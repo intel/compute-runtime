@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -477,6 +478,11 @@ bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQuery
 }
 
 bool IoctlHelperI915::translateTopologyInfo(const QueryTopologyInfo *queryTopologyInfo, DrmQueryTopologyData &topologyData, TopologyMapping &mapping) {
+    UNRECOVERABLE_IF(queryTopologyInfo->subsliceOffset != static_cast<uint16_t>(Math::divideAndRoundUp(queryTopologyInfo->maxSlices, 8u)));
+    UNRECOVERABLE_IF(queryTopologyInfo->subsliceStride != static_cast<uint16_t>(Math::divideAndRoundUp(queryTopologyInfo->maxSubslices, 8u)));
+    UNRECOVERABLE_IF(queryTopologyInfo->euOffset != queryTopologyInfo->subsliceOffset + queryTopologyInfo->maxSlices * queryTopologyInfo->subsliceStride);
+    UNRECOVERABLE_IF(queryTopologyInfo->euStride != static_cast<uint16_t>(Math::divideAndRoundUp(queryTopologyInfo->maxEusPerSubslice, 8u)));
+
     int sliceCount = 0;
     int subSliceCount = 0;
     int euCount = 0;

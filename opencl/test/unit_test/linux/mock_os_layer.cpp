@@ -15,7 +15,6 @@
 
 #include <cassert>
 #include <dirent.h>
-#include <iostream>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
@@ -258,9 +257,15 @@ int drmVersion(NEO::DrmVersion *version) {
 
 int drmQueryItem(NEO::Query *query) {
     auto queryItemArg = reinterpret_cast<NEO::QueryItem *>(query->itemsPtr);
+
+    constexpr int sliceCount = 1;
+    constexpr int subsliceCount = 1;
+    constexpr int euCount = 3;
+    const auto dataSize = static_cast<size_t>(Math::divideAndRoundUp(sliceCount, 8u) + Math::divideAndRoundUp(subsliceCount, 8u) + Math::divideAndRoundUp(euCount, 8u));
+
     if (queryItemArg->length == 0) {
         if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
-            queryItemArg->length = sizeof(NEO::QueryTopologyInfo) + 1;
+            queryItemArg->length = static_cast<int32_t>(sizeof(NEO::QueryTopologyInfo) + dataSize);
             return 0;
         }
     } else {
@@ -269,7 +274,11 @@ int drmQueryItem(NEO::Query *query) {
             topologyArg->maxSlices = 1;
             topologyArg->maxSubslices = 1;
             topologyArg->maxEusPerSubslice = 3;
-            topologyArg->data[0] = 0xFF;
+            topologyArg->subsliceOffset = 1;
+            topologyArg->subsliceStride = 1;
+            topologyArg->euOffset = 2;
+            topologyArg->euStride = 1;
+            memset(topologyArg->data, 0xFF, dataSize);
             return failOnEuTotal || failOnSubsliceTotal;
         }
     }

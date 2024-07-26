@@ -9,13 +9,13 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "gtest/gtest.h"
 
-#include <cmath>
 #include <cstring>
 
 const int DrmMock::mockFd;
@@ -293,8 +293,17 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         auto queryItemArg = reinterpret_cast<QueryItem *>(queryArg->itemsPtr);
         storedQueryItem = *queryItemArg;
 
-        auto realEuCount = std::max(rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount, static_cast<uint32_t>(this->storedEUVal));
-        auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));
+        UNRECOVERABLE_IF((this->storedSVal != 0) && (this->storedSSVal % this->storedSVal != 0));
+        UNRECOVERABLE_IF((this->storedSSVal != 0) && (this->storedEUVal % this->storedSSVal != 0));
+
+        const uint16_t subslicesPerSlice = this->storedSVal ? (this->storedSSVal / this->storedSVal) : 0u;
+        const uint16_t eusPerSubslice = this->storedSSVal ? (this->storedEUVal / this->storedSSVal) : 0u;
+        const uint16_t subsliceOffset = static_cast<uint16_t>(Math::divideAndRoundUp(this->storedSVal, 8u));
+        const uint16_t subsliceStride = static_cast<uint16_t>(Math::divideAndRoundUp(subslicesPerSlice, 8u));
+        const uint16_t euOffset = subsliceOffset + this->storedSVal * subsliceStride;
+        const uint16_t euStride = static_cast<uint16_t>(Math::divideAndRoundUp(eusPerSubslice, 8u));
+
+        const uint16_t dataSize = euOffset + this->storedSSVal * euStride;
 
         if (queryItemArg->length == 0) {
             if (queryItemArg->queryId == DRM_I915_QUERY_TOPOLOGY_INFO) {
@@ -308,13 +317,17 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
                     return -1;
                 }
                 topologyArg->maxSlices = this->storedSVal;
-                topologyArg->maxSubslices = this->storedSVal ? (this->storedSSVal / this->storedSVal) : 0;
-                topologyArg->maxEusPerSubslice = this->storedSSVal ? (this->storedEUVal / this->storedSSVal) : 0;
+                topologyArg->maxSubslices = subslicesPerSlice;
+                topologyArg->maxEusPerSubslice = eusPerSubslice;
+                topologyArg->subsliceOffset = subsliceOffset;
+                topologyArg->subsliceStride = subsliceStride;
+                topologyArg->euOffset = euOffset;
+                topologyArg->euStride = euStride;
 
                 if (this->disableSomeTopology) {
-                    memset(topologyArg->data, 0xCA, dataSize);
+                    memset(topologyArg->data, 0b11000110, dataSize);
                 } else {
-                    memset(topologyArg->data, 0xFF, dataSize);
+                    memset(topologyArg->data, 0b11111111, dataSize);
                 }
 
                 return 0;

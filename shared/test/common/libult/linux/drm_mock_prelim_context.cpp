@@ -18,7 +18,6 @@
 
 #include <gtest/gtest.h>
 
-#include <cmath>
 #include <errno.h>
 
 namespace {
@@ -434,14 +433,15 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
 
     case PRELIM_DRM_I915_QUERY_COMPUTE_SUBSLICES: {
         auto &gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
-        auto maxEuPerSubslice = gtSystemInfo.MaxEuPerSubSlice;
-        auto maxSlices = gtSystemInfo.MaxSlicesSupported;
-        auto maxSubslices = gtSystemInfo.MaxSubSlicesSupported / maxSlices;
-        auto threadsPerEu = gtSystemInfo.ThreadCount / gtSystemInfo.EUCount;
-        auto realEuCount = threadsPerEu * maxEuPerSubslice * maxSubslices * maxSlices;
+        const uint16_t subslicesPerSlice = gtSystemInfo.MaxSubSlicesSupported / gtSystemInfo.MaxSlicesSupported;
+        const uint16_t eusPerSubslice = gtSystemInfo.MaxEuPerSubSlice;
+        const uint16_t threadsPerEu = gtSystemInfo.ThreadCount / gtSystemInfo.EUCount;
+        const uint16_t subsliceOffset = static_cast<uint16_t>(Math::divideAndRoundUp(gtSystemInfo.MaxSlicesSupported, 8u));
+        const uint16_t subsliceStride = static_cast<uint16_t>(Math::divideAndRoundUp(subslicesPerSlice, 8u));
+        const uint16_t euOffset = subsliceOffset + gtSystemInfo.MaxSlicesSupported * subsliceStride;
+        const uint16_t euStride = static_cast<uint16_t>(Math::divideAndRoundUp(eusPerSubslice, 8u));
 
-        auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0)) + maxSlices * static_cast<uint16_t>(std::ceil(maxSubslices / 8.0)) +
-                        static_cast<uint16_t>(std::ceil(maxSlices / 8.0));
+        const uint16_t dataSize = euOffset + gtSystemInfo.MaxSubSlicesSupported * euStride;
 
         if (queryItem->length == 0) {
             queryItem->length = static_cast<int32_t>(sizeof(QueryTopologyInfo) + dataSize);
@@ -451,21 +451,20 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             if (failRetTopology) {
                 return false;
             }
-            topologyArg->maxSlices = maxSlices;
-            topologyArg->maxSubslices = maxSubslices;
-            topologyArg->maxEusPerSubslice = maxEuPerSubslice;
-
-            topologyArg->subsliceStride = static_cast<uint16_t>(std::ceil(maxSubslices / 8.0));
-            topologyArg->euStride = static_cast<uint16_t>(std::ceil(maxEuPerSubslice / 8.0));
-            topologyArg->subsliceOffset = static_cast<uint16_t>(std::ceil(maxSlices / 8.0));
-            topologyArg->euOffset = static_cast<uint16_t>(std::ceil(maxSubslices / 8.0)) * maxSlices;
+            topologyArg->maxSlices = gtSystemInfo.MaxSlicesSupported;
+            topologyArg->maxSubslices = subslicesPerSlice;
+            topologyArg->maxEusPerSubslice = eusPerSubslice;
+            topologyArg->subsliceOffset = subsliceOffset;
+            topologyArg->subsliceStride = subsliceStride;
+            topologyArg->euOffset = euOffset;
+            topologyArg->euStride = euStride;
 
             int threadData = (threadsPerEu == 8) ? 0xff : 0x7f;
 
             uint8_t *data = topologyArg->data;
-            for (uint32_t sliceId = 0; sliceId < maxSlices; sliceId++) {
+            for (uint32_t sliceId = 0; sliceId < gtSystemInfo.MaxSlicesSupported; sliceId++) {
                 data[0] |= 1 << (sliceId % 8);
-                if (sliceId == 7 || sliceId == maxSlices - 1) {
+                if (((sliceId + 1) % 8) == 0 || sliceId == gtSystemInfo.MaxSlicesSupported - 1) {
                     data++;
                 }
             }
@@ -473,11 +472,11 @@ bool DrmMockPrelimContext::handlePrelimQueryItem(void *arg) {
             DEBUG_BREAK_IF(ptrDiff(data, topologyArg->data) != topologyArg->subsliceOffset);
 
             data = ptrOffset(topologyArg->data, topologyArg->subsliceOffset);
-            for (uint32_t sliceId = 0; sliceId < maxSlices; sliceId++) {
-                for (uint32_t i = 0; i < maxSubslices; i++) {
+            for (uint32_t sliceId = 0; sliceId < gtSystemInfo.MaxSlicesSupported; sliceId++) {
+                for (uint32_t i = 0; i < subslicesPerSlice; i++) {
                     data[0] |= 1 << (i % 8);
 
-                    if (i == 7 || i == maxSubslices - 1) {
+                    if (((i + 1) % 8) == 0 || i == static_cast<uint32_t>(subslicesPerSlice) - 1) {
                         data++;
                     }
                 }

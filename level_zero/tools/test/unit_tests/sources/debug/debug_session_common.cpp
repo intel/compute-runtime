@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,11 +63,22 @@ void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L
     fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 0, 4, 0, 'a');
 
     if (version.major < 2) {
-        // grfs for 0/3/7/3 - somewhere in the middle
-        fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 3, 7, 3, 'a');
+        auto &hwInfo = *NEO::defaultHwInfo.get();
+        const uint32_t numSlices = hwInfo.gtSystemInfo.SliceCount > 2 ? 2 : hwInfo.gtSystemInfo.SliceCount;
+        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount;
+        const uint32_t numEusPerSubslice = hwInfo.gtSystemInfo.EUCount / hwInfo.gtSystemInfo.SubSliceCount;
+        const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
-        // grfs for 0/5/15/6 - very last eu thread
-        fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 5, 15, 6, 'a');
+        const uint32_t midSlice = (numSlices > 1) ? (numSlices / 2) : 0;
+        const uint32_t midSubslice = (numSubslicesPerSlice > 1) ? (numSubslicesPerSlice / 2) : 0;
+        const uint32_t midEu = (numEusPerSubslice > 1) ? (numEusPerSubslice / 2) : 0;
+        const uint32_t midThread = (numThreadsPerEu > 1) ? (numThreadsPerEu / 2) : 0;
+
+        // grfs for an eu thread that is somewhere in the middle
+        fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, midSlice, midSubslice, midEu, midThread, 'a');
+
+        // grfs for the very last eu thread
+        fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1, 'a');
     }
 }
 

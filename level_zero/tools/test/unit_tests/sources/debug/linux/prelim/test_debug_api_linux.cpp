@@ -132,16 +132,22 @@ TEST(DebugSessionLinuxi915Test, GivenDebugSessionWhenExtractingCpuVaFromUuidThen
 TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
+    const auto maxSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     hwInfo.gtSystemInfo.SliceCount = 1;
-    hwInfo.gtSystemInfo.SubSliceCount = 8;
+    hwInfo.gtSystemInfo.SubSliceCount = hwInfo.gtSystemInfo.SliceCount * maxSubslicesPerSlice;
+    hwInfo.gtSystemInfo.DualSubSliceCount = hwInfo.gtSystemInfo.SliceCount * maxSubslicesPerSlice;
+    hwInfo.gtSystemInfo.EUCount = hwInfo.gtSystemInfo.SubSliceCount * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = hwInfo.gtSystemInfo.SliceCount * 2;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = hwInfo.gtSystemInfo.SubSliceCount * 2;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = hwInfo.gtSystemInfo.DualSubSliceCount * 2;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
     auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
 
     mockDrm->storedSVal = 2; // slice 0 disabled in topology
-    mockDrm->storedSSVal = hwInfo.gtSystemInfo.SubSliceCount;
-    mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
+    mockDrm->storedSSVal = mockDrm->storedSVal * maxSubslicesPerSlice;
+    mockDrm->storedEUVal = mockDrm->storedSSVal * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     mockDrm->disableSomeTopology = true;
 
     NEO::DrmQueryTopologyData topologyData = {};
@@ -157,13 +163,15 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
     auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(zet_debug_config_t{0x1234}, &deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
 
-    ze_device_thread_t thread = {UINT32_MAX, 1, 0, 0};
+    // Only one SS will be active if maxSS == 2
+    EXPECT_GE(maxSubslicesPerSlice, 2u);
+    ze_device_thread_t thread = {UINT32_MAX, maxSubslicesPerSlice > 2u ? 1u : 0u, 0u, 0u};
     uint32_t deviceIndex = 0;
 
     auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
 
     EXPECT_EQ(1u, physicalThread.slice);
-    EXPECT_EQ(3u, physicalThread.subslice);
+    EXPECT_EQ(maxSubslicesPerSlice > 2u ? 2u : 1u, physicalThread.subslice);
     EXPECT_EQ(0u, physicalThread.eu);
     EXPECT_EQ(0u, physicalThread.thread);
 
@@ -171,7 +179,7 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
     physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
 
     EXPECT_EQ(1u, physicalThread.slice);
-    EXPECT_EQ(3u, physicalThread.subslice);
+    EXPECT_EQ(maxSubslicesPerSlice > 2u ? 2u : 1u, physicalThread.subslice);
     EXPECT_EQ(0u, physicalThread.eu);
     EXPECT_EQ(0u, physicalThread.thread);
 }
@@ -179,8 +187,13 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithSingleSliceT
 TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
-    hwInfo.gtSystemInfo.SliceCount = 8;
-    hwInfo.gtSystemInfo.SubSliceCount = 8;
+    hwInfo.gtSystemInfo.SliceCount = std::min(static_cast<uint32_t>(GT_MAX_SLICE), hwInfo.gtSystemInfo.SliceCount * 8);
+    hwInfo.gtSystemInfo.SubSliceCount = hwInfo.gtSystemInfo.SliceCount;
+    hwInfo.gtSystemInfo.DualSubSliceCount = hwInfo.gtSystemInfo.SliceCount;
+    hwInfo.gtSystemInfo.EUCount = hwInfo.gtSystemInfo.SubSliceCount * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = hwInfo.gtSystemInfo.SliceCount;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = hwInfo.gtSystemInfo.SubSliceCount;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = hwInfo.gtSystemInfo.DualSubSliceCount;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
@@ -226,7 +239,14 @@ TEST(DebugSessionLinuxi915Test, WhenConvertingThreadIDsForDeviceWithMultipleSlic
 TEST(DebugSessionLinuxi915Test, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsStoppedForSliceAllThenCorrectValuesAreReturned) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
+    hwInfo.gtSystemInfo.EUCount /= hwInfo.gtSystemInfo.SliceCount;
+    hwInfo.gtSystemInfo.ThreadCount /= hwInfo.gtSystemInfo.SliceCount;
+    hwInfo.gtSystemInfo.SubSliceCount /= hwInfo.gtSystemInfo.SliceCount;
+    hwInfo.gtSystemInfo.DualSubSliceCount /= hwInfo.gtSystemInfo.SliceCount;
     hwInfo.gtSystemInfo.SliceCount = 1;
+
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported /= hwInfo.gtSystemInfo.MaxSlicesSupported;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported /= hwInfo.gtSystemInfo.MaxSlicesSupported;
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
 
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -7186,7 +7206,6 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 struct DebugApiRegistersAccessFixture : public DebugApiLinuxPrelimFixture {
     void setUp() {
         hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.gtSystemInfo.SubSliceCount = 6 * hwInfo.gtSystemInfo.SliceCount;
 
         DebugApiLinuxPrelimFixture::setUp(&hwInfo);
 
@@ -7304,6 +7323,16 @@ TEST_F(DebugApiRegistersAccessTest, givenReadRegistersCalledCorrectValuesRead) {
     char grf[32] = {0};
     char grfRef[32] = {0};
 
+    const uint32_t numSlices = hwInfo.gtSystemInfo.SliceCount > 2 ? 2 : hwInfo.gtSystemInfo.SliceCount;
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount;
+    const uint32_t numEusPerSubslice = hwInfo.gtSystemInfo.EUCount / hwInfo.gtSystemInfo.SubSliceCount;
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+
+    const uint32_t midSlice = (numSlices > 1) ? (numSlices / 2) : 0;
+    const uint32_t midSubslice = (numSubslicesPerSlice > 1) ? (numSubslicesPerSlice / 2) : 0;
+    const uint32_t midEu = (numEusPerSubslice > 1) ? (numEusPerSubslice / 2) : 0;
+    const uint32_t midThread = (numThreadsPerEu > 1) ? (numThreadsPerEu / 2) : 0;
+
     session->ensureThreadStopped({0, 0, 0, 0});
     for (uint32_t reg = 0; reg < 20; ++reg) {
         memset(grfRef, 'a' + reg, 32);
@@ -7311,17 +7340,17 @@ TEST_F(DebugApiRegistersAccessTest, givenReadRegistersCalledCorrectValuesRead) {
         EXPECT_EQ(0, memcmp(grf, grfRef, 32));
     }
 
-    session->ensureThreadStopped({0, 3, 7, 3});
+    session->ensureThreadStopped({midSlice, midSubslice, midEu, midThread});
     for (uint32_t reg = 0; reg < 20; ++reg) {
         memset(grfRef, 'a' + reg, 32);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 3, 7, 3}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, reg, 1, grf));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {midSlice, midSubslice, midEu, midThread}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, reg, 1, grf));
         EXPECT_EQ(0, memcmp(grf, grfRef, 32));
     }
 
-    session->ensureThreadStopped({0, 5, 15, 6});
+    session->ensureThreadStopped({numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1});
     for (uint32_t reg = 0; reg < 20; ++reg) {
         memset(grfRef, 'a' + reg, 32);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 5, 15, 6}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, reg, 1, grf));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, reg, 1, grf));
         EXPECT_EQ(0, memcmp(grf, grfRef, 32));
     }
 }
@@ -7406,6 +7435,16 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) 
     char grf[32] = {0};
     char grfRef[32] = {0};
 
+    const uint32_t numSlices = hwInfo.gtSystemInfo.SliceCount > 2 ? 2 : hwInfo.gtSystemInfo.SliceCount;
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount;
+    const uint32_t numEusPerSubslice = hwInfo.gtSystemInfo.EUCount / hwInfo.gtSystemInfo.SubSliceCount;
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+
+    const uint32_t midSlice = (numSlices > 1) ? (numSlices / 2) : 0;
+    const uint32_t midSubslice = (numSubslicesPerSlice > 1) ? (numSubslicesPerSlice / 2) : 0;
+    const uint32_t midEu = (numEusPerSubslice > 1) ? (numEusPerSubslice / 2) : 0;
+    const uint32_t midThread = (numThreadsPerEu > 1) ? (numThreadsPerEu / 2) : 0;
+
     // grfs for 0/0/0/0 - very first eu thread
     memset(grfRef, 'k', 32); // 'a' + 10, r10
     session->ensureThreadStopped(stoppedThread);
@@ -7416,24 +7455,24 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
 
-    // grfs for 0/3/7/3 - somewhere in the middle
+    // grfs for an eu thread that is somewhere in the middle
     memset(grfRef, 'k', 32);
-    session->ensureThreadStopped({0, 3, 7, 3});
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 3, 7, 3}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
+    session->ensureThreadStopped({midSlice, midSubslice, midEu, midThread});
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {midSlice, midSubslice, midEu, midThread}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
     memset(grfRef, 'y', 32);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), {0, 3, 7, 3}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grfRef));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 3, 7, 3}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), {midSlice, midSubslice, midEu, midThread}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grfRef));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {midSlice, midSubslice, midEu, midThread}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
 
-    // grfs for 0/5/15/6 - very last eu thread
+    // grfs for the very last eu thread
     memset(grfRef, 'k', 32);
-    session->ensureThreadStopped({0, 5, 15, 6});
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 5, 15, 6}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
+    session->ensureThreadStopped({numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1});
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
     memset(grfRef, 'z', 32);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), {0, 5, 15, 6}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grfRef));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 5, 15, 6}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), {numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grfRef));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {numSlices - 1, numSubslicesPerSlice - 1, numEusPerSubslice - 1, numThreadsPerEu - 1}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
 }
 
@@ -7771,7 +7810,18 @@ TEST_F(DebugApiRegistersAccessTest, GivenScratchPointerAndZeroAddressInSurfaceSt
     session->ioctlHandler.reset(ioctlHandler);
     session->vmHandle = 7;
     session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToStateBaseAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa + maxDbgSurfaceSize, sizeof(SbaTrackedAddresses)};
-    ze_device_thread_t thread{0, 3, 7, 3};
+
+    const uint32_t numSlices = hwInfo.gtSystemInfo.SliceCount > 2 ? 2 : hwInfo.gtSystemInfo.SliceCount;
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.SubSliceCount / hwInfo.gtSystemInfo.SliceCount;
+    const uint32_t numEusPerSubslice = hwInfo.gtSystemInfo.EUCount / hwInfo.gtSystemInfo.SubSliceCount;
+    const uint32_t numThreadsPerEu = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+
+    const uint32_t midSlice = (numSlices > 1) ? (numSlices / 2) : 0;
+    const uint32_t midSubslice = (numSubslicesPerSlice > 1) ? (numSubslicesPerSlice / 2) : 0;
+    const uint32_t midEu = (numEusPerSubslice > 1) ? (numEusPerSubslice / 2) : 0;
+    const uint32_t midThread = (numThreadsPerEu > 1) ? (numThreadsPerEu / 2) : 0;
+
+    ze_device_thread_t thread{midSlice, midSubslice, midEu, midThread};
     session->ensureThreadStopped(thread);
 
     SbaTrackedAddresses sbaExpected{};
