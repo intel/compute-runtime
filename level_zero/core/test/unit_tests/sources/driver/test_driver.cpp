@@ -29,6 +29,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
+#include "level_zero/api/driver_experimental/public/zex_context.h"
 #include "level_zero/api/driver_experimental/public/zex_driver.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -1323,28 +1324,39 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexDriverGetHostPointerBaseAddress) expectedGet = L0::zexDriverGetHostPointerBaseAddress;
     decltype(&zexKernelGetBaseAddress) expectedKernelGetBaseAddress = L0::zexKernelGetBaseAddress;
     decltype(&zeIntelGetDriverVersionString) expectedIntelGetDriverVersionString = zeIntelGetDriverVersionString;
+    decltype(&zeIntelMediaCommunicationCreate) expectedIntelMediaCommunicationCreate = L0::zeIntelMediaCommunicationCreate;
+    decltype(&zeIntelMediaCommunicationDestroy) expectedIntelMediaCommunicationDestroy = L0::zeIntelMediaCommunicationDestroy;
+    decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
+    decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
 
     void *funPtr = nullptr;
 
-    auto result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr));
     EXPECT_EQ(expectedImport, reinterpret_cast<decltype(&zexDriverImportExternalPointer)>(funPtr));
 
-    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverReleaseImportedPointer", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverReleaseImportedPointer", &funPtr));
     EXPECT_EQ(expectedRelease, reinterpret_cast<decltype(&zexDriverReleaseImportedPointer)>(funPtr));
 
-    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverGetHostPointerBaseAddress", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverGetHostPointerBaseAddress", &funPtr));
     EXPECT_EQ(expectedGet, reinterpret_cast<decltype(&zexDriverGetHostPointerBaseAddress)>(funPtr));
 
-    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexKernelGetBaseAddress", &funPtr));
     EXPECT_EQ(expectedKernelGetBaseAddress, reinterpret_cast<decltype(&zexKernelGetBaseAddress)>(funPtr));
 
-    result = zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelGetDriverVersionString", &funPtr));
     EXPECT_EQ(expectedIntelGetDriverVersionString, reinterpret_cast<decltype(&zeIntelGetDriverVersionString)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMediaCommunicationCreate", &funPtr));
+    EXPECT_EQ(expectedIntelMediaCommunicationCreate, reinterpret_cast<decltype(&zeIntelMediaCommunicationCreate)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zeIntelMediaCommunicationDestroy", &funPtr));
+    EXPECT_EQ(expectedIntelMediaCommunicationDestroy, reinterpret_cast<decltype(&zeIntelMediaCommunicationDestroy)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexIntelAllocateNetworkInterrupt", &funPtr));
+    EXPECT_EQ(expectedIntelAllocateNetworkInterrupt, reinterpret_cast<decltype(&zexIntelAllocateNetworkInterrupt)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexIntelReleaseNetworkInterrupt", &funPtr));
+    EXPECT_EQ(expectedIntelReleaseNetworkInterrupt, reinterpret_cast<decltype(&zexIntelReleaseNetworkInterrupt)>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {
