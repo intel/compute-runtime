@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_walk_order.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -133,10 +134,12 @@ struct InlineDataFixture : AubDispatchThreadDataFixture {
 using XeHPAndLaterAubInlineDataTest = Test<InlineDataFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitIntoSingleGrfWhenInlineDataAllowedThenCopyAllCrossThreadIntoInline) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernels[4]->getKernelInfo().kernelDescriptor)) {
+    auto *kernel = kernels[4].get();
+
+    if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelInfo().kernelDescriptor)) {
         return;
     }
 
@@ -149,7 +152,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
     cl_event *event = nullptr;
 
     auto retVal = pCmdQ->enqueueKernel(
-        kernels[4].get(),
+        kernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -164,11 +167,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
     hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
-
-    auto localId = kernels[4]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
     if (localId[0]) {
         expectedEmitLocal |= (1 << 0);
@@ -180,17 +181,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
         expectedEmitLocal |= (1 << 2);
     }
 
-    EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), kernels[4]->getCrossThreadData(), sizeof(INLINE_DATA)));
+    std::visit([kernel, expectedEmitLocal](auto &&walker) {
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
+        EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), kernel->getCrossThreadData(), sizeof(INLINE_DATA)));
+    },
+               walkerVariant);
+
     // this kernel does nothing, so no expectMemory because only such kernel can fit into single GRF
     // this is for sake of testing inline data data copying by COMPUTE_WALKER
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSizeMoreThanSingleGrfWhenInlineDataAllowedThenCopyGrfCrossThreadToInline) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
-    if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernels[3]->getKernelInfo().kernelDescriptor)) {
+    auto *kernel = this->kernels[3].get();
+    if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelInfo().kernelDescriptor)) {
         return;
     }
 
@@ -205,7 +213,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     IndirectHeap &ih = pCmdQ->getIndirectHeap(IndirectHeap::Type::indirectObject, 2048);
 
     auto retVal = pCmdQ->enqueueKernel(
-        kernels[3].get(),
+        kernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -221,10 +229,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(1u, walker->getEmitInlineParameter());
-
-    auto localId = kernels[3]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
     if (localId[0]) {
         expectedEmitLocal |= (1 << 0);
@@ -235,17 +240,24 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
     if (localId[2]) {
         expectedEmitLocal |= (1 << 2);
     }
-    EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-    char *crossThreadData = kernels[3]->getCrossThreadData();
-    size_t crossThreadDataSize = kernels[3]->getCrossThreadDataSize();
-    auto inlineSize = sizeof(INLINE_DATA);
-    EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadData, inlineSize));
 
-    crossThreadDataSize -= inlineSize;
-    crossThreadData += inlineSize;
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([kernel, expectedEmitLocal, &ih](auto &&walker) {
+        EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
-    void *payloadData = ih.getCpuBase();
-    EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
+        EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
+        char *crossThreadData = kernel->getCrossThreadData();
+        size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
+        auto inlineSize = sizeof(INLINE_DATA);
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadData, inlineSize));
+
+        crossThreadDataSize -= inlineSize;
+        crossThreadData += inlineSize;
+
+        void *payloadData = ih.getCpuBase();
+        EXPECT_EQ(0, memcmp(payloadData, crossThreadData, crossThreadDataSize));
+    },
+               walkerVariant);
 
     expectMemory<FamilyType>(variables[3].destMemory, variables[3].expectedMemory, variables[3].sizeWrittenMemory);
     expectMemory<FamilyType>(variables[3].remainderDestMemory, variables[3].expectedRemainderMemory, variables[3].sizeRemainderMemory);
@@ -302,8 +314,7 @@ struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
 using XeHPAndLaterAubHwLocalIdsTest = Test<HwLocalIdsFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimensionsArePow2ThenSetEmitLocalIdsAndGenerateLocalIdsFields) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -313,8 +324,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
+    auto *kernel = this->kernels[2].get();
+
     auto retVal = pCmdQ->enqueueKernel(
-        kernels[2].get(),
+        kernel,
         workDim,
         globalWorkOffset,
         globalWorkSize,
@@ -329,9 +342,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
-    auto localId = kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
     if (localId[0]) {
         expectedEmitLocal |= (1 << 0);
@@ -342,17 +353,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
     if (localId[2]) {
         expectedEmitLocal |= (1 << 2);
     }
-    EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-    EXPECT_EQ(1u, walker->getGenerateLocalId());
 
-    auto kernelAllocationGpuAddr = kernels[2]->getKernelInfo().kernelAllocation->getGpuAddressToPatch();
-    auto skipOffset = kernels[2]->getKernelInfo().kernelDescriptor.entryPoints.skipPerThreadDataLoad;
-    uint64_t kernelStartPointer = kernelAllocationGpuAddr + skipOffset;
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([kernel, expectedEmitLocal](auto &&walker) {
+        EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
 
-    auto &idd = walker->getInterfaceDescriptor();
+        auto kernelAllocationGpuAddr = kernel->getKernelInfo().kernelAllocation->getGpuAddressToPatch();
+        auto skipOffset = kernel->getKernelInfo().kernelDescriptor.entryPoints.skipPerThreadDataLoad;
+        uint64_t kernelStartPointer = kernelAllocationGpuAddr + skipOffset;
 
-    using KernelStartPointerType = decltype(idd.getKernelStartPointer());
-    EXPECT_EQ(static_cast<KernelStartPointerType>(kernelStartPointer), idd.getKernelStartPointer());
+        auto &idd = walker->getInterfaceDescriptor();
+
+        using KernelStartPointerType = decltype(idd.getKernelStartPointer());
+        EXPECT_EQ(static_cast<KernelStartPointerType>(kernelStartPointer), idd.getKernelStartPointer());
+    },
+               walkerVariant);
 
     pCmdQ->flush();
 
@@ -361,15 +377,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalWorkSizeButCompatibleWorkOrderWhenLocalIdsAreUsedThenDataVerifiesCorrectly) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     cl_uint workDim = 1;
     size_t globalWorkSize[3] = {200, 1, 1};
     size_t localWorkSize[3] = {200, 1, 1};
 
+    auto *kernel = this->kernels[2].get();
+
     auto retVal = pCmdQ->enqueueKernel(
-        kernels[2].get(),
+        kernel,
         workDim,
         nullptr,
         globalWorkSize,
@@ -384,25 +401,30 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    if (kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder) {
-        EXPECT_EQ(0u, walker->getGenerateLocalId());
-    } else {
-        auto localId = kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
-        uint32_t expectedEmitLocal = 0;
-        if (localId[0]) {
-            expectedEmitLocal |= (1 << 0);
-        }
-        if (localId[1]) {
-            expectedEmitLocal |= (1 << 1);
-        }
-        if (localId[2]) {
-            expectedEmitLocal |= (1 << 2);
-        }
-        EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-        EXPECT_EQ(1u, walker->getGenerateLocalId());
-        EXPECT_EQ(4u, walker->getWalkOrder());
+    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    uint32_t expectedEmitLocal = 0;
+    if (localId[0]) {
+        expectedEmitLocal |= (1 << 0);
     }
+    if (localId[1]) {
+        expectedEmitLocal |= (1 << 1);
+    }
+    if (localId[2]) {
+        expectedEmitLocal |= (1 << 2);
+    }
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([kernel, expectedEmitLocal](auto &&walker) {
+        if (kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder) {
+            EXPECT_EQ(0u, walker->getGenerateLocalId());
+        } else {
+
+            EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
+            EXPECT_EQ(1u, walker->getGenerateLocalId());
+            EXPECT_EQ(4u, walker->getWalkOrder());
+        }
+    },
+               walkerVariant);
 
     pCmdQ->flush();
 
@@ -426,15 +448,16 @@ struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
 
 using XeHPAndLaterAubHwLocalIdsWithSubgroupsTest = Test<HwLocalIdsWithSubGroups>;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKernelUsingSubgroupsWhenLocalIdsAreGeneratedByHwThenValuesAreCorrect) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     cl_uint workDim = 1;
     size_t globalWorkSize[3] = {256, 1, 1};
     size_t localWorkSize[3] = {256, 1, 1};
 
+    auto *kernel = this->kernels[9].get();
+
     auto retVal = pCmdQ->enqueueKernel(
-        kernels[9].get(),
+        kernel,
         workDim,
         nullptr,
         globalWorkSize,
@@ -449,9 +472,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
-    auto localId = kernels[9]->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
+    auto localId = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.localId;
     uint32_t expectedEmitLocal = 0;
     if (localId[0]) {
         expectedEmitLocal |= (1 << 0);
@@ -462,11 +483,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
     if (localId[2]) {
         expectedEmitLocal |= (1 << 2);
     }
-    EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-    EXPECT_EQ(1u, walker->getGenerateLocalId());
-    for (size_t i = 0; i < 3; i++) {
-        EXPECT_EQ(kernels[9]->getKernelInfo().kernelDescriptor.kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
-    }
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+    std::visit([kernel, expectedEmitLocal](auto &&walker) {
+        EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
+        EXPECT_EQ(1u, walker->getGenerateLocalId());
+        for (size_t i = 0; i < 3; i++) {
+            EXPECT_EQ(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.workgroupWalkOrder[i], HwWalkOrderHelper::compatibleDimensionOrders[walker->getWalkOrder()][i]);
+        }
+    },
+               walkerVariant);
 
     pCmdQ->finish();
 

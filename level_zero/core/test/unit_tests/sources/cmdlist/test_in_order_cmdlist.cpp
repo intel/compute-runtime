@@ -5069,7 +5069,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     ze_command_queue_desc_t desc = {};
 
@@ -5087,55 +5087,54 @@ HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPa
 
     ASSERT_EQ(4u, regularCmdList->inOrderPatchCmds.size()); // Walker + 2x Semaphore + Walker
 
-    auto walkerFromContainer1 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[0].cmd1);
-    ASSERT_NE(nullptr, walkerFromContainer1);
-    auto walkerFromContainer2 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[3].cmd1);
-    ASSERT_NE(nullptr, walkerFromContainer2);
-    DefaultWalkerType *walkerFromParser1 = nullptr;
-    DefaultWalkerType *walkerFromParser2 = nullptr;
+    WalkerVariant walkerVariantFromContainer1 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(regularCmdList->inOrderPatchCmds[0].cmd1);
+    WalkerVariant walkerVariantFromContainer2 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(regularCmdList->inOrderPatchCmds[3].cmd1);
+    std::visit([](auto &&walker1, auto &&walker2) {
+        ASSERT_NE(nullptr, walker1);
+        ASSERT_NE(nullptr, walker2);
+    },
+               walkerVariantFromContainer1, walkerVariantFromContainer2);
 
-    {
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
-                                                          ptrOffset(cmdStream->getCpuBase(), offset),
-                                                          (cmdStream->getUsed() - offset)));
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
 
-        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    WalkerVariant walkerVariantFromParser1 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*itor);
 
-        ASSERT_NE(cmdList.end(), itor);
-
-        walkerFromParser1 = genCmdCast<DefaultWalkerType *>(*itor);
-
-        itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++itor, cmdList.end());
-        ASSERT_NE(cmdList.end(), itor);
-
-        walkerFromParser2 = genCmdCast<DefaultWalkerType *>(*itor);
-    }
+    itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    WalkerVariant walkerVariantFromParser2 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*itor);
 
     EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
 
-    auto verifyPatching = [&](uint64_t executionCounter) {
-        auto appendValue = regularCmdList->inOrderExecInfo->getCounterValue() * executionCounter;
+    std::visit([&](auto &&walkerFromParser1, auto &&walkerFromParser2, auto &&walkerFromContainer1, auto &&walkerFromContainer2) {
+        auto verifyPatching = [&](uint64_t executionCounter) {
+            auto appendValue = regularCmdList->inOrderExecInfo->getCounterValue() * executionCounter;
 
-        EXPECT_EQ(1u + appendValue, walkerFromContainer1->getPostSync().getImmediateData());
-        EXPECT_EQ(1u + appendValue, walkerFromParser1->getPostSync().getImmediateData());
+            EXPECT_EQ(1u + appendValue, walkerFromContainer1->getPostSync().getImmediateData());
+            EXPECT_EQ(1u + appendValue, walkerFromParser1->getPostSync().getImmediateData());
 
-        EXPECT_EQ(2u + appendValue, walkerFromContainer2->getPostSync().getImmediateData());
-        EXPECT_EQ(2u + appendValue, walkerFromParser2->getPostSync().getImmediateData());
-    };
+            EXPECT_EQ(2u + appendValue, walkerFromContainer2->getPostSync().getImmediateData());
+            EXPECT_EQ(2u + appendValue, walkerFromParser2->getPostSync().getImmediateData());
+        };
 
-    regularCmdList->close();
+        regularCmdList->close();
 
-    auto handle = regularCmdList->toHandle();
+        auto handle = regularCmdList->toHandle();
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
-    verifyPatching(0);
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
+        verifyPatching(0);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
-    verifyPatching(1);
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
+        verifyPatching(1);
 
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
-    verifyPatching(2);
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
+        verifyPatching(2);
+    },
+               walkerVariantFromParser1, walkerVariantFromParser2, walkerVariantFromContainer1, walkerVariantFromContainer2);
 }
 
 struct BcsSplitInOrderCmdListTests : public InOrderCmdListTests {
@@ -5797,7 +5796,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     ze_command_queue_desc_t desc = {};
 
@@ -5814,55 +5813,54 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatc
 
     ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // Walker + Semaphore + Walker
 
-    auto walkerFromContainer1 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[0].cmd1);
-    ASSERT_NE(nullptr, walkerFromContainer1);
-    auto walkerFromContainer2 = genCmdCast<DefaultWalkerType *>(regularCmdList->inOrderPatchCmds[2].cmd1);
-    ASSERT_NE(nullptr, walkerFromContainer2);
-    DefaultWalkerType *walkerFromParser1 = nullptr;
-    DefaultWalkerType *walkerFromParser2 = nullptr;
+    WalkerVariant walkerVariantFromContainer1 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(regularCmdList->inOrderPatchCmds[0].cmd1);
+    WalkerVariant walkerVariantFromContainer2 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(regularCmdList->inOrderPatchCmds[2].cmd1);
+    std::visit([](auto &&walker1, auto &&walker2) {
+        ASSERT_NE(nullptr, walker1);
+        ASSERT_NE(nullptr, walker2);
+    },
+               walkerVariantFromContainer1, walkerVariantFromContainer2);
 
-    {
-        GenCmdList cmdList;
-        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
-                                                          ptrOffset(cmdStream->getCpuBase(), offset),
-                                                          (cmdStream->getUsed() - offset)));
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
 
-        auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    WalkerVariant walkerVariantFromParser1 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*itor);
 
-        ASSERT_NE(cmdList.end(), itor);
+    itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    WalkerVariant walkerVariantFromParser2 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*itor);
 
-        walkerFromParser1 = genCmdCast<DefaultWalkerType *>(*itor);
+    std::visit([&](auto &&walkerFromParser1, auto &&walkerFromParser2, auto &&walkerFromContainer1, auto &&walkerFromContainer2) {
+        auto verifyPatching = [&](uint64_t executionCounter) {
+            auto appendValue = regularCmdList->inOrderExecInfo->getCounterValue() * executionCounter;
 
-        itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++itor, cmdList.end());
-        ASSERT_NE(cmdList.end(), itor);
+            EXPECT_EQ(1u + appendValue, walkerFromContainer1->getPostSync().getImmediateData());
+            EXPECT_EQ(1u + appendValue, walkerFromParser1->getPostSync().getImmediateData());
 
-        walkerFromParser2 = genCmdCast<DefaultWalkerType *>(*itor);
-    }
+            EXPECT_EQ(2u + appendValue, walkerFromContainer2->getPostSync().getImmediateData());
+            EXPECT_EQ(2u + appendValue, walkerFromParser2->getPostSync().getImmediateData());
+        };
+
+        regularCmdList->close();
+
+        auto handle = regularCmdList->toHandle();
+
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
+        verifyPatching(0);
+
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
+        verifyPatching(1);
+
+        mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
+        verifyPatching(2);
+    },
+               walkerVariantFromParser1, walkerVariantFromParser2, walkerVariantFromContainer1, walkerVariantFromContainer2);
 
     EXPECT_EQ(2u, regularCmdList->inOrderExecInfo->getCounterValue());
-
-    auto verifyPatching = [&](uint64_t executionCounter) {
-        auto appendValue = regularCmdList->inOrderExecInfo->getCounterValue() * executionCounter;
-
-        EXPECT_EQ(1u + appendValue, walkerFromContainer1->getPostSync().getImmediateData());
-        EXPECT_EQ(1u + appendValue, walkerFromParser1->getPostSync().getImmediateData());
-
-        EXPECT_EQ(2u + appendValue, walkerFromContainer2->getPostSync().getImmediateData());
-        EXPECT_EQ(2u + appendValue, walkerFromParser2->getPostSync().getImmediateData());
-    };
-
-    regularCmdList->close();
-
-    auto handle = regularCmdList->toHandle();
-
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
-    verifyPatching(0);
-
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
-    verifyPatching(1);
-
-    mockCmdQHw->executeCommandLists(1, &handle, nullptr, false, nullptr);
-    verifyPatching(2);
 }
 
 HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdListThenProgramPipeControlsToHandleDependencies, IsAtLeastXeHpCore) {
