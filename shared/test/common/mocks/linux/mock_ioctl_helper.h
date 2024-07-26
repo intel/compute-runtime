@@ -70,7 +70,14 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         std::unique_ptr<MemoryInfo> memoryInfo = std::make_unique<MemoryInfo>(regionInfo, drm);
         return memoryInfo;
     }
-
+    bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
+        topologyData = topologyDataToSet;
+        topologyMap[0].sliceIndices = topologyMapToSet.sliceIndices;
+        topologyMap[0].subsliceIndices = topologyMapToSet.subsliceIndices;
+        return true;
+    }
+    DrmQueryTopologyData topologyDataToSet{};
+    TopologyMapping topologyMapToSet{};
     int getDrmParamValueResult = 1234;
     uint32_t releaseInterruptCalled = 0;
     uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;

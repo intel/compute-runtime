@@ -534,6 +534,10 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     hwInfo->gtSystemInfo.DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
 
+    if (!hwInfo->gtSystemInfo.MaxEuPerSubSlice) {
+        hwInfo->gtSystemInfo.MaxEuPerSubSlice = topologyData.maxEusPerSubSlice;
+    }
+
     auto maxEuCount = static_cast<uint32_t>(topologyData.subSliceCount) * hwInfo->gtSystemInfo.MaxEuPerSubSlice;
 
     if (topologyData.euCount == 0 || static_cast<uint32_t>(topologyData.euCount) > maxEuCount) {

@@ -1752,6 +1752,48 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
     EXPECT_THROW(getDrmParamString(DrmParam::engineClassRender, &ioctlHelper), std::runtime_error);
 }
 
+TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorrectValuesAreSet) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    auto ioctlHelper = static_cast<MockIoctlHelper *>(drm.ioctlHelper.get());
+
+    ioctlHelper->topologyDataToSet.sliceCount = 2;
+    ioctlHelper->topologyDataToSet.subSliceCount = 6;
+    ioctlHelper->topologyDataToSet.euCount = 12;
+    ioctlHelper->topologyDataToSet.numL3Banks = 3;
+    ioctlHelper->topologyDataToSet.maxSlices = 4;
+    ioctlHelper->topologyDataToSet.maxSubSlicesPerSlice = 4;
+    ioctlHelper->topologyDataToSet.maxEusPerSubSlice = 9;
+
+    ioctlHelper->topologyMapToSet.sliceIndices = {1, 2};
+    ioctlHelper->topologyMapToSet.subsliceIndices = {};
+
+    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+
+    hwInfo->gtSystemInfo = {};
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, hwInfo, setupHardwareInfo};
+
+    drm.systemInfoQueried = true;
+    EXPECT_EQ(nullptr, drm.systemInfo.get());
+    drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(nullptr, drm.systemInfo.get());
+
+    EXPECT_EQ(hwInfo->gtSystemInfo.SliceCount, 2u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.SubSliceCount, 6u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.DualSubSliceCount, 6u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.EUCount, 12u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.L3BankCount, 3u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.MaxEuPerSubSlice, 9u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.MaxSlicesSupported, 2u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.MaxSubSlicesSupported, 16u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.MaxDualSubSlicesSupported, 16u);
+}
+
 TEST(DrmWrapperTest, givenEAgainOrEIntrOrEBusyWhenCheckingIfReinvokeRequiredThenTrueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
