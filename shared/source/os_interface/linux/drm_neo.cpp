@@ -1009,6 +1009,10 @@ int Drm::waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWi
 }
 
 bool Drm::querySystemInfo() {
+    if (systemInfoQueried) {
+        return this->systemInfo != nullptr;
+    }
+    systemInfoQueried = true;
     auto request = ioctlHelper->getDrmParamValue(DrmParam::queryHwconfigTable);
     auto deviceBlobQuery = this->query<uint32_t>(request, 0);
     if (deviceBlobQuery.empty()) {

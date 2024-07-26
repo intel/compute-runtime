@@ -130,6 +130,21 @@ TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpV
     EXPECT_EQ(55u, exposedReleaseHelper->hardwareIpVersion.release);
 }
 
+TEST(DrmSystemInfoTest, whenQueryingSystemInfoTwiceThenSystemInfoIsCreatedOnlyOnce) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    EXPECT_TRUE(drm.querySystemInfo());
+
+    auto systemInfo = drm.getSystemInfo();
+    EXPECT_NE(nullptr, systemInfo);
+    EXPECT_EQ(2u + drm.getBaseIoctlCalls(), drm.ioctlCallsCount);
+
+    EXPECT_TRUE(drm.querySystemInfo());
+    EXPECT_EQ(systemInfo, drm.getSystemInfo());
+    EXPECT_EQ(2u + drm.getBaseIoctlCalls(), drm.ioctlCallsCount);
+}
+
 TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsNonZeros) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);

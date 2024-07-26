@@ -364,6 +364,7 @@ class Drm : public DriverModel {
 
     bool memoryInfoQueried = false;
     bool engineInfoQueried = false;
+    bool systemInfoQueried = false;
 
   private:
     int getParamIoctl(DrmParam param, int *dstValue);
