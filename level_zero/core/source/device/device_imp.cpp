@@ -1720,7 +1720,9 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     }
 
     if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
-        getCsrForHighPriority(csr, copyOnly);
+        if (getCsrForHighPriority(csr, copyOnly) != ZE_RESULT_SUCCESS) {
+            contextPriority = NEO::EngineUsage::regular;
+        }
     }
 
     auto &osContext = (*csr)->getOsContext();

@@ -4635,6 +4635,15 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
                 engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
             }
 
+            for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
+                auto engineType = EngineHelpers::getBcsEngineAtIdx(i);
+
+                if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
+
+                    engines.push_back({engineType, EngineUsage::regular});
+                }
+            }
+
             return engines;
         }
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
@@ -4643,6 +4652,10 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
             }
             if (engineType >= aub_stream::ENGINE_CCS && engineType < (aub_stream::ENGINE_CCS + hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled)) {
                 return EngineGroupType::compute;
+            }
+
+            if (engineType == aub_stream::ENGINE_BCS1) {
+                return EngineGroupType::copy;
             }
             UNRECOVERABLE_IF(true);
         }
@@ -4656,6 +4669,8 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    hwInfo.featureTable.ftrBcsInfo = 0b10;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
     RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
@@ -4671,15 +4686,19 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         auto &engineGroups = neoMockDevice->getRegularEngineGroups();
         uint32_t count = static_cast<uint32_t>(engineGroups.size());
         auto ordinal = 0u;
+        auto ordinalCopy = 0u;
 
         for (uint32_t i = 0; i < count; i++) {
             if (engineGroups[i].engineGroupType == NEO::EngineGroupType::compute) {
                 ordinal = i;
-                break;
+            }
+            if (engineGroups[i].engineGroupType == NEO::EngineGroupType::copy) {
+                ordinalCopy = i;
             }
         }
 
         ASSERT_TRUE(engineGroups[ordinal].engineGroupType == NEO::EngineGroupType::compute);
+        ASSERT_TRUE(engineGroups[ordinalCopy].engineGroupType == NEO::EngineGroupType::copy);
 
         uint32_t index = 1;
         auto result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
@@ -4715,6 +4734,15 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         ordinal = 100;
         result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+        // When no HP copy engine, then regular engine is returned
+        NEO::CommandStreamReceiver *bcsEngine = nullptr;
+        EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
+
+        result = deviceImp.getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_NE(nullptr, bcsEngine);
+        EXPECT_TRUE(bcsEngine->getOsContext().isRegular());
     }
 }
 
