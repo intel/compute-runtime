@@ -129,7 +129,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
                                              ::L0::Event *event,
                                              CmdListKernelLaunchParams &launchParams) override {
 
-        kernelUsed = kernel;
         usedKernelLaunchParams = launchParams;
         if (launchParams.isKernelSplitOperation && (launchParams.numKernelsExecutedInSplitLaunch == 0)) {
             firstKernelInSplitOperation = kernel;
@@ -169,7 +168,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     ::L0::Kernel *firstKernelInSplitOperation = nullptr;
     ze_event_handle_t appendEventMultipleKernelIndirectEventHandleValue = nullptr;
     ze_event_handle_t appendEventKernelIndirectEventHandleValue = nullptr;
-    Kernel *kernelUsed;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
