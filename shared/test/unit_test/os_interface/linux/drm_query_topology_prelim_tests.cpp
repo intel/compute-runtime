@@ -27,6 +27,7 @@ TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
 
     DrmQueryTopologyData topologyData = {};
     drm.engineInfoQueried = true;
+    drm.systemInfoQueried = true;
     EXPECT_TRUE(drm.queryTopology(*drm.context.hwInfo, topologyData));
 
     constexpr uint32_t expectedFlag = 0;
@@ -111,6 +112,7 @@ struct QueryTopologyTests : ::testing::Test {
         drmMock->memoryInfoQueried = false;
         EXPECT_TRUE(drmMock->queryMemoryInfo());
         EXPECT_TRUE(drmMock->queryEngineInfo());
+        drmMock->systemInfoQueried = true;
     }
 
     DebugManagerStateRestore stateRestorer;

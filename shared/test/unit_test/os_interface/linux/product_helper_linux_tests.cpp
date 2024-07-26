@@ -96,6 +96,7 @@ TEST_F(MockProductHelperTestLinux, givenInvalidTopologyDataWhenConfiguringThenRe
     auto storedSSVal = drm->storedSSVal;
     auto storedEUVal = drm->storedEUVal;
     drm->engineInfoQueried = true;
+    drm->systemInfoQueried = true;
     {
         // 0 euCount
         drm->storedSVal = storedSVal;

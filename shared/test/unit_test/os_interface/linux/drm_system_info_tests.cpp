@@ -48,12 +48,15 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     EXPECT_EQ(0u, systemInfo.getCsrSizeInMb());
 }
 
+struct DrmMockToQuerySystemInfo : public DrmMock {
+    DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
+        : DrmMock(rootDeviceEnvironment) {}
+    bool querySystemInfo() override {
+        systemInfoQueried = true;
+        return false;
+    }
+};
 TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystemInfoIsNotCreated) {
-    struct DrmMockToQuerySystemInfo : public DrmMock {
-        DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
-            : DrmMock(rootDeviceEnvironment) {}
-        bool querySystemInfo() override { return false; }
-    };
 
     class MyMockIoctlHelper : public IoctlHelperPrelim20 {
       public:
@@ -88,11 +91,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoFalseThenSystem
 }
 
 TEST(DrmSystemInfoTest, whenSetupHardwareInfoThenReleaseHelperContainsCorrectIpVersion) {
-    struct DrmMockToQuerySystemInfo : public DrmMock {
-        DrmMockToQuerySystemInfo(RootDeviceEnvironment &rootDeviceEnvironment)
-            : DrmMock(rootDeviceEnvironment) {}
-        bool querySystemInfo() override { return false; }
-    };
 
     class MyMockIoctlHelper : public IoctlHelperPrelim20 {
       public:

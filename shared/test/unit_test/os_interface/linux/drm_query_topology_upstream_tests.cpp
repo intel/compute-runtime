@@ -17,6 +17,7 @@ TEST(DrmQueryTopologyTest, GivenDrmWhenQueryingTopologyInfoCorrectMaxValuesAreSe
 
     DrmQueryTopologyData topologyData = {};
     drm.engineInfoQueried = true;
+    drm.systemInfoQueried = true;
     EXPECT_TRUE(drm.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
     EXPECT_EQ(drm.storedSVal, topologyData.sliceCount);
@@ -34,6 +35,7 @@ TEST(DrmQueryTopologyTest, givenDrmWhenGettingSliceMappingsThenCorrectMappingRet
 
     DrmQueryTopologyData topologyData = {};
     drmMock.engineInfoQueried = true;
+    drmMock.systemInfoQueried = true;
     EXPECT_TRUE(drmMock.queryTopology(*executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo(), topologyData));
 
     auto device0SliceMapping = drmMock.getSliceMappings(0);
