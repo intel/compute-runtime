@@ -1616,3 +1616,35 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraP
     expectedConsumedSize = alignUp(expectedConsumedSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment());
     EXPECT_EQ(expectedConsumedSize, heap->getUsed());
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWriteWhenEncodeIsCalledThenPostSyncIsProgrammedCorrectly, IsAtLeastXeHpCore) {
+
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using OPERATION = typename PostSyncType::OPERATION;
+
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceComputeWalkerPostSyncFlushWithWrite.set(0);
+
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, false);
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+    auto it = find<DefaultWalkerType *>(commands.begin(), commands.end());
+    ASSERT_NE(it, commands.end());
+
+    auto walker = genCmdCast<DefaultWalkerType *>(*it);
+    auto &postSync = walker->getPostSync();
+    EXPECT_TRUE(postSync.getDataportPipelineFlush());
+    EXPECT_TRUE(postSync.getDataportSubsliceCacheFlush());
+
+    uint64_t expectedAddress = 0u;
+    EXPECT_EQ(expectedAddress, postSync.getDestinationAddress());
+    EXPECT_EQ(OPERATION::OPERATION_WRITE_IMMEDIATE_DATA, postSync.getOperation());
+    uint64_t expectedData = 0u;
+    EXPECT_EQ(expectedData, postSync.getImmediateData());
+}

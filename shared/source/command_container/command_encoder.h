@@ -210,6 +210,9 @@ struct EncodeDispatchKernel {
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
     static void *getImplicitArgsAddress(EncodeDispatchKernelArgs &args, const KernelDescriptor &kernelDescriptor);
     static size_t getScratchPtrOffsetOfImplicitArgs();
+
+    template <typename WalkerType>
+    static void forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd);
 };
 
 template <typename GfxFamily>

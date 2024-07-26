@@ -354,6 +354,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec<WalkerType>(walkerCmd, args);
     } else if (args.eventAddress) {
         EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent<WalkerType>(walkerCmd, args);
+    } else {
+        EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<WalkerType>(walkerCmd);
     }
 
     if (debugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {
@@ -936,6 +938,22 @@ template <typename Family>
 inline size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKernelArgs &args) {
     using DefaultWalkerType = typename Family::DefaultWalkerType;
     return offsetof(DefaultWalkerType, TheStructure.Common.InlineData);
+}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd) {
+    using PostSyncType = typename WalkerType::PostSyncType;
+    using OperationType = typename PostSyncType::OPERATION;
+
+    if (debugManager.flags.ForceComputeWalkerPostSyncFlushWithWrite.get() != -1) {
+        auto &postSync = walkerCmd.getPostSync();
+        postSync.setDataportPipelineFlush(true);
+        postSync.setDataportSubsliceCacheFlush(true);
+        postSync.setDestinationAddress(static_cast<uint64_t>(debugManager.flags.ForceComputeWalkerPostSyncFlushWithWrite.get()));
+        postSync.setOperation(OperationType::OPERATION_WRITE_IMMEDIATE_DATA);
+        postSync.setImmediateData(0u);
+    }
 }
 
 template <typename Family>

@@ -639,6 +639,11 @@ inline size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKe
 }
 
 template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd) {
+}
+
+template <typename Family>
 size_t EncodeStates<Family>::getSshHeapSize() {
     return 64 * MemoryConstants::kiloByte;
 }
