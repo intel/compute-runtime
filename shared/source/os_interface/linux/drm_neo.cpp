@@ -1072,7 +1072,8 @@ void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
 
 bool Drm::queryTopology(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData) {
     UNRECOVERABLE_IF(!engineInfoQueried);
-
+    UNRECOVERABLE_IF(topologyQueried);
+    topologyQueried = true;
     auto result = this->ioctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     return result;
 }

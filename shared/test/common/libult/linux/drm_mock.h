@@ -54,6 +54,7 @@ class DrmMock : public Drm {
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;
+    using Drm::topologyQueried;
     using Drm::virtualMemoryIds;
     using Drm::vmBindPatIndexProgrammingSupported;
 
