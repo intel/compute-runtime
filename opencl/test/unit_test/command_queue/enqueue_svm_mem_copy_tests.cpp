@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -51,6 +52,9 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
         ASSERT_NE(nullptr, dstSvmData);
         dstSvmAlloc = dstSvmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, dstSvmAlloc);
+
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        this->useHeapless = compilerProductHelper.isHeaplessModeEnabled();
     }
 
     void TearDown() override {
@@ -62,28 +66,40 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
         ClDeviceFixture::tearDown();
     }
 
+    EBuiltInOps::Type getAdjustedCopyBufferToBufferBuiltIn() {
+        if (useHeapless) {
+            return EBuiltInOps::copyBufferToBufferStatelessHeapless;
+        }
+
+        return EBuiltInOps::copyBufferToBuffer;
+    }
+
     void *srcSvmPtr = nullptr;
     void *dstSvmPtr = nullptr;
     GraphicsAllocation *srcSvmAlloc = nullptr;
     GraphicsAllocation *dstSvmAlloc = nullptr;
+    bool useHeapless = false;
 };
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
+
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     // retrieve original builder
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
@@ -102,13 +118,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
     auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
@@ -144,6 +160,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         return;
     }
 
+    auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
+
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     void *srcHostPtr = alignedMalloc(512, 64);
@@ -151,14 +169,14 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     // retrieve original builder
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
@@ -177,13 +195,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
     auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
@@ -224,6 +242,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         return;
     }
 
+    auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
+
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     auto dstHostPtr = alignedMalloc(512, 64);
@@ -231,14 +251,14 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
 
     // retrieve original builder
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
@@ -257,13 +277,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
     auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
@@ -476,18 +496,21 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
+
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     // retrieve original builder
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
@@ -509,13 +532,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
     auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
@@ -550,18 +573,21 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     if (!pDevice->isFullRangeSvm()) {
         return;
     }
+
+    auto builtIn = getAdjustedCopyBufferToBufferBuiltIn();
+
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     // retrieve original builder
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
@@ -583,13 +609,13 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
     auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyBufferToBuffer,
+        builtIn,
         pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
