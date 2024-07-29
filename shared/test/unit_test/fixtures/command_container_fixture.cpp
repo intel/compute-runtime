@@ -50,6 +50,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         threadGroupDimensions,                      // threadGroupDimensions
         nullptr,                                    // outWalkerPtr
         nullptr,                                    // cpuWalkerBuffer
+        nullptr,                                    // cpuPayloadBuffer
         nullptr,                                    // additionalCommands
         PreemptionMode::Disabled,                   // preemptionMode
         NEO::RequiredPartitionDim::none,            // requiredPartitionDim
@@ -73,6 +74,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         false,                                      // isHeaplessStateInitEnabled
         false,                                      // interruptEvent
         false,                                      // immediateScratchAddressPatching
+        false,                                      // makeCommandView
     };
 
     return args;

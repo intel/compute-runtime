@@ -52,6 +52,8 @@ template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
+    UNRECOVERABLE_IF(args.makeCommandView && (args.cpuWalkerBuffer == nullptr || args.cpuPayloadBuffer == nullptr));
+
     constexpr bool heaplessModeEnabled = Family::template isHeaplessMode<WalkerType>();
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();
     auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
@@ -71,10 +73,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         threadDimsVec = {threadDims[0], threadDims[1], threadDims[2]};
     }
 
-    bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    if (container.systolicModeSupportRef() && (container.lastPipelineSelectModeRequiredRef() != systolicModeRequired)) {
-        container.lastPipelineSelectModeRequiredRef() = systolicModeRequired;
-        EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
+    if (!args.makeCommandView) {
+        bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
+        if (container.systolicModeSupportRef() && (container.lastPipelineSelectModeRequiredRef() != systolicModeRequired)) {
+            container.lastPipelineSelectModeRequiredRef() = systolicModeRequired;
+            EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
+        }
     }
 
     WalkerType walkerCmd = Family::template getInitGpuWalker<WalkerType>();
@@ -133,7 +137,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         sshProgrammingRequired = false;
     }
 
-    if (sshProgrammingRequired) {
+    if (sshProgrammingRequired && !args.makeCommandView) {
         bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernelDescriptor);
         if (isBindlessKernel) {
             bool globalBindlessSsh = args.device->getBindlessHeapsHelper() != nullptr;
@@ -186,7 +190,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t samplerCount = 0;
 
     if constexpr (Family::supportsSampler && heaplessModeEnabled == false) {
-        if (args.device->getDeviceInfo().imageSupport) {
+        if (args.device->getDeviceInfo().imageSupport && !args.makeCommandView) {
 
             uint32_t samplerStateOffset = 0;
 
@@ -244,38 +248,43 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching + args.reserveExtraPayloadSpace;
     {
-        auto heap = container.getIndirectHeap(HeapType::indirectObject);
-        UNRECOVERABLE_IF(!heap);
-        heap->align(Family::cacheLineSize);
         void *ptr = nullptr;
-        if (args.isKernelDispatchedFromImmediateCmdList) {
-            ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
-        } else {
-            ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
-        }
-        UNRECOVERABLE_IF(!ptr);
-        offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - args.reserveExtraPayloadSpace);
-        auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
-        if (pImplicitArgs) {
-            offsetThreadData -= ImplicitArgs::getSize();
-            pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
-            EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
+        if (!args.makeCommandView) {
+            auto heap = container.getIndirectHeap(HeapType::indirectObject);
+            UNRECOVERABLE_IF(!heap);
+            heap->align(Family::cacheLineSize);
 
-            ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment);
+            if (args.isKernelDispatchedFromImmediateCmdList) {
+                ptr = container.getHeapWithRequiredSizeAndAlignment(HeapType::indirectObject, iohRequiredSize, Family::indirectDataAlignment)->getSpace(iohRequiredSize);
+            } else {
+                ptr = container.getHeapSpaceAllowGrow(HeapType::indirectObject, iohRequiredSize);
+            }
+
+            offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - args.reserveExtraPayloadSpace);
+            auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
+            if (pImplicitArgs) {
+                offsetThreadData -= ImplicitArgs::getSize();
+                pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
+                EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
+
+                ptr = NEO::ImplicitArgsHelper::patchImplicitArgs(ptr, *pImplicitArgs, kernelDescriptor, std::make_pair(localIdsGenerationByRuntime, requiredWorkgroupOrder), rootDeviceEnvironment);
+            }
+
+            if (args.isIndirect) {
+                auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
+                uint64_t implicitArgsGpuPtr = 0u;
+                if (pImplicitArgs) {
+                    implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - ImplicitArgs::getSize();
+                }
+                EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr);
+            }
+        } else {
+            ptr = args.cpuPayloadBuffer;
         }
 
         if (sizeCrossThreadData > 0) {
             memcpy_s(ptr, sizeCrossThreadData,
                      crossThreadData, sizeCrossThreadData);
-        }
-
-        if (args.isIndirect) {
-            auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
-            uint64_t implicitArgsGpuPtr = 0u;
-            if (pImplicitArgs) {
-                implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - ImplicitArgs::getSize();
-            }
-            EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr);
         }
 
         auto perThreadDataPtr = args.dispatchInterface->getPerThreadData();
@@ -286,7 +295,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    if (args.isHeaplessStateInitEnabled == false) {
+    if (args.isHeaplessStateInitEnabled == false && !args.makeCommandView) {
         if (container.isAnyHeapDirty() ||
             args.requiresUncachedMocs) {
 
@@ -317,21 +326,25 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
-        args.additionalCommands->push_back(commandBuffer);
+    if (!args.makeCommandView) {
+        if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+            void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
+            args.additionalCommands->push_back(commandBuffer);
 
-        EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+            EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+        }
     }
 
     uint8_t *inlineData = reinterpret_cast<uint8_t *>(walkerCmd.getInlineDataPointer());
     EncodeDispatchKernel<Family>::programInlineDataHeapless<heaplessModeEnabled>(inlineData, args, container, offsetThreadData, scratchAddressForImmediatePatching);
 
     if constexpr (heaplessModeEnabled == false) {
-        walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
-        walkerCmd.setIndirectDataLength(sizeThreadData);
+        if (!args.makeCommandView) {
+            walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
+            walkerCmd.setIndirectDataLength(sizeThreadData);
 
-        container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment());
+            container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment());
+        }
     }
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,
@@ -413,22 +426,26 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           hwInfo);
     } else {
         args.partitionCount = 1;
-        auto buffer = listCmdBufferStream->getSpaceForCmd<WalkerType>();
-        args.outWalkerPtr = buffer;
-        *buffer = walkerCmd;
+        if (!args.makeCommandView) {
+            auto buffer = listCmdBufferStream->getSpaceForCmd<WalkerType>();
+            args.outWalkerPtr = buffer;
+            *buffer = walkerCmd;
+        }
     }
 
     if (args.cpuWalkerBuffer) {
         *reinterpret_cast<WalkerType *>(args.cpuWalkerBuffer) = walkerCmd;
     }
 
-    PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
+    if (!args.makeCommandView) {
+        PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
 
-    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
-        args.additionalCommands->push_back(commandBuffer);
+        if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::debugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+            void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
+            args.additionalCommands->push_back(commandBuffer);
 
-        EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+            EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+        }
     }
 }
 

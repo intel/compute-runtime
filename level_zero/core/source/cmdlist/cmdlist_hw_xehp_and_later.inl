@@ -338,6 +338,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         reinterpret_cast<const void *>(&threadGroupDimensions), // threadGroupDimensions
         nullptr,                                                // outWalkerPtr
         launchParams.cmdWalkerBuffer,                           // cpuWalkerBuffer
+        nullptr,                                                // cpuPayloadBuffer
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim
@@ -361,6 +362,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->heaplessStateInitEnabled,                         // isHeaplessStateInitEnabled
         interruptEvent,                                         // interruptEvent
         !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
+        false,                                                  // makeCommandView
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);

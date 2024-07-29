@@ -199,6 +199,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         threadGroupDimensions,                      // threadGroupDimensions
         nullptr,                                    // outWalkerPtr
         nullptr,                                    // cpuWalkerBuffer
+        nullptr,                                    // cpuPayloadBuffer
         nullptr,                                    // additionalCommands
         PreemptionMode::MidBatch,                   // preemptionMode
         NEO::RequiredPartitionDim::none,            // requiredPartitionDim
@@ -222,6 +223,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         false,                                      // isHeaplessStateInitEnabled
         false,                                      // interruptEvent
         false,                                      // immediateScratchAddressPatching
+        false,                                      // makeCommandView
     };
     NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs);
 

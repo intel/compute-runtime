@@ -1648,3 +1648,57 @@ HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWrite
     uint64_t expectedData = 0u;
     EXPECT_EQ(expectedData, postSync.getImmediateData());
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    auto payloadHeap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
+    auto payloadHeapUsed = payloadHeap->getUsed();
+
+    auto cmdBuffer = cmdContainer->getCommandStream();
+    auto cmdBufferUsed = cmdBuffer->getUsed();
+
+    uint8_t payloadView[256] = {};
+    dispatchInterface->getCrossThreadDataSizeResult = 64;
+
+    auto walkerPtr = std::make_unique<DefaultWalkerType>();
+    DefaultWalkerType *cpuWalkerPointer = walkerPtr.get();
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.makeCommandView = true;
+    dispatchArgs.cpuPayloadBuffer = payloadView;
+    dispatchArgs.cpuWalkerBuffer = cpuWalkerPointer;
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    EXPECT_EQ(payloadHeapUsed, payloadHeap->getUsed());
+    EXPECT_EQ(cmdBufferUsed, cmdBuffer->getUsed());
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingCommandViewWithoutCpuPointersThenExpectUnrecoverable, IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    uint8_t payloadView[256] = {};
+    dispatchInterface->getCrossThreadDataSizeResult = 64;
+
+    auto walkerPtr = std::make_unique<DefaultWalkerType>();
+    DefaultWalkerType *cpuWalkerPointer = walkerPtr.get();
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.makeCommandView = true;
+    dispatchArgs.cpuPayloadBuffer = nullptr;
+    dispatchArgs.cpuWalkerBuffer = cpuWalkerPointer;
+
+    EXPECT_ANY_THROW(EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs));
+
+    dispatchArgs.cpuPayloadBuffer = payloadView;
+    dispatchArgs.cpuWalkerBuffer = nullptr;
+
+    EXPECT_ANY_THROW(EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs));
+}

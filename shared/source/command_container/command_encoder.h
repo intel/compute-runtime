@@ -57,6 +57,7 @@ struct EncodeDispatchKernelArgs {
     const void *threadGroupDimensions = nullptr;
     void *outWalkerPtr = nullptr;
     void *cpuWalkerBuffer = nullptr;
+    void *cpuPayloadBuffer = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
@@ -80,6 +81,7 @@ struct EncodeDispatchKernelArgs {
     bool isHeaplessStateInitEnabled = false;
     bool interruptEvent = false;
     bool immediateScratchAddressPatching = false;
+    bool makeCommandView = false;
 
     bool requiresSystemMemoryFence() const {
         return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);
