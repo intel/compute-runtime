@@ -505,6 +505,10 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to query engine info\n");
     }
 
+    if (!hwInfo->gtSystemInfo.L3BankCount) {
+        hwInfo->gtSystemInfo.L3BankCount = hwInfo->gtSystemInfo.MaxDualSubSlicesSupported;
+    }
+
     DrmQueryTopologyData topologyData = {};
 
     if (!queryTopology(*hwInfo, topologyData)) {
@@ -567,9 +571,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     if (systemInfo) {
-        uint32_t bankCount = (hwInfo->gtSystemInfo.L3BankCount > 0) ? hwInfo->gtSystemInfo.L3BankCount : hwInfo->gtSystemInfo.MaxDualSubSlicesSupported;
-
-        hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * bankCount;
+        hwInfo->gtSystemInfo.L3CacheSizeInKb = systemInfo->getL3BankSizeInKb() * hwInfo->gtSystemInfo.L3BankCount;
     }
 
     rootDeviceEnvironment.setRcsExposure();

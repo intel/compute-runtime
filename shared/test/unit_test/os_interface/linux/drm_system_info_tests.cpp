@@ -360,7 +360,7 @@ TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubsl
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
 
-    EXPECT_EQ(0u, gtSystemInfo.L3BankCount);
+    EXPECT_EQ(gtSystemInfo.MaxDualSubSlicesSupported, gtSystemInfo.L3BankCount);
 
     uint64_t expectedL3Size = gtSystemInfo.MaxDualSubSlicesSupported * drm.getSystemInfo()->getL3BankSizeInKb();
     uint64_t calculatedL3Size = gtSystemInfo.L3CacheSizeInKb;
