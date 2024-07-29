@@ -50,9 +50,7 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
-    using SHARED_LOCAL_MEMORY_SIZE = typename WalkerType::InterfaceDescriptorType::SHARED_LOCAL_MEMORY_SIZE;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
-    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
 
     constexpr bool heaplessModeEnabled = Family::template isHeaplessMode<WalkerType>();
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();
@@ -437,7 +435,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
+    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
 
     auto &postSync = walkerCmd.getPostSync();
 
@@ -473,7 +471,7 @@ void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walk
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = std::remove_reference_t<std::invoke_result_t<decltype(&WalkerType::getPostSync), WalkerType &>>;
+    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
 
     auto &postSync = walkerCmd.getPostSync();
 
