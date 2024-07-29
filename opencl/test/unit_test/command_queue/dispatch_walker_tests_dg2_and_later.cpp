@@ -183,7 +183,8 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugFlagToDisableL1FlushInPo
 }
 
 HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp, matcherDG2AndLater) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
     DebugManagerStateRestore restore;
     debugManager.flags.EnableTimestampPacket.set(true);
 
@@ -201,15 +202,19 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnque
     hwParser.findHardwareCommands<FamilyType>();
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
-    auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-
     auto gmmHelper = device->getGmmHelper();
     auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
-    auto &postSyncData = walker->getPostSync();
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP,
-              postSyncData.getOperation());
-    EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
-    EXPECT_TRUE(postSyncData.getDataportSubsliceCacheFlush());
-    EXPECT_EQ(expectedMocs, postSyncData.getMocs());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
+
+    std::visit([expectedMocs](auto &&walker) {
+        auto &postSyncData = walker->getPostSync();
+        using PostSyncType = std::decay_t<decltype(postSyncData)>;
+
+        EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
+        EXPECT_TRUE(postSyncData.getDataportPipelineFlush());
+        EXPECT_TRUE(postSyncData.getDataportSubsliceCacheFlush());
+        EXPECT_EQ(expectedMocs, postSyncData.getMocs());
+    },
+               walkerVariant);
 }

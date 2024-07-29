@@ -1696,6 +1696,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
 using NonDefaultPlatformGpuWalkerTest = XeHPAndLaterDispatchWalkerBasicTest;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, NonDefaultPlatformGpuWalkerTest, givenNonDefaultPlatformWhenSetupTimestampPacketThenGmmHelperIsTakenFromNonDefaultPlatform) {
+
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initGmm();
@@ -1706,12 +1709,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, NonDefaultPlatformGpuWalkerTest, givenNonDefaultPla
     TagNode<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestamp;
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
 
-    platformsImpl->clear();
-    EXPECT_EQ(platform(), nullptr);
-    GpgpuWalkerHelper<FamilyType>::setupTimestampPacket(&cmdStream, computeWalker, static_cast<TagNodeBase *>(&timestamp), *rootDeviceEnvironment);
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([&](auto &&walker) {
+        ASSERT_NE(nullptr, walker);
+        platformsImpl->clear();
+        EXPECT_EQ(platform(), nullptr);
+        GpgpuWalkerHelper<FamilyType>::setupTimestampPacket(&cmdStream, walker, static_cast<TagNodeBase *>(&timestamp), *rootDeviceEnvironment);
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenDefaultLocalIdsGenerationWhenPassingFittingParametersThenReturnFalse) {
