@@ -459,7 +459,7 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     };
 
     auto verifyXeFlagsBindName = [&mockXeIoctlHelper](const char *name, auto flags) {
-        EXPECT_STREQ(name, mockXeIoctlHelper->xeGetBindFlagsName(flags));
+        EXPECT_STREQ(name, mockXeIoctlHelper->xeGetBindFlagNames(flags).c_str());
     };
 
     auto verifyXeEngineClassName = [&mockXeIoctlHelper](const char *name, auto engineClass) {
@@ -479,8 +479,12 @@ TEST(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeOperationBindName("PREFETCH", DRM_XE_VM_BIND_OP_PREFETCH);
     verifyXeOperationBindName("Unknown operation", -1);
 
+    verifyXeFlagsBindName("", 0);
     verifyXeFlagsBindName("NULL", DRM_XE_VM_BIND_FLAG_NULL);
-    verifyXeFlagsBindName("Unknown flag", -1);
+    verifyXeFlagsBindName("READONLY", DRM_XE_VM_BIND_FLAG_READONLY);
+    verifyXeFlagsBindName("IMMEDIATE", DRM_XE_VM_BIND_FLAG_IMMEDIATE);
+    verifyXeFlagsBindName("DUMPABLE", DRM_XE_VM_BIND_FLAG_DUMPABLE);
+    verifyXeFlagsBindName("Unknown flag", 1 << 31);
 
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_RENDER", DRM_XE_ENGINE_CLASS_RENDER);
     verifyXeEngineClassName("DRM_XE_ENGINE_CLASS_COPY", DRM_XE_ENGINE_CLASS_COPY);

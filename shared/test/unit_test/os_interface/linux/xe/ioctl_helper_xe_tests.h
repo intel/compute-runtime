@@ -41,7 +41,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::supportedFeatures;
     using IoctlHelperXe::tileIdToGtId;
     using IoctlHelperXe::UserFenceExtension;
-    using IoctlHelperXe::xeGetBindFlagsName;
+    using IoctlHelperXe::xeGetBindFlagNames;
     using IoctlHelperXe::xeGetBindOperationName;
     using IoctlHelperXe::xeGetClassName;
     using IoctlHelperXe::xeGetengineClassName;

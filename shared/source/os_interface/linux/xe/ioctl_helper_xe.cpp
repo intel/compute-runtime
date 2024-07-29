@@ -72,12 +72,39 @@ const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
     return "Unknown operation";
 }
 
-const char *IoctlHelperXe::xeGetBindFlagsName(int bindFlags) {
-    switch (bindFlags) {
-    case DRM_XE_VM_BIND_FLAG_NULL:
-        return "NULL";
+std::string IoctlHelperXe::xeGetBindFlagNames(int bindFlags) {
+    if (bindFlags == 0) {
+        return "";
     }
-    return "Unknown flag";
+
+    std::string flags;
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_READONLY) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_READONLY;
+        flags += "READONLY ";
+    }
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_IMMEDIATE) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+        flags += "IMMEDIATE ";
+    }
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_NULL) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_NULL;
+        flags += "NULL ";
+    }
+    if (bindFlags & DRM_XE_VM_BIND_FLAG_DUMPABLE) {
+        bindFlags &= ~DRM_XE_VM_BIND_FLAG_DUMPABLE;
+        flags += "DUMPABLE ";
+    }
+
+    if (bindFlags != 0) {
+        flags += "Unknown flag ";
+    }
+
+    // Remove the trailing space
+    if (!flags.empty() && flags.back() == ' ') {
+        flags.pop_back();
+    }
+
+    return flags;
 }
 
 const char *IoctlHelperXe::xeGetengineClassName(uint32_t engineClass) {
@@ -1277,7 +1304,7 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
               bind.bind.op,
               xeGetBindOperationName(bind.bind.op),
               bind.bind.flags,
-              xeGetBindFlagsName(bind.bind.flags),
+              xeGetBindFlagNames(bind.bind.flags).c_str(),
               bind.num_syncs,
               bind.bind.pat_index,
               ret);
