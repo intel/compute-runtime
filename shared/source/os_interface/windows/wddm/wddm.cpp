@@ -154,7 +154,9 @@ bool Wddm::init() {
         gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
     }
 
-    buildTopologyMapping();
+    if (!buildTopologyMapping()) {
+        return false;
+    }
 
     setProcessPowerThrottling();
     setThreadPriority();

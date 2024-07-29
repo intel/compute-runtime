@@ -39,6 +39,8 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     gtSystemInfo.SliceCount = sliceCount;
     for (uint32_t slice = 0; slice < sliceCount; slice++) {
         gtSystemInfo.SliceInfo[slice].Enabled = true;
+        gtSystemInfo.SliceInfo[slice].SubSliceInfo[0].EuEnabledCount = 1;
+        gtSystemInfo.SliceInfo[slice].SubSliceInfo[0].Enabled = true;
     }
     for (uint32_t slice = sliceCount; slice < GT_MAX_SLICE; slice++) {
         gtSystemInfo.SliceInfo[slice].Enabled = false;
