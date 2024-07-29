@@ -115,7 +115,7 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
-    return false;
+    return true;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
