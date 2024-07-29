@@ -18,9 +18,7 @@ size_t ImplicitScalingDispatch<GfxFamily>::getSize(bool apiSelfCleanup, bool pre
 
 template <typename GfxFamily>
 template <typename WalkerType>
-void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandStream, WalkerType &walkerCmd, void **outWalkerPtr, const DeviceBitfield &devices, NEO::RequiredPartitionDim requiredPartitionDim,
-                                                          uint32_t &partitionCount, bool useSecondaryBatchBuffer, bool apiSelfCleanup, bool dcFlush, bool forceExecutionOnSingleTile, uint64_t workPartitionAllocationGpuVa,
-                                                          const HardwareInfo &hwInfo) {
+void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandStream, WalkerType &walkerCmd, const DeviceBitfield &devices, ImplicitScalingDispatchCommandArgs &dispatchCommandArgs) {
 }
 
 template <typename GfxFamily>
@@ -74,10 +72,7 @@ template <>
 bool ImplicitScalingDispatch<Family>::pipeControlStallRequired = true;
 
 template struct ImplicitScalingDispatch<Family>;
-template void ImplicitScalingDispatch<Family>::dispatchCommands<Family::DefaultWalkerType>(LinearStream &commandStream, Family::DefaultWalkerType &walkerCmd, void **outWalkerPtr,
-                                                                                           const DeviceBitfield &devices, RequiredPartitionDim requiredPartitionDim, uint32_t &partitionCount,
-                                                                                           bool useSecondaryBatchBuffer, bool apiSelfCleanup, bool dcFlush, bool forceExecutionOnSingleTile,
-                                                                                           uint64_t workPartitionAllocationGpuVa, const HardwareInfo &hwInfo);
+template void ImplicitScalingDispatch<Family>::dispatchCommands<Family::DefaultWalkerType>(LinearStream &commandStream, Family::DefaultWalkerType &walkerCmd, const DeviceBitfield &devices, ImplicitScalingDispatchCommandArgs &dispatchCommandArgs);
 template size_t ImplicitScalingDispatch<Family>::getSize<Family::DefaultWalkerType>(bool apiSelfCleanup, bool preferStaticPartitioning, const DeviceBitfield &devices, const Vec3<size_t> &groupStart, const Vec3<size_t> &groupCount);
 
 } // namespace NEO

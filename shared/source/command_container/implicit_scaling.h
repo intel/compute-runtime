@@ -37,6 +37,21 @@ struct ImplicitScalingHelper {
     static bool pipeControlBeforeCleanupAtomicSyncRequired();
 };
 
+struct ImplicitScalingDispatchCommandArgs {
+    uint64_t workPartitionAllocationGpuVa = 0;
+    const HardwareInfo *hwInfo = nullptr;
+    void **outWalkerPtr = nullptr;
+
+    RequiredPartitionDim requiredPartitionDim = RequiredPartitionDim::none;
+    uint32_t partitionCount = 0;
+
+    bool useSecondaryBatchBuffer = false;
+    bool apiSelfCleanup = false;
+    bool dcFlush = false;
+    bool forceExecutionOnSingleTile = false;
+    bool blockDispatchToCommandBuffer = false;
+};
+
 template <typename GfxFamily>
 struct ImplicitScalingDispatch {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
@@ -51,16 +66,8 @@ struct ImplicitScalingDispatch {
     template <typename WalkerType>
     static void dispatchCommands(LinearStream &commandStream,
                                  WalkerType &walkerCmd,
-                                 void **outWalkerPtr,
                                  const DeviceBitfield &devices,
-                                 RequiredPartitionDim requiredPartitionDim,
-                                 uint32_t &partitionCount,
-                                 bool useSecondaryBatchBuffer,
-                                 bool apiSelfCleanup,
-                                 bool dcFlush,
-                                 bool forceExecutionOnSingleTile,
-                                 uint64_t workPartitionAllocationGpuVa,
-                                 const HardwareInfo &hwInfo);
+                                 ImplicitScalingDispatchCommandArgs &dispatchCommandArgs);
 
     static bool &getPipeControlStallRequired();
 

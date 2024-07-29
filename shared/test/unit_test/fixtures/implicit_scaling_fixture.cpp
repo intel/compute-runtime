@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,4 +38,20 @@ void ImplicitScalingFixture::setUp() {
 void ImplicitScalingFixture::tearDown() {
     alignedFree(alignedMemory);
     CommandEncodeStatesFixture::tearDown();
+}
+
+ImplicitScalingDispatchCommandArgs ImplicitScalingFixture::createDispatchCommandArgs(uint64_t workPartitionAllocationAddress, uint32_t partitionCount) {
+    ImplicitScalingDispatchCommandArgs args{
+        workPartitionAllocationAddress,  // workPartitionAllocationGpuVa
+        defaultHwInfo.get(),             // hwInfo
+        nullptr,                         // outWalkerPtr
+        NEO::RequiredPartitionDim::none, // requiredPartitionDim
+        partitionCount,                  // partitionCount
+        true,                            // useSecondaryBatchBuffer
+        false,                           // apiSelfCleanup
+        dcFlushFlag,                     // dcFlush
+        forceExecutionOnSingleTileFlag,  // forceExecutionOnSingleTile
+        false};                          // blockDispatchToCommandBuffer
+
+    return args;
 }

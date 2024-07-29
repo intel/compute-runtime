@@ -720,7 +720,20 @@ HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysRetur
     EXPECT_EQ(0u, ImplicitScalingDispatch<FamilyType>::template getSize<WalkerType>(false, false, deviceBitField, vec3, vec3));
 
     void *ptr = nullptr;
-    ImplicitScalingDispatch<FamilyType>::dispatchCommands(linearStream, walkerCmd, &ptr, deviceBitField, RequiredPartitionDim::x, partitionCount, false, false, false, false, 0, *defaultHwInfo);
+
+    ImplicitScalingDispatchCommandArgs args{
+        0,                       // workPartitionAllocationGpuVa
+        defaultHwInfo.get(),     // hwInfo
+        &ptr,                    // outWalkerPtr
+        RequiredPartitionDim::x, // requiredPartitionDim
+        partitionCount,          // partitionCount
+        false,                   // useSecondaryBatchBuffer
+        false,                   // apiSelfCleanup
+        false,                   // dcFlush
+        false,                   // forceExecutionOnSingleTile
+        false};                  // blockDispatchToCommandBuffer
+
+    ImplicitScalingDispatch<FamilyType>::dispatchCommands(linearStream, walkerCmd, deviceBitField, args);
     EXPECT_EQ(0u, linearStream.getUsed());
 
     EXPECT_TRUE(ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired());

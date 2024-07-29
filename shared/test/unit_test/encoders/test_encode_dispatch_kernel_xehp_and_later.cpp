@@ -1702,3 +1702,47 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingComman
 
     EXPECT_ANY_THROW(EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs));
 }
+
+struct MultiTileCommandEncodeStatesFixture : public CommandEncodeStatesFixture {
+    void setUp() {
+        debugManager.flags.CreateMultipleSubDevices.set(2);
+        CommandEncodeStatesFixture::setUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using MultiTileCommandEncodeStatesTest = Test<MultiTileCommandEncodeStatesFixture>;
+HWTEST2_F(MultiTileCommandEncodeStatesTest, givenEncodeDispatchKernelInImplicitScalingWhenRequestingCommandViewThenDoNotConsumeCmdBufferAndHeapSpace, IsAtLeastXeHpCore) {
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    uint32_t dims[] = {1, 1, 1};
+    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->staticWorkPartitioningEnabled = true;
+    ultCsr->createWorkPartitionAllocation(*pDevice);
+
+    auto payloadHeap = cmdContainer->getIndirectHeap(HeapType::indirectObject);
+    auto payloadHeapUsed = payloadHeap->getUsed();
+
+    auto cmdBuffer = cmdContainer->getCommandStream();
+    auto cmdBufferUsed = cmdBuffer->getUsed();
+
+    uint8_t payloadView[256] = {};
+    dispatchInterface->getCrossThreadDataSizeResult = 64;
+
+    auto walkerPtr = std::make_unique<DefaultWalkerType>();
+    DefaultWalkerType *cpuWalkerPointer = walkerPtr.get();
+
+    bool requiresUncachedMocs = false;
+    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.makeCommandView = true;
+    dispatchArgs.partitionCount = 2;
+    dispatchArgs.cpuPayloadBuffer = payloadView;
+    dispatchArgs.cpuWalkerBuffer = cpuWalkerPointer;
+
+    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
+
+    EXPECT_EQ(payloadHeapUsed, payloadHeap->getUsed());
+    EXPECT_EQ(cmdBufferUsed, cmdBuffer->getUsed());
+}

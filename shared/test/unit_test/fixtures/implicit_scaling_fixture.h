@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,8 @@ using namespace NEO;
 struct ImplicitScalingFixture : public CommandEncodeStatesFixture {
     void setUp();
     void tearDown();
+
+    ImplicitScalingDispatchCommandArgs createDispatchCommandArgs(uint64_t workPartitionAllocationAddress, uint32_t partitionCount);
 
     static constexpr uint64_t gpuVa = (1ull << 48);
     static constexpr size_t bufferSize = 1024u;

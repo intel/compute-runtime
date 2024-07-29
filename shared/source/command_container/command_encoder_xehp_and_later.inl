@@ -412,18 +412,23 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (args.partitionCount > 1 && !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
 
+        ImplicitScalingDispatchCommandArgs implicitScalingArgs{
+            workPartitionAllocationGpuVa,                                                    // workPartitionAllocationGpuVa
+            &hwInfo,                                                                         // hwInfo
+            &args.outWalkerPtr,                                                              // outWalkerPtr
+            args.requiredPartitionDim,                                                       // requiredPartitionDim
+            args.partitionCount,                                                             // partitionCount
+            !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()), // useSecondaryBatchBuffer
+            !args.isKernelDispatchedFromImmediateCmdList,                                    // apiSelfCleanup
+            args.dcFlushEnable,                                                              // dcFlush
+            gfxCoreHelper.singleTileExecImplicitScalingRequired(args.isCooperative),         // forceExecutionOnSingleTile
+            args.makeCommandView};                                                           // blockDispatchToCommandBuffer
+
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
                                                           walkerCmd,
-                                                          &args.outWalkerPtr,
                                                           args.device->getDeviceBitfield(),
-                                                          args.requiredPartitionDim,
-                                                          args.partitionCount,
-                                                          !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),
-                                                          !args.isKernelDispatchedFromImmediateCmdList,
-                                                          args.dcFlushEnable,
-                                                          gfxCoreHelper.singleTileExecImplicitScalingRequired(args.isCooperative),
-                                                          workPartitionAllocationGpuVa,
-                                                          hwInfo);
+                                                          implicitScalingArgs);
+        args.partitionCount = implicitScalingArgs.partitionCount;
     } else {
         args.partitionCount = 1;
         if (!args.makeCommandView) {

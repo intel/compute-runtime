@@ -157,24 +157,31 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     if (partitionWalker) {
         const uint64_t workPartitionAllocationGpuVa = defaultCsr->getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
+        RequiredPartitionDim requiredPartitionDim = kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none;
+
+        ImplicitScalingDispatchCommandArgs implicitScalingArgs{
+            workPartitionAllocationGpuVa,        // workPartitionAllocationGpuVa
+            &hwInfo,                             // hwInfo
+            nullptr,                             // outWalkerPtr
+            requiredPartitionDim,                // requiredPartitionDim
+            partitionCount,                      // partitionCount
+            false,                               // useSecondaryBatchBuffer
+            false,                               // apiSelfCleanup
+            queueCsr.getDcFlushSupport(),        // dcFlush
+            kernel.isSingleSubdevicePreferred(), // forceExecutionOnSingleTile
+            false};                              // blockDispatchToCommandBuffer
+
         ImplicitScalingDispatch<GfxFamily>::template dispatchCommands<WalkerType>(commandStream,
                                                                                   walkerCmd,
-                                                                                  nullptr,
                                                                                   devices,
-                                                                                  kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none,
-                                                                                  partitionCount,
-                                                                                  false,
-                                                                                  false,
-                                                                                  queueCsr.getDcFlushSupport(),
-                                                                                  kernel.isSingleSubdevicePreferred(),
-                                                                                  workPartitionAllocationGpuVa,
-                                                                                  hwInfo);
+                                                                                  implicitScalingArgs);
+
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
-            queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
+            queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), implicitScalingArgs.partitionCount));
         }
 
         if (timestampPacketNode) {
-            timestampPacketNode->setPacketsUsed(partitionCount);
+            timestampPacketNode->setPacketsUsed(implicitScalingArgs.partitionCount);
         }
     } else {
         auto computeWalkerOnStream = commandStream.getSpaceForCmd<WalkerType>();
