@@ -17,6 +17,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -4620,6 +4621,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
     pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::offline);
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -4649,7 +4651,9 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     auto stateSipCmd = hwParserCsr.getCommand<STATE_SIP>();
     ASSERT_NE(nullptr, stateSipCmd);
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
+
+    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled() ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
+    EXPECT_EQ(expectedAddress, stateSipCmd->getSystemInstructionPointer());
 
     EXPECT_TRUE(commandStreamReceiver.getSipSentFlag());
 

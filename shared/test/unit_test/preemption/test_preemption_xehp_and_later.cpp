@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -109,6 +110,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingPreempt
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenProgrammingStateSipThenStateSipIsAdded) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     device->executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+    auto &compilerProductHelper = device->getCompilerProductHelper();
 
     auto sipType = SipKernel::getSipKernelType(*device.get());
     SipKernel::initSipKernel(sipType, *device.get());
@@ -127,7 +129,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();
 
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
+    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled() ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
+    EXPECT_EQ(expectedAddress, sipAddress);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebuggerWhenProgrammingStateSipWithContextThenStateSipIsAdded) {
@@ -139,6 +142,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
     device->executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     device->setPreemptionMode(MidThread);
+    auto &compilerProductHelper = device->getCompilerProductHelper();
 
     const uint32_t contextId = 0u;
     std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
@@ -162,5 +166,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();
 
-    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
+    auto expectedAddress = compilerProductHelper.isHeaplessModeEnabled() ? sipAllocation->getGpuAddress() : sipAllocation->getGpuAddressToPatch();
+    EXPECT_EQ(expectedAddress, sipAddress);
 }
