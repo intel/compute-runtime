@@ -150,6 +150,9 @@ void CommandStreamReceiver::makeResident(MultiGraphicsAllocation &gfxAllocation)
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
+
+    gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
+
     if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {
         auto pushAllocations = true;
 
@@ -161,7 +164,6 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
             this->getResidencyAllocations().push_back(&gfxAllocation);
         }
 
-        gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
         if (this->dispatchMode == DispatchMode::batchedDispatch) {
             checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
             if (!gfxAllocation.isResident(osContext->getContextId())) {
@@ -169,7 +171,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
             }
         }
     }
-    gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
+
     gfxAllocation.updateResidencyTaskCount(submissionTaskCount, osContext->getContextId());
 }
 
