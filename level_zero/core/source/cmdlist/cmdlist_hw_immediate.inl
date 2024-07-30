@@ -419,7 +419,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
     cmdQ->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
 
-    static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, 0, 0);
+    static_cast<CommandQueueHw<gfxCoreFamily> *>(this->cmdQImmediate)->patchCommands(*this, 0u, false);
 
     if (performMigration) {
         this->migrateSharedAllocations();

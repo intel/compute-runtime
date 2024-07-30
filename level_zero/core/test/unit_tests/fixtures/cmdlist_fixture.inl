@@ -1533,11 +1533,13 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(0));
-    EXPECT_EQ(0u, commandList->getCommandListPatchedPerThreadScratchSize(1));
-
     auto scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+    auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
+
+    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(scratchController, commandList->getCommandListUsedScratchController());
 
     uint64_t scratchInlineValue = 0;
 
@@ -1547,8 +1549,8 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
 
     commandList->reset();
 
-    EXPECT_EQ(0u, commandList->getCommandListPatchedPerThreadScratchSize(0));
-    EXPECT_EQ(0u, commandList->getCommandListPatchedPerThreadScratchSize(1));
+    EXPECT_EQ(0u, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(nullptr, commandList->getCommandListUsedScratchController());
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x40;
 
@@ -1570,17 +1572,16 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     result = commandList->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    // simulate slot 0 is already patched - to check slot 1 change is detected
-    commandList->setCommandListPatchedPerThreadScratchSize(0, 0x40);
-
     result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(0));
-    EXPECT_EQ(0x40u, commandList->getCommandListPatchedPerThreadScratchSize(1));
-
     scratchAddress = scratchController->getScratchPatchAddress();
     auto fullScratchSlot1Address = surfaceHeapGpuBase + scratchAddress;
+
+    expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
+
+    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(scratchController, commandList->getCommandListUsedScratchController());
 
     scratchInlinePtr = ptrOffset(walkerPtrWithSlot1Scratch, (inlineOffset + scratchInlineOffset));
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
@@ -1697,6 +1698,92 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
     EXPECT_EQ(fullScratchAddress, scratchInlineValue);
 
     memset(scratchInlinePtr, 0, scratchInlinePointerSize);
+
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(0u, scratchInlineValue);
+}
+
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() {
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+
+    auto scratchControllerInitial = csr->getScratchSpaceController();
+
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs = {};
+    dispatchKernelArgs.isHeaplessModeEnabled = true;
+
+    size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
+
+    auto cmdListStream = commandList->commandContainer.getCommandStream();
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = ZE_RESULT_SUCCESS;
+    size_t usedBefore = cmdListStream->getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t usedAfter = cmdListStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerIterator);
+    void *walkerPtrWithScratch = *walkerIterator;
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto scratchAddress = scratchControllerInitial->getScratchPatchAddress();
+    auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+    auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
+
+    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(scratchControllerInitial, commandList->getCommandListUsedScratchController());
+
+    uint64_t scratchInlineValue = 0;
+
+    void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+
+    memset(scratchInlinePtr, 0, scratchInlinePointerSize);
+
+    // simulate execution on different scratch controller (execution of command list from normal to low priority queue)
+    ultCsr->createScratchSpaceController();
+    auto scratchControllerSecond = csr->getScratchSpaceController();
+
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    scratchAddress = scratchControllerSecond->getScratchPatchAddress();
+    fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+    expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
+
+    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(scratchControllerSecond, commandList->getCommandListUsedScratchController());
+
+    scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+
+    memset(scratchInlinePtr, 0, scratchInlinePointerSize);
+
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
     EXPECT_EQ(0u, scratchInlineValue);

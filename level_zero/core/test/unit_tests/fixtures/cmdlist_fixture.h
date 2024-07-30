@@ -367,6 +367,7 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     void tearDown();
 
     uint64_t getSurfStateGpuBase(bool useImmediate);
+    uint64_t getExpectedScratchPatchAddress(uint64_t controllerScratchAddress);
 
     template <typename FamilyType>
     void testScratchInline(bool useImmediate);
@@ -379,6 +380,9 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
 
     template <typename FamilyType>
     void testScratchImmediatePatching();
+
+    template <typename FamilyType>
+    void testScratchChangedControllerPatching();
 
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;

@@ -953,9 +953,9 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
 
-    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, 0, 0));
+    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.push_back({});
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, 0, 0));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.clear();
 
     CFE_STATE destinationCfeStates[4];
@@ -983,7 +983,7 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     }
 
     uint64_t patchedScratchAddress = 0xABCD00;
-    commandQueue->patchCommands(*commandList, patchedScratchAddress, 0, 0);
+    commandQueue->patchCommands(*commandList, patchedScratchAddress, false);
     for (size_t i = 0; i < 4; i++) {
         EXPECT_EQ(patchedScratchAddress, destinationCfeStates[i].getScratchSpaceBuffer());
         auto &sourceCfeState = *reinterpret_cast<CFE_STATE *>(commandList->commandsToPatch[i].pCommand);
@@ -1004,21 +1004,21 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
 
-    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, 0, 0));
+    EXPECT_NO_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.push_back({});
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, 0, 0));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.clear();
 
     CommandToPatch commandToPatch;
 
     commandToPatch.type = CommandToPatch::FrontEndState;
     commandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, 0, 0));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.clear();
 
     commandToPatch.type = CommandToPatch::Invalid;
     commandList->commandsToPatch.push_back(commandToPatch);
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, 0, 0));
+    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.clear();
 }
 

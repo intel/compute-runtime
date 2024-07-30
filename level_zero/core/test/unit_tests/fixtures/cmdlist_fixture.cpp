@@ -631,5 +631,13 @@ uint64_t CommandListScratchPatchFixtureInit::getSurfStateGpuBase(bool useImmedia
     }
 }
 
+uint64_t CommandListScratchPatchFixtureInit::getExpectedScratchPatchAddress(uint64_t controllerScratchAddress) {
+    if (fixtureGlobalStatelessMode == 1) {
+        controllerScratchAddress += device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getGlobalStatelessHeapAllocation()->getGpuAddress();
+    }
+
+    return controllerScratchAddress;
+}
+
 } // namespace ult
 } // namespace L0

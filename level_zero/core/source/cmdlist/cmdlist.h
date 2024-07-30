@@ -30,6 +30,10 @@
 
 struct _ze_command_list_handle_t {};
 
+namespace NEO {
+class ScratchSpaceController;
+} // namespace NEO
+
 namespace L0 {
 struct Device;
 struct EventPool;
@@ -198,13 +202,20 @@ struct CommandList : _ze_command_list_handle_t {
         commandListPerThreadScratchSize[slotId] = size;
     }
 
-    uint32_t getCommandListPatchedPerThreadScratchSize(uint32_t slotId) const {
-        return commandListPatchedPerThreadScratchSize[slotId];
+    uint64_t getCurrentScratchPatchAddress() const {
+        return currentScratchPatchAddress;
     }
 
-    void setCommandListPatchedPerThreadScratchSize(uint32_t slotId, uint32_t size) {
-        UNRECOVERABLE_IF(slotId > 1);
-        commandListPatchedPerThreadScratchSize[slotId] = size;
+    void setCurrentScratchPatchAddress(uint64_t scratchPatchAddress) {
+        currentScratchPatchAddress = scratchPatchAddress;
+    }
+
+    NEO::ScratchSpaceController *getCommandListUsedScratchController() const {
+        return usedScratchController;
+    }
+
+    void setCommandListUsedScratchController(NEO::ScratchSpaceController *scratchController) {
+        usedScratchController = scratchController;
     }
 
     uint32_t getCommandListSLMEnable() const {
@@ -406,17 +417,19 @@ struct CommandList : _ze_command_list_handle_t {
     int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 
+    uint64_t currentScratchPatchAddress = 0;
+
     ze_context_handle_t hContext = nullptr;
     CommandQueue *cmdQImmediate = nullptr;
     CommandQueue *cmdQImmediateCopyOffload = nullptr;
     Device *device = nullptr;
+    NEO::ScratchSpaceController *usedScratchController = nullptr;
 
     size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
     size_t cmdListCurrentStartOffset = 0;
     size_t maxFillPaternSizeForCopyEngine = 0;
 
     uint32_t commandListPerThreadScratchSize[2]{};
-    uint32_t commandListPatchedPerThreadScratchSize[2]{};
 
     ze_command_list_flags_t flags = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;

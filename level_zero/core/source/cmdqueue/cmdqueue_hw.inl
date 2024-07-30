@@ -1740,13 +1740,26 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressDebugTracking() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, CommandListExecutionContext &ctx) {
+    bool patchNewScratchAddress = false;
     uint64_t scratchAddress = ctx.scratchSpaceController->getScratchPatchAddress();
-    if (this->heaplessModeEnabled && this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-        scratchAddress += ctx.globalStatelessAllocation->getGpuAddress();
+
+    if (this->heaplessModeEnabled) {
+        if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
+            scratchAddress += ctx.globalStatelessAllocation->getGpuAddress();
+        }
+
+        if (commandList.getCurrentScratchPatchAddress() != scratchAddress ||
+            commandList.getCommandListUsedScratchController() != ctx.scratchSpaceController) {
+            patchNewScratchAddress = true;
+        }
     }
-    patchCommands(commandList, scratchAddress,
-                  ctx.scratchSpaceController->getPerThreadScratchSpaceSizeSlot0(),
-                  ctx.scratchSpaceController->getPerThreadScratchSizeSlot1());
+
+    patchCommands(commandList, scratchAddress, patchNewScratchAddress);
+
+    if (patchNewScratchAddress) {
+        commandList.setCurrentScratchPatchAddress(scratchAddress);
+        commandList.setCommandListUsedScratchController(ctx.scratchSpaceController);
+    }
 }
 
 } // namespace L0

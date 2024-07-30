@@ -1586,6 +1586,11 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
     testScratchGrowingPatching<FamilyType>();
 }
 
+HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithChangedScratchControllerThenUpdatedCorrectAddressPatched, IsAtLeastXeHpcCore) {
+    testScratchChangedControllerPatching<FamilyType>();
+}
+
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
     testScratchInline<FamilyType>(false);

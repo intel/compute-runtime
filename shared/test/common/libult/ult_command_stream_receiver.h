@@ -55,6 +55,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::blitterDirectSubmission;
     using BaseClass::checkPlatformSupportsGpuIdleImplicitFlush;
     using BaseClass::checkPlatformSupportsNewResourceImplicitFlush;
+    using BaseClass::createScratchSpaceController;
     using BaseClass::csrSizeRequestFlags;
     using BaseClass::dcFlushSupport;
     using BaseClass::directSubmission;
