@@ -505,6 +505,9 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
 }
 
 HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
+
+    UnitTestSetter::disableHeapless(this->restore);
+
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
 

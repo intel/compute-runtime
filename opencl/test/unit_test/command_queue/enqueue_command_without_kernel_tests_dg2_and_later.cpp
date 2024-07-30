@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -27,6 +28,8 @@ namespace NEO {
 using IsDG2AndLater = IsAtLeastXeHpgCore;
 
 HWTEST2_F(DispatchFlagsTests, whenSubmittingKernelWithAdditionalKernelExecInfoThenCorrectDispatchFlagIsSet, IsDG2AndLater) {
+
+    UnitTestSetter::disableHeapless(this->restore);
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
 

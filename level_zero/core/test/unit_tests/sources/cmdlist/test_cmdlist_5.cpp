@@ -1451,6 +1451,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 struct CommandListPrivateHeapsBindlessSshFixture : public CommandListPrivateHeapsFixture {
     void setUp() {
+        UnitTestSetter::disableHeapless(restorer);
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
         debugManager.flags.UseBindlessMode.set(true);
         CommandListPrivateHeapsFixture::setUp();

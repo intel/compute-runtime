@@ -4060,6 +4060,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.heaplessModeEnabled = false;
 
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
 
@@ -4114,6 +4115,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.heaplessModeEnabled = false;
 
     EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
 
