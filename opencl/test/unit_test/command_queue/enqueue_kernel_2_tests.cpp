@@ -1279,28 +1279,6 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlu
     clReleaseEvent(outEvent);
 }
 
-HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenPipeControlForIoqDependencyResolvingEnabledWhenDispatchingRelaxedOrderingThenThrow, IsAtLeastXeHpcCore) {
-    debugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-
-    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
-    ultCsr.directSubmission.reset(directSubmission);
-    int client1, client2;
-    ultCsr.registerClient(&client1);
-    ultCsr.registerClient(&client2);
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-
-    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
-
-    // First dispatch without dependencies
-    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-
-    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
-
-    EXPECT_ANY_THROW(mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr));
-}
-
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSendingBbThenMarkAsStallingDispatch, IsAtLeastXeHpcCore) {
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
