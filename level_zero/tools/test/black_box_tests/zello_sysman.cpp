@@ -1389,6 +1389,8 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         std::cout << "properties.modelName = " << properties.modelName << std::endl;
         std::cout << "properties.vendorName = " << properties.vendorName << std::endl;
         std::cout << "properties.driverVersion= " << properties.driverVersion << std::endl;
+        std::cout << "properties.core.vendorId= " << properties.core.vendorId << std::endl;
+        std::cout << "properties.core.deviceId= " << properties.core.deviceId << std::endl;
         std::cout << "properties.core.uuid= " << std::endl;
         for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
             std::cout << +properties.core.uuid.id[i] << " ";

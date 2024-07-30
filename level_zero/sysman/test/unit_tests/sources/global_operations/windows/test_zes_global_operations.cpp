@@ -114,6 +114,19 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingzesDriver
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetPropertiesThenCorrectDeviceAndVendorIdsAreReturned) {
+    init(true);
+
+    auto pHwInfo = pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    pHwInfo->platform.usDeviceID = 0x1234;
+
+    zes_device_properties_t properties = {};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(properties.core.vendorId, static_cast<uint32_t>(0x8086));
+    EXPECT_EQ(properties.core.deviceId, static_cast<uint32_t>(pHwInfo->platform.usDeviceID));
+}
+
 class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
   public:
     L0::Sysman::GlobalOperationsImp *pGlobalOperationsImp;

@@ -29,6 +29,7 @@ constexpr uint32_t numCoreTemperatureEntries = 4;    // entries would be CORE0, 
 constexpr uint32_t numComputeTemperatureEntries = 3; // entries would be IA, GT and LLC
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
+constexpr uint32_t vendorIdIntel = 0x8086;
 
 namespace L0 {
 namespace Sysman {

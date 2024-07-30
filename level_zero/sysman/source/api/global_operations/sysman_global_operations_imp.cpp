@@ -60,6 +60,8 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
     if (hardwareInfo.capabilityTable.supportsOnDemandPageFaults) {
         pProperties->core.flags |= ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING;
     }
+    pProperties->core.deviceId = hardwareInfo.platform.usDeviceID;
+    pProperties->core.vendorId = vendorIdIntel;
 
     zes_base_properties_t *pNext = static_cast<zes_base_properties_t *>(pProperties->pNext);
     while (pNext) {
