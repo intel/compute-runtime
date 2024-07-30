@@ -11,7 +11,7 @@
 
 //
 
-#include "device_ids_configs_xe_lpg_additional.inl"
+#include "xe_lpg/device_ids_configs_xe_lpg_additional.inl"
 
 namespace NEO {
 const std::vector<unsigned short> mtlmDeviceIds{
