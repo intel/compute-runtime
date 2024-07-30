@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -178,7 +179,9 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    setUpImpl(EBuiltInOps::copyBufferToBuffer);
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto builtIn = compilerProductHelper.isHeaplessModeEnabled() ? EBuiltInOps::copyBufferToBufferStatelessHeapless : EBuiltInOps::copyBufferToBuffer;
+    setUpImpl(builtIn);
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
 
@@ -294,7 +297,9 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinP
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferRectCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    setUpImpl(EBuiltInOps::copyBufferRect);
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto builtIn = compilerProductHelper.isHeaplessModeEnabled() ? EBuiltInOps::copyBufferRectStatelessHeapless : EBuiltInOps::copyBufferRect;
+    setUpImpl(builtIn);
 
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
