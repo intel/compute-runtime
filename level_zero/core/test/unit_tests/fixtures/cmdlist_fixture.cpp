@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -220,6 +221,9 @@ void CommandListGlobalHeapsFixtureInit::setUp() {
 }
 
 void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
+
+    UnitTestSetter::disableHeaplessStateInit(this->restorer);
+
     if (globalHeapMode == static_cast<int32_t>(NEO::HeapAddressModel::globalStateless)) {
         debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
     }

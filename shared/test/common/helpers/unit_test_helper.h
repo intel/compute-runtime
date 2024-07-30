@@ -12,6 +12,8 @@
 #include <cstddef>
 #include <vector>
 
+class DebugManagerStateRestore;
+
 namespace NEO {
 
 class CommandStreamReceiver;
@@ -20,6 +22,11 @@ struct DeviceInfo;
 struct KernelDescriptor;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
+
+struct UnitTestSetter {
+    static void disableHeapless(const DebugManagerStateRestore &restorer);
+    static void disableHeaplessStateInit(const DebugManagerStateRestore &restorer);
+};
 
 template <typename GfxFamily>
 struct UnitTestHelper {
@@ -102,7 +109,6 @@ struct UnitTestHelper {
     static void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator);
     static GenCmdList::iterator findWalkerTypeCmd(GenCmdList::iterator begin, GenCmdList::iterator end);
     static std::vector<GenCmdList::iterator> findAllWalkerTypeCmds(GenCmdList::iterator begin, GenCmdList::iterator end);
-
     static typename GfxFamily::WalkerVariant getWalkerVariant(void *walkerItor);
 };
 
