@@ -640,7 +640,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
         break;
 
     case CL_KERNEL_LOCAL_MEM_SIZE:
-        localMemorySize = kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize;
+        localMemorySize = this->getSlmTotalSize();
         srcSize = sizeof(localMemorySize);
         pSrc = &localMemorySize;
         break;

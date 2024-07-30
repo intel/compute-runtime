@@ -1558,6 +1558,7 @@ class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
     class MockKernel : public KernelImp {
       public:
         using KernelImp::kernelHasIndirectAccess;
+        using KernelImp::slmArgsTotalSize;
     };
     void SetUp() override {
         debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
@@ -1678,6 +1679,25 @@ HWTEST2_F(KernelPropertiesTests, givenKernelWithPrivateScratchMemoryThenProperPr
 
     EXPECT_EQ(expectedPrivateSize, kernelProperties.privateMemSize);
     EXPECT_EQ(expectedSpillSize, kernelProperties.spillMemSize);
+}
+
+TEST_F(KernelPropertiesTests, givenKernelWithInlineAndDynamicSharedLocalMemoryThenTotalLocalMemorySizeIsReported) {
+    ze_kernel_properties_t kernelProperties = {};
+    kernelProperties.localMemSize = std::numeric_limits<uint32_t>::max();
+
+    uint32_t slmInlineSize = 100u;
+    uint32_t slmArgsSize = 4096u;
+    uint32_t expectedSlmTotalSize = slmInlineSize + slmArgsSize;
+
+    auto &kernelDescriptor = const_cast<KernelDescriptor &>(kernel->getKernelDescriptor());
+    kernelDescriptor.kernelAttributes.slmInlineSize = slmInlineSize;
+
+    kernel->slmArgsTotalSize = slmArgsSize;
+
+    ze_result_t res = kernel->getProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(expectedSlmTotalSize, kernelProperties.localMemSize);
 }
 
 using KernelMaxNumSubgroupsTests = Test<ModuleImmutableDataFixture>;

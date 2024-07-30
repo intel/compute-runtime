@@ -339,6 +339,42 @@ TEST_F(KernelTests, GivenRequiredDisabledEUFusionFlagWhenGettingPreferredWorkGro
     EXPECT_EQ(expectedValue, paramValue);
 }
 
+TEST_F(KernelTests, GivenSlmInlineSizeAndSlmOffsetWhenGettingWorkGroupInfoThenCorrectValueIsReturned) {
+    MockKernelInfo kernelInfo = {};
+    kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize = 100u;
+
+    kernelInfo.addArgLocal(0, 0x10, 0x1);
+    kernelInfo.addArgBuffer(1, 0x20, sizeof(void *));
+    kernelInfo.addArgBuffer(2, 0x20, sizeof(void *));
+    kernelInfo.addArgLocal(3, 0x30, 0x10);
+
+    MockKernel kernel(pProgram, kernelInfo, *pClDevice);
+    kernel.kernelArguments.resize(4);
+    kernel.slmSizes.resize(4);
+
+    uint32_t crossThreadData[0x40]{};
+    crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
+    kernel.setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+
+    kernel.setArgLocal(0, 4096, nullptr);
+    kernel.setArgLocal(3, 0, nullptr);
+
+    cl_kernel_info paramName = CL_KERNEL_LOCAL_MEM_SIZE;
+    cl_ulong paramValue;
+    size_t paramValueSizeRet = 0;
+    cl_ulong expectedValue = 4096 + 0 + 100;
+
+    retVal = kernel.getWorkGroupInfo(
+        paramName,
+        sizeof(cl_ulong),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_ulong), paramValueSizeRet);
+    EXPECT_EQ(expectedValue, paramValue);
+}
+
 TEST_F(KernelTests, GivenCFEFusedEUDispatchEnabledAndRequiredDisabledUEFusionWhenGettingPreferredWorkGroupSizeMultipleThenCorectValueIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.CFEFusedEUDispatch.set(0);

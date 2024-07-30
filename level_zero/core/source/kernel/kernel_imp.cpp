@@ -897,7 +897,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     pKernelProperties->requiredNumSubGroups = kernelDescriptor.kernelMetadata.compiledSubGroupsNumber;
     pKernelProperties->requiredSubgroupSize = kernelDescriptor.kernelMetadata.requiredSubGroupSize;
     pKernelProperties->maxSubgroupSize = kernelDescriptor.kernelAttributes.simdSize;
-    pKernelProperties->localMemSize = kernelDescriptor.kernelAttributes.slmInlineSize;
+    pKernelProperties->localMemSize = this->getSlmTotalSize();
     pKernelProperties->privateMemSize = gfxCoreHelper.getKernelPrivateMemSize(kernelDescriptor);
     pKernelProperties->spillMemSize = kernelDescriptor.kernelAttributes.spillFillScratchMemorySize;
     memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
