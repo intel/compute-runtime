@@ -97,7 +97,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
         hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
 
-        uint32_t walkersCount = hwParser.getCommandCount<DefaultWalkerType>();
+        uint32_t walkersCount = hwParser.getCommandWalkerCount<FamilyType>();
         EXPECT_EQ(walkersCount, 1u);
         GenCmdList walkerList = hwParser.getCommandsList<DefaultWalkerType>();
         DefaultWalkerType *walkerCmd = static_cast<DefaultWalkerType *>(*walkerList.begin());
@@ -286,7 +286,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
     uint32_t cmdPartitionCount = static_cast<uint32_t>(partitionCount);
 
     hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
-    uint32_t walkersCount = hwParser.getCommandCount<DefaultWalkerType>();
+    uint32_t walkersCount = hwParser.getCommandWalkerCount<FamilyType>();
     EXPECT_EQ(cmdPartitionCount + 1, walkersCount);
 
     GenCmdList walkerList = hwParser.getCommandsList<DefaultWalkerType>();

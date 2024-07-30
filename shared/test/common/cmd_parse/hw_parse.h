@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
@@ -182,6 +183,24 @@ struct HardwareParse {
 
         do {
             cmdItor = find<CmdType *>(cmdItor, cmdList.end());
+            if (cmdItor != cmdList.end()) {
+                ++cmdCount;
+                ++cmdItor;
+            }
+        } while (cmdItor != cmdList.end());
+
+        return cmdCount;
+    }
+
+    template <typename FamilyType>
+    uint32_t getCommandWalkerCount() {
+
+        using WalkerType = typename FamilyType::DefaultWalkerType;
+        GenCmdList::iterator cmdItor = cmdList.begin();
+        uint32_t cmdCount = 0;
+
+        do {
+            cmdItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdItor, cmdList.end());
             if (cmdItor != cmdList.end()) {
                 ++cmdCount;
                 ++cmdItor;
