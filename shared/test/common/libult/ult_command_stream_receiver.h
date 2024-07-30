@@ -99,6 +99,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::baseWaitFunction;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
     using BaseClass::CommandStreamReceiver::canUse4GbHeaps;
+    using BaseClass::CommandStreamReceiver::checkForNewResources;
     using BaseClass::CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using BaseClass::CommandStreamReceiver::cleanupResources;
     using BaseClass::CommandStreamReceiver::clearColorAllocation;

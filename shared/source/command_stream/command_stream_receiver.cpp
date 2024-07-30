@@ -165,6 +165,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
         }
 
         if (this->dispatchMode == DispatchMode::batchedDispatch) {
+            checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
             if (!gfxAllocation.isResident(osContext->getContextId())) {
                 this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
             }
@@ -984,6 +985,17 @@ void CommandStreamReceiver::printDeviceIndex() {
                this->osContext->getEngineType(),
                EngineHelpers::engineTypeToString(this->osContext->getEngineType()).c_str(),
                EngineHelpers::engineUsageToString(this->osContext->getEngineUsage()).c_str());
+    }
+}
+
+void CommandStreamReceiver::checkForNewResources(TaskCountType submittedTaskCount, TaskCountType allocationTaskCount, GraphicsAllocation &gfxAllocation) {
+    if (useNewResourceImplicitFlush) {
+        if (allocationTaskCount == GraphicsAllocation::objectNotUsed && !GraphicsAllocation::isIsaAllocationType(gfxAllocation.getAllocationType())) {
+            newResources = true;
+            if (debugManager.flags.ProvideVerboseImplicitFlush.get()) {
+                printf("New resource detected of type %llu\n", static_cast<unsigned long long>(gfxAllocation.getAllocationType()));
+            }
+        }
     }
 }
 
