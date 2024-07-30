@@ -69,10 +69,17 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         processEvictionCalled = true;
     }
 
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+        waitForTaskCountWithKmdNotifyFallbackCalled++;
+
+        return BaseUltCsrClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
+    }
+
     ResidencyContainer madeResidentGfxAllocations;
     ResidencyContainer madeNonResidentGfxAllocations;
     int32_t *executionStamp;
     int32_t flushTaskStamp;
+    uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     bool processEvictionCalled = false;
 };
 

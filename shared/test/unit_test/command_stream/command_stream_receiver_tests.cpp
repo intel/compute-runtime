@@ -5328,11 +5328,43 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenInitializeDeviceWithFirstSubmiss
     commandStreamReceiver.setupContext(mockOsContext);
     commandStreamReceiver.initializeTagAllocation();
     EXPECT_EQ(0u, commandStreamReceiver.taskCount);
+
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenTbxCsrWhenInitializingThenWaitForCompletion) {
+    MockOsContext mockOsContext(0, EngineDescriptorHelper::getDefaultDescriptor({defaultHwInfo->capabilityTable.defaultEngineType, EngineUsage::regular}));
+    pDevice->setPreemptionMode(PreemptionMode::Disabled);
+
+    MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    commandStreamReceiver.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    commandStreamReceiver.setupContext(mockOsContext);
+    commandStreamReceiver.initializeTagAllocation();
+
+    EXPECT_EQ(0u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(0u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(1u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(1u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+
+    MockCsrHw<FamilyType> failingCommandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    failingCommandStreamReceiver.commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    failingCommandStreamReceiver.setupContext(mockOsContext);
+    failingCommandStreamReceiver.initializeTagAllocation();
+    failingCommandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
+
+    EXPECT_EQ(SubmissionStatus::outOfMemory, failingCommandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
+    EXPECT_EQ(0u, failingCommandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetUmdPowerHintValueCalledThenCorrectValueIsReturned) {

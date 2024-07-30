@@ -14,7 +14,13 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     if (this->latestFlushedTaskCount > 0) {
         return SubmissionStatus::success;
     }
-    return flushTagUpdate();
+    auto status = flushTagUpdate();
+
+    if (isTbxMode() && (status == SubmissionStatus::success)) {
+        waitForTaskCountWithKmdNotifyFallback(this->taskCount, 0, false, QueueThrottle::MEDIUM);
+    }
+
+    return status;
 }
 
 template <typename GfxFamily>
