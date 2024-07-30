@@ -28,10 +28,10 @@ components:
     repository: https://github.com/intel/igsc.git
     component_version: 264
   infra:
-    branch: master
+    branch: neo/releases/24.31
     dest_dir: infra
     fetch_tags: true
-    revision: v6148
+    revision: v6148.2227.0
     type: git
   internal:
     branch: master
