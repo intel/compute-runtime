@@ -265,5 +265,10 @@ bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

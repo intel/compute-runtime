@@ -421,8 +421,14 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    std::string cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);
-    ze_result_t result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
+    std::string devicePath = {};
+    if (pSysmanProductHelper->isUpstreamPortConnected()) {
+        devicePath = getPciCardBusDirectoryPath(gtDevicePath);
+    } else {
+        devicePath = gtDevicePath;
+    }
+
+    ze_result_t result = pFsAccess->write(devicePath + '/' + "remove", "1");
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
@@ -469,7 +475,7 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
             return result;
         }
 
-        result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
+        result = pFsAccess->write(devicePath + '/' + "remove", "1");
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stdout,
                                   "Card Bus remove after resizing VF bar failed\n");
@@ -495,11 +501,11 @@ std::string LinuxSysmanImp::getAddressFromPath(std::string &rootPortPath) {
 }
 
 ze_result_t LinuxSysmanImp::osColdReset() {
-    const std::string slotPath("/sys/bus/pci/slots/");         // holds the directories matching to the number of slots in the PC
-    std::string cardBusPath;                                   // will hold the PCIe Root port directory path (the address of the PCIe slot).
-                                                               // will hold the absolute real path (not symlink) to the selected Device
-    cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);    // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
-    std::string rootAddress = getAddressFromPath(cardBusPath); // e.g rootAddress = 0000:8a:00.0
+    const std::string slotPath("/sys/bus/pci/slots/");        // holds the directories matching to the number of slots in the PC
+    std::string cardBusPath;                                  // will hold the PCIe upstream port path (the address of the PCIe slot).
+                                                              // will hold the absolute real path (not symlink) to the selected Device
+    cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);   // e.g cardBusPath=/sys/devices/pci0000:89/0000:89:02.0/
+    std::string uspAddress = getAddressFromPath(cardBusPath); // e.g upstreamPortAddress = 0000:8a:00.0
 
     std::vector<std::string> dir;
     ze_result_t result = pFsAccess->listDirectory(slotPath, dir); // get list of slot directories from  /sys/bus/pci/slots/
@@ -512,7 +518,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
         if (ZE_RESULT_SUCCESS != result) {
             return result;
         }
-        if (slotAddress.compare(rootAddress) == 0) {                      // compare slot address to root port address
+        if (slotAddress.compare(uspAddress) == 0) {                       // compare slot address to upstream port address
             result = pFsAccess->write((slotPath + slot + "/power"), "0"); // turn off power
             if (ZE_RESULT_SUCCESS != result) {
                 return result;

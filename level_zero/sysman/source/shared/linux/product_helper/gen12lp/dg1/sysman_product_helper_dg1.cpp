@@ -135,6 +135,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     return ZE_RESULT_SUCCESS;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

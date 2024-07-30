@@ -203,6 +203,11 @@ bool SysmanProductHelperHw<gfxProduct>::isEccConfigurationSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

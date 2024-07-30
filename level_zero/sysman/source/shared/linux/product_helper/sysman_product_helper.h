@@ -96,6 +96,9 @@ class SysmanProductHelper {
     // Ecc
     virtual bool isEccConfigurationSupported() = 0;
 
+    // Device
+    virtual bool isUpstreamPortConnected() = 0;
+
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;
 

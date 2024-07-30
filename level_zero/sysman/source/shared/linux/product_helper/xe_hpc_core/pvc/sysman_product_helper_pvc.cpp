@@ -430,6 +430,11 @@ bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

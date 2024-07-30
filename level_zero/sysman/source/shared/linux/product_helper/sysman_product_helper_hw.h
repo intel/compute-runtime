@@ -71,6 +71,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Ecc
     bool isEccConfigurationSupported() override;
 
+    // Device
+    bool isUpstreamPortConnected() override;
+
     ~SysmanProductHelperHw() override = default;
 
     const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;

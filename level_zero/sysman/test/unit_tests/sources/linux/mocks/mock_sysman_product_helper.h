@@ -27,6 +27,7 @@ struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_U
     std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override { return &mockGuidToKeyOffsetMap; }
     ADDMETHOD_NOBASE(isFrequencySetRangeSupported, bool, false, ());
     ADDMETHOD_NOBASE(isPowerSetLimitSupported, bool, false, ());
+    ADDMETHOD_NOBASE(isUpstreamPortConnected, bool, true, ());
 };
 
 } // namespace ult
