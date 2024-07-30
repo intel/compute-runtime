@@ -13,6 +13,7 @@
 
 #include "level_zero/sysman/source/api/pci/sysman_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
+#include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -54,8 +55,14 @@ void LinuxPciImp::getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) {
     maxLinkSpeed = 0;
     maxLinkWidth = -1;
 
+    auto isIntegratedDevice = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    if (isIntegratedDevice) {
+        return;
+    }
+
     std::string pciConfigNode = {};
-    if (!isIntegratedDevice) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    if (pSysmanProductHelper->isUpstreamPortConnected()) {
         pSysfsAccess->getRealPath(deviceDir, pciConfigNode);
         std::string cardBusPath = pLinuxSysmanImp->getPciCardBusDirectoryPath(pciConfigNode);
         pciConfigNode = cardBusPath + "/config";
@@ -315,7 +322,6 @@ bool LinuxPciImp::getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &
 LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    isIntegratedDevice = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice;
 }
 
 OsPci *OsPci::create(OsSysman *pOsSysman) {

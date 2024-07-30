@@ -47,7 +47,6 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     static const std::string resourceFile;
     static const std::string maxLinkSpeedFile;
     static const std::string maxLinkWidthFile;
-    bool isIntegratedDevice = false;
 };
 
 } // namespace Sysman

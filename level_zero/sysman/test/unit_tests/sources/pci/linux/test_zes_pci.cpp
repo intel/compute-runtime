@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,6 +220,7 @@ class ZesPciFixture : public SysmanDeviceFixture {
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
 
+        pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
         pPciImp = static_cast<L0::Sysman::PciImp *>(pSysmanDeviceImp->pPci);
         pOsPciPrev = pPciImp->pOsPci;
         pPciImp->pOsPci = nullptr;
@@ -327,6 +328,24 @@ TEST_F(ZesPciFixture, GivenSysmanHandleWhenGettingPCIWidthAndSpeedAndCapabilityL
     L0::Sysman::OsPci *pOsPciOriginal = pPciImp->pOsPci;
     PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
     pLinuxPciImpTemp->preadFunction = preadMockInvalidPos;
+
+    pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
+    pPciImp->pciGetStaticFields();
+    pPciImp->pOsPci->getMaxLinkCaps(speed, width);
+    EXPECT_EQ(width, -1);
+    EXPECT_EQ(speed, 0);
+
+    delete pLinuxPciImpTemp;
+    pPciImp->pOsPci = pOsPciOriginal;
+}
+
+TEST_F(ZesPciFixture, GivenSysmanHandleWhenGettingPCIWidthAndSpeedForIntegratedDevicesThenInvalidValuesAreReturned) {
+    int32_t width = 0;
+    double speed = 0;
+    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    L0::Sysman::OsPci *pOsPciOriginal = pPciImp->pOsPci;
+    PublicLinuxPciImp *pLinuxPciImpTemp = new PublicLinuxPciImp(pOsSysman);
+    pLinuxPciImpTemp->preadFunction = preadMock;
 
     pPciImp->pOsPci = static_cast<L0::Sysman::OsPci *>(pLinuxPciImpTemp);
     pPciImp->pciGetStaticFields();
