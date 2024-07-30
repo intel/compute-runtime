@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,14 +16,14 @@
 
 namespace NEO {
 
-class Drm;
+class IoctlHelper;
 
 struct CacheInfo {
-    CacheInfo(Drm &drm, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)
+    CacheInfo(IoctlHelper &ioctlHelper, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)
         : maxReservationCacheSize(maxReservationCacheSize),
           maxReservationNumCacheRegions(maxReservationNumCacheRegions),
           maxReservationNumWays(maxReservationNumWays),
-          cacheReserve(drm) {
+          cacheReserve{ioctlHelper} {
     }
 
     MOCKABLE_VIRTUAL ~CacheInfo();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,13 @@
 
 namespace NEO {
 
-class Drm;
+class IoctlHelper;
 enum class CacheLevel : uint16_t;
 enum class CacheRegion : uint16_t;
 
 class ClosCacheReservation {
   public:
-    ClosCacheReservation(Drm &drm) : drm(drm) {}
+    ClosCacheReservation(IoctlHelper &ioctlHelper) : ioctlHelper{ioctlHelper} {}
 
     CacheRegion reserveCache(CacheLevel cacheLevel, uint16_t numWays);
     CacheRegion freeCache(CacheLevel cacheLevel, CacheRegion closIndex);
@@ -28,7 +28,7 @@ class ClosCacheReservation {
     CacheRegion freeEntry(CacheRegion closIndex);
     uint16_t allocCacheWay(CacheRegion closIndex, CacheLevel cacheLevel, uint16_t numWays);
 
-    Drm &drm;
+    IoctlHelper &ioctlHelper;
 };
 
 } // namespace NEO

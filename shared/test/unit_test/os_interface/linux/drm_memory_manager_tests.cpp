@@ -4649,7 +4649,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThen
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse) {
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
-    drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
@@ -4660,7 +4660,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     drm.queryAndSetVmBindPatIndexProgrammingSupport();
-    drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -4678,7 +4678,7 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     drm.queryAndSetVmBindPatIndexProgrammingSupport();
-    drm.cacheInfo.reset(new MockCacheInfo(drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
@@ -4835,7 +4835,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
     }
     mock->ioctlExpected.total = -1;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
-    drm->cacheInfo.reset(new MockCacheInfo(*drm, 32 * MemoryConstants::kiloByte, 2, 32));
+    drm->cacheInfo.reset(new MockCacheInfo(*drm->getIoctlHelper(), 32 * MemoryConstants::kiloByte, 2, 32));
 
     auto ptr = reinterpret_cast<void *>(0x1000);
     auto size = MemoryConstants::pageSize;

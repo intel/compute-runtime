@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@ struct MockCacheInfo : public CacheInfo {
     using CacheInfo::cacheRegionsReserved;
     using CacheInfo::isRegionReserved;
 
-    MockCacheInfo(Drm &drm, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)
-        : CacheInfo(drm, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays) {}
+    MockCacheInfo(IoctlHelper &ioctlHelper, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)
+        : CacheInfo(ioctlHelper, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays) {}
 
     ~MockCacheInfo() override = default;
 

@@ -1295,7 +1295,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    mock->cacheInfo.reset(new CacheInfo(*mock, 64 * MemoryConstants::kiloByte, 2, 32));
+    mock->cacheInfo.reset(new CacheInfo(*mock->getIoctlHelper(), 64 * MemoryConstants::kiloByte, 2, 32));
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 

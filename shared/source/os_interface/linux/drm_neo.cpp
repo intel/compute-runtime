@@ -979,7 +979,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     if (debugManager.flags.ClosEnabled.get() == 0 || gfxCoreHelper.getNumCacheRegions() == 0) {
-        this->cacheInfo.reset(new CacheInfo(*this, 0, 0, 0));
+        this->cacheInfo.reset(new CacheInfo{*ioctlHelper, 0, 0, 0});
         return;
     }
 
@@ -993,7 +993,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
     const uint32_t maxReservationNumCacheRegions = gfxCoreHelper.getNumCacheRegions() - 1;
 
-    this->cacheInfo.reset(new CacheInfo(*this, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
+    this->cacheInfo.reset(new CacheInfo(*ioctlHelper, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {

@@ -49,7 +49,7 @@ class CacheReservationFixture : public DeviceFixture {
         mockDrm->ioctlHelper = IoctlHelper::getI915Helper(productFamily, "2.0", *mockDrm);
         mockDrm->ioctlHelper->initialize();
 
-        mockDrm->cacheInfo.reset(new MockCacheInfo(*mockDrm, 1024, 1, 32));
+        mockDrm->cacheInfo.reset(new MockCacheInfo(*mockDrm->ioctlHelper, 1024, 1, 32));
         rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
         rootDeviceEnvironment.initGmm();
