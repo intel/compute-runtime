@@ -241,9 +241,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         makeResident(*getGlobalFenceAllocation());
     }
 
-    if (dispatchBcsFlags.flushTaskCount) {
-        makeResident(*getTagAllocation());
-    }
+    makeResident(*getTagAllocation());
 
     makeResident(*commandStreamTask.getGraphicsAllocation());
 
