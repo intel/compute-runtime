@@ -191,6 +191,9 @@ void CommandListStateBaseAddressFixture::setUp() {
 }
 
 void CommandListPrivateHeapsFixture::setUp() {
+
+    UnitTestSetter::disableHeapless(this->restore);
+
     constexpr uint32_t storeAllocations = 4;
 
     debugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::privateHeaps));
