@@ -48,9 +48,7 @@ TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedThenCorrectValueIsRe
     MockDevice device;
 
     uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacksPerDss(device);
-    uint32_t expectedValue = device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported
-                                 ? static_cast<uint32_t>(RayTracingHelper::getNumRtStacks(device) / device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported + 0.5)
-                                 : RayTracingHelper::stackDssMultiplier;
+    uint32_t expectedValue = RayTracingHelper::stackDssMultiplier;
     EXPECT_EQ(expectedValue, numDssRtStacks);
 }
 

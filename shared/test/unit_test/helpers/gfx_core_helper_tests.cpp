@@ -1512,6 +1512,35 @@ HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsFalseThenGetHighestEnabl
     EXPECT_EQ(maxDualSubSlice, hwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
 }
 
+TEST_F(GfxCoreHelperTest, givenMaxDualSubSlicesSupportedAndNoDSSInfoThenMaxEnabledDualSubSliceIsCalculatedBasedOnMaxDSSPerSlice) {
+    HardwareInfo hwInfo = *defaultHwInfo.get();
+
+    constexpr uint32_t numFusedOutSlices = 2u;
+    constexpr uint32_t maxSlices = 2u;
+    constexpr uint32_t maxSliceIndex = numFusedOutSlices + maxSlices - 1;
+    constexpr uint32_t dualSubSlicesPerSlice = 5u;
+
+    constexpr uint32_t maxDualSubSliceEnabled = 20u;
+
+    hwInfo.gtSystemInfo.MaxSlicesSupported = maxSlices;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 0u;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = maxSlices * dualSubSlicesPerSlice;
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+
+    for (uint32_t slice = 0u; slice < GT_MAX_SLICE; slice++) {
+        hwInfo.gtSystemInfo.SliceInfo[slice].Enabled = false;
+        for (uint32_t dualSubSlice = 0; dualSubSlice < GT_MAX_DUALSUBSLICE_PER_SLICE; dualSubSlice++) {
+            hwInfo.gtSystemInfo.SliceInfo[slice].DSSInfo[dualSubSlice].Enabled = false;
+        }
+        for (uint32_t subSlice = 0; subSlice < GT_MAX_SUBSLICE_PER_SLICE; subSlice++) {
+            hwInfo.gtSystemInfo.SliceInfo[slice].SubSliceInfo[subSlice].Enabled = false;
+        }
+    }
+    hwInfo.gtSystemInfo.SliceInfo[maxSliceIndex].Enabled = true;
+
+    EXPECT_EQ(maxDualSubSliceEnabled, GfxCoreHelper::getHighestEnabledDualSubSlice(hwInfo));
+}
+
 TEST_F(GfxCoreHelperTest, givenNoMaxDualSubSlicesSupportedThenMaxEnabledDualSubSliceIsCalculatedBasedOnSubSlices) {
     HardwareInfo hwInfo = *defaultHwInfo.get();
 
