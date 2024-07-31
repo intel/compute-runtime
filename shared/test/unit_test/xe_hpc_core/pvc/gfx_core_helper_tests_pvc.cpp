@@ -78,7 +78,9 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratc
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.gtSystemInfo.EUCount *= 2;
 
-    uint32_t expectedValue = hwInfo.gtSystemInfo.MaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
+    auto highestEnabledSubSlice = GfxCoreHelper::getHighestEnabledSubSlice(hwInfo);
+
+    uint32_t expectedValue = highestEnabledSubSlice * hwInfo.gtSystemInfo.MaxEuPerSubSlice;
 
     struct {
         unsigned short revId;

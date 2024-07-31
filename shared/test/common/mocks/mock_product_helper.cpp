@@ -292,11 +292,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::overrideCacheableForDcFlushMitigation(Alloca
 }
 
 template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }

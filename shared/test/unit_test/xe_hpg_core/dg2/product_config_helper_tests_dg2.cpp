@@ -695,17 +695,6 @@ DG2TEST_F(ProductHelperTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeU
     EXPECT_EQ(expectedCalculation, gfxCoreHelper.getComputeUnitsUsedForScratch(*executionEnvironment->rootDeviceEnvironments[0]));
 }
 
-DG2TEST_F(ProductHelperTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScratchThenThrowUnrecoverableIf) {
-    HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
-    testSysInfo.IsDynamicallyPopulated = false;
-    testSysInfo.MaxSlicesSupported = 0;
-
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-
-    EXPECT_THROW(gfxCoreHelper.getComputeUnitsUsedForScratch(*executionEnvironment->rootDeviceEnvironments[0]), std::exception);
-}
-
 DG2TEST_F(ProductHelperTestDg2, givenDG2WhenCheckingIsTimestampWaitSupportedForEventsThenReturnTrue) {
 
     EXPECT_TRUE(productHelper->isTimestampWaitSupportedForEvents());

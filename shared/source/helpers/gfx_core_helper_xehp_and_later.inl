@@ -26,9 +26,8 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDev
         return static_cast<uint32_t>(debugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto maxSubSlice = productHelper.computeMaxNeededSubSliceSpace(*hwInfo);
+    auto maxSubSlice = GfxCoreHelper::getHighestEnabledSubSlice(*hwInfo);
     // XeHP and later products return physical threads
     return maxSubSlice * hwInfo->gtSystemInfo.MaxEuPerSubSlice * (hwInfo->gtSystemInfo.ThreadCount / hwInfo->gtSystemInfo.EUCount);
 }
