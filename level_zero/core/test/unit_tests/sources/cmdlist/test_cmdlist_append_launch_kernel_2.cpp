@@ -1577,7 +1577,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
-    auto itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     auto cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
     EXPECT_EQ(4u, cmd->getPartitionSize());
@@ -1594,7 +1594,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
-    itorWalker = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
 

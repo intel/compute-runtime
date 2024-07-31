@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
 
         parseCommands<FamilyType>(*pCmdQ);
 
-        itorWalker1 = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        itorWalker1 = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker1);
     }
 
@@ -53,7 +53,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
 
         parseCommands<FamilyType>(*pCmdQ);
 
-        itorWalker1 = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+        itorWalker1 = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker1);
     }
 

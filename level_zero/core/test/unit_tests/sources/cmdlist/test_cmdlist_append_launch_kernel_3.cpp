@@ -591,12 +591,12 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(pCommandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), pCommandList->getCmdContainer().getCommandStream()->getUsed()));
 
-    auto itor = find<typename FamilyType::DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
     EXPECT_NE(itor, cmdList.end());
     auto firstWalker = itor;
 
     itor++;
-    itor = find<typename FamilyType::DefaultWalkerType *>(itor, cmdList.end());
+    itor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(itor, cmdList.end());
     EXPECT_NE(itor, cmdList.end());
 
     auto secondWalker = itor;
