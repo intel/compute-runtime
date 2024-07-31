@@ -3004,7 +3004,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
         ptrOffset(cmdStream->getCpuBase(), commandStreamOffset),
         cmdStream->getUsed() - commandStreamOffset));
 
-    auto computeWalkerList = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto computeWalkerList = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, computeWalkerList.size());
 
     auto walkerGfxMemory = reinterpret_cast<DefaultWalkerType *>(*computeWalkerList[0]);

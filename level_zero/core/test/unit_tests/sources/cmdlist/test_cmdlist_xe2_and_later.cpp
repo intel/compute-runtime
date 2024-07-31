@@ -219,7 +219,6 @@ HWTEST2_F(CommandListAppendRangesBarrierXe2AndLater, givenCallToAppendRangesBarr
 using CommandListXe2AndLaterPreemptionTest = Test<ModuleMutableCommandListFixture>;
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKernelFlagRequiresDisablePreemptionThenExpectInterfaceDescriptorDataDisablePreemption, Platforms) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto &container = commandList->getCmdContainer();
     auto &cmdListStream = *container.getCommandStream();
@@ -239,7 +238,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKerne
         ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto walkerCmds = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
     auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
@@ -274,7 +273,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
         ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto walkerCmds = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
     auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
@@ -309,7 +308,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
         ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto walkerCmds = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
     auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
@@ -344,7 +343,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
         ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
         sizeAfter - sizeBefore));
 
-    auto walkerCmds = findAll<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
     auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
