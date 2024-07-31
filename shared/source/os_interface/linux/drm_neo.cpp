@@ -529,10 +529,45 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
+    if (!topologyMap.empty()) {
+        hwInfo->gtSystemInfo.IsDynamicallyPopulated = true;
+        std::bitset<GT_MAX_SLICE> totalSliceMask{maxNBitValue(GT_MAX_SLICE)};
+        uint32_t latestSliceIndex = 0;
+        for (auto &mapping : topologyMap) {
+            std::bitset<GT_MAX_SLICE> sliceMask;
+            DEBUG_BREAK_IF(mapping.second.sliceIndices.empty());
+            for (auto &slice : mapping.second.sliceIndices) {
+                sliceMask.set(slice);
+                latestSliceIndex = slice;
+            }
+            totalSliceMask &= sliceMask;
+        }
+        for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
+            hwInfo->gtSystemInfo.SliceInfo[slice].Enabled = totalSliceMask.test(slice);
+        }
+        if (totalSliceMask.none()) {
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Incorrect slice mask from topology map!\n");
+            return -1;
+        }
+        if (totalSliceMask.count() == 1u) {
+            std::bitset<GT_MAX_SUBSLICE_PER_SLICE> totalSubSliceMask{maxNBitValue(GT_MAX_SUBSLICE_PER_SLICE)};
+            for (auto &mapping : topologyMap) {
+                std::bitset<GT_MAX_SUBSLICE_PER_SLICE> subSliceMask;
+                DEBUG_BREAK_IF(mapping.second.subsliceIndices.empty());
+                for (auto &subslice : mapping.second.subsliceIndices) {
+                    if (subslice >= GT_MAX_SUBSLICE_PER_SLICE) {
+                        subSliceMask = {};
+                        break;
+                    }
+                    subSliceMask.set(subslice);
+                }
+                totalSubSliceMask &= subSliceMask;
+            }
 
-    hwInfo->gtSystemInfo.IsDynamicallyPopulated = true;
-    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
-        hwInfo->gtSystemInfo.SliceInfo[slice].Enabled = slice < hwInfo->gtSystemInfo.SliceCount;
+            for (uint32_t subslice = 0; subslice < GT_MAX_SUBSLICE_PER_SLICE; subslice++) {
+                hwInfo->gtSystemInfo.SliceInfo[latestSliceIndex].SubSliceInfo[subslice].Enabled = totalSubSliceMask.test(subslice);
+            }
+        }
     }
 
     hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);

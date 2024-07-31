@@ -72,12 +72,11 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     }
     bool getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTopologyData &topologyData, TopologyMap &topologyMap) override {
         topologyData = topologyDataToSet;
-        topologyMap[0].sliceIndices = topologyMapToSet.sliceIndices;
-        topologyMap[0].subsliceIndices = topologyMapToSet.subsliceIndices;
+        topologyMap = topologyMapToSet;
         return true;
     }
     DrmQueryTopologyData topologyDataToSet{};
-    TopologyMapping topologyMapToSet{};
+    TopologyMap topologyMapToSet{};
     int getDrmParamValueResult = 1234;
     uint32_t releaseInterruptCalled = 0;
     uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;

@@ -472,7 +472,9 @@ bool IoctlHelperI915::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQuery
     auto retVal = this->translateTopologyInfo(topologyInfo, topologyData, mapping);
 
     topologyMap.clear();
-    topologyMap[0] = mapping;
+    if (!mapping.sliceIndices.empty()) {
+        topologyMap[0] = mapping;
+    }
 
     return retVal;
 }
