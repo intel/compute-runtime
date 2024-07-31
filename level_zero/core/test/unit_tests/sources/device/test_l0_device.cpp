@@ -6117,21 +6117,21 @@ TEST(ExtensionLookupTest, givenLookupMapWhenAskingForZeIntelGetDriverVersionStri
     EXPECT_NE(nullptr, ExtensionFunctionAddressHelper::getExtensionFunctionAddress("zeIntelGetDriverVersionString"));
 }
 
-template <bool BlockLoad, bool BlockStore>
+template <bool blockLoad, bool blockStore>
 class Mock2DTransposeProductHelper : public MockProductHelperHw<IGFX_UNKNOWN> {
   public:
     bool supports2DBlockLoad() const override {
-        return BlockLoad;
+        return blockLoad;
     }
     bool supports2DBlockStore() const override {
-        return BlockStore;
+        return blockStore;
     }
 };
 
-template <bool BlockLoad, bool BlockStore>
+template <bool blockLoad, bool blockStore>
 class Mock2DTransposeDevice : public MockDeviceImp {
   public:
-    using mockProductHelperType = Mock2DTransposeProductHelper<BlockLoad, BlockStore>;
+    using mockProductHelperType = Mock2DTransposeProductHelper<blockLoad, blockStore>;
 
     using MockDeviceImp::MockDeviceImp;
 
