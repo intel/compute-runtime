@@ -434,11 +434,6 @@ bool ProductHelperHw<gfxProduct>::overrideCacheableForDcFlushMitigation(Allocati
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    return hwInfo.gtSystemInfo.MaxSubSlicesSupported;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
     return false;
 }
