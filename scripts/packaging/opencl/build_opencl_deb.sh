@@ -91,19 +91,20 @@ fi
 echo "NEO_CURRENT_PLATFORMS_SUPPORT: ${NEO_CURRENT_PLATFORMS_SUPPORT}"
 echo "NEO_LEGACY_PLATFORMS_SUPPORT: ${NEO_LEGACY_PLATFORMS_SUPPORT}"
 
+export NEO_OCLOC_VERSION_MAJOR=${NEO_OCL_VERSION_MAJOR}
+export NEO_OCLOC_VERSION_MINOR=${NEO_OCL_VERSION_MINOR}
+
 if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLATFORMS_SUPPORT}" == "TRUE" ]]; then
     echo "Building Legacy package"
-    export NEO_OCLOC_VERSION_MAJOR=24
-    export NEO_OCLOC_VERSION_MINOR=22
-    perl -pi -e "s/^Package: intel-opencl-icd$/Package: intel-opencl-icd-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/control"
+    export NEO_OCLOC_VERSION_MODE=0
+    perl -pi -e "s/^Package: intel-opencl-icd$/Package: intel-opencl-icd-legacy1/" "$BUILD_DIR/debian/control"
 else
     echo "Building Current/Full package"
-    export NEO_OCLOC_VERSION_MAJOR=${NEO_OCL_VERSION_MAJOR}
-    export NEO_OCLOC_VERSION_MINOR=${NEO_OCL_VERSION_MINOR}
+    export NEO_OCLOC_VERSION_MODE=1
 fi
 
-perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/postinst"
-perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/prerm"
+perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/postinst"
+perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/prerm"
 
 #needs a top level CMAKE file
 cat << EOF | tee $BUILD_DIR/CMakeLists.txt

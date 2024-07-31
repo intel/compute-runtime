@@ -107,33 +107,35 @@ fi
 echo "NEO_CURRENT_PLATFORMS_SUPPORT: ${NEO_CURRENT_PLATFORMS_SUPPORT}"
 echo "NEO_LEGACY_PLATFORMS_SUPPORT: ${NEO_LEGACY_PLATFORMS_SUPPORT}"
 
+export NEO_OCLOC_VERSION_MAJOR=${NEO_VERSION_MAJOR}
+export NEO_OCLOC_VERSION_MINOR=${NEO_VERSION_MINOR}
+
 if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLATFORMS_SUPPORT}" == "TRUE" ]]; then
     echo "Building Legacy package"
-    export NEO_OCLOC_VERSION_MAJOR=24
-    export NEO_OCLOC_VERSION_MINOR=22
-    perl -pi -e "s/^Package: intel-opencl-icd$/Package: intel-opencl-icd-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/control"
-    mv -v "$BUILD_DIR/debian/intel-opencl-icd.install" "$BUILD_DIR/debian/intel-opencl-icd-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.install"
+    export NEO_OCLOC_VERSION_MODE=0
+    export NEO_LEGACY_VERSION=legacy1
+    perl -pi -e "s/^Package: intel-opencl-icd$/Package: intel-opencl-icd-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
+    mv -v "$BUILD_DIR/debian/intel-opencl-icd.install" "$BUILD_DIR/debian/intel-opencl-icd-${NEO_LEGACY_VERSION}.install"
 
-    perl -pi -e "s/^Package: intel-ocloc$/Package: intel-ocloc-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/control"
-    mv -v "$BUILD_DIR/debian/intel-ocloc.install" "$BUILD_DIR/debian/intel-ocloc-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.install" 
-    mv -v "$BUILD_DIR/debian/intel-ocloc.postinst" "$BUILD_DIR/debian/intel-ocloc-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.postinst" 
-    mv -v "$BUILD_DIR/debian/intel-ocloc.prerm" "$BUILD_DIR/debian/intel-ocloc-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.prerm" 
-    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.postinst"
-    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.prerm"
+    perl -pi -e "s/^Package: intel-ocloc$/Package: intel-ocloc-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
+    mv -v "$BUILD_DIR/debian/intel-ocloc.install" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.install" 
+    mv -v "$BUILD_DIR/debian/intel-ocloc.postinst" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst" 
+    mv -v "$BUILD_DIR/debian/intel-ocloc.prerm" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm" 
+    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst"
+    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm"
     perl -i -lne 'if (/^Package: intel-ocloc-dev$/ .. /^$/) { print if !$flag } else {$flag=1; print}' "$BUILD_DIR/debian/control"
 
     if [ "${NEO_BUILD_WITH_L0}" == "TRUE" ]; then
-        perl -pi -e "s/^Package: libze-intel-gpu1$/Package: libze-intel-gpu1-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/control"
-        mv -v "$BUILD_DIR/debian/libze-intel-gpu1.install" "$BUILD_DIR/debian/libze-intel-gpu1-${NEO_OCLOC_VERSION_MAJOR}-${NEO_OCLOC_VERSION_MINOR}.install" 
+        perl -pi -e "s/^Package: libze-intel-gpu1$/Package: libze-intel-gpu1-${NEO_LEGACY_VERSION}/" "$BUILD_DIR/debian/control"
+        mv -v "$BUILD_DIR/debian/libze-intel-gpu1.install" "$BUILD_DIR/debian/libze-intel-gpu1-${NEO_LEGACY_VERSION}.install" 
     fi
     perl -i -lne 'if (/^Package: libze-intel-gpu-dev$/ .. /^$/) { print if !$flag } else {$flag=1; print}' "$BUILD_DIR/debian/control"
 else
     echo "Building Current/Full package"
-    export NEO_OCLOC_VERSION_MAJOR=${NEO_VERSION_MAJOR}
-    export NEO_OCLOC_VERSION_MINOR=${NEO_VERSION_MINOR}
+    export NEO_OCLOC_VERSION_MODE=1
 
-    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/intel-ocloc.postinst"
-    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}/" "$BUILD_DIR/debian/intel-ocloc.prerm"
+    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.postinst"
+    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.prerm"
 fi
 
 

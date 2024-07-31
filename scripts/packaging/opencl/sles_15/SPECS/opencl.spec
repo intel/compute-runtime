@@ -9,6 +9,7 @@
 %global NEO_RELEASE_WITH_REGKEYS FALSE
 %global NEO_ENABLE_XE_EU_DEBUG_SUPPORT FALSE
 %global NEO_I915_PRELIM_HEADERS_DIR %{nil}
+%global NEO_OCLOC_VERSION_MODE 1
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -114,12 +115,12 @@ fi
 /usr/share/doc/intel-ocloc%{?name_suffix}/copyright
 
 %post -n intel-ocloc%{?name_suffix}
-update-alternatives --quiet --install /usr/bin/ocloc ocloc /usr/bin/ocloc-%{NEO_OCL_VERSION_MAJOR}.%{NEO_OCL_VERSION_MINOR} %{NEO_OCL_VERSION_MAJOR}%{NEO_OCL_VERSION_MINOR}
+update-alternatives --quiet --install /usr/bin/ocloc ocloc /usr/bin/ocloc-%{NEO_OCL_VERSION_MAJOR}.%{NEO_OCL_VERSION_MINOR}.%{NEO_OCLOC_VERSION_MODE} %{NEO_OCL_VERSION_MAJOR}%{NEO_OCL_VERSION_MINOR}%{NEO_OCLOC_VERSION_MODE}
 
 %preun -n intel-ocloc%{?name_suffix}
 if [ $1 == "0" ]; then
     # uninstall
-    update-alternatives --quiet --remove ocloc /usr/bin/ocloc-%{NEO_OCL_VERSION_MAJOR}.%{NEO_OCL_VERSION_MINOR}
+    update-alternatives --quiet --remove ocloc /usr/bin/ocloc-%{NEO_OCL_VERSION_MAJOR}.%{NEO_OCL_VERSION_MINOR}.%{NEO_OCLOC_VERSION_MODE}
 fi
 
 %changelog
