@@ -28,6 +28,11 @@ struct MockSysmanProductHelper : public L0::Sysman::SysmanProductHelperHw<IGFX_U
     ADDMETHOD_NOBASE(isFrequencySetRangeSupported, bool, false, ());
     ADDMETHOD_NOBASE(isPowerSetLimitSupported, bool, false, ());
     ADDMETHOD_NOBASE(isUpstreamPortConnected, bool, true, ());
+
+    ze_result_t mockGetPciStatsResult = ZE_RESULT_SUCCESS;
+    ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) override {
+        return mockGetPciStatsResult;
+    }
 };
 
 } // namespace ult

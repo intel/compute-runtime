@@ -255,6 +255,7 @@ bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> key
     uint64_t offset = telemOffset + containerOffset->second;
     ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint32_t), offset, &value);
     if (bytesRead != sizeof(uint32_t)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for %s key \n", __FUNCTION__, key.c_str());
         return false;
     }
     return true;
@@ -271,6 +272,7 @@ bool PlatformMonitoringTech::readValue(const std::map<std::string, uint64_t> key
     uint64_t offset = telemOffset + containerOffset->second;
     ssize_t bytesRead = NEO::PmtUtil::readTelem(telemDir.data(), sizeof(uint64_t), offset, &value);
     if (bytesRead != sizeof(uint64_t)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read value for %s key \n", __FUNCTION__, key.c_str());
         return false;
     }
     return true;

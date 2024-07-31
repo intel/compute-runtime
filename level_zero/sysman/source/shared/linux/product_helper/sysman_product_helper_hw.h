@@ -74,6 +74,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Device
     bool isUpstreamPortConnected() override;
 
+    // Pci
+    ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) override;
+
     ~SysmanProductHelperHw() override = default;
 
     const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() override;

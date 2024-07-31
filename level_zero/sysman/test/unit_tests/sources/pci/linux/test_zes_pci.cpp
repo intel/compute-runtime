@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mocks/mock_sysman_product_helper.h"
 #include "level_zero/sysman/test/unit_tests/sources/pci/linux/mock_sysfs_pci.h"
 
 #include <string>
@@ -607,9 +608,33 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenV
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
 }
 
-TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStatsThenVerifyzetSysmanPciGetStatsCallReturnNotSupported) {
+TEST_F(ZesPciFixture, GivenValidLinuxPciImpInstanceAndGetPciStatsFailsFromSysmanProductHelperWhenGetStatsIsCalledThenCallFails) {
+    std::unique_ptr<MockSysmanProductHelper> pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    pMockSysmanProductHelper->mockGetPciStatsResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    std::unique_ptr<PublicLinuxPciImp> pMockLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    pLinuxSysmanImp->pSysmanProductHelper = std::move(pMockSysmanProductHelper);
+
+    auto pOsPciPrev = pPciImp->pOsPci;
+    pPciImp->pOsPci = pMockLinuxPciImp.get();
+
     zes_pci_stats_t stats;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetStats(device, &stats));
+
+    pPciImp->pOsPci = pOsPciPrev;
+}
+
+TEST_F(ZesPciFixture, GivenValidLinuxPciImpInstanceWhenGetStatsIsCalledThenCallSucceeds) {
+    std::unique_ptr<SysmanProductHelper> pMockSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
+    std::unique_ptr<PublicLinuxPciImp> pMockLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    pLinuxSysmanImp->pSysmanProductHelper = std::move(pMockSysmanProductHelper);
+
+    auto pOsPciPrev = pPciImp->pOsPci;
+    pPciImp->pOsPci = pMockLinuxPciImp.get();
+
+    zes_pci_stats_t stats;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetStats(device, &stats));
+
+    pPciImp->pOsPci = pOsPciPrev;
 }
 
 TEST_F(ZesPciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {

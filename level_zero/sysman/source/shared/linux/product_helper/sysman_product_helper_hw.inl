@@ -301,5 +301,10 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+};
+
 } // namespace Sysman
 } // namespace L0

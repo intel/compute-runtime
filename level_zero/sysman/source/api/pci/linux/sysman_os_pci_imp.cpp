@@ -298,7 +298,8 @@ ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
 }
 
 ze_result_t LinuxPciImp::getStats(zes_pci_stats_t *stats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPciStats(stats, pLinuxSysmanImp);
 }
 
 bool LinuxPciImp::getPciConfigMemory(std::string pciPath, std::vector<uint8_t> &configMem) {

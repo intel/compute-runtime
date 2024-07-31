@@ -81,6 +81,7 @@ constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
 constexpr uint32_t unknownMemoryType = UINT32_MAX;
 #define BITS(x, at, width) (((x) >> (at)) & ((1 << (width)) - 1))
+#define PACK_INTO_64BIT(msb, lsb) ((static_cast<uint64_t>(msb) << 32) | static_cast<uint64_t>(lsb))
 
 const std::map<std::string, zes_engine_type_flag_t> sysfsEngineMapToLevel0EngineType = {
     {"rcs", ZES_ENGINE_TYPE_FLAG_RENDER},

@@ -16,6 +16,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_power_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_pmt_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_device_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sysman_product_helper_pci_tests.cpp
   )
 endif()
 add_subdirectories()

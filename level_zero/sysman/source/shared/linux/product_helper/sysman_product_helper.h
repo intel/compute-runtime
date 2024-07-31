@@ -99,6 +99,9 @@ class SysmanProductHelper {
     // Device
     virtual bool isUpstreamPortConnected() = 0;
 
+    // Pci
+    virtual ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) = 0;
+
     virtual ~SysmanProductHelper() = default;
     virtual const std::map<std::string, std::map<std::string, uint64_t>> *getGuidToKeyOffsetMap() = 0;
 
