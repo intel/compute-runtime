@@ -218,7 +218,7 @@ HWTEST2_F(CommandListAppendRangesBarrierXe2AndLater, givenCallToAppendRangesBarr
 
 using CommandListXe2AndLaterPreemptionTest = Test<ModuleMutableCommandListFixture>;
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKernelFlagRequiresDisablePreemptionThenExpectInterfaceDescriptorDataDisablePreemption, Platforms) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto &container = commandList->getCmdContainer();
     auto &cmdListStream = *container.getCommandStream();
@@ -241,16 +241,18 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKerne
     auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
-    auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
-    auto &idd = walkerCmd->getInterfaceDescriptor();
-    EXPECT_FALSE(idd.getThreadPreemption());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
+    std::visit([](auto &&walker) {
+        auto &idd = walker->getInterfaceDescriptor();
+        EXPECT_FALSE(idd.getThreadPreemption());
+    },
+               walkerVariant);
 }
 
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
           givenAppendLaunchKernelWhenKernelRequiresDisablePreemptionForRayTracingAndKernelIsUsingRayTracingCallsThenExpectInterfaceDescriptorDataDisablePreemption,
           Platforms) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto &container = commandList->getCmdContainer();
     auto &cmdListStream = *container.getCommandStream();
@@ -276,9 +278,12 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
-    auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
-    auto &idd = walkerCmd->getInterfaceDescriptor();
-    EXPECT_FALSE(idd.getThreadPreemption());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
+    std::visit([](auto &&walker) {
+        auto &idd = walker->getInterfaceDescriptor();
+        EXPECT_FALSE(idd.getThreadPreemption());
+    },
+               walkerVariant);
 
     neoDevice->rtMemoryBackedBuffer = nullptr;
 }
@@ -286,8 +291,7 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
           givenAppendLaunchKernelWhenKernelRequiresDisablePreemptionForRayTracingAndKernelIsNotUsingRayTracingCallsThenExpectInterfaceDescriptorDataEnablePreemption,
           Platforms) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto &container = commandList->getCmdContainer();
     auto &cmdListStream = *container.getCommandStream();
@@ -311,16 +315,18 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
-    auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
-    auto &idd = walkerCmd->getInterfaceDescriptor();
-    EXPECT_TRUE(idd.getThreadPreemption());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
+    std::visit([](auto &&walker) {
+        auto &idd = walker->getInterfaceDescriptor();
+        EXPECT_TRUE(idd.getThreadPreemption());
+    },
+               walkerVariant);
 }
 
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
           givenAppendLaunchKernelWhenKernelDoNotRequireDisablePreemptionForRayTracingAndKernelIsUsingRayTracingCallsThenExpectInterfaceDescriptorDataEnablePreemption,
           Platforms) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto &container = commandList->getCmdContainer();
     auto &cmdListStream = *container.getCommandStream();
@@ -346,9 +352,12 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, walkerCmds.size());
 
-    auto walkerCmd = reinterpret_cast<DefaultWalkerType *>(*walkerCmds[0]);
-    auto &idd = walkerCmd->getInterfaceDescriptor();
-    EXPECT_TRUE(idd.getThreadPreemption());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
+    std::visit([](auto &&walker) {
+        auto &idd = walker->getInterfaceDescriptor();
+        EXPECT_TRUE(idd.getThreadPreemption());
+    },
+               walkerVariant);
 
     neoDevice->rtMemoryBackedBuffer = nullptr;
 }

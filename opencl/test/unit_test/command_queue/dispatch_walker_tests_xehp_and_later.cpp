@@ -1651,7 +1651,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
             givenStaticPartitioningWhenEnqueueingNonUnifromKernelThenMultipleActivePartitionsAreSetInCsrAndWparidRegisterIsReconfiguredToStatic) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
@@ -1671,17 +1672,28 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
 
     auto firstComputeWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(hwParser.cmdList.begin(), hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), firstComputeWalkerItor);
-    auto computeWalker = reinterpret_cast<DefaultWalkerType *>(*firstComputeWalkerItor);
-    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(8u, computeWalker->getPartitionSize());
-
     auto nextCmdItor = firstComputeWalkerItor;
     ++nextCmdItor;
 
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstComputeWalkerItor);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(8u, walker->getPartitionSize());
+    },
+               walkerVariant);
+
     auto secondComputeWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(nextCmdItor, hwParser.cmdList.end());
     ASSERT_NE(hwParser.cmdList.end(), secondComputeWalkerItor);
-    computeWalker = reinterpret_cast<DefaultWalkerType *>(*secondComputeWalkerItor);
-    EXPECT_EQ(DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
+
+    WalkerVariant walkerVariant2 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*secondComputeWalkerItor);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker->getPartitionType());
+    },
+               walkerVariant2);
 
     auto workPartitionAllocationGpuVa = commandStreamReceiver.getWorkPartitionAllocationGpuAddress();
     auto expectedRegister = 0x221Cu;
