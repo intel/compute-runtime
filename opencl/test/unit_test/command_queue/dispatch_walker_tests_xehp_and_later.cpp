@@ -1383,6 +1383,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     debugManager.flags.EnableWalkerPartition.set(1u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1392,15 +1393,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledAndForceSynchronizeWalkerInWpariModeThenWalkerPartitionLogicIsExecuted) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     debugManager.flags.EnableWalkerPartition.set(1u);
     debugManager.flags.SynchronizeWalkerInWparidMode.set(1);
@@ -1411,15 +1419,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithPartitionLogicDisabledThenWalkerPartitionLogicIsNotExecuted) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     debugManager.flags.EnableWalkerPartition.set(0u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
@@ -1429,15 +1444,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker->getPartitionType());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCreatedWithMultiEngineSupportAndEnqueueIsDoneThenWalkerIsPartitioned) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     debugManager.flags.EnableWalkerPartition.set(1u);
 
@@ -1448,10 +1470,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenQueueIsCre
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(64u, computeWalker->getPartitionSize());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(64u, walker->getPartitionSize());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithDebugRegistryOverridesThenWalkerContainsProperParameters) {
@@ -1461,6 +1489,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     debugManager.flags.EnableWalkerPartition.set(1u);
     debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {1, 1, 1};
@@ -1468,12 +1497,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker->getPartitionType());
+        EXPECT_EQ(1u, walker->getPartitionSize());
+    },
+               walkerVariant);
+
     auto timestampPacket = cmdQ->timestampPacketContainer->peekNodes().at(0);
     auto expectedPartitionCount = timestampPacket->getPacketsUsed();
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, computeWalker->getPartitionType());
-    EXPECT_EQ(1u, computeWalker->getPartitionSize());
+
     EXPECT_EQ(expectedPartitionCount, static_cast<unsigned int>(debugManager.flags.ExperimentalSetWalkerPartitionCount.get()));
 }
 
@@ -1481,6 +1518,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     debugManager.flags.EnableWalkerPartition.set(1u);
     debugManager.flags.ExperimentalSetWalkerPartitionCount.set(1u);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {1, 1, 1};
@@ -1488,11 +1526,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
-    EXPECT_EQ(0u, computeWalker->getPartitionSize());
-    EXPECT_FALSE(computeWalker->getWorkloadPartitionEnable());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker->getPartitionType());
+        EXPECT_EQ(0u, walker->getPartitionSize());
+        EXPECT_FALSE(walker->getWorkloadPartitionEnable());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoLocalMemorySupportThenDoNotPartition) {
@@ -1500,6 +1544,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoL
     debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
     VariableBackup<bool> backup(&OSInterface::osEnableLocalMemory, false);
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {1, 1, 1};
@@ -1507,11 +1552,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenThereIsNoL
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
-    EXPECT_EQ(0u, computeWalker->getPartitionSize());
-    EXPECT_FALSE(computeWalker->getWorkloadPartitionEnable());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_DISABLED, walker->getPartitionType());
+        EXPECT_EQ(0u, walker->getPartitionSize());
+        EXPECT_FALSE(walker->getWorkloadPartitionEnable());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsBlockedOnUserEventThenDoNotPartition) {
@@ -1521,6 +1572,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsB
     debugManager.flags.EnableWalkerPartition.set(1u);
     debugManager.flags.ExperimentalSetWalkerPartitionCount.set(2u);
     debugManager.flags.ExperimentalSetWalkerPartitionType.set(2u);
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     cl_event userEvent = clCreateUserEvent(context.get(), nullptr);
 
@@ -1532,11 +1584,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenEnqueueIsB
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ->getUltCommandStreamReceiver().lastFlushedCommandStream);
     hwParser.findHardwareCommands<FamilyType>(&cmdQ->getGpgpuCommandStreamReceiver().getIndirectHeap(IndirectHeap::Type::dynamicState, 0));
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, computeWalker->getPartitionType());
-    EXPECT_EQ(1u, computeWalker->getPartitionSize());
-    EXPECT_TRUE(computeWalker->getWorkloadPartitionEnable());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker->getPartitionType());
+        EXPECT_EQ(1u, walker->getPartitionSize());
+        EXPECT_TRUE(walker->getWorkloadPartitionEnable());
+    },
+               walkerVariant);
 
     clReleaseEvent(userEvent);
 }
@@ -1564,6 +1622,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
         GTEST_SKIP();
     }
     debugManager.flags.EnableWalkerPartition.set(1u);
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {128, 1, 1};
@@ -1572,10 +1631,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenOpenClWhe
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(8u, walker->getPartitionSize());
+    },
+               walkerVariant);
 
     GenCmdList storeDataImmList = hwParser.getCommandsList<MI_STORE_DATA_IMM>();
     EXPECT_EQ(0u, storeDataImmList.size());
@@ -1602,6 +1667,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     EXPECT_EQ(1u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
@@ -1609,10 +1675,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestDynamicPartition
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(8u, walker->getPartitionSize());
+    },
+               walkerVariant);
 }
 
 struct XeHPAndLaterDispatchWalkerBasicTestStaticPartition : public XeHPAndLaterDispatchWalkerBasicTest {
@@ -1636,6 +1707,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
     size_t gws[] = {128, 1, 1};
     size_t lws[] = {8, 1, 1};
     auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     EXPECT_EQ(2u, commandStreamReceiver.activePartitions);
     cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
@@ -1643,10 +1715,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(8u, computeWalker->getPartitionSize());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(8u, walker->getPartitionSize());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTestStaticPartition,
@@ -2023,6 +2100,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
@@ -2034,16 +2112,22 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(2u, computeWalker->getPartitionSize());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(2u, walker->getPartitionSize());
+    },
+               walkerVariant);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatDoesntPreferSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnAllTiles) {
     if (!OSInterface::osEnableLocalMemory) {
         GTEST_SKIP();
     }
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     size_t gws[] = {2, 1, 1};
@@ -2055,8 +2139,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, give
 
     ClHardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::DefaultWalkerType *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::DefaultWalkerType::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-    EXPECT_EQ(1u, computeWalker->getPartitionSize());
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(hwParser.cmdWalker);
+    std::visit([](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+
+        ASSERT_NE(nullptr, walker);
+        EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker->getPartitionType());
+        EXPECT_EQ(1u, walker->getPartitionSize());
+    },
+               walkerVariant);
 }
