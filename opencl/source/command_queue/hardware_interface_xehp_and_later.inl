@@ -62,7 +62,6 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
 
-    size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
     size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
     size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
     auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
@@ -103,7 +102,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         }
     }
 
-    GpgpuWalkerHelper<GfxFamily>::template setGpgpuWalkerThreadData<WalkerType>(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
+    GpgpuWalkerHelper<GfxFamily>::template setGpgpuWalkerThreadData<WalkerType>(&walkerCmd, kernelInfo.kernelDescriptor, startWorkGroups,
                                                                                 numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                                                 localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
 

@@ -25,7 +25,6 @@ template <typename WalkerType>
 size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     WalkerType *walkerCmd,
     const KernelDescriptor &kernelDescriptor,
-    const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
     const size_t numWorkGroups[3],
     const size_t localWorkSizesIn[3],

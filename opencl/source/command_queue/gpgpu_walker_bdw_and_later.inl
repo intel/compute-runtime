@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,6 @@ template <typename WalkerType>
 inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     WalkerType *walkerCmd,
     const KernelDescriptor &kernelDescriptor,
-    const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
     const size_t numWorkGroups[3],
     const size_t localWorkSizesIn[3],

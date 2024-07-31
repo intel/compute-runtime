@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,6 @@ class GpgpuWalkerHelper {
     static size_t setGpgpuWalkerThreadData(
         WalkerType *walkerCmd,
         const KernelDescriptor &kernelDescriptor,
-        const size_t globalOffsets[3],
         const size_t startWorkGroups[3],
         const size_t numWorkGroups[3],
         const size_t localWorkSizesIn[3],

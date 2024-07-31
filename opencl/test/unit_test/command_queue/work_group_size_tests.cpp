@@ -47,7 +47,6 @@ struct WorkGroupSizeBase {
 
     template <typename FamilyType>
     void verify(uint32_t simdSize, size_t dimX, size_t dimY, size_t dimZ) {
-        size_t globalOffsets[] = {0, 0, 0};
         size_t workItems[] = {
             dimX,
             dimY,
@@ -95,7 +94,7 @@ struct WorkGroupSizeBase {
             Math::divideAndRoundUp(workItems[1], workGroupSize[1]),
             Math::divideAndRoundUp(workItems[2], workGroupSize[2])};
         KernelDescriptor kd;
-        GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, kd, globalOffsets, workGroupsStart, workGroupsNum,
+        GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, kd, workGroupsStart, workGroupsNum,
                                                                 workGroupSize, simdSize, dims, true, false, 0u);
 
         // And check if it is programmed correctly

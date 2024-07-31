@@ -127,7 +127,6 @@ HWTEST_F(DispatchWalkerTest, givenSimd1WhenSetGpgpuWalkerThreadDataThenSimdInWal
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    size_t globalOffsets[] = {0, 0, 0};
     size_t startWorkGroups[] = {0, 0, 0};
     size_t numWorkGroups[] = {1, 1, 1};
     size_t localWorkSizesIn[] = {32, 1, 1};
@@ -135,7 +134,7 @@ HWTEST_F(DispatchWalkerTest, givenSimd1WhenSetGpgpuWalkerThreadDataThenSimdInWal
 
     KernelDescriptor kd;
     GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
-        computeWalker, kd, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 5u);
+        computeWalker, kd, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 5u);
     EXPECT_EQ(computeWalker->getSimdSize(), 32 >> 4);
 }
 

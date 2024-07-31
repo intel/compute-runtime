@@ -46,7 +46,6 @@ using WalkerDispatchTest = ::testing::Test;
 struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
     void setUp() {
         LinearStreamFixture::setUp();
-        memset(globalOffsets, 0, sizeof(globalOffsets));
         memset(startWorkGroups, 0, sizeof(startWorkGroups));
 
         localWorkSizesIn[0] = 16;
@@ -71,7 +70,6 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 
     DebugManagerStateRestore restore;
 
-    size_t globalOffsets[3];
     size_t startWorkGroups[3];
     size_t numWorkGroups[3];
     size_t localWorkSizesIn[3];
@@ -96,7 +94,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimOne
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     auto localWorkSize = GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
-        computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 5u);
+        computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 5u);
     EXPECT_EQ(localWorkSizesIn[0], localWorkSize);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -117,7 +115,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimTwo
     localWorkSizesIn[1] = 8;
 
     auto localWorkSize = GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
-        computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 0u);
+        computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 0u);
     EXPECT_EQ(localWorkSizesIn[0] * localWorkSizesIn[1], localWorkSize);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -138,7 +136,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWorkDimThr
     localWorkSizesIn[2] = 2;
 
     auto localWorkSize = GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(
-        computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 0u);
+        computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups, localWorkSizesIn, simd, 3, true, false, 0u);
     EXPECT_EQ(localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2], localWorkSize);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -157,7 +155,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
 
     kernel->kernelInfo.setLocalIds({1, 0, 0});
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 1, false, false, 4u);
 
     auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
@@ -183,7 +181,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     localWorkSizesIn[1] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[2] = 1;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 2, false, false, 0u);
 
     auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
@@ -208,7 +206,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkThree
     localWorkSizesIn[2] = 16;
     localWorkSizesIn[0] = localWorkSizesIn[1] = 1;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 2, false, false, 0u);
 
     auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
@@ -239,7 +237,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDifferent
     for (uint32_t i = 0; i < 4; i++) {
         for (uint32_t j = 0; j < 3; j++) {
             *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
-            GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+            GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                                     localWorkSizesIn, simdProgramming[j][0], 2,
                                                                     walkerInput[i][0], walkerInput[i][1], 0u);
             EXPECT_EQ(simdProgramming[j][1], computeWalker->getMessageSimd());
@@ -264,7 +262,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugFlag
     for (uint32_t i = 0; i < 4; i++) {
         for (uint32_t j = 0; j < 3; j++) {
             *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
-            GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+            GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                                     localWorkSizesIn, simdProgramming[j], 2,
                                                                     walkerInput[i][0], walkerInput[i][1], 0u);
             EXPECT_EQ(1u, computeWalker->getMessageSimd());
@@ -281,7 +279,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTw
     kernel->kernelInfo.setLocalIds({1, 1, 0});
     localWorkSizesIn[1] = 8;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 2, false, false, 0u);
 
     auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
@@ -306,7 +304,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
     localWorkSizesIn[1] = 8;
     localWorkSizesIn[2] = 2;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 3, false, false, 0u);
     auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
     auto localY = static_cast<size_t>(computeWalker->getLocalYMaximum() + 1);
@@ -330,7 +328,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
     localWorkSizesIn[1] = 8;
     localWorkSizesIn[2] = 2;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 3, false, false, 0u);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -352,7 +350,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
     localWorkSizesIn[1] = 8;
     localWorkSizesIn[2] = 2;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 3, true, false, 0u);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -370,7 +368,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
     DefaultWalkerType *computeWalker = static_cast<DefaultWalkerType *>(linearStream.getSpace(sizeof(DefaultWalkerType)));
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 1, true, true, 0u);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -389,7 +387,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimOn
 
     kernel->kernelInfo.setLocalIds({1, 0, 0});
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 1, true, true, 0u);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -408,7 +406,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
     *computeWalker = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
 
     kernel->kernelInfo.setLocalIds({1, 1, 1});
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 3, true, true, 0u);
 
     EXPECT_EQ(0u, computeWalker->getLocalXMaximum());
@@ -430,7 +428,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
     localWorkSizesIn[1] = 8;
     localWorkSizesIn[2] = 2;
 
-    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups, numWorkGroups,
+    GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(computeWalker, kernel->kernelInfo.kernelDescriptor, startWorkGroups, numWorkGroups,
                                                             localWorkSizesIn, simd, 3, false, true, 5u);
     auto localX = static_cast<size_t>(computeWalker->getLocalXMaximum() + 1);
     auto localY = static_cast<size_t>(computeWalker->getLocalYMaximum() + 1);
