@@ -70,6 +70,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     this->device->activateMetricGroups();
 
+    if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
+        this->csr->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
+    }
+
     auto lockCSR = this->csr->obtainUniqueOwnership();
     auto neoDevice = device->getNEODevice();
 

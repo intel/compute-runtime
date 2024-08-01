@@ -248,6 +248,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::flushImmediateTaskStateless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
     }
 
+    SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override {
+        initializeDeviceWithFirstSubmissionCalled++;
+        return BaseClass::initializeDeviceWithFirstSubmission(device);
+    }
+
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
         writeMemoryParams.totalCallCount++;
         if (isChunkCopy) {
@@ -535,6 +540,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t initDirectSubmissionCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t pollForCompletionCalled = 0;
+    uint32_t initializeDeviceWithFirstSubmissionCalled = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;

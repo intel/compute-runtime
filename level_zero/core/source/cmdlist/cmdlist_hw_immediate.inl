@@ -1040,6 +1040,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
     auto queue = copyOffloadSubmission ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
     this->latestFlushIsCopyOffload = copyOffloadSubmission;
 
+    if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
+        static_cast<CommandQueueImp *>(queue)->getCsr()->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
+    }
+
     if (inputRet == ZE_RESULT_SUCCESS) {
         if (this->isFlushTaskSubmissionEnabled) {
             if (signalEvent && (NEO::debugManager.flags.TrackNumCsrClientsOnSyncPoints.get() != 0)) {

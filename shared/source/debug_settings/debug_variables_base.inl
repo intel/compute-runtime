@@ -292,6 +292,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceScratchAndMTPBufferSizeMode, -1, "-1: defau
 DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in CFE_STATE on Xe2+, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, StandaloneInOrderTimestampAllocationEnabled, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use internal allocations, instead of Event pool for timestamps")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlushWithWrite, -1, "-1: ignore. >=0: Force PostSync cache flush and override postSync immediate write address to given value")
+DECLARE_DEBUG_VARIABLE(int32_t, DeferStateInitSubmissionToFirstRegularUsage, -1, "-1: ignore, 0: disabled, 1: enabled. If set, instead of initializing at Device creation, submit initial state during first usage (eg. kernel submission)")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

@@ -149,6 +149,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     TagNodeBase *hwTimeStamps = nullptr;
     CommandStreamReceiver &computeCommandStreamReceiver = getGpgpuCommandStreamReceiver();
 
+    if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
+        computeCommandStreamReceiver.ensurePrimaryCsrInitialized(this->device->getDevice());
+    }
+
     if (NEO::debugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
         auto pSvmAllocMgr = this->context->getSVMAllocsManager();
         pSvmAllocMgr->prefetchSVMAllocs(this->getDevice(), computeCommandStreamReceiver);
@@ -1399,6 +1403,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
 template <typename GfxFamily>
 template <uint32_t cmdType>
 cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr, EventBuilder *pExternalEventBuilder) {
+    if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
+        bcsCsr.ensurePrimaryCsrInitialized(this->device->getDevice());
+    }
+
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> commandStreamReceiverOwnership;
 

@@ -574,7 +574,10 @@ bool Device::initializeEngines() {
 
         if (initializeDevice) {
             engine.commandStreamReceiver->initializeResources(false);
-            engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
+
+            if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != 1) {
+                engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
+            }
         }
         deviceCsrIndex++;
     }

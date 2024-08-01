@@ -540,6 +540,8 @@ class CommandStreamReceiver {
         return !testTaskCountReady(getTagAddress(), this->taskCount);
     }
 
+    void ensurePrimaryCsrInitialized(Device &device);
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

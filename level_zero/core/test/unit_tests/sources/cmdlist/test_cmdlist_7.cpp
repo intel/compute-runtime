@@ -1990,6 +1990,127 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListThenEa
     commandList2->destroy();
 }
 
+struct DeferredFirstSubmissionCmdListTests : public Test<ModuleFixture> {
+    void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(5);
+        debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+        Test<ModuleFixture>::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeHpCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    createKernel();
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    ze_command_list_handle_t commandListHandle1, commandListHandle2;
+
+    auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandListImmediate(&desc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
+    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+
+    EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
+
+    auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(static_cast<UltCommandStreamReceiver<FamilyType> *>(commandList2->getCsr(false))->primaryCsr);
+    EXPECT_NE(nullptr, primaryCsr);
+    EXPECT_NE(commandList2->getCsr(false), primaryCsr);
+
+    EXPECT_EQ(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, commandList1->getCsr(false)->peekTaskCount());
+    EXPECT_EQ(0u, commandList2->getCsr(false)->peekTaskCount());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_NE(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_NE(0u, commandList2->getCsr(false)->peekTaskCount());
+
+    commandList1->destroy();
+    commandList2->destroy();
+}
+
+HWTEST2_F(DeferredFirstSubmissionCmdListTests, givenDebugFlagSetWhenSubmittingToPrimaryThenDeferFirstSubmission, IsAtLeastXeHpCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    createKernel();
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    ze_command_list_handle_t commandListHandle1, commandListHandle2;
+
+    auto result = device->createCommandListImmediate(&desc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandListImmediate(&desc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
+    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+
+    EXPECT_NE(commandList1->getCsr(false), commandList2->getCsr(false));
+
+    auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(static_cast<UltCommandStreamReceiver<FamilyType> *>(commandList2->getCsr(false))->primaryCsr);
+    EXPECT_EQ(commandList1->getCsr(false), primaryCsr);
+
+    EXPECT_EQ(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, commandList1->getCsr(false)->peekTaskCount());
+    EXPECT_EQ(0u, commandList2->getCsr(false)->peekTaskCount());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    commandList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_NE(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, commandList2->getCsr(false)->peekTaskCount());
+
+    commandList1->destroy();
+    commandList2->destroy();
+}
+
 TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithInterruptFlagThenPassInterruptFlagToContext) {
     class MockOsContext : public OsContext {
       public:

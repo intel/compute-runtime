@@ -2797,6 +2797,67 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenContextGroupWhenCreatingQueuesT
     EXPECT_EQ(csr1->primaryCsr, csr2->primaryCsr);
 }
 
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenSubmittingThenDeferFirstDeviceSubmission) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    MockContext context{&clDevice};
+    cl_command_queue_properties computeProperties[5] = {};
+    cl_command_queue_properties copyProperties[5] = {};
+
+    fillProperties(computeProperties, 1, 0);
+    fillProperties(copyProperties, 1, 0);
+
+    auto buffer = std::unique_ptr<Buffer>{BufferHelper<>::create(&context)};
+
+    MockCommandQueueHw<FamilyType> queueBcs0(&context, context.getDevice(0), copyProperties, false);
+    MockCommandQueueHw<FamilyType> queueBcs1(&context, context.getDevice(0), copyProperties, false);
+    MockCommandQueueHw<FamilyType> queueCompute0(&context, context.getDevice(0), computeProperties, false);
+    MockCommandQueueHw<FamilyType> queueCompute1(&context, context.getDevice(0), computeProperties, false);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queueBcs0.bcsEngines[0]->osContext->getEngineType());
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, queueBcs1.bcsEngines[0]->osContext->getEngineType());
+    EXPECT_TRUE(EngineHelpers::isComputeEngine(queueCompute0.getGpgpuCommandStreamReceiver().getOsContext().getEngineType()));
+    EXPECT_TRUE(EngineHelpers::isComputeEngine(queueCompute1.getGpgpuCommandStreamReceiver().getOsContext().getEngineType()));
+
+    auto copyCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(queueBcs1.bcsEngines[0]->commandStreamReceiver);
+    auto computeCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(&queueCompute1.getGpgpuCommandStreamReceiver());
+
+    auto copyPrimaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(copyCsr1->primaryCsr);
+    auto computePrimaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(computeCsr1->primaryCsr);
+
+    EXPECT_EQ(0u, copyPrimaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, computePrimaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+
+    queueBcs1.enqueueCopyBuffer(buffer.get(), buffer.get(), 0, 0, 1, 0, nullptr, nullptr);
+
+    EXPECT_EQ(1u, copyPrimaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, computePrimaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+
+    MockKernelWithInternals mockKernelWithInternals(clDevice);
+    size_t gws[3] = {1, 0, 0};
+
+    queueCompute1.enqueueKernel(mockKernelWithInternals.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(1u, copyPrimaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, computePrimaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, copyPrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(1u, computePrimaryCsr->initializeDeviceWithFirstSubmissionCalled);
+}
+
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;

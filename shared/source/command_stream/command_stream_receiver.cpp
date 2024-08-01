@@ -1154,5 +1154,10 @@ void CommandStreamReceiver::unregisterClient(void *client) {
     }
 }
 
+void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
+    auto csrToInitialize = primaryCsr ? primaryCsr : this;
+    csrToInitialize->initializeDeviceWithFirstSubmission(device);
+}
+
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
 } // namespace NEO

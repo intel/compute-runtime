@@ -13,6 +13,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
@@ -1359,6 +1360,87 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesThenEachCmdQ
 
     EXPECT_NE(commandQueue1->getCsr(), commandQueue2->getCsr());
 
+    commandQueue1->destroy();
+    commandQueue2->destroy();
+}
+
+struct DeferredFirstSubmissionCmdQueueTests : public Test<ModuleFixture> {
+    void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(5);
+        debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+        Test<ModuleFixture>::SetUp();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+};
+
+HWTEST2_F(DeferredFirstSubmissionCmdQueueTests, givenDebugFlagSetWhenSubmittingToSecondaryThenDeferFirstSubmission, IsAtLeastXeHpCore) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    createKernel();
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0;
+    desc.index = 0;
+    ze_command_queue_handle_t commandQueueHandle1, commandQueueHandle2;
+
+    auto result = device->createCommandQueue(&desc, &commandQueueHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandQueue(&desc, &commandQueueHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandQueue1 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle1));
+    auto commandQueue2 = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle2));
+
+    EXPECT_NE(commandQueue1->getCsr(), commandQueue2->getCsr());
+
+    ze_command_list_handle_t commandListHandle1, commandListHandle2;
+    ze_command_list_desc_t cmdListDesc = {};
+
+    result = device->createCommandList(&cmdListDesc, &commandListHandle1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = device->createCommandList(&cmdListDesc, &commandListHandle2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList1 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle1));
+    auto commandList2 = static_cast<CommandListImp *>(L0::CommandList::fromHandle(commandListHandle2));
+
+    auto primaryCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue2->getCsr())->primaryCsr);
+    EXPECT_NE(nullptr, primaryCsr);
+    EXPECT_NE(commandQueue2->getCsr(), primaryCsr);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    commandList2->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    commandList2->close();
+    EXPECT_EQ(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(0u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_EQ(0u, commandQueue1->getCsr()->peekTaskCount());
+    EXPECT_EQ(0u, commandQueue2->getCsr()->peekTaskCount());
+
+    commandQueue2->executeCommandLists(1, &commandListHandle2, nullptr, false, nullptr);
+
+    EXPECT_NE(0u, primaryCsr->peekTaskCount());
+    EXPECT_EQ(1u, primaryCsr->initializeDeviceWithFirstSubmissionCalled);
+    EXPECT_NE(0u, commandQueue2->getCsr()->peekTaskCount());
+
+    commandList1->destroy();
+    commandList2->destroy();
     commandQueue1->destroy();
     commandQueue2->destroy();
 }
