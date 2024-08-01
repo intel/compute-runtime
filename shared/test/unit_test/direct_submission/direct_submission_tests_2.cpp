@@ -992,11 +992,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenRingBufferRestartRequestWhenDi
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
     EXPECT_EQ(directSubmission.submitCount, 1u);
-
-    batchBuffer.ringBufferRestartRequest = true;
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(directSubmission.submitCount, 2u);
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWorkloadThenProgramSfenceInstruction) {

@@ -937,10 +937,6 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchUllsState() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
-    if (batchBuffer.ringBufferRestartRequest) {
-        this->stopRingBuffer(false);
-    }
-
     lastSubmittedThrottle = batchBuffer.throttle;
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
     bool inputRequiredMonitorFence = false;

@@ -55,7 +55,6 @@ struct BatchBuffer {
 
     bool hasStallingCmds = false;
     bool hasRelaxedOrderingDependencies = false;
-    bool ringBufferRestartRequest = false;
     bool disableFlatRingBuffer = false;
     bool dispatchMonitorFence = false;
 };
