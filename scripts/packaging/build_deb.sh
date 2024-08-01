@@ -107,9 +107,6 @@ fi
 echo "NEO_CURRENT_PLATFORMS_SUPPORT: ${NEO_CURRENT_PLATFORMS_SUPPORT}"
 echo "NEO_LEGACY_PLATFORMS_SUPPORT: ${NEO_LEGACY_PLATFORMS_SUPPORT}"
 
-export NEO_OCLOC_VERSION_MAJOR=${NEO_VERSION_MAJOR}
-export NEO_OCLOC_VERSION_MINOR=${NEO_VERSION_MINOR}
-
 if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLATFORMS_SUPPORT}" == "TRUE" ]]; then
     echo "Building Legacy package"
     export NEO_OCLOC_VERSION_MODE=0
@@ -121,8 +118,8 @@ if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLAT
     mv -v "$BUILD_DIR/debian/intel-ocloc.install" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.install" 
     mv -v "$BUILD_DIR/debian/intel-ocloc.postinst" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst" 
     mv -v "$BUILD_DIR/debian/intel-ocloc.prerm" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm" 
-    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst"
-    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm"
+    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_VERSION_MAJOR}${NEO_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.postinst"
+    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc-${NEO_LEGACY_VERSION}.prerm"
     perl -i -lne 'if (/^Package: intel-ocloc-dev$/ .. /^$/) { print if !$flag } else {$flag=1; print}' "$BUILD_DIR/debian/control"
 
     if [ "${NEO_BUILD_WITH_L0}" == "TRUE" ]; then
@@ -134,8 +131,8 @@ else
     echo "Building Current/Full package"
     export NEO_OCLOC_VERSION_MODE=1
 
-    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_OCLOC_VERSION_MAJOR}${NEO_OCLOC_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.postinst"
-    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_OCLOC_VERSION_MAJOR}.${NEO_OCLOC_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.prerm"
+    perl -pi -e "s/\/ocloc 0$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE} ${NEO_VERSION_MAJOR}${NEO_VERSION_MINOR}${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.postinst"
+    perl -pi -e "s/\/ocloc$/\/ocloc-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_OCLOC_VERSION_MODE}/" "$BUILD_DIR/debian/intel-ocloc.prerm"
 fi
 
 
