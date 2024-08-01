@@ -604,7 +604,10 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
     const size_t svmCpuAlignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment();
-    const size_t effectiveSvmCpuAlignment = std::max(MemoryConstants::pageSize64k, svmCpuAlignment);
+
+    auto minCpuAlignment = (debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) ? MemoryConstants::pageSize2M : MemoryConstants::pageSize64k;
+
+    const size_t effectiveSvmCpuAlignment = std::max(minCpuAlignment, svmCpuAlignment);
     const size_t alignment = alignUpNonZero<size_t>(unifiedMemoryProperties.alignment, effectiveSvmCpuAlignment);
     const size_t alignedCpuSize = alignUp<size_t>(size, alignment);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);

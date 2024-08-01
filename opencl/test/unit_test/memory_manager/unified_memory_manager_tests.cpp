@@ -802,6 +802,21 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleDeviceBi
     svmManager->freeSVMAlloc(ptr);
 }
 
+TEST_F(UnifiedMemoryManagerPropertiesTest, givenDebugFlagSetWhenCreatingAllocationThenSet2MbAlignemnt) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    auto ptr = svmManager->createUnifiedAllocationWithDeviceStorage(MemoryConstants::pageSize64k, {}, unifiedMemoryProperties);
+
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize2M>(ptr));
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
 TEST_F(UnifiedMemoryManagerPropertiesTest,
        givenSvmManagerMultiOsContextSupportFlagTrueWhenRootDeviceIsSingleThenMultiStorageFlagFalse) {
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
