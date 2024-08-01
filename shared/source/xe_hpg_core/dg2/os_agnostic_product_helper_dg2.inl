@@ -163,6 +163,18 @@ bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const Hard
 }
 
 template <>
+uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
+
+    UNRECOVERABLE_IF(highestEnabledSlice == 0);
+    UNRECOVERABLE_IF(hwInfo.gtSystemInfo.MaxSlicesSupported == 0);
+    auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    auto maxSubSlice = std::max(highestEnabledSlice * subSlicesPerSlice, hwInfo.gtSystemInfo.MaxSubSlicesSupported);
+
+    return maxSubSlice;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
     if (memoryManager) {
         if constexpr (is32bit) {
