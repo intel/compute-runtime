@@ -783,7 +783,7 @@ void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispat
     const auto &productHelper = device.getProductHelper();
 
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
-        interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+        interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
 
         bool adjustTGDispatchSize = true;
         if (debugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
@@ -829,13 +829,13 @@ void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispat
             }
 
             if (tgDispatchSizeSelected == 8) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
+                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
             } else if (tgDispatchSizeSelected == 1) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
             } else if (tgDispatchSizeSelected == 2) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
+                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
             } else {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
+                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
             }
         } else {
             if (adjustTGDispatchSize) {
@@ -872,20 +872,20 @@ void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispat
                     }
                 }
                 if (tgDispatchSizeSelected == 8) {
-                    interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
+                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
                 } else if (tgDispatchSizeSelected == 1) {
-                    interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
                 } else if (tgDispatchSizeSelected == 2) {
-                    interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
+                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
                 } else {
-                    interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
+                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
                 }
             }
         }
     }
 
     if (debugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
-        interfaceDescriptor.setThreadGroupDispatchSize(static_cast<typename INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE>(
+        interfaceDescriptor.setThreadGroupDispatchSize(static_cast<typename InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE>(
             debugManager.flags.ForceThreadGroupDispatchSize.get()));
     }
 }
