@@ -1046,7 +1046,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportRe
     EXPECT_EQ(mockGa.setAsReadOnlyCalled, 1u);
 }
 
-TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndSupportReadOnlyButPtlatformDoesNotAndBliterTransferNotRequiredThenAllocationIsNotSetAsReadOnly) {
+TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndSupportReadOnlyButPlatformDoesNotAndBliterTransferNotRequiredThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
@@ -1088,7 +1088,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportRe
     EXPECT_EQ(mockGa.setAsReadOnlyCalled, 0u);
 }
 
-TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeDoesNotSupportReadOnlyButPtlatformDoesAndBliterTransferNotRequiredThenAllocationIsNotSetAsReadOnly) {
+TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeDoesNotSupportReadOnlyButPlatformDoesAndBliterTransferNotRequiredThenAllocationIsNotSetAsReadOnly) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->isBlitCopyRequiredForLocalMemoryResult = false;
