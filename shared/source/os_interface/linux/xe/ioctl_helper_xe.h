@@ -15,11 +15,13 @@
 #include <mutex>
 #include <optional>
 
+namespace NEO {
+
+namespace XeDrm {
 struct drm_xe_engine_class_instance;
 struct drm_xe_query_gt_list;
 struct drm_xe_query_config;
-
-namespace NEO {
+} // namespace XeDrm
 
 enum class EngineClass : uint16_t;
 
@@ -151,7 +153,7 @@ class IoctlHelperXe : public IoctlHelper {
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
     int getRunaloneExtProperty();
     virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
-    virtual uint32_t getCxlType(struct drm_xe_query_config *config) { return 0u; }
+    virtual std::optional<uint32_t> getCxlType() { return {}; }
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
@@ -176,15 +178,15 @@ class IoctlHelperXe : public IoctlHelper {
     std::mutex xeLock;
     std::vector<BindInfo> bindInfo;
     std::vector<uint32_t> hwconfig;
-    std::vector<drm_xe_engine_class_instance> contextParamEngine;
+    std::vector<XeDrm::drm_xe_engine_class_instance> contextParamEngine;
 
     std::vector<uint64_t> queryGtListData;
     constexpr static int invalidIndex = -1;
     StackVec<int, 2> gtIdToTileId;
     StackVec<int, 2> tileIdToGtId;
-    drm_xe_query_gt_list *xeGtListData = nullptr;
+    XeDrm::drm_xe_query_gt_list *xeGtListData = nullptr;
 
-    std::unique_ptr<drm_xe_engine_class_instance> defaultEngine;
+    std::unique_ptr<XeDrm::drm_xe_engine_class_instance> defaultEngine;
     struct DebugMetadata {
         DrmResourceClass type;
         uint64_t offset;

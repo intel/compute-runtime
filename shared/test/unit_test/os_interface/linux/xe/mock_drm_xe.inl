@@ -1,77 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "shared/source/helpers/common_types.h"
-#include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/helpers/register_offsets.h"
-#include "shared/source/os_interface/linux/engine_info.h"
-#include "shared/source/os_interface/linux/ioctl_helper.h"
-#include "shared/source/os_interface/linux/memory_info.h"
-#include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
-#include "shared/source/os_interface/product_helper.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/libult/linux/drm_mock.h"
-#include "shared/test/common/mocks/linux/mock_os_time_linux.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/test.h"
-
-#include "xe_drm.h"
-
-using namespace NEO;
-
-struct MockIoctlHelperXe : IoctlHelperXe {
-    using IoctlHelperXe::bindInfo;
-    using IoctlHelperXe::contextParamEngine;
-    using IoctlHelperXe::defaultEngine;
-    using IoctlHelperXe::getDefaultEngineClass;
-    using IoctlHelperXe::getFdFromVmExport;
-    using IoctlHelperXe::ioctl;
-    using IoctlHelperXe::IoctlHelperXe;
-    using IoctlHelperXe::maxContextSetProperties;
-    using IoctlHelperXe::maxExecQueuePriority;
-    using IoctlHelperXe::queryGtListData;
-    using IoctlHelperXe::setContextProperties;
-    using IoctlHelperXe::supportedFeatures;
-    using IoctlHelperXe::tileIdToGtId;
-    using IoctlHelperXe::UserFenceExtension;
-    using IoctlHelperXe::xeGetBindFlagNames;
-    using IoctlHelperXe::xeGetBindOperationName;
-    using IoctlHelperXe::xeGetClassName;
-    using IoctlHelperXe::xeGetengineClassName;
-    using IoctlHelperXe::xeGtListData;
-    using IoctlHelperXe::xeShowBindTable;
-
-    int perfOpenIoctl(DrmIoctl request, void *arg) override {
-        if (failPerfOpen) {
-            return -1;
-        }
-        return IoctlHelperXe::perfOpenIoctl(request, arg);
-    }
-
-    int ioctl(int fd, DrmIoctl request, void *arg) override {
-        if (request == DrmIoctl::perfDisable) {
-            if (failPerfDisable) {
-                return -1;
-            }
-        }
-        if (request == DrmIoctl::perfEnable) {
-            if (failPerfEnable) {
-                return -1;
-            }
-        }
-        return IoctlHelperXe::ioctl(fd, request, arg);
-    }
-    bool failPerfDisable = false;
-    bool failPerfEnable = false;
-    bool failPerfOpen = false;
-};
 
 inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;

@@ -7,8 +7,7 @@
 
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
-
-#include "xe_drm.h"
+#include "shared/source/os_interface/linux/xe/xedrm.h"
 
 namespace NEO {
 

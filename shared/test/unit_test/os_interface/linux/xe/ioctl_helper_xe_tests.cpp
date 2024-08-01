@@ -5,12 +5,17 @@
  *
  */
 
-#include "shared/test/unit_test/os_interface/linux/xe/ioctl_helper_xe_tests.h"
-
+#include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
+#include "shared/test/common/mocks/linux/mock_os_time_linux.h"
+#include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/linux/xe/mock_drm_xe.h"
 
 using namespace NEO;
 
