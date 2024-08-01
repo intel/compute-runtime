@@ -220,6 +220,7 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
         auto status = source->getConcurrentMetricGroups(metricGroups, &perSourceConcurrentCount, nullptr);
         if (status != ZE_RESULT_SUCCESS) {
             METRICS_LOG_ERR("Per source concurrent metric group query returned error status %d", status);
+            *pConcurrentGroupCount = 0;
             return status;
         }
         maxConcurrentGroupCount = std::max(maxConcurrentGroupCount, perSourceConcurrentCount);
@@ -232,6 +233,7 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
 
     if (*pConcurrentGroupCount != maxConcurrentGroupCount) {
         METRICS_LOG_ERR("Input Concurrent Group Count %d is not same as expected %d", *pConcurrentGroupCount, maxConcurrentGroupCount);
+        *pConcurrentGroupCount = 0;
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
@@ -247,6 +249,7 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
         auto status = source->getConcurrentMetricGroups(metricGroups, &perSourceConcurrentCount, countPerConcurrentGroup.data());
         if (status != ZE_RESULT_SUCCESS) {
             METRICS_LOG_ERR("getConcurrentMetricGroups returned error status %d", status);
+            *pConcurrentGroupCount = 0;
             return status;
         }
 
@@ -274,7 +277,8 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
     // Update the output metric groups
     size_t availableSize = metricGroupCount;
     for (auto &concurrentGroup : concurrentGroups) {
-        memcpy_s(phMetricGroups, availableSize, concurrentGroup.data(), concurrentGroup.size());
+        memcpy_s(phMetricGroups, availableSize * sizeof(zet_metric_group_handle_t), concurrentGroup.data(), concurrentGroup.size() * sizeof(zet_metric_group_handle_t));
+
         availableSize -= concurrentGroup.size();
         phMetricGroups += concurrentGroup.size();
     }

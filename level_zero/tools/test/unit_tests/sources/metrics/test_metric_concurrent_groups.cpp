@@ -97,6 +97,8 @@ TEST_F(ConcurrentMetricGroupFixture, WhenGetConcurrentMetricGroupsIsCalledForDif
     metricGroupHandles.push_back(metricGroupType2[0].toHandle());
     metricGroupHandles.push_back(metricGroupType2[2].toHandle());
 
+    auto backupMetricGroupHandles = metricGroupHandles;
+
     uint32_t concurrentGroupCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext->getConcurrentMetricGroups(static_cast<uint32_t>(metricGroupHandles.size()), metricGroupHandles.data(), &concurrentGroupCount, nullptr));
     EXPECT_EQ(concurrentGroupCount, 4u);
@@ -106,6 +108,11 @@ TEST_F(ConcurrentMetricGroupFixture, WhenGetConcurrentMetricGroupsIsCalledForDif
     EXPECT_EQ(countPerConcurrentGroup[0], 3u);
     EXPECT_EQ(countPerConcurrentGroup[1], 3u);
     EXPECT_EQ(countPerConcurrentGroup[2], 1u);
+
+    // Ensure that re-arranged metric group handles were originally present in the vector
+    for (auto &metricGroupHandle : metricGroupHandles) {
+        EXPECT_TRUE(std::find(backupMetricGroupHandles.begin(), backupMetricGroupHandles.end(), metricGroupHandle) != backupMetricGroupHandles.end());
+    }
 }
 
 TEST_F(ConcurrentMetricGroupFixture, WhenGetConcurrentMetricGroupsIsCalledWithIncorrectGroupCountThenFailureIsReturned) {
@@ -134,6 +141,7 @@ TEST_F(ConcurrentMetricGroupFixture, WhenGetConcurrentMetricGroupsIsCalledWithIn
     concurrentGroupCount -= 1;
     std::vector<uint32_t> countPerConcurrentGroup(concurrentGroupCount);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, deviceContext->getConcurrentMetricGroups(static_cast<uint32_t>(metricGroupHandles.size()), metricGroupHandles.data(), &concurrentGroupCount, countPerConcurrentGroup.data()));
+    EXPECT_EQ(concurrentGroupCount, 0u);
 }
 
 class MockMetricSourceError : public MockMetricSource {
@@ -178,10 +186,12 @@ TEST_F(ConcurrentMetricGroupFixture, WhenGetConcurrentMetricGroupsIsCalledAndSou
     concurrentGroupCount = 10;
     std::vector<uint32_t> countPerConcurrentGroup(10);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext->getConcurrentMetricGroups(static_cast<uint32_t>(metricGroupHandles.size()), metricGroupHandles.data(), &concurrentGroupCount, countPerConcurrentGroup.data()));
+    EXPECT_EQ(concurrentGroupCount, 0u);
 
     MockMetricSourceError::errorCallCount = 1;
     concurrentGroupCount = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext->getConcurrentMetricGroups(static_cast<uint32_t>(metricGroupHandles.size()), metricGroupHandles.data(), &concurrentGroupCount, nullptr));
+    EXPECT_EQ(concurrentGroupCount, 0u);
 }
 
 } // namespace ult
