@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,10 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heap
     auto allocationType = AllocationType::linearStream;
     if (IndirectHeap::Type::indirectObject == heapType) {
         allocationType = AllocationType::internalHeap;
+    }
+
+    if (NEO::debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
+        alignment = MemoryConstants::pageSize2M;
     }
 
     auto allocation = this->storageForReuse->obtainReusableAllocation(heapSize, allocationType);

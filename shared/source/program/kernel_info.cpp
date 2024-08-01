@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/program/kernel_info.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -59,6 +60,12 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
     auto kernelIsaSize = heapInfo.kernelHeapSize;
     const auto allocType = internalIsa ? AllocationType::kernelIsaInternal : AllocationType::kernelIsa;
 
+    AllocationProperties properties = {device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()};
+
+    if (debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
+        properties.alignment = MemoryConstants::pageSize2M;
+    }
+
     if (device.getMemoryManager()->isKernelBinaryReuseEnabled()) {
         auto lock = device.getMemoryManager()->lockKernelAllocationMap();
         auto kernelName = this->kernelDescriptor.kernelMetadata.kernelName;
@@ -74,11 +81,11 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
                                                                     device, kernelAllocation, 0, heapInfo.pKernelHeap,
                                                                     static_cast<size_t>(kernelIsaSize));
         } else {
-            kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
+            kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
             storedAllocations.insert(std::make_pair(kernelName, MemoryManager::KernelAllocationInfo(kernelAllocation, 1u)));
         }
     } else {
-        kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()});
+        kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
 
     if (!kernelAllocation) {

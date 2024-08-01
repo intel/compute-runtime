@@ -844,10 +844,14 @@ size_t ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding(size_t isaSiz
 NEO::GraphicsAllocation *ModuleImp::allocateKernelsIsaMemory(size_t size) {
     auto allocType = (this->type == ModuleType::builtin ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa);
     auto neoDevice = this->device->getNEODevice();
-    return neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({neoDevice->getRootDeviceIndex(),
-                                                                                size,
-                                                                                allocType,
-                                                                                neoDevice->getDeviceBitfield()});
+
+    NEO::AllocationProperties properties{neoDevice->getRootDeviceIndex(), size, allocType, neoDevice->getDeviceBitfield()};
+
+    if (NEO::debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
+        properties.alignment = MemoryConstants::pageSize2M;
+    }
+
+    return neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 }
 
 void ModuleImp::createDebugZebin() {
