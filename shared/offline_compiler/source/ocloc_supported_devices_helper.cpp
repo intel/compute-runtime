@@ -127,7 +127,7 @@ std::map<std::string, SupportedDevicesHelper::SupportedDevicesData> SupportedDev
     const auto *root = parser.getRoot();
     for (const auto &oclocVersionNode : parser.createChildrenRange(*root)) {
         std::string oclocVersion = parser.readKey(oclocVersionNode).str();
-        SupportedDevicesData data;
+        SupportedDevicesData &data = result[oclocVersion];
 
         const auto *ipVersionsNode = parser.getChild(oclocVersionNode, SupportedDevicesYamlConstants::deviceIpVersions.data());
         if (ipVersionsNode) {
@@ -199,8 +199,6 @@ std::map<std::string, SupportedDevicesHelper::SupportedDevicesData> SupportedDev
                 }
             }
         }
-
-        result[oclocVersion] = data;
     }
 
     return result;
