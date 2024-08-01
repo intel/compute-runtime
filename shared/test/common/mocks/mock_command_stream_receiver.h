@@ -369,15 +369,20 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         auto completionStamp = CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
                                                                              dsh, ioh, ssh, taskLevel, dispatchFlags, device);
 
-        if (storeFlushedTaskStream && commandStream.getUsed() > commandStreamStart) {
-            storedTaskStreamSize = commandStream.getUsed() - commandStreamStart;
-            // Overfetch to allow command parser verify if "big" command is programmed at the end of allocation
-            auto overfetchedSize = storedTaskStreamSize + MemoryConstants::cacheLineSize;
-            storedTaskStream.reset(new uint8_t[overfetchedSize]);
-            memset(storedTaskStream.get(), 0, overfetchedSize);
-            memcpy_s(storedTaskStream.get(), storedTaskStreamSize,
-                     ptrOffset(commandStream.getCpuBase(), commandStreamStart), storedTaskStreamSize);
-        }
+        storeCommandStream(commandStream, commandStreamStart);
+
+        return completionStamp;
+    }
+
+    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
+                                       const IndirectHeap *dsh, const IndirectHeap *ioh,
+                                       const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        passedDispatchFlags = dispatchFlags;
+
+        recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
+        auto completionStamp = CommandStreamReceiverHw<GfxFamily>::flushTaskStateless(commandStream, commandStreamStart,
+                                                                                      dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+        storeCommandStream(commandStream, commandStreamStart);
 
         return completionStamp;
     }
@@ -393,6 +398,20 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         programHardwareContextCalled = true;
     }
 
+  private:
+    void storeCommandStream(LinearStream &commandStream, size_t commandStreamStart) {
+        if (storeFlushedTaskStream && commandStream.getUsed() > commandStreamStart) {
+            storedTaskStreamSize = commandStream.getUsed() - commandStreamStart;
+            // Overfetch to allow command parser verify if "big" command is programmed at the end of allocation
+            auto overfetchedSize = storedTaskStreamSize + MemoryConstants::cacheLineSize;
+            storedTaskStream.reset(new uint8_t[overfetchedSize]);
+            memset(storedTaskStream.get(), 0, overfetchedSize);
+            memcpy_s(storedTaskStream.get(), storedTaskStreamSize,
+                     ptrOffset(commandStream.getCpuBase(), commandStreamStart), storedTaskStreamSize);
+        }
+    }
+
+  public:
     bool skipBlitCalls = false;
     bool storeFlushedTaskStream = false;
     std::unique_ptr<uint8_t[]> storedTaskStream;

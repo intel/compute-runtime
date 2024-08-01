@@ -229,6 +229,14 @@ class MockCsr1 : public CommandStreamReceiverHw<GfxFamily> {
         passedDispatchFlags = dispatchFlags;
         return CompletionStamp();
     }
+
+    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
+                                       const IndirectHeap *dsh, const IndirectHeap *ioh,
+                                       const IndirectHeap *ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        passedDispatchFlags = dispatchFlags;
+        return CompletionStamp();
+    }
+
     MockCsr1(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
     DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();

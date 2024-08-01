@@ -221,6 +221,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
+    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
+                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        recordedDispatchFlags = dispatchFlags;
+        recordedSsh = ssh;
+        this->lastFlushedCommandStream = &commandStream;
+        return BaseClass::flushTaskStateless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
+
     CompletionStamp flushImmediateTask(LinearStream &immediateCommandStream,
                                        size_t immediateCommandStreamStart,
                                        ImmediateDispatchFlags &dispatchFlags,
