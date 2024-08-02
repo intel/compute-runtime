@@ -550,6 +550,10 @@ using EnqueueCopyBufferRectStateful = EnqueueCopyBufferRectHw;
 HWTEST_F(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned) {
 
     std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateful<FamilyType>(context.get(), device.get()));
+    if (cmdQ->getHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     srcBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = enqueueCopyBufferRectHw(cmdQ.get());
     EXPECT_EQ(CL_SUCCESS, retVal);

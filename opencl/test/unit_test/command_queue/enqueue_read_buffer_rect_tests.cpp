@@ -710,6 +710,9 @@ using EnqueueReadBufferRectStatefulTest = EnqueueReadBufferRectHw;
 HWTEST_F(EnqueueReadBufferRectStatefulTest, WhenReadingBufferRectStatefulThenSuccessIsReturned) {
 
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    if (pCmdQ->getHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     void *missAlignedPtr = reinterpret_cast<void *>(0x1041);
     srcBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = pCmdQ->enqueueReadBufferRect(&srcBuffer,

@@ -359,6 +359,9 @@ using EnqueueCopyBufferToImageStatefulTest = EnqueueCopyBufferToImageHw;
 
 HWTEST_F(EnqueueCopyBufferToImageStatefulTest, givenBigBufferWhenCopyingBufferToImageStatefulThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    if (cmdQ->getHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     srcBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = cmdQ->enqueueCopyBufferToImage(
         &srcBuffer,

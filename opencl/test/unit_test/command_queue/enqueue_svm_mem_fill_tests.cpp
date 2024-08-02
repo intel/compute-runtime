@@ -294,6 +294,9 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
 
 HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    if (cmdQ->getHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmGpu);
 

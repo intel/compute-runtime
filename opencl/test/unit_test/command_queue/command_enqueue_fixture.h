@@ -125,7 +125,9 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
 
 template <typename FamilyType>
 struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
-    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false){};
+    CommandQueueStateful(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false){
+
+                                                               };
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         auto kernel = dispatchInfo.begin()->getKernel();

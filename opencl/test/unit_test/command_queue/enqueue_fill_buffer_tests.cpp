@@ -654,6 +654,9 @@ using EnqueueFillBufferStatefulTest = EnqueueFillBufferHw;
 
 HWTEST_F(EnqueueFillBufferStatefulTest, givenBuffersWhenFillingBufferStatefulThenSuccessIsReturned) {
     auto pCmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    if (pCmdQ->getHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     dstBuffer.size = static_cast<size_t>(smallSize);
     auto retVal = pCmdQ->enqueueFillBuffer(
         &dstBuffer,
