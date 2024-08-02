@@ -27,6 +27,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xe2_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_pvc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h

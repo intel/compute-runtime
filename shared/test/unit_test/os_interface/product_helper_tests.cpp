@@ -1016,12 +1016,22 @@ TEST_F(ProductHelperTest, whenGettingMaxSubSliceSpaceThenValueIsNotSmallerThanMa
     EXPECT_EQ(maxSupportedSubSlices, productHelper->computeMaxNeededSubSliceSpace(hwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenDefaultProductHelperWhenQuery2DBlockLoadThenReturnFalse) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnFalse, IsAtMostDg2) {
 
     EXPECT_FALSE(productHelper->supports2DBlockLoad());
 }
 
-HWTEST_F(ProductHelperTest, givenDefaultProductHelperWhenQuery2DBlockStoreThenReturnFalse) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnFalse, IsAtMostDg2) {
 
     EXPECT_FALSE(productHelper->supports2DBlockStore());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockLoadThenReturnTrue, IsAtLeastPVC) {
+
+    EXPECT_TRUE(productHelper->supports2DBlockLoad());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTrue, IsAtLeastPVC) {
+
+    EXPECT_TRUE(productHelper->supports2DBlockStore());
 }
