@@ -413,6 +413,36 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSmallSizeAndGpuAddress
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenAllocationSizeIsRegistered) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(true, false, false, *executionEnvironment);
+    auto osContext = device->getDefaultEngine().osContext;
+
+    const auto allocationSize = MemoryConstants::pageSize;
+    auto allocationProperties = MockAllocationProperties{device->getRootDeviceIndex(), allocationSize};
+    allocationProperties.osContext = osContext;
+    allocationProperties.allocationType = AllocationType::buffer;
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex()));
+    EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
+    auto localAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+    EXPECT_NE(nullptr, localAllocation);
+    EXPECT_EQ(localAllocation->getUnderlyingBufferSize(), memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex()));
+    EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
+
+    allocationProperties.allocationType = AllocationType::bufferHostMemory;
+    auto systemAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+    EXPECT_NE(nullptr, systemAllocation);
+    EXPECT_EQ(localAllocation->getUnderlyingBufferSize(), memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex()));
+    EXPECT_EQ(systemAllocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
+
+    memoryManager->freeGraphicsMemory(localAllocation);
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex()));
+    EXPECT_EQ(systemAllocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
+
+    memoryManager->freeGraphicsMemory(systemAllocation);
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex()));
+    EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
+}
+
 TEST_F(DrmMemoryManagerTest, givenInjectedFailuresWhenGraphicsMemoryWithGpuVaIsAllocatedThenNullptrIsReturned) {
     mock->ioctlExpected.total = -1; // don't care
 

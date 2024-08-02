@@ -309,6 +309,9 @@ class MemoryManager {
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }
     virtual bool usmCompressionSupported(Device *device);
 
+    size_t getUsedLocalMemorySize(uint32_t rootDeviceIndex) const { return localMemAllocsSize[rootDeviceIndex]; }
+    size_t getUsedSystemMemorySize() const { return sysMemAllocsSize; }
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
@@ -378,6 +381,8 @@ class MemoryManager {
     std::mutex virtualMemoryReservationMapMutex;
     std::map<void *, PhysicalMemoryAllocation *> physicalMemoryAllocationMap;
     std::mutex physicalMemoryAllocationMapMutex;
+    std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
+    std::atomic<size_t> sysMemAllocsSize;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

@@ -747,6 +747,34 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenAllocationSizeIsRegistered) {
+    memoryManager.reset(new MockWddmMemoryManager(false, true, executionEnvironment));
+
+    const auto allocationSize = MemoryConstants::pageSize;
+    auto allocationProperties = MockAllocationProperties{csr->getRootDeviceIndex(), allocationSize};
+    allocationProperties.allocationType = AllocationType::buffer;
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(csr->getRootDeviceIndex()));
+    EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
+    auto localAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+    EXPECT_NE(nullptr, localAllocation);
+    EXPECT_EQ(localAllocation->getUnderlyingBufferSize(), memoryManager->getUsedLocalMemorySize(csr->getRootDeviceIndex()));
+    EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
+
+    allocationProperties.allocationType = AllocationType::bufferHostMemory;
+    auto systemAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+    EXPECT_NE(nullptr, systemAllocation);
+    EXPECT_EQ(localAllocation->getUnderlyingBufferSize(), memoryManager->getUsedLocalMemorySize(csr->getRootDeviceIndex()));
+    EXPECT_EQ(systemAllocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
+
+    memoryManager->freeGraphicsMemory(localAllocation);
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(csr->getRootDeviceIndex()));
+    EXPECT_EQ(systemAllocation->getUnderlyingBufferSize(), memoryManager->getUsedSystemMemorySize());
+
+    memoryManager->freeGraphicsMemory(systemAllocation);
+    EXPECT_EQ(0u, memoryManager->getUsedLocalMemorySize(csr->getRootDeviceIndex()));
+    EXPECT_EQ(0u, memoryManager->getUsedSystemMemorySize());
+}
+
 class MockCreateWddmAllocationMemoryManager : public MockWddmMemoryManager {
   public:
     MockCreateWddmAllocationMemoryManager(NEO::ExecutionEnvironment &execEnv) : MockWddmMemoryManager(execEnv) {}

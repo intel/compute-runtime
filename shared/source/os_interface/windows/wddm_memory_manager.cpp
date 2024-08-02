@@ -47,6 +47,8 @@
 
 namespace NEO {
 
+using AllocationStatus = MemoryManager::AllocationStatus;
+
 template void WddmMemoryManager::adjustGpuPtrToHostAddressSpace<is32bit>(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
 
 WddmMemoryManager::~WddmMemoryManager() = default;
@@ -783,6 +785,13 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         auto gfxPartition = getGfxPartition(input->getRootDeviceIndex());
         gfxPartition->heapFree(heapIndex, input->getGpuAddress(), alignedSize);
     }
+
+    if (gfxAllocation->isAllocatedInLocalMemoryPool()) {
+        localMemAllocsSize[gfxAllocation->getRootDeviceIndex()] -= gfxAllocation->getUnderlyingBufferSize();
+    } else if (MemoryPool::memoryNull != gfxAllocation->getMemoryPool()) {
+        sysMemAllocsSize -= gfxAllocation->getUnderlyingBufferSize();
+    }
+
     delete gfxAllocation;
 }
 
@@ -942,6 +951,16 @@ double WddmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceI
         return 0.98;
     }
     return 0.94;
+}
+
+AllocationStatus WddmMemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
+    this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
+    return AllocationStatus::Success;
+}
+
+AllocationStatus WddmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
+    this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
+    return AllocationStatus::Success;
 }
 
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {

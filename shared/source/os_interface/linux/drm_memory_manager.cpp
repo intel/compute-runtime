@@ -1551,6 +1551,7 @@ AllocationStatus DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *alloc
     if (!makeAllocationResident(allocation)) {
         return AllocationStatus::Error;
     }
+    this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->sysMemAllocs.push_back(allocation);
     return AllocationStatus::Success;
@@ -1560,12 +1561,18 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
     if (!makeAllocationResident(allocation)) {
         return AllocationStatus::Error;
     }
+    this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->localMemAllocs[rootDeviceIndex].push_back(allocation);
     return AllocationStatus::Success;
 }
 
 void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
+    if (allocation->isAllocatedInLocalMemoryPool()) {
+        localMemAllocsSize[allocation->getRootDeviceIndex()] -= allocation->getUnderlyingBufferSize();
+    } else if (MemoryPool::memoryNull != allocation->getMemoryPool()) {
+        sysMemAllocsSize -= allocation->getUnderlyingBufferSize();
+    }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     sysMemAllocs.erase(std::remove(sysMemAllocs.begin(), sysMemAllocs.end(), allocation),
                        sysMemAllocs.end());
