@@ -391,6 +391,9 @@ struct CommandListScratchPatchFixtureInit : public ModuleMutableCommandListFixtu
     template <typename FamilyType>
     void testScratchCommandViewNoPatching();
 
+    template <typename FamilyType>
+    void testExternalScratchPatching();
+
     int32_t fixtureGlobalStatelessMode = 0;
     uint32_t scratchInlineOffset = 8;
     uint32_t scratchInlinePointerSize = sizeof(uint64_t);

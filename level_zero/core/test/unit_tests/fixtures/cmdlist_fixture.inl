@@ -1819,5 +1819,71 @@ void CommandListScratchPatchFixtureInit::testScratchCommandViewNoPatching() {
     EXPECT_FALSE(foundScratchPatchCmd);
 }
 
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
+    auto csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+    auto scratchController = csr->getScratchSpaceController();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->csr);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    NEO::EncodeDispatchKernelArgs dispatchKernelArgs = {};
+    dispatchKernelArgs.isHeaplessModeEnabled = true;
+
+    size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
+
+    auto cmdListStream = commandList->commandContainer.getCommandStream();
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x0;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x0;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.externalPerThreadScratchSize[0] = 0x80;
+    launchParams.externalPerThreadScratchSize[1] = 0x40;
+
+    auto result = ZE_RESULT_SUCCESS;
+    size_t usedBefore = cmdListStream->getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t usedAfter = cmdListStream->getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0x80u, commandList->getCommandListPerThreadScratchSize(0));
+    EXPECT_EQ(0x40u, commandList->getCommandListPerThreadScratchSize(1));
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream->getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto walkerIterator = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerIterator);
+    void *walkerPtrWithScratch = *walkerIterator;
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto scratchAddress = scratchController->getScratchPatchAddress();
+    auto fullScratchAddress = surfaceHeapGpuBase + scratchAddress;
+
+    auto expectedScratchPatchAddress = getExpectedScratchPatchAddress(scratchAddress);
+
+    EXPECT_EQ(expectedScratchPatchAddress, commandList->getCurrentScratchPatchAddress());
+    EXPECT_EQ(scratchController, commandList->getCommandListUsedScratchController());
+
+    uint64_t scratchInlineValue = 0;
+
+    void *scratchInlinePtr = ptrOffset(walkerPtrWithScratch, (inlineOffset + scratchInlineOffset));
+    std::memcpy(&scratchInlineValue, scratchInlinePtr, sizeof(scratchInlineValue));
+    EXPECT_EQ(fullScratchAddress, scratchInlineValue);
+}
+
 } // namespace ult
 } // namespace L0

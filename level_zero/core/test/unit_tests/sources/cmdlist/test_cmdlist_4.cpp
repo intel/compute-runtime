@@ -1596,6 +1596,11 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
     testScratchCommandViewNoPatching<FamilyType>();
 }
 
+HWTEST2_F(CommandListScratchPatchPrivateHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsAtLeastXeHpcCore) {
+    testExternalScratchPatching<FamilyType>();
+}
+
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
     testScratchInline<FamilyType>(false);
@@ -1616,6 +1621,11 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
     testScratchCommandViewNoPatching<FamilyType>();
 }
 
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsAtLeastXeHpcCore) {
+    testExternalScratchPatching<FamilyType>();
+}
+
 HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
     testScratchInline<FamilyType>(false);
@@ -1636,6 +1646,11 @@ HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
     testScratchCommandViewNoPatching<FamilyType>();
 }
 
+HWTEST2_F(CommandListScratchPatchPrivateHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsAtLeastXeHpcCore) {
+    testExternalScratchPatching<FamilyType>();
+}
+
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingAndExecutingKernelWithScratchThenExpectCorrectAddressPatched, IsAtLeastXeHpcCore) {
     testScratchInline<FamilyType>(false);
@@ -1654,6 +1669,11 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithCommandViewFlagThenScratchIsNotStoredToPatch, IsAtLeastXeHpcCore) {
     testScratchCommandViewNoPatching<FamilyType>();
+}
+
+HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
+          givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsAtLeastXeHpcCore) {
+    testExternalScratchPatching<FamilyType>();
 }
 
 } // namespace ult
