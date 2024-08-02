@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/sysman_const.h"
+#include "level_zero/sysman/test/unit_tests/sources/pci/windows/mock_pci.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
 #include "mock_pci.h"
@@ -15,6 +18,15 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
+    {{"REG_RX_BYTECOUNT_LSB", {100, 1}},
+     {"REG_TX_BYTECOUNT_LSB", {101, 1}},
+     {"REG_RX_PKTCOUNT_LSB", {102, 1}},
+     {"REG_TX_PKTCOUNT_LSB", {103, 1}}}};
+
+const std::wstring pmtInterfaceName = L"TEST\0";
+std::vector<wchar_t> deviceInterfacePci(pmtInterfaceName.begin(), pmtInterfaceName.end());
 
 class SysmanDevicePciFixture : public SysmanDeviceFixture {
   protected:
@@ -29,10 +41,12 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
+        auto pPmt = new PublicPlatformMonitoringTech(deviceInterfacePci, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pWddmSysmanImp->pPmt.reset(pPmt);
+
         delete pSysmanDeviceImp->pPci;
-
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
-
         pSysmanDeviceImp->pPci = new PciImp(pOsSysman);
 
         if (pSysmanDeviceImp->pPci) {
@@ -288,6 +302,82 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingResizableBarEnab
     WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
     EXPECT_EQ(false, pPciImp->resizableBarEnabled(barIndex));
     delete pPciImp;
+}
+
+HWTEST2_F(SysmanDevicePciFixture, GivenValidDeviceHandleWhenGettingZesDevicePciGetStatsThenValidReadingIsRetrieved, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        PmtSysman::PmtTelemetryRead *readRequest = static_cast<PmtSysman::PmtTelemetryRead *>(lpInBuffer);
+        switch (readRequest->offset) {
+        case 100:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockRxCounter;
+            return true;
+        case 101:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockTxCounter;
+            return true;
+        case 102:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockRxPacketCounter;
+            return true;
+        case 103:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockTxPacketCounter;
+            return true;
+        }
+        return false;
+    });
+    zes_pci_stats_t stats;
+    ze_result_t result = zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(stats.rxCounter, mockRxCounter);
+    EXPECT_EQ(stats.txCounter, mockTxCounter);
+    EXPECT_EQ(stats.packetCounter, mockRxPacketCounter + mockTxPacketCounter);
+}
+
+HWTEST2_F(SysmanDevicePciFixture, GivenNullPmtHandleWhenGettingZesDevicePciGetStatsThenCallFails, IsBMG) {
+    pWddmSysmanImp->pPmt.reset(nullptr);
+    zes_pci_stats_t stats;
+    ze_result_t result = zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats);
+    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+HWTEST2_F(SysmanDevicePciFixture, GivenValidPmtHandleWhenCallingZesDevicePciGetStatsAndIoctlFailsThenCallsFails, IsBMG) {
+    static int count = 4;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        PmtSysman::PmtTelemetryRead *readRequest = static_cast<PmtSysman::PmtTelemetryRead *>(lpInBuffer);
+        switch (readRequest->offset) {
+        case 100:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockRxCounter;
+            return count == 1 ? false : true;
+        case 101:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockTxCounter;
+            return count == 2 ? false : true;
+        case 102:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockRxPacketCounter;
+            return count == 3 ? false : true;
+        case 103:
+            *lpBytesReturned = 8;
+            *static_cast<uint64_t *>(lpOutBuffer) = mockTxPacketCounter;
+            return count == 4 ? false : true;
+        }
+        return false;
+    });
+    zes_pci_stats_t stats;
+    while (count) {
+        ze_result_t result = zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats);
+        ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+        count--;
+    }
 }
 
 } // namespace ult

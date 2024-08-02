@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/os_interface/windows/mock_sys_calls.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/api/temperature/windows/sysman_os_temperature_imp.h"
@@ -14,6 +16,12 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
+
+std::vector<wchar_t> pmtInterface(pmtInterfaceName.begin(), pmtInterfaceName.end());
+const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
+    {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[2]", {14, 1}},
+     {"Package_Temperature_0_0_0_MCHBAR_PCU", {39, 1}},
+     {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", {43, 1}}}};
 
 class SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
 
@@ -29,6 +37,9 @@ class SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
+        auto pPmt = new PublicPlatformMonitoringTech(pmtInterface, pWddmSysmanImp->getSysmanProductHelper());
+        pPmt->keyOffsetMap = dummyKeyOffsetMap;
+        pWddmSysmanImp->pPmt.reset(pPmt);
 
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
     }
@@ -152,6 +163,79 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenInvalidTemperatureEscapeCallT
         ASSERT_EQ(false, pWddmTemperatureImp->isTempModuleSupported());
         pKmdSysManager->mockTemperatureFailure[*it] = 0;
     }
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTempHandleWhenGettingMemoryTemperatureThenValidTemperatureReadingsRetrieved, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        *lpBytesReturned = 4;
+        *static_cast<int *>(lpOutBuffer) = 23;
+        return true;
+    });
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    double temperature;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_MEMORY], &temperature));
+    EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempMemory));
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTempHandleWhenGettingGPUTemperatureThenValidTemperatureReadingsRetrieved, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        *lpBytesReturned = 4;
+        *static_cast<int *>(lpOutBuffer) = 25;
+        return true;
+    });
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    double temperature;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GPU], &temperature));
+    EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGPU));
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTempHandleWhenGettingGlobalTemperatureThenValidTemperatureReadingsRetrieved, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        *lpBytesReturned = 4;
+        *static_cast<int *>(lpOutBuffer) = 26;
+        return true;
+    });
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    double temperature;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));
+    EXPECT_EQ(temperature, static_cast<double>(pKmdSysManager->mockTempGlobal));
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenNullPmtHandleWhenGettingGlobalTemperatureThenCallFails, IsBMG) {
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    pWddmSysmanImp->pPmt.reset(nullptr);
+    double temperature;
+    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));
+    EXPECT_EQ(temperature, 0);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidPmtHandleWhenGettingGlobalTemperatureAndIoctlFailsThenCallsFails, IsBMG) {
+    auto handles = getTempHandles(temperatureHandleComponentCount);
+    double temperature;
+    ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesTemperatureGetState(handles[ZES_TEMP_SENSORS_GLOBAL], &temperature));
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenInvalidTempHandleWhenGettingGlobalTemperatureThenCallsFails, IsBMG) {
+    std::unique_ptr<WddmTemperatureImp> pWddmTemperatureImp = std::make_unique<WddmTemperatureImp>(pOsSysman);
+    pWddmTemperatureImp->setSensorType(ZES_TEMP_SENSORS_FORCE_UINT32);
+    double temperature;
+    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmTemperatureImp->getSensorTemperature(&temperature));
+    EXPECT_EQ(temperature, 0);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenUnsupportedTemperatureTypeWhenCheckingForTempModuleSupportThenCallReturnsFalse, IsBMG) {
+    std::unique_ptr<WddmTemperatureImp> pWddmTemperatureImp = std::make_unique<WddmTemperatureImp>(pOsSysman);
+    pWddmTemperatureImp->setSensorType(ZES_TEMP_SENSORS_GLOBAL_MIN);
+    ASSERT_EQ(false, pWddmTemperatureImp->isTempModuleSupported());
 }
 
 } // namespace ult

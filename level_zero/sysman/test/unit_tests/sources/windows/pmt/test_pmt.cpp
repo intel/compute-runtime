@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper_hw.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
@@ -27,7 +28,7 @@ inline static HANDLE mockCreateFileSuccess(LPCWSTR lpFileName, DWORD dwDesiredAc
 
 inline static BOOL mockDeviceIoControlSuccess(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
     *lpBytesReturned = 4;
-    *(int *)lpOutBuffer = 1;
+    *static_cast<int *>(lpOutBuffer) = 1;
     return true;
 }
 
@@ -105,7 +106,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32
 TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32WithNullBytesCountReturnedFromIoctlCallThenreadValueFails) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
         *lpBytesReturned = 0;
-        *(int *)lpOutBuffer = 4;
+        *static_cast<int *>(lpOutBuffer) = 4;
         return true;
     });
     pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
@@ -119,7 +120,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint32
 TEST_F(SysmanDevicePmtFixture, GivenValidPmtHandleWhenCallingReadValueWithUint64WithNullBytesCountReturnedFromIoctlCallThenreadValueFails) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
         *lpBytesReturned = 0;
-        *(int *)lpOutBuffer = 4;
+        *static_cast<int *>(lpOutBuffer) = 4;
         return true;
     });
     pPmt = std::make_unique<PublicPlatformMonitoringTech>(deviceInterface, pWddmSysmanImp->getSysmanProductHelper());
@@ -156,10 +157,10 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWithUnsupportedGuidWhenCall
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
         if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
-            *(unsigned long *)lpOutBuffer = 40;
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
         } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
             PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
-            *(PmtSysman::PmtTelemetryDiscovery *)lpOutBuffer = temp;
+            *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
         }
         return true;
     });
@@ -176,6 +177,242 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWithUnsupportedGuidWhenCall
 
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelperPmt>();
     std::swap(pWddmSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateThenCallSucceeds, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_NE(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateWithNoGuidsFoundThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTelemtrySizeIsZeroThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 0;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTelemtryDiscoveryFailsThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            return false;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTelemtryDiscoveryFailsThenCallFailsCoveringNewBranch, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateThenCallSucceedsCoveringNewBranch, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        static int sysCallsInterfaceListCounter = 0;
+        if (sysCallsInterfaceListCounter) {
+            return CR_SUCCESS;
+        }
+        sysCallsInterfaceListCounter++;
+        return CR_BUFFER_SMALL;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_NE(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenInValidPmtInterfaceWhenCallingCreateThenCallFails, IsBMG) {
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndCmGetDeviceInterfaceListFailsThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndCmGetDeviceInterfaceListSizeReturnZeroThenCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> psysCallsInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 0;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> psysCallsInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndHeapAllocFailsThenCreateCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> mockCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> mockDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> mockCmGetDeviceInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> mockCmGetDeviceInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsHeapAlloc)> mockHeapAlloc(&NEO::SysCalls::sysCallsHeapAlloc, [](HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes) -> LPVOID {
+        return nullptr;
+    });
+
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTelemetryIndexIsGreaterThanTotalPmtInterfacesThenCreateCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> mockCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> mockDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            // Initialize PmtTelemetryDiscovery 'temp' with {version = 1, interface count = 1, {{version = 1, index = 3, guid = 0x1e2f8201, dWordCount = 10}}}
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 1, {{1, 3, 0x1e2f8201, 10}}};
+            *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> mockCmGetDeviceInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> mockCmGetDeviceInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
+    EXPECT_EQ(nullptr, pPmt);
+}
+
+HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndHeapFreeCallFailsThenCreateCallFails, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> mockCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
+        return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> mockDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
+        if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
+            *static_cast<unsigned long *>(lpOutBuffer) = 40;
+        } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
+        }
+        return true;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize)> mockCmGetDeviceInterfaceListSize(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceListSize, [](PULONG pulLen, LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, ULONG ulFlags) -> CONFIGRET {
+        *pulLen = 4;
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsCmGetDeviceInterfaceList)> mockCmGetDeviceInterfaceList(&NEO::SysCalls::sysCallsCmGetDeviceInterfaceList, [](LPGUID interfaceClassGuid, DEVINSTID_W pDeviceID, PZZWSTR buffer, ULONG bufferLen, ULONG ulFlags) -> CONFIGRET {
+        return CR_SUCCESS;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsHeapFree)> mocksHeapFree(&NEO::SysCalls::sysCallsHeapFree, [](HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) -> BOOL {
+        return false;
+    });
     std::unique_ptr<PlatformMonitoringTech> pPmt = PublicPlatformMonitoringTech::create(pWddmSysmanImp->getSysmanProductHelper());
     EXPECT_EQ(nullptr, pPmt);
 }
