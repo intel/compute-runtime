@@ -3119,5 +3119,32 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(0u, csrStream.getUsed());
 }
 
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListUsingPrivateSurfaceHeapWhenMakeCommandViewIsTrueThenDoNotReserveHeapSpaceAndDoNotConsumeCommandBuffer,
+          IsAtLeastXeHpgCore) {
+    auto &container = commandList->getCmdContainer();
+    auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
+    ssh->getSpace(ssh->getAvailableSpace() - 32);
+
+    auto oldGfxHeapAllocation = ssh->getGraphicsAllocation();
+
+    uint8_t computeWalkerHostBuffer[512];
+    uint8_t payloadHostBuffer[256];
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.makeKernelCommandView = true;
+    launchParams.cmdWalkerBuffer = computeWalkerHostBuffer;
+    launchParams.hostPayloadBuffer = payloadHostBuffer;
+
+    auto &cmdListStream = *container.getCommandStream();
+    size_t usedBefore = cmdListStream.getUsed();
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(oldGfxHeapAllocation, ssh->getGraphicsAllocation());
+    EXPECT_EQ(usedBefore, cmdListStream.getUsed());
+}
+
 } // namespace ult
 } // namespace L0

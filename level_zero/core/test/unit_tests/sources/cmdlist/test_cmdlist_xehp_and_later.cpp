@@ -3041,5 +3041,60 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     EXPECT_EQ(expectedSize, ioh->getUsed());
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel,
+          givenFlagMakeKernelCommandViewWhenAppendKernelWithSignalEventThenDispatchNoPostSyncInViewMemoryAndNoEventAllocationAddedToResidency,
+          IsAtLeastXeHpCore) {
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
+    Mock<::L0::KernelImp> kernel;
+    auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = mockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event.get());
+
+    auto eventBaseAddress = event->getGpuAddress(device);
+    auto eventAlloaction = event->getPoolAllocation(device);
+
+    uint8_t computeWalkerHostBuffer[512];
+    uint8_t payloadHostBuffer[256];
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.makeKernelCommandView = true;
+    launchParams.cmdWalkerBuffer = computeWalkerHostBuffer;
+    launchParams.hostPayloadBuffer = payloadHostBuffer;
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(launchParams.cmdWalkerBuffer);
+    std::visit([eventBaseAddress](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+        using PostSyncType = typename WalkerType::PostSyncType;
+        auto &postSync = walker->getPostSync();
+
+        EXPECT_NE(eventBaseAddress, postSync.getDestinationAddress());
+    },
+               walkerVariant);
+
+    auto &cmdlistResidency = commandList->getCmdContainer().getResidencyContainer();
+
+    auto kernelAllocationIt = std::find(cmdlistResidency.begin(), cmdlistResidency.end(), eventAlloaction);
+    EXPECT_EQ(kernelAllocationIt, cmdlistResidency.end());
+}
+
 } // namespace ult
 } // namespace L0

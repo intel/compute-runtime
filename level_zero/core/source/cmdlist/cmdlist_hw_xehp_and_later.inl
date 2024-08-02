@@ -129,13 +129,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool kernelNeedsImplicitArgs = kernel->getImplicitArgs() != nullptr;
     bool needScratchSpace = false;
     bool kernelNeedsScratchSpace = false;
-    for (uint32_t slotId = 0u; slotId < 2; slotId++) {
-        commandListPerThreadScratchSize[slotId] = std::max<uint32_t>(commandListPerThreadScratchSize[slotId], kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId]);
-        if (commandListPerThreadScratchSize[slotId] > 0) {
-            needScratchSpace = true;
-        }
-        if (kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId] > 0) {
-            kernelNeedsScratchSpace = true;
+    if (!launchParams.makeKernelCommandView) {
+        for (uint32_t slotId = 0u; slotId < 2; slotId++) {
+            commandListPerThreadScratchSize[slotId] = std::max<uint32_t>(commandListPerThreadScratchSize[slotId], kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId]);
+            if (commandListPerThreadScratchSize[slotId] > 0) {
+                needScratchSpace = true;
+            }
+            if (kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId] > 0) {
+                kernelNeedsScratchSpace = true;
+            }
         }
     }
 
@@ -144,7 +146,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
-        (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps)) {
+        (this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) &&
+        (!launchParams.makeKernelCommandView)) {
 
         auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
         NEO::HeapReserveArguments sshReserveArgs = {sshReserveConfig.indirectHeapReservation,
@@ -195,7 +198,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool interruptEvent = false;
     Event *compactEvent = nullptr;
     Event *eventForInOrderExec = event;
-    if (event) {
+    if (event && !launchParams.makeKernelCommandView) {
         if (kernel->getPrintfBufferAllocation() != nullptr) {
             auto module = static_cast<const ModuleImp *>(&static_cast<KernelImp *>(kernel)->getParentModule());
             event->setKernelForPrintf(module->getPrintfKernelWeakPtr(kernel->toHandle()));
@@ -290,7 +293,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
-    if (this->heaplessStateInitEnabled == false) {
+    if (this->heaplessStateInitEnabled == false && !launchParams.makeKernelCommandView) {
         updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
     }
 
@@ -308,20 +311,25 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         appendEventForProfilingAllWalkers(compactEvent, nullptr, launchParams.outListCommands, true, true, launchParams.omitAddingEventResidency, false);
     }
 
-    bool inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
-    bool inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
+    bool inOrderExecSignalRequired = false;
+    bool inOrderNonWalkerSignalling = false;
 
     uint64_t inOrderCounterValue = 0;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
 
-    if (inOrderExecSignalRequired) {
-        if (inOrderNonWalkerSignalling) {
-            dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
-        } else {
-            inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-            inOrderExecInfo = this->inOrderExecInfo.get();
-            if (eventForInOrderExec && eventForInOrderExec->isCounterBased() && !isTimestampEvent) {
-                eventAddress = 0;
+    if (!launchParams.makeKernelCommandView) {
+        inOrderExecSignalRequired = (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
+        inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
+
+        if (inOrderExecSignalRequired) {
+            if (inOrderNonWalkerSignalling) {
+                dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
+            } else {
+                inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+                inOrderExecInfo = this->inOrderExecInfo.get();
+                if (eventForInOrderExec && eventForInOrderExec->isCounterBased() && !isTimestampEvent) {
+                    eventAddress = 0;
+                }
             }
         }
     }
@@ -338,7 +346,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         reinterpret_cast<const void *>(&threadGroupDimensions), // threadGroupDimensions
         nullptr,                                                // outWalkerPtr
         launchParams.cmdWalkerBuffer,                           // cpuWalkerBuffer
-        nullptr,                                                // cpuPayloadBuffer
+        launchParams.hostPayloadBuffer,                         // cpuPayloadBuffer
         &additionalCommands,                                    // additionalCommands
         kernelPreemptionMode,                                   // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim
@@ -362,7 +370,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->heaplessStateInitEnabled,                         // isHeaplessStateInitEnabled
         interruptEvent,                                         // interruptEvent
         !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
-        false,                                                  // makeCommandView
+        launchParams.makeKernelCommandView,                     // makeCommandView
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
@@ -389,23 +397,25 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
     }
 
-    if (compactEvent) {
-        void **syncCmdBuffer = nullptr;
-        if (launchParams.outSyncCommand != nullptr) {
-            launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
-            syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
-        }
-        appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency, false);
-        if (compactEvent->isInterruptModeEnabled()) {
-            NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
-        }
-    } else if (event) {
-        event->setPacketsInUse(partitionCount);
-        if (l3FlushEnable) {
-            programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
-        }
-        if (!launchParams.isKernelSplitOperation) {
-            dispatchEventRemainingPacketsPostSyncOperation(event, false);
+    if (!launchParams.makeKernelCommandView) {
+        if (compactEvent) {
+            void **syncCmdBuffer = nullptr;
+            if (launchParams.outSyncCommand != nullptr) {
+                launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
+                syncCmdBuffer = &launchParams.outSyncCommand->pDestination;
+            }
+            appendEventForProfilingAllWalkers(compactEvent, syncCmdBuffer, launchParams.outListCommands, false, true, launchParams.omitAddingEventResidency, false);
+            if (compactEvent->isInterruptModeEnabled()) {
+                NEO::EnodeUserInterrupt<GfxFamily>::encode(*commandContainer.getCommandStream());
+            }
+        } else if (event) {
+            event->setPacketsInUse(partitionCount);
+            if (l3FlushEnable) {
+                programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
+            }
+            if (!launchParams.isKernelSplitOperation) {
+                dispatchEventRemainingPacketsPostSyncOperation(event, false);
+            }
         }
     }
 

@@ -48,6 +48,7 @@ using CommandToPatchContainer = std::vector<CommandToPatch>;
 struct CmdListKernelLaunchParams {
     void *outWalker = nullptr;
     void *cmdWalkerBuffer = nullptr;
+    void *hostPayloadBuffer = nullptr;
     CommandToPatch *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
@@ -70,5 +71,6 @@ struct CmdListKernelLaunchParams {
     bool omitAddingKernelInternalResidency = false;
     bool omitAddingEventResidency = false;
     bool omitAddingWaitEventsResidency = false;
+    bool makeKernelCommandView = false;
 };
 } // namespace L0

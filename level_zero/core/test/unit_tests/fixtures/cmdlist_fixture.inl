@@ -1789,5 +1789,35 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
     EXPECT_EQ(0u, scratchInlineValue);
 }
 
+template <typename FamilyType>
+void CommandListScratchPatchFixtureInit::testScratchCommandViewNoPatching() {
+    uint8_t computeWalkerHostBuffer[512];
+    uint8_t payloadHostBuffer[256];
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.makeKernelCommandView = true;
+    launchParams.cmdWalkerBuffer = computeWalkerHostBuffer;
+    launchParams.hostPayloadBuffer = payloadHostBuffer;
+
+    auto result = ZE_RESULT_SUCCESS;
+    result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(0));
+    EXPECT_EQ(0u, commandList->getCommandListPerThreadScratchSize(1));
+
+    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    bool foundScratchPatchCmd = false;
+
+    for (auto &cmdToPatch : cmdsToPatch) {
+        if (cmdToPatch.type == CommandToPatch::CommandType::ComputeWalkerInlineDataScratch) {
+            foundScratchPatchCmd = true;
+            break;
+        }
+    }
+    EXPECT_FALSE(foundScratchPatchCmd);
+}
+
 } // namespace ult
 } // namespace L0

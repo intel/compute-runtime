@@ -7737,5 +7737,26 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramU
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAppendingKernelInCommandViewModeThenDoNotDispatchInOrderCommands, IsAtLeastXeHpCore) {
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    uint8_t computeWalkerHostBuffer[512];
+    uint8_t payloadHostBuffer[256];
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.makeKernelCommandView = true;
+    launchParams.cmdWalkerBuffer = computeWalkerHostBuffer;
+    launchParams.hostPayloadBuffer = payloadHostBuffer;
+
+    auto result = regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
+}
+
 } // namespace ult
 } // namespace L0
