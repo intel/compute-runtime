@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
