@@ -1578,13 +1578,15 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyAndFlushRequiredWh
     };
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
+    auto dcFlushRequired = immCmdList->getDcFlushRequired(true);
+
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
-    findSemaphores(1); // implicit dependency
+    findSemaphores(dcFlushRequired ? 1 : 2); // implicit dependency + timestamp chaining
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
-    findSemaphores(1); // implicit dependency
+    findSemaphores(dcFlushRequired ? 1 : 0); // implicit dependency or already waited on previous call
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, eventHandle, 0, nullptr, false, false);
@@ -1655,26 +1657,36 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhe
     auto offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, false, false);
 
+    auto dcFlushRequired = immCmdList->getDcFlushRequired(true);
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
     auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope()))) {
         EXPECT_NE(cmdList.end(), sdiItor);
     } else {
-        EXPECT_NE(cmdList.end(), sdiItor);
+        if (dcFlushRequired) {
+            EXPECT_NE(cmdList.end(), sdiItor);
 
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+
+        } else {
+            EXPECT_EQ(cmdList.end(), sdiItor);
+        }
 
         auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([&immCmdList](auto &&walker) {
+        std::visit([&immCmdList, &dcFlushRequired](auto &&walker) {
             auto &postSync = walker->getPostSync();
-
-            EXPECT_NE(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+            if (dcFlushRequired) {
+                EXPECT_NE(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+            } else {
+                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+            }
         },
                    walkerVariant);
     }
@@ -3037,6 +3049,8 @@ HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyTh
 
     immCmdList->appendMemoryCopy(alignedPtr, alignedPtr, 1, nullptr, 0, nullptr, false, false);
 
+    auto dcFlushRequired = immCmdList->getDcFlushRequired(true);
+
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
@@ -3044,18 +3058,27 @@ HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyTh
     ASSERT_NE(cmdList.end(), walkerItor);
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([](auto &&walker) {
+    std::visit([&dcFlushRequired](auto &&walker) {
         auto &postSync = walker->getPostSync();
 
-        EXPECT_EQ(0u, postSync.getDestinationAddress());
+        if (dcFlushRequired) {
+            EXPECT_EQ(0u, postSync.getDestinationAddress());
+        } else {
+            EXPECT_NE(0u, postSync.getDestinationAddress());
+        }
     },
                walkerVariant);
 
     auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
-    EXPECT_NE(cmdList.end(), sdiItor);
-    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
 
-    EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+    if (dcFlushRequired) {
+        EXPECT_NE(cmdList.end(), sdiItor);
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+    } else {
+        EXPECT_EQ(cmdList.end(), sdiItor);
+    }
 
     alignedFree(alignedPtr);
 }
