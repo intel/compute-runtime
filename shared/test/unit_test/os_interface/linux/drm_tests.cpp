@@ -36,6 +36,10 @@
 
 using namespace NEO;
 
+namespace NEO {
+extern bool returnEmptyFilesVector;
+}
+
 std::string getLinuxDevicesPath(const char *file) {
     std::string resultString(Os::sysFsPciPathPrefix);
     resultString += file;
@@ -1736,7 +1740,7 @@ TEST(DrmTest, GivenDrmWhenDiscoveringDevicesThenCloseOnExecFlagIsPassedToFdOpen)
     EXPECT_NE(0u, SysCalls::openFuncCalled);
 
     SysCalls::openFuncCalled = 0;
-    VariableBackup<bool> emptyDir(&NEO::Directory::returnEmptyFilesVector, true);
+    VariableBackup<bool> emptyDir(&NEO::returnEmptyFilesVector, true);
     devices = Drm::discoverDevices(*executionEnvironment);
     EXPECT_NE(0u, SysCalls::openFuncCalled);
 }

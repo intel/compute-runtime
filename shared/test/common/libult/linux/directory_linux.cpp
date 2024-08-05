@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <map>
 
 namespace NEO {
+extern bool returnEmptyFilesVector;
 
 std::string byPathPattern(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/by-path");
 std::string deviceDrmPath(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/devices/device/drm");
@@ -22,7 +23,7 @@ std::map<std::string, std::vector<std::string>> directoryFilesMap = {};
 std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
 
-    if (Directory::returnEmptyFilesVector) {
+    if (returnEmptyFilesVector) {
         return files;
     }
 

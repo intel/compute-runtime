@@ -14,6 +14,7 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/cpuintrinsics_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_file_reader_tests.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/directory_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/io_functions_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/logger_tests.cpp

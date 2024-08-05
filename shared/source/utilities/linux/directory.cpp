@@ -14,9 +14,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-namespace NEO::Directory {
+namespace NEO {
 
-std::vector<std::string> getFiles(const std::string &path) {
+std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
 
     DIR *dir = opendir(path.c_str());
@@ -42,10 +42,10 @@ std::vector<std::string> getFiles(const std::string &path) {
     return files;
 }
 
-void createDirectory(const std::string &path) {
+void Directory::createDirectory(const std::string &path) {
     const mode_t mode = 0777; // 777 in base 8
     [[maybe_unused]] auto status = mkdir(path.c_str(), mode);
     DEBUG_BREAK_IF(status != 0 && errno != EEXIST);
 }
 
-}; // namespace NEO::Directory
+} // namespace NEO

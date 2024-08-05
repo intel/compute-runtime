@@ -196,6 +196,7 @@ elseif(UNIX)
 endif()
 
 set(neo_libult_SRCS_LINUX
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_directory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@ namespace NEO {
 
 bool OSInterface::osEnableLocalMemory = true;
 
-namespace Directory {
 bool returnEmptyFilesVector = false;
-}
 
 } // namespace NEO

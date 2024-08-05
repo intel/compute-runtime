@@ -43,10 +43,8 @@
 using namespace NEO;
 
 namespace NEO {
-namespace Directory {
 extern bool returnEmptyFilesVector;
 }
-} // namespace NEO
 
 class MockAllocateGraphicsMemoryWithAlignmentWddm : public MemoryManagerCreate<WddmMemoryManager> {
   public:
@@ -96,7 +94,7 @@ class WddmMemoryManagerTests : public ::testing::Test {
     ExecutionEnvironment *executionEnvironment = nullptr;
 
     void SetUp() override {
-        returnEmptyFilesVectorBackup = std::make_unique<VariableBackup<bool>>(&NEO::Directory::returnEmptyFilesVector, true);
+        returnEmptyFilesVectorBackup = std::make_unique<VariableBackup<bool>>(&NEO::returnEmptyFilesVector, true);
         HardwareInfo *hwInfo = nullptr;
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
 
@@ -290,7 +288,7 @@ class WddmMemoryManagerAllocPathTests : public ::testing::Test {
     ExecutionEnvironment *executionEnvironment = nullptr;
 
     void SetUp() override {
-        returnEmptyFilesVectorBackup = std::make_unique<VariableBackup<bool>>(&NEO::Directory::returnEmptyFilesVector, true);
+        returnEmptyFilesVectorBackup = std::make_unique<VariableBackup<bool>>(&NEO::returnEmptyFilesVector, true);
         HardwareInfo *hwInfo = nullptr;
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
 
@@ -4152,7 +4150,7 @@ TEST(WddmMemoryManagerTest3, givenUsedTagAllocationInWddmMemoryManagerWhenCleanu
 }
 
 TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddmIsFromCorrectRootDevice) {
-    VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
+    VariableBackup<bool> emptyFilesBackup(&NEO::returnEmptyFilesVector, true);
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
@@ -4169,7 +4167,7 @@ TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThe
 
 TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenCreateMemoryManagerThenTakeMaxMallocRestrictionAvailable) {
     uint32_t numRootDevices = 4u;
-    VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
+    VariableBackup<bool> emptyFilesBackup(&NEO::returnEmptyFilesVector, true);
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
@@ -4187,7 +4185,7 @@ TEST(WddmMemoryManagerTest3, givenMultipleRootDeviceWhenCreateMemoryManagerThenT
 }
 
 TEST(WddmMemoryManagerTest3, givenNoLocalMemoryOnAnyDeviceWhenIsCpuCopyRequiredIsCalledThenFalseIsReturned) {
-    VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
+    VariableBackup<bool> emptyFilesBackup(&NEO::returnEmptyFilesVector, true);
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableLocalMemory.set(false);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
@@ -4199,7 +4197,7 @@ TEST(WddmMemoryManagerTest3, givenNoLocalMemoryOnAnyDeviceWhenIsCpuCopyRequiredI
 }
 
 TEST(WddmMemoryManagerTest3, givenLocalPointerPassedToIsCpuCopyRequiredThenFalseIsReturned) {
-    VariableBackup<bool> emptyFilesBackup(&NEO::Directory::returnEmptyFilesVector, true);
+    VariableBackup<bool> emptyFilesBackup(&NEO::returnEmptyFilesVector, true);
     MockExecutionEnvironment executionEnvironment{};
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
