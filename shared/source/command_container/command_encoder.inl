@@ -907,11 +907,6 @@ size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
 }
 
 template <typename GfxFamily>
-void *EncodeDispatchKernel<GfxFamily>::getImplicitArgsAddress(EncodeDispatchKernelArgs &args, const KernelDescriptor &kernelDescriptor) {
-    return nullptr;
-}
-
-template <typename GfxFamily>
 size_t EncodeDispatchKernel<GfxFamily>::getScratchPtrOffsetOfImplicitArgs() {
     return 0;
 }

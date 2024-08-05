@@ -58,6 +58,7 @@ struct EncodeDispatchKernelArgs {
     void *outWalkerPtr = nullptr;
     void *cpuWalkerBuffer = nullptr;
     void *cpuPayloadBuffer = nullptr;
+    void *outImplicitArgsPtr = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
@@ -210,7 +211,6 @@ struct EncodeDispatchKernel {
     static void patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 
     static size_t getInlineDataOffset(EncodeDispatchKernelArgs &args);
-    static void *getImplicitArgsAddress(EncodeDispatchKernelArgs &args, const KernelDescriptor &kernelDescriptor);
     static size_t getScratchPtrOffsetOfImplicitArgs();
 
     template <typename WalkerType>

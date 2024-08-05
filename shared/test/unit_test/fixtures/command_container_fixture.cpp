@@ -51,6 +51,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                                    // outWalkerPtr
         nullptr,                                    // cpuWalkerBuffer
         nullptr,                                    // cpuPayloadBuffer
+        nullptr,                                    // outImplicitArgsPtr
         nullptr,                                    // additionalCommands
         PreemptionMode::Disabled,                   // preemptionMode
         NEO::RequiredPartitionDim::none,            // requiredPartitionDim

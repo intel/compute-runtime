@@ -66,7 +66,7 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
     }
 }
 
-void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const RootDeviceEnvironment &rootDeviceEnvironment, void **outImplicitArgsAddress) {
     auto localIdsGeneratedByHw = hwGenerationOfLocalIdsParams.has_value() ? hwGenerationOfLocalIdsParams.value().first : false;
     auto totalSizeToProgram = getSizeForImplicitArgsPatching(&implicitArgs, kernelDescriptor, localIdsGeneratedByHw, rootDeviceEnvironment);
     auto retVal = ptrOffset(ptrToPatch, totalSizeToProgram);
@@ -89,6 +89,11 @@ void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, cons
         auto sizeForLocalIdsProgramming = totalSizeToProgram - ImplicitArgs::getSize();
         ptrToPatch = ptrOffset(ptrToPatch, sizeForLocalIdsProgramming);
     }
+
+    if (outImplicitArgsAddress) {
+        *outImplicitArgsAddress = ptrToPatch;
+    }
+
     memcpy_s(ptrToPatch, ImplicitArgs::getSize(), &implicitArgs, ImplicitArgs::getSize());
 
     return retVal;

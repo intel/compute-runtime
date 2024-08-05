@@ -203,6 +203,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         nullptr,                                                // outWalkerPtr
         nullptr,                                                // cpuWalkerBuffer
         nullptr,                                                // cpuPayloadBuffer
+        nullptr,                                                // outImplicitArgsPtr
         &additionalCommands,                                    // additionalCommands
         commandListPreemptionMode,                              // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim

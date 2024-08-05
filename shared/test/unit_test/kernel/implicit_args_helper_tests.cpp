@@ -102,6 +102,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
     ImplicitArgs implicitArgs{ImplicitArgs::getSize()};
 
+    void *outImplicitArgs = nullptr;
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0] = 0;
     kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1] = 1;
@@ -119,6 +120,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     auto totalWorkgroupSize = implicitArgs.localSizeX * implicitArgs.localSizeY * implicitArgs.localSizeZ;
     auto localIdsPatchingSize = totalWorkgroupSize * 3 * sizeof(uint16_t);
+    auto localIdsOffset = alignUp(localIdsPatchingSize, MemoryConstants::cacheLineSize);
 
     auto memoryToPatch = std::make_unique<uint8_t[]>(totalSizeForPatching);
 
@@ -126,9 +128,12 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
     memset(memoryToPatch.get(), pattern, totalSizeForPatching);
 
-    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment);
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment, &outImplicitArgs);
 
     EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
+
+    void *expectedImplicitArgsPtr = ptrOffset(memoryToPatch.get(), localIdsOffset);
+    EXPECT_EQ(expectedImplicitArgsPtr, outImplicitArgs);
 
     uint32_t offset = 0;
 
@@ -147,7 +152,7 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithoutImplicitArgsBufferOffsetInP
 
 TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayloadMappingWhenPatchingImplicitArgsThenOnlyProperRegionIsPatched) {
     ImplicitArgs implicitArgs{ImplicitArgs::getSize()};
-
+    void *outImplicitArgs = nullptr;
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer = 0x10;
     EXPECT_TRUE(isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer));
@@ -168,9 +173,12 @@ TEST(ImplicitArgsHelperTest, givenImplicitArgsWithImplicitArgsBufferOffsetInPayl
 
     memset(memoryToPatch.get(), pattern, totalSizeForPatching);
 
-    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment);
+    auto retVal = ImplicitArgsHelper::patchImplicitArgs(memoryToPatch.get(), implicitArgs, kernelDescriptor, {}, rootDeviceEnvironment, &outImplicitArgs);
 
     EXPECT_EQ(retVal, ptrOffset(memoryToPatch.get(), totalSizeForPatching));
+
+    void *expectedImplicitArgsPtr = memoryToPatch.get();
+    EXPECT_EQ(expectedImplicitArgsPtr, outImplicitArgs);
 
     uint32_t offset = 0;
 
