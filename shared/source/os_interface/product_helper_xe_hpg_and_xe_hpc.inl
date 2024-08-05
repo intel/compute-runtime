@@ -108,6 +108,11 @@ bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return true;
 }

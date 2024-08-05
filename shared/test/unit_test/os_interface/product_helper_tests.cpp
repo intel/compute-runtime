@@ -844,7 +844,11 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocation
     EXPECT_TRUE(productHelper->isDeviceUsmAllocationReuseSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtMostDg2) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsBeforeXeHpgCore) {
+    EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
     EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
 }
 
