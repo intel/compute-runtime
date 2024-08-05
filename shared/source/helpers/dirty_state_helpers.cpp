@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,17 @@ bool HeapDirtyState::updateAndCheck(const IndirectHeap *heap) {
         sizeInPages = 0llu;
         return true;
     }
-    bool dirty = gpuBaseAddress != heap->getHeapGpuBase() || sizeInPages != heap->getHeapSizeInPages();
+
+    return updateAndCheck(heap, heap->getHeapGpuBase(), heap->getHeapSizeInPages());
+}
+
+bool HeapDirtyState::updateAndCheck(const IndirectHeap *heap, const uint64_t comparedGpuAddress, const size_t comparedSize) {
+    bool dirty = gpuBaseAddress != comparedGpuAddress || sizeInPages != comparedSize;
+
     if (dirty) {
-        gpuBaseAddress = heap->getHeapGpuBase();
-        sizeInPages = heap->getHeapSizeInPages();
+        gpuBaseAddress = comparedGpuAddress;
+        sizeInPages = comparedSize;
     }
+
     return dirty;
 }

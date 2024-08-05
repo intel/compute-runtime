@@ -29,6 +29,7 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
@@ -1601,6 +1602,9 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
     auto &streamProperties = this->csr->getStreamProperties();
 
+    const auto bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
+    const bool isLastAppendedKernelBindlessMode = lastCommandList->isLastAppendedKernelBindlessMode();
+
     auto &commandContainer = lastCommandList->getCmdContainer();
 
     if (lastCommandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::globalStateless) {
@@ -1610,15 +1614,23 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     } else {
         auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         if (dsh != nullptr) {
-            csrHw->getDshState().updateAndCheck(dsh);
-            streamProperties.stateBaseAddress.setPropertiesDynamicState(dsh->getHeapGpuBase(), dsh->getHeapSizeInPages());
+            auto stateBaseAddress = NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper);
+            auto stateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
+
+            csrHw->getDshState().updateAndCheck(dsh, stateBaseAddress, stateSize);
+            streamProperties.stateBaseAddress.setPropertiesDynamicState(stateBaseAddress, stateSize);
         }
 
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
-            csrHw->getSshState().updateAndCheck(ssh);
-            streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(ssh->getHeapGpuBase(), ssh->getHeapSizeInPages(),
-                                                                                    ssh->getHeapGpuBase(), ssh->getHeapSizeInPages());
+            auto stateBaseAddress = NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode);
+            auto stateSize = NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode);
+
+            csrHw->getSshState().updateAndCheck(ssh, stateBaseAddress, stateSize);
+            streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(stateBaseAddress,
+                                                                                    stateSize,
+                                                                                    stateBaseAddress,
+                                                                                    stateSize);
         }
     }
 

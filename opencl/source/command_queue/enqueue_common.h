@@ -877,6 +877,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     auto memoryCompressionState = csr.getMemoryCompressionState(auxTranslationRequired);
     bool hasStallingCmds = enqueueProperties.hasStallingCmds || (!relaxedOrderingEnabled && (eventsRequest.numEventsInWaitList > 0 || timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0));
+    bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernel->getDescriptor());
 
     DispatchFlags dispatchFlags(
         &timestampPacketDependencies.barrierNodes,                                  // barrierTimestampPacketNodes
@@ -908,7 +909,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         relaxedOrderingEnabled,                                                     // hasRelaxedOrderingDependencies
         false,                                                                      // stateCacheInvalidation
         isStallingCommandsOnNextFlushRequired(),                                    // isStallingCommandsOnNextFlushRequired
-        isDcFlushRequiredOnStallingCommandsOnNextFlush()                            // isDcFlushRequiredOnStallingCommandsOnNextFlush
+        isDcFlushRequiredOnStallingCommandsOnNextFlush(),                           // isDcFlushRequiredOnStallingCommandsOnNextFlush
+        !isBindlessKernel                                                           // disableGlobalSSH
     );
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
@@ -1177,7 +1179,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             hasRelaxedOrderingDependencies,                                      // hasRelaxedOrderingDependencies
             stateCacheInvalidationNeeded,                                        // stateCacheInvalidation
             isStallingCommandsOnNextFlushRequired(),                             // isStallingCommandsOnNextFlushRequired
-            isDcFlushRequiredOnStallingCommandsOnNextFlush()                     // isDcFlushRequiredOnStallingCommandsOnNextFlush
+            isDcFlushRequiredOnStallingCommandsOnNextFlush(),                    // isDcFlushRequiredOnStallingCommandsOnNextFlush
+            true                                                                 // disableGlobalSSH
         );
 
         const bool isHandlingBarrier = isStallingCommandsOnNextFlushRequired();

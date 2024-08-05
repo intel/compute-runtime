@@ -139,6 +139,10 @@ struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixtu
 
 struct CommandListPrivateHeapsFixture : public CommandListStateBaseAddressFixture {
     void setUp();
+    void checkAndPrepareBindlessKernel();
+
+    bool isBindlessKernel = false;
+    NEO::BindlessHeapsHelper *bindlessHeapsHelper = nullptr;
 };
 
 struct CommandListGlobalHeapsFixtureInit : public CommandListStateBaseAddressFixture {

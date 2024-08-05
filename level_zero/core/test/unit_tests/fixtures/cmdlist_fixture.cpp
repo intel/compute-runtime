@@ -219,6 +219,19 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
     kernel->surfaceStateHeapDataSize = 128;
     kernel->surfaceStateHeapData.reset(new uint8_t[256]);
+
+    bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
+}
+
+void CommandListPrivateHeapsFixture::checkAndPrepareBindlessKernel() {
+    if (NEO::ApiSpecificConfig::getBindlessMode(device->getNEODevice()->getReleaseHelper())) {
+        const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
+        isBindlessKernel = true;
+    }
+
+    if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) == nullptr) {
+        commandList->commandContainer.prepareBindfulSsh();
+    }
 }
 
 void CommandListGlobalHeapsFixtureInit::setUp() {

@@ -14,6 +14,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -2363,7 +2364,7 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     uint64_t dsRegularBaseAddress = static_cast<uint64_t>(-1);
     if (this->dshRequired) {
         auto dshRegularHeap = container.getIndirectHeap(NEO::HeapType::dynamicState);
-        dsRegularBaseAddress = dshRegularHeap->getHeapGpuBase();
+        dsRegularBaseAddress = NEO::getStateBaseAddress(*dshRegularHeap, bindlessHeapsHelper);
     }
 
     ze_command_list_handle_t cmdListHandle = commandList->toHandle();
@@ -2407,6 +2408,8 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
     auto &csrStream = csrImmediate.commandStream;
+
+    commandListImmediate->getCmdContainer().prepareBindfulSsh();
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};

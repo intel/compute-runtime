@@ -43,7 +43,8 @@ struct DispatchFlagsHelper {
             false,                                   // hasRelaxedOrderingDependencies
             false,                                   // stateCacheInvalidation
             false,                                   // isStallingCommandsOnNextFlushRequired
-            false                                    // isDcFlushRequiredOnStallingCommandsOnNextFlush
+            false,                                   // isDcFlushRequiredOnStallingCommandsOnNextFlush
+            true                                     // disableGlobalSSH
         );
     }
 };

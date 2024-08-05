@@ -26,6 +26,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -152,6 +153,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     taskCountUpdateFenceRequired = false;
+    lastAppendedKernelBindlessMode = false;
 
     this->inOrderPatchCmds.clear();
 
@@ -3099,6 +3101,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
+    const bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernel.getKernelDescriptor());
+    setIsLastAppendedKernelBindlessMode(isBindlessKernel);
+
     if (this->isFlushTaskSubmissionEnabled) {
         updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative, threadGroupDimensions, isIndirect);
     } else {
@@ -3155,6 +3160,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
+    const auto bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
+
     KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
 
     int32_t currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
@@ -3166,8 +3173,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::surfaceState)) {
             auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
             if (ssh) {
-                currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
-                currentSurfaceStateSize = ssh->getHeapSizeInPages();
+                currentSurfaceStateBaseAddress = NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode());
+                currentSurfaceStateSize = NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode());
 
                 currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
                 currentBindingTablePoolSize = currentSurfaceStateSize;
@@ -3179,8 +3186,9 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
         if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::dynamicState))) {
             auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
-            currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
-            currentDynamicStateSize = dsh->getHeapSizeInPages();
+
+            currentDynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper);
+            currentDynamicStateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
 
             checkDsh = true;
         }

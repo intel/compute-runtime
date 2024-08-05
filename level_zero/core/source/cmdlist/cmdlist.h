@@ -384,6 +384,14 @@ struct CommandList : _ze_command_list_handle_t {
         return statelessBuiltinsEnabled;
     }
 
+    bool isLastAppendedKernelBindlessMode() const {
+        return lastAppendedKernelBindlessMode;
+    }
+
+    void setIsLastAppendedKernelBindlessMode(bool isBindlessKernel) {
+        lastAppendedKernelBindlessMode = isBindlessKernel;
+    }
+
     void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
 
   protected:
@@ -476,6 +484,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool taskCountUpdateFenceRequired = false;
     bool requiresDcFlushForDcMitigation = false;
     bool statelessBuiltinsEnabled = false;
+    bool lastAppendedKernelBindlessMode = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

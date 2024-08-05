@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,8 @@ class IndirectHeap;
 class HeapDirtyState {
   public:
     bool updateAndCheck(const IndirectHeap *heap);
+    bool updateAndCheck(const IndirectHeap *heap,
+                        const uint64_t comparedGpuAddress, const size_t comparedSize);
 
   protected:
     uint64_t gpuBaseAddress = 0llu;

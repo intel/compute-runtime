@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -745,4 +746,50 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     EXPECT_EQ(surfaceHeapSize * MemoryConstants::pageSize / sizeof(RENDER_SURFACE_STATE), sbaCmd.getBindlessSurfaceStateSize());
     EXPECT_EQ(surfaceHeapBase, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
+}
+
+TEST(SbaHelperTest, givenIndirectHeapWhenGetStateBaseAddressAndGetStateSizeThenReturnValuesBasedOnGlobalHeapsAndBindlessKernelPresence) {
+    auto cpuBaseAddress = reinterpret_cast<void *>(0x3000);
+    MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    graphicsAllocation.setGpuBaseAddress(4096u);
+
+    IndirectHeap heap(&graphicsAllocation, false);
+
+    auto gpuAddress = heap.getGraphicsAllocation()->getGpuAddress();
+    auto gpuBaseAddress = heap.getGraphicsAllocation()->getGpuBaseAddress();
+    auto heapSize = (static_cast<uint32_t>(heap.getMaxAvailableSpace()) + MemoryConstants::pageMask) / MemoryConstants::pageSize;
+
+    bool useGlobalHeaps = false;
+
+    {
+        useGlobalHeaps = false;
+        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps));
+        EXPECT_EQ(heapSize, NEO::getStateSize(heap, useGlobalHeaps));
+    }
+    {
+        useGlobalHeaps = true;
+        EXPECT_EQ(gpuBaseAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps));
+        EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, NEO::getStateSize(heap, useGlobalHeaps));
+    }
+
+    bool isBindlessKernel = false;
+
+    {
+        useGlobalHeaps = false;
+        isBindlessKernel = false;
+        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps, isBindlessKernel));
+        EXPECT_EQ(heapSize, NEO::getStateSize(heap, useGlobalHeaps, isBindlessKernel));
+    }
+    {
+        useGlobalHeaps = true;
+        isBindlessKernel = false;
+        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps, isBindlessKernel));
+        EXPECT_EQ(heapSize, NEO::getStateSize(heap, useGlobalHeaps, isBindlessKernel));
+    }
+    {
+        useGlobalHeaps = true;
+        isBindlessKernel = true;
+        EXPECT_EQ(gpuBaseAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps, isBindlessKernel));
+        EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, NEO::getStateSize(heap, useGlobalHeaps, isBindlessKernel));
+    }
 }

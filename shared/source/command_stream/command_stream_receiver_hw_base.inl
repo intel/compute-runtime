@@ -37,6 +37,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/helpers/state_base_address_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -1570,18 +1571,33 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                         LinearStream &commandStreamCSR,
                                                                         bool stateBaseAddressDirty) {
 
-    auto &hwInfo = this->peekHwInfo();
-    const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
+    const auto bindlessHeapsHelper = device.getBindlessHeapsHelper();
+    const bool isBindlessKernel = !dispatchFlags.disableGlobalSSH;
 
-    bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
+    auto &hwInfo = this->peekHwInfo();
+
+    const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
+    int64_t dynamicStateBaseAddress = 0;
+    size_t dynamicStateSize = 0;
+    if (hasDsh) {
+        dynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper);
+        dynamicStateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
+    }
+
+    int64_t surfaceStateBaseAddress = 0;
+    size_t surfaceStateSize = 0;
+    if (ssh != nullptr) {
+        surfaceStateBaseAddress = NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isBindlessKernel);
+        surfaceStateSize = NEO::getStateSize(*ssh, bindlessHeapsHelper, isBindlessKernel);
+    }
+
+    bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh, dynamicStateBaseAddress, dynamicStateSize) : false;
     bool iohDirty = iohState.updateAndCheck(ioh);
-    bool sshDirty = ssh != nullptr ? sshState.updateAndCheck(ssh) : false;
+    bool sshDirty = ssh != nullptr ? sshState.updateAndCheck(ssh, surfaceStateBaseAddress, surfaceStateSize) : false;
 
     bool bindingTablePoolCommandNeeded = sshDirty && (ssh->getGraphicsAllocation() != globalStatelessHeapAllocation);
 
     if (dshDirty) {
-        int64_t dynamicStateBaseAddress = dsh->getHeapGpuBase();
-        size_t dynamicStateSize = dsh->getHeapSizeInPages();
         this->streamProperties.stateBaseAddress.setPropertiesDynamicState(dynamicStateBaseAddress, dynamicStateSize);
     }
     if (iohDirty) {
@@ -1590,8 +1606,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
         this->streamProperties.stateBaseAddress.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
     }
     if (sshDirty) {
-        int64_t surfaceStateBaseAddress = ssh->getHeapGpuBase();
-        size_t surfaceStateSize = ssh->getHeapSizeInPages();
         int64_t bindingTablePoolBaseAddress = -1;
         size_t bindingTablePoolSize = std::numeric_limits<size_t>::max();
 
