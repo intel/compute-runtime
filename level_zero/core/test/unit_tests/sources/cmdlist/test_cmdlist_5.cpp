@@ -3233,6 +3233,8 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenMakeCommandViewIsTrueThenDoNotReserveHeapSpaceAndDoNotConsumeCommandBuffer,
           IsAtLeastXeHpgCore) {
+    checkAndPrepareBindlessKernel();
+
     auto &container = commandList->getCmdContainer();
     auto ssh = container.getIndirectHeap(NEO::HeapType::surfaceState);
     ssh->getSpace(ssh->getAvailableSpace() - 32);
