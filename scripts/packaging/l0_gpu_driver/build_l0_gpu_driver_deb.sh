@@ -14,6 +14,8 @@ REPO_DIR="$( cd "$( dirname "${DIR}/../../../../" )" && pwd )"
 BUILD_DIR="${REPO_DIR}/../build_l0_gpu_driver"
 NEO_SKIP_UNIT_TESTS=${NEO_SKIP_UNIT_TESTS:-FALSE}
 NEO_DISABLE_BUILTINS_COMPILATION=${NEO_DISABLE_BUILTINS_COMPILATION:-FALSE}
+NEO_LEGACY_PLATFORMS_SUPPORT=${NEO_LEGACY_PLATFORMS_SUPPORT:-TRUE}
+NEO_CURRENT_PLATFORMS_SUPPORT=${NEO_CURRENT_PLATFORMS_SUPPORT:-TRUE}
 SPEC_FILE="${SPEC_FILE:-${OS_TYPE}}"
 
 BRANCH_SUFFIX="$( cat ${REPO_DIR}/.branch )"
@@ -81,6 +83,18 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${IGC_VERSION}" ]; then
         perl -pi -e "s/^ intel-igc-core(?=,|$)/ intel-igc-core (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
     fi
+fi
+
+echo "NEO_CURRENT_PLATFORMS_SUPPORT: ${NEO_CURRENT_PLATFORMS_SUPPORT}"
+echo "NEO_LEGACY_PLATFORMS_SUPPORT: ${NEO_LEGACY_PLATFORMS_SUPPORT}"
+
+if [[ "${NEO_LEGACY_PLATFORMS_SUPPORT}" == "TRUE" ]] && [[ ! "${NEO_CURRENT_PLATFORMS_SUPPORT}" == "TRUE" ]]; then
+    echo "Building Legacy package"
+    export NEO_OCLOC_VERSION_MODE=0
+    perl -pi -e "s/^Package: intel-level-zero-gpu$/Package: intel-level-zero-gpu-legacy1/" "$BUILD_DIR/debian/control"
+else
+    echo "Building Current/Full package"
+    export NEO_OCLOC_VERSION_MODE=1
 fi
 
 # Update rules file with new version
