@@ -1569,8 +1569,10 @@ AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *all
 
 void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
     if (allocation->isAllocatedInLocalMemoryPool()) {
+        DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > localMemAllocsSize[allocation->getRootDeviceIndex()]);
         localMemAllocsSize[allocation->getRootDeviceIndex()] -= allocation->getUnderlyingBufferSize();
     } else if (MemoryPool::memoryNull != allocation->getMemoryPool()) {
+        DEBUG_BREAK_IF(allocation->getUnderlyingBufferSize() > sysMemAllocsSize);
         sysMemAllocsSize -= allocation->getUnderlyingBufferSize();
     }
     std::lock_guard<std::mutex> lock(this->allocMutex);

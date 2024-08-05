@@ -78,6 +78,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
         auto globalHeap = ApiSpecificConfig::getGlobalBindlessHeapConfiguration(rootDeviceEnvironment.getReleaseHelper());
         heapAssigners.push_back(std::make_unique<HeapAssigner>(globalHeap));
+        localMemAllocsSize[rootDeviceIndex].store(0u);
     }
 
     if (anyLocalMemorySupported) {

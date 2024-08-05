@@ -787,8 +787,10 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
 
     if (gfxAllocation->isAllocatedInLocalMemoryPool()) {
+        DEBUG_BREAK_IF(gfxAllocation->getUnderlyingBufferSize() > localMemAllocsSize[gfxAllocation->getRootDeviceIndex()]);
         localMemAllocsSize[gfxAllocation->getRootDeviceIndex()] -= gfxAllocation->getUnderlyingBufferSize();
     } else if (MemoryPool::memoryNull != gfxAllocation->getMemoryPool()) {
+        DEBUG_BREAK_IF(gfxAllocation->getUnderlyingBufferSize() > sysMemAllocsSize);
         sysMemAllocsSize -= gfxAllocation->getUnderlyingBufferSize();
     }
 
