@@ -3313,6 +3313,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             UNRECOVERABLE_IF(commandToPatch.pCommand == nullptr);
             break;
         case CommandToPatch::ComputeWalkerInlineDataScratch:
+        case CommandToPatch::ComputeWalkerImplicitArgsScratch:
             break;
         default:
             UNRECOVERABLE_IF(true);

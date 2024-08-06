@@ -1483,6 +1483,11 @@ HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatc
     pCommandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
     EXPECT_TRUE(pCommandList->commandsToPatch.empty());
+    pCommandList->commandsToPatch.clear();
+
+    commandToPatch.type = CommandToPatch::ComputeWalkerImplicitArgsScratch;
+    pCommandList->commandsToPatch.push_back(commandToPatch);
+    EXPECT_NO_THROW(pCommandList->clearCommandsToPatch());
 }
 
 template <NEO::AllocationType allocType>
