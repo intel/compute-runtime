@@ -33,6 +33,7 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenTimeo
 
     DirectSubmissionControllerMock controller;
     executionEnvironment.directSubmissionController.reset(&controller);
+    controller.timeoutElapsedReturnValue.store(true);
     controller.startThread();
     csr.startControllingDirectSubmissions();
     controller.registerDirectSubmission(&csr);
@@ -74,6 +75,42 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWithNotSt
     while (!controller.sleepCalled) {
         std::this_thread::yield();
     }
+    controller.stopThread();
+}
+
+TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenEnqueuedWaitForPagingFenceThenRequestHandled) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    DirectSubmissionControllerMock controller;
+    controller.sleepCalled.store(false);
+    controller.startThread();
+    while (!controller.sleepCalled) {
+        std::this_thread::yield();
+    }
+    EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
+
+    controller.enqueueWaitForPagingFence(&csr, 10u);
+    // Wait until csr is not updated
+    while (csr.pagingFenceValueToUnblock == 0u) {
+        std::this_thread::yield();
+    }
+    EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
+
+    // Verify that controller is able to handle requests during controlling
+    controller.startControlling();
+
+    controller.enqueueWaitForPagingFence(&csr, 20u);
+
+    while (csr.pagingFenceValueToUnblock == 10u) {
+        std::this_thread::yield();
+    }
+    EXPECT_EQ(20u, csr.pagingFenceValueToUnblock);
+
     controller.stopThread();
 }
 

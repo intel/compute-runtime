@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,4 +15,9 @@ void sleep(const T &sleepDuration);
 
 template <class T>
 void waitOnCondition(std::condition_variable &condition, std::unique_lock<std::mutex> &lock, const T &duration);
+
+template <class T, class Predicate>
+bool waitOnConditionWithPredicate(std::condition_variable &condition, std::unique_lock<std::mutex> &lock, const T &duration, Predicate predicate) {
+    return condition.wait_for(lock, duration, predicate);
+}
 } // namespace NEO

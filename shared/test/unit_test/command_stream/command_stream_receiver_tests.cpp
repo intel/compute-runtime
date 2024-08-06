@@ -5597,3 +5597,27 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrsWhenSameResour
     EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
     EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
 }
+
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenEnqueueWaitForPagingFenceCalledThenEnqueueIfPossibleAndReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDirectSubmissionController.set(1);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto pagingFenceValue = 10u;
+    EXPECT_FALSE(csr.enqueueWaitForPagingFence(pagingFenceValue));
+
+    // enqueue waitForPagingFence is possible only if controller exists and direct submission is enabled
+    auto controller = static_cast<DirectSubmissionControllerMock *>(executionEnvironment->initializeDirectSubmissionController());
+    controller->stopThread();
+    EXPECT_FALSE(csr.enqueueWaitForPagingFence(pagingFenceValue));
+
+    csr.directSubmissionAvailable = true;
+    EXPECT_TRUE(csr.enqueueWaitForPagingFence(pagingFenceValue));
+
+    EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    csr.directSubmissionAvailable = false;
+    controller->handlePagingFenceRequests(lock, false);
+    EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
+}

@@ -241,6 +241,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return getAcLineConnectedReturnValue;
     }
 
+    void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
+        this->pagingFenceValueToUnblock = pagingFenceValue;
+    }
+
     static constexpr size_t tagSize = 256;
     static volatile TagAddressType mockTagAddress[tagSize];
     std::vector<char> instructionHeapReserveredData;
@@ -269,6 +273,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     QueueThrottle getLastDirectSubmissionThrottleReturnValue = QueueThrottle::MEDIUM;
     bool getAcLineConnectedReturnValue = true;
     bool submitDependencyUpdateReturnValue = true;
+    std::atomic<uint64_t> pagingFenceValueToUnblock{0u};
 };
 
 class MockCommandStreamReceiverWithFailingSubmitBatch : public MockCommandStreamReceiver {

@@ -1321,22 +1321,21 @@ void Wddm::virtualFree(void *ptr, size_t size) {
     osMemory->osReleaseCpuAddressRange(ptr, size);
 }
 
-void Wddm::waitOnPagingFenceFromCpu(bool isKmdWaitNeeded) {
-    perfLogStartWaitTime(residencyLogger.get(), currentPagingFenceValue);
-    if (currentPagingFenceValue > *getPagingFenceAddress()) {
+void Wddm::waitOnPagingFenceFromCpu(uint64_t pagingFenceValueToWait, bool isKmdWaitNeeded) {
+    perfLogStartWaitTime(residencyLogger.get(), pagingFenceValueToWait);
+    if (pagingFenceValueToWait > *getPagingFenceAddress()) {
         if (isKmdWaitNeeded) {
             perfLogResidencyEnteredWait(residencyLogger.get());
             D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
             waitFromCpu.ObjectCount = 1;
             waitFromCpu.ObjectHandleArray = &pagingQueueSyncObject;
-            uint64_t paging = currentPagingFenceValue.load();
-            waitFromCpu.FenceValueArray = &paging;
+            waitFromCpu.FenceValueArray = &pagingFenceValueToWait;
             waitFromCpu.hDevice = device;
             waitFromCpu.hAsyncEvent = NULL_HANDLE;
             [[maybe_unused]] auto status = getGdi()->waitForSynchronizationObjectFromCpu(&waitFromCpu);
             DEBUG_BREAK_IF(status != STATUS_SUCCESS);
         } else {
-            while (currentPagingFenceValue > *getPagingFenceAddress()) {
+            while (pagingFenceValueToWait > *getPagingFenceAddress()) {
                 perfLogResidencyEnteredWait(residencyLogger.get());
             }
         }

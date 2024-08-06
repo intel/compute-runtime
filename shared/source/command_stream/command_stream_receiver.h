@@ -542,6 +542,9 @@ class CommandStreamReceiver {
 
     void ensurePrimaryCsrInitialized(Device &device);
 
+    bool enqueueWaitForPagingFence(uint64_t pagingFenceValue);
+    virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {}
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -679,6 +682,7 @@ class CommandStreamReceiver {
     bool doubleSbaWa = false;
     bool dshSupported = false;
     bool heaplessModeEnabled = false;
+    bool requiresBlockingResidencyHandling = true;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

@@ -953,8 +953,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
     MockWddmAllocation allocation3(gmmHelper);
     MockWddmAllocation allocation4(gmmHelper);
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
-
-    residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_TRUE(allocation2.getResidencyData().resident[osContextId]);
@@ -970,8 +970,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentRes
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
     residencyController->getMonitoredFence().currentFenceValue = 20;
-
-    residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_EQ(20u, allocation1.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
     EXPECT_EQ(20u, allocation2.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
@@ -990,8 +990,8 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocation
 
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize}, ptr);
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
-
-    residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
@@ -1009,9 +1009,9 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocation
     WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1500)));
 
     residencyController->getMonitoredFence().currentFenceValue = 20;
-
+    bool requiresBlockingResidencyHandling = true;
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
-    residencyController->makeResidentResidencyAllocations(residencyPack);
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_EQ(20u, allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->getFenceValueForContextId(0));
@@ -1030,7 +1030,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     wddm->makeResidentStatus = false;
 
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_FALSE(result);
 
@@ -1053,7 +1054,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     wddm->makeResidentStatus = false;
 
     ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_FALSE(result);
 
@@ -1072,7 +1074,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     wddm->makeResidentStatus = false;
 
     ResidencyContainer residencyPack{&allocation1};
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_FALSE(result);
     EXPECT_NE(wddm->makeResidentParamsPassed[0].cantTrimFurther, wddm->makeResidentParamsPassed[1].cantTrimFurther);
@@ -1085,8 +1088,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCal
     allocation1.handle = 1;
     allocation2.handle = 2;
     ResidencyContainer residencyPack{&allocation1, &allocation2};
-
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
     EXPECT_TRUE(result);
     EXPECT_EQ(2 * EngineLimits::maxHandleCount, wddm->makeResidentResult.handleCount);
     EXPECT_EQ(false, wddm->makeResidentResult.cantTrimFurther);
@@ -1110,7 +1113,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     residencyController->addToTrimCandidateList(&allocationToTrim);
 
     ResidencyContainer residencyPack{&allocation1};
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_TRUE(result);
 
@@ -1123,8 +1127,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     ResidencyContainer residencyPack{&allocation1};
 
     wddm->makeResidentResults = {false, true};
-
-    residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
     EXPECT_TRUE(residencyController->isMemoryBudgetExhausted());
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
 }
@@ -1173,8 +1177,8 @@ TEST_F(WddmResidencyControllerWithMockWddmMakeResidentTest, givenMakeResidentFai
 
     MockWddmAllocation allocation1(gmmHelper);
     ResidencyContainer residencyPack{&allocation1};
-
-    bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(3u, wddm->makeResidentResult.called);

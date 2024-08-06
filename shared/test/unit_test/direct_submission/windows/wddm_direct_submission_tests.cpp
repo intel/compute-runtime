@@ -1117,3 +1117,17 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenSwitchingRingBuffers
     wddmDirectSubmission.handleSwitchRingBuffers(nullptr);
     EXPECT_EQ(wddmDirectSubmission.ringBufferForCompletionFence, wddmDirectSubmission.previousRingBuffer);
 }
+
+HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenUnblockPagingFenceSemaphoreThenCorrectValueAssigned) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    auto pagingFenceValueToWait = 30u;
+    auto mockedPagingFence = 20u;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    wddmDirectSubmission.initialize(false, false);
+    EXPECT_EQ(0u, wddmDirectSubmission.semaphoreData->pagingFenceCounter);
+    wddm->mockPagingFence = mockedPagingFence;
+
+    wddmDirectSubmission.unblockPagingFenceSemaphore(pagingFenceValueToWait);
+    EXPECT_GT(wddmDirectSubmission.semaphoreData->pagingFenceCounter, mockedPagingFence);
+}

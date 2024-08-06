@@ -517,6 +517,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
     }
 
+    void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
+        this->pagingFenceValueToUnblock = pagingFenceValue;
+        BaseClass::unblockPagingFenceSemaphore(pagingFenceValue);
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -534,6 +539,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::mutex mutex;
     std::atomic<uint32_t> recursiveLockCounter;
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};
+    std::atomic<uint64_t> pagingFenceValueToUnblock{0u};
     uint32_t makeSurfacePackNonResidentCalled = false;
     uint32_t blitBufferCalled = 0;
     uint32_t createPerDssBackedBufferCalled = 0;

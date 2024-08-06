@@ -48,8 +48,8 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr.taskCount.store(5u);
 
     DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(true);
     controller.registerDirectSubmission(&csr);
-
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
@@ -92,6 +92,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
     csr.setupContext(*osContext.get());
 
     DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(true);
     controller.registerDirectSubmission(&csr);
     {
         csr.taskCount.store(1u);
@@ -211,6 +212,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
     csr.setupContext(*osContext.get());
 
     DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(true);
     controller.setTimeoutParamsForPlatform(csr.getProductHelper());
     controller.registerDirectSubmission(&csr);
     EXPECT_TRUE(controller.adjustTimeoutOnThrottleAndAcLineStatus);
@@ -556,6 +558,77 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmi
     controller.unregisterDirectSubmission(&csr2);
     controller.unregisterDirectSubmission(&csr3);
     controller.unregisterDirectSubmission(&csr4);
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceThenWaitInQueue) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    DirectSubmissionControllerMock controller;
+    EXPECT_TRUE(controller.pagingFenceRequests.empty());
+    controller.enqueueWaitForPagingFence(&csr, 10u);
+    EXPECT_FALSE(controller.pagingFenceRequests.empty());
+
+    auto request = controller.pagingFenceRequests.front();
+    EXPECT_EQ(request.csr, &csr);
+    EXPECT_EQ(request.pagingFenceValue, 10u);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    controller.handlePagingFenceRequests(lock, false);
+    EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
+
+    // Do nothing when queue is empty
+    csr.pagingFenceValueToUnblock = 0u;
+    controller.handlePagingFenceRequests(lock, false);
+    EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceWithCheckSubmissionsThenCheckSubmissions) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+
+    DirectSubmissionControllerMock controller;
+    EXPECT_TRUE(controller.pagingFenceRequests.empty());
+    controller.enqueueWaitForPagingFence(&csr, 10u);
+    EXPECT_FALSE(controller.pagingFenceRequests.empty());
+
+    auto request = controller.pagingFenceRequests.front();
+    EXPECT_EQ(request.csr, &csr);
+    EXPECT_EQ(request.pagingFenceValue, 10u);
+
+    csr.taskCount.store(5u);
+    controller.registerDirectSubmission(&csr);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    controller.timeoutElapsedReturnValue.store(true);
+    controller.handlePagingFenceRequests(lock, true);
+    EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
+    EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
+}
+
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenCheckTimeoutElapsedThenReturnCorrectValue) {
+    DirectSubmissionControllerMock controller;
+    controller.timeout = std::chrono::seconds(5);
+    controller.timeoutElapsedCallBase.store(true);
+
+    controller.timeSinceLastCheck = controller.getCpuTimestamp() - std::chrono::seconds(10);
+    EXPECT_TRUE(controller.timeoutElapsed());
+
+    controller.timeSinceLastCheck = controller.getCpuTimestamp() - std::chrono::seconds(1);
+    EXPECT_FALSE(controller.timeoutElapsed());
 }
 
 } // namespace NEO

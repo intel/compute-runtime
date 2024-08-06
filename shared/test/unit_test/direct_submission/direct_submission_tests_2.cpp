@@ -2756,3 +2756,59 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhen
 
     EXPECT_FALSE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 }
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDispatchBufferNotRequiresBlockingResidencyHandlingThenDontWaitForResidencyAndProgramSemaphore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    FlushStampTracker flushStamp(true);
+    HardwareParse hwParse;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.initialize(false, true));
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
+    directSubmission.handleResidencyCount = 0u;
+    batchBuffer.pagingFenceSemInfo.pagingFenceValue = 10u;
+    batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling = false;
+    EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+    EXPECT_EQ(0u, directSubmission.handleResidencyCount);
+
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto semaphoreIt = find<MI_SEMAPHORE_WAIT *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+    auto semaphore = reinterpret_cast<MI_SEMAPHORE_WAIT *>(*semaphoreIt);
+    EXPECT_EQ(10u, semaphore->getSemaphoreDataDword());
+
+    auto expectedGpuVa = directSubmission.semaphoreGpuVa + offsetof(RingSemaphoreData, pagingFenceCounter);
+    EXPECT_EQ(expectedGpuVa, semaphore->getSemaphoreGraphicsAddress());
+}
+
+HWTEST_F(DirectSubmissionTest, givenCsrWhenUnblockPagingFenceSemaphoreCalledThenSemaphoreUnblocked) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+    auto directSubmission = new NEO::MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    auto blitterDirectSubmission = new NEO::MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*ultCsr);
+
+    ultCsr->directSubmission.reset(directSubmission);
+    ultCsr->blitterDirectSubmission.reset(blitterDirectSubmission);
+
+    ultCsr->unblockPagingFenceSemaphore(20u);
+    EXPECT_EQ(0ull, directSubmission->pagingFenceValueToWait);
+    EXPECT_EQ(0ull, blitterDirectSubmission->pagingFenceValueToWait);
+
+    ultCsr->directSubmissionAvailable = true;
+    ultCsr->blitterDirectSubmissionAvailable = true;
+
+    ultCsr->unblockPagingFenceSemaphore(20u);
+    EXPECT_EQ(20u, directSubmission->pagingFenceValueToWait);
+    EXPECT_EQ(0ull, blitterDirectSubmission->pagingFenceValueToWait);
+
+    directSubmission->pagingFenceValueToWait = 0u;
+
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular},
+                                                                                                        PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+    ultCsr->setupContext(*osContext);
+    ultCsr->unblockPagingFenceSemaphore(20u);
+    EXPECT_EQ(0ull, directSubmission->pagingFenceValueToWait);
+    EXPECT_EQ(20u, blitterDirectSubmission->pagingFenceValueToWait);
+}

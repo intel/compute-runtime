@@ -73,7 +73,7 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
     Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
 
     this->dispatchSemaphoreSection(this->currentQueueWorkCount + 1);
-    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize);
+    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, true);
     this->currentQueueWorkCount++;
 
     this->updateTagValueImpl(this->currentRingBuffer);
@@ -205,6 +205,18 @@ void WddmDirectSubmission<GfxFamily, Dispatcher>::updateMonitorFenceValueForResi
         // Update fence value not to early destroy / evict allocation
         allocation->updateCompletionDataForAllocationAndFragments(currentFence, contextId);
     }
+}
+
+/**
+ * @brief Unblocks pipeline by waiting for paging fence value and signals semaphore with latest value.
+ * Signals semaphore with latest fence value instead of passed one to unblock immediately subsequent semaphores.
+ *
+ * @param[in] pagingFenceValue paging fence submitted from user thread to wait for.
+ */
+template <typename GfxFamily, typename Dispatcher>
+inline void WddmDirectSubmission<GfxFamily, Dispatcher>::unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {
+    this->wddm->waitOnPagingFenceFromCpu(pagingFenceValue, true);
+    this->semaphoreData->pagingFenceCounter = static_cast<uint32_t>(*this->wddm->getPagingFenceAddress());
 }
 
 } // namespace NEO

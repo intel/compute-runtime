@@ -201,6 +201,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device);
     bool submitDependencyUpdate(TagNodeBase *tag) override;
 
+    void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs);

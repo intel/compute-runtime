@@ -14,8 +14,10 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <unordered_map>
 
 namespace NEO {
@@ -33,6 +35,11 @@ struct TimeoutParams {
     bool directSubmissionEnabled;
 };
 
+struct WaitForPagingFenceRequest {
+    CommandStreamReceiver *csr;
+    uint64_t pagingFenceValue;
+};
+
 class DirectSubmissionController {
   public:
     static constexpr size_t defaultTimeout = 5'000;
@@ -48,6 +55,8 @@ class DirectSubmissionController {
     void stopThread();
 
     static bool isSupported();
+
+    void enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue);
 
   protected:
     struct DirectSubmissionState {
@@ -76,7 +85,7 @@ class DirectSubmissionController {
 
     static void *controlDirectSubmissionsState(void *self);
     void checkNewSubmissions();
-    MOCKABLE_VIRTUAL void sleep();
+    MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
 
     void adjustTimeout(CommandStreamReceiver *csr);
@@ -84,6 +93,9 @@ class DirectSubmissionController {
     void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
     void updateLastSubmittedThrottle(QueueThrottle throttle);
     size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
+
+    void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
+    MOCKABLE_VIRTUAL bool timeoutElapsed();
 
     uint32_t maxCcsCount = 1u;
     std::array<uint32_t, DeviceBitfield().size()> ccsCount = {};
@@ -94,6 +106,7 @@ class DirectSubmissionController {
     std::atomic_bool keepControlling = true;
     std::atomic_bool runControlling = false;
 
+    SteadyClock::time_point timeSinceLastCheck{};
     SteadyClock::time_point lastTerminateCpuTimestamp{};
     std::chrono::microseconds maxTimeout{defaultTimeout};
     std::chrono::microseconds timeout{defaultTimeout};
@@ -101,5 +114,10 @@ class DirectSubmissionController {
     std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
     bool adjustTimeoutOnThrottleAndAcLineStatus = false;
+
+    std::condition_variable condVar;
+    std::mutex condVarMutex;
+
+    std::queue<WaitForPagingFenceRequest> pagingFenceRequests;
 };
 } // namespace NEO

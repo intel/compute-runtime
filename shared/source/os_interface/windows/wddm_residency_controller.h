@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ class WddmResidencyController {
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency);
+    bool makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
     void makeNonResidentEvictionAllocations(const ResidencyContainer &evictionAllocations);
 
     bool isInitialized() const;

@@ -105,21 +105,36 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
         if (!controller->keepControlling.load()) {
             return nullptr;
         }
+        std::unique_lock<std::mutex> lock(controller->condVarMutex);
+        controller->handlePagingFenceRequests(lock, false);
 
-        controller->sleep();
+        auto isControllerNotified = controller->sleep(lock);
+        if (isControllerNotified) {
+            controller->handlePagingFenceRequests(lock, false);
+        }
     }
 
+    controller->timeSinceLastCheck = controller->getCpuTimestamp();
     while (true) {
         if (!controller->keepControlling.load()) {
             return nullptr;
         }
+        std::unique_lock<std::mutex> lock(controller->condVarMutex);
+        controller->handlePagingFenceRequests(lock, true);
 
-        controller->sleep();
+        auto isControllerNotified = controller->sleep(lock);
+        if (isControllerNotified) {
+            controller->handlePagingFenceRequests(lock, true);
+        }
+        lock.unlock();
         controller->checkNewSubmissions();
     }
 }
 
 void DirectSubmissionController::checkNewSubmissions() {
+    if (!timeoutElapsed()) {
+        return;
+    }
     std::lock_guard<std::mutex> lock(this->directSubmissionsMutex);
     bool shouldRecalculateTimeout = false;
     for (auto &directSubmission : this->directSubmissions) {
@@ -149,10 +164,11 @@ void DirectSubmissionController::checkNewSubmissions() {
     if (shouldRecalculateTimeout) {
         this->recalculateTimeout();
     }
+    this->timeSinceLastCheck = getCpuTimestamp();
 }
 
-void DirectSubmissionController::sleep() {
-    NEO::sleep(std::chrono::microseconds(this->timeout));
+bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
+    return NEO::waitOnConditionWithPredicate(condVar, lock, std::chrono::microseconds(this->timeout), [&] { return !pagingFenceRequests.empty(); });
 }
 
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
@@ -184,6 +200,33 @@ void DirectSubmissionController::recalculateTimeout() {
         this->timeout = newTimeout.count() < this->maxTimeout.count() ? newTimeout : this->maxTimeout;
     }
     this->lastTerminateCpuTimestamp = now;
+}
+
+void DirectSubmissionController::enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue) {
+    std::lock_guard lock(this->condVarMutex);
+    pagingFenceRequests.push({csr, pagingFenceValue});
+    condVar.notify_one();
+}
+
+void DirectSubmissionController::handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions) {
+    UNRECOVERABLE_IF(!lock.owns_lock())
+    while (!pagingFenceRequests.empty()) {
+        auto request = pagingFenceRequests.front();
+        pagingFenceRequests.pop();
+        lock.unlock();
+
+        request.csr->unblockPagingFenceSemaphore(request.pagingFenceValue);
+        if (checkForNewSubmissions) {
+            checkNewSubmissions();
+        }
+
+        lock.lock();
+    }
+}
+
+bool DirectSubmissionController::timeoutElapsed() {
+    auto diff = std::chrono::duration_cast<std::chrono::microseconds>(getCpuTimestamp() - this->timeSinceLastCheck);
+    return diff >= this->timeout;
 }
 
 } // namespace NEO

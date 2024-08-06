@@ -83,6 +83,17 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
         return submissionStatus;
     }
     batchBuffer.allocationsForResidency = &allocationsForResidency;
+
+    // Enqueue wait for paging fence only if it's valid and there's actual paging fence to wait for
+    auto pagingFenceValue = this->wddm->getCurrentPagingFenceValue();
+    if (!this->requiresBlockingResidencyHandling && pagingFenceValue > *this->wddm->getPagingFenceAddress()) {
+        auto waitEnqueued = this->enqueueWaitForPagingFence(pagingFenceValue);
+        if (waitEnqueued) {
+            batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling = false;
+            batchBuffer.pagingFenceSemInfo.pagingFenceValue = pagingFenceValue;
+        }
+    }
+
     if (this->directSubmission.get()) {
         this->startControllingDirectSubmissions();
         auto ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
@@ -138,7 +149,7 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 
 template <typename GfxFamily>
 SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 template <typename GfxFamily>

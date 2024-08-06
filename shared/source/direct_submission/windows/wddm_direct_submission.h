@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     ~WddmDirectSubmission() override;
 
     void flushMonitorFence() override;
+    void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
 
   protected:
     bool allocateOsResources() override;

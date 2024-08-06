@@ -2376,4 +2376,16 @@ bool CommandStreamReceiverHw<GfxFamily>::submitDependencyUpdate(TagNodeBase *tag
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     return submissionStatus == SubmissionStatus::success;
 }
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {
+    if (this->isAnyDirectSubmissionEnabled()) {
+        if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+            this->blitterDirectSubmission->unblockPagingFenceSemaphore(pagingFenceValue);
+        } else {
+            this->directSubmission->unblockPagingFenceSemaphore(pagingFenceValue);
+        }
+    }
+}
+
 } // namespace NEO

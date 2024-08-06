@@ -181,10 +181,15 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         return this->isCompletedReturn;
     }
 
+    void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
+        this->pagingFenceValueToWait = pagingFenceValue;
+    }
+
     uint64_t updateTagValueReturn = 1ull;
     uint64_t tagAddressSetValue = MemoryConstants::pageSize;
     uint64_t tagValueSetValue = 1ull;
     uint64_t submitGpuAddress = 0ull;
+    uint64_t pagingFenceValueToWait = 0ull;
     size_t submitSize = 0u;
     uint32_t submitCount = 0u;
     uint32_t handleResidencyCount = 0u;

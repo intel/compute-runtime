@@ -19,6 +19,11 @@ class Event;
 class FlushStampTracker;
 class GraphicsAllocation;
 
+struct PagingFenceSemaphoreInfo {
+    bool requiresBlockingResidencyHandling = true;
+    uint64_t pagingFenceValue = 0u;
+};
+
 struct BatchBuffer {
     BatchBuffer(GraphicsAllocation *commandBufferAllocation,
                 size_t startOffset,
@@ -52,6 +57,8 @@ struct BatchBuffer {
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
     uint32_t numCsrClients = 0;
+
+    PagingFenceSemaphoreInfo pagingFenceSemInfo{};
 
     bool hasStallingCmds = false;
     bool hasRelaxedOrderingDependencies = false;

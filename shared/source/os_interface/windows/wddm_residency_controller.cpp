@@ -173,13 +173,28 @@ void WddmResidencyController::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, u
     monitoredFence.gpuAddress = gpuAddress;
 }
 
-bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency) {
+/**
+ * @brief Makes resident passed allocations on a device
+ *
+ * @param[in] allocationsForResidency container of allocations which need to be resident.
+ * @param[out] requiresBlockingResidencyHandling flag indicating whether wait for paging fence must be handled in user thread.
+ * Setting to false means that it can be handled in background thread, which will signal semaphore after paging fence reaches required value.
+ *
+ * @note This method skips allocations which are already resident.
+ *
+ * @return returns true if all allocations either succeeded or are pending to be resident
+ */
+bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling) {
     const size_t residencyCount = allocationsForResidency.size();
     constexpr uint32_t stackAllocations = 64;
     constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount * stackAllocations;
     StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForResidency;
     uint32_t totalHandlesCount = 0;
     size_t totalSize = 0;
+    requiresBlockingResidencyHandling = true;
+    if (debugManager.flags.WaitForPagingFenceInController.get() != -1) {
+        requiresBlockingResidencyHandling = !debugManager.flags.WaitForPagingFenceInController.get();
+    }
 
     auto lock = this->acquireLock();
 
@@ -213,12 +228,14 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
                 if (!fragmentResidency[allocationId]) {
                     handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
                     totalHandlesCount++;
+                    requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
                 }
             }
         } else if (!residencyData.resident[osContextId]) {
             for (uint32_t gmmId = 0; gmmId < allocation->getNumGmms(); ++gmmId) {
                 handlesForResidency.push_back(allocation->getHandle(gmmId));
                 totalHandlesCount++;
+                requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
             }
         }
     }

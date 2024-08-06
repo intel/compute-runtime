@@ -407,7 +407,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = 0u;
 
     this->gpuVaForMiFlush = this->semaphoreGpuVa + offsetof(RingSemaphoreData, miFlushSpace);
-
+    this->gpuVaForPagingFenceSemaphore = this->semaphoreGpuVa + offsetof(RingSemaphoreData, pagingFenceCounter);
     auto ret = makeResourcesResident(allocations);
 
     return ret && allocateOsResources();
@@ -683,6 +683,10 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
                batchBuffer.usedSize);
     }
 
+    if (!batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling) {
+        dispatchSemaphoreForPagingFence(batchBuffer.pagingFenceSemInfo.pagingFenceValue);
+    }
+
     if (workloadMode == 0) {
         auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
         void *returnCmd = batchBuffer.endCmdPtr;
@@ -946,11 +950,15 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         inputRequiredMonitorFence = batchBuffer.hasStallingCmds;
     }
     bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(inputRequiredMonitorFence);
+    auto requiresBlockingResidencyHandling = batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling;
 
     size_t dispatchSize = this->getUllsStateSize() + getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
 
     if (this->copyCommandBufferIntoRing(batchBuffer)) {
         dispatchSize += (batchBuffer.stream->getUsed() - batchBuffer.startOffset) - 2 * getSizeStartSection();
+    }
+    if (!requiresBlockingResidencyHandling) {
+        dispatchSize += getSizeSemaphoreForPagingFence();
     }
 
     size_t cycleSize = getSizeSwitchRingBufferSection();
@@ -986,7 +994,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     cpuCachelineFlush(currentPosition, dispatchSize);
 
-    if (!this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize)) {
+    if (!this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, requiresBlockingResidencyHandling)) {
         return false;
     }
 
@@ -1004,12 +1012,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size) {
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait) {
     if (needStart) {
         this->ringStart = this->submit(gpuAddress, size);
         return this->ringStart;
     } else {
-        handleResidency();
+        if (needWait) {
+            handleResidency();
+        }
         this->unblockGpu();
         return true;
     }
@@ -1215,6 +1225,20 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSystemMemoryFenceAddres
 template <typename GfxFamily, typename Dispatcher>
 uint32_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDispatchErrorCode() {
     return dispatchErrorCode;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreForPagingFence(uint64_t value) {
+    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+    EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
+                                                          this->gpuVaForPagingFenceSemaphore,
+                                                          value,
+                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, false, false, false, false, nullptr);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreForPagingFence() {
+    return EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
 }
 
 } // namespace NEO
