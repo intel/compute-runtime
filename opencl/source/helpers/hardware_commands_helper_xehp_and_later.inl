@@ -61,6 +61,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     uint32_t &sizeCrossThreadData,
     [[maybe_unused]] uint64_t scratchAddress,
     const RootDeviceEnvironment &rootDeviceEnvironment) {
+    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     indirectHeap.align(GfxFamily::cacheLineSize);
 
@@ -94,6 +95,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         offsetCrossThreadData += sizeForLocalIdsProgramming;
 
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
+        EncodeDispatchKernel<GfxFamily>::template patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddress, true);
 
         ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder), rootDeviceEnvironment, nullptr);
     }
@@ -102,7 +104,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     if (inlineDataProgrammingRequired == true) {
 
         constexpr uint32_t inlineDataSize = WalkerType::getInlineDataSize();
-
         sizeToCopy = std::min(inlineDataSize, sizeCrossThreadData);
         dest = reinterpret_cast<char *>(walkerCmd->getInlineDataPointer());
         memcpy_s(dest, sizeToCopy, kernel.getCrossThreadData(), sizeToCopy);
@@ -115,8 +116,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
     }
-
-    constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     if constexpr (heaplessModeEnabled) {
         uint64_t indirectDataAddress = indirectHeap.getHeapGpuBase();
