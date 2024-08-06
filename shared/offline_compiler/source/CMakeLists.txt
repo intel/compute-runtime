@@ -437,6 +437,10 @@ elseif(WIN32)
             COMPONENT ocloc
     )
     install(TARGETS ${OCLOC_NAME}_lib
+            RUNTIME
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT ocloc
+            ARCHIVE
             DESTINATION ${CMAKE_INSTALL_LIBDIR}
             COMPONENT ocloc
     )
