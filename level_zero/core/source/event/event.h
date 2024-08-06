@@ -78,7 +78,7 @@ struct EventDescriptor {
 };
 
 struct Event : _ze_event_handle_t {
-    virtual ~Event();
+    virtual ~Event() = default;
     virtual ze_result_t destroy();
     virtual ze_result_t hostSignal(bool allowCounterBased) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;

@@ -41,10 +41,6 @@ template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, De
 template Event *Event::create<uint64_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
 template Event *Event::create<uint32_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
 
-Event::~Event() {
-    resetInOrderTimestampNode(nullptr);
-}
-
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
     this->context = static_cast<ContextImp *>(context);
 
@@ -386,6 +382,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 }
 
 ze_result_t Event::destroy() {
+    this->resetInOrderTimestampNode(nullptr);
     delete this;
     return ZE_RESULT_SUCCESS;
 }
