@@ -198,7 +198,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
                         break;
                     }
                     if (waitForCompletion) {
-                        const auto waitStatus = engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
+                        const auto waitStatus = engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, engine.commandStreamReceiver->peekLatestFlushedTaskCount());
                         if (waitStatus == WaitStatus::gpuHang) {
                             return MemoryOperationsStatus::gpuHangDetectedDuringOperation;
                         }

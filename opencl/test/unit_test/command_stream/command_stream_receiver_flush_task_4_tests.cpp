@@ -816,7 +816,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     CpuIntrinsicsTests::pauseAddress = mockCsr->tagAddress;
     CpuIntrinsicsTests::pauseValue = taskCountToWait;
 
-    const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, 1}, taskCountToWait);
+    const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, false, 1}, taskCountToWait);
     EXPECT_EQ(NEO::WaitStatus::ready, ret);
 }
 
@@ -836,7 +836,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
     CpuIntrinsicsTests::pauseAddress = mockCsr->tagAddress;
     CpuIntrinsicsTests::pauseValue = taskCountToWait;
 
-    const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{true, true, 10}, taskCountToWait);
+    const auto ret = mockCsr->waitForCompletionWithTimeout(WaitParams{true, true, false, 10}, taskCountToWait);
     EXPECT_EQ(NEO::WaitStatus::notReady, ret);
 }
 

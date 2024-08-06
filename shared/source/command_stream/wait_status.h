@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,13 @@ enum class WaitStatus {
 };
 
 struct WaitParams {
+    WaitParams() = default;
+    WaitParams(bool indefinitelyPoll, bool enableTimeout, bool skipTbxDownload, int64_t waitTimeout)
+        : indefinitelyPoll(indefinitelyPoll), enableTimeout(enableTimeout), skipTbxDownload(skipTbxDownload), waitTimeout(waitTimeout){};
+
     bool indefinitelyPoll = false;
     bool enableTimeout = false;
+    bool skipTbxDownload = false;
     int64_t waitTimeout = 0;
 };
 

@@ -215,7 +215,7 @@ WaitStatus CommandStreamReceiver::waitForTaskCount(TaskCountType requiredTaskCou
     auto address = getTagAddress();
     if (!skipResourceCleanup() && address) {
         this->downloadTagAllocation(requiredTaskCount);
-        return baseWaitFunction(address, WaitParams{false, false, 0}, requiredTaskCount);
+        return baseWaitFunction(address, WaitParams{false, false, false, 0}, requiredTaskCount);
     }
 
     return WaitStatus::ready;

@@ -17,7 +17,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     auto status = flushTagUpdate();
 
     if (isTbxMode() && (status == SubmissionStatus::success)) {
-        waitForTaskCountWithKmdNotifyFallback(this->taskCount, 0, false, QueueThrottle::MEDIUM);
+        waitForCompletionWithTimeout({true, false, true, TimeoutControls::maxTimeout}, this->taskCount);
     }
 
     return status;

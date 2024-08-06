@@ -30,7 +30,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
-    void flushSubmissionsAndDownloadAllocations(TaskCountType taskCount);
+    void flushSubmissionsAndDownloadAllocations(TaskCountType taskCount, bool skipAllocationsDownload);
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;

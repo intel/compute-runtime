@@ -828,7 +828,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
     if (status == WaitStatus::notReady) {
         waitForFlushStamp(flushStampToWait);
         // now call blocking wait, this is to ensure that task count is reached
-        status = waitForCompletionWithTimeout(WaitParams{false, false, 0}, taskCountToWait);
+        status = waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, taskCountToWait);
     }
 
     // If GPU hang occured, then propagate it to the caller.

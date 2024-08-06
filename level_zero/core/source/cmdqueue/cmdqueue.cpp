@@ -177,7 +177,7 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNa
         timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
     }
 
-    const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, enableTimeout, timeoutMicroseconds}, taskCountToWait);
+    const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, enableTimeout, false, timeoutMicroseconds}, taskCountToWait);
     if (waitStatus == NEO::WaitStatus::notReady) {
         return ZE_RESULT_NOT_READY;
     }

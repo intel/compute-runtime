@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
                                                 bool kmdWaitModeActive,
                                                 bool directSubmissionEnabled) {
     if (throttle == QueueThrottle::HIGH) {
-        return WaitParams{true};
+        return WaitParams{true, false, false, 0};
     }
 
     if (flushStampToWait == 0) {
@@ -36,7 +36,7 @@ WaitParams KmdNotifyHelper::obtainTimeoutParams(bool quickKmdSleepRequest,
     }
 
     if (debugManager.flags.PowerSavingMode.get() || throttle == QueueThrottle::LOW) {
-        return WaitParams{false, true, 1};
+        return WaitParams{false, true, false, 1};
     }
 
     const int64_t taskCountDiff = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;

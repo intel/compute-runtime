@@ -5349,15 +5349,16 @@ HWTEST_F(CommandStreamReceiverTest, givenTbxCsrWhenInitializingThenWaitForComple
     commandStreamReceiver.initializeTagAllocation();
 
     EXPECT_EQ(0u, commandStreamReceiver.taskCount);
-    EXPECT_EQ(0u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_EQ(0u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
 
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
-    EXPECT_EQ(1u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_EQ(1u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
+    EXPECT_TRUE(commandStreamReceiver.latestWaitForCompletionWithTimeoutWaitParams.skipTbxDownload);
 
     EXPECT_EQ(SubmissionStatus::success, commandStreamReceiver.initializeDeviceWithFirstSubmission(*pDevice));
     EXPECT_EQ(1u, commandStreamReceiver.taskCount);
-    EXPECT_EQ(1u, commandStreamReceiver.waitForTaskCountWithKmdNotifyFallbackCalled);
+    EXPECT_EQ(1u, commandStreamReceiver.waitForCompletionWithTimeoutTaskCountCalled);
 
     MockCsrHw<FamilyType> failingCommandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     failingCommandStreamReceiver.commandStreamReceiverType = CommandStreamReceiverType::tbx;

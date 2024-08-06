@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -784,7 +784,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForT
     auto cmdBuffer = cmdBufferList.peekHead();
     EXPECT_EQ(1u, cmdBuffer->taskCount);
 
-    mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, 1}, 1);
+    mockCsr->waitForCompletionWithTimeout(WaitParams{false, false, false, 1}, 1);
 
     EXPECT_EQ(1u, mockCsr->peekLatestFlushedTaskCount());
 
@@ -2090,5 +2090,5 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenWaitForCompletionWithTimeoutI
     mockCsr.latestSentTaskCount = 1;
     auto cmdBuffer = std::make_unique<CommandBuffer>(*pDevice);
     mockCsr.submissionAggregator->recordCommandBuffer(cmdBuffer.release());
-    EXPECT_EQ(NEO::WaitStatus::notReady, mockCsr.waitForCompletionWithTimeout(WaitParams{false, false, 0}, 1));
+    EXPECT_EQ(NEO::WaitStatus::notReady, mockCsr.waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, 1));
 }
