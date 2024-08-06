@@ -2270,3 +2270,86 @@ TEST(IoctlHelperXeVmBindTest, whenInitializeIoctlHelperThenQueryBindFlagsSupport
         }
     }
 }
+
+struct HwIpVersionFixture {
+
+    HwIpVersionFixture() : hwInfo{*executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()},
+                           drm{DrmMockXe::create(*executionEnvironment.rootDeviceEnvironments[0])} {}
+
+    void setUp() {
+        mockGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm->queryGtList.begin());
+        mockGtList->gt_list[0].ip_ver_major = 0x2a5;
+        mockGtList->gt_list[0].ip_ver_minor = 0xc3;
+        mockGtList->gt_list[0].ip_ver_rev = 0x2f;
+        mockGtList->gt_list[0].pad2 = 0xffff;
+        mockGtList->gt_list[1].ip_ver_major = 0x2a6;
+        mockGtList->gt_list[1].ip_ver_minor = 0xc4;
+        mockGtList->gt_list[1].ip_ver_rev = 0x2e;
+        mockGtList->gt_list[1].pad2 = 0xffff;
+        mockGtList->gt_list[2].ip_ver_major = 0x2a7;
+        mockGtList->gt_list[2].ip_ver_minor = 0xc5;
+        mockGtList->gt_list[2].ip_ver_rev = 0x2d;
+        mockGtList->gt_list[2].pad2 = 0xffff;
+        mockGtList->gt_list[3].ip_ver_major = 0x2a8;
+        mockGtList->gt_list[3].ip_ver_minor = 0xc6;
+        mockGtList->gt_list[3].ip_ver_rev = 0x2c;
+        mockGtList->gt_list[3].pad2 = 0xffff;
+    }
+    void tearDown() {}
+
+    MockExecutionEnvironment executionEnvironment{};
+    const HardwareInfo &hwInfo;
+    std::unique_ptr<DrmMockXe> drm;
+    drm_xe_query_gt_list *mockGtList{nullptr};
+};
+using IoctlHelperXeHwIpVersionTests = Test<HwIpVersionFixture>;
+
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListProvidesProperDataThenIpVersionIsTakenFromGtList) {
+    EXPECT_EQ(mockGtList->gt_list[0].type, DRM_XE_QUERY_GT_TYPE_MAIN);
+
+    NEO::HardwareIpVersion testHwIpVersion{};
+    testHwIpVersion.architecture = mockGtList->gt_list[0].ip_ver_major;
+    testHwIpVersion.release = mockGtList->gt_list[0].ip_ver_minor;
+    testHwIpVersion.revision = mockGtList->gt_list[0].ip_ver_rev;
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+    xeIoctlHelper->setupIpVersion();
+    EXPECT_EQ(testHwIpVersion.value, hwInfo.ipVersion.value);
+}
+
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListHasOnlyMediaEntriesThenIpVersionFallsBackToDefault) {
+    for (size_t i = 0; i < mockGtList->num_gt; i++) {
+        mockGtList->gt_list[i].type = DRM_XE_QUERY_GT_TYPE_MEDIA;
+    }
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto config = compilerProductHelper.getHwIpVersion(hwInfo);
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+    xeIoctlHelper->setupIpVersion();
+    EXPECT_EQ(config, hwInfo.ipVersion.value);
+}
+
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndGtListEntryHasZeroMajorVersionThenThisEntryIsConsideredInvalid) {
+    EXPECT_EQ(mockGtList->gt_list[0].type, DRM_XE_QUERY_GT_TYPE_MAIN);
+    EXPECT_EQ(mockGtList->gt_list[2].type, DRM_XE_QUERY_GT_TYPE_MAIN);
+    mockGtList->gt_list[0].ip_ver_major = static_cast<uint16_t>(0u);
+
+    NEO::HardwareIpVersion testHwIpVersion{};
+    testHwIpVersion.architecture = mockGtList->gt_list[2].ip_ver_major;
+    testHwIpVersion.release = mockGtList->gt_list[2].ip_ver_minor;
+    testHwIpVersion.revision = mockGtList->gt_list[2].ip_ver_rev;
+
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+    xeIoctlHelper->setupIpVersion();
+    EXPECT_EQ(testHwIpVersion.value, hwInfo.ipVersion.value);
+}
+
+TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndIoctlReturnsNoDataThenIpVersionFallsBackToDefault) {
+    drm->testMode(true, 0);
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto config = compilerProductHelper.getHwIpVersion(hwInfo);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+
+    xeIoctlHelper->setupIpVersion();
+    EXPECT_EQ(config, hwInfo.ipVersion.value);
+}

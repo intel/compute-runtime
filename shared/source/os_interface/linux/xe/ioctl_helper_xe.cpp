@@ -383,6 +383,27 @@ void IoctlHelperXe::setupIpVersion() {
     }
 }
 
+bool IoctlHelperXe::queryHwIpVersion(GtIpVersion &gtIpVersion) {
+    auto gtListData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_GT_LIST);
+    if (gtListData.empty()) {
+        return false;
+    }
+
+    auto xeGtListData = reinterpret_cast<drm_xe_query_gt_list *>(gtListData.data());
+    for (auto i = 0u; i < xeGtListData->num_gt; i++) {
+        auto &gtEntry = xeGtListData->gt_list[i];
+
+        if (gtEntry.type == DRM_XE_QUERY_GT_TYPE_MEDIA || gtEntry.ip_ver_major == 0u) {
+            continue;
+        }
+        gtIpVersion.major = gtEntry.ip_ver_major;
+        gtIpVersion.minor = gtEntry.ip_ver_minor;
+        gtIpVersion.revision = gtEntry.ip_ver_rev;
+        return true;
+    }
+    return false;
+}
+
 bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     if (pGpuCpuTime == nullptr || osTime == nullptr) {
         return false;
