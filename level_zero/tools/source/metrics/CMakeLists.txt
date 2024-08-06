@@ -25,11 +25,4 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_metric.h
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_device_context_create.cpp
 )
-
-if(WIN32)
-  target_sources(${L0_STATIC_LIB_NAME}
-                 PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/windows/os_metric_ip_sampling_imp_windows.cpp
-  )
-endif()
 add_subdirectories()

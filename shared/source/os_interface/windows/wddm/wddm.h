@@ -187,7 +187,7 @@ class Wddm : public DriverModel {
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return rootDeviceEnvironment; }
     const HardwareInfo *getHardwareInfo() const override { return rootDeviceEnvironment.getHardwareInfo(); }
 
-    uint32_t getTimestampFrequency() const { return timestampFrequency; }
+    MOCKABLE_VIRTUAL uint32_t getTimestampFrequency() const { return timestampFrequency; }
 
     MOCKABLE_VIRTUAL bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize);
     MOCKABLE_VIRTUAL bool perfDisableEuStallStream();

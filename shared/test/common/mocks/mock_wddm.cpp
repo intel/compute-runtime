@@ -22,6 +22,15 @@
 
 using namespace NEO;
 
+namespace NEO {
+NTSTATUS(*pCallEscape)
+(D3DKMT_ESCAPE &escapeCommand) = nullptr;
+uint32_t (*pGetTimestampFrequency)() = nullptr;
+bool (*pPerfOpenEuStallStream)(uint32_t sampleRate, uint32_t minBufferSize) = nullptr;
+bool (*pPerfDisableEuStallStream)() = nullptr;
+bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize) = nullptr;
+} // namespace NEO
+
 struct MockHwDeviceId : public HwDeviceIdWddm {
     using HwDeviceIdWddm::osEnvironment;
 };
@@ -73,6 +82,12 @@ NTSTATUS WddmMock::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
         createAllocationsAndMapGpuVaStatus = Wddm::createAllocationsAndMapGpuVa(osHandles);
     }
     return createAllocationsAndMapGpuVaStatus;
+}
+NTSTATUS WddmMock::escape(D3DKMT_ESCAPE &escapeCommand) {
+    if (pCallEscape != nullptr) {
+        return pCallEscape(escapeCommand);
+    }
+    return Wddm::escape(escapeCommand);
 }
 bool WddmMock::mapGpuVirtualAddress(WddmAllocation *allocation) {
     D3DGPU_VIRTUAL_ADDRESS minimumAddress = gfxPartition.Standard.Base;
@@ -342,4 +357,32 @@ bool WddmMock::setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allo
         return status;
     }
     return setAllocationPriorityResult.success;
+}
+
+bool WddmMock::perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) {
+    if (pPerfOpenEuStallStream != nullptr) {
+        return pPerfOpenEuStallStream(sampleRate, minBufferSize);
+    }
+    return Wddm::perfOpenEuStallStream(sampleRate, minBufferSize);
+}
+
+bool WddmMock::perfDisableEuStallStream() {
+    if (pPerfDisableEuStallStream != nullptr) {
+        return pPerfDisableEuStallStream();
+    }
+    return Wddm::perfDisableEuStallStream();
+}
+
+bool WddmMock::perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) {
+    if (pPerfReadEuStallStream != nullptr) {
+        return pPerfReadEuStallStream(pRawData, pRawDataSize);
+    }
+    return Wddm::perfReadEuStallStream(pRawData, pRawDataSize);
+}
+
+uint32_t WddmMock::getTimestampFrequency() const {
+    if (pGetTimestampFrequency != nullptr) {
+        return pGetTimestampFrequency();
+    }
+    return Wddm::getTimestampFrequency();
 }

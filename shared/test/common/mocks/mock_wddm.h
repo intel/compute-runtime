@@ -21,6 +21,13 @@
 #include <unordered_set>
 
 namespace NEO {
+
+extern NTSTATUS (*pCallEscape)(D3DKMT_ESCAPE &escapeCommand);
+extern uint32_t (*pGetTimestampFrequency)();
+extern bool (*pPerfOpenEuStallStream)(uint32_t sampleRate, uint32_t minBufferSize);
+extern bool (*pPerfDisableEuStallStream)();
+extern bool (*pPerfReadEuStallStream)(uint8_t *pRawData, size_t *pRawDataSize);
+
 class GraphicsAllocation;
 
 inline constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
@@ -142,6 +149,11 @@ class WddmMock : public Wddm {
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override;
     bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim, bool evictNeeded) override;
     NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override;
+    NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand) override;
+    uint32_t getTimestampFrequency() const override;
+    bool perfOpenEuStallStream(uint32_t sampleRate, uint32_t minBufferSize) override;
+    bool perfDisableEuStallStream() override;
+    bool perfReadEuStallStream(uint8_t *pRawData, size_t *pRawDataSize) override;
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult evictResult;
