@@ -89,7 +89,7 @@ TEST_F(AllocUsmHostDisabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemT
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-using AllocUsmHostEnabledMemoryTest = AllocUsmPoolMemoryTest<16, -1>;
+using AllocUsmHostEnabledMemoryTest = AllocUsmPoolMemoryTest<1, -1>;
 
 TEST_F(AllocUsmHostEnabledMemoryTest, givenDriverHandleWhenCallingAllocHostMemWithVariousParametersThenUsePoolIfAllowed) {
     auto mockHostMemAllocPool = reinterpret_cast<MockUsmMemAllocPool *>(&driverHandle->usmHostMemAllocPool);
