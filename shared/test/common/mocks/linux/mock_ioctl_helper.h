@@ -37,6 +37,8 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_NOBASE(allocateInterrupt, bool, true, (uint32_t &));
     ADDMETHOD_NOBASE(createMediaContext, bool, true, (void *, uint32_t, void *, uint32_t, uint64_t &));
     ADDMETHOD_NOBASE(releaseMediaContext, bool, true, (uint64_t));
+    ADDMETHOD_CONST_NOBASE(getNumMediaDecoders, uint32_t, 0, ());
+    ADDMETHOD_CONST_NOBASE(getNumMediaEncoders, uint32_t, 0, ());
 
     int getDrmParamValue(DrmParam drmParam) const override {
         if (drmParam == DrmParam::memoryClassSystem) {

@@ -1776,6 +1776,24 @@ TEST_F(DrmMemoryManagerTest, whenCallingCreateAndReleaseMediaContextThenCallIoct
     EXPECT_EQ(1u, mockIoctlHelper->releaseMediaContextCalled);
 }
 
+TEST_F(DrmMemoryManagerTest, whenCallingGetNumMediaThenCallIoctlHelper) {
+    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    EXPECT_EQ(0u, mockIoctlHelper->getNumMediaDecodersCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->getNumMediaEncodersCalled);
+
+    memoryManager->getNumMediaDecoders(rootDeviceIndex);
+    EXPECT_EQ(1u, mockIoctlHelper->getNumMediaDecodersCalled);
+    EXPECT_EQ(0u, mockIoctlHelper->getNumMediaEncodersCalled);
+
+    memoryManager->getNumMediaEncoders(rootDeviceIndex);
+    EXPECT_EQ(1u, mockIoctlHelper->getNumMediaDecodersCalled);
+    EXPECT_EQ(1u, mockIoctlHelper->getNumMediaEncodersCalled);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenShareableEnabledWhenAskedToCreateGraphicsAllocationThenValidAllocationIsReturnedAndStandard64KBHeapIsUsed) {
     mock->ioctlHelper.reset(new MockIoctlHelper(*mock));
     mock->queryMemoryInfo();

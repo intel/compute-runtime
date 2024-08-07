@@ -2749,6 +2749,14 @@ bool DrmMemoryManager::releaseMediaContext(uint32_t rootDeviceIndex, uint64_t do
     return getDrm(rootDeviceIndex).getIoctlHelper()->releaseMediaContext(doorbellHandle);
 }
 
+uint32_t DrmMemoryManager::getNumMediaDecoders(uint32_t rootDeviceIndex) const {
+    return getDrm(rootDeviceIndex).getIoctlHelper()->getNumMediaDecoders();
+}
+
+uint32_t DrmMemoryManager::getNumMediaEncoders(uint32_t rootDeviceIndex) const {
+    return getDrm(rootDeviceIndex).getIoctlHelper()->getNumMediaEncoders();
+}
+
 bool DrmMemoryManager::isCompressionSupportedForShareable(bool isShareable) {
     // Currently KMD does not support compression with allocation sharing
     return !isShareable;

@@ -20,7 +20,9 @@
 
 #define ADDMETHOD_CONST_NOBASE(funcName, retType, defaultReturn, funcParams) \
     retType funcName##Result = defaultReturn;                                \
+    mutable uint32_t funcName##Called = 0u;                                  \
     retType funcName funcParams const override {                             \
+        funcName##Called++;                                                  \
         return funcName##Result;                                             \
     }
 

@@ -161,6 +161,9 @@ class IoctlHelper {
     virtual bool createMediaContext(void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) { return false; }
     virtual bool releaseMediaContext(uint64_t doorbellHandle) { return false; }
 
+    virtual uint32_t getNumMediaDecoders() const { return 0; }
+    virtual uint32_t getNumMediaEncoders() const { return 0; }
+
     virtual void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) = 0;
     virtual void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) = 0;
     virtual void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) = 0;

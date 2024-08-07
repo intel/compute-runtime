@@ -104,6 +104,9 @@ class DrmMemoryManager : public MemoryManager {
     bool createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) override;
     bool releaseMediaContext(uint32_t rootDeviceIndex, uint64_t doorbellHandle) override;
 
+    uint32_t getNumMediaDecoders(uint32_t rootDeviceIndex) const override;
+    uint32_t getNumMediaEncoders(uint32_t rootDeviceIndex) const override;
+
     bool isCompressionSupportedForShareable(bool isShareable) override;
     bool usmCompressionSupported(Device *device) override;
 
