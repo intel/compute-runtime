@@ -13,24 +13,11 @@
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_walker.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_l3_control_xehp_and_later.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_sip.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.inl"
 
 #include "gtest/gtest.h"
-
-using STATE_SIP = GenStruct::STATE_SIP;
-
-template <>
-STATE_SIP *genCmdCast<STATE_SIP *>(void *buffer) {
-    auto pCmd = reinterpret_cast<STATE_SIP *>(buffer);
-
-    return STATE_SIP::COMMAND_TYPE_GFXPIPE == pCmd->TheStructure.Common.CommandType &&
-                   STATE_SIP::COMMAND_SUBTYPE_GFXPIPE_COMMON == pCmd->TheStructure.Common.CommandSubtype &&
-                   STATE_SIP::_3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED == pCmd->TheStructure.Common._3DCommandOpcode &&
-                   STATE_SIP::_3D_COMMAND_SUB_OPCODE_STATE_SIP == pCmd->TheStructure.Common._3DCommandSubOpcode
-               ? pCmd
-               : nullptr;
-}
 
 template <>
 size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {

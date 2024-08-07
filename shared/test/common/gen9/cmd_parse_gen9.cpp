@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@ using GenGfxFamily = NEO::Gen9Family;
 
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_base_mi_arb.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_csr_base_address.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_gpgpu_walker.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_sip.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

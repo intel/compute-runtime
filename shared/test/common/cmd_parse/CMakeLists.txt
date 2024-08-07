@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mi_arb.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mode.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_walker.inl
+               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_csr_base_address.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_gpgpu_walker.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_l3_control.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_mi_arb.inl
