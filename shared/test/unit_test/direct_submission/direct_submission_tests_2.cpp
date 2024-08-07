@@ -783,6 +783,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
     EXPECT_TRUE(pos != std::string::npos);
     pos = output.find("Client buffer");
     EXPECT_TRUE(pos != std::string::npos);
+    pos = output.find("Ring buffer for submission");
+    EXPECT_TRUE(pos != std::string::npos);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,

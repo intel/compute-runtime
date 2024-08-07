@@ -665,6 +665,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::updateRelaxedOrderingQueueSize(u
 template <typename GfxFamily, typename Dispatcher>
 void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBuffer &batchBuffer, bool dispatchMonitorFence) {
     void *currentPosition = ringCommandStream.getSpace(0);
+    auto copyCmdBuffer = this->copyCommandBufferIntoRing(batchBuffer);
 
     if (debugManager.flags.DirectSubmissionPrintBuffers.get()) {
         printf("Client buffer:\n");
@@ -681,6 +682,15 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
                ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.usedSize),
                batchBuffer.startOffset,
                batchBuffer.usedSize);
+        printf("Ring buffer for submission - start gpu address: %" PRIx64 " - %" PRIx64 ", start cpu address: %p - %p, size: %zu,  submission address: %" PRIx64 ", used size: %zu, copyCmdBuffer: %d \n",
+               ringCommandStream.getGraphicsAllocation()->getGpuAddress(),
+               ptrOffset(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize()),
+               ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(),
+               ptrOffset(ringCommandStream.getGraphicsAllocation()->getUnderlyingBuffer(), ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize()),
+               ringCommandStream.getGraphicsAllocation()->getUnderlyingBufferSize(),
+               ptrOffset(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), ringCommandStream.getUsed()),
+               ringCommandStream.getUsed(),
+               copyCmdBuffer);
     }
 
     if (!batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling) {
@@ -697,8 +707,6 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
             auto relaxedOrderingReturnPtrCmds = ringCommandStream.getSpace(RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
             relaxedOrderingReturnPtrCmdStream.replaceBuffer(relaxedOrderingReturnPtrCmds, RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
         }
-
-        auto copyCmdBuffer = this->copyCommandBufferIntoRing(batchBuffer);
 
         if (copyCmdBuffer) {
             auto cmdStreamTaskPtr = ptrOffset(batchBuffer.stream->getCpuBase(), batchBuffer.startOffset);
