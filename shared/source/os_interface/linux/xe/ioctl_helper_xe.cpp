@@ -242,6 +242,10 @@ std::vector<DataType> IoctlHelperXe::queryData(uint32_t queryId) {
 template std::vector<uint8_t> IoctlHelperXe::queryData(uint32_t queryId);
 template std::vector<uint64_t> IoctlHelperXe::queryData(uint32_t queryId);
 
+uint32_t IoctlHelperXe::getNumEngines(uint64_t *enginesData) const {
+    return reinterpret_cast<struct drm_xe_query_engines *>(enginesData)->num_engines;
+}
+
 std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled) {
     auto enginesData = queryData<uint64_t>(DRM_XE_DEVICE_QUERY_ENGINES);
 
@@ -251,7 +255,7 @@ std::unique_ptr<EngineInfo> IoctlHelperXe::createEngineInfo(bool isSysmanEnabled
 
     auto queryEngines = reinterpret_cast<struct drm_xe_query_engines *>(enginesData.data());
 
-    auto numberHwEngines = queryEngines->num_engines;
+    auto numberHwEngines = getNumEngines(enginesData.data());
 
     xeLog("numberHwEngines=%d\n", numberHwEngines);
 

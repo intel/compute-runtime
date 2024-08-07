@@ -154,6 +154,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getRunaloneExtProperty();
     virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
     virtual std::optional<uint32_t> getCxlType() { return {}; }
+    virtual uint32_t getNumEngines(uint64_t *enginesData) const;
 
     struct UserFenceExtension {
         static constexpr uint32_t tagValue = 0x123987;
