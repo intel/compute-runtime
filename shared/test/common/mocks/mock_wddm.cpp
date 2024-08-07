@@ -320,7 +320,7 @@ NTSTATUS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, 
     return Wddm::reserveGpuVirtualAddress(baseAddress, minimumAddress, maximumAddress, size, reservedAddress);
 }
 
-uint64_t *WddmMock::getPagingFenceAddress() {
+volatile uint64_t *WddmMock::getPagingFenceAddress() {
     if (NEO::wddmResidencyLoggingAvailable) {
         getPagingFenceAddressResult.called++;
     }

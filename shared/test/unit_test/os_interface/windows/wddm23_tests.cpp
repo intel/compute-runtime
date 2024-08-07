@@ -198,7 +198,7 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
     submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
 
-    VariableBackup<uint64_t> pagingFenceBackup(wddm->pagingFenceAddress);
+    VariableBackup<volatile uint64_t> pagingFenceBackup(wddm->pagingFenceAddress);
     *wddm->pagingFenceAddress = 1;
     wddm->currentPagingFenceValue = 1;
 

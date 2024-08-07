@@ -589,7 +589,7 @@ TEST_F(WddmTests, givenCheckDeviceStateSetToTrueAndForceExecutionStateWhenSubmit
 
     wddm->checkDeviceState = true;
     uint64_t pagingFenceValue = 0u;
-    VariableBackup<uint64_t *> pagingFenceBackup(&wddm->pagingFenceAddress, &pagingFenceValue);
+    VariableBackup<volatile uint64_t *> pagingFenceBackup(&wddm->pagingFenceAddress, &pagingFenceValue);
     auto executionState = D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY;
     setMockDeviceExecutionStateFcn(executionState);
     ::testing::internal::CaptureStderr();

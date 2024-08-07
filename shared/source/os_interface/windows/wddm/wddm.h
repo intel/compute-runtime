@@ -159,7 +159,7 @@ class Wddm : public DriverModel {
     }
 
     unsigned int getEnablePreemptionRegValue();
-    MOCKABLE_VIRTUAL uint64_t *getPagingFenceAddress() {
+    MOCKABLE_VIRTUAL volatile uint64_t *getPagingFenceAddress() {
         return pagingFenceAddress;
     }
     WddmResidentAllocationsContainer *getTemporaryResourcesContainer() {
@@ -289,7 +289,7 @@ class Wddm : public DriverModel {
     static GetSystemInfoFcn getSystemInfo;
     RootDeviceEnvironment &rootDeviceEnvironment;
 
-    uint64_t *pagingFenceAddress = nullptr;
+    volatile uint64_t *pagingFenceAddress = nullptr;
     int64_t pagingFenceDelayTime = 0;
 
     uintptr_t maximumApplicationAddress = 0;

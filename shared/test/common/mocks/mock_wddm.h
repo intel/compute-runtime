@@ -107,7 +107,7 @@ class WddmMock : public Wddm {
     NTSTATUS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size, D3DGPU_VIRTUAL_ADDRESS *reservedAddress) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem) override;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
-    uint64_t *getPagingFenceAddress() override;
+    volatile uint64_t *getPagingFenceAddress() override;
     void waitOnPagingFenceFromCpu(bool isKmdWaitNeeded) override;
     void delayPagingFenceFromCpu(int64_t delayTime) override;
     void createPagingFenceLogger() override;
