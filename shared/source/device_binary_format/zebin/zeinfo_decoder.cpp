@@ -496,9 +496,6 @@ DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, cons
         if (DecodeError::success != zeInfoErr) {
             return zeInfoErr;
         }
-        if (kernelInfo->kernelDescriptor.kernelMetadata.kernelName == Zebin::Elf::SectionNames::externalFunctions) {
-            dst.functionPointerWithIndirectAccessExists |= kernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess;
-        }
 
         dst.kernelInfos.push_back(kernelInfo.release());
     }

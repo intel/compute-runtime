@@ -48,7 +48,6 @@ struct ProgramInfo {
     uint32_t minScratchSpaceSize = 0U;
     uint32_t indirectDetectionVersion = 0U;
     size_t kernelMiscInfoPos = std::string::npos;
-    bool functionPointerWithIndirectAccessExists = false;
 };
 
 size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo);

@@ -6691,8 +6691,6 @@ functions:
         EXPECT_EQ(128U, fun1Info.numGrfRequired);
         EXPECT_EQ(8U, fun1Info.simdSize);
         EXPECT_EQ(0U, fun1Info.barrierCount);
-
-        EXPECT_FALSE(programInfo.functionPointerWithIndirectAccessExists);
     }
 }
 
@@ -6733,8 +6731,6 @@ functions:
     EXPECT_EQ(128U, fun0Info.numGrfRequired);
     EXPECT_EQ(8U, fun0Info.simdSize);
     EXPECT_EQ(1U, fun0Info.barrierCount);
-
-    EXPECT_FALSE(programInfo.functionPointerWithIndirectAccessExists);
 }
 
 TEST(PopulateZeInfoExternalFunctionsMetadata, GivenInvalidExternalFunctionsMetadataThenFail) {
