@@ -191,7 +191,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
     StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForResidency;
     uint32_t totalHandlesCount = 0;
     size_t totalSize = 0;
-    requiresBlockingResidencyHandling = true;
+    requiresBlockingResidencyHandling = false;
     if (debugManager.flags.WaitForPagingFenceInController.get() != -1) {
         requiresBlockingResidencyHandling = !debugManager.flags.WaitForPagingFenceInController.get();
     }

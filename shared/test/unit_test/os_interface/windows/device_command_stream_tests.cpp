@@ -1362,7 +1362,6 @@ struct MockWddmDirectSubmissionCsr : public WddmCommandStreamReceiver<DEFAULT_TE
 struct SemaphorWaitForResidencyTest : public WddmCommandStreamTest {
     void SetUp() override {
         WddmCommandStreamTest::setUp();
-        debugManager.flags.WaitForPagingFenceInController.set(1);
         debugManager.flags.EnableDirectSubmissionController.set(1);
 
         auto executionEnvironment = device->getExecutionEnvironment();
