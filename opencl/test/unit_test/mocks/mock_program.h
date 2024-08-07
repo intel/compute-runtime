@@ -55,7 +55,6 @@ class MockProgram : public Program {
     using Program::deviceBuildInfos;
     using Program::disableZebinIfVmeEnabled;
     using Program::extractInternalOptions;
-    using Program::functionPointerWithIndirectAccessExists;
     using Program::getKernelInfo;
     using Program::getModuleAllocations;
     using Program::internalOptionsToExtract;

@@ -248,7 +248,6 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL std::string getInternalOptions() const;
     uint32_t getMaxRootDeviceIndex() const { return maxRootDeviceIndex; }
     uint32_t getIndirectDetectionVersion() const { return indirectDetectionVersion; }
-    bool getFunctionPointerWithIndirectAccessExists() const { return functionPointerWithIndirectAccessExists; }
     void retainForKernel() {
         std::unique_lock<std::mutex> lock{lockMutex};
         exposedKernels++;
@@ -374,7 +373,6 @@ class Program : public BaseObject<_cl_program> {
     ClDeviceVector clDevicesInProgram;
 
     uint32_t indirectDetectionVersion = 0u;
-    bool functionPointerWithIndirectAccessExists = false;
     bool isBuiltIn = false;
     bool isGeneratedByIgc = true;
 

@@ -1427,7 +1427,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
@@ -1446,7 +1445,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
@@ -1465,7 +1463,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
@@ -1484,7 +1481,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
         kernel->initialize(&desc);
@@ -1503,7 +1499,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
@@ -1523,7 +1518,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = false;
 
@@ -1543,7 +1537,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEn
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
-        module->getTranslationUnit()->programInfo.functionPointerWithIndirectAccessExists = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.flags.useStackCalls = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectAccessInImplicitArg = true;
 

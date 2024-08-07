@@ -343,7 +343,6 @@ TEST(DecodeSingleDeviceBinary, GivenZebinWithExternalFunctionsThenDecodingSuccee
     EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
     EXPECT_NE(nullptr, programInfo.linkerInput.get());
     EXPECT_EQ(1, programInfo.linkerInput->getExportedFunctionsSegmentId());
-    EXPECT_TRUE(programInfo.functionPointerWithIndirectAccessExists);
 }
 
 TEST(DecodeSingleDeviceBinary, GivenOclElfFormatThenDecodingFails) {

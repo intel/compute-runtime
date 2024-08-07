@@ -2012,7 +2012,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithExternalFunctionWithIndirectAccessAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
+HWTEST_F(KernelResidencyTest, givenKernelWithStackCallsAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -2033,7 +2033,6 @@ HWTEST_F(KernelResidencyTest, givenKernelWithExternalFunctionWithIndirectAccessA
     MockContext ctx;
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    program.functionPointerWithIndirectAccessExists = true;
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
@@ -2042,7 +2041,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWithExternalFunctionWithIndirectAccessA
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithExternalFunctionWithIndirectAccessButNoUseStackCallsAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToFalse) {
+HWTEST_F(KernelResidencyTest, givenKernelWithoutStackCallsAndDetectIndirectAccessInKernelEnabledThenKernelHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DetectIndirectAccessInKernel.set(1);
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -2064,7 +2063,6 @@ HWTEST_F(KernelResidencyTest, givenKernelWithExternalFunctionWithIndirectAccessB
     MockContext ctx;
     program.setContext(&ctx);
     program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    program.functionPointerWithIndirectAccessExists = true;
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, kernel->initialize());
 
