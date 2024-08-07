@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ struct EnqueueWithWalkerPartitionTests : public ::testing::Test {
 
     DebugManagerStateRestore restore;
     VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
-    const uint32_t numberOfTiles = 3;
+    const uint32_t numberOfTiles = 4;
     EngineControl engineControlForFusedQueue = {};
     std::unique_ptr<MockClDevice> rootDevice;
     std::unique_ptr<MockContext> context;

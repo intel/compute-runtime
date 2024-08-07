@@ -180,7 +180,7 @@ TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenAlign
     size_t size = 1024 * 4096;
     auto pLowerBound = ptrBase;
 
-    auto allocAlign = 8162u;
+    auto allocAlign = 8192u;
 
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
 

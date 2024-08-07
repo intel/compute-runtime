@@ -360,7 +360,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
         EXPECT_EQ(gsHaddress + ScratchSpaceConstants::scratchSpaceOffsetFor64Bit, graphicsAllocation->getGpuAddress());
     }
 
-    auto allocationSize = alignUp(scratchSize * pDevice->getDeviceInfo().computeUnitsUsedForScratch, MemoryConstants::pageMask);
+    auto allocationSize = alignUp(scratchSize * pDevice->getDeviceInfo().computeUnitsUsedForScratch, MemoryConstants::pageSize);
     EXPECT_EQ(allocationSize, graphicsAllocation->getUnderlyingBufferSize());
 
     // Generically validate this command
