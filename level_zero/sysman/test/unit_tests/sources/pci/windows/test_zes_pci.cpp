@@ -20,10 +20,14 @@ namespace Sysman {
 namespace ult {
 
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
-    {{"REG_RX_BYTECOUNT_LSB", {100, 1}},
-     {"REG_TX_BYTECOUNT_LSB", {101, 1}},
-     {"REG_RX_PKTCOUNT_LSB", {102, 1}},
-     {"REG_TX_PKTCOUNT_LSB", {103, 1}}}};
+    {{"rx_byte_count_lsb", {70, 1}},
+     {"rx_byte_count_msb", {69, 1}},
+     {"tx_byte_count_lsb", {72, 1}},
+     {"tx_byte_count_msb", {71, 1}},
+     {"rx_pkt_count_lsb", {74, 1}},
+     {"rx_pkt_count_msb", {73, 1}},
+     {"tx_pkt_count_lsb", {76, 1}},
+     {"tx_pkt_count_msb", {75, 1}}}};
 
 const std::wstring pmtInterfaceName = L"TEST\0";
 std::vector<wchar_t> deviceInterfacePci(pmtInterfaceName.begin(), pmtInterfaceName.end());
@@ -311,21 +315,25 @@ HWTEST2_F(SysmanDevicePciFixture, GivenValidDeviceHandleWhenGettingZesDevicePciG
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
         PmtSysman::PmtTelemetryRead *readRequest = static_cast<PmtSysman::PmtTelemetryRead *>(lpInBuffer);
         switch (readRequest->offset) {
-        case 100:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockRxCounter;
+        case 70:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockRxCounter;
             return true;
-        case 101:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockTxCounter;
+        case 72:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockTxCounter;
             return true;
-        case 102:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockRxPacketCounter;
+        case 74:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockRxPacketCounter;
             return true;
-        case 103:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockTxPacketCounter;
+        case 76:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockTxPacketCounter;
+            return true;
+        default:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = 0;
             return true;
         }
         return false;
@@ -346,29 +354,45 @@ HWTEST2_F(SysmanDevicePciFixture, GivenNullPmtHandleWhenGettingZesDevicePciGetSt
 }
 
 HWTEST2_F(SysmanDevicePciFixture, GivenValidPmtHandleWhenCallingZesDevicePciGetStatsAndIoctlFailsThenCallsFails, IsBMG) {
-    static int count = 4;
+    static int count = 8;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsDeviceIoControl)> psysCallsDeviceIoControl(&NEO::SysCalls::sysCallsDeviceIoControl, [](HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) -> BOOL {
         PmtSysman::PmtTelemetryRead *readRequest = static_cast<PmtSysman::PmtTelemetryRead *>(lpInBuffer);
         switch (readRequest->offset) {
-        case 100:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockRxCounter;
+        case 69:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = 0;
             return count == 1 ? false : true;
-        case 101:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockTxCounter;
+        case 70:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockRxCounter;
             return count == 2 ? false : true;
-        case 102:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockRxPacketCounter;
+        case 71:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = 9;
             return count == 3 ? false : true;
-        case 103:
-            *lpBytesReturned = 8;
-            *static_cast<uint64_t *>(lpOutBuffer) = mockTxPacketCounter;
+        case 72:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockTxCounter;
             return count == 4 ? false : true;
+        case 73:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = 0;
+            return count == 5 ? false : true;
+        case 74:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockRxPacketCounter;
+            return count == 6 ? false : true;
+        case 75:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = 0;
+            return count == 7 ? false : true;
+        case 76:
+            *lpBytesReturned = 4;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockTxPacketCounter;
+            return count == 8 ? false : true;
         }
         return false;
     });

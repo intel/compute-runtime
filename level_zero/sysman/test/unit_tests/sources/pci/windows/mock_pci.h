@@ -15,10 +15,10 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint64_t mockRxCounter = 242000000000;
-constexpr uint64_t mockTxCounter = 231000000000;
-constexpr uint64_t mockRxPacketCounter = 3000000000;
-constexpr uint64_t mockTxPacketCounter = 2000000000;
+constexpr uint64_t mockRxCounter = 24200000u;
+constexpr uint64_t mockTxCounter = 231000000u;
+constexpr uint64_t mockRxPacketCounter = 300000u;
+constexpr uint64_t mockTxPacketCounter = 200000u;
 
 struct PciKmdSysManager : public MockKmdSysManager {
     // PciCurrentDevice, PciParentDevice, PciRootPort

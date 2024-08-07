@@ -23,18 +23,20 @@ namespace Sysman {
 constexpr static auto gfxProduct = IGFX_BMG;
 
 static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetMap = {
-    {0x1e2f8201, // BMG OOBMSM rev 1
-     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[2]", 14},
-      {"Package_Temperature_0_0_0_MCHBAR_PCU", 39},
-      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 43},
-      {"REG_RX_BYTECOUNT_LSB", 100},
-      {"REG_TX_BYTECOUNT_LSB", 101},
-      {"REG_RX_PKTCOUNT_LSB", 102},
-      {"REG_TX_PKTCOUNT_LSB", 103}}},
     {0x1e2f8200, // BMG PUNIT rev 1
      {{"VRAM_BANDWIDTH", 14}}},
     {0x5e2f8210, // BMG OOBMSM rev 15
-     {{"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 92},
+     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 42},
+      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 43},
+      {"rx_byte_count_lsb", 70},
+      {"rx_byte_count_msb", 69},
+      {"tx_byte_count_lsb", 72},
+      {"tx_byte_count_msb", 71},
+      {"rx_pkt_count_lsb", 74},
+      {"rx_pkt_count_msb", 73},
+      {"tx_pkt_count_lsb", 76},
+      {"tx_pkt_count_msb", 75},
+      {"GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 92},
       {"GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 93},
       {"GDDR0_CH0_GT_32B_RD_REQ_UPPER", 94},
       {"GDDR0_CH0_GT_32B_RD_REQ_LOWER", 95},
@@ -278,10 +280,36 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
       {"GDDR5_CH1_GT_64B_WR_REQ_UPPER", 320},
       {"GDDR5_CH1_GT_64B_WR_REQ_LOWER", 321}}}};
 
+ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+    uint32_t gpuMaxTemperature = 0;
+    std::string key("SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]");
+    auto result = pPmt->readValue(key, gpuMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key %s\n", key.c_str());
+        return result;
+    }
+    *pTemperature = static_cast<double>(gpuMaxTemperature);
+    return result;
+}
+
+ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+    uint32_t memoryMaxTemperature = 0;
+    std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
+    auto result = pPmt->readValue(key, memoryMaxTemperature);
+    if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key %s\n", key.c_str());
+        return result;
+    }
+    memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
+    *pTemperature = static_cast<double>(memoryMaxTemperature);
+    return result;
+}
+
 template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTemperature, zes_temp_sensors_t type, WddmSysmanImp *pWddmSysmanImp) {
     ze_result_t status = ZE_RESULT_SUCCESS;
-    uint32_t val;
     std::string key;
 
     PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
@@ -291,14 +319,34 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTem
     }
 
     switch (type) {
-    case ZES_TEMP_SENSORS_GLOBAL:
-        key = "Package_Temperature_0_0_0_MCHBAR_PCU";
+    case ZES_TEMP_SENSORS_GLOBAL: {
+        double gpuMaxTemperature = 0;
+        double memoryMaxTemperature = 0;
+
+        ze_result_t result = getGpuMaxTemperature(pPmt, &gpuMaxTemperature);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+
+        result = getMemoryMaxTemperature(pPmt, &memoryMaxTemperature);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+
+        *pTemperature = std::max(gpuMaxTemperature, memoryMaxTemperature);
         break;
+    }
     case ZES_TEMP_SENSORS_GPU:
-        key = "SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[2]";
+        status = getGpuMaxTemperature(pPmt, pTemperature);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
         break;
     case ZES_TEMP_SENSORS_MEMORY:
-        key = "VRAM_TEMPERATURE_0_2_0_GTTMMADR";
+        status = getMemoryMaxTemperature(pPmt, pTemperature);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
         break;
     default:
         DEBUG_BREAK_IF(true);
@@ -306,12 +354,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getSensorTemperature(double *pTem
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         break;
     }
-    status = pPmt->readValue(key, val);
-    if (status != ZE_RESULT_SUCCESS) {
-        return status;
-    }
 
-    *pTemperature = static_cast<double>(val);
     return status;
 }
 
@@ -337,33 +380,76 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    uint64_t rxCounter;
-    status = pPmt->readValue("REG_RX_BYTECOUNT_LSB", rxCounter);
+    // rx counter calculation
+    uint32_t rxCounterL = 0;
+    uint32_t rxCounterH = 0;
+    status = pPmt->readValue("rx_byte_count_lsb", rxCounterL);
     if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key rx_byte_count_lsb\n");
         return status;
     }
 
-    uint64_t txCounter;
-    status = pPmt->readValue("REG_TX_BYTECOUNT_LSB", txCounter);
+    status = pPmt->readValue("rx_byte_count_msb", rxCounterH);
     if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key rx_byte_count_msb\n");
+        return status;
+    }
+    pStats->rxCounter = PACK_INTO_64BIT(rxCounterH, rxCounterL);
+
+    // tx counter calculation
+    uint32_t txCounterL = 0;
+    uint32_t txCounterH = 0;
+    status = pPmt->readValue("tx_byte_count_lsb", txCounterL);
+    if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key tx_byte_count_lsb\n");
         return status;
     }
 
-    uint64_t rxPacketCounter;
-    status = pPmt->readValue("REG_RX_PKTCOUNT_LSB", rxPacketCounter);
+    status = pPmt->readValue("tx_byte_count_msb", txCounterH);
     if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key tx_byte_count_msb\n");
+        return status;
+    }
+    pStats->txCounter = PACK_INTO_64BIT(txCounterH, txCounterL);
+
+    // packet counter calculation
+    uint32_t rxPacketCounterL = 0;
+    uint32_t rxPacketCounterH = 0;
+    status = pPmt->readValue("rx_pkt_count_lsb", rxPacketCounterL);
+    if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key rx_pkt_count_lsb\n");
         return status;
     }
 
-    uint64_t txPacketCounter;
-    status = pPmt->readValue("REG_TX_PKTCOUNT_LSB", txPacketCounter);
+    status = pPmt->readValue("rx_pkt_count_msb", rxPacketCounterH);
     if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key rx_pkt_count_msb\n");
         return status;
     }
 
-    pStats->txCounter = txCounter;
-    pStats->rxCounter = rxCounter;
-    pStats->packetCounter = rxPacketCounter + txPacketCounter;
+    uint32_t txPacketCounterL = 0;
+    uint32_t txPacketCounterH = 0;
+    status = pPmt->readValue("tx_pkt_count_lsb", txPacketCounterL);
+    if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key tx_pkt_count_lsb\n");
+        return status;
+    }
+
+    status = pPmt->readValue("tx_pkt_count_msb", txPacketCounterH);
+    if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "readValue call failed for register key tx_pkt_count_msb\n");
+        return status;
+    }
+
+    pStats->packetCounter = PACK_INTO_64BIT(txPacketCounterH, txPacketCounterL) + PACK_INTO_64BIT(rxPacketCounterH, rxPacketCounterL);
     pStats->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return status;

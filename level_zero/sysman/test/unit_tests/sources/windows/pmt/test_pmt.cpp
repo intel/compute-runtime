@@ -159,7 +159,7 @@ TEST_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWithUnsupportedGuidWhenCall
         if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
-            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x5e2f8210, 10}}};
             *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
         }
         return true;
@@ -189,7 +189,7 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateThenCal
         if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
-            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x5e2f8210, 10}}};
             *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
         }
         return true;
@@ -293,7 +293,7 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateThenCal
         if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
-            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x5e2f8210, 10}}};
             *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
         }
         return true;
@@ -373,8 +373,8 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndTele
         if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
-            // Initialize PmtTelemetryDiscovery 'temp' with {version = 1, interface count = 1, {{version = 1, index = 3, guid = 0x1e2f8201, dWordCount = 10}}}
-            PmtSysman::PmtTelemetryDiscovery temp = {1, 1, {{1, 3, 0x1e2f8201, 10}}};
+            // Initialize PmtTelemetryDiscovery 'temp' with {version = 1, interface count = 1, {{version = 1, index = 3, guid = 0x5e2f8210, dWordCount = 10}}}
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 1, {{1, 3, 0x5e2f8210, 10}}};
             *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
         }
         return true;
@@ -398,7 +398,7 @@ HWTEST2_F(SysmanDevicePmtFixture, GivenValidPmtInterfaceWhenCallingCreateAndHeap
         if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscoverySize) {
             *static_cast<unsigned long *>(lpOutBuffer) = 40;
         } else if (static_cast<uint32_t>(dwIoControlCode) == PmtSysman::IoctlPmtGetTelemetryDiscovery) {
-            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x1e2f8201, 10}}};
+            PmtSysman::PmtTelemetryDiscovery temp = {1, 2, {{1, 1, 0x5e2f8210, 10}}};
             *static_cast<PmtSysman::PmtTelemetryDiscovery *>(lpOutBuffer) = temp;
         }
         return true;
