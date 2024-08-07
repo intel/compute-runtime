@@ -5548,10 +5548,56 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEng
         }
     }
 
-    auto osContextCount = static_cast<uint32_t>(engineInstances.size()) +
+    auto nonGroupCount = static_cast<uint32_t>(engineInstances.size()) - numRegularEngines - numHpEngines;
+
+    auto osContextCount = nonGroupCount +
                           (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
-                          (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
-                          static_cast<uint32_t>(hwInfo.featureTable.ftrBcsInfo.count());
+                          (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
+
+    EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
+}
+HWTEST_F(CommandStreamReceiverContextGroupTest, givenMultipleSubDevicesAndContextGroupWhenCreatingEnginesThenSetCorrectMaxOsContextCount) {
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(8);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0b110;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    device->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    auto &engineInstances = device->getGfxCoreHelper().getGpgpuEngineInstances(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    uint32_t numRegularEngines = 0;
+    uint32_t numHpEngines = 0;
+
+    for (const auto &engine : engineInstances) {
+        if (engine.second == EngineUsage::regular) {
+            numRegularEngines++;
+        }
+        if (engine.second == EngineUsage::highPriority) {
+            numHpEngines++;
+        }
+    }
+
+    auto nonGroupCount = static_cast<uint32_t>(engineInstances.size()) - numRegularEngines - numHpEngines;
+
+    auto osContextCount = nonGroupCount +
+                          (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
+                          (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
+
+    osContextCount = osContextCount * 2 + 1;
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }

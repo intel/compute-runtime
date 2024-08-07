@@ -3296,10 +3296,32 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     event->destroy();
 }
 
-HWTEST_F(EventTests, givenSecondaryCsrWhenDownloadingAllocationThenUseCorrectCsr) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ContextGroupSize.set(2);
+struct EventContextGroupFixture : public EventFixture<1, 0> {
+    using BaseClass = EventFixture<1, 0>;
+    void setUp() {
+        HardwareInfo hwInfo = *defaultHwInfo;
+        if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+            skipped = true;
+            GTEST_SKIP();
+        }
 
+        debugManager.flags.ContextGroupSize.set(2);
+        BaseClass::setUp();
+    }
+
+    void tearDown() {
+        if (!skipped) {
+            BaseClass::tearDown();
+        }
+    }
+
+    DebugManagerStateRestore restore;
+    bool skipped = false;
+};
+
+using EventContextGroupTests = Test<EventContextGroupFixture>;
+
+HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenUseCorrectCsr) {
     neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
 
     neoDevice->getUltCommandStreamReceiver<FamilyType>().commandStreamReceiverType = CommandStreamReceiverType::tbx;
@@ -3318,9 +3340,10 @@ HWTEST_F(EventTests, givenSecondaryCsrWhenDownloadingAllocationThenUseCorrectCsr
     *eventAddress = Event::STATE_INITIAL;
 
     auto ultCsr = new UltCommandStreamReceiver<FamilyType>(*neoDevice->getExecutionEnvironment(), 0, 1);
+
     neoDevice->secondaryCsrs.push_back(std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(ultCsr));
 
-    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size() + 1), EngineDescriptorHelper::getDefaultDescriptor());
+    OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
 
     ultCsr->setupContext(osContext);
 

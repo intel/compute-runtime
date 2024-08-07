@@ -108,13 +108,14 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
             }
         }
 
+        uint32_t numSecondaryContexts = 0;
         if (gfxCoreHelper.getContextGroupContextsCount() > 0) {
-            MemoryManager::maxOsContextCount += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
-            MemoryManager::maxOsContextCount += numHpEngines * gfxCoreHelper.getContextGroupContextsCount();
-            MemoryManager::maxOsContextCount += static_cast<uint32_t>(hwInfo->featureTable.ftrBcsInfo.count()); // LP contexts
+            numSecondaryContexts += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
+            numSecondaryContexts += numHpEngines * gfxCoreHelper.getContextGroupContextsCount();
+            osContextCount -= (numRegularEngines + numHpEngines);
         }
 
-        MemoryManager::maxOsContextCount += osContextCount * subDevicesCount + hasRootCsr;
+        MemoryManager::maxOsContextCount += (numSecondaryContexts + osContextCount) * subDevicesCount + hasRootCsr;
 
         if (ccsCount > 1 && debugManager.flags.EngineInstancedSubDevices.get()) {
             MemoryManager::maxOsContextCount += ccsCount * subDevicesCount;
