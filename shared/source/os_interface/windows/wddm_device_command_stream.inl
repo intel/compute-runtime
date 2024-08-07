@@ -95,7 +95,6 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     }
 
     if (this->directSubmission.get()) {
-        this->startControllingDirectSubmissions();
         auto ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::failed;
@@ -103,7 +102,6 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
         return SubmissionStatus::success;
     }
     if (this->blitterDirectSubmission.get()) {
-        this->startControllingDirectSubmissions();
         auto ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::failed;

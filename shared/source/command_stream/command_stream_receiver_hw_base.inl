@@ -1404,6 +1404,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
                 if (directSubmissionController) {
                     directSubmissionController->registerDirectSubmission(this);
                 }
+                this->startControllingDirectSubmissions();
                 if (this->isUpdateTagFromWaitEnabled()) {
                     this->overrideDispatchPolicy(DispatchMode::immediateDispatch);
                 }

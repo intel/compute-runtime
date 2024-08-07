@@ -1220,7 +1220,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenF
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsedAndDirectSubmissionControllerStarted) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     using MockSubmission =
         MockWddmDirectSubmission<FamilyType, Dispatcher>;
@@ -1247,7 +1247,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     batchBuffer.endCmdPtr = commandBuffer->getUnderlyingBuffer();
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_TRUE(mockCsr->directSubmissionControllerStarted);
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
@@ -1267,7 +1266,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsedAndDirectSubmissionControllerStarted) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
     using Dispatcher = BlitterDispatcher<FamilyType>;
     using MockSubmission =
         MockWddmDirectSubmission<FamilyType, Dispatcher>;
@@ -1295,7 +1294,6 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     batchBuffer.endCmdPtr = commandBuffer->getUnderlyingBuffer();
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
-    EXPECT_TRUE(mockCsr->directSubmissionControllerStarted);
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->blitterDirectSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
