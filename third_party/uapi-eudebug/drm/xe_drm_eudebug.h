@@ -3,8 +3,11 @@
  * Copyright © 2023 Intel Corporation
  */
 
-#if !defined(_UAPI_XE_DRM_H_)
-	error "Do not include this directly"
+#ifndef _UAPI_XE_DRM_EUDEBUG_H_
+#define _UAPI_XE_DRM_EUDEBUG_H_
+
+#if defined(__cplusplus)
+extern "C" {
 #endif
 
 /**
@@ -34,7 +37,6 @@ struct drm_xe_eudebug_event {
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE	8
 #define DRM_XE_EUDEBUG_EVENT_METADATA		9
 #define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA 10
-#define DRM_XE_EUDEBUG_EVENT_MAX_EVENT		DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA
 
 	__u16 flags;
 #define DRM_XE_EUDEBUG_EVENT_CREATE		(1 << 0)
@@ -171,7 +173,7 @@ struct drm_xe_eudebug_ack_event {
 	__u32 flags; /* MBZ */
 	__u64 seqno;
 };
-	
+
 struct drm_xe_eudebug_vm_open {
 	/** @extensions: Pointer to the first extension struct, if any */
 	__u64 extensions;
@@ -215,3 +217,9 @@ struct drm_xe_eudebug_event_vm_bind_op_metadata {
 	__u64 metadata_handle;
 	__u64 metadata_cookie;
 };
+
+#if defined(__cplusplus)
+}
+#endif
+
+#endif
