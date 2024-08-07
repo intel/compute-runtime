@@ -1,0 +1,6 @@
+components:
+  i915_kmd:
+    version: 'dev-5737'
+  xe_kmd:
+    version: 'dev-636'
+version: '1'
