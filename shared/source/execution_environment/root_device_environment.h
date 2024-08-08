@@ -100,7 +100,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryOperationsHandler> memoryOperationsInterface;
     std::unique_ptr<AubCenter> aubCenter;
-    std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
     std::unique_ptr<OSTime> osTime;
 
     std::unique_ptr<CompilerInterface> compilerInterface;
@@ -113,6 +112,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     std::unique_ptr<ReleaseHelper> releaseHelper;
     std::unique_ptr<AILConfiguration> ailConfiguration;
+    std::unique_ptr<BindlessHeapsHelper> bindlessHeapsHelper;
 
     std::unique_ptr<AssertHandler> assertHandler;
 

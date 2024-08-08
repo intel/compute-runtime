@@ -7,12 +7,14 @@
 
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
@@ -43,6 +45,16 @@ void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     executionEnvironment->prepareRootDeviceEnvironments(1u);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    if (auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0]; !rootDeviceEnvironment.aubCenter) {
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+        auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
+        auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
+        rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", NEO::CommandStreamReceiverType::aub);
+    }
+
+    const auto aubCenter = executionEnvironment->rootDeviceEnvironments[0]->aubCenter.get();
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::AubMemoryOperationsHandler>(aubCenter->getAubManager());
 
     if (debuggingEnabled) {
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);

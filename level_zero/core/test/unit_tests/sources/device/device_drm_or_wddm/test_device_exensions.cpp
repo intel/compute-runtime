@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/drm_mock_extended.h"
+#include "shared/test/common/os_interface/windows/mock_wddm_memory_manager.h"
 
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -28,6 +29,8 @@ struct DeviceWddmExtensionTest : public ::testing::Test {
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         executionEnvironment->incRefInternal();
         executionEnvironment->rootDeviceEnvironments[0]->initOsInterface(std::make_unique<NEO::HwDeviceId>(NEO::DriverModelType::wddm), rootDeviceIndex);
+        executionEnvironment->memoryManager.reset(new MockWddmMemoryManager(*executionEnvironment));
+
         neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment.get(), rootDeviceIndex);
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
