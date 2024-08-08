@@ -16,7 +16,7 @@ using GenGfxFamily = NEO::Gen8Family;
 #include "shared/test/common/cmd_parse/cmd_parse_sip.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/cmd_parse/hw_parse.inl"
+#include "shared/test/common/cmd_parse/hw_parse_base.inl"
 
 template <>
 size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {

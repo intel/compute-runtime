@@ -1,128 +1,30 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/cmd_parse/cmd_parse_base.inl"
-//
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/test/common/cmd_parse/cmd_parse_3d_state_btd.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_compute_mi_arb.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_compute_walker.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_l3_control_xehp_and_later.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_sip.inl"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/cmd_parse/hw_parse.inl"
 
 #include "gtest/gtest.h"
-
-template <>
-size_t CmdParse<GenGfxFamily>::getCommandLengthHwSpecific(void *cmd) {
-    {
-        auto pCmd = genCmdCast<STATE_COMPUTE_MODE *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
-    }
-    {
-        auto pCmd = genCmdCast<COMPUTE_WALKER *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
-    }
-    {
-        auto pCmd = genCmdCast<CFE_STATE *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
-    }
-    {
-        auto pCmd = genCmdCast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
-    }
-    {
-        auto pCmd = genCmdCast<MI_SET_PREDICATE *>(cmd);
-        if (pCmd)
-            return 1;
-    }
-    {
-        auto pCmd = genCmdCast<L3_CONTROL *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.Length + 2;
-    }
-    {
-        auto pCmd = genCmdCast<_3DSTATE_BTD *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
-    }
-    {
-        auto pCmd = genCmdCast<STATE_SIP *>(cmd);
-        if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
-    }
-
-    return 0;
-}
-
-template <>
-const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
-    if (nullptr != genCmdCast<STATE_COMPUTE_MODE *>(cmd)) {
-        return "STATE_COMPUTE_MODE";
-    }
-
-    if (nullptr != genCmdCast<COMPUTE_WALKER *>(cmd)) {
-        return "COMPUTE_WALKER";
-    }
-
-    if (nullptr != genCmdCast<CFE_STATE *>(cmd)) {
-        return "CFE_STATE";
-    }
-
-    if (nullptr != genCmdCast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmd)) {
-        return "_3DSTATE_BINDING_TABLE_POOL_ALLOC";
-    }
-
-    if (nullptr != genCmdCast<MI_SET_PREDICATE *>(cmd)) {
-        return "MI_SET_PREDICATE";
-    }
-
-    if (nullptr != genCmdCast<L3_CONTROL *>(cmd)) {
-        auto l3Command = genCmdCast<L3_CONTROL *>(cmd);
-        if (l3Command->getPostSyncOperation() == L3_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE) {
-
-            return "L3_CONTROL(NO_POST_SYNC)";
-        } else {
-            return "L3_CONTROL(POST_SYNC)";
-        }
-    }
-
-    if (nullptr != genCmdCast<_3DSTATE_BTD *>(cmd)) {
-        return "_3DSTATE_BTD";
-    }
-
-    if (nullptr != genCmdCast<STATE_SIP *>(cmd)) {
-        return "STATE_SIP";
-    }
-
-    return "UNKNOWN";
-}
-
-template struct CmdParse<GenGfxFamily>;
 
 namespace NEO {
 
 template <>
 void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
-    typedef typename GenGfxFamily::DefaultWalkerType DefaultWalkerType;
+    typedef typename GenGfxFamily::COMPUTE_WALKER COMPUTE_WALKER;
     typedef typename GenGfxFamily::CFE_STATE CFE_STATE;
     typedef typename GenGfxFamily::PIPELINE_SELECT PIPELINE_SELECT;
     typedef typename GenGfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename GenGfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename GenGfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GenGfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GenGfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
-    itorWalker = find<DefaultWalkerType *>(cmdList.begin(), cmdList.end());
+    itorWalker = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
     if (itorWalker != cmdList.end()) {
         cmdWalker = *itorWalker;
     }
@@ -152,7 +54,7 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
         cmdPipelineSelect = *itorPipelineSelect;
     }
 
-    itorMediaVfeState = find<CFE_STATE *>(itorPipelineSelect, itorWalker);
+    itorMediaVfeState = find<CFE_STATE *>(requiresPipelineSelectBeforeMediaState<GenGfxFamily>() ? itorPipelineSelect : cmdList.begin(), itorWalker);
     if (itorMediaVfeState != itorWalker) {
         cmdMediaVfeState = *itorMediaVfeState;
     }
@@ -177,20 +79,20 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
         cmdBindingTableBaseAddress = *itorBindingTableBaseAddress;
     }
 
-    // interfaceDescriptorData should be located within DefaultWalkerType
+    // interfaceDescriptorData should be located within COMPUTE_WALKER
     if (cmdWalker) {
         // Extract the interfaceDescriptorData
-        auto &idd = reinterpret_cast<DefaultWalkerType *>(cmdWalker)->getInterfaceDescriptor();
+        INTERFACE_DESCRIPTOR_DATA &idd = reinterpret_cast<COMPUTE_WALKER *>(cmdWalker)->getInterfaceDescriptor();
         cmdInterfaceDescriptorData = &idd;
     }
 }
 
 template <>
 const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex) {
-    typedef typename GenGfxFamily::DefaultWalkerType DefaultWalkerType;
+    typedef typename GenGfxFamily::COMPUTE_WALKER COMPUTE_WALKER;
     typedef typename GenGfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    auto cmdWalker = (DefaultWalkerType *)this->cmdWalker;
+    auto cmdWalker = (COMPUTE_WALKER *)this->cmdWalker;
     EXPECT_NE(nullptr, cmdWalker);
     auto inlineInComputeWalker = cmdWalker->getInlineDataPointer();
 
@@ -198,7 +100,6 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     EXPECT_NE(nullptr, cmdSBA);
     auto argOffset = std::numeric_limits<uint32_t>::max();
     // Determine where the argument is
-
     const auto &arg = kernelInfo.getArgDescriptorAt(indexArg);
     if (arg.is<ArgDescriptor::argTPointer>() && isValidOffset(arg.as<ArgDescPointer>().stateless)) {
         argOffset = arg.as<ArgDescPointer>().stateless;
@@ -210,6 +111,7 @@ const void *HardwareParse::getStatelessArgumentPointer<GenGfxFamily>(const Kerne
     auto inlineDataSize = 32u;
 
     auto offsetCrossThreadData = cmdWalker->getIndirectDataStartAddress();
+
     offsetCrossThreadData -= static_cast<uint32_t>(ioh.getGraphicsAllocation()->getGpuAddressToPatch());
 
     // Get the base of cross thread

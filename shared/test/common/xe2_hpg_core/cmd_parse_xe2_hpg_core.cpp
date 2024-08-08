@@ -9,6 +9,7 @@
 using GenStruct = NEO::Xe2HpgCore;
 using GenGfxFamily = NEO::Xe2HpgCoreFamily;
 
+#include "shared/test/common/cmd_parse/cmd_parse_xy_block_copy.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 using MI_MEM_FENCE = GenStruct::MI_MEM_FENCE;
@@ -130,22 +131,10 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
     return "UNKNOWN";
 }
 
+#include "shared/test/common/cmd_parse/cmd_parse_xe_hpg_and_later.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
-
-template <>
-bool NEO::HardwareParse::requiresPipelineSelectBeforeMediaState<GenGfxFamily>() {
-    return false;
-}
-
-#include "shared/test/common/cmd_parse/cmd_parse_pvc_and_later.inl"
-
-template <>
-void HardwareParse::findCsrBaseAddress<GenGfxFamily>() {
-    using STATE_CONTEXT_DATA_BASE_ADDRESS = typename GenGfxFamily::STATE_CONTEXT_DATA_BASE_ADDRESS;
-    itorGpgpuCsrBaseAddress = find<STATE_CONTEXT_DATA_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    if (itorGpgpuCsrBaseAddress != cmdList.end()) {
-        cmdGpgpuCsrBaseAddress = *itorGpgpuCsrBaseAddress;
-    }
-}
+#include "shared/test/common/cmd_parse/hw_parse_base.inl"
+#include "shared/test/common/cmd_parse/hw_parse_xe2_hpg_and_later.inl"
+#include "shared/test/common/cmd_parse/hw_parse_xe_hpg_and_later.inl"
 
 template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);

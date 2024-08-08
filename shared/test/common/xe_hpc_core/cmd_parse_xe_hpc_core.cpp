@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 using GenStruct = NEO::XeHpcCore;
 using GenGfxFamily = NEO::XeHpcCoreFamily;
 
+#include "shared/test/common/cmd_parse/cmd_parse_xy_block_copy.inl"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 using MI_MEM_FENCE = GenStruct::MI_MEM_FENCE;
@@ -109,6 +110,9 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
     return "UNKNOWN";
 }
 
-#include "shared/test/common/cmd_parse/cmd_parse_pvc_and_later.inl"
+#include "shared/test/common/cmd_parse/cmd_parse_xe_hpg_and_later.inl"
+#include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/cmd_parse/hw_parse_base.inl"
+#include "shared/test/common/cmd_parse/hw_parse_xe_hpg_and_later.inl"
 
 template const typename GenGfxFamily::RENDER_SURFACE_STATE *NEO::HardwareParse::getSurfaceState<GenGfxFamily>(IndirectHeap *ssh, uint32_t index);
