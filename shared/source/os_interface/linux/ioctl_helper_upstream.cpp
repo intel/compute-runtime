@@ -191,8 +191,8 @@ bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindA
     return false;
 }
 
-std::optional<DrmParam> IoctlHelperUpstream::getHasPageFaultParamId() {
-    return std::nullopt;
+bool IoctlHelperUpstream::isPageFaultSupported() {
+    return false;
 };
 
 bool IoctlHelperUpstream::isEuStallSupported() {
@@ -239,7 +239,7 @@ void IoctlHelperUpstream::fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtU
 
 void IoctlHelperUpstream::setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence){};
 
-uint32_t IoctlHelperUpstream::getVmAdviseAtomicAttribute() {
+std::optional<uint32_t> IoctlHelperUpstream::getVmAdviseAtomicAttribute() {
     return 0;
 }
 

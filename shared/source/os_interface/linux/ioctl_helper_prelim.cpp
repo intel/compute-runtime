@@ -554,8 +554,19 @@ int IoctlHelperPrelim20::queryDistances(std::vector<QueryItem> &queryItems, std:
     return ret;
 }
 
-std::optional<DrmParam> IoctlHelperPrelim20::getHasPageFaultParamId() {
-    return DrmParam::paramHasPageFault;
+bool IoctlHelperPrelim20::isPageFaultSupported() {
+    int pagefaultSupport{};
+    GetParam getParam{};
+    getParam.param = PRELIM_I915_PARAM_HAS_PAGE_FAULT;
+    getParam.value = &pagefaultSupport;
+
+    int retVal = ioctl(DrmIoctl::getparam, &getParam);
+    if (debugManager.flags.PrintIoctlEntries.get()) {
+        printf("DRM_IOCTL_I915_GETPARAM: param: PRELIM_I915_PARAM_HAS_PAGE_FAULT, output value: %d, retCode:% d\n",
+               *getParam.value,
+               retVal);
+    }
+    return (retVal == 0) && (pagefaultSupport > 0);
 };
 
 bool IoctlHelperPrelim20::isEuStallSupported() {
@@ -732,7 +743,7 @@ EngineCapabilities::Flags IoctlHelperPrelim20::getEngineCapabilitiesFlags(uint64
     return flags;
 }
 
-uint32_t IoctlHelperPrelim20::getVmAdviseAtomicAttribute() {
+std::optional<uint32_t> IoctlHelperPrelim20::getVmAdviseAtomicAttribute() {
     switch (NEO::debugManager.flags.SetVmAdviseAtomicAttribute.get()) {
     case 0:
         return PRELIM_I915_VM_ADVISE_ATOMIC_NONE;

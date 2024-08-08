@@ -69,7 +69,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint16_t getWaitUserFenceSoftFlag() override;
     int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) override;
     bool completionFenceExtensionSupported(const bool isVmBindAvailable) override;
-    std::optional<DrmParam> getHasPageFaultParamId() override;
+    bool isPageFaultSupported() override;
     std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) override;
     uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) override;
     uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) override;
@@ -77,7 +77,7 @@ class IoctlHelperXe : public IoctlHelper {
     void fillVmBindExtSetPat(VmBindExtSetPatT &vmBindExtSetPat, uint64_t patIndex, uint64_t nextExtension) override;
     void fillVmBindExtUserFence(VmBindExtUserFenceT &vmBindExtUserFence, uint64_t fenceAddress, uint64_t fenceValue, uint64_t nextExtension) override;
     void setVmBindUserFence(VmBindParams &vmBind, VmBindExtUserFenceT vmBindUserFence) override;
-    uint32_t getVmAdviseAtomicAttribute() override;
+    std::optional<uint32_t> getVmAdviseAtomicAttribute() override;
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
@@ -214,7 +214,8 @@ class IoctlHelperXe : public IoctlHelper {
             struct {
                 uint32_t vmBindReadOnly : 1;
                 uint32_t vmBindImmediate : 1;
-                uint32_t reserved : 30;
+                uint32_t pageFault : 1;
+                uint32_t reserved : 29;
             } flags;
             uint32_t allFlags = 0;
         };
