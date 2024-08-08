@@ -921,6 +921,33 @@ TEST(SysmanProductHelperTest, GivenInvalidProductFamilyWhenCallingProductHelperC
     EXPECT_EQ(nullptr, pSysmanProductHelper);
 }
 
+using IsNotDG1 = IsNotWithinProducts<IGFX_DG1, IGFX_DG1>;
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesThenVerifyCallSucceeds, IsNotDG1) {
+    pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm3);
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_mem_properties_t properties = {};
+    bool isSubdevice = true;
+    uint32_t subDeviceId = 0;
+
+    auto pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+    MockMemorySysFsAccessInterface *pSysfsAccess = new MockMemorySysFsAccessInterface();
+    pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+    pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
+    pSysfsAccess->mockReadStringValue.push_back(mockPhysicalSize);
+    pSysfsAccess->mockReadReturnStatus.push_back(ZE_RESULT_SUCCESS);
+    pSysfsAccess->isRepeated = true;
+
+    ze_result_t result = pSysmanProductHelper->getMemoryProperties(&properties, pLinuxSysmanImp, pDrm, pLinuxSysmanImp->getSysmanKmdInterface(), subDeviceId, isSubdevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(properties.type, ZES_MEM_TYPE_HBM);
+    EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
+    EXPECT_EQ(properties.subdeviceId, 0u);
+    EXPECT_EQ(properties.physicalSize, strtoull(mockPhysicalSize.c_str(), nullptr, 16));
+    EXPECT_EQ(properties.numChannels, numMemoryChannels);
+    EXPECT_EQ(properties.busWidth, memoryBusWidth);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

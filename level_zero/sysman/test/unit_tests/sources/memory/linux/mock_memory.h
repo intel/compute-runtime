@@ -121,7 +121,10 @@ struct MockMemoryNeoDrm : public NEO::Drm {
             return returnValue;
         }
 
-        uint32_t hwBlob[] = {NEO::DeviceBlobConstants::maxMemoryChannels, 1, 8, NEO::DeviceBlobConstants::memoryType, 0, mockMemoryType};
+        constexpr uint32_t numHbmStacksPerTile = 2;
+        constexpr uint32_t numChannelsPerHbmStack = 4;
+
+        uint32_t hwBlob[] = {NEO::DeviceBlobConstants::maxMemoryChannels, 1, 8, NEO::DeviceBlobConstants::memoryType, 1, mockMemoryType, NEO::DeviceBlobConstants::numHbmStacksPerTile, 1, numHbmStacksPerTile, NEO::DeviceBlobConstants::numChannelsPerHbmStack, 1, numChannelsPerHbmStack};
         std::vector<uint32_t> inputBlobData(reinterpret_cast<uint32_t *>(hwBlob), reinterpret_cast<uint32_t *>(ptrOffset(hwBlob, sizeof(hwBlob))));
         this->systemInfo.reset(new SystemInfo(inputBlobData));
         return returnValue;

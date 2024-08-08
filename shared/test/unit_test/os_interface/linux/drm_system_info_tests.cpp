@@ -180,6 +180,8 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x2Du, systemInfo.getL3BankSizeInKb());
     EXPECT_EQ(0x24u, systemInfo.getSlmSizePerDss());
     EXPECT_EQ(0x25u, systemInfo.getCsrSizeInMb());
+    EXPECT_EQ(0x04u, systemInfo.getNumHbmStacksPerTile());
+    EXPECT_EQ(0x08u, systemInfo.getNumChannlesPerHbmStack());
 }
 
 TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobAndDifferentMaxSubSlicesAndMaxDSSThenQueryReturnsTheMaxValue) {

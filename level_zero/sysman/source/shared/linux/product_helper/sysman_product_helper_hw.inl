@@ -52,11 +52,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
     if (status) {
         auto memSystemInfo = pDrm->getSystemInfo();
         if (memSystemInfo != nullptr) {
-            pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
             auto memType = memSystemInfo->getMemoryType();
             switch (memType) {
             case NEO::DeviceBlobConstants::MemoryType::hbm2e:
             case NEO::DeviceBlobConstants::MemoryType::hbm2:
+            case NEO::DeviceBlobConstants::MemoryType::hbm3:
                 pProperties->type = ZES_MEM_TYPE_HBM;
                 break;
             case NEO::DeviceBlobConstants::MemoryType::lpddr4:
@@ -68,6 +68,12 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
             default:
                 pProperties->type = ZES_MEM_TYPE_DDR;
                 break;
+            }
+
+            if (pProperties->type == ZES_MEM_TYPE_HBM) {
+                pProperties->numChannels = memSystemInfo->getNumHbmStacksPerTile() * memSystemInfo->getNumChannlesPerHbmStack();
+            } else {
+                pProperties->numChannels = memSystemInfo->getMaxMemoryChannels();
             }
         }
     }

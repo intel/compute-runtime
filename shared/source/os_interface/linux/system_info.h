@@ -27,13 +27,16 @@ constexpr uint32_t slmSizePerDss = 65;
 constexpr uint32_t maxSubSlicesSupported = 70;
 constexpr uint32_t maxEuPerSubSlice = 71;
 constexpr uint32_t slmSizePerSs = 73;
+constexpr uint32_t numHbmStacksPerTile = 74;
+constexpr uint32_t numChannelsPerHbmStack = 75;
 
 enum MemoryType {
     lpddr4,
     lpddr5,
     hbm2,
     hbm2e,
-    gddr6
+    gddr6,
+    hbm3
 };
 } // namespace DeviceBlobConstants
 
@@ -54,6 +57,8 @@ struct SystemInfo {
     uint32_t getL3BankSizeInKb() const { return l3BankSizeInKb; }
     uint32_t getSlmSizePerDss() const { return slmSizePerDss; }
     uint32_t getCsrSizeInMb() const { return csrSizeInMb; }
+    uint32_t getNumHbmStacksPerTile() const { return numHbmStacksPerTile; }
+    uint32_t getNumChannlesPerHbmStack() const { return numChannelsPerHbmStack; }
 
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
 
@@ -71,6 +76,8 @@ struct SystemInfo {
     uint32_t l3BankSizeInKb = 0;
     uint32_t slmSizePerDss = 0;
     uint32_t csrSizeInMb = 0;
+    uint32_t numHbmStacksPerTile = 0;
+    uint32_t numChannelsPerHbmStack = 0;
 };
 
 } // namespace NEO
