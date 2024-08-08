@@ -518,8 +518,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenNotUsedAllocationsFromPreviousPe
 
     residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    // 2 allocations evicted
-    EXPECT_EQ(2u, wddm->evictResult.called);
+    // Single evict called
+    EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     // removed from trim candidate list
     EXPECT_EQ(0u, residencyController->peekTrimCandidateList().size());
@@ -651,7 +651,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallb
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, GivenZeroWhenTrimmingToBudgetThenTrueIsReturned) {
-    bool status = residencyController->trimResidencyToBudget(0);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    bool status = residencyController->trimResidencyToBudget(0, lock);
 
     EXPECT_TRUE(status);
 }
@@ -682,10 +684,11 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAlloca
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    residencyController->trimResidencyToBudget(3 * 4096, lock);
 
-    residencyController->trimResidencyToBudget(3 * 4096);
-
-    EXPECT_EQ(2u, wddm->evictResult.called);
+    EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
 
     EXPECT_EQ(1u, residencyController->peekTrimCandidatesCount());
@@ -711,8 +714,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
     wddm->evictResult.called = 0;
 
     residencyController->addToTrimCandidateList(&allocation1);
-
-    bool status = residencyController->trimResidencyToBudget(3 * 4096);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    bool status = residencyController->trimResidencyToBudget(3 * 4096, lock);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, residencyController->peekTrimCandidateList().size());
@@ -746,11 +750,12 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimming
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
-
-    bool status = residencyController->trimResidencyToBudget(3 * 4096);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    bool status = residencyController->trimResidencyToBudget(3 * 4096, lock);
 
     EXPECT_TRUE(status);
-    EXPECT_EQ(2u, wddm->evictResult.called);
+    EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(1u, residencyController->peekTrimCandidateList().size());
 
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition(osContextId));
@@ -783,8 +788,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAlloca
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
-
-    residencyController->trimResidencyToBudget(3 * 4096);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    residencyController->trimResidencyToBudget(3 * 4096, lock);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
@@ -809,8 +815,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
     residencyController->addToTrimCandidateList(&allocation1);
 
     gdi->getWaitFromCpuArg().hDevice = 0;
-
-    residencyController->trimResidencyToBudget(3 * 4096);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    residencyController->trimResidencyToBudget(3 * 4096, lock);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
@@ -861,9 +868,11 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
 
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
-    residencyController->trimResidencyToBudget(3 * 4096);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    residencyController->trimResidencyToBudget(3 * 4096, lock);
 
-    EXPECT_EQ(2u, wddm->evictResult.called);
+    EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident[osContextId]);
     EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident[osContextId]);
@@ -908,8 +917,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     residencyController->addToTrimCandidateList(&allocation1);
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
-
-    bool status = residencyController->trimResidencyToBudget(budget);
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    bool status = residencyController->trimResidencyToBudget(budget, lock);
     EXPECT_TRUE(status);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
@@ -1262,8 +1272,10 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenResidencyLoggingEnabledWhenTrimm
     residencyController->addToTrimCandidateList(&allocation2);
     residencyController->addToTrimCandidateList(&allocation3);
 
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
     constexpr uint64_t trimBudgetSize = 3 * 4096;
-    residencyController->trimResidencyToBudget(trimBudgetSize);
+    residencyController->trimResidencyToBudget(trimBudgetSize, lock);
     residencyController->compactTrimCandidateList();
 
     EXPECT_EQ(trimBudgetSize, logger->numBytesToTrimSave);

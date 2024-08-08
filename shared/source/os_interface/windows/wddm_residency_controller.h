@@ -55,7 +55,7 @@ class WddmResidencyController {
     void registerCallback();
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
-    bool trimResidencyToBudget(uint64_t bytes);
+    bool trimResidencyToBudget(uint64_t bytes, std::unique_lock<std::mutex> &lock);
 
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
@@ -69,6 +69,7 @@ class WddmResidencyController {
     MonitoredFence monitoredFence = {};
 
     ResidencyContainer trimCandidateList;
+    std::vector<D3DKMT_HANDLE> handlesToEvict;
 
     SpinLock lock;
     SpinLock trimCallbackLock;
