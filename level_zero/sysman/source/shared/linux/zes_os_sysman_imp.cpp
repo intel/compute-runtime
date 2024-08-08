@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/file_descriptor.h"
 #include "shared/source/os_interface/linux/pci_path.h"
+#include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -21,7 +22,6 @@
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
@@ -549,29 +549,41 @@ uint32_t LinuxSysmanImp::getMemoryType() {
     return memType;
 }
 
-void LinuxSysmanImp::addTelemOffsetAndDirPair(uint32_t subdeviceId, std::pair<uint64_t, std::string> pairTelemOffsetAndDir) {
-    mapOfSubDeviceIdToTelemOffsetAndDirPair[subdeviceId] = pairTelemOffsetAndDir;
-}
+bool LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &offset) {
 
-bool LinuxSysmanImp::getTelemOffsetAndDir(uint32_t subdeviceId, uint64_t &telemOffset, std::string &telemDir) {
-
-    if (mapOfSubDeviceIdToTelemOffsetAndDirPair.find(subdeviceId) != mapOfSubDeviceIdToTelemOffsetAndDirPair.end()) {
-        telemOffset = mapOfSubDeviceIdToTelemOffsetAndDirPair[subdeviceId].first;
-        telemDir = mapOfSubDeviceIdToTelemOffsetAndDirPair[subdeviceId].second;
+    if (mapOfSubDeviceIdToTelemData.find(subDeviceId) != mapOfSubDeviceIdToTelemData.end()) {
+        auto pTelemData = mapOfSubDeviceIdToTelemData[subDeviceId].get();
+        telemDir = pTelemData->telemDir;
+        guid = pTelemData->guid;
+        offset = pTelemData->offset;
         return true;
     }
-    return false;
-}
 
-void LinuxSysmanImp::addTelemNodes(std::map<uint32_t, std::string> telemNodes) {
-    telemNodesInPCIPath = telemNodes;
-}
+    if (telemNodesInPciPath.empty()) {
+        NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodesInPciPath);
+    }
 
-bool LinuxSysmanImp::getTelemNodes(std::map<uint32_t, std::string> &telemNodes) {
-    if (telemNodesInPCIPath.empty()) {
+    uint32_t deviceCount = getSubDeviceCount() + 1;
+    if (telemNodesInPciPath.size() < deviceCount) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Number of telemetry nodes:%d is less than device count: %d \n", __FUNCTION__, telemNodesInPciPath.size(), deviceCount);
         return false;
     }
-    telemNodes = telemNodesInPCIPath;
+
+    if (telemNodesInPciPath.size() == 1) {
+        if (!PlatformMonitoringTech::getTelemData(telemNodesInPciPath, telemDir, guid, offset)) {
+            return false;
+        }
+    } else {
+        if (!PlatformMonitoringTech::getTelemDataForTileAggregator(telemNodesInPciPath, subDeviceId, telemDir, guid, offset)) {
+            return false;
+        }
+    }
+
+    pTelemData = std::make_unique<PlatformMonitoringTech::TelemData>();
+    pTelemData->telemDir = telemDir;
+    pTelemData->offset = offset;
+    pTelemData->guid = guid;
+    mapOfSubDeviceIdToTelemData[subDeviceId] = std::move(pTelemData);
     return true;
 }
 

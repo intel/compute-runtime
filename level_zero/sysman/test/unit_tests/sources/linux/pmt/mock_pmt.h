@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,11 +24,11 @@ const std::string realPathTelem3 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a
 const std::string realPathTelem4 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem4";
 const std::string realPathTelem5 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem5";
 const std::string invalidRealPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8e:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-const std::string sysfsPahTelem1 = "/sys/class/intel_pmt/telem1";
-const std::string sysfsPahTelem2 = "/sys/class/intel_pmt/telem2";
-const std::string sysfsPahTelem3 = "/sys/class/intel_pmt/telem3";
-const std::string sysfsPahTelem4 = "/sys/class/intel_pmt/telem4";
-const std::string sysfsPahTelem5 = "/sys/class/intel_pmt/telem5";
+const std::string sysfsPathTelem1 = "/sys/class/intel_pmt/telem1";
+const std::string sysfsPathTelem2 = "/sys/class/intel_pmt/telem2";
+const std::string sysfsPathTelem3 = "/sys/class/intel_pmt/telem3";
+const std::string sysfsPathTelem4 = "/sys/class/intel_pmt/telem4";
+const std::string sysfsPathTelem5 = "/sys/class/intel_pmt/telem5";
 
 struct MockPmtFsAccess : public L0::Sysman::FsAccessInterface {
 
@@ -36,6 +36,7 @@ struct MockPmtFsAccess : public L0::Sysman::FsAccessInterface {
     ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
     ze_result_t readUnsignedResult = ZE_RESULT_SUCCESS;
     ze_result_t readStringResult = ZE_RESULT_SUCCESS;
+    ze_result_t readFileAvailability = ZE_RESULT_SUCCESS;
     ze_bool_t returnTelemNodes = true;
     ze_bool_t returnInvalidRealPath = false;
     ze_bool_t readInvalidString = false;
@@ -83,6 +84,11 @@ struct MockPmtFsAccess : public L0::Sysman::FsAccessInterface {
     }
 
     bool fileExists(const std::string file) override {
+
+        if (readFileAvailability != ZE_RESULT_SUCCESS) {
+            return false;
+        }
+
         if ((file.compare(telemetryDeviceEntryForSubdevice0) == 0) ||
             (file.compare(telemetryDeviceEntryForSubdevice1) == 0)) {
             return true;
@@ -101,15 +107,15 @@ struct MockPmtFsAccess : public L0::Sysman::FsAccessInterface {
             return ZE_RESULT_SUCCESS;
         }
 
-        if (path.compare(sysfsPahTelem1) == 0) {
+        if (path.compare(sysfsPathTelem1) == 0) {
             buf = realPathTelem1;
-        } else if (path.compare(sysfsPahTelem2) == 0) {
+        } else if (path.compare(sysfsPathTelem2) == 0) {
             buf = realPathTelem2;
-        } else if (path.compare(sysfsPahTelem3) == 0) {
+        } else if (path.compare(sysfsPathTelem3) == 0) {
             buf = realPathTelem3;
-        } else if (path.compare(sysfsPahTelem4) == 0) {
+        } else if (path.compare(sysfsPathTelem4) == 0) {
             buf = realPathTelem4;
-        } else if (path.compare(sysfsPahTelem5) == 0) {
+        } else if (path.compare(sysfsPathTelem5) == 0) {
             buf = realPathTelem5;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;

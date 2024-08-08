@@ -129,7 +129,28 @@ bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+
+    std::string telemDir = "";
+    std::string guid = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    auto pGuidToKeyOffsetMap = this->getGuidToKeyOffsetMap();
+    if (pGuidToKeyOffsetMap == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    auto keyOffsetMapEntry = pGuidToKeyOffsetMap->find(guid);
+    if (keyOffsetMapEntry == pGuidToKeyOffsetMap->end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    keyOffsetMap = keyOffsetMapEntry->second;
+
     auto isValidTemperature = [](auto temperature) {
         if ((temperature > invalidMaxTemperature) || (temperature < invalidMinTemperature)) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): temperature:%f is not in valid limits \n", __FUNCTION__, temperature);
@@ -151,44 +172,54 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(PlatformM
         return maxTemperature;
     };
 
-    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    std::string key;
-
-    // SOC_TEMPERATURES is present in all product families
+    std::string key = "SOC_TEMPERATURES";
     uint64_t socTemperature = 0;
-    key = "SOC_TEMPERATURES";
-    result = pPmt->readValue(key, socTemperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
-    // Check max temperature among possible sensors like PCH or GT_TEMP, DRAM, SA, PSF, DE, PCIE, TYPEC across SOC_TEMPERATURES
     uint32_t maxSocTemperature = getMaxTemperature(socTemperature, numSocTemperatureEntries);
-
     *pTemperature = static_cast<double>(maxSocTemperature);
-
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+
+    std::string telemDir = "";
+    std::string guid = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    auto pGuidToKeyOffsetMap = this->getGuidToKeyOffsetMap();
+    if (pGuidToKeyOffsetMap == nullptr) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    auto keyOffsetMapEntry = pGuidToKeyOffsetMap->find(guid);
+    if (keyOffsetMapEntry == pGuidToKeyOffsetMap->end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    keyOffsetMap = keyOffsetMapEntry->second;
+
     double gpuMaxTemperature = 0;
     uint64_t socTemperature = 0;
-    // Gpu temperature is obtained from GT_TEMP in SOC_TEMPERATURE's bit 0 to 7.
     std::string key = "SOC_TEMPERATURES";
-    auto result = pPmt->readValue(key, socTemperature);
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Pmt->readvalue() for SOC_TEMPERATURES is returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, socTemperature)) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readValue for SOC_TEMPERATURES returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
     gpuMaxTemperature = static_cast<double>(socTemperature & 0xff);
-
     *pTemperature = gpuMaxTemperature;
     return ZE_RESULT_SUCCESS;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) {
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

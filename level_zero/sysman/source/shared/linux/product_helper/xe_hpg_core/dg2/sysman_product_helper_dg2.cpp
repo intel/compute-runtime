@@ -137,8 +137,7 @@ const std::map<std::string, std::map<std::string, uint64_t>> *SysmanProductHelpe
     return &guidToKeyOffsetMap;
 }
 
-ze_result_t readMcChannelCounters(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &readCounters, uint64_t &writeCounters, std::string telemDir, uint64_t telemOffset) {
-    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+ze_result_t readMcChannelCounters(std::map<std::string, uint64_t> keyOffsetMap, uint64_t &readCounters, uint64_t &writeCounters, std::string telemDir, uint64_t telemOffset) {
     uint32_t numMcChannels = 16u;
     std::vector<std::string> nameOfCounters{"IDI_READS", "IDI_WRITES", "DISPLAY_VC1_READS"};
     std::vector<uint64_t> counterValues(3, 0);
@@ -146,7 +145,7 @@ ze_result_t readMcChannelCounters(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &rea
         for (uint32_t mcChannelIndex = 0; mcChannelIndex < numMcChannels; mcChannelIndex++) {
             uint64_t val = 0;
             std::string readCounterKey = nameOfCounters[counterIndex] + "[" + std::to_string(mcChannelIndex) + "]";
-            if (!PlatformMonitoringTech::readValue(pSysmanProductHelper, telemDir, readCounterKey, telemOffset, val)) {
+            if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, readCounterKey, telemOffset, val)) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readValue for readCounterKey returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_NOT_AVAILABLE);
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
@@ -171,16 +170,21 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     pBandwidth->maxBandwidth = 0;
 
     std::string telemDir = "";
+    std::string guid = "";
     uint64_t telemOffset = 0;
 
-    if (!pLinuxSysmanImp->getTelemOffsetAndDir(subdeviceId, telemOffset, telemDir)) {
-        if (!PlatformMonitoringTech::getTelemOffsetAndTelemDir(pLinuxSysmanImp, telemOffset, telemDir)) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-        pLinuxSysmanImp->addTelemOffsetAndDirPair(subdeviceId, std::make_pair(telemOffset, telemDir));
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    result = readMcChannelCounters(pLinuxSysmanImp, pBandwidth->readCounter, pBandwidth->writeCounter, telemDir, telemOffset);
+    std::map<std::string, uint64_t> keyOffsetMap;
+    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
+    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    keyOffsetMap = keyOffsetMapEntry->second;
+
+    result = readMcChannelCounters(keyOffsetMap, pBandwidth->readCounter, pBandwidth->writeCounter, telemDir, telemOffset);
     if (result != ZE_RESULT_SUCCESS) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():readMcChannelCounters returning error:0x%x  \n", __FUNCTION__, result);
         return result;

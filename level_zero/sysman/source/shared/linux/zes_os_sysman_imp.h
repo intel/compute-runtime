@@ -13,6 +13,7 @@
 
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/sysman_hw_device_id_linux.h"
 #include "level_zero/sysman/source/sysman_const.h"
 
@@ -27,7 +28,6 @@ namespace L0 {
 namespace Sysman {
 
 class SysmanProductHelper;
-class PlatformMonitoringTech;
 class PmuInterface;
 class FirmwareUtil;
 class SysmanKmdInterface;
@@ -80,10 +80,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string gtDevicePath;
     SysmanKmdInterface *getSysmanKmdInterface() { return pSysmanKmdInterface.get(); }
     static ze_result_t getResult(int err);
-    void addTelemNodes(std::map<uint32_t, std::string> telemNodes);
-    bool getTelemNodes(std::map<uint32_t, std::string> &telemNodes);
-    void addTelemOffsetAndDirPair(uint32_t subdeviceId, std::pair<uint64_t, std::string> pairTelemOffsetAndDir);
-    bool getTelemOffsetAndDir(uint32_t subdeviceId, uint64_t &telemOffset, std::string &telemDir);
+    bool getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
 
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
@@ -98,8 +95,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string rootPath;
     void releaseFwUtilInterface();
     uint32_t memType = unknownMemoryType;
-    std::map<uint32_t, std::pair<uint64_t, std::string>> mapOfSubDeviceIdToTelemOffsetAndDirPair;
-    std::map<uint32_t, std::string> telemNodesInPCIPath;
+    std::map<uint32_t, std::unique_ptr<PlatformMonitoringTech::TelemData>> mapOfSubDeviceIdToTelemData;
+    std::map<uint32_t, std::string> telemNodesInPciPath;
+    std::unique_ptr<PlatformMonitoringTech::TelemData> pTelemData = nullptr;
 
   private:
     LinuxSysmanImp() = delete;

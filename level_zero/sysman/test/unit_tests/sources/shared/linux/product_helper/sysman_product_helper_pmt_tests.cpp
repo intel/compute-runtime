@@ -28,7 +28,22 @@ const std::map<std::string, std::map<std::string, uint64_t>> mockPvcGuidToKeyOff
                                                                                             {"TileMaxTemperature", 44}}}};
 
 using IsUnknown = IsProduct<IGFX_UNKNOWN>;
-using SysmanProductHelperPmtTest = ::testing::Test;
+
+class SysmanProductHelperPmtTest : public SysmanDeviceFixture {
+  protected:
+    L0::Sysman::SysmanDevice *device = nullptr;
+
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+        device = pSysmanDeviceImp;
+        auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        pLinuxSysmanImp->pSysmanProductHelper = std::move(pSysmanProductHelper);
+    }
+
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+    }
+};
 
 HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGuidToKeyOffsetMapIsCalledThenValidMapIsReturned, IsDG1) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);

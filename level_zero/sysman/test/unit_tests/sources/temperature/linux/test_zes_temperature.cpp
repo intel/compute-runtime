@@ -18,56 +18,15 @@ constexpr uint32_t handleComponentCountForNoSubDevices = 2u;
 constexpr uint32_t invalidMaxTemperature = 125;
 constexpr uint32_t invalidMinTemperature = 10;
 
-const std::map<std::string, uint64_t> mockMap1 = {{"HBM0MaxDeviceTemperature", 28},
-                                                  {"HBM1MaxDeviceTemperature", 36},
-                                                  {"TileMinTemperature", 40},
-                                                  {"TileMaxTemperature", 44},
-                                                  {"GTMinTemperature", 48},
-                                                  {"GTMaxTemperature", 52},
-                                                  {"HBM2MaxDeviceTemperature", 300},
-                                                  {"HBM3MaxDeviceTemperature", 308}};
-
-const std::map<std::string, uint64_t> mockMap2 = {{"PACKAGE_ENERGY", 0x420},
-                                                  {"COMPUTE_TEMPERATURES", 0x68},
-                                                  {"SOC_TEMPERATURES", 0x60},
-                                                  {"CORE_TEMPERATURES", 0x6c}};
-
 class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
   protected:
-    std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
-    std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
-    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOriginal;
     L0::Sysman::SysmanDevice *device = nullptr;
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
         device = pSysmanDevice;
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
-        pFsAccess = std::make_unique<MockTemperatureFsAccess>();
-        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-
-        mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-
-        auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        uint32_t subdeviceId = 0;
-
-        do {
-            ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-            auto pPmt = new MockTemperaturePmt(pFsAccess.get(), onSubdevice, subdeviceId);
-            pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = mockMap1;
-            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
-        } while (++subdeviceId < subDeviceCount);
-        getTempHandles(0);
     }
     void TearDown() override {
-        for (const auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-            delete pmtMapElement.second;
-        }
-        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
         SysmanMultiDeviceFixture::TearDown();
     }
 
@@ -78,7 +37,151 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
     }
 };
 
+static int mockReadLinkMultiTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {
+
+    std::map<std::string, std::string> fileNameLinkMap = {
+        {sysfsPathTelem1, realPathTelem1},
+        {sysfsPathTelem2, realPathTelem2},
+        {sysfsPathTelem3, realPathTelem3},
+        {sysfsPathTelem4, realPathTelem4},
+        {sysfsPathTelem5, realPathTelem5},
+        {sysfsPathTelem6, realPathTelem6},
+    };
+    auto it = fileNameLinkMap.find(std::string(path));
+    if (it != fileNameLinkMap.end()) {
+        std::memcpy(buf, it->second.c_str(), it->second.size());
+        return static_cast<int>(it->second.size());
+    }
+    return -1;
+}
+
+static int mockReadLinkSingleTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {
+
+    std::map<std::string, std::string> fileNameLinkMap = {
+        {sysfsPathTelem1, realPathTelem1},
+    };
+    auto it = fileNameLinkMap.find(std::string(path));
+    if (it != fileNameLinkMap.end()) {
+        std::memcpy(buf, it->second.c_str(), it->second.size());
+        return static_cast<int>(it->second.size());
+    }
+    return -1;
+}
+
+static int mockOpenSuccess(const char *pathname, int flags) {
+
+    int returnValue = -1;
+    std::string strPathName(pathname);
+    if (strPathName == telem1OffsetFileName || strPathName == telem2OffsetFileName || strPathName == telem3OffsetFileName || strPathName == telem5OffsetFileName || strPathName == telem6OffsetFileName) {
+        returnValue = 4;
+    } else if (strPathName == telem1GuidFileName || strPathName == telem2GuidFileName || strPathName == telem3GuidFileName || strPathName == telem5GuidFileName || strPathName == telem6GuidFileName) {
+        returnValue = 5;
+    } else if (strPathName == telem1TelemFileName || strPathName == telem2TelemFileName || strPathName == telem3TelemFileName || strPathName == telem5TelemFileName || strPathName == telem6TelemFileName) {
+        returnValue = 6;
+    }
+    return returnValue;
+}
+
+static ssize_t mockReadSuccessPvc(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    uint32_t val = 0;
+    if (fd == 4) {
+        memcpy(buf, &val, count);
+        return count;
+    } else if (fd == 5) {
+        oStream << "0xb15a0ede";
+    } else if (fd == 6) {
+        if (offset == offsetTileMaxTemperature) {
+            val = tileMaxTemperature;
+        } else if (offset == offsetGtMaxTemperature) {
+            val = gtMaxTemperature;
+        } else if (offset == offsetHbm0MaxDeviceTemperature) {
+            val = memory0MaxTemperature;
+        } else if (offset == offsetHbm1MaxDeviceTemperature) {
+            val = memory1MaxTemperature;
+        } else if (offset == offsetHbm2MaxDeviceTemperature) {
+            val = memory2MaxTemperature;
+        } else if (offset == offsetHbm3MaxDeviceTemperature) {
+            val = memory3MaxTemperature;
+        }
+        memcpy(buf, &val, count);
+        return count;
+    } else {
+        oStream << "-1";
+    }
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
+
+static ssize_t mockReadSuccessDg1(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    uint32_t intVal = 0;
+    uint64_t longVal = 0;
+    if (fd == 4) {
+        memcpy(buf, &intVal, count);
+        return count;
+    } else if (fd == 5) {
+        oStream << "0x490e";
+    } else if (fd == 6) {
+        if (offset == offsetComputeTemperatures) {
+            for (uint8_t i = 0; i < sizeof(uint32_t); i++) {
+                intVal |= (uint32_t)tempArrForNoSubDevices[(computeTempIndex) + i] << (i * 8);
+            }
+            memcpy(buf, &intVal, sizeof(intVal));
+            return sizeof(intVal);
+        } else if (offset == offsetCoreTemperatures) {
+            for (uint8_t i = 0; i < sizeof(uint32_t); i++) {
+                intVal |= (uint32_t)tempArrForNoSubDevices[(coreTempIndex) + i] << (i * 8);
+            }
+            memcpy(buf, &intVal, sizeof(intVal));
+            return sizeof(intVal);
+        } else if (offset == offsetSocTemperatures1) {
+            for (uint8_t i = 0; i < sizeof(uint64_t); i++) {
+                longVal |= (uint64_t)tempArrForNoSubDevices[(socTempIndex) + i] << (i * 8);
+            }
+            memcpy(buf, &longVal, sizeof(longVal));
+            return sizeof(longVal);
+        }
+    } else {
+        oStream << "-1";
+    }
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
+
+static ssize_t mockReadSuccessDg2(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    uint64_t val = 0;
+    if (fd == 4) {
+        memcpy(buf, &val, count);
+        return count;
+    } else if (fd == 5) {
+        oStream << "0x4f9502";
+    } else if (fd == 6) {
+        if (offset == offsetSocTemperatures2) {
+            for (uint8_t i = 0; i < sizeof(uint64_t); i++) {
+                val |= (uint64_t)tempArrForNoSubDevices[(socTempIndex) + i] << (i * 8);
+            }
+        }
+        memcpy(buf, &val, sizeof(val));
+        return sizeof(val);
+    } else {
+        oStream << "-1";
+    }
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
+
 HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetSysmanTemperatureGetThenZeroCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -96,6 +199,12 @@ HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallin
 }
 
 HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -118,6 +227,12 @@ HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTe
 }
 
 HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureConfigThenUnsupportedIsReturned, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -127,6 +242,12 @@ HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTe
 }
 
 HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTemperatureConfigThenUnsupportedIsReturned, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);
@@ -135,69 +256,14 @@ HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenSettingTe
     }
 }
 
-TEST_F(SysmanMultiDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnumeratesSuccessfulThenValidatePmtObjectsReceivedAndBranches) {
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
-    L0::Sysman::PlatformMonitoringTech::create(pLinuxSysmanImp, gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject);
-    uint32_t subdeviceId = 0;
-    for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
-        EXPECT_NE(subDeviceIdToPmtEntry.second, nullptr);
-        EXPECT_EQ(subDeviceIdToPmtEntry.first, subdeviceId);
-        subdeviceId++;
-        delete subDeviceIdToPmtEntry.second; // delete memory to avoid mem leak here, as we finished our test validation just above.
-    }
-}
-
-HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsWhenGettingTemperatureThenFailureReturned, IsPVC) {
-    auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
-
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    uint32_t subdeviceId = 0;
-
-    for (subdeviceId = 0; subdeviceId < subDeviceCount; subdeviceId++) {
-        auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-        pPmt->mockReadValueResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    for (auto &handle : handles) {
-        zes_temp_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
-        double temperature;
-        ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
-    }
-}
-
 class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<PublicLinuxTemperatureImp> pPublicLinuxTemperatureImp;
-    std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
-    L0::Sysman::FsAccessInterface *pFsAccessOriginal = nullptr;
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> pmtMapOriginal;
     L0::Sysman::SysmanDevice *device = nullptr;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
-        pFsAccess = std::make_unique<MockTemperatureFsAccess>();
-        pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-
-        auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        uint32_t subdeviceId = 0;
-
-        pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-        do {
-            ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-            auto pPmt = new MockTemperaturePmt(pFsAccess.get(), onSubdevice, subdeviceId);
-            pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = mockMap2;
-            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
-        } while (++subdeviceId < subDeviceCount);
-        getTempHandles(0);
     }
     void TearDown() override {
-        pLinuxSysmanImp->releasePmtObject();
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = pmtMapOriginal;
-        pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
         SysmanDeviceFixture::TearDown();
     }
 
@@ -209,6 +275,12 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
 };
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumPowerHandleSucceeds, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCountForSingleTileDevice);
@@ -223,6 +295,12 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidPowerHandleAndHandleCountZer
 }
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlobalTemperatureThenValidTemperatureReadingsRetrieved, IsDG1) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessDg1);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     auto handles = getTempHandles(handleComponentCountForNoSubDevices);
     for (auto &handle : handles) {
         zes_temp_properties_t properties = {};
@@ -246,41 +324,13 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndG
     }
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndReadCoreTemperatureFailsWhenGettingGpuAndGlobalTempThenValidGpuTempAndFailureForGlobalTempAreReturned, IsDG1) {
-    auto handles = getTempHandles(handleComponentCountForNoSubDevices);
-    uint32_t subdeviceId = 0;
-
-    auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-    pPmt->mockReadCoreTempResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-
-    for (auto &handle : handles) {
-        zes_temp_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
-        double temperature;
-        if (properties.type == ZES_TEMP_SENSORS_GLOBAL) {
-            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
-        }
-        if (properties.type == ZES_TEMP_SENSORS_GPU) {
-            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-            EXPECT_EQ(temperature, static_cast<double>(tempArrForNoSubDevices[computeIndexForNoSubDevices]));
-        }
-    }
-}
-
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndReadComputeTemperatureFailsWhenGettingGPUAndGlobalTemperatureThenFailureReturned, IsDG1) {
-    auto handles = getTempHandles(handleComponentCountForNoSubDevices);
-    uint32_t subdeviceId = 0;
-
-    auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-    pPmt->mockReadComputeTempResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-
-    for (auto &handle : handles) {
-        double temperature;
-        ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
-    }
-}
-
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndGlobalTemperatureThenValidTemperatureReadingsRetrieved, IsDG2) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessDg2);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     auto handles = getTempHandles(handleComponentCountForNoSubDevices);
     for (auto &handle : handles) {
         zes_temp_properties_t properties = {};
@@ -289,7 +339,6 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndG
         ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
         if (properties.type == ZES_TEMP_SENSORS_GLOBAL) {
             uint8_t maxTemp = 0;
-            // For DG2, Global Max temperature will be Maximum of SOC_TEMPERATURES
             for (uint64_t i = 0; i < sizeof(uint64_t); i++) {
                 if ((tempArrForNoSubDevices[i] > invalidMaxTemperature) ||
                     (tempArrForNoSubDevices[i] < invalidMinTemperature) || (maxTemp > tempArrForNoSubDevices[i])) {
@@ -302,21 +351,6 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGPUAndG
         if (properties.type == ZES_TEMP_SENSORS_GPU) {
             EXPECT_EQ(temperature, static_cast<double>(tempArrForNoSubDevices[gtTempIndexForNoSubDevices]));
         }
-    }
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleAndPmtReadValueFailsWhenGettingTemperatureThenFailureReturned) {
-    auto handles = getTempHandles(handleComponentCountForNoSubDevices);
-    uint32_t subdeviceId = 0;
-
-    auto pPmt = static_cast<MockTemperaturePmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-    pPmt->mockReadValueResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-
-    for (auto &handle : handles) {
-        zes_temp_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
-        double temperature;
-        ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetState(handle, &temperature));
     }
 }
 
@@ -341,35 +375,13 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempSensor
     EXPECT_EQ(false, pPublicLinuxTemperatureImp->isTempModuleSupported());
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidateEnumerateRootTelemIndexWhengetRealPathFailsThenFailureReturned) {
-    pFsAccess->mockErrorListDirectory = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE,
-              L0::Sysman::PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess.get(), gpuUpstreamPortPathInTemperature));
-
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
-    L0::Sysman::PlatformMonitoringTech::create(pLinuxSysmanImp, gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject);
-    EXPECT_TRUE(mapOfSubDeviceIdToPmtObject.empty());
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenValidatePmtReadValueWhenkeyOffsetMapIsNotThereThenFailureReturned) {
-    auto pPmt = std::make_unique<MockTemperaturePmt>(pFsAccess.get(), 0, 0);
-    pPmt->mockedInit(pFsAccess.get());
-    pPmt->keyOffsetMap = mockMap2;
-    uint32_t val = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPmt->readValue("SOMETHING", val));
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenCreatePmtObjectsWhenRootTileIndexEnumeratesSuccessfulThenValidatePmtObjectsReceivedAndBranches) {
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
-    L0::Sysman::PlatformMonitoringTech::create(pLinuxSysmanImp, gpuUpstreamPortPathInTemperature, mapOfSubDeviceIdToPmtObject);
-    for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
-        EXPECT_NE(subDeviceIdToPmtEntry.second, nullptr);
-        EXPECT_EQ(subDeviceIdToPmtEntry.first, 0u);
-        delete subDeviceIdToPmtEntry.second;
-    }
-}
-
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetSysmanTemperatureGetThenZeroCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -387,6 +399,12 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetS
 }
 
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccessPvc);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+
     auto handles = getTempHandles(handleComponentCountForSingleTileDevice);
     for (auto handle : handles) {
         ASSERT_NE(nullptr, handle);

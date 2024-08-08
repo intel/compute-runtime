@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/sysman/source/api/temperature/sysman_os_temperature.h"
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 
 #include "igfxfmid.h"
 
@@ -18,8 +17,7 @@
 namespace L0 {
 namespace Sysman {
 
-class SysfsAccess;
-class PlatformMonitoringTech;
+class LinuxSysmanImp;
 class SysmanProductHelper;
 class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass {
   public:
@@ -32,8 +30,8 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
     ~LinuxTemperatureImp() override = default;
 
   protected:
-    PlatformMonitoringTech *pPmt = nullptr;
     zes_temp_sensors_t type = ZES_TEMP_SENSORS_GLOBAL;
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
 
   private:
     ze_result_t getGlobalMaxTemperature(double *pTemperature);

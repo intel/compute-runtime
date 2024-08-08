@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
@@ -27,15 +28,15 @@ ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pPropertie
 }
 
 ze_result_t LinuxTemperatureImp::getGlobalMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getGlobalMaxTemperature(pPmt, pTemperature);
+    return pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
 ze_result_t LinuxTemperatureImp::getGpuMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getGpuMaxTemperature(pPmt, pTemperature);
+    return pSysmanProductHelper->getGpuMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
 ze_result_t LinuxTemperatureImp::getMemoryMaxTemperature(double *pTemperature) {
-    return pSysmanProductHelper->getMemoryMaxTemperature(pPmt, pTemperature);
+    return pSysmanProductHelper->getMemoryMaxTemperature(pLinuxSysmanImp, pTemperature, subdeviceId);
 }
 
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
@@ -60,7 +61,8 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
 }
 
 bool LinuxTemperatureImp::isTempModuleSupported() {
-    bool result = (pPmt != nullptr);
+
+    bool result = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
     switch (type) {
     case ZES_TEMP_SENSORS_GLOBAL:
     case ZES_TEMP_SENSORS_GPU:
@@ -81,8 +83,7 @@ void LinuxTemperatureImp::setSensorType(zes_temp_sensors_t sensorType) {
 
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman, ze_bool_t onSubdevice,
                                          uint32_t subdeviceId) : subdeviceId(subdeviceId), isSubdevice(onSubdevice) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 }
 

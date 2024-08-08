@@ -24,6 +24,12 @@ class SysmanProductHelper;
 
 class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   public:
+    struct TelemData {
+        std::string telemDir;
+        std::string guid;
+        uint64_t offset;
+    };
+
     PlatformMonitoringTech() = default;
     PlatformMonitoringTech(FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId);
     virtual ~PlatformMonitoringTech();
@@ -35,11 +41,12 @@ class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
                        std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject);
     static ze_result_t getKeyOffsetMap(SysmanProductHelper *pSysmanProductHelper, std::string guid, std::map<std::string, uint64_t> &keyOffsetMap);
     static bool getTelemOffsetAndTelemDir(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir);
-    static bool getTelemOffsetAndTelemDirForTileAggregator(LinuxSysmanImp *pLinuxSysmanImp, uint64_t &telemOffset, std::string &telemDir, uint32_t subdeviceId);
+    static bool getTelemData(const std::map<uint32_t, std::string> telemNodesInPciPath, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
+    static bool getTelemDataForTileAggregator(const std::map<uint32_t, std::string> telemNodesInPciPath, uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
     static bool getTelemOffsetForContainer(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset);
-    static bool getTelemNodes(LinuxSysmanImp *pLinuxSysmanImp, std::map<uint32_t, std::string> &telemNodes);
-    static bool readValue(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset, uint32_t &value);
-    static bool readValue(SysmanProductHelper *pSysmanProductHelper, const std::string &telemDir, const std::string &key, uint64_t &telemOffset, uint64_t &value);
+    static bool readValue(const std::map<std::string, uint64_t> keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint32_t &value);
+    static bool readValue(const std::map<std::string, uint64_t> keyOffsetMap, const std::string &telemDir, const std::string &key, const uint64_t &telemOffset, uint64_t &value);
+    static bool isTelemetrySupportAvailable(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId);
 
   protected:
     static uint32_t rootDeviceTelemNodeIndex;

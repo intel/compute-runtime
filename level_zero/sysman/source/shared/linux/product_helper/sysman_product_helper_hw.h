@@ -36,9 +36,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isPerfFactorSupported() override;
 
     // temperature
-    ze_result_t getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
-    ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
-    ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) override;
+    ze_result_t getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
+    ze_result_t getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
+    ze_result_t getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) override;
     bool isMemoryMaxTemperatureSupported() override;
 
     // Ras

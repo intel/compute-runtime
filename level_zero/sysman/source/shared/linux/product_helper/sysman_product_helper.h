@@ -61,9 +61,9 @@ class SysmanProductHelper {
     virtual bool isPerfFactorSupported() = 0;
 
     // temperature
-    virtual ze_result_t getGlobalMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
-    virtual ze_result_t getGpuMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
-    virtual ze_result_t getMemoryMaxTemperature(PlatformMonitoringTech *pPmt, double *pTemperature) = 0;
+    virtual ze_result_t getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
+    virtual ze_result_t getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
+    virtual ze_result_t getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) = 0;
     virtual bool isMemoryMaxTemperatureSupported() = 0;
 
     // Ras

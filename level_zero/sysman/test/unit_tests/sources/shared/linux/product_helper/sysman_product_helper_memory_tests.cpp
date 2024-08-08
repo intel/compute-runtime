@@ -226,7 +226,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     uint32_t subDeviceId = 0;
     zes_mem_bandwidth_t bandwidth = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndVfid0IsActiveThenVerifyBandWidthIsValid, IsPVC) {
@@ -746,7 +746,25 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenInvalidGuidWhenCallingGetBandwidth
 
     zes_mem_bandwidth_t bandwidth{};
     ze_result_t result = pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAndReadGuidFailsThenErrorIsReturned, IsDG2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        if (fd == 5) {
+            errno = ENOENT;
+            return -1;
+        }
+        return count;
+    });
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    uint32_t subDeviceId = 0;
+    zes_mem_bandwidth_t bandwidth = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId));
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenInvalidGuidWhenCallingGetBandwidthThenFailureIsReturned, IsDG2) {
@@ -772,7 +790,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenInvalidGuidWhenCallingGetBandwidth
 
     zes_mem_bandwidth_t bandwidth{};
     ze_result_t result = pSysmanProductHelper->getMemoryBandwidth(&bandwidth, pLinuxSysmanImp, subDeviceId);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryBandwidthAPIsThenErrorIsReturned, IsDG1) {

@@ -37,7 +37,94 @@ class ZesPmtFixtureMultiDevice : public SysmanMultiDeviceFixture {
     }
 };
 
-TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenValidPmtHandlesForAllSubdevicesWillBeCreated) {}
+static int mockReadLinkMultiTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {
+
+    std::map<std::string, std::string> fileNameLinkMap = {
+        {"/sys/class/intel_pmt/telem1", "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1"},
+        {"/sys/class/intel_pmt/telem2", "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2"},
+    };
+    auto it = fileNameLinkMap.find(std::string(path));
+    if (it != fileNameLinkMap.end()) {
+        std::memcpy(buf, it->second.c_str(), it->second.size());
+        return static_cast<int>(it->second.size());
+    }
+    return -1;
+}
+
+static int mockReadLinkSingleTelemetryNodesSuccess(const char *path, char *buf, size_t bufsize) {
+
+    std::map<std::string, std::string> fileNameLinkMap = {
+        {"/sys/class/intel_pmt/telem1", "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1"},
+    };
+    auto it = fileNameLinkMap.find(std::string(path));
+    if (it != fileNameLinkMap.end()) {
+        std::memcpy(buf, it->second.c_str(), it->second.size());
+        return static_cast<int>(it->second.size());
+    }
+    return -1;
+}
+
+static int mockOpenSuccess(const char *pathname, int flags) {
+
+    int returnValue = -1;
+    std::string strPathName(pathname);
+    if (strPathName == "/sys/class/intel_pmt/telem1/offset" || strPathName == "/sys/class/intel_pmt/telem2/offset") {
+        returnValue = 4;
+    } else if (strPathName == "/sys/class/intel_pmt/telem1/guid" || strPathName == "/sys/class/intel_pmt/telem2/guid") {
+        returnValue = 5;
+    } else if (strPathName == "/sys/class/intel_pmt/telem1/telem" || strPathName == "/sys/class/intel_pmt/telem2/telem") {
+        returnValue = 6;
+    }
+    return returnValue;
+}
+
+static ssize_t mockReadOffsetFail(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    if (fd == 4) {
+        errno = ENOENT;
+        return -1;
+    } else {
+        oStream << "-1";
+    }
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
+
+static ssize_t mockReadGuidFail(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    uint32_t val = 0;
+    if (fd == 4) {
+        memcpy(buf, &val, count);
+        return count;
+    } else if (fd == 5) {
+        errno = ENOENT;
+        return -1;
+    } else {
+        oStream << "-1";
+    }
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
+
+static ssize_t mockReadIncorrectGuid(int fd, void *buf, size_t count, off_t offset) {
+    std::ostringstream oStream;
+    uint32_t val = 0;
+    if (fd == 4) {
+        memcpy(buf, &val, count);
+        return count;
+    } else if (fd == 5) {
+        val = 12345;
+        memcpy(buf, &val, count);
+        return count;
+    } else {
+        oStream << "-1";
+    }
+    std::string value = oStream.str();
+    memcpy(buf, value.data(), count);
+    return count;
+}
 
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenenumerateRootTelemIndexThenCheckForErrorIflistDirectoryFails) {
     pTestFsAccess->listDirectoryResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -62,7 +149,14 @@ TEST_F(ZesPmtFixtureMultiDevice, GivenTelemDirectoryContainNowTelemEntryWhenenum
 TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringWhileValidatingTelemNode) {
     pTestFsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
     L0::Sysman::PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
-    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 1, 0);
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 0, 0);
+    EXPECT_EQ(pPmt->init(pLinuxSysmanImp, gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
+TEST_F(ZesPmtFixtureMultiDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringWhileCheckingTelemetryDeviceEntryAvailability) {
+    pTestFsAccess->readFileAvailability = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    L0::Sysman::PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 0, 0);
     EXPECT_EQ(pPmt->init(pLinuxSysmanImp, gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
@@ -245,6 +339,7 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         pTestFsAccess = std::make_unique<MockPmtFsAccess>();
+        pLinuxSysmanImp->pFsAccess = pTestFsAccess.get();
         L0::Sysman::PlatformMonitoringTech::create(pLinuxSysmanImp, gpuUpstreamPortPathInPmt, mapOfSubDeviceIdToPmtObject);
     }
     void TearDown() override {
@@ -256,7 +351,108 @@ class ZesPmtFixtureNoSubDevice : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesPmtFixtureNoSubDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenValidPmtHandlesForAllSubdevicesWillBeCreated) {}
+TEST_F(ZesPmtFixtureNoSubDevice, GivenValidDeviceHandlesWhenCreatingPMTHandlesThenCheckForErrorThatCouldHappenDuringWhileCheckingTelemetryDeviceEntryAvailability) {
+    pTestFsAccess->readFileAvailability = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    L0::Sysman::PlatformMonitoringTech::enumerateRootTelemIndex(pTestFsAccess.get(), gpuUpstreamPortPathInPmt);
+    auto pPmt = std::make_unique<PublicPlatformMonitoringTech>(pTestFsAccess.get(), 0, 0);
+    EXPECT_EQ(pPmt->init(pLinuxSysmanImp, gpuUpstreamPortPathInPmt), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
+HWTEST2_F(ZesPmtFixtureNoSubDevice, GivenTelemNodesAreNotAvailableWhenCallingIsTelemetrySupportAvailableThenFalseValueIsReturned, IsPVC) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    uint32_t subDeviceId = 0;
+    EXPECT_FALSE(PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subDeviceId));
+}
+
+HWTEST2_F(ZesPmtFixtureNoSubDevice, GivenOffsetReadFailsWhenCallingIsTelemetrySupportAvailableThenFalseValueIsReturned, IsPVC) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadOffsetFail);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    uint32_t subDeviceId = 0;
+    EXPECT_FALSE(PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subDeviceId));
+}
+
+HWTEST2_F(ZesPmtFixtureNoSubDevice, GivenOffsetReadFailsWhenCallingIsTelemetrySupportAvailableThenFalseValueIsReturned, IsDG2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadOffsetFail);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    uint32_t subDeviceId = 0;
+    EXPECT_FALSE(PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subDeviceId));
+}
+
+HWTEST2_F(ZesPmtFixtureNoSubDevice, GivenGuidReadFailsWhenCallingIsTelemetrySupportAvailableThenFalseValueIsReturned, IsPVC) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadGuidFail);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    uint32_t subDeviceId = 0;
+    EXPECT_FALSE(PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subDeviceId));
+}
+
+HWTEST2_F(ZesPmtFixtureNoSubDevice, GivenGuidDoesNotGiveKeyOffsetMapWhenCallingIsTelemetrySupportAvailableThenFalseValueIsReturned, IsPVC) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadIncorrectGuid);
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    uint32_t subDeviceId = 0;
+    EXPECT_FALSE(PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subDeviceId));
+}
+
+HWTEST2_F(ZesPmtFixtureNoSubDevice, GivenTelemDoesNotExistWhenCallingIsTelemetrySupportAvailableThenFalseValueIsReturned, IsPVC) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::ostringstream oStream;
+        uint32_t val = 0;
+        if (fd == 4) {
+            memcpy(buf, &val, count);
+            return count;
+        } else if (fd == 5) {
+            oStream << "0xb15a0edc";
+        } else {
+            oStream << "-1";
+        }
+        std::string value = oStream.str();
+        memcpy(buf, value.data(), count);
+        return count;
+    });
+    pTestFsAccess->readFileAvailability = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
+    uint32_t subDeviceId = 0;
+    EXPECT_FALSE(PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subDeviceId));
+}
+
+TEST_F(ZesPmtFixtureNoSubDevice, GivenKeyDoesNotExistinKeyOffsetMapWhenCallingReadValueForUnsignedIntThenFalseValueIsReturned) {
+    uint32_t value = 0;
+    std::string mockTelemDir = sysfsPathTelem1;
+    uint64_t mockOffset = 0;
+    std::map<std::string, uint64_t> keyOffsetMap = {{"PACKAGE_ENERGY", 1032}, {"SOC_TEMPERATURES", 56}};
+    std::string mockKey = "ABCDE";
+    EXPECT_FALSE(PlatformMonitoringTech::readValue(keyOffsetMap, mockTelemDir, mockKey, mockOffset, value));
+}
+
+TEST_F(ZesPmtFixtureNoSubDevice, GivenKeyDoesNotExistinKeyOffsetMapWhenCallingReadValueForUnsignedLongThenFalseValueIsReturned) {
+    uint64_t value = 0;
+    std::string mockTelemDir = sysfsPathTelem1;
+    uint64_t mockOffset = 0;
+    std::map<std::string, uint64_t> keyOffsetMap = {{"PACKAGE_ENERGY", 1032}, {"SOC_TEMPERATURES", 56}};
+    std::string mockKey = "ABCDE";
+    EXPECT_FALSE(PlatformMonitoringTech::readValue(keyOffsetMap, mockTelemDir, mockKey, mockOffset, value));
+}
 
 } // namespace ult
 } // namespace Sysman
