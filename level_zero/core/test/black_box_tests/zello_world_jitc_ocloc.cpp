@@ -10,13 +10,6 @@
 
 #include <cstring>
 
-const char *moduleSrc = R"===(
-__kernel void kernel_copy(__global char *dst, __global char *src){
-    uint gid = get_global_id(0);
-    dst[gid] = src[gid];
-}
-)===";
-
 void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -48,7 +41,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     memset(dstBuffer, 0, allocSize);
 
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::memcpyBytesTestKernelSrc, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
@@ -79,7 +72,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "kernel_copy";
+    kernelDesc.pKernelName = "memcpy_bytes";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
     ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));

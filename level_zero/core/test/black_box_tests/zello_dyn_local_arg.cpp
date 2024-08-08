@@ -14,45 +14,11 @@
 #include <memory>
 #include <vector>
 
-const char *clProgram = R"==(
-__kernel void local_barrier_arg(__local int *local_dst1, __global int *dst, __local int *local_dst2,
-        __local ulong *local_dst3, __local int *local_dst4) {
-    unsigned int gid = get_global_id(0);
-    if(get_local_id(0) == 0){
-        local_dst1[0] = 6;
-        local_dst2[0] = 7;
-        local_dst3[0] = 8;
-        local_dst4[0] = 9;
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
-    if(get_local_id(0) == 0){
-        local_dst1[0] = gid + local_dst1[0];
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
-    if(get_local_id(0) == 0){
-        local_dst2[0] = gid + local_dst2[0];
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
-    if(get_local_id(0) == 0){
-        local_dst3[0] = gid + local_dst3[0];
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
-    if(get_local_id(0) == 0){
-        local_dst4[0] = gid + local_dst4[0];
-    }
-    barrier(CLK_LOCAL_MEM_FENCE);
-    barrier(CLK_GLOBAL_MEM_FENCE);
-    if(gid == 0){
-        dst[0] = local_dst1[0] + local_dst2[0] + local_dst3[0] + local_dst4[0];
-    }
-}
-)==";
-
 void createModule(ze_module_handle_t &module, ze_context_handle_t &context, ze_device_handle_t &device) {
     // Prepare spirV
     std::string buildLog;
 
-    auto binaryModule = LevelZeroBlackBoxTests::compileToSpirV(clProgram, "", buildLog);
+    auto binaryModule = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::dynLocalBarrierArgSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cerr << "CL->spirV comilation log : " << buildLog
                   << std::endl;

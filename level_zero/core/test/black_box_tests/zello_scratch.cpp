@@ -10,28 +10,6 @@
 
 #include <cstring>
 
-const char *moduleSrc = R"===(
-typedef long16 TYPE;
-__attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
-__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
-__kernel void
-scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
-    size_t lid = get_local_id(0);
-    size_t gid = get_global_id(0);
-
-    TYPE res1 = src[gid * 3];
-    TYPE res2 = src[gid * 3 + 1];
-    TYPE res3 = src[gid * 3 + 2];
-
-    __local TYPE locMem[32];
-    locMem[lid] = res1;
-    barrier(CLK_LOCAL_MEM_FENCE);
-    barrier(CLK_GLOBAL_MEM_FENCE);
-    TYPE res = (locMem[resIdx[gid]] * res3) * res2 + res1;
-    dst[gid] = res;
-}
-)===";
-
 void executeGpuKernelAndValidate(ze_context_handle_t &context,
                                  ze_device_handle_t &device,
                                  ze_module_handle_t &module,
@@ -161,7 +139,7 @@ void createModuleKernel(ze_context_handle_t &context,
                         ze_module_handle_t &module,
                         ze_kernel_handle_t &kernel) {
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::scratchKernelSrc, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
@@ -194,7 +172,7 @@ void createModuleKernel(ze_context_handle_t &context,
 
     ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernelProperties));
-    std::cout << "Scratch size = " << kernelProperties.spillMemSize << "\n";
+    std::cout << "Scratch size = " << std::dec << kernelProperties.spillMemSize << "\n";
 }
 
 int main(int argc, char *argv[]) {

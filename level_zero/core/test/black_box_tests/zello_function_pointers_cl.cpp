@@ -15,59 +15,6 @@
 #include <iostream>
 #include <memory>
 
-const char *functionPointersProgram = R"==(
-__global char *__builtin_IB_get_function_pointer(__constant char *function_name);
-void __builtin_IB_call_function_pointer(__global char *function_pointer,
-                                        char *argument_structure);
-
-struct FunctionData {
-    __global char *dst;
-    const __global char *src;
-    unsigned int gid;
-};
-
-kernel void memcpy_bytes(__global char *dst, const __global char *src, __global char *pBufferWithFunctionPointer) {
-    unsigned int gid = get_global_id(0);
-    struct FunctionData functionData;
-    functionData.dst = dst;
-    functionData.src = src;
-    functionData.gid = gid;
-    __global char * __global *pBufferWithFunctionPointerChar = (__global char * __global *)pBufferWithFunctionPointer;
-    __builtin_IB_call_function_pointer(pBufferWithFunctionPointerChar[0], (char *)&functionData);
-}
-
-void copy_helper(char *data) {
-    if(data != NULL) {
-        struct FunctionData *pFunctionData = (struct FunctionData *)data;
-        __global char *dst = pFunctionData->dst;
-        const __global char *src = pFunctionData->src;
-        unsigned int gid = pFunctionData->gid;
-        dst[gid] = src[gid];
-    }
-}
-
-void other_indirect_f(unsigned int *dimNum) {
-    if(dimNum != NULL) {
-        if(*dimNum > 2) {
-            *dimNum += 2;
-        }
-    }
-}
-
-__kernel void workaround_kernel() {
-    __global char *fp = 0;
-    switch (get_global_id(0)) {
-    case 0:
-        fp = __builtin_IB_get_function_pointer("copy_helper");
-        break;
-    case 1:
-        fp = __builtin_IB_get_function_pointer("other_indirect_f");
-        break;
-    }
-    __builtin_IB_call_function_pointer(fp, 0);
-}
-)==";
-
 int main(int argc, char *argv[]) {
     const std::string blackBoxName = "Zello Function Pointers CL";
 
@@ -88,7 +35,7 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(functionPointersProgram, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::functionPointersProgram, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 

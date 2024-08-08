@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,5 +147,243 @@ __kernel void memcpy_bytes(__global uchar *dst, const __global uchar *src) {
     }
 }
 )==";
+
+const char *openCLKernelsSource = R"OpenCLC(
+__kernel void add_constant(global int *values, int addval) {
+    const int xid = get_global_id(0);
+    values[xid] = values[xid] + addval;
+}
+
+__kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
+    unsigned int gid = get_global_id(0);
+    dst[gid] = (uchar)(src[gid] + 1);
+}
+)OpenCLC";
+
+const char *scratchKernelSrc = R"===(
+typedef long16 TYPE;
+__attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
+__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
+__kernel void
+scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
+    size_t lid = get_local_id(0);
+    size_t gid = get_global_id(0);
+
+    TYPE res1 = src[gid * 3];
+    TYPE res2 = src[gid * 3 + 1];
+    TYPE res3 = src[gid * 3 + 2];
+
+    __local TYPE locMem[32];
+    locMem[lid] = res1;
+    barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    TYPE res = (locMem[resIdx[gid]] * res3) * res2 + res1;
+    dst[gid] = res;
+}
+)===";
+
+const char *printfKernelSource = R"===(
+__kernel void printf_kernel(char byteValue, short shortValue, int intValue, long longValue) {
+    printf("byte = %hhd\nshort = %hd\nint = %d\nlong = %ld", byteValue, shortValue, intValue, longValue);
+}
+
+__kernel void printf_kernel1() {
+    uint gid = get_global_id(0);
+    if( get_local_id(0) == 0 )
+    {
+        printf("id == %d\n", 0);
+    }
+}
+)===";
+
+const char *readNV12Module = R"===(
+__kernel void
+ReadNV12Kernel(
+    read_only image2d_t nv12Img,
+    uint width,
+    uint height,
+    __global uchar *pDest) {
+    int tid_x = get_global_id(0);
+    int tid_y = get_global_id(1);
+    float4 colorY;
+    int2 coord;
+    const sampler_t samplerA = CLK_NORMALIZED_COORDS_FALSE |
+                               CLK_ADDRESS_NONE |
+                               CLK_FILTER_NEAREST;
+    if (tid_x < width && tid_y < height) {
+        coord = (int2)(tid_x, tid_y);
+        if (((tid_y * width) + tid_x) < (width * height)) {
+            colorY = read_imagef(nv12Img, samplerA, coord);
+            pDest[(tid_y * width) + tid_x] = (uchar)(255.0f * colorY.y);
+            if ((tid_x % 2 == 0) && (tid_y % 2 == 0)) {
+                pDest[(width * height) + (tid_y / 2 * width) + (tid_x)] = (uchar)(255.0f * colorY.z);
+                pDest[(width * height) + (tid_y / 2 * width) + (tid_x) + 1] = (uchar)(255.0f * colorY.x);
+            }
+        }
+    }
+}
+)===";
+
+const char *functionPointersProgram = R"==(
+__global char *__builtin_IB_get_function_pointer(__constant char *function_name);
+void __builtin_IB_call_function_pointer(__global char *function_pointer,
+                                        char *argument_structure);
+
+struct FunctionData {
+    __global char *dst;
+    const __global char *src;
+    unsigned int gid;
+};
+
+kernel void memcpy_bytes(__global char *dst, const __global char *src, __global char *pBufferWithFunctionPointer) {
+    unsigned int gid = get_global_id(0);
+    struct FunctionData functionData;
+    functionData.dst = dst;
+    functionData.src = src;
+    functionData.gid = gid;
+    __global char * __global *pBufferWithFunctionPointerChar = (__global char * __global *)pBufferWithFunctionPointer;
+    __builtin_IB_call_function_pointer(pBufferWithFunctionPointerChar[0], (char *)&functionData);
+}
+
+void copy_helper(char *data) {
+    if(data != NULL) {
+        struct FunctionData *pFunctionData = (struct FunctionData *)data;
+        __global char *dst = pFunctionData->dst;
+        const __global char *src = pFunctionData->src;
+        unsigned int gid = pFunctionData->gid;
+        dst[gid] = src[gid];
+    }
+}
+
+void other_indirect_f(unsigned int *dimNum) {
+    if(dimNum != NULL) {
+        if(*dimNum > 2) {
+            *dimNum += 2;
+        }
+    }
+}
+
+__kernel void workaround_kernel() {
+    __global char *fp = 0;
+    switch (get_global_id(0)) {
+    case 0:
+        fp = __builtin_IB_get_function_pointer("copy_helper");
+        break;
+    case 1:
+        fp = __builtin_IB_get_function_pointer("other_indirect_f");
+        break;
+    }
+    __builtin_IB_call_function_pointer(fp, 0);
+}
+)==";
+
+const char *dynLocalBarrierArgSrc = R"==(
+__kernel void local_barrier_arg(__local int *local_dst1, __global int *dst, __local int *local_dst2,
+        __local ulong *local_dst3, __local int *local_dst4) {
+    unsigned int gid = get_global_id(0);
+    if(get_local_id(0) == 0){
+        local_dst1[0] = 6;
+        local_dst2[0] = 7;
+        local_dst3[0] = 8;
+        local_dst4[0] = 9;
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if(get_local_id(0) == 0){
+        local_dst1[0] = gid + local_dst1[0];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if(get_local_id(0) == 0){
+        local_dst2[0] = gid + local_dst2[0];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if(get_local_id(0) == 0){
+        local_dst3[0] = gid + local_dst3[0];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    if(get_local_id(0) == 0){
+        local_dst4[0] = gid + local_dst4[0];
+    }
+    barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    if(gid == 0){
+        dst[0] = local_dst1[0] + local_dst2[0] + local_dst3[0] + local_dst4[0];
+    }
+}
+)==";
+
+const char *atomicIncSrc = R"===(
+__kernel void testKernel(__global uint *dst) {
+        atomic_inc(dst);
+}
+)===";
+
+namespace DynamicLink {
+
+const char *importModuleSrc = R"===(
+int lib_func_add(int x, int y);
+int lib_func_mult(int x, int y);
+int lib_func_sub(int x, int y);
+
+kernel void call_library_funcs(__global int* result) {
+    int add_result = lib_func_add(1,2);
+    int mult_result = lib_func_mult(add_result,2);
+    result[0] = lib_func_sub(mult_result, 1);
+}
+)===";
+
+const char *exportModuleSrc = R"===(
+int lib_func_add(int x, int y) {
+    return x+y;
+}
+
+int lib_func_mult(int x, int y) {
+    return x*y;
+}
+
+int lib_func_sub(int x, int y) {
+    return x-y;
+}
+)===";
+
+const char *importModuleSrcCircDep = R"===(
+int lib_func_add(int x, int y);
+int lib_func_mult(int x, int y);
+int lib_func_sub(int x, int y);
+
+kernel void call_library_funcs(__global int* result) {
+    int add_result = lib_func_add(1,2);
+    int mult_result = lib_func_mult(add_result,2);
+    result[0] = lib_func_sub(mult_result, 1);
+}
+
+int lib_func_add2(int x) {
+    return x+2;
+}
+)===";
+
+const char *exportModuleSrcCircDep = R"===(
+int lib_func_add2(int x);
+int lib_func_add5(int x);
+
+int lib_func_add(int x, int y) {
+    return lib_func_add5(lib_func_add2(x + y));
+}
+
+int lib_func_mult(int x, int y) {
+    return x*y;
+}
+
+int lib_func_sub(int x, int y) {
+    return x-y;
+}
+)===";
+
+const char *exportModuleSrc2CircDep = R"===(
+int lib_func_add5(int x) {
+    return x+5;
+}
+)===";
+
+} // namespace DynamicLink
 
 } // namespace LevelZeroBlackBoxTests

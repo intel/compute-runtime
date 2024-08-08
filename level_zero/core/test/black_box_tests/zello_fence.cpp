@@ -15,17 +15,10 @@
 #include <iostream>
 #include <memory>
 
-const char *clProgram = R"==(
-__kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
-    unsigned int gid = get_global_id(0);
-    dst[gid] = (uchar)(src[gid] + 1);
-}
-)==";
-
 void createModule(ze_context_handle_t &context, ze_module_handle_t &module, ze_device_handle_t &device) {
     // Prepare spirV
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(clProgram, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 

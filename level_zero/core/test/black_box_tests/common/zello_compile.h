@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,5 +19,27 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
 extern const char *memcpyBytesTestKernelSrc;
 
 extern const char *memcpyBytesWithPrintfTestKernelSrc;
+
+extern const char *openCLKernelsSource;
+
+extern const char *scratchKernelSrc;
+
+extern const char *printfKernelSource;
+
+extern const char *readNV12Module;
+
+extern const char *functionPointersProgram;
+
+extern const char *dynLocalBarrierArgSrc;
+
+extern const char *atomicIncSrc;
+
+namespace DynamicLink {
+extern const char *importModuleSrc;
+extern const char *exportModuleSrc;
+extern const char *importModuleSrcCircDep;
+extern const char *exportModuleSrcCircDep;
+extern const char *exportModuleSrc2CircDep;
+} // namespace DynamicLink
 
 } // namespace LevelZeroBlackBoxTests

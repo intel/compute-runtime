@@ -10,37 +10,9 @@
 
 #include <cstring>
 
-const char *readNV12Module = R"===(
-    __kernel void
-    ReadNV12Kernel(
-        read_only image2d_t nv12Img,
-        uint width,
-        uint height,
-        __global uchar *pDest) {
-    int tid_x = get_global_id(0);
-    int tid_y = get_global_id(1);
-    float4 colorY;
-    int2 coord;
-    const sampler_t samplerA = CLK_NORMALIZED_COORDS_FALSE |
-                               CLK_ADDRESS_NONE |
-                               CLK_FILTER_NEAREST;
-    if (tid_x < width && tid_y < height) {
-        coord = (int2)(tid_x, tid_y);
-        if (((tid_y * width) + tid_x) < (width * height)) {
-            colorY = read_imagef(nv12Img, samplerA, coord);
-            pDest[(tid_y * width) + tid_x] = (uchar)(255.0f * colorY.y);
-            if ((tid_x % 2 == 0) && (tid_y % 2 == 0)) {
-                pDest[(width * height) + (tid_y / 2 * width) + (tid_x)] = (uchar)(255.0f * colorY.z);
-                pDest[(width * height) + (tid_y / 2 * width) + (tid_x) + 1] = (uchar)(255.0f * colorY.x);
-            }
-        }
-    }
-}
-)===";
-
 void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(readNV12Module, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::readNV12Module, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 

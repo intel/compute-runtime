@@ -11,21 +11,13 @@
 #include <cstring>
 #include <sstream>
 
-const char *addConstModuleSrc = R"===(
-kernel void add_constant(global int *values, int addval) {
-
-    const int xid = get_global_id(0);
-    values[xid] = values[xid] + addval;
-}
-)===";
-
 void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_device_handle_t &device,
                                             bool &outputValidationSuccessful, bool aubMode, bool asyncMode) {
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(addConstModuleSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::openCLKernelsSource, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 

@@ -10,12 +10,6 @@
 
 #include <cstring>
 
-const char *moduleSrc = R"===(
-__kernel void testKernel(__global uint *dst){
-        atomic_inc(dst);
-}
-)===";
-
 static bool inverseOrder = false;
 
 void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
@@ -42,7 +36,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     memset(dstBuffer, 0, allocSize);
 
     std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(moduleSrc, "", buildLog);
+    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::atomicIncSrc, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
