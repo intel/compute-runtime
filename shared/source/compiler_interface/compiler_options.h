@@ -44,6 +44,7 @@ inline constexpr ConstStringRef autoGrf = "-cl-intel-enable-auto-large-GRF-mode"
 inline constexpr ConstStringRef numThreadsPerEu = "-cl-intel-reqd-eu-thread-count";
 inline constexpr ConstStringRef useCMCompiler = "-cmc";
 inline constexpr ConstStringRef enableFP64GenEmu = "-cl-fp64-gen-emu";
+inline constexpr ConstStringRef enableDivergentBarriers = "-cl-intel-enable-divergent-barrier-handling";
 
 inline constexpr size_t nullterminateSize = 1U;
 inline constexpr size_t spaceSeparatorSize = 1U;

@@ -40,6 +40,7 @@ enum class AILEnumeration : uint32_t {
     disableHostPtrTracking,
     enableLegacyPlatformName,
     disableDirectSubmission,
+    handleDivergentBarriers,
 };
 
 class AILConfiguration;
@@ -76,12 +77,15 @@ class AILConfiguration {
 
     virtual bool forceRcs() = 0;
 
+    virtual bool handleDivergentBarriers() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
 
     bool sourcesContain(const std::string &sources, std::string_view contentToFind) const;
     MOCKABLE_VIRTUAL bool isKernelHashCorrect(const std::string &kernelSources, uint64_t expectedHash) const;
+    virtual void setHandleDivergentBarriers(bool val) = 0;
 };
 
 extern const std::set<std::string_view> applicationsContextSyncFlag;
@@ -104,8 +108,13 @@ class AILConfigurationHw : public AILConfiguration {
     bool isBufferPoolEnabled() override;
     bool useLegacyValidationLogic() override;
     bool forceRcs() override;
+    bool handleDivergentBarriers() override;
 
     bool shouldForceRcs = false;
+    bool shouldHandleDivergentBarriers = false;
+
+  protected:
+    void setHandleDivergentBarriers(bool val) override;
 };
 
 template <PRODUCT_FAMILY product>

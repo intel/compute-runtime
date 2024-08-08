@@ -41,6 +41,14 @@ class MockAILConfiguration : public AILConfiguration {
         return forceRcsValue;
     }
 
+    bool handleDivergentBarriers() override {
+        return handleDivergentBarriersValue;
+    }
+    void setHandleDivergentBarriers(bool val) override {
+        handleDivergentBarriersValue = val;
+    }
+    bool handleDivergentBarriersValue = false;
+
   protected:
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
 };

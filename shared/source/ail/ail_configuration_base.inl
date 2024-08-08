@@ -60,4 +60,13 @@ inline bool AILConfigurationHw<product>::forceRcs() {
     return shouldForceRcs;
 }
 
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::handleDivergentBarriers() {
+    return shouldHandleDivergentBarriers;
+}
+template <PRODUCT_FAMILY product>
+inline void AILConfigurationHw<product>::setHandleDivergentBarriers(bool val) {
+    shouldHandleDivergentBarriers = val;
+}
+
 } // namespace NEO

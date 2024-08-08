@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
@@ -12,6 +13,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/program/kernel_info.h"
@@ -94,6 +96,10 @@ cl_int Program::build(
 
             appendAdditionalExtensions(extensions, options, internalOptions);
             CompilerOptions::concatenateAppend(internalOptions, extensions);
+
+            if (defaultDevice.getRootDeviceEnvironment().getAILConfigurationHelper()->handleDivergentBarriers()) {
+                CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableDivergentBarriers);
+            }
 
             if (!this->getIsBuiltIn() && debugManager.flags.InjectInternalBuildOptions.get() != "unk") {
                 NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::debugManager.flags.InjectInternalBuildOptions.get());

@@ -36,6 +36,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_elf.h"
@@ -2729,6 +2730,40 @@ TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenBuildingBuiltInProgramTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, "-abc")) << cip->buildInternalOptions;
+}
+
+TEST_F(ProgramTests, GivenAilWithHandleDivergentBarriersSetTrueOptionsWhenCompilingProgramThenInternalOptionsWereAppended) {
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->ailConfiguration.reset(new MockAILConfiguration());
+    auto mockAIL = static_cast<MockAILConfiguration *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->ailConfiguration.get());
+    mockAIL->setHandleDivergentBarriers(true);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
+    program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::source;
+
+    cl_int retVal = program->build(program->getDevices(), "");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::enableDivergentBarriers)) << cip->buildInternalOptions;
+}
+
+TEST_F(ProgramTests, GivenAilWithHandleDivergentBarriersSetFalseOptionsWhenCompilingProgramThenInternalOptionsWereAppended) {
+    auto cip = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pDevice = pContext->getDevice(0);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->ailConfiguration.reset(new MockAILConfiguration());
+    auto mockAIL = static_cast<MockAILConfiguration *>(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->ailConfiguration.get());
+    mockAIL->setHandleDivergentBarriers(false);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(toClDeviceVector(*pDevice));
+    program->sourceCode = "__kernel mock() {}";
+    program->createdFrom = Program::CreatedFrom::source;
+
+    cl_int retVal = program->build(program->getDevices(), "");
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::enableDivergentBarriers)) << cip->buildInternalOptions;
 }
 
 TEST_F(ProgramTests, GivenInjectInternalBuildOptionsWhenCompilingProgramThenInternalOptionsWereAppended) {
