@@ -13,6 +13,7 @@
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/affinity_mask.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -42,6 +43,7 @@ void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvir
         rootDeviceEnvironment->builtins.reset();
     }
     rootDeviceEnvironment->releaseDummyAllocation();
+    rootDeviceEnvironment->bindlessHeapsHelper.reset();
 }
 
 ExecutionEnvironment::~ExecutionEnvironment() {
