@@ -152,7 +152,13 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemContextCreateExt: {
         auto queueCreate = static_cast<drm_xe_exec_queue_create *>(arg);
         latestExecQueueCreate = *queueCreate;
-        latestQueueEngineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(queueCreate->instances)[0];
+        latestQueueEngineClassInstances.clear();
+
+        auto instances = reinterpret_cast<drm_xe_engine_class_instance *>(queueCreate->instances);
+
+        for (uint16_t i = 0; i < queueCreate->num_placements; i++) {
+            latestQueueEngineClassInstances.push_back(instances[i]);
+        }
 
         auto extension = queueCreate->extensions;
         while (extension) {

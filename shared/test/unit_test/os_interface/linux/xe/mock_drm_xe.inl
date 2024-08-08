@@ -50,7 +50,7 @@ struct DrmMockXe : public DrmMockCustom {
     StackVec<drm_xe_sync, 1> syncInputs;
     StackVec<drm_xe_ext_set_property, 1> execQueueProperties;
     drm_xe_exec_queue_create latestExecQueueCreate = {};
-    drm_xe_engine_class_instance latestQueueEngineClassInstance = {};
+    std::vector<drm_xe_engine_class_instance> latestQueueEngineClassInstances;
 
     int waitUserFenceReturn = 0;
     int execQueueBanPropertyReturn = 0;
