@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/utilities/logger.h"
@@ -21,6 +22,7 @@
 
 template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
 constexpr inline TNoRef alignUp(T before, size_t alignment) {
+    UNRECOVERABLE_IF(!Math::isPow2(alignment));
     TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return (before + mask) & ~mask;
 }
@@ -41,6 +43,7 @@ constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
 
 template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
 constexpr inline TNoRef alignDown(T before, size_t alignment) {
+    UNRECOVERABLE_IF(!Math::isPow2(alignment));
     TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return before & ~mask;
 }
@@ -105,11 +108,13 @@ inline bool isAligned(T *ptr) {
 
 template <typename T1, typename T2>
 inline bool isAligned(T1 ptr, T2 alignment) {
+    UNRECOVERABLE_IF(!Math::isPow2(alignment));
     return ((static_cast<size_t>(ptr)) & (static_cast<size_t>(alignment) - 1u)) == 0;
 }
 
 template <typename T>
 inline bool isAligned(T *ptr) {
+    // alignment requirement (returned by alignof) is always a power of 2
     return (reinterpret_cast<uintptr_t>(ptr) & (alignof(T) - 1)) == 0;
 }
 inline auto allocateAlignedMemory(size_t bytes, size_t alignment) {
