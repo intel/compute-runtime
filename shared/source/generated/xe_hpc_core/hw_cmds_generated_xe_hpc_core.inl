@@ -7140,7 +7140,7 @@ struct STATE_SYSTEM_MEM_FENCE_ADDRESS {
             uint32_t ContextRestoreInvalid : BITFIELD_RANGE(15, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
-            uint32_t CommandSubType : BITFIELD_RANGE(27, 28);
+            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1-2
             uint64_t Reserved011 : BITFIELD_RANGE(0, 11);
@@ -7189,9 +7189,9 @@ struct STATE_PREFETCH {
             // DWORD 0
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
             uint32_t Reserved814 : BITFIELD_RANGE(8, 15);
-            uint32_t _3dCommandSubOpcode : BITFIELD_RANGE(16, 23);
-            uint32_t _3dCommandOpcode : BITFIELD_RANGE(24, 26);
-            uint32_t CommandSubType : BITFIELD_RANGE(27, 28);
+            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
+            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
+            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t PrefetchSize : BITFIELD_RANGE(0, 9);
@@ -7216,7 +7216,7 @@ struct STATE_PREFETCH {
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = 0x2;
-        TheStructure.Common._3dCommandSubOpcode = 0x3;
+        TheStructure.Common._3DCommandSubOpcode = 0x3;
         TheStructure.Common.CommandType = 0x3;
     }
 

@@ -17,7 +17,6 @@ target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_l3_control.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_mi_arb.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_sip.inl
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_xy_block_copy.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h
                ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.h
                ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse_base.inl
@@ -30,9 +29,19 @@ if(TESTS_DG2_AND_LATER)
   )
 endif()
 
+if(TESTS_PVC_AND_LATER)
+  target_sources(neo_libult_common PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_mem_fence.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_mem_set.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_state_prefetch.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_system_mem_fence_address.inl
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_xy_block_copy.inl
+  )
+endif()
+
 if(TESTS_XE2_AND_LATER)
   target_sources(neo_libult_common PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_state_context_data_base_address.inl
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse_xe2_hpg_and_later.inl
-
   )
 endif()
