@@ -166,7 +166,6 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
     if (scratchSlot0SizeInBytes < requiredScratchSizeInBytes) {
         if (scratchSlot0Allocation) {
-            scratchSlot0Allocation->updateTaskCount(currentTaskCount, osContext.getContextId());
             csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
         }
         scratchSurfaceDirty = true;
@@ -183,7 +182,6 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         size_t requiredScratchSlot1SizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot1AlignedUp) * computeUnitsUsedForScratch;
         if (scratchSlot1SizeInBytes < requiredScratchSlot1SizeInBytes) {
             if (scratchSlot1Allocation) {
-                scratchSlot1Allocation->updateTaskCount(currentTaskCount, osContext.getContextId());
                 csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot1Allocation), TEMPORARY_ALLOCATION);
             }
             scratchSlot1SizeInBytes = requiredScratchSlot1SizeInBytes;

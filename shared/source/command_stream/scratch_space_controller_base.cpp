@@ -35,7 +35,6 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
     size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeSlot0 * computeUnitsUsedForScratch;
     if (requiredScratchSizeInBytes && (scratchSlot0SizeInBytes < requiredScratchSizeInBytes)) {
         if (scratchSlot0Allocation) {
-            scratchSlot0Allocation->updateTaskCount(currentTaskCount, osContext.getContextId());
             csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
         }
         scratchSlot0SizeInBytes = requiredScratchSizeInBytes;
