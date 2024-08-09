@@ -114,8 +114,9 @@ ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
 ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {
 
     ssize_t ret = NEO::SysCalls::read(stream, pRawData, *pRawDataSize);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (ret < 0), stderr, "read() failed errno = %d | ret = %d \n",
-                       errno, ret);
+    if (ret < 0) {
+        METRICS_LOG_ERR("read() failed errno = %d | ret = %d", errno, ret);
+    }
 
     if (ret >= 0) {
         *pRawDataSize = ret;
@@ -154,8 +155,9 @@ bool MetricIpSamplingLinuxImp::isNReportsAvailable() {
     pollParams.events = POLLIN;
 
     int32_t pollResult = NEO::SysCalls::poll(&pollParams, 1, 0u);
-    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get() && (pollResult < 0), stderr, "poll() failed errno = %d | pollResult = %d \n",
-                       errno, pollResult);
+    if (pollResult < 0) {
+        METRICS_LOG_ERR("poll() failed errno = %d | pollResult = %d", errno, pollResult);
+    }
 
     if (pollResult > 0) {
         return true;
@@ -186,8 +188,7 @@ ze_result_t MetricIpSamplingLinuxImp::getMetricsTimerResolution(uint64_t &timerR
     if (ret < 0 || gpuTimeStampfrequency == 0) {
         timerResolution = 0;
         result = ZE_RESULT_ERROR_UNKNOWN;
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "getTimestampFrequency() failed errno = %d | ret = %d \n",
-                           errno, ret);
+        METRICS_LOG_ERR("getTimestampFrequency() failed errno = %d | ret = %d", errno, ret);
     } else {
         timerResolution = static_cast<uint64_t>(gpuTimeStampfrequency);
     }

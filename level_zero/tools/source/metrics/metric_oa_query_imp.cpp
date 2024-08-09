@@ -190,7 +190,7 @@ bool MetricsLibrary::load() {
     }
 
     if (contextCreateFunction == nullptr || contextDeleteFunction == nullptr) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "cannot load %s exported functions\n", MetricsLibrary::getFilename());
+        METRICS_LOG_ERR("cannot load %s exported functions", MetricsLibrary::getFilename());
         return false;
     }
 
