@@ -342,10 +342,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         if (!args.makeCommandView) {
             walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
             walkerCmd.setIndirectDataLength(sizeThreadData);
-
-            container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment());
         }
     }
+    container.getIndirectHeap(HeapType::indirectObject)->align(NEO::EncodeDispatchKernel<Family>::getDefaultIOHAlignment());
 
     EncodeDispatchKernel<Family>::encodeThreadData(walkerCmd,
                                                    nullptr,

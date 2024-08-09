@@ -345,9 +345,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
                                           WalkerType::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
         walkerCmd->setIndirectDataLength(indirectDataLength);
-
-        ioh.align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment());
     }
+    ioh.align(NEO::EncodeDispatchKernel<GfxFamily>::getDefaultIOHAlignment());
 
     return offsetCrossThreadData;
 }
