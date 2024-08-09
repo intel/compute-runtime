@@ -2886,7 +2886,7 @@ struct MockRequiredScratchSpaceController : public ScratchSpaceControllerBase {
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                  uint32_t requiredPerThreadScratchSizeSlot1,
-                                 TaskCountType currentTaskCount,
+
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {
@@ -4685,7 +4685,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
     uint8_t surfaceHeap[1000];
-    scratchController->setRequiredScratchSpace(surfaceHeap, 0u, perThreadScratchSize, 0u, commandStreamReceiver->taskCount, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
+    scratchController->setRequiredScratchSpace(surfaceHeap, 0u, perThreadScratchSize, 0u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
     EXPECT_EQ(expectedValue, scratchController->perThreadScratchSize);
 }
 
@@ -4702,7 +4702,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
 
     bool cfeStateDirty = false;
     bool stateBaseAddressDirty = false;
-    scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch, 0u,
+    scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch,
                                                *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
     EXPECT_NE(scratchController->scratchSlot1SizeInBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
     EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);

@@ -204,7 +204,7 @@ struct EncodeDispatchKernel {
 
     static size_t getDefaultIOHAlignment();
     template <bool isHeapless>
-    static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr);
+    static void setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr);
     template <bool isHeapless>
     static uint64_t getScratchAddressForImmediatePatching(CommandContainer &container, EncodeDispatchKernelArgs &args);
     template <bool isHeapless>

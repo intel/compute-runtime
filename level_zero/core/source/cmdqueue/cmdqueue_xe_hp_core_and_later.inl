@@ -138,7 +138,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
                                                        uint32_t perThreadScratchSpaceSlot0Size, uint32_t perThreadScratchSpaceSlot1Size) {
     if (perThreadScratchSpaceSlot0Size > 0 || perThreadScratchSpaceSlot1Size > 0) {
         if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) {
-            scratchController->setRequiredScratchSpace(globalStatelessAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
+            scratchController->setRequiredScratchSpace(globalStatelessAllocation->getUnderlyingBuffer(), 0, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size,
                                                        csr->getOsContext(), gsbaState, frontEndState);
         }
 
@@ -148,7 +148,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
 
         if (sshHeaps.size() > 0) {
             uint32_t offsetIndex = gfxCoreHelper.getMaxPtssIndex(productHelper) * csr->getOsContext().getEngineType() + 1u;
-            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size, csr->peekTaskCount(),
+            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size,
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
 

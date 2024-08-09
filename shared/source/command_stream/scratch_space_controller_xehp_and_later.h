@@ -24,7 +24,6 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                  uint32_t requiredPerThreadScratchSizeSlot1,
-                                 TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override;
@@ -38,14 +37,12 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSizeSlot0,
                       uint32_t requiredPerThreadScratchSizeSlot1,
-                      TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override;
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSizeSlot0,
                                                uint32_t requiredPerThreadScratchSizeSlot1,
-                                               TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,
@@ -56,7 +53,6 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
     MOCKABLE_VIRTUAL void programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation);
     MOCKABLE_VIRTUAL void prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
                                                    uint32_t requiredPerThreadScratchSizeSlot1,
-                                                   TaskCountType currentTaskCount,
                                                    OsContext &osContext,
                                                    bool &stateBaseAddressDirty,
                                                    bool &scratchSurfaceDirty,

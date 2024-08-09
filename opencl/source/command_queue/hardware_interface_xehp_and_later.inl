@@ -108,10 +108,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     auto requiredScratchSlot0Size = queueCsr.getRequiredScratchSlot0Size();
     auto requiredScratchSlot1Size = queueCsr.getRequiredScratchSlot1Size();
-    auto *defaultCsr = device.getDefaultEngine().commandStreamReceiver;
 
     uint64_t scratchAddress = 0u;
-    EncodeDispatchKernel<GfxFamily>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, *defaultCsr);
+
+    EncodeDispatchKernel<GfxFamily>::template setScratchAddress<heaplessModeEnabled>(scratchAddress, requiredScratchSlot0Size, requiredScratchSlot1Size, &ssh, queueCsr);
 
     auto interfaceDescriptor = &walkerCmd.getInterfaceDescriptor();
 
@@ -154,7 +154,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     if (partitionWalker) {
-        const uint64_t workPartitionAllocationGpuVa = defaultCsr->getWorkPartitionAllocationGpuAddress();
+        const uint64_t workPartitionAllocationGpuVa = queueCsr.getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
         RequiredPartitionDim requiredPartitionDim = kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none;
 

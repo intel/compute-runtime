@@ -44,7 +44,6 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
                                          uint32_t scratchSlot,
                                          uint32_t requiredPerThreadScratchSizeSlot0,
                                          uint32_t requiredPerThreadScratchSizeSlot1,
-                                         TaskCountType currentTaskCount,
                                          OsContext &osContext,
                                          bool &stateBaseAddressDirty,
                                          bool &vfeStateDirty) = 0;
@@ -63,14 +62,12 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
                               uint32_t scratchSlot,
                               uint32_t requiredPerThreadScratchSizeSlot0,
                               uint32_t requiredPerThreadScratchSizeSlot1,
-                              TaskCountType currentTaskCount,
                               OsContext &osContext,
                               bool &stateBaseAddressDirty,
                               bool &vfeStateDirty) = 0;
     virtual void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                        uint32_t requiredPerThreadScratchSizeSlot0,
                                                        uint32_t requiredPerThreadScratchSizeSlot1,
-                                                       TaskCountType currentTaskCount,
                                                        OsContext &osContext,
                                                        bool &stateBaseAddressDirty,
                                                        bool &vfeStateDirty,

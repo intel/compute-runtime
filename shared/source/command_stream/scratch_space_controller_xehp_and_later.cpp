@@ -56,13 +56,12 @@ void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAd
                                                                  uint32_t offset,
                                                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                                                  uint32_t requiredPerThreadScratchSizeSlot1,
-                                                                 TaskCountType currentTaskCount,
                                                                  OsContext &osContext,
                                                                  bool &stateBaseAddressDirty,
                                                                  bool &vfeStateDirty) {
     setNewSshPtr(sshBaseAddress, vfeStateDirty, offset == 0 ? true : false);
     bool scratchSurfaceDirty = false;
-    prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
+    prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         vfeStateDirty = true;
         updateSlots = true;
@@ -133,13 +132,12 @@ void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType
 void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                                                uint32_t requiredPerThreadScratchSizeSlot0,
                                                                                uint32_t requiredPerThreadScratchSizeSlot1,
-                                                                               TaskCountType currentTaskCount,
                                                                                OsContext &osContext,
                                                                                bool &stateBaseAddressDirty,
                                                                                bool &vfeStateDirty,
                                                                                NEO::CommandStreamReceiver *csr) {
     bool scratchSurfaceDirty = false;
-    prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, currentTaskCount, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
+    prepareScratchAllocation(requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext, stateBaseAddressDirty, scratchSurfaceDirty, vfeStateDirty);
     if (scratchSurfaceDirty) {
         bindlessSS = heapsHelper->allocateSSInHeap(singleSurfaceStateSize * (twoSlotScratchSpaceSupported ? 2 : 1), scratchSlot0Allocation, BindlessHeapsHelper::specialSsh);
         programSurfaceStateAtPtr(bindlessSS.ssPtr);
@@ -152,7 +150,6 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
 
 void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
                                                                   uint32_t requiredPerThreadScratchSizeSlot1,
-                                                                  TaskCountType currentTaskCount,
                                                                   OsContext &osContext,
                                                                   bool &stateBaseAddressDirty,
                                                                   bool &scratchSurfaceDirty,
@@ -197,13 +194,12 @@ void ScratchSpaceControllerXeHPAndLater::programHeaps(HeapContainer &heapContain
                                                       uint32_t scratchSlot,
                                                       uint32_t requiredPerThreadScratchSizeSlot0,
                                                       uint32_t requiredPerThreadScratchSizeSlot1,
-                                                      TaskCountType currentTaskCount,
                                                       OsContext &osContext,
                                                       bool &stateBaseAddressDirty,
                                                       bool &vfeStateDirty) {
     sshOffset = scratchSlot;
     updateSlots = false;
-    setRequiredScratchSpace(heapContainer[0]->getUnderlyingBuffer(), sshOffset, requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, currentTaskCount, osContext, stateBaseAddressDirty, vfeStateDirty);
+    setRequiredScratchSpace(heapContainer[0]->getUnderlyingBuffer(), sshOffset, requiredPerThreadScratchSizeSlot0, requiredPerThreadScratchSizeSlot1, osContext, stateBaseAddressDirty, vfeStateDirty);
 
     for (uint32_t i = 1; i < heapContainer.size(); ++i) {
         surfaceStateHeap = static_cast<char *>(heapContainer[i]->getUnderlyingBuffer());

@@ -309,7 +309,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
                                                         0u,
                                                         this->requiredScratchSlot0Size,
                                                         this->requiredScratchSlot1Size,
-                                                        this->taskCount,
                                                         *this->osContext,
                                                         checkSbaStateDirty,
                                                         checkFeStateDirty);
@@ -446,7 +445,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                             0u,
                                                             requiredScratchSlot0Size,
                                                             requiredScratchSlot1Size,
-                                                            this->taskCount,
                                                             *this->osContext,
                                                             stateBaseAddressDirty,
                                                             checkVfeStateDirty);

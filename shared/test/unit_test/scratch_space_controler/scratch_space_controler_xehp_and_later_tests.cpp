@@ -37,7 +37,6 @@ class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHP
     }
     void prepareScratchAllocation(uint32_t requiredPerThreadScratchSizeSlot0,
                                   uint32_t requiredPerThreadScratchSizeSlot1,
-                                  TaskCountType currentTaskCount,
                                   OsContext &osContext,
                                   bool &stateBaseAddressDirty,
                                   bool &scratchSurfaceDirty,
@@ -67,7 +66,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenDirtyScratchAllocation
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
-    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
     EXPECT_GT(csr.makeResidentCalledTimes, 0u);
     EXPECT_TRUE(scratchController->wasProgramSurfaceStateAtPtrCalled);
 }
@@ -89,7 +88,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNotDirtyScratchAllocat
     scratchController->scratchDirty = false;
 
     scratchController->bindlessSS = bindlessHeapHelper->allocateSSInHeap(0x1000, nullptr, BindlessHeapsHelper::specialSsh);
-    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
     EXPECT_GT(csr.makeResidentCalledTimes, 0u);
     EXPECT_FALSE(scratchController->wasProgramSurfaceStateAtPtrCalled);
 }
@@ -111,7 +110,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenNoBindlessSSWhenProgra
     scratchController->scratchDirty = false;
     bindlessHeapHelper->failAllocateSS = true;
 
-    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
     EXPECT_EQ(csr.makeResidentCalledTimes, 0u);
     EXPECT_FALSE(scratchController->wasProgramSurfaceStateAtPtrCalled);
 }
@@ -133,7 +132,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchEnabledW
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
     auto usedBefore = bindlessHeapHelper->getHeap(BindlessHeapsHelper::specialSsh)->getUsed();
-    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
     auto usedAfter = bindlessHeapHelper->getHeap(BindlessHeapsHelper::specialSsh)->getUsed();
     EXPECT_EQ(usedAfter - usedBefore, 2 * scratchController->singleSurfaceStateSize);
 }
@@ -155,7 +154,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ScratchControllerTests, givenPrivateScratchDisabled
     bool frontEndStateDirty = false;
     scratchController->scratchDirty = true;
     auto usedBefore = bindlessHeapHelper->getHeap(BindlessHeapsHelper::specialSsh)->getUsed();
-    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
+    scratchController->programBindlessSurfaceStateForScratch(bindlessHeapHelper.get(), 0, 0, *pDevice->getDefaultEngine().osContext, gsbaStateDirty, frontEndStateDirty, &csr);
     auto usedAfter = bindlessHeapHelper->getHeap(BindlessHeapsHelper::specialSsh)->getUsed();
     EXPECT_EQ(usedAfter - usedBefore, scratchController->singleSurfaceStateSize);
 }

@@ -913,7 +913,7 @@ size_t EncodeDispatchKernel<GfxFamily>::getScratchPtrOffsetOfImplicitArgs() {
 
 template <typename Family>
 template <bool isHeapless>
-void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &csr) {
+void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
 }
 
 template <typename Family>

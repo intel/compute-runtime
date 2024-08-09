@@ -125,7 +125,7 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &heapC
                                                        uint32_t perThreadScratchSpaceSlot0Size, uint32_t perThreadScratchSpaceSlot1Size) {
 
     if (perThreadScratchSpaceSlot0Size > 0) {
-        scratchController->setRequiredScratchSpace(nullptr, 0u, perThreadScratchSpaceSlot0Size, 0u, csr->peekTaskCount(),
+        scratchController->setRequiredScratchSpace(nullptr, 0u, perThreadScratchSpaceSlot0Size, 0u,
                                                    csr->getOsContext(), gsbaState, frontEndState);
         auto scratchAllocation = scratchController->getScratchSpaceSlot0Allocation();
         csr->makeResident(*scratchAllocation);

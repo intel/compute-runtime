@@ -842,7 +842,6 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceThenP
                           uint32_t scratchSlot,
                           uint32_t requiredPerThreadScratchSizeSlot0,
                           uint32_t requiredPerThreadScratchSizeSlot1,
-                          TaskCountType currentTaskCount,
                           OsContext &osContext,
                           bool &stateBaseAddressDirty,
                           bool &vfeStateDirty) override {
@@ -905,7 +904,6 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandQueueWhenHandleScratchSpaceAndHe
                           uint32_t scratchSlot,
                           uint32_t requiredPerThreadScratchSizeSlot0,
                           uint32_t requiredPerThreadScratchSizeSlot1,
-                          TaskCountType currentTaskCount,
                           OsContext &osContext,
                           bool &stateBaseAddressDirty,
                           bool &vfeStateDirty) override {

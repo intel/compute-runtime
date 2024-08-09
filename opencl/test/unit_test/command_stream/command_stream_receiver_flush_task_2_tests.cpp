@@ -597,7 +597,6 @@ struct MockScratchController : public ScratchSpaceController {
                                  uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSizeSlot0,
                                  uint32_t requiredPerThreadScratchSizeSlot1,
-                                 TaskCountType currentTaskCount,
                                  OsContext &osContext,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {
@@ -616,7 +615,6 @@ struct MockScratchController : public ScratchSpaceController {
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSizeSlot0,
                       uint32_t requiredPerThreadScratchSizeSlot1,
-                      TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
@@ -624,7 +622,6 @@ struct MockScratchController : public ScratchSpaceController {
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSizeSlot0,
                                                uint32_t requiredPerThreadScratchSizeSlot1,
-                                               TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,

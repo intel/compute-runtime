@@ -514,6 +514,7 @@ class CommandStreamReceiver {
     void setPrimaryCsr(CommandStreamReceiver *primaryCsr) {
         this->primaryCsr = primaryCsr;
     }
+    CommandStreamReceiver *getPrimaryCsr() const { return primaryCsr; }
 
     void requestPreallocation();
     void releasePreallocationRequest();
