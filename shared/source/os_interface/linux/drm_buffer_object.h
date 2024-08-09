@@ -220,9 +220,6 @@ class BufferObject {
     void requireExplicitLockedMemory(bool locked) { requiresLocked = locked; }
     bool isExplicitLockedMemoryRequired() { return requiresLocked; }
 
-    void setIsLockable(bool lockable) { this->lockable = lockable; };
-    bool isLockable() { return lockable; };
-
     uint64_t peekPatIndex() const { return patIndex; }
     void setPatIndex(uint64_t newPatIndex) { this->patIndex = newPatIndex; }
     BOType peekBOType() const { return boType; }
@@ -276,6 +273,5 @@ class BufferObject {
     bool chunked = false;
     bool isReused = false;
     bool readOnlyGpuResource = false;
-    bool lockable = true;
 };
 } // namespace NEO
