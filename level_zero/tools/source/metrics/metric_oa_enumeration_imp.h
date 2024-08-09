@@ -172,7 +172,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
     ze_result_t readIoStream(uint32_t &reportCount, uint8_t &reportData);
     ze_result_t closeIoStream();
 
-    std::vector<zet_metric_group_handle_t> &getMetricGroups();
+    std::vector<MetricGroupImp *> &getMetricGroups();
     ze_result_t streamerOpen(
         zet_context_handle_t hContext,
         zet_device_handle_t hDevice,
@@ -218,7 +218,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
 
-    std::vector<zet_metric_group_handle_t> metricGroups;
+    std::vector<MetricGroupImp *> metricGroups;
     size_t cachedExportDataHeapSize = 0;
 
   private:

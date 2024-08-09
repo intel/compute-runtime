@@ -471,11 +471,11 @@ ze_result_t OaMetricQueryPoolImp::metricQueryPoolCreate(zet_context_handle_t hCo
 
     if (metricSource.isImplicitScalingCapable()) {
 
-        auto emptyMetricGroups = std::vector<zet_metric_group_handle_t>();
+        auto emptyMetricGroups = std::vector<MetricGroupImp *>();
 
-        auto &metricGroups = hMetricGroup
-                                 ? static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup))->getMetricGroups()
-                                 : emptyMetricGroups;
+        auto metricGroups = hMetricGroup
+                                ? static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup))->getMetricGroups()
+                                : emptyMetricGroups;
 
         const bool useMetricGroupSubDevice = metricGroups.size() > 0;
 

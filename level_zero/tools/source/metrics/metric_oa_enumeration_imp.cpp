@@ -278,7 +278,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
             for (auto subDevice : deviceImp.subDevices) {
                 MetricGroup *metricGroupSubDevice = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupByIndex(i);
 
-                metricGroupRootDevice->getMetricGroups().push_back(metricGroupSubDevice);
+                metricGroupRootDevice->getMetricGroups().push_back(static_cast<MetricGroupImp *>(metricGroupSubDevice));
             }
 
             metricGroups.push_back(metricGroupRootDevice);
@@ -990,7 +990,7 @@ uint32_t OaMetricGroupImp::getRawReportSize() {
                : pMetricSetParams->QueryReportSize;
 }
 
-std::vector<zet_metric_group_handle_t> &OaMetricGroupImp::getMetricGroups() {
+std::vector<MetricGroupImp *> &OaMetricGroupImp::getMetricGroups() {
     return metricGroups;
 }
 
