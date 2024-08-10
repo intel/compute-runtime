@@ -48,11 +48,6 @@ inline bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
     return false;
 }
 
-template <>
-inline bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return true;
-}
-
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe_lpg.inl"
