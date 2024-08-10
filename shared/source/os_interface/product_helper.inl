@@ -919,4 +919,15 @@ bool ProductHelperHw<gfxProduct>::supports2DBlockStore() const {
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getNumCacheRegions() const {
+    return 0u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
+    UNRECOVERABLE_IF(true);
+    return -1;
+}
+
 } // namespace NEO

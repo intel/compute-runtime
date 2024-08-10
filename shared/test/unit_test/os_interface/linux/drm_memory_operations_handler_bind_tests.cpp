@@ -1089,10 +1089,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    bool closSupported = (gfxCoreHelper.getNumCacheRegions() > 0);
+    bool closSupported = (productHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
 
     uint64_t gpuAddress = 0x123000;
@@ -1148,9 +1147,8 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     auto csr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, DeviceBitfield(1));
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    bool closSupported = (gfxCoreHelper.getNumCacheRegions() > 0);
+    bool closSupported = (productHelper.getNumCacheRegions() > 0);
     bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
     if (!closSupported || !patIndexProgrammingSupported) {
         GTEST_SKIP();
@@ -1209,9 +1207,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenDebugFlagSetWhenVmBindCalledTh
 
     auto timestampStorageAlloc = csr->getTimestampPacketAllocator()->getTag()->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation();
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+    if (productHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
 
@@ -1297,9 +1295,9 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
 
     mock->cacheInfo.reset(new CacheInfo(*mock->getIoctlHelper(), 64 * MemoryConstants::kiloByte, 2, 32));
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+    if (productHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
 
@@ -1311,7 +1309,7 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenClosEnabledAndAllocationToBeCach
         mock->context.receivedVmBindPatIndex.reset();
         operationHandler->makeResident(device, ArrayRef<GraphicsAllocation *>(&allocation, 1));
 
-        auto patIndex = gfxCoreHelper.getPatIndex(cacheRegion, CachePolicy::writeBack);
+        auto patIndex = productHelper.getPatIndex(cacheRegion, CachePolicy::writeBack);
 
         EXPECT_EQ(patIndex, mock->context.receivedVmBindPatIndex.value());
 
@@ -1413,26 +1411,26 @@ using DrmResidencyHandlerTests = ::testing::Test;
 
 HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsWithinXeGfxFamily) {
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
+    if (productHelper.getNumCacheRegions() == 0) {
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
     } else {
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_EQ(1u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
-        EXPECT_EQ(2u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
-        EXPECT_EQ(3u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
+        EXPECT_EQ(1u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
+        EXPECT_EQ(2u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
+        EXPECT_EQ(3u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
 
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
-        EXPECT_EQ(4u, gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
-        EXPECT_EQ(5u, gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
+        EXPECT_EQ(4u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
+        EXPECT_EQ(5u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
 
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
-        EXPECT_EQ(6u, gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
-        EXPECT_EQ(7u, gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
+        EXPECT_EQ(6u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
+        EXPECT_EQ(7u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
     }
 }
 
@@ -1441,26 +1439,26 @@ HWTEST2_F(DrmResidencyHandlerTests, givenForceAllResourcesUnchashedSetAskingForP
     debugManager.flags.ForceAllResourcesUncached.set(1);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_ANY_THROW(gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
+    if (productHelper.getNumCacheRegions() == 0) {
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
+        EXPECT_ANY_THROW(productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
     } else {
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::uncached));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeCombined));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeThrough));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack));
 
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::uncached));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeCombined));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeThrough));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region1, CachePolicy::writeBack));
 
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
-        EXPECT_EQ(0u, gfxCoreHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::uncached));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeCombined));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeThrough));
+        EXPECT_EQ(0u, productHelper.getPatIndex(CacheRegion::region2, CachePolicy::writeBack));
     }
 }
 

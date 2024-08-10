@@ -131,7 +131,6 @@ class GfxCoreHelper {
     virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
-    virtual uint32_t getNumCacheRegions() const = 0;
     virtual bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
@@ -159,7 +158,6 @@ class GfxCoreHelper {
     virtual uint32_t getRenderSurfaceStatePitch(void *renderSurfaceState, const ProductHelper &productHelper) const = 0;
     virtual size_t getMax3dImageWidthOrHeight() const = 0;
     virtual uint64_t getMaxMemAllocSize() const = 0;
-    virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual bool isStatelessToStatefulWithOffsetSupported() const = 0;
     virtual void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const = 0;
     virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
@@ -362,8 +360,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const override;
 
-    uint32_t getNumCacheRegions() const override;
-
     bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
 
     uint32_t getPlanarYuvMaxHeight() const override;
@@ -397,7 +393,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool preferInternalBcsEngine() const override;
     size_t getMax3dImageWidthOrHeight() const override;
     uint64_t getMaxMemAllocSize() const override;
-    uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     bool isStatelessToStatefulWithOffsetSupported() const override;
     void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override;
     bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;

@@ -1281,11 +1281,6 @@ TEST_F(GfxCoreHelperTest, whenFtrGpGpuMidThreadLevelPreemptFeatureDisabledThenFa
     EXPECT_FALSE(result);
 }
 
-HWTEST_F(GfxCoreHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, gfxCoreHelper.getNumCacheRegions());
-}
-
 HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());

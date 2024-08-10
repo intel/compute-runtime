@@ -583,11 +583,6 @@ bool GfxCoreHelperHw<GfxFamily>::isAdditionalFeatureFlagRequired(const FeatureTa
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getNumCacheRegions() const {
-    return 0;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     return true;
 }
@@ -661,13 +656,6 @@ void GfxCoreHelperHw<GfxFamily>::encodeBatchBufferStart(void *cmdBuffer, uint64_
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const ProductHelper &productHelper) const {
     return productHelper.isFlushTaskAllowed();
-}
-
-template <typename GfxFamily>
-uint64_t GfxCoreHelperHw<GfxFamily>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
-    UNRECOVERABLE_IF(true);
-
-    return -1;
 }
 
 template <typename GfxFamily>

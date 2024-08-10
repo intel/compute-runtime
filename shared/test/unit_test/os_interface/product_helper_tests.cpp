@@ -611,6 +611,10 @@ HWTEST_F(ProductHelperTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIs
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
 
+HWTEST_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
+    EXPECT_EQ(0u, productHelper->getNumCacheRegions());
+}
+
 HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters, IsAtLeastGen12lp) {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
 

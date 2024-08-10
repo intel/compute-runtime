@@ -48,6 +48,8 @@ enum class DriverModelType;
 enum class EngineGroupType : uint32_t;
 enum class GfxMemoryAllocationMethod : uint32_t;
 enum class AllocationType;
+enum class CacheRegion : uint16_t;
+enum class CachePolicy : uint32_t;
 
 using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
@@ -243,6 +245,8 @@ class ProductHelper {
     virtual uint32_t getCacheLineSize() const = 0;
     virtual bool supports2DBlockStore() const = 0;
     virtual bool supports2DBlockLoad() const = 0;
+    virtual uint32_t getNumCacheRegions() const = 0;
+    virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
 
     virtual ~ProductHelper() = default;
 

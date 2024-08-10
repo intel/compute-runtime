@@ -1011,9 +1011,9 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
 }
 
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (debugManager.flags.ClosEnabled.get() == 0 || gfxCoreHelper.getNumCacheRegions() == 0) {
+    if (debugManager.flags.ClosEnabled.get() == 0 || productHelper.getNumCacheRegions() == 0) {
         this->cacheInfo.reset(new CacheInfo{*ioctlHelper, 0, 0, 0});
         return;
     }
@@ -1026,7 +1026,7 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
     const size_t totalCacheSize = gtSysInfo->L3CacheSizeInKb * MemoryConstants::kiloByte;
     const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
-    const uint32_t maxReservationNumCacheRegions = gfxCoreHelper.getNumCacheRegions() - 1;
+    const uint32_t maxReservationNumCacheRegions = productHelper.getNumCacheRegions() - 1;
 
     this->cacheInfo.reset(new CacheInfo(*ioctlHelper, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
 }
@@ -1366,8 +1366,6 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return CommonConstants::unsupportedPatIndex;
     }
 
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
     bool cachable = !CacheSettingsHelper::isUncachedType(usageType);
     bool compressed = false;
@@ -1389,7 +1387,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     if (closEnabled) {
-        patIndex = gfxCoreHelper.getPatIndex(cacheRegion, cachePolicy);
+        patIndex = productHelper.getPatIndex(cacheRegion, cachePolicy);
     }
 
     return patIndex;

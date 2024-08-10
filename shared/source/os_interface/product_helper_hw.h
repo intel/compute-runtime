@@ -187,6 +187,8 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getCacheLineSize() const override;
     bool supports2DBlockStore() const override;
     bool supports2DBlockLoad() const override;
+    uint32_t getNumCacheRegions() const override;
+    uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
 
     ~ProductHelperHw() override = default;
 

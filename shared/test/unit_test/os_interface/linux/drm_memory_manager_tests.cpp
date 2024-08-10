@@ -4711,10 +4711,9 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), 32 * MemoryConstants::kiloByte, 2, 32));
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if ((gfxCoreHelper.getNumCacheRegions() == 0) &&
+    if ((productHelper.getNumCacheRegions() == 0) &&
         productHelper.isVmBindPatIndexProgrammingSupported()) {
         EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::region1, false));
     } else {
@@ -4732,10 +4731,9 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     allocation.bufferObjects[0] = &bo;
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if ((gfxCoreHelper.getNumCacheRegions() == 0) &&
+    if ((productHelper.getNumCacheRegions() == 0) &&
         productHelper.isVmBindPatIndexProgrammingSupported()) {
         EXPECT_ANY_THROW(allocation.setCacheAdvice(&drm, 1024, CacheRegion::region1, false));
     } else {
@@ -4877,8 +4875,8 @@ TEST_F(DrmAllocationTests, givenCachedTypeWhenForceOverridePatIndexForCachedType
 
 TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCacheRegionThenSetRegionInBufferObject) {
 
-    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    if (productHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
     mock->ioctlExpected.total = -1;

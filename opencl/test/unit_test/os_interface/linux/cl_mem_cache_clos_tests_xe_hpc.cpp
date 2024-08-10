@@ -97,8 +97,8 @@ XE_HPC_CORETEST_F(BuffersWithClMemCacheClosTests, givenDrmBuffersWhenTheyAreCrea
     cl_mem_alloc_flags_intel allocflags = 0;
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, device.get());
 
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto numCacheRegions = gfxCoreHelper.getNumCacheRegions();
+    auto &productHelper = device->getProductHelper();
+    auto numCacheRegions = productHelper.getNumCacheRegions();
     EXPECT_EQ(3u, numCacheRegions);
 
     for (uint32_t cacheRegion = 0; cacheRegion < numCacheRegions; cacheRegion++) {

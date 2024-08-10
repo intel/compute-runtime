@@ -145,8 +145,8 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 }
 
 HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCacheAdviceOnReservedCacheRegionThenSetCacheRegionCorrectly, IsCacheReservationSupported) {
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+    auto &productHelper = neoDevice->getProductHelper();
+    if (productHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
     size_t cacheLevel = 3;
@@ -186,8 +186,8 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
 }
 
 HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCacheAdviceOnNonReservedCacheRegionThenSetCacheRegionCorrectly, IsCacheReservationSupported) {
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.getNumCacheRegions() == 0) {
+    auto &productHelper = neoDevice->getProductHelper();
+    if (productHelper.getNumCacheRegions() == 0) {
         GTEST_SKIP();
     }
     size_t cacheLevel = 3;
