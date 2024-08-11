@@ -18,7 +18,9 @@ constexpr static auto gfxProduct = IGFX_BMG;
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
     {"0x5e2F8210", // BMG OOBMSM Rev 15
-     {{"reg_PCIESS_rx_bytecount_lsb", 70},
+     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 42},
+      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 43},
+      {"reg_PCIESS_rx_bytecount_lsb", 70},
       {"reg_PCIESS_rx_bytecount_msb", 69},
       {"reg_PCIESS_tx_bytecount_lsb", 72},
       {"reg_PCIESS_tx_bytecount_msb", 71},
@@ -144,6 +146,77 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 
     return result;
 };
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    std::string telemDir = "";
+    std::string guid = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
+    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    keyOffsetMap = keyOffsetMapEntry->second;
+
+    uint32_t gpuMaxTemperature = 0;
+    std::string key("SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]");
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, gpuMaxTemperature)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    *pTemperature = static_cast<double>(gpuMaxTemperature);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    std::string telemDir = "";
+    std::string guid = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    auto keyOffsetMapEntry = guidToKeyOffsetMap.find(guid);
+    if (keyOffsetMapEntry == guidToKeyOffsetMap.end()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    keyOffsetMap = keyOffsetMapEntry->second;
+
+    uint32_t memoryMaxTemperature = 0;
+    std::string key("VRAM_TEMPERATURE_0_2_0_GTTMMADR");
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, memoryMaxTemperature)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    memoryMaxTemperature &= 0xFFu; // Extract least significant 8 bits
+    *pTemperature = static_cast<double>(memoryMaxTemperature);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
+    double gpuMaxTemperature = 0;
+    ze_result_t result = this->getGpuMaxTemperature(pLinuxSysmanImp, &gpuMaxTemperature, subdeviceId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    double memoryMaxTemperature = 0;
+    result = this->getMemoryMaxTemperature(pLinuxSysmanImp, &memoryMaxTemperature, subdeviceId);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    *pTemperature = std::max(gpuMaxTemperature, memoryMaxTemperature);
+    return result;
+}
 
 template class SysmanProductHelperHw<gfxProduct>;
 
