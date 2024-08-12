@@ -2163,15 +2163,15 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
 
     auto endingPtr = commandStream.getSpace(0);
 
-    ultCsr->programEndingCmd(commandStream, &endingPtr, true, true);
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, true, true);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0 + 4);
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
@@ -2196,7 +2196,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingDisabledW
 
     auto endingPtr = commandStream.getSpace(0);
 
-    ultCsr->programEndingCmd(commandStream, &endingPtr, true, false);
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, false, true);
 
     auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(commandStream.getCpuBase());
     ASSERT_NE(nullptr, bbStartCmd);
@@ -2219,15 +2219,15 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSet
 
     auto endingPtr = commandStream.getSpace(0);
 
-    ultCsr->programEndingCmd(commandStream, &endingPtr, true, true);
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, true, true);
 
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0 + 4);
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
@@ -2248,7 +2248,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDep
 
     auto endingPtr = commandStream.getSpace(0);
 
-    ultCsr->programEndingCmd(commandStream, &endingPtr, true, false);
+    ultCsr->programEndingCmd(commandStream, &endingPtr, true, false, false);
 
     auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(commandStream.getCpuBase());
     ASSERT_NE(nullptr, bbStartCmd);

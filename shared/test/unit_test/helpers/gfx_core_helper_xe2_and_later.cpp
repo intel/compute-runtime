@@ -89,7 +89,7 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalT
     LinearStream stream(streamBuffer, bufferSize);
     uint64_t fstAddress = 12;
     uint64_t sndAddress = 100;
-    MemorySynchronizationCommands<FamilyType>::encodeAdditionalTimestampOffsets(stream, fstAddress, sndAddress);
+    MemorySynchronizationCommands<FamilyType>::encodeAdditionalTimestampOffsets(stream, fstAddress, sndAddress, false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream, 0);

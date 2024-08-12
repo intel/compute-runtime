@@ -546,7 +546,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
 
     if (nonWalkerSignalingHasRelaxedOrdering) {
         result = flushImmediate(result, true, hasStallingCmds, relaxedOrderingDispatch, true, false, nullptr);
-        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*this->commandContainer.getCommandStream());
+        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*this->commandContainer.getCommandStream(), NEO::EngineHelper::isCopyOnlyEngineType(this->engineGroupType));
         relaxedOrderingDispatch = true;
         hasStallingCmds = hasStallingCmdsForRelaxedOrdering(1, relaxedOrderingDispatch);
     }

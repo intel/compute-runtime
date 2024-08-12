@@ -353,12 +353,12 @@ struct EncodeSetMMIO {
     static const size_t sizeREG = sizeof(MI_LOAD_REGISTER_REG);
 
     static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap, bool isBcs);
-    static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address);
-    static void encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset);
+    static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address, bool isBcs);
+    static void encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset, bool isBcs);
 
     static void encodeIMM(LinearStream &cmdStream, uint32_t offset, uint32_t data, bool remap, bool isBcs);
-    static void encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address);
-    static void encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset);
+    static void encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address, bool isBcs);
+    static void encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset, bool isBcs);
 
     static bool isRemapApplicable(uint32_t offset);
     static void remapOffset(MI_LOAD_REGISTER_MEM *pMiLoadReg);
@@ -414,8 +414,8 @@ struct EncodeStoreMMIO {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     static const size_t size = sizeof(MI_STORE_REGISTER_MEM);
-    static void encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition, void **outCmdBuffer);
-    static void encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition);
+    static void encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition, void **outCmdBuffer, bool isBcs);
+    static void encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition, bool remap, bool isBcs);
     static void appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition);
 };
 

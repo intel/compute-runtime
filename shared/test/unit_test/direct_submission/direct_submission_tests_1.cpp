@@ -750,7 +750,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAvailableWhenProgrammingEndi
     uint8_t buffer[128];
     mockCsr->commandStream.replaceBuffer(&buffer[0], 128u);
     mockCsr->commandStream.replaceGraphicsAllocation(&mockAllocation);
-    mockCsr->programEndingCmd(mockCsr->commandStream, &location, ret, false);
+    mockCsr->programEndingCmd(mockCsr->commandStream, &location, ret, false, false);
     EXPECT_EQ(sizeof(MI_BATCH_BUFFER_START), mockCsr->commandStream.getUsed());
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -794,7 +794,7 @@ HWTEST_F(DirectSubmissionTest, givenDebugFlagSetWhenProgrammingEndingCommandThen
         auto currectBbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(cmdStream.getSpace(0));
         uint64_t expectedGpuVa = cmdStream.getGraphicsAllocation()->getGpuAddress() + cmdStream.getUsed();
 
-        mockCsr->programEndingCmd(cmdStream, &location, ret, false);
+        mockCsr->programEndingCmd(cmdStream, &location, ret, false, false);
         EncodeNoop<FamilyType>::alignToCacheLine(cmdStream);
 
         if (value == 0) {

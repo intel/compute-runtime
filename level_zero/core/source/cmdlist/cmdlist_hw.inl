@@ -2266,7 +2266,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Event *event, bool beforeWalker) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Event *event, bool beforeWalker, bool isBcs) {
     if (!event->isEventTimestampFlagSet()) {
         return;
     }
@@ -2277,9 +2277,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     } else {
         NEO::MiFlushArgs args{this->dummyBlitWa};
         encodeMiFlush(0, 0, args);
-        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, false, true);
+        dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, true, false, false, false, isBcs);
     }
-    appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false, true);
+    appendWriteKernelTimestamp(event, nullptr, beforeWalker, false, false, isBcs);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2403,7 +2403,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(boo
         }
 
         if (relaxedOrderingAllowed) {
-            NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
+            NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream(), NEO::EngineHelper::isCopyOnlyEngineType(this->engineGroupType));
         }
 
         CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(inOrderExecInfo, nullptr, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset(), relaxedOrderingAllowed, true, false, false);
@@ -2428,7 +2428,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
     }
 
     if (relaxedOrderingAllowed && numWaitEvents > 0 && !inOrderDependenciesSent) {
-        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
+        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream(), NEO::EngineHelper::isCopyOnlyEngineType(this->engineGroupType));
     }
 
     if (numWaitEvents > 0) {
@@ -2814,8 +2814,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *eve
         NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::globalTimestampLdw, mask, globalAddress, workloadPartition, globalPostSyncCmdBuffer, copyOperation);
         NEO::EncodeMathMMIO<GfxFamily>::encodeBitwiseAndVal(commandContainer, RegisterOffsets::gpThreadTimeRegAddressOffsetLow, mask, contextAddress, workloadPartition, contextPostSyncCmdBuffer, copyOperation);
     } else {
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::globalTimestampLdw, globalAddress, workloadPartition, globalPostSyncCmdBuffer);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextAddress, workloadPartition, contextPostSyncCmdBuffer);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::globalTimestampLdw, globalAddress, workloadPartition, globalPostSyncCmdBuffer, copyOperation);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextAddress, workloadPartition, contextPostSyncCmdBuffer, copyOperation);
     }
 
     if (outTimeStampSyncCmds != nullptr) {
@@ -2841,7 +2841,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
     }
 
     if (copyOperation) {
-        appendEventForProfilingCopyCommand(event, beforeWalker);
+        appendEventForProfilingCopyCommand(event, beforeWalker, copyOperation);
     } else {
         if (!event->isEventTimestampFlagSet()) {
             return;
@@ -3087,13 +3087,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
         }
 
         auto groupCount = ptrOffset(alloc->getGpuAddress(), groupCountOffset);
-
+        bool isBcs = NEO::EngineHelper::isCopyOnlyEngineType(this->engineGroupType);
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimX,
-                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountX)));
+                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountX)), isBcs);
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimY,
-                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountY)));
+                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountY)), isBcs);
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, RegisterOffsets::gpgpuDispatchDimZ,
-                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountZ)));
+                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountZ)), isBcs);
     }
 
     return ZE_RESULT_SUCCESS;
