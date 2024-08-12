@@ -53,6 +53,16 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             retVal = Commands::compile(argHelper.get(), args);
         }
 
+        if (retVal == ocloc_error_t::OCLOC_INVALID_DEVICE && !getOclocFormerLibName().empty()) {
+            argHelper->printf("Invalid device error, trying to fallback to former ocloc %s\n", getOclocFormerLibName().c_str());
+            auto retValFromFormerOcloc = Commands::invokeFormerOcloc(getOclocFormerLibName(), numArgs, argv, numSources, dataSources, lenSources, nameSources, numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders, numOutputs, dataOutputs, lenOutputs, nameOutputs);
+            if (retValFromFormerOcloc) {
+                retVal = retValFromFormerOcloc.value();
+            } else {
+                argHelper->printf("Couldn't load former ocloc %s\n", getOclocFormerLibName().c_str());
+            }
+        }
+
         if (retVal != OCLOC_SUCCESS) {
             printOclocCmdLine(*argHelper, args);
         } else if (argHelper->isVerbose()) {
