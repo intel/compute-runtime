@@ -399,6 +399,11 @@ bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &h
     return hwInfo.capabilityTable.ftrRenderCompressedBuffers;
 }
 
+template <>
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
+    return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe2HPG);
+}
+
 } // namespace NEO
 
 namespace NEO {
