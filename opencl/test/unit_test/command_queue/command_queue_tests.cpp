@@ -12,6 +12,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bcs_ccs_dependency_pair_container.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -2619,8 +2620,14 @@ HWTEST_F(CommandQueueWithTimestampPacketTests, givedDependencyBetweenCsrWhenSubm
 
 using KernelExecutionTypesTests = DispatchFlagsTests;
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
+
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     MockKernelWithInternals mockKernelWithInternals(*device.get());
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -2635,8 +2642,14 @@ HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingNonBlockedEnq
 }
 
 HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDoingNonBlockedEnqueueThenKernelTypeInCSRIsChanging) {
+
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     MockKernelWithInternals mockKernelWithInternals(*device.get());
     auto pKernel = mockKernelWithInternals.mockKernel;
@@ -2659,8 +2672,14 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
 }
 
 HWTEST_F(KernelExecutionTypesTests, givenConcurrentKernelWhileDoingBlockedEnqueueThenCorrectKernelTypeIsSetInCSR) {
+
     using CsrType = MockCsrHw2<FamilyType>;
     setUpImpl<CsrType>();
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     MockKernelWithInternals mockKernelWithInternals(*device.get());
     auto pKernel = mockKernelWithInternals.mockKernel;
