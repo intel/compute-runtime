@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
@@ -34,6 +35,12 @@ void DeviceImp::createSysmanHandle(bool isSubDevice) {
 }
 
 SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
+    if (L0::Sysman::sysmanOnlyInit) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Sysman Initialization already happened via zesInit\n");
+        return nullptr;
+    }
+
     SysmanDeviceImp *sysmanDevice = new SysmanDeviceImp(coreDevice);
     DEBUG_BREAK_IF(!sysmanDevice);
     if (ZE_RESULT_SUCCESS != sysmanDevice->init()) {

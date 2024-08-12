@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
@@ -329,6 +330,14 @@ TEST_F(SysmanDriverHandleTest,
 
     result = zesDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportUnKnownPointer", &funPtr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
+
+TEST(SysmanDriverInit, GivenValidSysmanImpObjectWhenCallingInitWithSysmanInitFromCoreSetAsTrueThenSysmanInitFails) {
+    L0::sysmanInitFromCore = true;
+    std::unique_ptr<SysmanDriverImp> pSysmanDriverImp = std::make_unique<SysmanDriverImp>();
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit(0));
+    EXPECT_FALSE(L0::Sysman::sysmanOnlyInit);
+    L0::sysmanInitFromCore = false;
 }
 
 } // namespace ult

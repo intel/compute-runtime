@@ -11,6 +11,7 @@
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/sysman/source/driver/sysman_driver.h"
 #include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
@@ -214,6 +215,16 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleButSysmanInitFailsThenValidNul
     ze_device_handle_t hSysman = device->toHandle();
     auto pSysmanDevice = L0::SysmanDeviceHandleContext::init(hSysman);
     EXPECT_EQ(pSysmanDevice, nullptr);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithSysmanOnlyInitSetAsTrueThenSysmanInitFailsAndValidNullptrReceived) {
+    ze_device_handle_t hSysman = device->toHandle();
+    L0::Sysman::sysmanOnlyInit = true;
+    L0::sysmanInitFromCore = false;
+    auto pSysmanDevice = L0::SysmanDeviceHandleContext::init(hSysman);
+    EXPECT_EQ(pSysmanDevice, nullptr);
+    EXPECT_FALSE(L0::sysmanInitFromCore);
+    L0::Sysman::sysmanOnlyInit = false;
 }
 
 TEST_F(SysmanDeviceFixture, GivenSetValidDrmHandleForDeviceWhenDoingOsSysmanDeviceInitThenSameDrmHandleIsRetrieved) {
