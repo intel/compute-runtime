@@ -156,7 +156,8 @@ HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenIndirectDataIsAdded) {
     srcBuffer->forceDisallowCPUCopy = true;
     EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto builtInType = pCmdQ->getHeaplessModeEnabled() ? EBuiltInOps::copyBufferToBufferStatelessHeapless : EBuiltInOps::copyBufferToBuffer;
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -305,6 +306,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, GivenBlockingWhenReadingB
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3OrL1ON) {
+
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     void *ptr = (void *)0x1040;
 
     cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
@@ -327,6 +333,11 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBuf
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
+
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     void *ptr = (void *)0x1039;
 
     cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
@@ -365,6 +376,11 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndSizeWhenBlockedReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
+
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     auto ptr = reinterpret_cast<void *>(0x1039);
 
     auto userEvent = clCreateUserEvent(pCmdQ->getContextPtr(), nullptr);
