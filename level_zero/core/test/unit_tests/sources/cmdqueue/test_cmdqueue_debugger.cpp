@@ -210,7 +210,7 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTim
             cmdList, ptrOffset(cmdStream.getCpuBase(), 0), usedSpaceAfter));
 
         bool csrSurfaceProgramming = NEO::PreemptionHelper::getRequiredPreambleSize<FamilyType>(*neoDevice) > 0;
-        csrSurfaceProgramming = csrSurfaceProgramming & !internalQueue;
+        csrSurfaceProgramming = csrSurfaceProgramming && !internalQueue;
         auto itCsrCommand = NEO::UnitTestHelper<FamilyType>::findCsrBaseAddressCommand(cmdList.begin(), cmdList.end());
         if (csrSurfaceProgramming) {
             EXPECT_NE(cmdList.end(), itCsrCommand);
