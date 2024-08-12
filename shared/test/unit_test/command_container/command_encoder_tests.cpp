@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
@@ -164,8 +165,17 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingInOrderExecIn
         EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
         EXPECT_FALSE(inOrderExecInfo->isHostStorageDuplicated());
         EXPECT_FALSE(inOrderExecInfo->isRegularCmdList());
-        EXPECT_FALSE(inOrderExecInfo->isAtomicDeviceSignalling());
-        EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
+
+        auto heaplessEnabled = mockDevice.getCompilerProductHelper().isHeaplessModeEnabled();
+
+        if (heaplessEnabled) {
+            EXPECT_TRUE(inOrderExecInfo->isAtomicDeviceSignalling());
+            EXPECT_EQ(1u, inOrderExecInfo->getNumDevicePartitionsToWait());
+        } else {
+            EXPECT_FALSE(inOrderExecInfo->isAtomicDeviceSignalling());
+            EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
+        }
+
         EXPECT_EQ(2u, inOrderExecInfo->getNumHostPartitionsToWait());
         EXPECT_EQ(0u, InOrderPatchCommandHelpers::getAppendCounterValue(*inOrderExecInfo));
         EXPECT_FALSE(inOrderExecInfo->isExternalMemoryExecInfo());
