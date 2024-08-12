@@ -1739,7 +1739,13 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingBarrierThenAllo
         EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasStallingCmds);
     }
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
-    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+
+    auto isHeaplessStateInitEnabled = commandList->isHeaplessStateInitEnabled();
+    if (isHeaplessStateInitEnabled) {
+        EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    } else {
+        EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+    }
 
     commandList->appendBarrier(nullptr, 1, &event, false);
 
@@ -2843,6 +2849,14 @@ HWTEST_F(CommandListCreate, whenCommandListIsResetThenContainsStatelessUncachedR
 }
 
 HWTEST_F(CommandListCreate, givenBindlessModeDisabledWhenCommandListsResetThenSbaReloaded) {
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
+    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
     debugManager.flags.EnableStateBaseAddressTracking.set(0);
