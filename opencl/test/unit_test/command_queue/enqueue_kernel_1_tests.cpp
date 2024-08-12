@@ -716,6 +716,11 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueingKernelThatRequirePrivateScratchThenPri
 }
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingProgrammedThenConstPolicyIsChoosen) {
+
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
@@ -734,6 +739,11 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingP
 }
 
 HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePathWhenSbaIsBeingProgrammedThenConstPolicyIsChoosen) {
+
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
