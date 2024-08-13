@@ -1126,11 +1126,7 @@ void Drm::queryPageFaultSupport() {
         return;
     }
 
-    if (const auto paramId = ioctlHelper->getHasPageFaultParamId(); paramId) {
-        int support = 0;
-        const auto ret = getParamIoctl(*paramId, &support);
-        pageFaultSupported = (0 == ret) && (support > 0);
-    }
+    pageFaultSupported = this->ioctlHelper->isPageFaultSupported();
 }
 
 bool Drm::hasPageFaultSupport() const {
@@ -1434,10 +1430,10 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool readOnlyResource = bo->isReadOnlyGpuResource();
 
         if (drm->useVMBindImmediate()) {
-            bindMakeResident = bo->isExplicitResidencyRequired();
+            bindMakeResident = bo->isExplicitResidencyRequired() && bo->isLockable();
             bindImmediate = true;
         }
-        bool bindLock = bo->isExplicitLockedMemoryRequired();
+        bool bindLock = bo->isExplicitLockedMemoryRequired() && bo->isLockable();
         flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident, bindLock, readOnlyResource);
     }
 
@@ -1531,8 +1527,14 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
 int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
     auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
     if (ret != 0) {
+        errno = 0;
         static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
         ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+        if ((getErrno() == ENOMEM) && ioctlHelper->isPageFaultSupported()) {
+            DEBUG_BREAK_IF(true);
+            bo->setIsLockable(false);
+            ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+        }
     }
     return ret;
 }

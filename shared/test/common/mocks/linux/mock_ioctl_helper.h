@@ -50,6 +50,12 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
         return getDrmParamValueResult;
     }
 
+    std::optional<uint32_t> getVmAdviseAtomicAttribute() override {
+        if (callBaseVmAdviseAtomicAttribute)
+            return IoctlHelperPrelim20::getVmAdviseAtomicAttribute();
+        return vmAdviseAtomicAttribute;
+    }
+
     bool releaseInterrupt(uint32_t handle) override {
         releaseInterruptCalled++;
         latestReleaseInterruptHandle = handle;
@@ -84,5 +90,7 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     uint32_t latestReleaseInterruptHandle = InterruptId::notUsed;
 
     bool releaseInterruptResult = true;
+    bool callBaseVmAdviseAtomicAttribute = true;
+    std::optional<uint32_t> vmAdviseAtomicAttribute{};
 };
 } // namespace NEO

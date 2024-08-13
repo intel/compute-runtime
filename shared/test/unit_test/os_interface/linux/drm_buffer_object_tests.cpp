@@ -1136,3 +1136,58 @@ TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperWhenMoveConstructingAnotherOb
 
     EXPECT_EQ(2, secondBoHandleWrapper.controlBlock->refCount);
 }
+
+TEST_F(DrmBufferObjectTest, givenDrmWhenBindOperationFailsWithENOMEMThenBindWithoutLockingIsTried) {
+    struct IoctlHelperPageFaultSupport : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+        bool isPageFaultSupported() override { return true; }
+    };
+
+    auto executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+
+    auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->requirePerContextVM = false;
+    drm->isVMBindImmediateSupported = true;
+
+    auto ioctlHelper = std::make_unique<IoctlHelperPageFaultSupport>(*drm);
+    ioctlHelper->vmBindResult = -1;
+    ioctlHelper->isWaitBeforeBindRequiredResult = true;
+    drm->ioctlHelper.reset(ioctlHelper.release());
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
+    uint64_t initFenceValue = 10u;
+    drm->fenceVal[0] = initFenceValue;
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+    auto &engines = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines(device->getRootDeviceIndex());
+    auto osContextCount = engines.size();
+    auto contextId = osContextCount / 2;
+    auto osContext = engines[contextId].osContext;
+
+    MockBufferObject bo(device->getRootDeviceIndex(), drm, 3, 0, 0, osContextCount);
+    EXPECT_EQ(bo.isLockable(), true);
+
+    drm->bindBufferObject(osContext, 0, &bo);
+    EXPECT_EQ(bo.isLockable(), true);
+
+    drm->errnoRetVal = ENOMEM;
+    drm->baseErrno = false;
+    drm->bindBufferObject(osContext, 0, &bo);
+    EXPECT_EQ(bo.isLockable(), false);
+}
+
+TEST_F(DrmBufferObjectTest, givenBufferObjectWhenSetIsLockableIsCalledThenIsLockableIsSet) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    DrmMock drm(*(executionEnvironment.rootDeviceEnvironments[0].get()));
+    MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+
+    for (auto isLockable : {false, true}) {
+        bo.setIsLockable(isLockable);
+        EXPECT_EQ(isLockable, bo.isLockable());
+    }
+}
