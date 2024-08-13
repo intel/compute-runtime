@@ -30,6 +30,11 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
     if (!aubManager) {
         return MemoryOperationsStatus::deviceUninitialized;
     }
+
+    if (device) {
+        device->getDefaultEngine().commandStreamReceiver->initializeEngine();
+    }
+
     auto lock = acquireLock(resourcesLock);
     int hint = AubMemDump::DataTypeHintValues::TraceNotype;
     for (const auto &allocation : gfxAllocations) {

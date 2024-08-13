@@ -69,7 +69,6 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual bool isTbxWritable(GraphicsAllocation &graphicsAllocation) const = 0;
 
     virtual void dumpAllocation(GraphicsAllocation &gfxAllocation) = 0;
-    virtual void initializeEngine() = 0;
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 

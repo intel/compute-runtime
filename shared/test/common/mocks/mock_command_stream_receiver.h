@@ -88,6 +88,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         writeMemoryAubCalled++;
     }
 
+    void initializeEngine() override {
+        initializeEngineCalled++;
+    }
+
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
     bool isGpuHangDetected() const override {
@@ -252,6 +256,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t writeMemoryAubCalled = 0;
+    uint32_t initializeEngineCalled = 0;
     uint32_t makeResidentCalledTimes = 0;
     uint32_t downloadAllocationsCalledCount = 0;
     uint32_t submitDependencyUpdateCalledTimes = 0;

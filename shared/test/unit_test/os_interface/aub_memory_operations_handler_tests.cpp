@@ -152,6 +152,46 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationInLocalMemor
     device->getDefaultEngine().commandStreamReceiver = oldCsr;
 }
 
+TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThenInitializeEngineBeforeWriteMemory) {
+    DeviceBitfield deviceBitfield(1);
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), 0, deviceBitfield);
+    csr->localMemoryEnabled = true;
+
+    auto oldCsr = device->getDefaultEngine().commandStreamReceiver;
+    device->getDefaultEngine().commandStreamReceiver = csr.get();
+
+    MockAubManager aubManager;
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+    auto result = memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
+    EXPECT_EQ(1u, csr->initializeEngineCalled);
+
+    auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(1u, memoryOperationsInterface->residentAllocations.size());
+
+    device->getDefaultEngine().commandStreamReceiver = oldCsr;
+}
+
+TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledWithNullDeviceThenDoNotInitializeEngineBeforeWriteMemory) {
+    DeviceBitfield deviceBitfield(1);
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*device->getExecutionEnvironment(), 0, deviceBitfield);
+    csr->localMemoryEnabled = true;
+
+    auto oldCsr = device->getDefaultEngine().commandStreamReceiver;
+    device->getDefaultEngine().commandStreamReceiver = csr.get();
+
+    MockAubManager aubManager;
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+    auto result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::success);
+    EXPECT_EQ(0u, csr->initializeEngineCalled);
+
+    device->getDefaultEngine().commandStreamReceiver = oldCsr;
+}
+
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnCompressedAllocationThenPassCorrectParams) {
     MockAubManager aubManager;
     aubManager.storeAllocationParams = true;

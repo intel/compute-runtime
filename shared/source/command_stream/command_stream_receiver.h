@@ -286,6 +286,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation) { return writeMemory(gfxAllocation, false, 0, 0); }
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) { return false; }
     virtual void writeMemoryAub(aub_stream::AllocationParams &allocationParams){};
+    virtual void initializeEngine(){};
 
     virtual bool isMultiOsContextCapable() const = 0;
 
