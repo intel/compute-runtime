@@ -20,6 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/fixtures/aub_csr_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
@@ -1018,6 +1019,109 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     commandList->commandsToPatch.push_back(commandToPatch);
     EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, 0, false));
     commandList->commandsToPatch.clear();
+}
+
+using CommandQueueCreate = Test<DeviceFixture>;
+HWTEST2_F(CommandQueueCreate, givenGettingDispatchTaskCountPostSyncRequiredWhenRegularCommandListAndDirectSubmissionEnabledThenReturnFalse, IsAtLeastSkl) {
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->callBaseIsUpdateTagFromWaitEnabled = false;
+    ultCsr->updateTagFromWaitEnabled = true;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    ctx.isDirectSubmissionEnabled = true;
+    ctx.containsAnyRegularCmdList = true;
+    ze_fence_handle_t fenceHandle = nullptr;
+
+    EXPECT_FALSE(commandQueue->isDispatchTaskCountPostSyncRequired(fenceHandle, ctx));
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueCreate, givenGettingDispatchTaskCountPostSyncRequiredWhenRegularCommandListAndDirectSubmissionDisabledThenReturnTrue, IsAtLeastSkl) {
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->callBaseIsUpdateTagFromWaitEnabled = false;
+    ultCsr->updateTagFromWaitEnabled = true;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    ctx.isDirectSubmissionEnabled = false;
+    ctx.containsAnyRegularCmdList = true;
+    ze_fence_handle_t fenceHandle = nullptr;
+
+    EXPECT_TRUE(commandQueue->isDispatchTaskCountPostSyncRequired(fenceHandle, ctx));
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueCreate, givenGettingDispatchTaskCountPostSyncRequiredWhenFenceIsNotNullThenReturnTrue, IsAtLeastSkl) {
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->callBaseIsUpdateTagFromWaitEnabled = false;
+    ultCsr->updateTagFromWaitEnabled = true;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    ctx.isDirectSubmissionEnabled = true;
+    ctx.containsAnyRegularCmdList = true;
+
+    ze_fence_desc_t fenceDesc{};
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(nullptr, fence);
+
+    ze_fence_handle_t fenceHandle = fence->toHandle();
+
+    EXPECT_TRUE(commandQueue->isDispatchTaskCountPostSyncRequired(fenceHandle, ctx));
+
+    fence->destroy();
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueCreate, givenGettingDispatchTaskCountPostSyncRequiredWhenQueueIsSynchronousReturnTrue, IsAtLeastSkl) {
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->callBaseIsUpdateTagFromWaitEnabled = false;
+    ultCsr->updateTagFromWaitEnabled = true;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    ctx.isDirectSubmissionEnabled = true;
+    ctx.containsAnyRegularCmdList = true;
+
+    ze_fence_handle_t fenceHandle = nullptr;
+
+    EXPECT_TRUE(commandQueue->isDispatchTaskCountPostSyncRequired(fenceHandle, ctx));
+
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueCreate, givenGettingDispatchTaskCountPostSyncRequiredWhenUpdateTagFromWaitDisabledThenReturnTrue, IsAtLeastSkl) {
+    auto ultCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(neoDevice->getDefaultEngine().commandStreamReceiver);
+    ultCsr->callBaseIsUpdateTagFromWaitEnabled = false;
+    ultCsr->updateTagFromWaitEnabled = false;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
+    typename MockCommandQueueHw<gfxCoreFamily>::CommandListExecutionContext ctx{};
+
+    ctx.isDirectSubmissionEnabled = true;
+    ctx.containsAnyRegularCmdList = true;
+    ze_fence_handle_t fenceHandle = nullptr;
+
+    EXPECT_TRUE(commandQueue->isDispatchTaskCountPostSyncRequired(fenceHandle, ctx));
+
+    commandQueue->destroy();
 }
 
 } // namespace ult
