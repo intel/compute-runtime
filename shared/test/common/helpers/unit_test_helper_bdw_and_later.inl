@@ -163,4 +163,10 @@ std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllWalkerTypeCm
     return findAll<typename GfxFamily::GPGPU_WALKER *>(begin, end);
 }
 
+template <typename GfxFamily>
+uint64_t UnitTestHelper<GfxFamily>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(bool isHeaplessEnabled, WalkerPartition::WalkerPartitionArgs &testArgs) {
+    UNRECOVERABLE_IF(true);
+    return 0u;
+}
+
 } // namespace NEO

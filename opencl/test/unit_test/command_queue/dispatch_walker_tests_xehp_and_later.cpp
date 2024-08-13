@@ -1198,13 +1198,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.staticPartitioning = false;
     testArgs.synchronizeBeforeExecution = false;
     csr.staticWorkPartitioningEnabled = false;
-    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+
+    auto partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
     testArgs.staticPartitioning = true;
     csr.staticWorkPartitioningEnabled = true;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
@@ -1212,14 +1213,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.synchronizeBeforeExecution = true;
     testArgs.staticPartitioning = false;
     csr.staticWorkPartitioningEnabled = false;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
     testArgs.synchronizeBeforeExecution = true;
     testArgs.staticPartitioning = true;
     csr.staticWorkPartitioningEnabled = true;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 }
@@ -1258,13 +1259,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.staticPartitioning = false;
     testArgs.synchronizeBeforeExecution = false;
     csr.staticWorkPartitioningEnabled = false;
-    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    auto partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     auto returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
     testArgs.staticPartitioning = true;
     csr.staticWorkPartitioningEnabled = true;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
@@ -1272,14 +1273,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.synchronizeBeforeExecution = true;
     testArgs.staticPartitioning = false;
     csr.staticWorkPartitioningEnabled = false;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 
     testArgs.synchronizeBeforeExecution = true;
     testArgs.staticPartitioning = true;
     csr.staticWorkPartitioningEnabled = true;
-    partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
     returnedSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *cmdQ.get(), kernel->mockKernel, dispatchInfo);
     EXPECT_EQ(returnedSize, partitionSize + baseSize);
 }
@@ -1343,7 +1344,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
-    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    auto partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
@@ -1376,7 +1377,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
-    auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType, WalkerType>(testArgs);
+    auto partitionSize = UnitTestHelper<FamilyType>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(this->heaplessEnabled, testArgs);
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});

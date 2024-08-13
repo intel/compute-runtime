@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -146,6 +147,13 @@ GenCmdList::iterator UnitTestHelper<GfxFamily>::findWalkerTypeCmd(GenCmdList::it
 template <typename GfxFamily>
 std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllWalkerTypeCmds(GenCmdList::iterator begin, GenCmdList::iterator end) {
     return findAll<typename GfxFamily::COMPUTE_WALKER *>(begin, end);
+}
+
+template <typename GfxFamily>
+uint64_t UnitTestHelper<GfxFamily>::getWalkerPartitionEstimateSpaceRequiredInCommandBuffer(bool isHeaplessEnabled, WalkerPartition::WalkerPartitionArgs &testArgs) {
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+
+    return WalkerPartition::estimateSpaceRequiredInCommandBuffer<GfxFamily, DefaultWalkerType>(testArgs);
 }
 
 } // namespace NEO
