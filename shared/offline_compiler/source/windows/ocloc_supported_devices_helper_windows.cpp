@@ -21,14 +21,6 @@ std::string SupportedDevicesHelper::getOclocCurrentVersionOutputFilename() const
     return getOclocCurrentVersion() + getOutputFilenameSuffix(SupportedDevicesMode::unknown);
 }
 
-std::string SupportedDevicesHelper::getOclocCurrentLibName() const {
-    return "";
-}
-
-std::string SupportedDevicesHelper::getOclocFormerLibName() const {
-    return "";
-}
-
 std::string SupportedDevicesHelper::getOclocCurrentVersion() const {
     return "ocloc";
 }

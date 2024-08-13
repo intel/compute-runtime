@@ -143,7 +143,13 @@ target_include_directories(ocloc_tests PRIVATE
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                            $<TARGET_PROPERTY:ocloc_lib,INCLUDE_DIRECTORIES>
 )
-target_compile_definitions(ocloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS> ${TESTED_CORE_FLAGS_DEFINITONS})
+target_compile_definitions(ocloc_tests PUBLIC
+                           MOCKABLE_VIRTUAL=virtual
+                           $<TARGET_PROPERTY:ocloc_lib,INTERFACE_COMPILE_DEFINITIONS>
+                           ${TESTED_CORE_FLAGS_DEFINITONS}
+                           NEO_OCLOC_CURRENT_LIB_NAME="ocloc-current"
+                           NEO_OCLOC_FORMER_LIB_NAME="ocloc-former"
+)
 
 target_link_libraries(ocloc_tests gmock-gtest)
 

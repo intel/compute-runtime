@@ -19,29 +19,13 @@ using namespace Ocloc;
 class MockSupportedDevicesHelper : public SupportedDevicesHelper {
   public:
     using SupportedDevicesHelper::extractOclocVersion;
-    using SupportedDevicesHelper::getOclocCurrentLibName;
     using SupportedDevicesHelper::getOclocCurrentVersion;
-    using SupportedDevicesHelper::getOclocFormerLibName;
     using SupportedDevicesHelper::getOclocFormerVersion;
     using SupportedDevicesHelper::mergeOclocVersionData;
 
   public:
     MockSupportedDevicesHelper(SupportedDevicesMode mode, ProductConfigHelper *productConfigHelper)
         : SupportedDevicesHelper(mode, productConfigHelper) {}
-
-    std::string getOclocCurrentLibName() const override {
-        if (!getOclocCurrentLibNameMockResult.empty()) {
-            return getOclocCurrentLibNameMockResult;
-        }
-        return SupportedDevicesHelper::getOclocCurrentLibName();
-    }
-
-    std::string getOclocFormerLibName() const override {
-        if (!getOclocFormerLibNameMockResult.empty()) {
-            return getOclocFormerLibNameMockResult;
-        }
-        return SupportedDevicesHelper::getOclocFormerLibName();
-    }
 
     std::string getDataFromFormerOclocVersion() const override {
         if (getDataFromFormerOclocVersionEmptyResult) {
@@ -77,8 +61,6 @@ class MockSupportedDevicesHelper : public SupportedDevicesHelper {
     }
 
   public:
-    std::string getOclocCurrentLibNameMockResult = "libocloc-current.so";
-    std::string getOclocFormerLibNameMockResult = "libocloc-former.so";
     bool getDataFromFormerOclocVersionEmptyResult = false;
     std::string getOclocCurrentVersionMockResult = "ocloc-current";
 };

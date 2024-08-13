@@ -15,8 +15,6 @@ namespace NEO {
 
 struct SupportedDevicesHelperWindowsTest : public ::testing::Test {
     void SetUp() override {
-        mockHelper.getOclocCurrentLibNameMockResult = "";
-        mockHelper.getOclocFormerLibNameMockResult = "";
         mockHelper.getOclocCurrentVersionMockResult = "";
     }
 
@@ -32,14 +30,6 @@ TEST_F(SupportedDevicesHelperWindowsTest, GivenVariousOclocLibraryNamesWhenExtra
     EXPECT_EQ(mockHelper.extractOclocVersion("libocloc2.0.so"), "");
     EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0"), "");
     EXPECT_EQ(mockHelper.extractOclocVersion("libocloc.so"), "");
-}
-
-TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetOclocCurrentLibNameThenReturnEmptyString) {
-    EXPECT_EQ("", mockHelper.getOclocCurrentLibName());
-}
-
-TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetOclocFormerLibNameThenReturnEmptyString) {
-    EXPECT_EQ("", mockHelper.getOclocFormerLibName());
 }
 
 TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetOclocCurrentVersionThenReturnCorrectValue) {

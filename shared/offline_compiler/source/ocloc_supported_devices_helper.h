@@ -67,8 +67,6 @@ class SupportedDevicesHelper {
     MOCKABLE_VIRTUAL std::string getDataFromFormerOclocVersion() const;
 
   protected:
-    MOCKABLE_VIRTUAL std::string getOclocCurrentLibName() const;
-    MOCKABLE_VIRTUAL std::string getOclocFormerLibName() const;
     MOCKABLE_VIRTUAL std::string getOclocCurrentVersion() const;
     std::string getOclocFormerVersion() const;
     std::string extractOclocVersion(std::string_view oclocLibNameWithVersion) const;

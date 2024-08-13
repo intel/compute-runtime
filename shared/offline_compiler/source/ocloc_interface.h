@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,16 @@
 
 #include "shared/source/utilities/const_stringref.h"
 
+#include <string>
 #include <vector>
 
 class OclocArgHelper;
 namespace Ocloc {
 void printOclocCmdLine(OclocArgHelper &wrapper, const std::vector<std::string> &args);
 void printHelp(OclocArgHelper &wrapper);
+
+const std::string &getOclocCurrentLibName();
+const std::string &getOclocFormerLibName();
 
 namespace CommandNames {
 inline constexpr NEO::ConstStringRef compile = "compile";

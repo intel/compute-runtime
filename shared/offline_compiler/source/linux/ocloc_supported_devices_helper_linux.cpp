@@ -6,6 +6,7 @@
  */
 
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -21,22 +22,6 @@ std::string SupportedDevicesHelper::getOutputFilenameSuffix(SupportedDevicesMode
 
 std::string SupportedDevicesHelper::getOclocCurrentVersionOutputFilename() const {
     return getOclocCurrentVersion() + getOutputFilenameSuffix(mode);
-}
-
-std::string SupportedDevicesHelper::getOclocCurrentLibName() const {
-#ifdef NEO_OCLOC_CURRENT_LIB_NAME
-    return std::string(NEO_OCLOC_CURRENT_LIB_NAME);
-#else
-    return "";
-#endif
-}
-
-std::string SupportedDevicesHelper::getOclocFormerLibName() const {
-#ifdef NEO_OCLOC_FORMER_LIB_NAME
-    return std::string(NEO_OCLOC_FORMER_LIB_NAME);
-#else
-    return "";
-#endif
 }
 
 std::string SupportedDevicesHelper::getOclocCurrentVersion() const {
@@ -64,8 +49,7 @@ std::string SupportedDevicesHelper::extractOclocVersion(std::string_view oclocLi
 }
 
 std::string SupportedDevicesHelper::getDataFromFormerOclocVersion() const {
-    if (getOclocFormerLibName().empty() ||
-        getOclocFormerLibName() == getOclocCurrentLibName()) {
+    if (getOclocFormerLibName().empty()) {
         return "";
     }
 

@@ -116,6 +116,14 @@ void printOclocOptionsReadFromFile(OclocArgHelper &wrapper, OfflineCompiler *pCo
     }
 }
 
+std::string oclocCurrentLibName = std::string(NEO_OCLOC_CURRENT_LIB_NAME);
+std::string oclocFormerLibName = std::string(NEO_OCLOC_FORMER_LIB_NAME);
+
+static_assert(std::string_view(NEO_OCLOC_CURRENT_LIB_NAME) != std::string_view(NEO_OCLOC_FORMER_LIB_NAME), "Ocloc current and former names cannot be same");
+
+const std::string &getOclocCurrentLibName() { return oclocCurrentLibName; }
+const std::string &getOclocFormerLibName() { return oclocFormerLibName; }
+
 namespace Commands {
 
 int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
