@@ -77,7 +77,6 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::commandStream;
     using BaseClass::estimateStreamSizeForExecuteCommandListsRegularHeapless;
     using BaseClass::executeCommandListsRegularHeapless;
-    using BaseClass::isDispatchTaskCountPostSyncRequired;
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;

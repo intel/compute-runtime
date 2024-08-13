@@ -455,7 +455,6 @@ HWTEST2_F(CommandQueueCreate, givenSwTagsEnabledWhenPrepareAndSubmitBatchBufferT
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFamily> {
-    using CommandListExecutionContext = typename CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext;
 
     MockCommandQueueHwEstimateSizeTest(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
         : MockCommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
@@ -465,7 +464,7 @@ struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFam
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, CommandListExecutionContext &ctx) const override {
+    bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const override {
         return dispatchTaskCountPostSyncRequired;
     }
     bool dispatchTaskCountPostSyncRequired = false;

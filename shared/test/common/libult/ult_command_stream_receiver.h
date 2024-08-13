@@ -522,13 +522,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::unblockPagingFenceSemaphore(pagingFenceValue);
     }
 
-    bool isUpdateTagFromWaitEnabled() override {
-        if (callBaseIsUpdateTagFromWaitEnabled) {
-            return BaseClass::isUpdateTagFromWaitEnabled();
-        }
-        return updateTagFromWaitEnabled;
-    }
-
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -597,8 +590,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
     bool registeredDcFlushForDcFlushMitigation = false;
-    bool callBaseIsUpdateTagFromWaitEnabled = true;
-    bool updateTagFromWaitEnabled = false;
 };
 
 } // namespace NEO

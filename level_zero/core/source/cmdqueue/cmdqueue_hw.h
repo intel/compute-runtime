@@ -142,7 +142,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                               ze_command_list_handle_t *phCommandLists,
                                               uint32_t numCommandLists,
                                               ze_fence_handle_t hFence);
-    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, CommandListExecutionContext &ctx) const;
+    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
     inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
     size_t estimateStreamSizeForExecuteCommandListsRegularHeapless(CommandListExecutionContext &ctx,
                                                                    uint32_t numCommandLists,

@@ -141,9 +141,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     auto neoDevice = this->device->getNEODevice();
     this->csr->initializeDeviceWithFirstSubmission(*neoDevice);
 
-    ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
     this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
-
+    ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
     bool instructionCacheFlushRequired = this->csr->isInstructionCacheFlushRequired();
     bool stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
 
@@ -266,8 +265,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     ze_fence_handle_t hFence,
     NEO::LinearStream *parentImmediateCommandlistLinearStream) {
 
-    ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
     this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence);
+    ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
 
     std::unique_lock<std::mutex> lockForIndirect;
     if (ctx.hasIndirectAccess) {
@@ -436,8 +435,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
 
-    ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();
     this->setupCmdListsAndContextParams(ctx, phCommandLists, numCommandLists, hFence);
+    ctx.isDirectSubmissionEnabled = this->csr->isBlitterDirectSubmissionEnabled();
 
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx);
     bool fenceRequired = false;
@@ -628,9 +627,8 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::Li
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, CommandListExecutionContext &ctx) const {
-    bool regularCmdListCondition = ctx.isDirectSubmissionEnabled ? false : ctx.containsAnyRegularCmdList;
-    return regularCmdListCondition || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode();
+bool CommandQueueHw<gfxCoreFamily>::isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const {
+    return containsAnyRegularCmdList || !csr->isUpdateTagFromWaitEnabled() || hFence != nullptr || isSynchronousMode();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -789,7 +787,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
         makeResidentAndMigrate(ctx.isMigrationRequested, commandContainer.getResidencyContainer());
     }
 
-    ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx);
+    ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx.containsAnyRegularCmdList);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
