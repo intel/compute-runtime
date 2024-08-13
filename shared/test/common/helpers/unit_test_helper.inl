@@ -80,6 +80,12 @@ bool UnitTestHelper<GfxFamily>::expectNullDsh(const DeviceInfo &deviceInfo) {
 }
 
 template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getInlineDataSize(bool isHeaplessEnabled) {
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+    return DefaultWalkerType::getInlineDataSize();
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(CommandStreamReceiver &csr, LinearStream &csrStream) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 

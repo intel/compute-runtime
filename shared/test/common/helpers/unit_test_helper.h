@@ -104,7 +104,7 @@ struct UnitTestHelper {
     static GenCmdList::iterator findCsrBaseAddressCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
 
     static std::vector<GenCmdList::iterator> findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
-
+    static uint32_t getInlineDataSize(bool isHeaplessEnabled);
     static bool getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd);
     static bool getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::FrontEndStateCommand &feCmd);
     static bool getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd);
