@@ -272,8 +272,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     bool isMixingRegularAndCooperativeKernelsAllowed = NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
-    if ((!containsAnyKernel) || isMixingRegularAndCooperativeKernelsAllowed) {
-        containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || launchParams.isCooperative);
+    if (!containsAnyKernel || isMixingRegularAndCooperativeKernelsAllowed) {
+        containsCooperativeKernelsFlag |= launchParams.isCooperative;
     } else if (containsCooperativeKernelsFlag != launchParams.isCooperative) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -296,6 +296,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (this->heaplessStateInitEnabled == false && !launchParams.makeKernelCommandView) {
         updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
+    } else {
+        if (!this->isImmediateType()) {
+            containsAnyKernel = true;
+        }
     }
 
     auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
