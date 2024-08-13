@@ -7,6 +7,7 @@
 
 #include "shared/source/aub/aub_subcapture.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -600,6 +601,12 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadySe
     if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
+
+    auto &compilerProductHelper = pClDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore stateRestore;
     debugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::filter));
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);

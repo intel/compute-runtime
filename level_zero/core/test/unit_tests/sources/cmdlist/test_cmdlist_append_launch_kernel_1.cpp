@@ -121,6 +121,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithStallRRThreadArbitrationP
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithThreadArbitrationPolicySetUsingSchedulingHintExtensionTheSameFlagIsUsedToSetCmdListThreadArbitrationPolicy) {
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 

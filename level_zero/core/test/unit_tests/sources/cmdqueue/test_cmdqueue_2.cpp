@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -757,6 +758,12 @@ struct DeviceWithDualStorage : Test<DeviceFixture> {
 };
 
 HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAndBlitterDisabledWhenExecuteCmdListThenCfeStateOnceProgrammed, IsAtLeastXeHpCore) {
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     using CFE_STATE = typename FamilyType::CFE_STATE;
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
     ze_result_t res = ZE_RESULT_SUCCESS;
