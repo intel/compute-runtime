@@ -9,6 +9,7 @@
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -66,6 +67,9 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
         for (uint32_t i = sizeGrfDwords; i < sizeGrfDwords * 2; i++) {
             crossThreadDataTwoGrf[i] = i + 2;
         }
+
+        auto &compilerProductHelper = device->getCompilerProductHelper();
+        heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
     }
 
     DebugManagerStateRestore restore;
@@ -84,6 +88,8 @@ struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
     std::unique_ptr<MockKernelWithInternals> kernel;
+
+    bool heaplessEnabled = false;
 };
 
 using XeHPAndLaterDispatchWalkerBasicTest = Test<XeHPAndLaterDispatchWalkerBasicFixture>;
@@ -1172,7 +1178,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) ? 2 : 1;
 
-    auto baseSize = sizeof(WalkerType) +
+    auto baseSize = UnitTestHelper<FamilyType>::getWalkerSize(this->heaplessEnabled) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
@@ -1232,7 +1238,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) ? 2 : 1;
 
-    auto baseSize = sizeof(WalkerType) +
+    auto baseSize = UnitTestHelper<FamilyType>::getWalkerSize(this->heaplessEnabled) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
@@ -1287,7 +1293,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
 
-    auto baseSize = sizeof(typename FamilyType::DefaultWalkerType) +
+    auto baseSize = UnitTestHelper<FamilyType>::getWalkerSize(this->heaplessEnabled) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
@@ -1304,7 +1310,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) ? 2 : 1;
 
-    auto baseSize = sizeof(typename FamilyType::DefaultWalkerType) +
+    auto baseSize = UnitTestHelper<FamilyType>::getWalkerSize(this->heaplessEnabled) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
@@ -1324,7 +1330,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) ? 2 : 1;
 
-    auto baseSize = sizeof(WalkerType) +
+    auto baseSize = UnitTestHelper<FamilyType>::getWalkerSize(this->heaplessEnabled) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());
@@ -1357,7 +1363,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 
     size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment()) ? 2 : 1;
 
-    auto baseSize = sizeof(WalkerType) +
+    auto baseSize = UnitTestHelper<FamilyType>::getWalkerSize(this->heaplessEnabled) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
                     HardwareCommandsHelper<FamilyType>::getSizeRequiredCS() +
                     EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(kernel->kernelInfo.heapInfo.kernelHeapSize, device->getRootDeviceEnvironment());

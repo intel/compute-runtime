@@ -12,6 +12,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 
 #include "gtest/gtest.h"
+#include "unit_test_helper.h"
 
 namespace NEO {
 
@@ -122,6 +123,12 @@ typename GfxFamily::WalkerVariant UnitTestHelper<GfxFamily>::getWalkerVariant(vo
 
     UNRECOVERABLE_IF(true);
     return {};
+}
+
+template <typename GfxFamily>
+size_t UnitTestHelper<GfxFamily>::getWalkerSize(bool isHeaplessEnabled) {
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+    return sizeof(DefaultWalkerType);
 }
 
 } // namespace NEO
