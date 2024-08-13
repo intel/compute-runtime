@@ -8,7 +8,6 @@
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include <cstring>
 #include <memory>
@@ -49,20 +48,7 @@ std::string SupportedDevicesHelper::extractOclocVersion(std::string_view oclocLi
 }
 
 std::string SupportedDevicesHelper::getDataFromFormerOclocVersion() const {
-    if (getOclocFormerLibName().empty()) {
-        return "";
-    }
-
-    std::unique_ptr<OsLibrary> oclocLib(OsLibrary::load(getOclocFormerLibName()));
-
-    if (!oclocLib ||
-        !oclocLib->isLoaded()) {
-        return "";
-    }
-
     std::string retData;
-
-    auto oclocInvokeFunc = reinterpret_cast<pOclocInvoke>(oclocLib->getProcAddress("oclocInvoke"));
 
     const char *argv[] = {"ocloc", "query", "SUPPORTED_DEVICES", "-concat"};
 
@@ -72,19 +58,23 @@ std::string SupportedDevicesHelper::getDataFromFormerOclocVersion() const {
     size_t *ouputLengths = nullptr;
     char **outputNames = nullptr;
 
-    oclocInvokeFunc(numArgs, argv,
-                    0,
-                    nullptr,
-                    nullptr,
-                    nullptr,
-                    0,
-                    nullptr,
-                    nullptr,
-                    nullptr,
-                    &numOutputs,
-                    &dataOutputs,
-                    &ouputLengths,
-                    &outputNames);
+    auto retVal = Commands::invokeFormerOcloc(getOclocFormerLibName(),
+                                              numArgs, argv,
+                                              0,
+                                              nullptr,
+                                              nullptr,
+                                              nullptr,
+                                              0,
+                                              nullptr,
+                                              nullptr,
+                                              nullptr,
+                                              &numOutputs,
+                                              &dataOutputs,
+                                              &ouputLengths,
+                                              &outputNames);
+    if (!retVal) {
+        return "";
+    }
 
     const std::string expectedSubstr = getOutputFilenameSuffix(SupportedDevicesMode::concat);
 
