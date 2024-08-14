@@ -9,6 +9,7 @@
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_concat.h"
+#include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
@@ -986,4 +987,95 @@ TEST(OclocApiTests, GivenVerboseModeWhenCompilingThenPrintCommandLine) {
     EXPECT_EQ(retVal, OCLOC_SUCCESS);
     EXPECT_NE(std::string::npos, output.find("Command was: ocloc -file "s + clFileName.c_str() + " -device "s + argv[4] + " -v")) << output;
     EXPECT_NE(std::string::npos, output.find("Build succeeded.\n"));
+}
+
+TEST(InvokeFormerOclocTest, givenEmptyOrInvalidFormerOclocNameWhenInvokeFormerOclocThenNulloptIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "-file",
+        "kernel.cl",
+        "-device",
+        "invalid_device"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    auto retVal = Ocloc::Commands::invokeFormerOcloc("", argc, argv,
+                                                     0, nullptr, nullptr, nullptr,
+                                                     0, nullptr, nullptr, nullptr,
+                                                     nullptr, nullptr, nullptr, nullptr);
+
+    EXPECT_FALSE(retVal.has_value());
+
+    retVal = Ocloc::Commands::invokeFormerOcloc("invalidName", argc, argv,
+                                                0, nullptr, nullptr, nullptr,
+                                                0, nullptr, nullptr, nullptr,
+                                                nullptr, nullptr, nullptr, nullptr);
+
+    EXPECT_FALSE(retVal.has_value());
+}
+
+namespace Ocloc {
+extern std::string oclocFormerLibName;
+}
+
+struct OclocFallbackTests : ::testing::Test {
+
+    int callOclocForInvalidDevice() {
+        const char *argv[] = {
+            "ocloc",
+            "-file",
+            "kernel.cl",
+            "-device",
+            "invalid_device"};
+        unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+        testing::internal::CaptureStdout();
+        testing::internal::CaptureStderr();
+        auto retVal = oclocInvoke(argc, argv,
+                                  0, nullptr, nullptr, nullptr,
+                                  0, nullptr, nullptr, nullptr,
+                                  nullptr, nullptr, nullptr, nullptr);
+        capturedStdout = testing::internal::GetCapturedStdout();
+        capturedStderr = testing::internal::GetCapturedStderr();
+        return retVal;
+    }
+
+    void TearDown() override {
+        Ocloc::oclocFormerLibName.clear();
+        Ocloc::oclocFormerLibName.shrink_to_fit();
+    }
+    std::string capturedStdout;
+    std::string capturedStderr;
+    VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
+};
+
+TEST_F(OclocFallbackTests, GivenNoFormerOclocNameWhenInvalidDeviceErrorIsReturnedThenDontFallback) {
+
+    Ocloc::oclocFormerLibName = "";
+
+    auto retVal = callOclocForInvalidDevice();
+
+    EXPECT_EQ(ocloc_error_t::OCLOC_INVALID_DEVICE, retVal);
+    EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+
+    EXPECT_EQ(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc"));
+    EXPECT_EQ(std::string::npos, capturedStdout.find("Couldn't load former ocloc"));
+    EXPECT_TRUE(capturedStderr.empty());
+}
+
+TEST_F(OclocFallbackTests, GivenInvalidFormerOclocNameWhenInvalidDeviceErrorIsReturnedThenFallbackButWithoutLoadingLib) {
+
+    Ocloc::oclocFormerLibName = "invalidName";
+
+    auto retVal = callOclocForInvalidDevice();
+
+    EXPECT_EQ(ocloc_error_t::OCLOC_INVALID_DEVICE, retVal);
+    EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+
+    EXPECT_NE(std::string::npos, capturedStdout.find("Couldn't load former ocloc invalidName"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc invalidName"));
+    EXPECT_TRUE(capturedStderr.empty());
 }
