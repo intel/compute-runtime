@@ -23,6 +23,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.h
                ${CMAKE_CURRENT_SOURCE_DIR}/metric_ip_sampling_streamer.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_metric.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_oa_enumeration_${DRIVER_MODEL}.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/metric_device_context_create.cpp
 )
 add_subdirectories()

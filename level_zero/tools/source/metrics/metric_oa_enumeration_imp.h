@@ -38,6 +38,8 @@ struct MetricEnumeration {
 
     MetricsDiscovery::IMetricsDevice_1_5 *getMdapiDevice() { return pMetricsDevice; }
     MetricsDiscovery::IAdapter_1_9 *getMdapiAdapter() { return pAdapter; }
+    MetricsDiscovery::IAdapterGroup_1_9 *getMdapiAdapterGroup() { return pAdapterGroup; }
+    OaMetricSourceImp &getMetricSource() { return metricSource; }
     virtual MetricsDiscovery::IAdapter_1_9 *getAdapterFromAdapterGroup(
         MetricsDiscovery::IAdapterGroup_1_9 *adapterGroup,
         uint32_t index) {

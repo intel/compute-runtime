@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "level_zero/tools/source/metrics/linux/os_metric_oa_enumeration_imp_linux.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -26,9 +28,7 @@ void MetricEnumeration::getMetricsDiscoveryFilename(std::vector<const char *> &n
     names.push_back("libmd.so.1");
 }
 
-bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor) {
-
-    auto &device = metricSource.getMetricDeviceContext().getDevice();
+bool getDrmAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor, Device &device) {
     auto &osInterface = device.getOsInterface();
     auto drm = osInterface.getDriverModel()->as<NEO::Drm>();
     auto drmFile = drm->getFileDescriptor();
@@ -42,15 +42,16 @@ bool MetricEnumeration::getAdapterId(uint32_t &adapterMajor, uint32_t &adapterMi
     return result == 0;
 }
 
-MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
-
-    UNRECOVERABLE_IF(pAdapterGroup == nullptr);
-
+MetricsDiscovery::IAdapter_1_9 *getDrmMetricsAdapter(MetricEnumeration *metricEnumeration) {
     // Obtain drm minor / major version.
     uint32_t drmMajor = 0;
     uint32_t drmMinor = 0;
 
-    UNRECOVERABLE_IF(getAdapterId(drmMajor, drmMinor) == false);
+    auto pAdapterGroup = metricEnumeration->getMdapiAdapterGroup();
+    auto &device = metricEnumeration->getMetricSource().getMetricDeviceContext().getDevice();
+
+    UNRECOVERABLE_IF(pAdapterGroup == nullptr);
+    UNRECOVERABLE_IF(getDrmAdapterId(drmMajor, drmMinor, device) == false);
 
     // Driver drm major/minor version.
     const int32_t drmNodePrimary = 0; // From xf86drm.h
@@ -61,15 +62,15 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
     const int32_t drmMinorPrimary = drmMinor - (drmNodePrimary * drmMaxDevices);
 
     // Enumerate metrics discovery adapters.
-    for (uint32_t index = 0, count = getAdapterGroupParams(pAdapterGroup)->AdapterCount;
+    for (uint32_t index = 0, count = metricEnumeration->getAdapterGroupParams(pAdapterGroup)->AdapterCount;
          index < count;
          ++index) {
 
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index) == nullptr);
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index)->GetParams() == nullptr);
 
-        auto adapter = getAdapterFromAdapterGroup(pAdapterGroup, index);
-        auto adapterParams = getAdapterParams(adapter);
+        auto adapter = metricEnumeration->getAdapterFromAdapterGroup(pAdapterGroup, index);
+        auto adapterParams = metricEnumeration->getAdapterParams(adapter);
 
         const bool validAdapterType = adapterParams->SystemId.Type == MetricsDiscovery::ADAPTER_ID_TYPE_MAJOR_MINOR;
         const bool validAdapterMajor = adapterParams->SystemId.MajorMinor.Major == static_cast<int32_t>(drmMajor);
@@ -83,21 +84,8 @@ MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
 
     return nullptr;
 }
-class MetricOALinuxImp : public MetricOAOsInterface {
-  public:
-    MetricOALinuxImp(Device &device);
-    ~MetricOALinuxImp() override = default;
-    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override;
-
-  private:
-    Device &device;
-};
 
 MetricOALinuxImp::MetricOALinuxImp(Device &device) : device(device) {}
-
-std::unique_ptr<MetricOAOsInterface> MetricOAOsInterface::create(Device &device) {
-    return std::make_unique<MetricOALinuxImp>(device);
-}
 
 ze_result_t MetricOALinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {
     ze_result_t result = ZE_RESULT_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
 
@@ -17,9 +17,9 @@
 namespace L0 {
 namespace ult {
 
-using MetricEnumerationTestWindows = Test<MetricContextFixture>;
+using MetricEnumerationTestWddm = Test<MetricContextFixture>;
 
-TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAdapterThenReturnSuccess) {
+TEST_F(MetricEnumerationTestWddm, givenCorrectWddmAdapterWhenGetMetricsAdapterThenReturnSuccess) {
 
     auto &rootDevice = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()];
     auto &osInterface = rootDevice->osInterface;

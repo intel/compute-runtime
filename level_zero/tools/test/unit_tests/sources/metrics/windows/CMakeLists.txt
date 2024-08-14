@@ -6,7 +6,7 @@
 
 if(WIN32)
   target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_oa_enumeration_windows.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_ip_sampling.cpp
   )
 endif()
