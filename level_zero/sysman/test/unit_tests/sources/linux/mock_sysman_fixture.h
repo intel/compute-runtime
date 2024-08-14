@@ -37,7 +37,6 @@ namespace ult {
 
 class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
   public:
-    using LinuxSysmanImp::mapOfSubDeviceIdToPmtObject;
     using LinuxSysmanImp::pFsAccess;
     using LinuxSysmanImp::pFwUtilInterface;
     using LinuxSysmanImp::pPmuInterface;

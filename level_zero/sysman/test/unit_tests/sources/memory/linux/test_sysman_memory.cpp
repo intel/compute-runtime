@@ -76,7 +76,6 @@ class SysmanDeviceMemoryFixtureI915 : public SysmanDeviceMemoryFixture {
     }
 
     void TearDown() override {
-        pLinuxSysmanImp->releasePmtObject();
         SysmanDeviceFixture::TearDown();
     }
 };

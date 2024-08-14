@@ -48,9 +48,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // global ops
     bool isRepairStatusSupported() override;
 
-    // Voltage
-    void getCurrentVoltage(PlatformMonitoringTech *pPmt, double &voltage) override;
-
     // power
     int32_t getPowerLimitValue(uint64_t value) override;
     uint64_t setPowerLimitValue(int32_t value) override;

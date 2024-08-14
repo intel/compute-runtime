@@ -150,7 +150,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPro
     }
 }
 
-TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndPmtIsNullForSubDeviceZeroWhenGettingCardPowerThenReturnsFailure) {
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndTelemetrySupportNotAvailableWhenGettingCardPowerThenFailureIsReturned) {
 
     pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
@@ -158,14 +158,21 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndPmt
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    for (auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-        if (pmtMapElement.first == 0) {
-            delete pmtMapElement.second;
-            pmtMapElement.second = nullptr;
-        }
-    }
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
 
+    zes_pwr_handle_t phPower = {};
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenPowerHandleDomainIsNotCardWhenGettingCardPowerDomainThenErrorIsReturned) {
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, powerHandleComponentCountMultiDevice);
+
+    auto handle = pSysmanDeviceImp->pPowerHandleContext->handleList.front();
+    delete handle;
+
+    pSysmanDeviceImp->pPowerHandleContext->handleList.erase(pSysmanDeviceImp->pPowerHandleContext->handleList.begin());
     zes_pwr_handle_t phPower = {};
     EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
@@ -175,12 +182,6 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenReadingToSysNodesFailsWhe
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    for (auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-        if (pmtMapElement.first == 0) {
-            delete pmtMapElement.second;
-            pmtMapElement.second = nullptr;
-        }
-    }
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());

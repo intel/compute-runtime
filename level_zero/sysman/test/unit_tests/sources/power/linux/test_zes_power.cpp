@@ -12,14 +12,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint64_t convertJouleToMicroJoule = 1000000u;
 constexpr uint32_t powerHandleComponentCount = 1u;
-
-ssize_t preadMockPower(int fd, void *buf, size_t count, off_t offset) {
-    uint64_t *mockBuf = static_cast<uint64_t *>(buf);
-    *mockBuf = setEnergyCounter;
-    return count;
-}
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenComponentCountZeroWhenEnumeratingPowerDomainsWhenhwmonInterfaceExistsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
@@ -63,26 +56,6 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenUninitializedPowerHandlesAndWhenGettin
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-
-    zes_pwr_handle_t phPower = {};
-    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenScanDiectoriesFailAndPmtIsNullWhenGettingCardPowerThenReturnsFailure) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    for (auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-        if (pmtMapElement.second) {
-            delete pmtMapElement.second;
-            pmtMapElement.second = nullptr;
-        }
-    }
-    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
 
     zes_pwr_handle_t phPower = {};
     EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
@@ -208,33 +181,11 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPowerSetLimitSuppor
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsReadFailsThenFailureIsReturned) {
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
-    pLinuxPowerImp->pSysfsAccess = pSysfsAccess;
-    pLinuxPowerImp->pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(0));
-    pLinuxPowerImp->isPowerModuleSupported();
-
+    EXPECT_TRUE(pLinuxPowerImp->isPowerModuleSupported());
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_properties_t properties{};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getProperties(&properties));
     EXPECT_EQ(properties.defaultLimit, -1);
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyCounterFailedWhenHwmonInterfaceExistThenValidErrorCodeReturned) {
-    auto handles = getPowerHandles(powerHandleComponentCount);
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    uint32_t subdeviceId = 0;
-    do {
-        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-        pPmt->preadFunction = preadMockPower;
-    } while (++subdeviceId < subDeviceCount);
-
-    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_power_energy_counter_t energyCounter = {};
-        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
-    }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumPowerHandleSucceeds) {
@@ -633,23 +584,6 @@ HWTEST2_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPermissionsThenF
     EXPECT_EQ(sustainedGet.power, sustainedSet.power);
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
-    auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_power_sustained_limit_t sustained;
-        zes_power_burst_limit_t burst;
-        zes_power_peak_limit_t peak;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, &sustained, &burst, &peak));
-    }
-}
-
 TEST_F(SysmanDevicePowerFixtureI915, GivenwritingSustainedPowerNodeReturnErrorWhenSetPowerLimitsForSustainedPowerWhenHwmonInterfaceExistThenProperErrorCodesReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
@@ -684,87 +618,6 @@ HWTEST2_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenWritingToSustai
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
-    auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_power_sustained_limit_t sustained;
-        zes_power_burst_limit_t burst;
-        zes_power_peak_limit_t peak;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, &sustained, &burst, &peak));
-    }
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenScanDirectoriesFailAndPmtIsNotNullPointerThenPowerModuleIsSupported) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    pSysmanDeviceImp->pPowerHandleContext->init(subDeviceCount);
-    ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-    uint32_t subdeviceId = 0;
-    PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_CARD);
-    EXPECT_TRUE(pPowerImp->isPowerModuleSupported());
-    delete pPowerImp;
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenComponentCountZeroWhenEnumeratingPowerDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, powerHandleComponentCount);
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenInvalidComponentCountWhenEnumeratingPowerDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, powerHandleComponentCount);
-
-    count = count + 1;
-    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, powerHandleComponentCount);
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenComponentCountZeroWhenEnumeratingPowerDomainsThenValidPowerHandlesIsReturned) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, powerHandleComponentCount);
-
-    std::vector<zes_pwr_handle_t> handles(count, nullptr);
-    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-    }
-}
-
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
 
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
@@ -783,68 +636,18 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
     }
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
+TEST_F(SysmanDevicePowerFixtureI915, GivenHwMonDoesNotExistAndTelemDataNotAvailableWhenGettingPowerEnergyCounterThenFailureIsReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
-
-    uint32_t subdeviceId = 0;
-    do {
-        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-        pPmt->preadFunction = preadMockPower;
-    } while (++subdeviceId < subDeviceCount);
-
-    for (auto handle : handles) {
-        zes_power_energy_counter_t energyCounter;
-        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
-    }
-}
-
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFileReturnsErrorAndPmtFailsThenFailureIsReturned) {
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    for (auto &subDeviceIdToPmtEntry : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-        delete subDeviceIdToPmtEntry.second;
-    }
-
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    uint32_t subdeviceId = 0;
-    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-    do {
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, nullptr);
-    } while (++subdeviceId < subDeviceCount);
-
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(subDeviceCount);
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
     for (auto handle : handles) {
         pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
         ASSERT_NE(nullptr, handle);
         zes_power_energy_counter_t energyCounter = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetEnergyCounter(handle, &energyCounter));
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesPowerGetEnergyCounter(handle, &energyCounter));
     }
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
 
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     zes_energy_threshold_t threshold;
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
@@ -853,67 +656,12 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergy
     }
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenScanDirectoriesFailAndPmtIsNullWhenGettingCardPowerThenReturnsFailure) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    for (auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-        if (pmtMapElement.second) {
-            delete pmtMapElement.second;
-            pmtMapElement.second = nullptr;
-        }
-    }
-    pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
-
-    zes_pwr_handle_t phPower = {};
-    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
 
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
     double threshold = 0;
     auto handles = getPowerHandles(powerHandleComponentCount);
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetEnergyThreshold(handle, threshold));
-    }
-}
-
-TEST_F(SysmanDevicePowerMultiDeviceFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterWhenEnergyHwmonFailsThenValidPowerReadingsRetrievedFromPmt) {
-
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-    pSysmanDeviceImp->pPowerHandleContext->init(subDeviceCount);
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
-    uint32_t subdeviceId = 0;
-    do {
-        auto pPmt = static_cast<MockPowerPmt *>(pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId));
-        pPmt->preadFunction = preadMockPower;
-    } while (++subdeviceId < subDeviceCount);
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-        zes_power_energy_counter_t energyCounter;
-        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-        ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
     }
 }
 

@@ -42,7 +42,6 @@ class SysmanProductHelperMemoryTest : public SysmanDeviceFixture {
     }
 
     void TearDown() override {
-        pLinuxSysmanImp->releasePmtObject();
         SysmanDeviceFixture::TearDown();
     }
 };

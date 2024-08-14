@@ -10,7 +10,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
@@ -85,13 +84,30 @@ ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPope
 }
 
 ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy) {
+
+    std::string telemDir = "";
+    std::string guid = "";
+    uint64_t telemOffset = 0;
+
+    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    if (!PlatformMonitoringTech::getKeyOffsetMap(pSysmanProductHelper, guid, keyOffsetMap)) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     const std::string key("PACKAGE_ENERGY");
     uint64_t energy = 0;
     constexpr uint64_t fixedPointToJoule = 1048576;
-    ze_result_t result = pPmt->readValue(key, energy);
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, energy)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
     // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part and remaining integral part which is converted into joule by division with 1048576(2^20) and then converted into microjoules
     pEnergy->energy = (energy / fixedPointToJoule) * convertJouleToMicroJoule;
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
@@ -99,13 +115,9 @@ ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy)
     std::string energyCounterNode = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEnergyCounterNode, subdeviceId, false);
     ze_result_t result = pSysfsAccess->read(energyCounterNode, pEnergy->energy);
     if (result != ZE_RESULT_SUCCESS) {
-        if (pPmt != nullptr) {
+        if (isTelemetrySupportAvailable) {
             return getPmtEnergyCounter(pEnergy);
         }
-    }
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), energyCounterNode.c_str(), getErrorCode(result));
-        return getErrorCode(result);
     }
     return result;
 }
@@ -315,14 +327,14 @@ bool LinuxPowerImp::isPowerModuleSupported() {
     }
 
     if (hwmonDirExists == false) {
-        return (pPmt != nullptr);
+        isTelemetrySupportAvailable = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
+        return isTelemetrySupportAvailable;
     }
     return true;
 }
 
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), powerDomain(powerDomain) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();

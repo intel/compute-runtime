@@ -12,7 +12,6 @@
 #include "level_zero/sysman/source/api/power/linux/sysman_os_power_imp.h"
 #include "level_zero/sysman/source/api/power/sysman_power_imp.h"
 #include "level_zero/sysman/source/device/sysman_device_imp.h"
-#include "level_zero/sysman/source/shared/linux/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
@@ -23,10 +22,8 @@ namespace Sysman {
 namespace ult {
 
 constexpr uint64_t setEnergyCounter = (83456u * 1048576u);
-constexpr uint64_t offset = 0x400;
+constexpr uint64_t mockKeyOffset = 0x420;
 constexpr uint32_t mockLimitCount = 2u;
-const std::string deviceName("device");
-const std::string baseTelemSysFS("/sys/class/intel_pmt");
 const std::string hwmonDir("device/hwmon");
 const std::string i915HwmonDir("device/hwmon/hwmon2");
 const std::string nonI915HwmonDir("device/hwmon/hwmon1");
@@ -46,11 +43,11 @@ constexpr uint32_t mockDefaultPowerLimitVal = 600000000;
 constexpr uint64_t mockMinPowerLimitVal = 300000000;
 constexpr uint64_t mockMaxPowerLimitVal = 600000000;
 
-const std::map<std::string, uint64_t> deviceKeyOffsetMapPower = {
-    {"PACKAGE_ENERGY", 0x400},
-    {"COMPUTE_TEMPERATURES", 0x68},
-    {"SOC_TEMPERATURES", 0x60},
-    {"CORE_TEMPERATURES", 0x6c}};
+const std::string realPathTelem = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+const std::string sysfsPathTelem = "/sys/class/intel_pmt/telem1";
+const std::string telemOffsetFileName("/sys/class/intel_pmt/telem1/offset");
+const std::string telemGuidFileName("/sys/class/intel_pmt/telem1/guid");
+const std::string telemFileName("/sys/class/intel_pmt/telem1/telem");
 
 struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
 
@@ -238,110 +235,37 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     MockPowerSysfsAccessInterface() = default;
 };
 
-struct MockPowerPmt : public L0::Sysman::PlatformMonitoringTech {
-    using L0::Sysman::PlatformMonitoringTech::keyOffsetMap;
-    using L0::Sysman::PlatformMonitoringTech::preadFunction;
-    using L0::Sysman::PlatformMonitoringTech::telemetryDeviceEntry;
-
-    MockPowerPmt(L0::Sysman::FsAccessInterface *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId) : L0::Sysman::PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId) {}
-    ~MockPowerPmt() override {
-        rootDeviceTelemNodeIndex = 0;
-    }
-
-    void mockedInit(L0::Sysman::FsAccessInterface *pFsAccess) {
-        std::string gpuUpstreamPortPath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0";
-        if (ZE_RESULT_SUCCESS != L0::Sysman::PlatformMonitoringTech::enumerateRootTelemIndex(pFsAccess, gpuUpstreamPortPath)) {
-            return;
-        }
-        telemetryDeviceEntry = "/sys/class/intel_pmt/telem2/telem";
-    }
-};
-
-struct MockPowerFsAccess : public L0::Sysman::FsAccessInterface {
-
-    ze_result_t listDirectory(const std::string directory, std::vector<std::string> &listOfTelemNodes) override {
-        if (directory.compare(baseTelemSysFS) == 0) {
-            listOfTelemNodes.push_back("telem1");
-            listOfTelemNodes.push_back("telem2");
-            listOfTelemNodes.push_back("telem3");
-            listOfTelemNodes.push_back("telem4");
-            listOfTelemNodes.push_back("telem5");
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t listDirectoryFailure(const std::string directory, std::vector<std::string> &events) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getRealPath(const std::string path, std::string &buf) override {
-        if (path.compare("/sys/class/intel_pmt/telem1") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-        } else if (path.compare("/sys/class/intel_pmt/telem2") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:86:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
-        } else if (path.compare("/sys/class/intel_pmt/telem3") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
-        } else if (path.compare("/sys/class/intel_pmt/telem4") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem4";
-        } else if (path.compare("/sys/class/intel_pmt/telem5") == 0) {
-            buf = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem5";
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t getRealPathFailure(const std::string path, std::string &buf) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    MockPowerFsAccess() = default;
+struct MockPowerFsAccessInterface : public L0::Sysman::FsAccessInterface {
+    MockPowerFsAccessInterface() = default;
 };
 
 class PublicLinuxPowerImp : public L0::Sysman::LinuxPowerImp {
   public:
     PublicLinuxPowerImp(L0::Sysman::OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : L0::Sysman::LinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, powerDomain) {}
-    using L0::Sysman::LinuxPowerImp::pPmt;
+    using L0::Sysman::LinuxPowerImp::isTelemetrySupportAvailable;
     using L0::Sysman::LinuxPowerImp::pSysfsAccess;
 };
 
 class SysmanDevicePowerFixtureI915 : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
-    std::unique_ptr<MockPowerPmt> pPmt;
-    std::unique_ptr<MockPowerFsAccess> pFsAccess;
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> pmtMapOriginal;
     MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
     MockPowerSysfsAccessInterface *pSysfsAccess = nullptr;
+    MockPowerFsAccessInterface *pFsAccess = nullptr;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
-        pFsAccess = std::make_unique<MockPowerFsAccess>();
         pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+        pFsAccess = new MockPowerFsAccessInterface();
         pSysfsAccess = new MockPowerSysfsAccessInterface();
+        pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
-
-        pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-
-        auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        uint32_t subdeviceId = 0;
-        do {
-            ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-            auto pPmt = new MockPowerPmt(pFsAccess.get(), onSubdevice, subdeviceId);
-            pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
-            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
-        } while (++subdeviceId < subDeviceCount);
-
+        pLinuxSysmanImp->pFsAccess = pFsAccess;
         getPowerHandles(0);
     }
     void TearDown() override {
-        pLinuxSysmanImp->releasePmtObject();
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = pmtMapOriginal;
         SysmanDeviceFixture::TearDown();
     }
 
@@ -369,40 +293,18 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
     std::unique_ptr<PublicLinuxPowerImp> pPublicLinuxPowerImp;
-    std::unique_ptr<MockPowerPmt> pPmt;
-    std::unique_ptr<MockPowerFsAccess> pFsAccess;
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOriginal;
     MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = nullptr;
     MockPowerSysfsAccessInterface *pSysfsAccess = nullptr;
 
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
         device = pSysmanDevice;
-        pFsAccess = std::make_unique<MockPowerFsAccess>();
-
         pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
         pSysfsAccess = new MockPowerSysfsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
-
-        mapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
-
-        auto subDeviceCount = pLinuxSysmanImp->getSubDeviceCount();
-        uint32_t subdeviceId = 0;
-        do {
-            ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-            auto pPmt = new MockPowerPmt(pFsAccess.get(), onSubdevice, subdeviceId);
-            pPmt->mockedInit(pFsAccess.get());
-            pPmt->keyOffsetMap = deviceKeyOffsetMapPower;
-            pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
-        } while (++subdeviceId < subDeviceCount);
     }
     void TearDown() override {
-        for (const auto &pmtMapElement : pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject) {
-            delete pmtMapElement.second;
-        }
-        pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject = mapOriginal;
         SysmanMultiDeviceFixture::TearDown();
     }
 

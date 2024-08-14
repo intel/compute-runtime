@@ -18,7 +18,6 @@ namespace Sysman {
 class SysmanKmdInterface;
 class SysmanProductHelper;
 class SysFsAccessInterface;
-class PlatformMonitoringTech;
 
 class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   public:
@@ -81,7 +80,6 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     uint32_t subdeviceId = 0;
     zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_GPU;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
-    PlatformMonitoringTech *pPmt = nullptr;
     void init();
 };
 

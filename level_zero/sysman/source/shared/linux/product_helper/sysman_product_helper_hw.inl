@@ -245,11 +245,6 @@ bool SysmanProductHelperHw<gfxProduct>::isRepairStatusSupported() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void SysmanProductHelperHw<gfxProduct>::getCurrentVoltage(PlatformMonitoringTech *pPmt, double &voltage) {
-    voltage = -1.0;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 int32_t SysmanProductHelperHw<gfxProduct>::getPowerLimitValue(uint64_t value) {
     uint64_t val = value / milliFactor;
     return static_cast<int32_t>(val);

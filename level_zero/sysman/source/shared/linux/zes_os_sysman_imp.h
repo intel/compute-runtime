@@ -54,11 +54,9 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
-    PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
     SysmanHwDeviceIdDrm::SingleInstance getSysmanHwDeviceIdInstance();
     NEO::Drm *getDrm();
-    void releasePmtObject();
     MOCKABLE_VIRTUAL void releaseSysmanDeviceResources();
     MOCKABLE_VIRTUAL ze_result_t reInitSysmanDeviceResources();
     MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(const ::pid_t, std::vector<int> &);
@@ -68,7 +66,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string getAddressFromPath(std::string &rootPortPath);
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
     decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
-    ze_result_t createPmtHandles();
     SysmanDeviceImp *getParentSysmanDeviceImp() { return pParentSysmanDeviceImp; }
     std::string &getPciRootPath() { return rootPath; }
     std::string &getDeviceName();
@@ -88,7 +85,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     FsAccessInterface *pFsAccess = nullptr;
     ProcFsAccessInterface *pProcfsAccess = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
-    std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     uint32_t subDeviceCount = 0;
     FirmwareUtil *pFwUtilInterface = nullptr;
     PmuInterface *pPmuInterface = nullptr;

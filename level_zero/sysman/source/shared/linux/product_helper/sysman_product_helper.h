@@ -73,9 +73,6 @@ class SysmanProductHelper {
     // Global Operations
     virtual bool isRepairStatusSupported() = 0;
 
-    // Voltage
-    virtual void getCurrentVoltage(PlatformMonitoringTech *pPmt, double &voltage) = 0;
-
     // power
     virtual int32_t getPowerLimitValue(uint64_t value) = 0;
     virtual uint64_t setPowerLimitValue(int32_t value) = 0;

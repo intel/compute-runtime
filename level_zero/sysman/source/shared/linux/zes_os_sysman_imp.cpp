@@ -61,7 +61,7 @@ ze_result_t LinuxSysmanImp::init() {
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     pPmuInterface = PmuInterface::create(this);
-    return createPmtHandles();
+    return result;
 }
 
 ze_result_t LinuxSysmanImp::getResult(int err) {
@@ -88,17 +88,6 @@ SysmanHwDeviceIdDrm::SingleInstance LinuxSysmanImp::getSysmanHwDeviceIdInstance(
 NEO::Drm *LinuxSysmanImp::getDrm() {
     const auto &osInterface = *pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
     return osInterface.getDriverModel()->as<NEO::Drm>();
-}
-
-ze_result_t LinuxSysmanImp::createPmtHandles() {
-    std::string gtDevicePCIPath;
-    auto result = pSysfsAccess->getRealPath("device", gtDevicePCIPath);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-    auto gpuUpstreamPortPath = getPciCardBusDirectoryPath(gtDevicePCIPath);
-    PlatformMonitoringTech::create(this, gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
-    return result;
 }
 
 static std::string modifyPathOnLevel(std::string realPciPath, uint8_t nLevel) {
@@ -144,24 +133,6 @@ std::string LinuxSysmanImp::getPciCardBusDirectoryPath(std::string realPciPath) 
     // '/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/' will always be the same distance.
     // from 0000:8c:00.0 i.e the 2nd PCI address from the gt tile.
     return modifyPathOnLevel(realPciPath, 2);
-}
-
-PlatformMonitoringTech *LinuxSysmanImp::getPlatformMonitoringTechAccess(uint32_t subDeviceId) {
-    auto subDeviceIdToPmtEntry = mapOfSubDeviceIdToPmtObject.find(subDeviceId);
-    if (subDeviceIdToPmtEntry == mapOfSubDeviceIdToPmtObject.end()) {
-        return nullptr;
-    }
-    return subDeviceIdToPmtEntry->second;
-}
-
-void LinuxSysmanImp::releasePmtObject() {
-    for (auto &subDeviceIdToPmtEntry : mapOfSubDeviceIdToPmtObject) {
-        if (subDeviceIdToPmtEntry.second) {
-            delete subDeviceIdToPmtEntry.second;
-            subDeviceIdToPmtEntry.second = nullptr;
-        }
-    }
-    mapOfSubDeviceIdToPmtObject.clear();
 }
 
 FsAccessInterface &LinuxSysmanImp::getFsAccess() {
@@ -229,7 +200,6 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         pPmuInterface = nullptr;
     }
     releaseFwUtilInterface();
-    releasePmtObject();
 }
 
 void LinuxSysmanImp::getPidFdsForOpenDevice(const ::pid_t pid, std::vector<int> &deviceFds) {
@@ -304,14 +274,12 @@ void LinuxSysmanImp::releaseSysmanDeviceResources() {
         getSysmanDeviceImp()->pDiagnosticsHandleContext->releaseDiagnosticsHandles();
     }
     getSysmanDeviceImp()->pFirmwareHandleContext->releaseFwHandles();
-    releasePmtObject();
     if (!diagnosticsReset) {
         releaseFwUtilInterface();
     }
 }
 
 ze_result_t LinuxSysmanImp::reInitSysmanDeviceResources() {
-    createPmtHandles();
     if (!diagnosticsReset) {
         if (pFwUtilInterface == nullptr) {
             createFwUtilInterface();

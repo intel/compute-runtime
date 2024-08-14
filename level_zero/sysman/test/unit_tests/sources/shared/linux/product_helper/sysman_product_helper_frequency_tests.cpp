@@ -35,15 +35,6 @@ HWTEST2_F(SysmanProductHelperFrequencyTest, GivenFrequencyModuleWhenQueryingFreq
     EXPECT_EQ(true, pSysmanProductHelper->isFrequencySetRangeSupported());
 }
 
-TEST_F(SysmanProductHelperFrequencyTest, GivenSysmanProductHelperInstanceWhenGettingCurrentVoltageThenVerifyCurrentVoltageIsNegative) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    std::unique_ptr<PublicFsAccess> pFsAccess = std::make_unique<PublicFsAccess>();
-    auto pPmt = std::make_unique<PlatformMonitoringTech>(pFsAccess.get(), 1, 0);
-    double voltage = 0;
-    pSysmanProductHelper->getCurrentVoltage(pPmt.get(), voltage);
-    EXPECT_EQ(voltage, -1.0);
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

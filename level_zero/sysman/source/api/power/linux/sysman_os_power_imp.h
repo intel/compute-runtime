@@ -17,10 +17,10 @@
 namespace L0 {
 namespace Sysman {
 
-class PlatformMonitoringTech;
 class SysFsAccessInterface;
 class SysmanKmdInterface;
 class SysmanProductHelper;
+class LinuxSysmanImp;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;
@@ -41,10 +41,11 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ~LinuxPowerImp() override = default;
 
   protected:
-    PlatformMonitoringTech *pPmt = nullptr;
+    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
+    bool isTelemetrySupportAvailable = false;
 
   private:
     std::string intelGraphicsHwmonDir = {};
