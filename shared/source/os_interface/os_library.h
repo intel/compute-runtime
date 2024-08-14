@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,8 +30,8 @@ class OsLibrary {
   public:
     virtual ~OsLibrary() = default;
 
-    static OsLibrary *load(const std::string &name);
-    static OsLibrary *load(const std::string &name, std::string *errorValue);
+    static OsLibrary *load(const std::string &name) { return loadAndCaptureError(name, nullptr); }
+    static OsLibrary *loadAndCaptureError(const std::string &name, std::string *errorValue);
     static const std::string createFullSystemPath(const std::string &name);
 
     ConvertibleProcAddr operator[](const std::string &name) {

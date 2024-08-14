@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,8 @@
 #include <link.h>
 
 namespace NEO {
-OsLibrary *OsLibrary::load(const std::string &name) {
-    return load(name, nullptr);
-}
 
-OsLibrary *OsLibrary::load(const std::string &name, std::string *errorValue) {
+OsLibrary *OsLibrary::loadAndCaptureError(const std::string &name, std::string *errorValue) {
     auto ptr = new (std::nothrow) Linux::OsLibrary(name, errorValue);
     if (ptr == nullptr)
         return nullptr;

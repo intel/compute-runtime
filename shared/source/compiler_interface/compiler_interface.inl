@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,7 +90,7 @@ template <template <CIF::Version_t> class EntryPointT>
 inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib,
                          CIF::RAII::UPtr_t<CIF::CIFMain> &outLibMain) {
     std::string loadLibraryError;
-    auto lib = std::unique_ptr<OsLibrary>(OsLibrary::load(libName, &loadLibraryError));
+    auto lib = std::unique_ptr<OsLibrary>(OsLibrary::loadAndCaptureError(libName, &loadLibraryError));
     if (lib == nullptr) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
         DEBUG_BREAK_IF(true); // could not load library

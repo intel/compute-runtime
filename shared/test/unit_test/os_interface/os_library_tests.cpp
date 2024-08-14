@@ -1,15 +1,10 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#if defined(_WIN32)
-#include "shared/source/os_interface/windows/os_library_win.h"
-#elif defined(__linux__)
-#include "shared/source/os_interface/linux/os_library_linux.h"
-#endif
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/test_macros/test.h"
@@ -40,7 +35,7 @@ TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturned) {
 
 TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturnedAndErrorString) {
     std::string errorValue;
-    OsLibrary *library = OsLibrary::load(fakeLibName, &errorValue);
+    OsLibrary *library = OsLibrary::loadAndCaptureError(fakeLibName, &errorValue);
     EXPECT_FALSE(errorValue.empty());
     EXPECT_EQ(nullptr, library);
 }
@@ -52,7 +47,7 @@ TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoaded) {
 
 TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoadedWithNoErrorString) {
     std::string errorValue;
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName, &errorValue));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadAndCaptureError(Os::testDllName, &errorValue));
     EXPECT_TRUE(errorValue.empty());
     EXPECT_NE(nullptr, library);
 }
