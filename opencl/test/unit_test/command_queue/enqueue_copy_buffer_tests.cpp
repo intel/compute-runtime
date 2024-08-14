@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/gen_common/reg_configs_common.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -210,9 +211,13 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
     enqueueCopyBuffer();
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto builtInType = adjustBuiltInType(heaplessEnabled, EBuiltInOps::copyBufferToBuffer);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -231,7 +236,17 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     auto kernelDescriptor = &kernel->getKernelInfo().kernelDescriptor;
 
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernelDescriptor, rootDeviceIndex));
-    EXPECT_NE(iohBefore, pIOH->getUsed());
+
+    auto crossThreadDatSize = kernel->getCrossThreadDataSize();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(heaplessEnabled);
+    bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
+
+    if (crossThreadDataFitsInInlineData) {
+        EXPECT_EQ(iohBefore, pIOH->getUsed());
+    } else {
+        EXPECT_NE(iohBefore, pIOH->getUsed());
+    }
+
     if (kernel->usesBindfulAddressingForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
@@ -377,7 +392,11 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
 
     // Extract the kernel used
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto builtInType = adjustBuiltInType(heaplessEnabled, EBuiltInOps::copyBufferToBuffer);
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
@@ -405,7 +424,10 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer,
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto builtInType = adjustBuiltInType(heaplessEnabled, EBuiltInOps::copyBufferToBuffer);
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                             pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &builder);
 
