@@ -1316,12 +1316,18 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
         }
     }
 
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
 
-    auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
+    if (!heaplessStateInitEnabled) {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+            cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
+
+        auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), itor);
+    }
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerDoesNotContainDuplicatesAfterClosingCommandList) {

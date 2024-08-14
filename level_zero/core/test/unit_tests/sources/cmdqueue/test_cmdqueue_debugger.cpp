@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -31,6 +32,13 @@ using L0CmdQueueDebuggerTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
 HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaProgrammingExecutedThenProgramSbaWritesToSbaTrackingBufferForNonInternalQueues) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableStateBaseAddressTracking.set(1);
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
+    if (heaplessEnabled) {
+        GTEST_SKIP();
+    }
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -165,6 +173,13 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenIntern
 
 HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTimesThenCsrBaseProgrammedOnlyTheFirstTime, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+    if (heplessStateInitEnabled) {
+        GTEST_SKIP();
+    }
 
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

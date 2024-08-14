@@ -8,6 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -82,6 +83,13 @@ TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenComp
 
 using L0DebuggerPerContextAddressSpaceTest = Test<L0DebuggerPerContextAddressSpaceFixture>;
 HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded) {
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+        GTEST_SKIP();
+    }
+
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
@@ -151,6 +159,12 @@ HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenCommandL
 
 HWTEST_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledWhenTwoCommandQueuesExecuteCommandListThenSipIsDispatchedOncePerContext) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+        GTEST_SKIP();
+    }
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;

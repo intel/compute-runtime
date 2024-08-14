@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -33,6 +34,12 @@ struct L0DebuggerWithBlitterTest : public L0DebuggerHwParameterizedFixture {
 
 HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+        GTEST_SKIP();
+    }
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
@@ -63,6 +70,12 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandLi
 
 HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionDisabledWhenCommandListIsInititalizedOrResetThenCaptureSbaIsNotCalled) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+        GTEST_SKIP();
+    }
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
@@ -257,6 +270,13 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
+
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
     kernel.module = &module;
@@ -302,6 +322,12 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateFlushTaskWhenExecutingKernelT
 
 HWTEST_P(L0DebuggerWithBlitterTest, givenInternalUsageImmediateCommandListWhenExecutingThenDebuggerAllocationsAreNotResident) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+        GTEST_SKIP();
+    }
 
     Mock<Module> module(device, nullptr, ModuleType::user);
     Mock<::L0::KernelImp> kernel;
