@@ -98,6 +98,16 @@ constexpr uint32_t highPriority = 1 << 14;
 constexpr uint32_t lowPriority = 1 << 13;
 } // namespace hardwareContextFlags
 
+namespace hardwareContextId {
+constexpr uint32_t invalidContextId = -1;
+}
+
+struct CreateHardwareContext2Params {
+    uint32_t contextId;
+    uint32_t primaryContextId = hardwareContextId::invalidContextId;
+};
+
 static_assert(std::is_pod<SurfaceInfo>::value, "SurfaceInfo is not POD type");
+static_assert(std::is_standard_layout_v<CreateHardwareContext2Params>, "CreateHardwareContext2Params is not standard layout type");
 
 } // namespace aub_stream

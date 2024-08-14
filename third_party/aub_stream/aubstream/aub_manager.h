@@ -17,6 +17,7 @@
 namespace aub_stream {
 
 struct HardwareContext;
+struct CreateHardwareContext2Params;
 
 struct AubManagerOptions {
     uint32_t version{};
@@ -71,6 +72,7 @@ class AubManager {
     virtual void blockMemWritesViaTbx(bool onoff) {}
 
     virtual bool releaseHardwareContext(HardwareContext *context) { return false; };
+    virtual HardwareContext *createHardwareContext2(const CreateHardwareContext2Params &params, uint32_t device, uint32_t engine, uint32_t flags) { return nullptr; };
 };
 
 } // namespace aub_stream
