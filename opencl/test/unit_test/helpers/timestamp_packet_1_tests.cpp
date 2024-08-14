@@ -415,7 +415,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
-    using GPGPU_WALKER = typename FamilyType::DefaultWalkerType;
+
+    using WalkerVariant = typename FamilyType::WalkerVariant;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -426,23 +427,24 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdQ->getCS(0), 0);
+    hwParser.findHardwareCommands<FamilyType>();
 
-    bool walkerFound = false;
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        if (genCmdCast<GPGPU_WALKER *>(*it)) {
-            if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
-                auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
-                EXPECT_NE(nullptr, pipeControl);
-            }
-            walkerFound = true;
-            it = find<PIPE_CONTROL *>(++it, hwParser.cmdList.end());
-            ASSERT_NE(hwParser.cmdList.end(), it);
-            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
-            ASSERT_NE(nullptr, pipeControl);
-            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    auto it = hwParser.itorWalker;
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*it);
+
+    std::visit([&it, &hwParser, this](auto &&walker) {
+        ASSERT_NE(nullptr, walker);
+        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getRootDeviceEnvironment())) {
+            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
+            EXPECT_NE(nullptr, pipeControl);
         }
-    }
-    EXPECT_TRUE(walkerFound);
+        it = find<PIPE_CONTROL *>(++it, hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), it);
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        ASSERT_NE(nullptr, pipeControl);
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    },
+               walkerVariant);
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrThenAddSizeForSemaphores) {
