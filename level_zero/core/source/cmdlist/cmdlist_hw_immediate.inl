@@ -466,7 +466,9 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         cmdQ->setTaskCount(completionStamp.taskCount);
 
         if (this->isSyncModeQueue) {
+            lockCSR.unlock();
             status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
+            lockCSR.lock();
         }
     }
 
