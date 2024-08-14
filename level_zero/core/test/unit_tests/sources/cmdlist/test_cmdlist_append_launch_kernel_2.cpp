@@ -1564,6 +1564,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
 }
 
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenSetProperPartitionSize, IsAtLeastXeHpCore) {
+
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
     ze_group_count_t groupCount{16, 1, 1};
 
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -1578,9 +1581,14 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
     auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
-    EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
-    EXPECT_EQ(4u, cmd->getPartitionSize());
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*itorWalker);
+    std::visit([](auto &&walker) {
+        ASSERT_NE(nullptr, walker);
+
+        EXPECT_TRUE(walker->getWorkloadPartitionEnable());
+        EXPECT_EQ(4u, walker->getPartitionSize());
+    },
+               walkerVariant);
 
     auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -1594,17 +1602,21 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
         cmdList, ptrOffset(commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
-    itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-    cmd = genCmdCast<typename FamilyType::DefaultWalkerType *>(*itorWalker);
-    EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
-
     const auto &gfxCoreHelper = device->getGfxCoreHelper();
+    bool singleTileExecImplicitScalingRequired = gfxCoreHelper.singleTileExecImplicitScalingRequired(true);
+    itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
 
-    if (gfxCoreHelper.singleTileExecImplicitScalingRequired(true)) {
-        EXPECT_EQ(16u, cmd->getPartitionSize());
-    } else {
-        EXPECT_EQ(4u, cmd->getPartitionSize());
-    }
+    WalkerVariant walkerVariant2 = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*itorWalker);
+    std::visit([singleTileExecImplicitScalingRequired](auto &&walker) {
+        ASSERT_NE(nullptr, walker);
+        EXPECT_TRUE(walker->getWorkloadPartitionEnable());
+        if (singleTileExecImplicitScalingRequired) {
+            EXPECT_EQ(16u, walker->getPartitionSize());
+        } else {
+            EXPECT_EQ(4u, walker->getPartitionSize());
+        }
+    },
+               walkerVariant2);
 }
 
 HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
