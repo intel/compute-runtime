@@ -58,6 +58,7 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             auto retValFromFormerOcloc = Commands::invokeFormerOcloc(getOclocFormerLibName(), numArgs, argv, numSources, dataSources, lenSources, nameSources, numInputHeaders, dataInputHeaders, lenInputHeaders, nameInputHeaders, numOutputs, dataOutputs, lenOutputs, nameOutputs);
             if (retValFromFormerOcloc) {
                 retVal = retValFromFormerOcloc.value();
+                argHelper->dontSetupOutputs();
             } else {
                 argHelper->printf("Couldn't load former ocloc %s\n", getOclocFormerLibName().c_str());
             }

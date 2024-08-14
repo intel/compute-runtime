@@ -84,6 +84,7 @@ class OclocArgHelper {
     MOCKABLE_VIRTUAL std::vector<char> readBinaryFile(const std::string &filename);
     MOCKABLE_VIRTUAL std::unique_ptr<char[]> loadDataFromFile(const std::string &filename, size_t &retSize);
 
+    void dontSetupOutputs() { hasOutput = false; }
     bool outputEnabled() const {
         return hasOutput;
     }
