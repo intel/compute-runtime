@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/compiler_product_helper.h"
 
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
@@ -21,6 +23,9 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         BufferDefaults::context = new MockContext;
 
         buffer = BufferHelper<>::create();
+
+        auto &compilerProductHelper = this->pDevice->getCompilerProductHelper();
+        isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
     }
 
     void tearDown() {
@@ -38,6 +43,21 @@ struct EnqueueFillBufferFixture : public CommandEnqueueFixture {
         EXPECT_EQ(CL_SUCCESS, retVal);
         parseCommands<FamilyType>(*pCmdQ);
     }
+
+    int32_t adjustBuiltInType(int32_t builtInType) {
+
+        if (this->isHeaplessEnabled) {
+            switch (builtInType) {
+            case EBuiltInOps::fillBuffer:
+            case EBuiltInOps::fillBufferStateless:
+                return EBuiltInOps::fillBufferStatelessHeapless;
+            }
+        }
+
+        return builtInType;
+    }
+
+    bool isHeaplessEnabled = false;
 
     MockContext context;
     Buffer *buffer = nullptr;
