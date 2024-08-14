@@ -589,7 +589,18 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
 
     callOneWorkItemNDRKernel();
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), &pKernel->getKernelInfo().kernelDescriptor, rootDeviceIndex));
-    EXPECT_NE(iohBefore, pIOH->getUsed());
+
+    auto crossThreadDatSize = this->pKernel->getCrossThreadDataSize();
+    auto heaplessEnabled = pCmdQ->getHeaplessModeEnabled();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(heaplessEnabled);
+    bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
+
+    if (crossThreadDataFitsInInlineData) {
+        EXPECT_EQ(iohBefore, pIOH->getUsed());
+    } else {
+        EXPECT_NE(iohBefore, pIOH->getUsed());
+    }
+
     if ((pKernel->usesBindfulAddressingForBuffers() || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) && compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
