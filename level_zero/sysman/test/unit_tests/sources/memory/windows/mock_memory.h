@@ -22,7 +22,7 @@ namespace Sysman {
 namespace ult {
 
 constexpr uint32_t memoryHandleComponentCount = 1u;
-constexpr uint32_t mockMemoryMaxBandwidth = 250000;
+constexpr uint32_t mockMemoryMaxBandwidth = 2;
 constexpr uint32_t mockMemoryCurrentBandwidthRead = 3840;
 constexpr uint32_t mockMemoryCurrentBandwidthWrite = 2560;
 constexpr uint32_t mockMemoryBandwidthTimestamp = 1230000;
