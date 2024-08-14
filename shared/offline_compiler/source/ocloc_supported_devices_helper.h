@@ -55,22 +55,22 @@ class SupportedDevicesHelper {
     SupportedDevicesHelper(SupportedDevicesMode mode, ProductConfigHelper *productConfigHelper)
         : mode(mode), productConfigHelper(productConfigHelper) {}
 
-    std::string getOclocCurrentVersionOutputFilename() const;
+    std::string getCurrentOclocOutputFilename() const;
     SupportedDevicesData collectSupportedDevicesData(const std::vector<DeviceAotInfo> &enabledDevices) const;
 
-    std::string serialize(std::string_view oclocVersion, const SupportedDevicesData &data) const;
+    std::string serialize(std::string_view oclocName, const SupportedDevicesData &data) const;
     std::map<std::string, SupportedDevicesData> deserialize(std::string_view yamlString) const;
 
-    std::string mergeAndSerializeWithFormerVersionData(const SupportedDevicesData &currentVersionData) const;
-    std::string concatAndSerializeWithFormerVersionData(const SupportedDevicesData &currentVersionData) const;
+    std::string mergeAndSerializeWithFormerData(const SupportedDevicesData &currentData) const;
+    std::string concatAndSerializeWithFormerData(const SupportedDevicesData &currentData) const;
 
-    MOCKABLE_VIRTUAL std::string getDataFromFormerOclocVersion() const;
+    MOCKABLE_VIRTUAL std::string getDataFromFormerOcloc() const;
 
   protected:
-    MOCKABLE_VIRTUAL std::string getOclocCurrentVersion() const;
-    std::string getOclocFormerVersion() const;
-    std::string extractOclocVersion(std::string_view oclocLibNameWithVersion) const;
-    SupportedDevicesData mergeOclocVersionData(const std::map<std::string, SupportedDevicesData> &versionDataMap) const;
+    MOCKABLE_VIRTUAL std::string getCurrentOclocName() const;
+    std::string getFormerOclocName() const;
+    std::string extractOclocName(std::string_view oclocLibFileName) const;
+    SupportedDevicesData mergeOclocData(const std::map<std::string, SupportedDevicesData> &nameDataMap) const;
     std::string getOutputFilenameSuffix([[maybe_unused]] SupportedDevicesMode mode) const;
 
   private:

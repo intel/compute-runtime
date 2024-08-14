@@ -11,11 +11,11 @@
 
 #include "gtest/gtest.h"
 
-namespace NEO {
+using namespace NEO;
 
 struct SupportedDevicesHelperWindowsTest : public ::testing::Test {
     void SetUp() override {
-        mockHelper.getOclocCurrentVersionMockResult = "";
+        mockHelper.getCurrentOclocNameMockResult = "";
     }
 
     void TearDown() override {
@@ -24,25 +24,23 @@ struct SupportedDevicesHelperWindowsTest : public ::testing::Test {
     MockSupportedDevicesHelper mockHelper = MockSupportedDevicesHelper(SupportedDevicesMode::concat, nullptr);
 };
 
-TEST_F(SupportedDevicesHelperWindowsTest, GivenVariousOclocLibraryNamesWhenExtractingOclocVersionThenEmptyStringIsReturned) {
-    EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0.1.so"), "");
-    EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0.so"), "");
-    EXPECT_EQ(mockHelper.extractOclocVersion("libocloc2.0.so"), "");
-    EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0"), "");
-    EXPECT_EQ(mockHelper.extractOclocVersion("libocloc.so"), "");
+TEST_F(SupportedDevicesHelperWindowsTest, GivenVariousOclocLibraryNamesWhenExtractingOclocNameThenEmptyStringIsReturned) {
+    EXPECT_EQ(mockHelper.extractOclocName("libocloc-2.0.1.so"), "");
+    EXPECT_EQ(mockHelper.extractOclocName("libocloc-2.0.so"), "");
+    EXPECT_EQ(mockHelper.extractOclocName("libocloc2.0.so"), "");
+    EXPECT_EQ(mockHelper.extractOclocName("libocloc-2.0"), "");
+    EXPECT_EQ(mockHelper.extractOclocName("libocloc.so"), "");
 }
 
-TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetOclocCurrentVersionThenReturnCorrectValue) {
-    EXPECT_EQ("ocloc", mockHelper.getOclocCurrentVersion());
+TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetCurrentOclocNameThenReturnCorrectValue) {
+    EXPECT_EQ("ocloc", mockHelper.getCurrentOclocName());
 }
 
-TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetOclocFormerVersionThenReturnCorrectValue) {
-    EXPECT_EQ("", mockHelper.getOclocFormerVersion());
+TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetFormerOclocNameThenReturnCorrectValue) {
+    EXPECT_EQ("", mockHelper.getFormerOclocName());
 }
 
-TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetDataFromFormerOclocVersionThenReturnEmptyData) {
+TEST_F(SupportedDevicesHelperWindowsTest, GivenSupportedDevicesHelperWhenGetDataFromFormerOclocThenReturnEmptyData) {
     SupportedDevicesHelper helper(SupportedDevicesMode::concat, nullptr);
-    EXPECT_EQ("", helper.getDataFromFormerOclocVersion());
+    EXPECT_EQ("", helper.getDataFromFormerOcloc());
 }
-
-} // namespace NEO

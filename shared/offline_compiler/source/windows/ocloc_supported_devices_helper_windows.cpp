@@ -17,23 +17,19 @@ std::string SupportedDevicesHelper::getOutputFilenameSuffix(SupportedDevicesMode
     return std::string("_supported_devices") + fileExtension.data();
 }
 
-std::string SupportedDevicesHelper::getOclocCurrentVersionOutputFilename() const {
-    return getOclocCurrentVersion() + getOutputFilenameSuffix(SupportedDevicesMode::unknown);
+std::string SupportedDevicesHelper::getCurrentOclocOutputFilename() const {
+    return getCurrentOclocName() + getOutputFilenameSuffix(SupportedDevicesMode::unknown);
 }
 
-std::string SupportedDevicesHelper::getOclocCurrentVersion() const {
+std::string SupportedDevicesHelper::getCurrentOclocName() const {
     return "ocloc";
 }
 
-std::string SupportedDevicesHelper::getOclocFormerVersion() const {
+std::string SupportedDevicesHelper::extractOclocName(std::string_view oclocLibName) const {
     return "";
 }
 
-std::string SupportedDevicesHelper::extractOclocVersion(std::string_view oclocLibNameWithVersion) const {
-    return "";
-}
-
-std::string SupportedDevicesHelper::getDataFromFormerOclocVersion() const {
+std::string SupportedDevicesHelper::getDataFromFormerOcloc() const {
     return "";
 }
 } // namespace Ocloc

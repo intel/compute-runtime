@@ -23,7 +23,7 @@ using namespace NEO;
 
 struct SupportedDevicesHelperLinuxTest : public ::testing::Test {
     void SetUp() override {
-        mockHelper.getOclocCurrentVersionMockResult = "";
+        mockHelper.getCurrentOclocNameMockResult = "";
         oclocCurrentLibName.shrink_to_fit();
         oclocFormerLibName.shrink_to_fit();
     }
@@ -36,28 +36,27 @@ struct SupportedDevicesHelperLinuxTest : public ::testing::Test {
     MockSupportedDevicesHelper mockHelper = MockSupportedDevicesHelper(SupportedDevicesMode::concat, nullptr);
 };
 
-TEST_F(SupportedDevicesHelperLinuxTest, GivenVariousOclocLibraryNamesWhenExtractingOclocVersionThenEmptyStringIsReturned) {
+TEST_F(SupportedDevicesHelperLinuxTest, GivenVariousOclocLibraryNamesWhenExtractingOclocNameThenCorrectStringIsReturned) {
     {
         // Valid Ocloc lib names
-        EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0.1.so"), "ocloc-2.0.1");
-        EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0.so"), "ocloc-2.0");
+        EXPECT_EQ(mockHelper.extractOclocName("libocloc.so"), "ocloc");
+        EXPECT_EQ(mockHelper.extractOclocName("libocloc-legacy1.so"), "ocloc-legacy1");
     }
 
     {
         // Invalid Ocloc lib names
-        EXPECT_EQ(mockHelper.extractOclocVersion("libocloc2.0.so"), "ocloc");
-        EXPECT_EQ(mockHelper.extractOclocVersion("libocloc-2.0"), "ocloc");
-        EXPECT_EQ(mockHelper.extractOclocVersion(""), "ocloc");
-        EXPECT_EQ(mockHelper.extractOclocVersion("libocloc.so"), "ocloc");
+        EXPECT_EQ(mockHelper.extractOclocName("ocloc2.so"), "ocloc");
+        EXPECT_EQ(mockHelper.extractOclocName(""), "ocloc");
+        EXPECT_EQ(mockHelper.extractOclocName("libocloc2"), "ocloc");
     }
 }
 
-TEST_F(SupportedDevicesHelperLinuxTest, GivenSupportedDevicesHelperWhenGetOclocCurrentVersionThenReturnCorrectValue) {
+TEST_F(SupportedDevicesHelperLinuxTest, GivenSupportedDevicesHelperWhenGetCurrentOclocNameThenReturnCorrectValue) {
     VariableBackup<std::string> oclocNameBackup(&oclocCurrentLibName, "libocloc-current.so");
-    EXPECT_EQ("ocloc-current", mockHelper.getOclocCurrentVersion());
+    EXPECT_EQ("ocloc-current", mockHelper.getCurrentOclocName());
 }
 
-TEST_F(SupportedDevicesHelperLinuxTest, GivenSupportedDevicesHelperWhenGetOclocFormerVersionThenReturnCorrectValue) {
+TEST_F(SupportedDevicesHelperLinuxTest, GivenSupportedDevicesHelperWhenGetFormerOclocNameThenReturnCorrectValue) {
     VariableBackup<std::string> oclocNameBackup(&oclocFormerLibName, "libocloc-former.so");
-    EXPECT_EQ("ocloc-former", mockHelper.getOclocFormerVersion());
+    EXPECT_EQ("ocloc-former", mockHelper.getFormerOclocName());
 }

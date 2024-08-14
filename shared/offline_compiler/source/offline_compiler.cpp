@@ -472,12 +472,12 @@ int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, Ocl
     std::string output;
 
     if (mode == Ocloc::SupportedDevicesMode::merge) {
-        output = supportedDevicesHelper.mergeAndSerializeWithFormerVersionData(supportedDevicesData);
+        output = supportedDevicesHelper.mergeAndSerializeWithFormerData(supportedDevicesData);
     } else {
-        output = supportedDevicesHelper.concatAndSerializeWithFormerVersionData(supportedDevicesData);
+        output = supportedDevicesHelper.concatAndSerializeWithFormerData(supportedDevicesData);
     }
 
-    helper->saveOutput(supportedDevicesHelper.getOclocCurrentVersionOutputFilename(), output.data(), output.size());
+    helper->saveOutput(supportedDevicesHelper.getCurrentOclocOutputFilename(), output.data(), output.size());
 
     return 0;
 }

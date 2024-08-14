@@ -19,25 +19,24 @@ std::string SupportedDevicesHelper::getOutputFilenameSuffix(SupportedDevicesMode
     return "_supported_devices_" + toStr(mode) + fileExtension.data();
 }
 
-std::string SupportedDevicesHelper::getOclocCurrentVersionOutputFilename() const {
-    return getOclocCurrentVersion() + getOutputFilenameSuffix(mode);
+std::string SupportedDevicesHelper::getCurrentOclocOutputFilename() const {
+    return getCurrentOclocName() + getOutputFilenameSuffix(mode);
 }
 
-std::string SupportedDevicesHelper::getOclocCurrentVersion() const {
-    return extractOclocVersion(getOclocCurrentLibName());
+std::string SupportedDevicesHelper::getCurrentOclocName() const {
+    return extractOclocName(getOclocCurrentLibName());
 }
 
-std::string SupportedDevicesHelper::getOclocFormerVersion() const {
-    return extractOclocVersion(getOclocFormerLibName());
-}
-
-std::string SupportedDevicesHelper::extractOclocVersion(std::string_view oclocLibNameWithVersion) const {
-    // libocloc-2.0.so -> ocloc-2.0
-    std::string_view view(oclocLibNameWithVersion);
-    auto start = view.find("ocloc-");
+std::string SupportedDevicesHelper::extractOclocName(std::string_view oclocLibName) const {
+    // libocloc.so -> ocloc
+    // libocloc-legacy1.so -> ocloc-legacy1
+    std::string_view view(oclocLibName);
+    constexpr char prefix[] = "lib";
+    auto start = view.find(prefix);
     if (start == std::string_view::npos) {
         return "ocloc";
     }
+    start += strlen(prefix);
 
     auto end = view.find(".so", start);
     if (end == std::string_view::npos) {
@@ -47,7 +46,7 @@ std::string SupportedDevicesHelper::extractOclocVersion(std::string_view oclocLi
     return std::string(view.substr(start, end - start));
 }
 
-std::string SupportedDevicesHelper::getDataFromFormerOclocVersion() const {
+std::string SupportedDevicesHelper::getDataFromFormerOcloc() const {
     std::string retData;
 
     const char *argv[] = {"ocloc", "query", "SUPPORTED_DEVICES", "-concat"};

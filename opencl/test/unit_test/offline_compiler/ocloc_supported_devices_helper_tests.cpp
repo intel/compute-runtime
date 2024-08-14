@@ -370,7 +370,7 @@ TEST_F(SupportedDevicesHelperTest, WhenSerializingDeserializingAndSerializingAga
     }
 }
 
-TEST_F(SupportedDevicesHelperTest, WhenMergingOclocVersionDataThenAllDataIsCombinedCorrectly) {
+TEST_F(SupportedDevicesHelperTest, WhenMergingOclocDataThenAllDataIsCombinedCorrectly) {
     SupportedDevicesMode mode = SupportedDevicesMode::merge;
     MockSupportedDevicesHelper supportedDevicesHelper(mode, argHelper->productConfigHelper.get());
 
@@ -397,7 +397,7 @@ TEST_F(SupportedDevicesHelperTest, WhenMergingOclocVersionDataThenAllDataIsCombi
     versionDataMap["ocloc-1.0"] = data1;
     versionDataMap["ocloc-2.0"] = data2;
 
-    auto mergedData = supportedDevicesHelper.mergeOclocVersionData(versionDataMap);
+    auto mergedData = supportedDevicesHelper.mergeOclocData(versionDataMap);
 
     ASSERT_EQ(mergedData.deviceIpVersions.size(), 3u);
     EXPECT_TRUE(std::is_sorted(mergedData.deviceIpVersions.begin(), mergedData.deviceIpVersions.end()));
@@ -448,13 +448,13 @@ TEST_F(SupportedDevicesHelperTest, WhenMergingOclocVersionDataThenAllDataIsCombi
     EXPECT_EQ(mergedData.releaseGroups[3].second, std::vector<uint32_t>({0x2000001}));
 }
 
-TEST_F(SupportedDevicesHelperTest, WhenConcatAndSerializeWithFormerVersionDataThenResultIsCorrect) {
+TEST_F(SupportedDevicesHelperTest, WhenConcatAndSerializeWithFormerDataThenResultIsCorrect) {
     SupportedDevicesMode mode = SupportedDevicesMode::concat;
     MockSupportedDevicesHelper supportedDevicesHelper(mode, argHelper->productConfigHelper.get());
 
-    auto currentVersionData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
+    auto currentData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
 
-    std::string concatResult = supportedDevicesHelper.concatAndSerializeWithFormerVersionData(currentVersionData);
+    std::string concatResult = supportedDevicesHelper.concatAndSerializeWithFormerData(currentData);
 
     auto family1 = argHelper->productConfigHelper->getAcronymFromAFamily(mockDevices[0].family);
     auto family2 = argHelper->productConfigHelper->getAcronymFromAFamily(mockDevices[1].family);
@@ -516,14 +516,14 @@ ocloc-former:
     EXPECT_EQ(concatResult, expectedYaml);
 }
 
-TEST_F(SupportedDevicesHelperTest, GivenEmptyFormerVersionDataWhenConcatAndSerializeWithFormerVersionDataThenResultIsCorrect) {
+TEST_F(SupportedDevicesHelperTest, GivenEmptyFormerDataWhenConcatAndSerializeWithFormerDataThenResultIsCorrect) {
     SupportedDevicesMode mode = SupportedDevicesMode::concat;
     MockSupportedDevicesHelper supportedDevicesHelper(mode, argHelper->productConfigHelper.get());
     supportedDevicesHelper.getDataFromFormerOclocVersionEmptyResult = true;
 
-    auto currentVersionData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
+    auto currentData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
 
-    std::string concatResult = supportedDevicesHelper.concatAndSerializeWithFormerVersionData(currentVersionData);
+    std::string concatResult = supportedDevicesHelper.concatAndSerializeWithFormerData(currentData);
 
     auto family1 = argHelper->productConfigHelper->getAcronymFromAFamily(mockDevices[0].family);
     auto family2 = argHelper->productConfigHelper->getAcronymFromAFamily(mockDevices[1].family);
@@ -566,13 +566,13 @@ TEST_F(SupportedDevicesHelperTest, GivenEmptyFormerVersionDataWhenConcatAndSeria
     EXPECT_EQ(concatResult, expectedYaml);
 }
 
-TEST_F(SupportedDevicesHelperTest, WhenMergeAndSerializeWithFormerVersionDataThenBothVersionsAreCorrectlyMerged) {
+TEST_F(SupportedDevicesHelperTest, WhenMergeAndSerializeWithFormerDataThenBothVersionsAreCorrectlyMerged) {
     SupportedDevicesMode mode = SupportedDevicesMode::merge;
     MockSupportedDevicesHelper supportedDevicesHelper(mode, argHelper->productConfigHelper.get());
     supportedDevicesHelper.getDataFromFormerOclocVersionEmptyResult = false;
 
-    auto currentVersionData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
-    std::string mergeResult = supportedDevicesHelper.mergeAndSerializeWithFormerVersionData(currentVersionData);
+    auto currentData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
+    std::string mergeResult = supportedDevicesHelper.mergeAndSerializeWithFormerData(currentData);
 
     auto deserializedResult = supportedDevicesHelper.deserialize(mergeResult);
     ASSERT_EQ(deserializedResult.size(), 1u);
@@ -643,13 +643,13 @@ TEST_F(SupportedDevicesHelperTest, WhenMergeAndSerializeWithFormerVersionDataThe
     }
 }
 
-TEST_F(SupportedDevicesHelperTest, GivenEmptyFormerVersionDataWhenMergeAndSerializeWithFormerVersionDataThenOnlyCurrentVersionIsPresent) {
+TEST_F(SupportedDevicesHelperTest, GivenEmptyFormerDataWhenMergeAndSerializeWithFormerDataThenOnlyCurrentVersionIsPresent) {
     SupportedDevicesMode mode = SupportedDevicesMode::merge;
     MockSupportedDevicesHelper supportedDevicesHelper(mode, argHelper->productConfigHelper.get());
     supportedDevicesHelper.getDataFromFormerOclocVersionEmptyResult = true;
 
-    auto currentVersionData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
-    std::string mergeResult = supportedDevicesHelper.mergeAndSerializeWithFormerVersionData(currentVersionData);
+    auto currentData = supportedDevicesHelper.collectSupportedDevicesData(enabledDevices);
+    std::string mergeResult = supportedDevicesHelper.mergeAndSerializeWithFormerData(currentData);
 
     auto family1 = argHelper->productConfigHelper->getAcronymFromAFamily(mockDevices[0].family);
     auto family2 = argHelper->productConfigHelper->getAcronymFromAFamily(mockDevices[1].family);

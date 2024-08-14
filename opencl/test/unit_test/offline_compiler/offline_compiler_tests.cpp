@@ -1042,7 +1042,7 @@ TEST_F(OfflineCompilerTests, WhenQueryingSupportedDevicesThenNonEmptyOutputFileI
         EXPECT_EQ(OCLOC_SUCCESS, retVal);
 
         Ocloc::SupportedDevicesHelper supportedDevicesHelper(mode, oclocArgHelperWithoutInput->productConfigHelper.get());
-        std::string expectedFileName = supportedDevicesHelper.getOclocCurrentVersionOutputFilename();
+        std::string expectedFileName = supportedDevicesHelper.getCurrentOclocOutputFilename();
 
         EXPECT_NE(oclocArgHelperWithoutInput->filesMap.find(expectedFileName), oclocArgHelperWithoutInput->filesMap.end());
 

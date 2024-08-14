@@ -8,9 +8,9 @@
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/helpers/product_config_helper.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include <cstring>
 #include <memory>
@@ -63,9 +63,9 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
     return data;
 }
 
-std::string SupportedDevicesHelper::serialize(std::string_view oclocVersion, const SupportedDevicesData &data) const {
+std::string SupportedDevicesHelper::serialize(std::string_view oclocName, const SupportedDevicesData &data) const {
     std::ostringstream oss;
-    oss << oclocVersion << ":\n";
+    oss << oclocName << ":\n";
 
     // DeviceIpVersions
     oss << "  " << SupportedDevicesYamlConstants::deviceIpVersions << ":\n";
@@ -204,30 +204,30 @@ std::map<std::string, SupportedDevicesHelper::SupportedDevicesData> SupportedDev
     return result;
 }
 
-std::string SupportedDevicesHelper::mergeAndSerializeWithFormerVersionData(const SupportedDevicesData &currentVersionData) const {
-    std::string formerVersionSupportedDevices = getDataFromFormerOclocVersion();
+std::string SupportedDevicesHelper::mergeAndSerializeWithFormerData(const SupportedDevicesData &currentData) const {
+    std::string formerSupportedDevices = getDataFromFormerOcloc();
 
-    if (formerVersionSupportedDevices.empty()) {
-        return serialize(getOclocCurrentVersion(), currentVersionData);
+    if (formerSupportedDevices.empty()) {
+        return serialize(getCurrentOclocName(), currentData);
     }
 
-    auto formerVerDeserialized = deserialize(formerVersionSupportedDevices);
-    formerVerDeserialized[getOclocCurrentVersion()] = currentVersionData;
+    auto formerDataDeserialized = deserialize(formerSupportedDevices);
+    formerDataDeserialized[getCurrentOclocName()] = currentData;
 
-    auto mergedData = mergeOclocVersionData(formerVerDeserialized);
+    auto mergedData = mergeOclocData(formerDataDeserialized);
     return serialize("ocloc", mergedData);
 }
 
-std::string SupportedDevicesHelper::concatAndSerializeWithFormerVersionData(const SupportedDevicesData &currentVersionData) const {
-    std::string output = serialize(getOclocCurrentVersion(), currentVersionData);
-    std::string formerVersionSupportedDevices = getDataFromFormerOclocVersion();
-    if (!formerVersionSupportedDevices.empty()) {
-        output += "\n" + formerVersionSupportedDevices;
+std::string SupportedDevicesHelper::concatAndSerializeWithFormerData(const SupportedDevicesData &currentData) const {
+    std::string output = serialize(getCurrentOclocName(), currentData);
+    std::string formerSupportedDevices = getDataFromFormerOcloc();
+    if (!formerSupportedDevices.empty()) {
+        output += "\n" + formerSupportedDevices;
     }
     return output;
 }
 
-SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocVersionData(const std::map<std::string, SupportedDevicesData> &versionDataMap) const {
+SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocData(const std::map<std::string, SupportedDevicesData> &nameDataMap) const {
     struct DeviceInfoComparator {
         bool operator()(const DeviceInfo &lhs, const DeviceInfo &rhs) const {
             return std::tie(lhs.deviceId, lhs.revisionId, lhs.ipVersion) <
@@ -242,7 +242,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocV
     std::map<std::string, std::set<uint32_t>> uniqueFamilyGroups;
     std::map<std::string, std::set<uint32_t>> uniqueReleaseGroups;
 
-    for (const auto &[version, data] : versionDataMap) {
+    for (const auto &[name, data] : nameDataMap) {
         uniqueIpVersions.insert(data.deviceIpVersions.begin(), data.deviceIpVersions.end());
         for (const auto &deviceInfo : data.deviceInfos) {
             uniqueDeviceInfos.insert(deviceInfo);
@@ -293,5 +293,9 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocV
     }
 
     return mergedData;
+}
+
+std::string SupportedDevicesHelper::getFormerOclocName() const {
+    return extractOclocName(getOclocFormerLibName());
 }
 } // namespace Ocloc

@@ -18,16 +18,16 @@ using namespace Ocloc;
 
 class MockSupportedDevicesHelper : public SupportedDevicesHelper {
   public:
-    using SupportedDevicesHelper::extractOclocVersion;
-    using SupportedDevicesHelper::getOclocCurrentVersion;
-    using SupportedDevicesHelper::getOclocFormerVersion;
-    using SupportedDevicesHelper::mergeOclocVersionData;
+    using SupportedDevicesHelper::extractOclocName;
+    using SupportedDevicesHelper::getCurrentOclocName;
+    using SupportedDevicesHelper::getFormerOclocName;
+    using SupportedDevicesHelper::mergeOclocData;
 
   public:
     MockSupportedDevicesHelper(SupportedDevicesMode mode, ProductConfigHelper *productConfigHelper)
         : SupportedDevicesHelper(mode, productConfigHelper) {}
 
-    std::string getDataFromFormerOclocVersion() const override {
+    std::string getDataFromFormerOcloc() const override {
         if (getDataFromFormerOclocVersionEmptyResult) {
             return "";
         }
@@ -53,16 +53,16 @@ class MockSupportedDevicesHelper : public SupportedDevicesHelper {
 )";
     }
 
-    std::string getOclocCurrentVersion() const override {
-        if (!getOclocCurrentVersionMockResult.empty()) {
-            return getOclocCurrentVersionMockResult;
+    std::string getCurrentOclocName() const override {
+        if (!getCurrentOclocNameMockResult.empty()) {
+            return getCurrentOclocNameMockResult;
         }
-        return SupportedDevicesHelper::getOclocCurrentVersion();
+        return SupportedDevicesHelper::getCurrentOclocName();
     }
 
   public:
     bool getDataFromFormerOclocVersionEmptyResult = false;
-    std::string getOclocCurrentVersionMockResult = "ocloc-current";
+    std::string getCurrentOclocNameMockResult = "ocloc-current";
 };
 
 } // namespace NEO
