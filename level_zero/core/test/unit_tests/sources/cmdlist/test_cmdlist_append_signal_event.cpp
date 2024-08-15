@@ -607,7 +607,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     event->setEventTimestampFlag(true);
 
-    commandList->appendEventForProfilingCopyCommand(event.get(), false, true);
+    commandList->appendEventForProfilingCopyCommand(event.get(), false);
     size_t usedAfterSize = cmdStream->getUsed();
 
     GenCmdList cmdList;

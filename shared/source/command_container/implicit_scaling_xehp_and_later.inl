@@ -214,7 +214,7 @@ inline void ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(Li
                                                                               bool isBcs) {
     EncodeSetMMIO<GfxFamily>::encodeMEM(commandStream,
                                         PartitionRegisters<GfxFamily>::wparidCCSOffset,
-                                        workPartitionSurfaceAddress, isBcs);
+                                        workPartitionSurfaceAddress);
     dispatchOffsetRegister(commandStream, addressOffset, isBcs);
 }
 

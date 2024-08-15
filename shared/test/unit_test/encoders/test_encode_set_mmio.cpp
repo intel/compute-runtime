@@ -47,7 +47,7 @@ HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
 }
 
 HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterMemIsUsed) {
-    EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x2000, 0xDEADBEEFCAF0, false);
+    EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x2000, 0xDEADBEEFCAF0);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -63,7 +63,7 @@ HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterMemIsUsed) {
 }
 
 HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterRegIsUsed) {
-    EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), 0x2000, 0x2000, false);
+    EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), 0x2000, 0x2000);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
@@ -99,7 +99,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
         for (uint32_t offset = remapApplicableOffsets[2 * i]; offset < remapApplicableOffsets[2 * i + 1]; offset += 32) {
             MI_LOAD_REGISTER_MEM *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmdContainer->getCommandStream()->getSpace(0));
 
-            EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), offset, 0xDEADBEEFCAF0, false);
+            EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), offset, 0xDEADBEEFCAF0);
 
             EXPECT_EQ(offset, miLoadReg->getRegisterAddress());
             EXPECT_EQ(0xDEADBEEFCAF0u, miLoadReg->getMemoryAddress());
@@ -109,7 +109,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
 
     {
         MI_LOAD_REGISTER_MEM *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmdContainer->getCommandStream()->getSpace(0));
-        EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x3000, 0xDEADBEEFCAF0, false);
+        EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x3000, 0xDEADBEEFCAF0);
 
         EXPECT_EQ(0x3000u, miLoadReg->getRegisterAddress());
         EXPECT_EQ(0xDEADBEEFCAF0u, miLoadReg->getMemoryAddress());
@@ -117,7 +117,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
     }
     {
         MI_LOAD_REGISTER_MEM *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmdContainer->getCommandStream()->getSpace(0));
-        EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x4300, 0xDEADBEEFCAF0, false);
+        EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x4300, 0xDEADBEEFCAF0);
 
         EXPECT_EQ(0x4300u, miLoadReg->getRegisterAddress());
         EXPECT_EQ(0xDEADBEEFCAF0u, miLoadReg->getMemoryAddress());
@@ -125,7 +125,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
     }
     {
         MI_LOAD_REGISTER_MEM *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmdContainer->getCommandStream()->getSpace(0));
-        EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x5000, 0xDEADBEEFCAF0, false);
+        EncodeSetMMIO<FamilyType>::encodeMEM(*cmdContainer.get(), 0x5000, 0xDEADBEEFCAF0);
 
         EXPECT_EQ(0x5000u, miLoadReg->getRegisterAddress());
         EXPECT_EQ(0xDEADBEEFCAF0u, miLoadReg->getMemoryAddress());
@@ -143,7 +143,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
     for (int i = 0; i < 3; i++) {
         for (uint32_t offset = remapApplicableOffsets[2 * i]; offset < remapApplicableOffsets[2 * i + 1]; offset += 32) {
             MI_LOAD_REGISTER_REG *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_REG *>(cmdContainer->getCommandStream()->getSpace(0));
-            EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), offset, offset, false);
+            EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), offset, offset);
 
             EXPECT_EQ(offset, miLoadReg->getSourceRegisterAddress());
             EXPECT_EQ(offset, miLoadReg->getDestinationRegisterAddress());
@@ -154,7 +154,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
 
     {
         MI_LOAD_REGISTER_REG *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_REG *>(cmdContainer->getCommandStream()->getSpace(0));
-        EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), 0x1000, 0x2500, false);
+        EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), 0x1000, 0x2500);
 
         EXPECT_EQ(0x2500u, miLoadReg->getSourceRegisterAddress());
         EXPECT_EQ(0x1000u, miLoadReg->getDestinationRegisterAddress());
@@ -163,7 +163,7 @@ HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMM
     }
     {
         MI_LOAD_REGISTER_REG *miLoadReg = reinterpret_cast<MI_LOAD_REGISTER_REG *>(cmdContainer->getCommandStream()->getSpace(0));
-        EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), 0x2200, 0x4000, false);
+        EncodeSetMMIO<FamilyType>::encodeREG(*cmdContainer.get(), 0x2200, 0x4000);
 
         EXPECT_EQ(0x4000u, miLoadReg->getSourceRegisterAddress());
         EXPECT_EQ(0x2200u, miLoadReg->getDestinationRegisterAddress());

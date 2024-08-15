@@ -111,7 +111,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
         logLws++;
     }
 
-    EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, offset, isBcs);
+    EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, offset);
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR1, 0, true, isBcs);
 
     i = 0;
@@ -119,14 +119,14 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
         if (val & (1 << i)) {
             EncodeMath<Family>::addition(container, AluRegisters::gpr1,
                                          AluRegisters::gpr0, AluRegisters::gpr2);
-            EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR1, RegisterOffsets::csGprR2, isBcs);
+            EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR1, RegisterOffsets::csGprR2);
         }
         EncodeMath<Family>::addition(container, AluRegisters::gpr0,
                                      AluRegisters::gpr0, AluRegisters::gpr2);
-        EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, RegisterOffsets::csGprR2, isBcs);
+        EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR0, RegisterOffsets::csGprR2);
         i++;
     }
-    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::csGprR1, dstAddress, false, nullptr, isBcs);
+    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::csGprR1, dstAddress, false, nullptr);
 }
 
 /*
@@ -139,14 +139,14 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
  */
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &container, uint64_t firstOperand, uint32_t secondOperand, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeMEM(container, RegisterOffsets::csGprR0, firstOperand, isBcs);
+    EncodeSetMMIO<Family>::encodeMEM(container, RegisterOffsets::csGprR0, firstOperand);
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR1, secondOperand, true, isBcs);
 
     /* RegisterOffsets::csGprR* registers map to AluRegisters::gpr* registers */
     EncodeMath<Family>::greaterThan(container, AluRegisters::gpr0,
                                     AluRegisters::gpr1, AluRegisters::gpr2);
 
-    EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csPredicateResult, RegisterOffsets::csGprR2, isBcs);
+    EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csPredicateResult, RegisterOffsets::csGprR2);
 }
 
 /*
@@ -156,13 +156,13 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress,
                                                  bool workloadPartition, void **outCmdBuffer, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR13, regOffset, isBcs);
+    EncodeSetMMIO<Family>::encodeREG(container, RegisterOffsets::csGprR13, regOffset);
     EncodeSetMMIO<Family>::encodeIMM(container, RegisterOffsets::csGprR14, immVal, true, isBcs);
     EncodeMath<Family>::bitwiseAnd(container, AluRegisters::gpr13,
                                    AluRegisters::gpr14,
                                    AluRegisters::gpr12);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
-                                    RegisterOffsets::csGprR12, dstAddress, workloadPartition, outCmdBuffer, isBcs);
+                                    RegisterOffsets::csGprR12, dstAddress, workloadPartition, outCmdBuffer);
 }
 
 /*
@@ -341,13 +341,13 @@ inline void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32
 }
 
 template <typename Family>
-inline void EncodeSetMMIO<Family>::encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeMEM(*container.getCommandStream(), offset, address, isBcs);
+inline void EncodeSetMMIO<Family>::encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address) {
+    EncodeSetMMIO<Family>::encodeMEM(*container.getCommandStream(), offset, address);
 }
 
 template <typename Family>
-inline void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeREG(*container.getCommandStream(), dstOffset, srcOffset, isBcs);
+inline void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset) {
+    EncodeSetMMIO<Family>::encodeREG(*container.getCommandStream(), dstOffset, srcOffset);
 }
 
 template <typename Family>
@@ -373,9 +373,8 @@ inline void EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled
 }
 
 template <typename Family>
-void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address, bool isBcs) {
+void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address) {
     MI_LOAD_REGISTER_MEM cmd = Family::cmdInitLoadRegisterMem;
-    offset += isBcs ? RegisterOffsets::bcs0Base : 0x0;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
     remapOffset(&cmd);
@@ -385,29 +384,27 @@ void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, 
 }
 
 template <typename Family>
-void EncodeSetMMIO<Family>::encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset, bool isBcs) {
+void EncodeSetMMIO<Family>::encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset) {
     MI_LOAD_REGISTER_REG cmd = Family::cmdInitLoadRegisterReg;
-    uint32_t isBcsOffset = isBcs ? RegisterOffsets::bcs0Base : 0x0;
-    cmd.setSourceRegisterAddress(srcOffset + isBcsOffset);
-    cmd.setDestinationRegisterAddress(dstOffset + isBcsOffset);
+    cmd.setSourceRegisterAddress(srcOffset);
+    cmd.setDestinationRegisterAddress(dstOffset);
     remapOffset(&cmd);
     auto buffer = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_REG>();
     *buffer = cmd;
 }
 
 template <typename Family>
-void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition, void **outCmdBuffer, bool isBcs) {
+void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address, bool workloadPartition, void **outCmdBuffer) {
     auto buffer = csr.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
     if (outCmdBuffer != nullptr) {
         *outCmdBuffer = buffer;
     }
-    EncodeStoreMMIO<Family>::encode(buffer, offset, address, workloadPartition, true, isBcs);
+    EncodeStoreMMIO<Family>::encode(buffer, offset, address, workloadPartition);
 }
 
 template <typename Family>
-inline void EncodeStoreMMIO<Family>::encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition, bool remap, bool isBcs) {
+inline void EncodeStoreMMIO<Family>::encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition) {
     MI_STORE_REGISTER_MEM cmd = Family::cmdInitStoreRegisterMem;
-    offset += (remap && isBcs) ? RegisterOffsets::bcs0Base : 0x0;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
     appendFlags(&cmd, workloadPartition);
@@ -623,7 +620,7 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::gpgpuDispatchDim[i], ptrOffset(crossThreadAddress, offsets[i]), false, nullptr, false);
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), RegisterOffsets::gpgpuDispatchDim[i], ptrOffset(crossThreadAddress, offsets[i]), false, nullptr);
     }
 }
 
@@ -676,7 +673,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
             constexpr AluRegisters offsetAluRegister = AluRegisters::gpr8;
 
             if (offset) {
-                EncodeSetMMIO<Family>::encodeMEM(container, backupRegister, dstPtr, false);
+                EncodeSetMMIO<Family>::encodeMEM(container, backupRegister, dstPtr);
                 EncodeSetMMIO<Family>::encodeIMM(container, memoryMaskRegister, memoryMask, true, false);
                 EncodeMath<Family>::bitwiseAnd(container, memoryMaskAluRegister, backupAluRegister, backupAluRegister);
                 EncodeSetMMIO<Family>::encodeIMM(container, offsetRegister, offset, true, false);
@@ -685,13 +682,13 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
             EncodeSetMMIO<Family>::encodeIMM(container, constantOneRegister, 1, true, false);
             EncodeSetMMIO<Family>::encodeIMM(container, constantTwoRegister, 2, true, false);
 
-            EncodeSetMMIO<Family>::encodeREG(container, groupCount2Register, RegisterOffsets::gpgpuDispatchDim[2], false);
+            EncodeSetMMIO<Family>::encodeREG(container, groupCount2Register, RegisterOffsets::gpgpuDispatchDim[2]);
 
             EncodeMath<Family>::greaterThan(container, groupCount2AluRegister, constantOneAluRegister, workDimEq3AluRegister);
             EncodeMath<Family>::bitwiseAnd(container, workDimEq3AluRegister, constantOneAluRegister, workDimEq3AluRegister);
 
             EncodeSetMMIO<Family>::encodeIMM(container, groupSize1Register, groupSize[1], true, false);
-            EncodeSetMMIO<Family>::encodeREG(container, groupCount1Register, RegisterOffsets::gpgpuDispatchDim[1], false);
+            EncodeSetMMIO<Family>::encodeREG(container, groupCount1Register, RegisterOffsets::gpgpuDispatchDim[1]);
 
             EncodeMath<Family>::addition(container, groupSize1AluRegister, groupCount1AluRegister, sumAluRegister);
             EncodeMath<Family>::addition(container, sumAluRegister, workDimEq3AluRegister, sumAluRegister);
@@ -706,7 +703,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
                 EncodeMath<Family>::bitwiseAnd(container, workDimGe2AluRegister, constantOneAluRegister, workDimGe2AluRegister);
             }
 
-            EncodeSetMMIO<Family>::encodeREG(container, resultRegister, constantOneRegister, false);
+            EncodeSetMMIO<Family>::encodeREG(container, resultRegister, constantOneRegister);
             EncodeMath<Family>::addition(container, resultAluRegister, workDimGe2AluRegister, resultAluRegister);
             EncodeMath<Family>::addition(container, resultAluRegister, workDimEq3AluRegister, resultAluRegister);
 
@@ -714,7 +711,7 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
                 EncodeMath<Family>::addition(container, resultAluRegister, backupAluRegister, resultAluRegister);
             }
         }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), resultRegister, dstPtr, false, nullptr, false);
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), resultRegister, dstPtr, false, nullptr);
     }
 }
 
@@ -1023,10 +1020,10 @@ void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress,
                                                                                     uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeMEM(commandStream, RegisterOffsets::csGprR7, compareAddress, isBcs);
+    EncodeSetMMIO<Family>::encodeMEM(commandStream, RegisterOffsets::csGprR7, compareAddress);
 
     if (useQwordData) {
-        EncodeSetMMIO<Family>::encodeMEM(commandStream, RegisterOffsets::csGprR7 + 4, compareAddress + 4, isBcs);
+        EncodeSetMMIO<Family>::encodeMEM(commandStream, RegisterOffsets::csGprR7 + 4, compareAddress + 4);
     } else {
         LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR7 + 4, 0, true, isBcs);
     }
@@ -1043,9 +1040,9 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferSt
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg,
                                                                                     uint64_t compareData, CompareOperation compareOperation, bool indirect, bool useQwordData, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR7, compareReg, isBcs);
+    EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR7, compareReg);
     if (useQwordData) {
-        EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR7 + 4, compareReg + 4, isBcs);
+        EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR7 + 4, compareReg + 4);
     } else {
         LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR7 + 4, 0, true, isBcs);
     }
@@ -1069,10 +1066,10 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegRegBatchBufferSta
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareReg,
                                                                                    CompareOperation compareOperation, bool indirect, bool isBcs) {
-    EncodeSetMMIO<Family>::encodeMEM(commandStream, RegisterOffsets::csGprR7, compareAddress, isBcs);
+    EncodeSetMMIO<Family>::encodeMEM(commandStream, RegisterOffsets::csGprR7, compareAddress);
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR7 + 4, 0, true, isBcs);
 
-    EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR8, compareReg, isBcs);
+    EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csGprR8, compareReg);
     LriHelper<Family>::program(&commandStream, RegisterOffsets::csGprR8 + 4, 0, true, isBcs);
 
     programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::gpr7, AluRegisters::gpr8, compareOperation, indirect);
@@ -1096,7 +1093,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase
 
     aluHelper.copyToCmdStream(commandStream);
 
-    EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csPredicateResult2, RegisterOffsets::csGprR7, false);
+    EncodeSetMMIO<Family>::encodeREG(commandStream, RegisterOffsets::csPredicateResult2, RegisterOffsets::csGprR7);
 
     MiPredicateType predicateType = MiPredicateType::noopOnResult2Clear; // Equal or Less
     if ((compareOperation == CompareOperation::notEqual) || (compareOperation == CompareOperation::greaterOrEqual)) {

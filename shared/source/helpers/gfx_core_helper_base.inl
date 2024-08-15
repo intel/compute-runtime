@@ -801,7 +801,7 @@ void *LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, u
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress, bool isBcs) {
+void MemorySynchronizationCommands<GfxFamily>::encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress) {
 }
 
 template <typename GfxFamily>

@@ -114,7 +114,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     if (walkerArgs.relaxedOrderingEnabled) {
-        RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandStream, commandQueue.isBcs());
+        RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandStream);
     }
 
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled, commandQueue.isBcs());

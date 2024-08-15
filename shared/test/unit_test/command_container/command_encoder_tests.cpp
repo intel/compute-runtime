@@ -680,45 +680,6 @@ HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStatePar
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
-HWTEST2_F(CommandEncoderTests, givenMiStoreRegisterMemwhenRemapAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
-    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
-
-    uint64_t baseAddr = 0x10;
-    uint32_t offset = 0x20;
-
-    constexpr size_t bufferSize = 256;
-    uint8_t buffer[bufferSize];
-    LinearStream cmdStream(buffer, bufferSize);
-    auto buf = cmdStream.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    bool remap = true;
-    bool isBcs = true;
-    EncodeStoreMMIO<FamilyType>::encode(buf, offset, baseAddr, true, remap, isBcs);
-    auto storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
-    ASSERT_NE(nullptr, storeRegMem);
-    EXPECT_EQ(storeRegMem->getRegisterAddress(), RegisterOffsets::bcs0Base + offset);
-
-    remap = true;
-    isBcs = false;
-    EncodeStoreMMIO<FamilyType>::encode(buf, offset, baseAddr, true, remap, isBcs);
-    storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
-    ASSERT_NE(nullptr, storeRegMem);
-    EXPECT_EQ(storeRegMem->getRegisterAddress(), offset);
-
-    remap = false;
-    isBcs = true;
-    EncodeStoreMMIO<FamilyType>::encode(buf, offset, baseAddr, true, remap, isBcs);
-    storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
-    ASSERT_NE(nullptr, storeRegMem);
-    EXPECT_EQ(storeRegMem->getRegisterAddress(), offset);
-
-    remap = false;
-    isBcs = false;
-    EncodeStoreMMIO<FamilyType>::encode(buf, offset, baseAddr, true, remap, isBcs);
-    storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
-    ASSERT_NE(nullptr, storeRegMem);
-    EXPECT_EQ(storeRegMem->getRegisterAddress(), offset);
-}
-
 HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtLeastGen12lp) {
 
     DebugManagerStateRestore dbgRestore;

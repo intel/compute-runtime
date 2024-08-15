@@ -504,7 +504,7 @@ struct MemorySynchronizationCommands {
     static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
 
-    static void encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress, bool isBcs);
+    static void encodeAdditionalTimestampOffsets(LinearStream &commandStream, uint64_t contextAddress, uint64_t globalAddress);
 };
 
 } // namespace NEO

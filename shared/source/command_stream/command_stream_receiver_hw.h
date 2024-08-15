@@ -80,7 +80,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdsSizeForHardwareContext() const override;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
-    void programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled, bool hasRelaxedOrderingDependencies, bool isBcs);
+    void programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled, bool hasRelaxedOrderingDependencies);
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
 
     size_t getRequiredStateBaseAddressSize(const Device &device) const;
