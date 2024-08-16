@@ -4378,6 +4378,87 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 }
 
 HWTEST2_F(CommandStreamReceiverHwTest,
+          givenImmediateFlushTaskWhenRequireTaskCountUpdateSelectedThenDispatchPipeControlPostSyncToImmediateBatchBuffer,
+          IsAtLeastXeHpCore) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    bool additionalSyncCmd = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(commandStreamReceiver.peekRootDeviceEnvironment()) > 0;
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto startOffset = commandStream.getUsed();
+    auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+    auto csrTagAllocation = commandStreamReceiver.getTagAllocation();
+    uint64_t postsyncAddress = csrTagAllocation->getGpuAddress();
+
+    immediateFlushTaskFlags.requireTaskCountUpdate = true;
+    auto completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    EXPECT_EQ(1u, completionStamp.taskCount);
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(1u, commandStreamReceiver.latestSentTaskCount);
+    EXPECT_EQ(1u, commandStreamReceiver.latestFlushedTaskCount);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStream, 0);
+    auto cmdItor = hwParserCsr.getCommandItor<PIPE_CONTROL>();
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdItor);
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+    ASSERT_NE(nullptr, pipeControlCmd);
+    EXPECT_EQ(postsyncAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd));
+    EXPECT_EQ(1u, pipeControlCmd->getImmediateData());
+
+    cmdItor++;
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdItor);
+    if (additionalSyncCmd) {
+        cmdItor++;
+        ASSERT_NE(hwParserCsr.cmdList.end(), cmdItor);
+    }
+    auto bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdItor);
+    ASSERT_NE(nullptr, bbEndCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(csrTagAllocation));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation));
+
+    startOffset = commandStream.getUsed();
+    EXPECT_EQ(0u, (startOffset % MemoryConstants::cacheLineSize));
+
+    *commandStream.getSpaceForCmd<DefaultWalkerType>() = FamilyType::template getInitGpuWalker<DefaultWalkerType>();
+
+    completionStamp = commandStreamReceiver.flushImmediateTask(commandStream, startOffset, immediateFlushTaskFlags, *pDevice);
+    EXPECT_EQ(2u, completionStamp.taskCount);
+    EXPECT_EQ(2u, commandStreamReceiver.taskCount);
+    EXPECT_EQ(2u, commandStreamReceiver.latestSentTaskCount);
+    EXPECT_EQ(2u, commandStreamReceiver.latestFlushedTaskCount);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStream, startOffset);
+    cmdItor = hwParserCsr.getCommandItor<PIPE_CONTROL>();
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdItor);
+    pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*cmdItor);
+    ASSERT_NE(nullptr, pipeControlCmd);
+    EXPECT_EQ(postsyncAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd));
+    EXPECT_EQ(2u, pipeControlCmd->getImmediateData());
+
+    cmdItor++;
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdItor);
+    if (additionalSyncCmd) {
+        cmdItor++;
+        ASSERT_NE(hwParserCsr.cmdList.end(), cmdItor);
+    }
+    bbEndCmd = genCmdCast<MI_BATCH_BUFFER_END *>(*cmdItor);
+    ASSERT_NE(nullptr, bbEndCmd);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(csrTagAllocation));
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(immediateListCmdBufferAllocation));
+
+    startOffset = commandStream.getUsed();
+    EXPECT_EQ(0u, (startOffset % MemoryConstants::cacheLineSize));
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenPreambleIsUsedOrNotThenCsrBufferIsUsedOrImmediateBufferIsUsed,
           IsAtLeastXeHpCore) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;

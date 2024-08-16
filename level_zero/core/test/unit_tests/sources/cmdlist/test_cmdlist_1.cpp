@@ -2075,15 +2075,18 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForIm
     whiteBoxCmdList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
-TEST_F(CommandListCreate, whenCreatingImmediateCommandListAndAppendCommandListsThenReturnsUnsupported) {
+TEST_F(CommandListCreate, whenCreatingImmediateCommandListAndAppendCommandListsThenReturnsSuccess) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     ASSERT_NE(nullptr, commandList);
 
     EXPECT_TRUE(commandList->isImmediateType());
-    auto result = commandList->appendCommandLists(0u, nullptr, nullptr, 0u, nullptr);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
+    commandListRegular->close();
+    auto commandListHandle = commandListRegular->toHandle();
+    auto result = commandList->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
 TEST_F(CommandListCreate, givenCreatingRegularCommandlistAndppendCommandListsThenReturnInvalidArgument) {

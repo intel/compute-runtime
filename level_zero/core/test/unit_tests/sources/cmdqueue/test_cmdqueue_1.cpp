@@ -465,7 +465,7 @@ struct MockCommandQueueHwEstimateSizeTest : public MockCommandQueueHw<gfxCoreFam
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const override {
+    bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const override {
         return dispatchTaskCountPostSyncRequired;
     }
     bool dispatchTaskCountPostSyncRequired = false;

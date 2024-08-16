@@ -2171,7 +2171,7 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferCommands(ImmediateDispatchFlags &dispatchFlags,
                                                                                     LinearStream &immediateCommandStream,
                                                                                     ImmediateFlushData &flushData) {
-    if (dispatchFlags.blockingAppend) {
+    if (dispatchFlags.blockingAppend || dispatchFlags.requireTaskCountUpdate) {
         auto address = getTagAllocation()->getGpuAddress();
 
         PipeControlArgs args = {};
@@ -2228,7 +2228,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
         CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
         return completionStamp;
     } else {
-        if (dispatchFlags.blockingAppend) {
+        if (dispatchFlags.blockingAppend || dispatchFlags.requireTaskCountUpdate) {
             this->latestFlushedTaskCount = this->taskCount + 1;
         }
 

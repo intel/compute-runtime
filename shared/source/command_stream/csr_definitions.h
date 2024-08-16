@@ -139,6 +139,7 @@ struct ImmediateDispatchFlags {
     StreamProperties *requiredState = nullptr;
     void *sshCpuBase = nullptr;
     bool blockingAppend = false;
+    bool requireTaskCountUpdate = false;
     bool hasRelaxedOrderingDependencies = false;
     bool hasStallingCmds = false;
 };

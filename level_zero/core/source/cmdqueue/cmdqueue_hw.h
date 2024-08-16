@@ -114,6 +114,7 @@ struct CommandQueueHw : public CommandQueueImp {
         bool globalInit = false;
         bool lockScratchController = false;
         bool cmdListScratchAddressPatchingEnabled = false;
+        bool containsParentImmediateStream = false;
     };
 
     ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
@@ -141,8 +142,9 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void setupCmdListsAndContextParams(CommandListExecutionContext &ctx,
                                               ze_command_list_handle_t *phCommandLists,
                                               uint32_t numCommandLists,
-                                              ze_fence_handle_t hFence);
-    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
+                                              ze_fence_handle_t hFence,
+                                              NEO::LinearStream *parentImmediateCommandlistLinearStream);
+    MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList, bool containsParentImmediateStream) const;
     inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
     size_t estimateStreamSizeForExecuteCommandListsRegularHeapless(CommandListExecutionContext &ctx,
                                                                    uint32_t numCommandLists,
