@@ -787,6 +787,31 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
     EXPECT_TRUE(pos != std::string::npos);
 }
 
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintSemaphoreWhenDispatchingThenPrintAllData) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionPrintSemaphoreUsage.set(1);
+
+    FlushStampTracker flushStamp(true);
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    testing::internal::CaptureStdout();
+
+    bool ret = directSubmission.initialize(false, false);
+    EXPECT_TRUE(ret);
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+    directSubmission.unblockGpu();
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    auto pos = output.find("DirectSubmission semaphore");
+    EXPECT_TRUE(pos != std::string::npos);
+    pos = output.find("unlocked with value:");
+    EXPECT_TRUE(pos != std::string::npos);
+    pos = output.find("programmed with value:");
+    EXPECT_TRUE(pos != std::string::npos);
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
             givenDirectSubmissionRingStartWhenMultiTileSupportedThenExpectMultiTileConfigSetAndWorkPartitionResident) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;

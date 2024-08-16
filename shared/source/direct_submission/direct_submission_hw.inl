@@ -86,7 +86,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     int32_t disableCacheFlushKey = debugManager.flags.DirectSubmissionDisableCpuCacheFlush.get();
     if (disableCacheFlushKey != -1) {
-        disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
+        disableCpuCacheFlush = (disableCacheFlushKey == 1);
     }
 
     isDisablePrefetcherRequired = productHelper.isPrefetcherDisablingInDirectSubmissionRequired();
@@ -430,6 +430,10 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
         *this->pciBarrierPtr = 0u;
     }
 
+    if (debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1) {
+        printf("DirectSubmission semaphore %" PRIx64 " unlocked with value: %u\n", semaphoreGpuVa, currentQueueWorkCount);
+    }
+
     semaphoreData->queueWorkCount = currentQueueWorkCount;
 
     if (sfenceMode == DirectSubmissionSfenceMode::beforeAndAfterSemaphore) {
@@ -546,6 +550,10 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(uint32_t value) {
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+    if (debugManager.flags.DirectSubmissionPrintSemaphoreUsage.get() == 1) {
+        printf("DirectSubmission semaphore %" PRIx64 " programmed with value: %u\n", semaphoreGpuVa, value);
+    }
 
     dispatchDisablePrefetcher(true);
 
