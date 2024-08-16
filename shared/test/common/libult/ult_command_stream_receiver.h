@@ -205,7 +205,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         if (flushReturnValue) {
             return *flushReturnValue;
         }
-        if (recordFlusheBatchBuffer) {
+        if (recordFlushedBatchBuffer) {
             latestFlushedBatchBuffer = batchBuffer;
         }
         latestSentTaskCountValueDuringFlush = latestSentTaskCount;
@@ -563,7 +563,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool renderStateCacheDcFlushForced = false;
     bool cpuCopyForHostPtrSurfaceAllowed = false;
     bool createPageTableManagerCalled = false;
-    bool recordFlusheBatchBuffer = false;
+    bool recordFlushedBatchBuffer = false;
     bool checkAndActivateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
     std::atomic_bool downloadAllocationCalled = false;

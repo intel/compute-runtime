@@ -869,7 +869,7 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
 
 HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -908,7 +908,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
 
 HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -935,7 +935,7 @@ HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
 
 HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenPassNumClients) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -1772,7 +1772,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThen
     using DirectSubmission = MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>;
 
     csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(csr);
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
     DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
     bool initRet = directSubmission->initialize(true, false);
     EXPECT_TRUE(initRet);
@@ -1815,7 +1815,7 @@ HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenFlushTagUpdateThenBatc
     using DirectSubmission = MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>;
 
     csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(csr);
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
     DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
     bool initRet = directSubmission->initialize(true, false);
     EXPECT_TRUE(initRet);

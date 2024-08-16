@@ -1142,7 +1142,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
@@ -1263,7 +1263,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingDi
     driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
 
@@ -1372,7 +1372,7 @@ HWTEST2_F(CommandListCreate, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHp
     CmdListKernelLaunchParams launchParams = {};
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     int client1, client2;
     ultCsr->registerClient(&client1);
@@ -1536,7 +1536,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -1671,7 +1671,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     CmdListKernelLaunchParams launchParams = {};
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -1720,7 +1720,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingBarrierThenAllo
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -1791,7 +1791,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingBarrierWithFlus
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -1853,7 +1853,7 @@ HWTEST2_F(CommandListCreate, givenInOrderExecutionWhenDispatchingRelaxedOrdering
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
 
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);

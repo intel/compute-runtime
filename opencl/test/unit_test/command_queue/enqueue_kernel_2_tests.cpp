@@ -1290,7 +1290,7 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSend
     ultCsr.registerClient(&client1);
     ultCsr.registerClient(&client2);
 
-    ultCsr.recordFlusheBatchBuffer = true;
+    ultCsr.recordFlushedBatchBuffer = true;
 
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
     MockKernelWithInternals mockKernel(*pClDevice);

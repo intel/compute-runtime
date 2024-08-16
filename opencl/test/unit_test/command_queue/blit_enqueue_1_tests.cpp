@@ -239,7 +239,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenFenceAndMiFlus
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmdsFlag) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     EXPECT_EQ(SubmissionStatus::success, bcsCsr->flushTagUpdate());
 

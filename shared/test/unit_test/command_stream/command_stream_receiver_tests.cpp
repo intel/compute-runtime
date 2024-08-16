@@ -3219,7 +3219,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenInitiali
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    ultCsr.recordFlusheBatchBuffer = true;
+    ultCsr.recordFlushedBatchBuffer = true;
 
     EXPECT_EQ(SubmissionStatus::success, ultCsr.flushTagUpdate());
 
@@ -3229,7 +3229,7 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag)
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    ultCsr.recordFlusheBatchBuffer = true;
+    ultCsr.recordFlushedBatchBuffer = true;
 
     int client1, client2;
     ultCsr.registerClient(&client1);
@@ -3242,7 +3242,7 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
 
 HWTEST_F(CommandStreamReceiverHwTest, whenFlushTaskCalledThenSetPassNumClients) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     int client1, client2;
     commandStreamReceiver.registerClient(&client1);
@@ -4384,7 +4384,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     auto startOffset = commandStream.getUsed();
     auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
@@ -4443,7 +4443,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     auto startOffset = commandStream.getUsed();
     auto immediateListCmdBufferAllocation = commandStream.getGraphicsAllocation();
@@ -4938,7 +4938,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenRequiresInstructionCacheFlushWhenFlus
 
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsBlockingWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     commandStreamReceiver.taskCount = 5;
     flushTaskFlags.blocking = true;
@@ -4957,7 +4957,7 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsBlockingWhenFlushTaskCalledThe
 
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsDcFlushWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     commandStreamReceiver.taskCount = 11;
     flushTaskFlags.dcFlush = true;
@@ -4976,7 +4976,7 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsDcFlushWhenFlushTaskCalledThen
 
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushGuardBufferWithPipeControlWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     commandStreamReceiver.taskCount = 17;
     flushTaskFlags.guardCommandBufferWithPipeControl = true;
@@ -4995,7 +4995,7 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenFlushGuardBufferWithPipeControlWhenFl
 
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushHeapStorageRequiresRecyclingTagWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.recordFlusheBatchBuffer = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
 
     commandStreamReceiver.taskCount = 23;
     commandStreamReceiver.heapStorageRequiresRecyclingTag = true;

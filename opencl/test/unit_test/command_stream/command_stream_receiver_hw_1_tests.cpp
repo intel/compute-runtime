@@ -1038,7 +1038,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorre
     int client1, client2;
     csr.registerClient(&client1);
     csr.registerClient(&client2);
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
 
     csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
 
@@ -1080,7 +1080,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramProgr
     int client1, client2;
     csr.registerClient(&client1);
     csr.registerClient(&client1);
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
 
     csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
 
@@ -1122,7 +1122,7 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
     int client1, client2;
     csr.registerClient(&client1);
     csr.registerClient(&client2);
-    csr.recordFlusheBatchBuffer = true;
+    csr.recordFlushedBatchBuffer = true;
 
     csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
 

@@ -1514,7 +1514,7 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopy
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     void *srcPtr = reinterpret_cast<void *>(0x12000);
     void *dstPtr = reinterpret_cast<void *>(0x23000);
@@ -1536,7 +1536,7 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
-    ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->recordFlushedBatchBuffer = true;
 
     void *srcPtr = reinterpret_cast<void *>(0x12000);
     void *dstPtr = reinterpret_cast<void *>(0x23000);
