@@ -126,7 +126,7 @@ void DebugSessionLinuxXe::readInternalEventsAsync() {
 
         if (result == ZE_RESULT_SUCCESS) {
             std::lock_guard<std::mutex> lock(internalEventThreadMutex);
-            if (event->type == DRM_XE_EUDEBUG_EVENT_EU_ATTENTION) {
+            if (eventTypeIsAttention(event->type)) {
                 newestAttSeqNo.store(event->seqno);
             }
 
@@ -343,7 +343,7 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
     } break;
 
     default:
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
+        additionalEvents(event);
         break;
     }
 }

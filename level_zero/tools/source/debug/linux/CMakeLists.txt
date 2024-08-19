@@ -24,6 +24,7 @@ if(UNIX)
     target_sources(${L0_STATIC_LIB_NAME}
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/xe/debug_session.cpp
+                   ${CMAKE_CURRENT_SOURCE_DIR}/xe/${BRANCH_DIR_SUFFIX}handle_event_helper.cpp
                    ${CMAKE_CURRENT_SOURCE_DIR}/xe/debug_session.h
     )
   endif()

@@ -136,6 +136,8 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
     MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
+    void additionalEvents(drm_xe_eudebug_event *event);
+    MOCKABLE_VIRTUAL bool eventTypeIsAttention(uint16_t eventType);
     void readInternalEventsAsync() override;
     std::atomic<bool> detached{false};
 

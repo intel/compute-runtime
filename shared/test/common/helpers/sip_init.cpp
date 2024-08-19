@@ -191,7 +191,15 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
         begin = reinterpret_cast<char *>(&stateSaveAreaHeader2);
         sizeOfHeader = offsetof(SIP::StateSaveAreaHeader, regHeader.dbg_reg) + sizeof(SIP::StateSaveAreaHeader::regHeader.dbg_reg);
     } else if (version == 3) {
+        stateSaveAreaHeader3.versionHeader.size = sizeof(stateSaveAreaHeader3) / 8;
         begin = reinterpret_cast<char *>(&stateSaveAreaHeader3);
+        stateSaveAreaHeader3.regHeaderV3.fifo_size = 56;
+
+        stateSaveAreaHeader3.regHeaderV3.fifo_offset = (stateSaveAreaHeader3.regHeaderV3.num_slices *
+                                                        stateSaveAreaHeader3.regHeaderV3.num_subslices_per_slice *
+                                                        stateSaveAreaHeader3.regHeaderV3.num_eus_per_subslice *
+                                                        stateSaveAreaHeader3.regHeaderV3.num_threads_per_eu *
+                                                        stateSaveAreaHeader3.regHeaderV3.state_save_size);
         sizeOfHeader = offsetof(NEO::StateSaveAreaHeader, regHeaderV3.msg) + sizeof(NEO::StateSaveAreaHeader::regHeaderV3.msg);
     }
 

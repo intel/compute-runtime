@@ -15,4 +15,4 @@ if(UNIX)
   endif()
 
 endif()
-
+add_subdirectories()

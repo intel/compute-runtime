@@ -1843,6 +1843,163 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
 }
 
+struct DebugSessionTestSwFifoFixture : public ::testing::Test {
+    void SetUp() override {
+        auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+        auto hwInfo = *NEO::defaultHwInfo.get();
+        NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+        MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+        session = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+        stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
+        stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoHead;
+        stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail = fifoTail;
+
+        offsetFifo = (stateSaveAreaHeaderPtr->versionHeader.size * 8) + stateSaveAreaHeaderPtr->regHeaderV3.fifo_offset;
+        stateSaveAreaHeader.resize(offsetFifo + stateSaveAreaHeaderPtr->regHeaderV3.fifo_size * (sizeof(SIP::fifo_node)));
+        memcpy_s(stateSaveAreaHeader.data() + offsetFifo,
+                 fifoVecTillHead.size() * sizeof(SIP::fifo_node),
+                 fifoVecTillHead.data(),
+                 fifoVecTillHead.size() * sizeof(SIP::fifo_node));
+        memcpy_s(stateSaveAreaHeader.data() + offsetFifo + fifoTail * sizeof(SIP::fifo_node),
+                 fifoVecFromTail.size() * sizeof(SIP::fifo_node),
+                 fifoVecFromTail.data(),
+                 fifoVecFromTail.size() * sizeof(SIP::fifo_node));
+        session->stateSaveAreaHeader = std::move(stateSaveAreaHeader);
+    }
+    void TearDown() override {
+    }
+
+    const std::vector<SIP::fifo_node> fifoVecTillHead = {{1, 0, 0, 0, 0}, {1, 1, 0, 0, 0}, {1, 2, 0, 0, 0}, {1, 3, 0, 0, 0}, {1, 4, 0, 0, 0}};
+    const std::vector<SIP::fifo_node> fifoVecFromTail = {{1, 0, 1, 0, 0}, {1, 1, 1, 0, 0}, {1, 2, 1, 0, 0}, {1, 3, 1, 0, 0}, {1, 4, 1, 0, 0}, {1, 5, 1, 0, 0}};
+    const uint32_t fifoHead = 5;
+    const uint32_t fifoTail = 50;
+    std::unique_ptr<L0::ult::MockDebugSession> session;
+    NEO::StateSaveAreaHeader *stateSaveAreaHeaderPtr = nullptr;
+    uint64_t offsetFifo = 0u;
+};
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoThenFifoIsCorrectlyReadAndDrained) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    session->readFifo(0, threadsWithAttention);
+
+    stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    std::vector<SIP::fifo_node> readFifoForValidation(stateSaveAreaHeaderPtr->regHeaderV3.fifo_size);
+    session->readGpuMemory(0, reinterpret_cast<char *>(readFifoForValidation.data()), readFifoForValidation.size() * sizeof(SIP::fifo_node),
+                           reinterpret_cast<uint64_t>(session->stateSaveAreaHeader.data()) + offsetFifo);
+    for (size_t i = 0; i < readFifoForValidation.size(); i++) {
+        EXPECT_EQ(readFifoForValidation[i].valid, 0);
+    }
+    EXPECT_EQ(stateSaveAreaHeaderPtr->regHeaderV3.fifo_head, stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail);
+
+    EXPECT_EQ(threadsWithAttention.size(), fifoVecFromTail.size() + fifoVecTillHead.size());
+    size_t index = 0;
+    for (; index < fifoVecFromTail.size(); index++) {
+        EXPECT_EQ(threadsWithAttention[index].slice, fifoVecFromTail[index].slice_id);
+        EXPECT_EQ(threadsWithAttention[index].subslice, fifoVecFromTail[index].subslice_id);
+        EXPECT_EQ(threadsWithAttention[index].eu, fifoVecFromTail[index].eu_id);
+        EXPECT_EQ(threadsWithAttention[index].thread, fifoVecFromTail[index].thread_id);
+    }
+    for (; index < fifoVecTillHead.size(); index++) {
+        EXPECT_EQ(threadsWithAttention[index].slice, fifoVecTillHead[index].slice_id);
+        EXPECT_EQ(threadsWithAttention[index].subslice, fifoVecTillHead[index].subslice_id);
+        EXPECT_EQ(threadsWithAttention[index].eu, fifoVecTillHead[index].eu_id);
+        EXPECT_EQ(threadsWithAttention[index].thread, fifoVecTillHead[index].thread_id);
+    }
+}
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenWriteGpuMemoryFailsWhileInValidatingNodeDuringFifoReadThenErrorReturned) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->writeMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenWriteGpuMemoryFailsWhileUpdatingTailIndexDuringFifoReadThenErrorReturned) {
+
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->forceWriteGpuMemoryFailOnCount = 3;
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringFifoReadingThenErrorReturned) {
+
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->forcereadGpuMemoryFailOnCount = 3;
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
+TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringFifoReadThenFifoIsNotReadAndSuccessIsReturned) {
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    session->stateSaveAreaHeader.clear();
+    session->stateSaveAreaHeader.resize(stateSaveAreaHeader.size());
+    memcpy_s(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaHeader.data(), stateSaveAreaHeader.size());
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
+}
+
+TEST_F(DebugSessionTest, GivenSwFifoNodeWhenCheckingIsValidNodeThenAfterCheckingValidityOfNodeTrueOrFalseReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    SIP::fifo_node node1 = {0, 1, 1, 0, 0};
+    EXPECT_FALSE(session->isValidNode(0, 0, node1));
+
+    SIP::fifo_node node2 = {1, 1, 1, 0, 0};
+    EXPECT_TRUE(session->isValidNode(0, 0, node2));
+}
+
+TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadingMemoryAgainNodeTurnsValidThenTrueReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    // Declare node whose valid field is 0
+    SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
+    EXPECT_FALSE(session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+
+    SIP::fifo_node correctedNode = {1, 1, 1, 0, 0};
+    session->readMemoryBuffer.resize(sizeof(SIP::fifo_node));
+    memcpy_s(session->readMemoryBuffer.data(), session->readMemoryBuffer.size(), reinterpret_cast<void *>(&correctedNode), sizeof(SIP::fifo_node));
+
+    EXPECT_TRUE(session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+}
+
+TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadingMemoryAgainReadMemoryFailsThenFalseReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    // Declare node whose valid field is 0
+    SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
+    session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
+    EXPECT_FALSE(session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+}
+
 TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderIsNotSet) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;

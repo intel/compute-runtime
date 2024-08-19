@@ -160,8 +160,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
     using L0::DebugSessionImp::getRegisterSize;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
+    using L0::DebugSessionImp::isValidNode;
     using L0::DebugSessionImp::newAttentionRaised;
     using L0::DebugSessionImp::readDebugScratchRegisters;
+    using L0::DebugSessionImp::readFifo;
     using L0::DebugSessionImp::readModeFlags;
     using L0::DebugSessionImp::readSbaRegisters;
     using L0::DebugSessionImp::readThreadScratchRegisters;
@@ -314,6 +316,10 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return readMemoryResult;
     }
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override {
+        writeGpuMemoryCallCount++;
+        if (forceWriteGpuMemoryFailOnCount == writeGpuMemoryCallCount) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
 
         if (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()) &&
             ((gpuVa + size) <= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data() + stateSaveAreaHeader.size()))) {
@@ -538,6 +544,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     uint32_t readGpuMemoryCallCount = 0;
     uint32_t forcereadGpuMemoryFailOnCount = 0;
+
+    uint32_t writeGpuMemoryCallCount = 0;
+    uint32_t forceWriteGpuMemoryFailOnCount = 0;
 
     bool skipWriteResumeCommand = true;
     uint32_t writeResumeCommandCalled = 0;

@@ -1638,4 +1638,92 @@ void DebugSessionImp::getNotStoppedThreads(const std::vector<EuThread::ThreadId>
     }
 }
 
+bool DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node) {
+    constexpr uint32_t failsafeTimeoutMax = 100, failsafeTimeoutWait = 50;
+    uint32_t timeCount = 0;
+    while (!node.valid && (timeCount < failsafeTimeoutMax)) {
+        auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&node), sizeof(SIP::fifo_node), gpuVa);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("Reading FIFO failed, error = %d\n", retVal);
+            return false;
+        }
+        NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
+        timeCount += failsafeTimeoutWait;
+    }
+    if (!node.valid) {
+        PRINT_DEBUGGER_ERROR_LOG("%S", "Invalid entry  in SW FIFO\n");
+        return false;
+    }
+
+    return true;
+}
+
+ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    if (stateSaveAreaHeader->versionHeader.version.major < 3) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
+
+    // Drain the fifo
+    uint32_t drainRetries = 2, lastHead = ~0u;
+    uint64_t offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
+    uint64_t offsetHead = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_head);
+    const uint64_t offsetFifo = gpuVa + (stateSaveAreaHeader->versionHeader.size * 8) + stateSaveAreaHeader->regHeaderV3.fifo_offset;
+
+    while (drainRetries--) {
+        constexpr uint32_t failsafeTimeoutWait = 50;
+        std::vector<uint32_t> fifoIndices(2);
+        uint32_t fifoHeadIndex = 0, fifoTailIndex = 0;
+
+        readGpuMemory(vmHandle, reinterpret_cast<char *>(fifoIndices.data()), fifoIndices.size() * sizeof(uint32_t), gpuVa + offsetHead);
+        fifoHeadIndex = fifoIndices[0];
+        fifoTailIndex = fifoIndices[1];
+
+        if (lastHead != fifoHeadIndex) {
+            drainRetries++;
+        }
+
+        while (fifoTailIndex != fifoHeadIndex) {
+            uint32_t readSize = fifoTailIndex < fifoHeadIndex ? fifoHeadIndex - fifoTailIndex : stateSaveAreaHeader->regHeaderV3.fifo_size - fifoTailIndex;
+            std::vector<SIP::fifo_node> nodes(readSize);
+            uint64_t currentFifoOffset = offsetFifo + (sizeof(SIP::fifo_node) * fifoTailIndex);
+
+            auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(nodes.data()), readSize * sizeof(SIP::fifo_node), currentFifoOffset);
+            if (retVal != ZE_RESULT_SUCCESS) {
+                PRINT_DEBUGGER_ERROR_LOG("Reading FIFO failed, error = %d\n", retVal);
+                return retVal;
+            }
+            for (uint32_t i = 0; i < readSize; i++) {
+                PRINT_DEBUGGER_INFO_LOG("Validate entry at index %u in SW Fifo\n", (i + fifoTailIndex));
+                UNRECOVERABLE_IF(!isValidNode(vmHandle, currentFifoOffset + (i * sizeof(SIP::fifo_node)), nodes[i]));
+                threadsWithAttention.emplace_back(0, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
+                nodes[i].valid = 0;
+            }
+            retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(nodes.data()), readSize * sizeof(SIP::fifo_node), currentFifoOffset);
+            if (retVal != ZE_RESULT_SUCCESS) {
+                PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
+                return retVal;
+            }
+
+            if (fifoTailIndex < fifoHeadIndex) {
+                // then we read to the head and are done
+                fifoTailIndex = fifoHeadIndex;
+                retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
+                if (retVal != ZE_RESULT_SUCCESS) {
+                    PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
+                    return retVal;
+                }
+            } else {
+                // wrap around
+                fifoTailIndex = 0;
+            }
+        }
+        lastHead = stateSaveAreaHeader->regHeaderV3.fifo_head;
+        NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

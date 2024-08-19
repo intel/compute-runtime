@@ -150,9 +150,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::interruptSent;
+    using L0::DebugSessionImp::readFifo;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
     using L0::DebugSessionLinux::getClientConnection;
+    using L0::DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents;
     using L0::DebugSessionLinuxXe::addThreadToNewlyStoppedFromRaisedAttentionForTileSession;
     using L0::DebugSessionLinuxXe::asyncThread;
     using L0::DebugSessionLinuxXe::asyncThreadFunction;
@@ -163,6 +165,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::clientHandleToConnection;
     using L0::DebugSessionLinuxXe::debugArea;
     using L0::DebugSessionLinuxXe::euControlInterruptSeqno;
+    using L0::DebugSessionLinuxXe::eventTypeIsAttention;
     using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
     using L0::DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle;
     using L0::DebugSessionLinuxXe::handleEvent;
