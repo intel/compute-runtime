@@ -26,11 +26,12 @@ struct ConvertibleProcAddr {
 class OsLibrary {
   protected:
     OsLibrary() = default;
+    static OsLibrary *load(const std::string &name) { return loadAndCaptureError(name, nullptr); }
 
   public:
     virtual ~OsLibrary() = default;
 
-    static OsLibrary *load(const std::string &name) { return loadAndCaptureError(name, nullptr); }
+    static decltype(&OsLibrary::load) loadFunc;
     static OsLibrary *loadAndCaptureError(const std::string &name, std::string *errorValue);
     static const std::string createFullSystemPath(const std::string &name);
 

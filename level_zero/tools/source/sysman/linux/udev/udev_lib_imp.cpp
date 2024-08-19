@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,7 +79,7 @@ UdevLibImp::~UdevLibImp(){};
 UdevLib *UdevLib::create() {
     UdevLibImp *pUdevLib = new UdevLibImp();
     UNRECOVERABLE_IF(nullptr == pUdevLib);
-    pUdevLib->libraryHandle.reset(NEO::OsLibrary::load(std::string(libUdevlFile)));
+    pUdevLib->libraryHandle.reset(NEO::OsLibrary::loadFunc(std::string(libUdevlFile)));
     if (pUdevLib->libraryHandle == nullptr || pUdevLib->loadEntryPoints() == false || !pUdevLib->init()) {
         delete pUdevLib;
         return nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,8 +80,6 @@ struct RTASBuilder : _ze_rtas_builder_exp_handle_t {
     static RTASBuilder *fromHandle(ze_rtas_builder_exp_handle_t handle) { return static_cast<RTASBuilder *>(handle); }
     inline ze_rtas_builder_exp_handle_t toHandle() { return this; }
 
-    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
-    static OsLibraryLoadPtr osLibraryLoadFunction;
     static std::string rtasLibraryName;
     static bool loadEntryPoints(NEO::OsLibrary *libraryHandle);
 

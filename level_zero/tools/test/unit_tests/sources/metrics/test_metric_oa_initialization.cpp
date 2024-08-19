@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,9 +49,8 @@ using MetricInitializationTest = Test<MetricContextFixture>;
 TEST_F(MetricInitializationTest, GivenOaDependenciesAreAvailableThenMetricInitializationIsSuccess) {
 
     globalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
-    OaMetricSourceImp::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     EXPECT_EQ(device->getMetricDeviceContext().enableMetricApi(), ZE_RESULT_SUCCESS);
-    OaMetricSourceImp::osLibraryLoadFunction = NEO::OsLibrary::load;
 }
 
 } // namespace ult

@@ -22,13 +22,13 @@ namespace ult {
 
 TEST(GlobalTearDownCallbackTests, givenL0LoaderThenGlobalTeardownCallbackIsCalled) {
     L0::levelZeroDriverInitialized = true;
-    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(L0::ult::testLoaderDllName)};
+    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(L0::ult::testLoaderDllName)};
     EXPECT_EQ(ZE_RESULT_SUCCESS, setDriverTeardownHandleInLoader(L0::ult::testLoaderDllName));
     L0::levelZeroDriverInitialized = false;
 }
 TEST(GlobalTearDownCallbackTests, givenL0LoaderButL0DriverDidNotInitThenSetTearDownReturnsUninitialized) {
     L0::levelZeroDriverInitialized = false;
-    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(L0::ult::testLoaderDllName)};
+    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(L0::ult::testLoaderDllName)};
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, setDriverTeardownHandleInLoader(L0::ult::testLoaderDllName));
 }
 TEST(GlobalTearDownCallbackTests, givenL0LoaderIsMissingThenGlobalTeardownCallbackIsNotCalled) {

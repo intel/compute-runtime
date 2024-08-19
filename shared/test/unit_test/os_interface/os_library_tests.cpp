@@ -22,14 +22,14 @@ const std::string fnName = "testDynamicLibraryFunc";
 using namespace NEO;
 
 TEST(OSLibraryTest, whenLibraryNameIsEmptyThenCurrentProcesIsUsedAsLibrary) {
-    std::unique_ptr<OsLibrary> library{OsLibrary::load("")};
+    std::unique_ptr<OsLibrary> library{OsLibrary::loadFunc("")};
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress("selfDynamicLibraryFunc");
     EXPECT_NE(nullptr, ptr);
 }
 
 TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturned) {
-    OsLibrary *library = OsLibrary::load(fakeLibName);
+    OsLibrary *library = OsLibrary::loadFunc(fakeLibName);
     EXPECT_EQ(nullptr, library);
 }
 
@@ -41,7 +41,7 @@ TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturnedAndError
 }
 
 TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoaded) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
@@ -53,14 +53,14 @@ TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoadedWithNo
 }
 
 TEST(OSLibraryTest, whenSymbolNameIsValidThenGetProcAddressReturnsNonNullPointer) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress(fnName);
     EXPECT_NE(nullptr, ptr);
 }
 
 TEST(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress(fnName + "invalid");
     EXPECT_EQ(nullptr, ptr);
@@ -73,7 +73,7 @@ TEST_F(OsLibraryTestWithFailureInjection, GivenFailureInjectionWhenLibraryIsLoad
         std::string libName(Os::testDllName);
 
         // System under test
-        OsLibrary *library = OsLibrary::load(libName);
+        OsLibrary *library = OsLibrary::loadFunc(libName);
 
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_NE(nullptr, library);

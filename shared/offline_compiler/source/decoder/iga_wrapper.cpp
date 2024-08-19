@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ struct IgaWrapper::Impl {
         iga.optsContext.cb = sizeof(igaLib.optsContext);
         iga.optsContext.gen = igaGen;
 
-        iga.library.reset(NEO::OsLibrary::load(Os::igaDllName));
+        iga.library.reset(NEO::OsLibrary::loadFunc(Os::igaDllName));
         if (iga.library == nullptr) {
             return;
         }

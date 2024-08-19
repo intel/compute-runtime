@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "pin.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/os_library.h"
 
 #include "os_pin.h"
 
@@ -15,10 +16,8 @@
 
 namespace NEO {
 
-PinContext::OsLibraryLoadPtr PinContext::osLibraryLoadFunction(NEO::OsLibrary::load);
-
 bool PinContext::init(const std::string &gtPinOpenFunctionName) {
-    auto hGtPinLibrary = std::unique_ptr<OsLibrary>(PinContext::osLibraryLoadFunction(PinContext::gtPinLibraryFilename.c_str()));
+    auto hGtPinLibrary = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc(PinContext::gtPinLibraryFilename.c_str()));
 
     if (hGtPinLibrary == nullptr) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library %s\n", PinContext::gtPinLibraryFilename.c_str());

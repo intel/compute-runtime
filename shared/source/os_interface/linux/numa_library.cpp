@@ -16,7 +16,6 @@ namespace NEO {
 namespace Linux {
 
 std::unique_ptr<NEO::OsLibrary> NumaLibrary::osLibrary(nullptr);
-NumaLibrary::OsLibraryLoadPtr NumaLibrary::osLibraryLoadFunction(NEO::OsLibrary::load);
 NumaLibrary::GetMemPolicyPtr NumaLibrary::getMemPolicyFunction(nullptr);
 NumaLibrary::NumaAvailablePtr NumaLibrary::numaAvailableFunction(nullptr);
 NumaLibrary::NumaMaxNodePtr NumaLibrary::numaMaxNodeFunction(nullptr);
@@ -24,7 +23,7 @@ int NumaLibrary::maxNode(-1);
 bool NumaLibrary::numaLoaded(false);
 
 bool NumaLibrary::init() {
-    osLibrary.reset(osLibraryLoadFunction(std::string(numaLibNameStr)));
+    osLibrary.reset(NEO::OsLibrary::loadFunc(std::string(numaLibNameStr)));
     numaLoaded = false;
     numaAvailableFunction = nullptr;
     numaMaxNodeFunction = nullptr;

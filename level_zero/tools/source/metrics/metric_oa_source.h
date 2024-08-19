@@ -9,10 +9,6 @@
 
 #include "level_zero/tools/source/metrics/metric.h"
 
-namespace NEO {
-class OsLibrary;
-} // namespace NEO
-
 namespace L0 {
 struct MetricEnumeration;
 struct MetricsLibrary;
@@ -57,8 +53,6 @@ class OaMetricSourceImp : public MetricSource {
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
     void setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface);
     MetricOAOsInterface *getMetricOsInterface() { return metricOAOsInterface.get(); }
-    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
-    static OsLibraryLoadPtr osLibraryLoadFunction;
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;

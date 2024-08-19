@@ -20,7 +20,7 @@ inline const std::string getGdiName() {
 }
 
 NEO::OsLibrary *Gdi::createGdiDLL() {
-    return NEO::OsLibrary::load(getGdiName());
+    return NEO::OsLibrary::loadFunc(getGdiName());
 }
 
 } // namespace NEO

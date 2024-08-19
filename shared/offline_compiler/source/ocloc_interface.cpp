@@ -272,7 +272,7 @@ std::optional<int> invokeFormerOcloc(const std::string &formerOclocName, unsigne
         return {};
     }
 
-    std::unique_ptr<OsLibrary> oclocLib(OsLibrary::load(formerOclocName));
+    std::unique_ptr<OsLibrary> oclocLib(OsLibrary::loadFunc(formerOclocName));
 
     if (!oclocLib ||
         !oclocLib->isLoaded()) {

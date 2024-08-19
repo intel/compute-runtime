@@ -6008,7 +6008,7 @@ HWTEST2_F(RTASDeviceTest, GivenValidRTASLibraryWhenQueryingRTASProptertiesThenCo
 
     ze_device_properties_t devProps = {};
     ze_rtas_device_exp_properties_t rtasProperties = {};
-    L0::RTASBuilder::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     driverHandle->rtasLibraryHandle.reset();
 
     devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
@@ -6064,7 +6064,7 @@ HWTEST2_F(RTASDeviceTest, GivenInvalidRTASLibraryWhenQueryingRTASProptertiesThen
 
     ze_device_properties_t devProps = {};
     ze_rtas_device_exp_properties_t rtasProperties = {};
-    L0::RTASBuilder::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     driverHandle->rtasLibraryHandle.reset();
 
     devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
@@ -6090,7 +6090,7 @@ HWTEST2_F(RTASDeviceTest, GivenMissingSymbolsInRTASLibraryWhenQueryingRTASPropte
 
     ze_device_properties_t devProps = {};
     ze_rtas_device_exp_properties_t rtasProperties = {};
-    L0::RTASBuilder::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     driverHandle->rtasLibraryHandle.reset();
 
     devProps.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;

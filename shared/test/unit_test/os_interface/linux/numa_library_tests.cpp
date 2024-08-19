@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/numa_library.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -21,13 +22,11 @@ struct WhiteBoxNumaLibrary : NumaLibrary {
     using NumaLibrary::procGetMemPolicyStr;
     using NumaLibrary::procNumaAvailableStr;
     using NumaLibrary::procNumaMaxNodeStr;
-    using OsLibraryLoadPtr = NumaLibrary::OsLibraryLoadPtr;
     using GetMemPolicyPtr = NumaLibrary::GetMemPolicyPtr;
     using NumaAvailablePtr = NumaLibrary::NumaAvailablePtr;
     using NumaMaxNodePtr = NumaLibrary::NumaMaxNodePtr;
     using NumaLibrary::getMemPolicyFunction;
     using NumaLibrary::osLibrary;
-    using NumaLibrary::osLibraryLoadFunction;
 };
 
 TEST(NumaLibraryTests, givenNumaLibraryWithValidMockOsLibraryWhenCallingGetMemPolicyThenZeroIsReturned) {
@@ -44,7 +43,7 @@ TEST(NumaLibraryTests, givenNumaLibraryWithValidMockOsLibraryWhenCallingGetMemPo
     osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procNumaAvailableStr)] = reinterpret_cast<void *>(numaAvailableHandler);
     osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procNumaMaxNodeStr)] = reinterpret_cast<void *>(numaMaxNodeHandler);
 
-    WhiteBoxNumaLibrary::osLibraryLoadFunction = MockOsLibraryCustom::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
     EXPECT_TRUE(WhiteBoxNumaLibrary::init());
     EXPECT_TRUE(WhiteBoxNumaLibrary::isLoaded());
     EXPECT_EQ(reinterpret_cast<WhiteBoxNumaLibrary::GetMemPolicyPtr>(memPolicyHandler), WhiteBoxNumaLibrary::getMemPolicyFunction);
@@ -72,7 +71,7 @@ TEST(NumaLibraryTests, givenNumaLibraryWithInvalidMockOsLibraryWhenCallingLoadTh
     osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procNumaMaxNodeStr)] = nullptr;
     osLibrary->procMap[std::string(WhiteBoxNumaLibrary::procGetMemPolicyStr)] = nullptr;
 
-    WhiteBoxNumaLibrary::osLibraryLoadFunction = MockOsLibraryCustom::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
     EXPECT_FALSE(WhiteBoxNumaLibrary::init());
     EXPECT_FALSE(WhiteBoxNumaLibrary::isLoaded());
     EXPECT_EQ(nullptr, MockOsLibrary::loadLibraryNewObject);
@@ -122,7 +121,7 @@ TEST(NumaLibraryTests, givenNumaLibraryWithInvalidMockOsLibraryWhenCallingLoadTh
 
 TEST(NumaLibraryTests, givenNumaLibraryWithInvalidOsLibraryWhenCallingGetMemPolicyThenErrorIsReturned) {
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(nullptr, false);
-    WhiteBoxNumaLibrary::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     EXPECT_FALSE(WhiteBoxNumaLibrary::init());
     EXPECT_FALSE(WhiteBoxNumaLibrary::isLoaded());
 
@@ -132,7 +131,7 @@ TEST(NumaLibraryTests, givenNumaLibraryWithInvalidOsLibraryWhenCallingGetMemPoli
 
 TEST(NumaLibraryTests, givenNumaLibraryWithInvalidGetMemPolicyWhenCallingGetMemPolicyThenErrorIsReturned) {
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(nullptr, true);
-    WhiteBoxNumaLibrary::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     EXPECT_FALSE(WhiteBoxNumaLibrary::init());
     EXPECT_FALSE(WhiteBoxNumaLibrary::isLoaded());
     EXPECT_EQ(nullptr, WhiteBoxNumaLibrary::getMemPolicyFunction);

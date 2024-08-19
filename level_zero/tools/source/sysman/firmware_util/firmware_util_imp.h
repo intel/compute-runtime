@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,8 +127,6 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
-    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
-    static OsLibraryLoadPtr osLibraryLoadFunction;
     static std::string fwUtilLibraryName;
     std::string fwDevicePath{};
     struct igsc_device_handle fwDeviceHandle = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
 }
 
 std::unique_ptr<OsLibrary> OclocFclFacade::loadFclLibrary() const {
-    return std::unique_ptr<OsLibrary>{OsLibrary::load(Os::frontEndDllName)};
+    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc(Os::frontEndDllName)};
 }
 
 CIF::CreateCIFMainFunc_t OclocFclFacade::loadCreateFclMainFunction() const {

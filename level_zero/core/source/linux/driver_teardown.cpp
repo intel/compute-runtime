@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace L0 {
 ze_result_t setDriverTeardownHandleInLoader(const char *loaderLibraryName) {
     if (L0::levelZeroDriverInitialized) {
         ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-        std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(loaderLibraryName)};
+        std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryName)};
         if (loaderLibrary) {
             zelSetDriverTeardown_fn setDriverTeardown = reinterpret_cast<zelSetDriverTeardown_fn>(loaderLibrary->getProcAddress("zelSetDriverTeardown"));
             if (setDriverTeardown) {

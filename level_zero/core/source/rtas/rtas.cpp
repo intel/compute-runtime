@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,6 @@ pRTASParallelOperationCreateExpImpl parallelOperationCreateExpImpl;
 pRTASParallelOperationDestroyExpImpl parallelOperationDestroyExpImpl;
 pRTASParallelOperationGetPropertiesExpImpl parallelOperationGetPropertiesExpImpl;
 pRTASParallelOperationJoinExpImpl parallelOperationJoinExpImpl;
-
-RTASBuilder::OsLibraryLoadPtr RTASBuilder::osLibraryLoadFunction(NEO::OsLibrary::load);
 
 bool RTASBuilder::loadEntryPoints(NEO::OsLibrary *libraryHandle) {
     bool ok = getSymbolAddr(libraryHandle, zeRTASBuilderCreateExpImpl, builderCreateExpImpl);
@@ -118,7 +116,7 @@ ze_result_t DriverHandleImp::loadRTASLibrary() {
     }
 
     if (this->rtasLibraryHandle == nullptr) {
-        this->rtasLibraryHandle = std::unique_ptr<NEO::OsLibrary>(RTASBuilder::osLibraryLoadFunction(RTASBuilder::rtasLibraryName));
+        this->rtasLibraryHandle = std::unique_ptr<NEO::OsLibrary>(NEO::OsLibrary::loadFunc(RTASBuilder::rtasLibraryName));
         if (this->rtasLibraryHandle == nullptr || RTASBuilder::loadEntryPoints(this->rtasLibraryHandle.get()) == false) {
             this->rtasLibraryUnavailable = true;
 

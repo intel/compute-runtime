@@ -179,7 +179,7 @@ void MetricsLibrary::release() {
 
 bool MetricsLibrary::load() {
     // Load library.
-    handle = OaMetricSourceImp::osLibraryLoadFunction(getFilename());
+    handle = NEO::OsLibrary::loadFunc(getFilename());
 
     // Load exported functions.
     if (handle) {

@@ -9,6 +9,7 @@ set(CLOC_SEGFAULT_TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/segfault_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+    ${NEO_SHARED_DIRECTORY}/os_interface/os_library.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/debug_helpers.cpp

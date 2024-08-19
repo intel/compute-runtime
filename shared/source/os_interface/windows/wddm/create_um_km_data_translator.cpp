@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,7 +282,7 @@ std::unique_ptr<UmKmDataTranslator> createUmKmDataTranslator(const Gdi &gdi, D3D
             path.append(Os::fileSeparator);
             path.append(wslComputeHelperLibNameToLoad);
         }
-        std::unique_ptr<OsLibrary> lib{OsLibrary::load(path)};
+        std::unique_ptr<OsLibrary> lib{OsLibrary::loadFunc(path)};
         if ((nullptr != lib) && (lib->isLoaded())) {
             return std::make_unique<WslComputeHelperUmKmDataTranslator>(std::move(lib));
         }

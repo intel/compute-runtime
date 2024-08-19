@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -275,7 +275,7 @@ TEST_F(RTASTest, GivenLibraryLoadsSymbolsAndUnderlyingFunctionsSucceedThenSucces
     ze_rtas_parallel_operation_exp_handle_t hParallelOperation;
     const ze_rtas_format_exp_t accelFormatA = {};
     const ze_rtas_format_exp_t accelFormatB = {};
-    L0::RTASBuilder::osLibraryLoadFunction = MockSymbolsLoadedOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockSymbolsLoadedOsLibrary::load};
     driverHandle->rtasLibraryHandle.reset();
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, L0::zeRTASBuilderCreateExp(driverHandle->toHandle(), nullptr, &hBuilder));
@@ -301,7 +301,7 @@ TEST_F(RTASTest, GivenLibraryFailedToLoadSymbolsThenErrorIsReturned) {
     ze_rtas_parallel_operation_exp_handle_t hParallelOperation;
     const ze_rtas_format_exp_t accelFormatA = {};
     const ze_rtas_format_exp_t accelFormatB = {};
-    L0::RTASBuilder::osLibraryLoadFunction = MockRTASOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockRTASOsLibrary::load};
     driverHandle->rtasLibraryHandle.reset();
 
     EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, L0::zeRTASBuilderCreateExp(driverHandle->toHandle(), nullptr, &hBuilder));
@@ -333,7 +333,7 @@ TEST_F(RTASTest, GivenLibraryPreLoadedAndUnderlyingBuilderCreateFailsThenErrorIs
 
 TEST_F(RTASTest, GivenLibraryFailsToLoadThenBuilderCreateReturnsError) {
     ze_rtas_builder_exp_handle_t hBuilder;
-    L0::RTASBuilder::osLibraryLoadFunction = MockRTASOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockRTASOsLibrary::load};
     MockRTASOsLibrary::mockLoad = false;
     driverHandle->rtasLibraryHandle.reset();
 
@@ -500,7 +500,7 @@ TEST_F(RTASTest, GivenNoSymbolAvailableInLibraryThenLoadEntryPointsReturnsFalse)
 }
 
 TEST_F(RTASTest, GivenRTASLibraryHandleUnavailableThenDependencyUnavailableErrorIsReturned) {
-    L0::RTASBuilder::osLibraryLoadFunction = MockRTASOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockRTASOsLibrary::load};
     MockRTASOsLibrary::mockLoad = false;
     driverHandle->rtasLibraryHandle.reset();
 

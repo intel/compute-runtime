@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ using setGLMockValue = void (*)(GLMockReturnedValues);
 struct GlDllHelper {
   public:
     GlDllHelper() {
-        glDllLoad.reset(OsLibrary::load(Os::openglDllName));
+        glDllLoad.reset(OsLibrary::loadFunc(Os::openglDllName));
         if (glDllLoad) {
             glSetString = (*glDllLoad)["glSetString"];
             UNRECOVERABLE_IF(glSetString == nullptr);

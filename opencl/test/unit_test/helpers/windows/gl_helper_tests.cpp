@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ class GlFunctionHelperMock : public GlFunctionHelper {
 };
 
 TEST(GlFunctionHelper, whenCreateGlFunctionHelperThenSetGlFunctionPtrToLoadAnotherFunctions) {
-    std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
+    std::unique_ptr<OsLibrary> glLibrary(OsLibrary::loadFunc("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
     GlFunctionHelperMock loader(glLibrary.get(), "mockLoader");
     funcType function1 = ConvertibleProcAddr{reinterpret_cast<void *>(loader.glFunctionPtr("realFunction"))};
@@ -35,7 +35,7 @@ TEST(GlFunctionHelper, whenCreateGlFunctionHelperThenSetGlFunctionPtrToLoadAnoth
 }
 
 TEST(GlFunctionHelper, givenNonExistingFunctionNameWhenCreateGlFunctionHelperThenNullptr) {
-    std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
+    std::unique_ptr<OsLibrary> glLibrary(OsLibrary::loadFunc("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
     GlFunctionHelper loader(glLibrary.get(), "mockLoader");
     funcType function = loader["nonExistingFunction"];
@@ -43,7 +43,7 @@ TEST(GlFunctionHelper, givenNonExistingFunctionNameWhenCreateGlFunctionHelperThe
 }
 
 TEST(GlFunctionHelper, givenRealFunctionNameWhenCreateGlFunctionHelperThenGetPointerToAppropriateFunction) {
-    std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
+    std::unique_ptr<OsLibrary> glLibrary(OsLibrary::loadFunc("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
     GlFunctionHelper loader(glLibrary.get(), "mockLoader");
     funcType function = loader["realFunction"];

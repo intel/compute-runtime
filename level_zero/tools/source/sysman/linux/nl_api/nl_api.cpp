@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -264,7 +264,7 @@ int NlApi::nlaNestEnd(struct nl_msg *msg, struct nlattr *attr) {
 }
 
 NlApi::NlApi() {
-    genlLibraryHandle.reset(NEO::OsLibrary::load(std::string(libgenlFile)));
+    genlLibraryHandle.reset(NEO::OsLibrary::loadFunc(std::string(libgenlFile)));
 }
 
 NlApi::~NlApi() = default;

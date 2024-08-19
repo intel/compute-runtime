@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 }
 
 std::unique_ptr<OsLibrary> OclocIgcFacade::loadIgcLibrary() const {
-    return std::unique_ptr<OsLibrary>{OsLibrary::load(Os::igcDllName)};
+    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc(Os::igcDllName)};
 }
 
 CIF::CreateCIFMainFunc_t OclocIgcFacade::loadCreateIgcMainFunction() const {

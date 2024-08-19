@@ -95,7 +95,7 @@ void GLSharingFunctionsLinux::removeGlArbSyncEventMapping(Event &baseEvent) {
 }
 
 GLboolean GLSharingFunctionsLinux::initGLFunctions() {
-    std::unique_ptr<OsLibrary> dynLibrary(OsLibrary::load(""));
+    std::unique_ptr<OsLibrary> dynLibrary(OsLibrary::loadFunc(""));
 
     GlFunctionHelper glXGetProc(dynLibrary.get(), "glXGetProcAddress");
     if (glXGetProc.ready()) {

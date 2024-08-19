@@ -114,7 +114,7 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
     getMetricsDiscoveryFilename(libnames);
 
     for (auto &name : libnames) {
-        hMetricsDiscovery.reset(OaMetricSourceImp::osLibraryLoadFunction(name));
+        hMetricsDiscovery.reset(NEO::OsLibrary::loadFunc(name));
 
         // Load exported functions.
         if (hMetricsDiscovery) {

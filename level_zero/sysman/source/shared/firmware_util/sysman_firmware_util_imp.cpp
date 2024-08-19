@@ -66,8 +66,6 @@ void firmwareFlashProgressFunc(uint32_t done, uint32_t total, void *ctx) {
     }
 }
 
-FirmwareUtilImp::OsLibraryLoadPtr FirmwareUtilImp::osLibraryLoadFunction(NEO::OsLibrary::load);
-
 void FirmwareUtilImp::updateFirmwareFlashProgress(uint32_t percent) {
     const std::lock_guard<std::mutex> lock(flashProgress.fwProgressLock);
     flashProgress.completionPercent = percent;
@@ -210,7 +208,7 @@ FirmwareUtilImp::~FirmwareUtilImp() {
 FirmwareUtil *FirmwareUtil::create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function) {
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(domain, bus, device, function);
     UNRECOVERABLE_IF(nullptr == pFwUtilImp);
-    pFwUtilImp->libraryHandle = FirmwareUtilImp::osLibraryLoadFunction(FirmwareUtilImp::fwUtilLibraryName);
+    pFwUtilImp->libraryHandle = NEO::OsLibrary::loadFunc(FirmwareUtilImp::fwUtilLibraryName);
     if (pFwUtilImp->libraryHandle == nullptr || pFwUtilImp->loadEntryPoints() == false || pFwUtilImp->fwDeviceInit() != ZE_RESULT_SUCCESS) {
         if (nullptr != pFwUtilImp->libraryHandle) {
             delete pFwUtilImp->libraryHandle;

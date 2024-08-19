@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ TEST(FwUtilDeleteTest, GivenLibraryWasSetWhenFirmwareUtilInterfaceIsDeletedThenL
 }
 
 TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndGetProcAddressFailsThenFirmwareUtilInterfaceIsNotCreated) {
-    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockFwUtilOsLibrary::load};
     FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }
@@ -70,14 +70,14 @@ TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceAndIgscDevic
         GTEST_SKIP();
     }
 
-    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockFwUtilOsLibrary::load};
     FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }
 
 TEST(FwUtilTest, GivenLibraryWasNotSetWhenCreatingFirmwareUtilInterfaceThenFirmwareUtilInterfaceIsNotCreated) {
     L0::ult::MockFwUtilOsLibrary::mockLoad = false;
-    FirmwareUtilImp::osLibraryLoadFunction = L0::ult::MockFwUtilOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockFwUtilOsLibrary::load};
     FirmwareUtil *pFwUtil = FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(pFwUtil, nullptr);
 }

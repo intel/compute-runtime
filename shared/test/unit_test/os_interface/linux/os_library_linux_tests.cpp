@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,14 +34,14 @@ TEST(OsLibraryTest, GivenValidNameWhenGettingFullPathAndDlinfoFailsThenPathIsEmp
         }
         return 0;
     });
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
     std::string path = library->getFullPath();
     EXPECT_EQ(0u, path.size());
 }
 
 TEST(OsLibraryTest, GivenValidLibNameWhenGettingFullPathThenPathIsNotEmpty) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
     std::string path = library->getFullPath();
     EXPECT_NE(0u, path.size());

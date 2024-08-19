@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,7 @@ UINT WINAPI getSystemDirectoryAMock(LPSTR lpBuffer, UINT uSize) {
 TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToSystem32) {
     auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
 
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
@@ -92,7 +92,7 @@ TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
     auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
     VariableBackup<bool> bkpM(&mockWillFailInNonSystem32, false);
 
-    std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 

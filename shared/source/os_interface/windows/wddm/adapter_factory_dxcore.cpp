@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace NEO {
 
 DxCoreAdapterFactory::DxCoreAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn) : createAdapterFactoryFcn(createAdapterFactoryFcn) {
     if (nullptr == createAdapterFactoryFcn) {
-        dxCoreLibrary.reset(OsLibrary::load(Os::dxcoreDllName));
+        dxCoreLibrary.reset(OsLibrary::loadFunc(Os::dxcoreDllName));
         if (dxCoreLibrary && dxCoreLibrary->isLoaded()) {
             auto func = dxCoreLibrary->getProcAddress(dXCoreCreateAdapterFactoryFuncName);
             createAdapterFactoryFcn = reinterpret_cast<DxCoreAdapterFactory::CreateAdapterFactoryFcn>(func);

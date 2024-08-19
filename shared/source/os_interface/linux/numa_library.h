@@ -28,13 +28,11 @@ class NumaLibrary {
     static constexpr const char *procNumaAvailableStr = "numa_available";
     static constexpr const char *procNumaMaxNodeStr = "numa_max_node";
 
-    using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
     using GetMemPolicyPtr = std::add_pointer<long(int *, unsigned long[], unsigned long, void *, unsigned long)>::type;
     using NumaAvailablePtr = std::add_pointer<int(void)>::type;
     using NumaMaxNodePtr = std::add_pointer<int(void)>::type;
 
     static std::unique_ptr<NEO::OsLibrary> osLibrary;
-    static OsLibraryLoadPtr osLibraryLoadFunction;
     static GetMemPolicyPtr getMemPolicyFunction;
     static NumaAvailablePtr numaAvailableFunction;
     static NumaMaxNodePtr numaMaxNodeFunction;

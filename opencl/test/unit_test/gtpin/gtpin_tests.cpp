@@ -2517,7 +2517,7 @@ TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndNoEnvironmentVariableSetWhe
     VariableBackup<uint32_t> gtpinCounterBackup(&gtpinInitTimesCalled, 0u);
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
-    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
 
     gtPinTryNotifyInit();
     EXPECT_EQ(0u, gtpinInitTimesCalled);
@@ -2536,7 +2536,7 @@ TEST(GTPinInitNotifyTests, givenNoPlatformsAvailableAndEnvironmentVariableSetWhe
 
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
-    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
 
     gtPinTryNotifyInit();
     EXPECT_EQ(0u, gtpinInitTimesCalled);
@@ -2556,7 +2556,7 @@ TEST(GTPinInitNotifyTests, givenAvailablePlatformsAndEnvironmentVariableSetWhenT
 
     uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t { gtpinInitTimesCalled++; return 0; };
     MockOsLibrary::loadLibraryNewObject = new MockOsLibrary(reinterpret_cast<void *>(openPinHandler), false);
-    NEO::PinContext::osLibraryLoadFunction = MockOsLibrary::load;
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
 
     gtPinTryNotifyInit();
     EXPECT_EQ(1u, gtpinInitTimesCalled);

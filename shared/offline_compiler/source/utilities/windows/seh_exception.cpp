@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
     DWORD displacement = 0;
     DWORD64 displacement64 = 0;
 
-    std::unique_ptr<NEO::OsLibrary> psApiLib(NEO::OsLibrary::load("psapi.dll"));
+    std::unique_ptr<NEO::OsLibrary> psApiLib(NEO::OsLibrary::loadFunc("psapi.dll"));
     auto getMappedFileName = reinterpret_cast<getMappedFileNameFunction>(psApiLib->getProcAddress("GetMappedFileNameA"));
 
     size_t callstackCounter = 0;

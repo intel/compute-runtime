@@ -17,8 +17,6 @@
 
 namespace L0 {
 
-OaMetricSourceImp::OsLibraryLoadPtr OaMetricSourceImp::osLibraryLoadFunction(NEO::OsLibrary::load);
-
 std::unique_ptr<OaMetricSourceImp> OaMetricSourceImp::create(const MetricDeviceContext &metricDeviceContext) {
     return std::unique_ptr<OaMetricSourceImp>(new (std::nothrow) OaMetricSourceImp(metricDeviceContext));
 }

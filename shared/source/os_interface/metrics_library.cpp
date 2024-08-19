@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace NEO {
 ///////////////////////////////////////////////////////
 MetricsLibrary::MetricsLibrary() {
     api = std::make_unique<MetricsLibraryInterface>();
-    osLibrary.reset(OsLibrary::load(Os::metricsLibraryDllName));
+    osLibrary.reset(OsLibrary::loadFunc(Os::metricsLibraryDllName));
 }
 
 //////////////////////////////////////////////////////
