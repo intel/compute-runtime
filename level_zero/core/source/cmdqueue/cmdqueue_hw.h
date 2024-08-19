@@ -133,8 +133,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,
                                                    ze_fence_handle_t hFence,
-                                                   ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                                   ze_event_handle_t *phWaitEvents);
+                                                   NEO::LinearStream *parentImmediateCommandlistLinearStream);
     inline size_t computeDebuggerCmdsSize(const CommandListExecutionContext &ctx);
     inline size_t computePreemptionSizeForCommandList(CommandListExecutionContext &ctx,
                                                       CommandList *commandList,
