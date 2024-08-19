@@ -101,7 +101,7 @@ class AUBFixtureL0 {
         }
     }
 
-    static ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags);
+    static ze_module_handle_t createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile = false);
 
     std::string aubFileName;
     std::unique_ptr<VariableBackup<NEO::UltHwConfig>> backupUltConfig;

@@ -8,6 +8,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -147,6 +148,126 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
     driverHandle->svmAllocsManager->freeSVMAlloc(bufferDst);
+}
+
+struct DebuggerSingleAddressSpaceGlobalBindlessAllocatorAubFixture : public DebuggerAubFixture {
+    void setUp() {
+        NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        NEO::debugManager.flags.UseBindlessMode.set(1);
+        DebuggerAubFixture::setUp();
+    }
+    void tearDown() {
+        DebuggerAubFixture::tearDown();
+    }
+};
+using DebuggerGlobalAllocatorAub = Test<DebuggerSingleAddressSpaceGlobalBindlessAllocatorAubFixture>;
+using PlatformsSupportingGlobalBindless = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE2_HPG_CORE>;
+
+HWTEST2_F(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedThenSbaAddressesAreTracked, PlatformsSupportingGlobalBindless) {
+
+    const uint32_t arraySize = 32;
+    const uint32_t typeSize = sizeof(int);
+
+    uint32_t bufferSize = (arraySize * 2 + 1) * typeSize - 4;
+    const uint32_t groupSize[] = {arraySize, 1, 1};
+    const uint32_t groupCount[] = {1, 1, 1};
+
+    memoryManager = neoDevice->getMemoryManager();
+    gmmHelper = neoDevice->getGmmHelper();
+    rootDeviceIndex = neoDevice->getRootDeviceIndex();
+
+    NEO::debugManager.flags.UpdateCrossThreadDataSize.set(true);
+
+    ASSERT_NE(nullptr, neoDevice->getBindlessHeapsHelper());
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                                           1,
+                                                                           context->rootDeviceIndices,
+                                                                           context->deviceBitfields);
+
+    auto bufferDst = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    memset(bufferDst, 0, bufferSize);
+    auto bufferSrc = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(bufferSize, unifiedMemoryProperties);
+    memset(bufferSrc, 0, bufferSize);
+    auto bufferOffset = driverHandle->svmAllocsManager->createHostUnifiedMemoryAllocation(128 * arraySize, unifiedMemoryProperties);
+    memset(bufferOffset, 0, 128 * arraySize);
+
+    int *srcBufferInt = static_cast<int *>(bufferSrc);
+    std::unique_ptr<int[]> expectedMemoryInt = std::make_unique<int[]>(bufferSize / typeSize);
+    const int expectedVal1 = 16256;
+    const int expectedVal2 = 512;
+
+    for (uint32_t i = 0; i < arraySize; ++i) {
+        srcBufferInt[i] = 2;
+        expectedMemoryInt[i * 2] = expectedVal1;
+        expectedMemoryInt[i * 2 + 1] = expectedVal2;
+    }
+
+    auto simulatedCsr = AUBFixtureL0::getSimulatedCsr<FamilyType>();
+    simulatedCsr->initializeEngine();
+
+    simulatedCsr->writeMemory(*driverHandle->svmAllocsManager->getSVMAlloc(bufferDst)->gpuAllocations.getDefaultGraphicsAllocation());
+
+    ze_group_count_t dispatchTraits;
+    dispatchTraits.groupCountX = groupCount[0];
+    dispatchTraits.groupCountY = groupCount[1];
+    dispatchTraits.groupCountZ = groupCount[2];
+
+    module = static_cast<L0::ModuleImp *>(Module::fromHandle(createModuleFromFile("simple_spill_fill_kernel", context, device, "", true)));
+
+    ze_kernel_handle_t kernel;
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "spill_test";
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelCreate(module->toHandle(), &kernelDesc, &kernel));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 0, sizeof(void *), &bufferSrc));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 1, sizeof(void *), &bufferDst));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetArgumentValue(kernel, 2, sizeof(void *), &bufferOffset));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelSetGroupSize(kernel, groupSize[0], groupSize[1], groupSize[2]));
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListAppendLaunchKernel(cmdListHandle, kernel, &dispatchTraits, nullptr, 0, nullptr));
+    commandList->close();
+
+    pCmdq->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+    pCmdq->synchronize(std::numeric_limits<uint64_t>::max());
+
+    expectMemory<FamilyType>(reinterpret_cast<void *>(driverHandle->svmAllocsManager->getSVMAlloc(bufferDst)->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()),
+                             expectedMemoryInt.get(), bufferSize);
+
+    const auto sbaAddress = device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId())->getGpuAddress();
+    auto instructionHeapBaseAddress = memoryManager->getInternalHeapBaseAddress(rootDeviceIndex,
+                                                                                memoryManager->isLocalMemoryUsedForIsa(rootDeviceIndex));
+    instructionHeapBaseAddress = gmmHelper->canonize(instructionHeapBaseAddress);
+
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, instructionBaseAddress)),
+                             &instructionHeapBaseAddress, sizeof(instructionHeapBaseAddress));
+
+    auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::surfaceState);
+
+    auto surfaceStateBaseAddress = commandListSurfaceHeapAllocation->getGraphicsAllocation()->getGpuAddress();
+    surfaceStateBaseAddress = gmmHelper->canonize(surfaceStateBaseAddress);
+
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, surfaceStateBaseAddress)),
+                             &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
+
+    auto bindlessSurfaceStateBaseAddress = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+    expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, bindlessSurfaceStateBaseAddress)),
+                             &bindlessSurfaceStateBaseAddress, sizeof(bindlessSurfaceStateBaseAddress));
+
+    auto commandListDynamicHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::dynamicState);
+    if (commandListDynamicHeapAllocation) {
+        auto dynamicStateBaseAddress = commandListDynamicHeapAllocation->getGraphicsAllocation()->getGpuAddress();
+        dynamicStateBaseAddress = gmmHelper->canonize(dynamicStateBaseAddress);
+
+        expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, dynamicStateBaseAddress)),
+                                 &bindlessSurfaceStateBaseAddress, sizeof(bindlessSurfaceStateBaseAddress));
+    }
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
+    driverHandle->svmAllocsManager->freeSVMAlloc(bufferDst);
+    driverHandle->svmAllocsManager->freeSVMAlloc(bufferSrc);
+    driverHandle->svmAllocsManager->freeSVMAlloc(bufferOffset);
 }
 
 } // namespace ult

@@ -105,10 +105,14 @@ void AUBFixtureL0::tearDown() {
     pCmdq->destroy();
 }
 
-ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags) {
+ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileName, ze_context_handle_t context, ze_device_handle_t device, const std::string &buildFlags, bool useSharedFile) {
     ze_module_handle_t moduleHandle;
     std::string testFile;
-    retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
+    if (useSharedFile) {
+        retrieveBinaryKernelFilename(testFile, fileName + "_", ".bin");
+    } else {
+        retrieveBinaryKernelFilenameApiSpecific(testFile, fileName + "_", ".bin");
+    }
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -129,4 +133,5 @@ ze_module_handle_t AUBFixtureL0::createModuleFromFile(const std::string &fileNam
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeModuleCreate(context, device, &moduleDesc, &moduleHandle, nullptr));
     return moduleHandle;
 }
+
 } // namespace L0

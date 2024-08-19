@@ -17,6 +17,8 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 namespace L0 {
@@ -170,6 +172,90 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
     EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa >> 32), cmdSdi->getDataDword1());
 
     auto expectedGpuVa = gmmHelper->decanonize(device->getL0Debugger()->getSbaTrackingGpuVa()) + offsetof(NEO::SbaTrackedAddresses, generalStateBaseAddress);
+    EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(commandLists[i]);
+        commandList->destroy();
+    }
+    commandQueue->destroy();
+}
+
+using L0DebuggerPerContextAddressSpaceGlobalBindlessTest = Test<L0DebuggerPerContextAddressSpaceGlobalBindlessFixture>;
+using PlatformsSupportingGlobalBindless = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE2_HPG_CORE>;
+
+HWTEST2_F(L0DebuggerPerContextAddressSpaceGlobalBindlessTest, givenDebuggingEnabledAndRequiredSshWhenCommandListIsExecutedThenProgramSsbaWritesToSbaTrackingBuffer, PlatformsSupportingGlobalBindless) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue);
+    ASSERT_NE(nullptr, cmdQ);
+
+    auto commandQueue = whiteboxCast(cmdQ);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
+
+    auto commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
+
+    Mock<Module> module(device, nullptr, ModuleType::user);
+    Mock<KernelImp> kernel;
+    kernel.module = &module;
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.perThreadScratchSize[0] = 0x40;
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    CommandList::fromHandle(commandLists[0])->close();
+
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto sbaItors = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, sbaItors.size());
+
+    auto sbaItor = sbaItors[sbaItors.size() - 1];
+
+    ASSERT_NE(cmdList.end(), sbaItor);
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
+
+    auto sdiItors = findAll<MI_STORE_DATA_IMM *>(sbaItor, cmdList.end());
+    ASSERT_NE(0u, sdiItors.size());
+
+    auto cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItors[0]);
+
+    auto gmmHelper = neoDevice->getGmmHelper();
+    auto expectedSshGpuVa = commandList->getCmdContainer().getIndirectHeap(HeapType::surfaceState)->getGpuBase();
+
+    for (size_t i = 0; i < sdiItors.size(); i++) {
+        cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItors[i]);
+        uint64_t address = cmdSdi->getDataDword1();
+        address <<= 32;
+        address = address | cmdSdi->getDataDword0();
+        if (expectedSshGpuVa == address) {
+            break;
+        }
+        cmdSdi = nullptr;
+    }
+
+    ASSERT_NE(nullptr, cmdSdi);
+    uint64_t ssbaGpuVa = gmmHelper->canonize(cmdSba->getSurfaceStateBaseAddress());
+    EXPECT_EQ(static_cast<uint32_t>(ssbaGpuVa & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(ssbaGpuVa >> 32), cmdSdi->getDataDword1());
+
+    auto expectedGpuVa = gmmHelper->decanonize(device->getL0Debugger()->getSbaTrackingGpuVa()) + offsetof(NEO::SbaTrackedAddresses, surfaceStateBaseAddress);
     EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
 
     for (auto i = 0u; i < numCommandLists; i++) {

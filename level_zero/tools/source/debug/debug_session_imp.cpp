@@ -1315,6 +1315,17 @@ ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint3
     packed.push_back(bindingTableBaseAddress);
     packed.push_back(scratchSpaceBaseAddress);
 
+    PRINT_DEBUGGER_INFO_LOG("Debug session : SBA ssh = %" SCNx64
+                            " gsba = %" SCNx64
+                            " dsba =  %" SCNx64
+                            " ioba =  %" SCNx64
+                            " iba =  %" SCNx64
+                            " bsurfsba =  %" SCNx64
+                            " btba =  %" SCNx64
+                            " scrsba =  %" SCNx64 "\n",
+                            sbaBuffer.surfaceStateBaseAddress, sbaBuffer.generalStateBaseAddress, sbaBuffer.dynamicStateBaseAddress,
+                            sbaBuffer.indirectObjectBaseAddress, sbaBuffer.instructionBaseAddress, sbaBuffer.bindlessSurfaceStateBaseAddress, bindingTableBaseAddress, scratchSpaceBaseAddress);
+
     size_t size = count * sbaRegDesc->bytes;
     memcpy_s(pRegisterValues, size, &packed[start], size);
 

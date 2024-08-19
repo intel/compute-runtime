@@ -111,6 +111,19 @@ struct L0DebuggerPerContextAddressSpaceFixture : public L0DebuggerHwFixture {
     DebugManagerStateRestore restorer;
 };
 
+struct L0DebuggerPerContextAddressSpaceGlobalBindlessFixture : public L0DebuggerHwFixture {
+    void setUp() {
+        NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
+        NEO::debugManager.flags.UseBindlessMode.set(1);
+        NEO::debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        L0DebuggerHwFixture::setUp();
+    }
+    void tearDown() {
+        L0DebuggerHwFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
 struct L0DebuggerSingleAddressSpaceFixture : public L0DebuggerHwFixture {
     void setUp() {
         NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);

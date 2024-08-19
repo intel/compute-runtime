@@ -323,6 +323,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             };
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
+
+            bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(args.isInternal) && args.device->getL0Debugger();
+            NEO::EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
+                                                                                      *args.device,
+                                                                                      *container.getCommandStream(),
+                                                                                      sbaCmd, container.isUsingPrimaryBuffer());
         }
     }
 
