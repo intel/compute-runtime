@@ -4285,6 +4285,61 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGe
     testAllDevices();
 }
 
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceButUsedOnDifferentSubdeviceWhenQueryingThenDownload, IsAtLeastXeHpCore) {
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    auto rootDevice = static_cast<MockDeviceImp *>(device);
+
+    ASSERT_TRUE(rootDevice->subDevices.size() > 1);
+
+    auto subDevice0 = rootDevice->subDevices[0];
+    auto subDevice1 = rootDevice->subDevices[1];
+
+    auto ultCsr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice0->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 1;
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1));
+
+    size_t eventCompletionOffset = event->getContextStartOffset();
+    if (event->isUsingContextEndOffset()) {
+        eventCompletionOffset = event->getContextEndOffset();
+    }
+    TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
+    *eventAddress = Event::STATE_INITIAL;
+
+    uint32_t downloadCounter0 = 0;
+    uint32_t downloadCounter1 = 0;
+
+    ultCsr0->downloadAllocationImpl = [&downloadCounter0](GraphicsAllocation &gfxAllocation) {
+        downloadCounter0++;
+    };
+    ultCsr1->downloadAllocationImpl = [&downloadCounter1](GraphicsAllocation &gfxAllocation) {
+        downloadCounter1++;
+    };
+
+    auto eventAllocation = event->getPoolAllocation(device);
+    ultCsr0->makeResident(*eventAllocation);
+
+    event->hostSynchronize(1);
+
+    EXPECT_EQ(1u, downloadCounter0);
+    EXPECT_EQ(0u, downloadCounter1);
+
+    event->destroy();
+}
+
 HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleOneTileDeviceThenMaxFromThisDeviceSelected, IsAtLeastXeHpCore) {
     testSingleDevice();
 }

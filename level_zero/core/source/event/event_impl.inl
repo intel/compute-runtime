@@ -344,6 +344,21 @@ bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &down
 }
 
 template <typename TagSizeT>
+void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation) {
+    for (auto const &engine : device.getAllEngines()) {
+        if (!tbxDownload(*engine.commandStreamReceiver, downloadedAllocation, downloadedInOrdedAllocation)) {
+            break;
+        }
+    }
+
+    for (auto &csr : device.getSecondaryCsrs()) {
+        if (!tbxDownload(*csr, downloadedAllocation, downloadedInOrdedAllocation)) {
+            break;
+        }
+    }
+}
+
+template <typename TagSizeT>
 bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (this->eventPoolAllocation) {
         if (metricNotification != nullptr) {
@@ -351,18 +366,14 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
         }
         if (this->tbxMode) {
 
-            bool downloadedAllocation = false;
+            bool downloadedAllocation = (eventPoolAllocation == nullptr);
             bool downloadedInOrdedAllocation = (inOrderExecInfo.get() == nullptr);
 
-            for (auto const &engine : this->device->getNEODevice()->getAllEngines()) {
-                if (!tbxDownload(*engine.commandStreamReceiver, downloadedAllocation, downloadedInOrdedAllocation)) {
-                    break;
-                }
-            }
+            tbxDownload(*this->device->getNEODevice(), downloadedAllocation, downloadedInOrdedAllocation);
 
-            for (auto &csr : this->device->getNEODevice()->getSecondaryCsrs()) {
-                if (!tbxDownload(*csr, downloadedAllocation, downloadedInOrdedAllocation)) {
-                    break;
+            if (!downloadedAllocation || !downloadedInOrdedAllocation) {
+                for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
+                    tbxDownload(*subDevice, downloadedAllocation, downloadedInOrdedAllocation);
                 }
             }
         }

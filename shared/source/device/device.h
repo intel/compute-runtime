@@ -181,7 +181,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
 
     uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
-    const std::vector<SubDevice *> getSubDevices() const { return subdevices; }
+    const std::vector<SubDevice *> &getSubDevices() const { return subdevices; }
     bool getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
     void generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
     void getAdapterLuid(std::array<uint8_t, ProductHelper::luidSize> &luid);
