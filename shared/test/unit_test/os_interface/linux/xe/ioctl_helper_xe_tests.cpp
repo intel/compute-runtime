@@ -2314,6 +2314,18 @@ TEST(IoctlHelperXeVmBindTest, givenDeviceInFaultModeWhenInitializeIoctlHelperThe
     }
 }
 
+TEST(IoctlHelperXeVmBindTest, givenPageFaultSupportIsSetWhenCallingIsPageFaultSupportedThenProperValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeVmBind::create(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (const auto &recoverablePageFault : ::testing::Bool()) {
+        drm->supportsRecoverablePageFault = recoverablePageFault;
+        auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+        xeIoctlHelper->initialize();
+        EXPECT_EQ(xeIoctlHelper->isPageFaultSupported(), recoverablePageFault);
+    }
+}
+
 struct HwIpVersionFixture {
 
     HwIpVersionFixture() : hwInfo{*executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()},
