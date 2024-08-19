@@ -7,6 +7,7 @@
 
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -179,6 +180,13 @@ HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequired
 }
 
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndDebuggerLogsWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted, Gen12Plus) {
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (isHeaplessEnabled) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -279,6 +287,13 @@ HWTEST2_F(L0DebuggerTest, givenL0DebuggerAndDebuggerLogsDisabledWhenCommandQueue
 }
 
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, Gen12Plus) {
+
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto isHeaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (isHeaplessEnabled) {
+        GTEST_SKIP();
+    }
+
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
