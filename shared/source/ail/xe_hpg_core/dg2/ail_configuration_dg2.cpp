@@ -70,6 +70,23 @@ bool AILConfigurationHw<IGFX_DG2>::isBufferPoolEnabled() {
     return iterator == applicationsBufferPoolDisabled.end();
 }
 
+template <>
+inline bool AILConfigurationHw<IGFX_DG2>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
+    std::string_view dummyKernelSource{"kernel void _(){}"};
+    if (sourcesContain(kernelSources, dummyKernelSource)) {
+        return true;
+    }
+
+    for (const auto &name : {"Resolve",
+                             "ArcControlAssist",
+                             "ArcControl"}) {
+        if (processName == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 template class AILConfigurationHw<IGFX_DG2>;
 
 } // namespace NEO

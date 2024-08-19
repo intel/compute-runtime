@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,23 @@ inline void AILConfigurationHw<IGFX_ELKHARTLAKE>::applyExt(RuntimeCapabilityTabl
             }
         }
     }
+}
+
+template <>
+inline bool AILConfigurationHw<IGFX_ELKHARTLAKE>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
+    std::string_view dummyKernelSource{"kernel void _(){}"};
+    if (sourcesContain(kernelSources, dummyKernelSource)) {
+        return true;
+    }
+
+    for (const auto &name : {"Resolve",
+                             "ArcControlAssist",
+                             "ArcControl"}) {
+        if (processName == name) {
+            return true;
+        }
+    }
+    return false;
 }
 
 template class AILConfigurationHw<IGFX_ELKHARTLAKE>;

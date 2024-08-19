@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,14 +26,19 @@ HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePat
     EXPECT_FALSE(ail.isFallbackToPatchtokensRequired(dummyKernelSource));
 }
 
-HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtLeastSkl) {
+HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequireAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtLeastSkl) {
     AILWhitebox<productFamily> ail;
-    for (const auto &name : {"Resolve",
-                             "ArcControlAssist",
+    for (const auto &name : {"ArcControlAssist",
                              "ArcControl"}) {
         ail.processName = name;
         EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
     }
+}
+
+HWTEST2_F(AILBaseTests, givenResolveNameWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtMostXeHpcCore) {
+    AILWhitebox<productFamily> ail;
+    ail.processName = "Resolve";
+    EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
 }
 
 } // namespace NEO

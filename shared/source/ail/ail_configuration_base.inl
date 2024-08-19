@@ -26,8 +26,7 @@ inline bool AILConfigurationHw<product>::isFallbackToPatchtokensRequired(const s
         return true;
     }
 
-    for (const auto &name : {"Resolve",
-                             "ArcControlAssist",
+    for (const auto &name : {"ArcControlAssist",
                              "ArcControl"}) {
         if (processName == name) {
             return true;
