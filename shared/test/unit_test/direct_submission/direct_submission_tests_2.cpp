@@ -791,16 +791,18 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintSemaphore
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionPrintSemaphoreUsage.set(1);
 
-    FlushStampTracker flushStamp(true);
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    {
+        FlushStampTracker flushStamp(true);
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    testing::internal::CaptureStdout();
+        testing::internal::CaptureStdout();
 
-    bool ret = directSubmission.initialize(false, false);
-    EXPECT_TRUE(ret);
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-    directSubmission.unblockGpu();
+        bool ret = directSubmission.initialize(false, false);
+        EXPECT_TRUE(ret);
+        ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+        EXPECT_TRUE(ret);
+        directSubmission.unblockGpu();
+    }
 
     std::string output = testing::internal::GetCapturedStdout();
 
