@@ -97,7 +97,8 @@ cl_int Program::build(
             appendAdditionalExtensions(extensions, options, internalOptions);
             CompilerOptions::concatenateAppend(internalOptions, extensions);
 
-            if (defaultDevice.getRootDeviceEnvironment().getAILConfigurationHelper()->handleDivergentBarriers()) {
+            auto ailHelper = defaultDevice.getRootDeviceEnvironment().getAILConfigurationHelper();
+            if (ailHelper && ailHelper->handleDivergentBarriers()) {
                 CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableDivergentBarriers);
             }
 

@@ -77,8 +77,9 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
     auto defaultEngine = getChosenEngineType(hwInfo);
 
     EngineInstancesContainer engines;
-
-    if (hwInfo.featureTable.flags.ftrCCSNode && !rootDeviceEnvironment.getAILConfigurationHelper()->forceRcs()) {
+    auto ailHelper = rootDeviceEnvironment.getAILConfigurationHelper();
+    auto forceRcs = ailHelper && ailHelper->forceRcs();
+    if (hwInfo.featureTable.flags.ftrCCSNode && !forceRcs) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::regular});
         }
@@ -86,7 +87,7 @@ const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstanc
 
     if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
         hwInfo.featureTable.flags.ftrRcsNode ||
-        rootDeviceEnvironment.getAILConfigurationHelper()->forceRcs()) {
+        forceRcs) {
         engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@ using namespace NEO;
 struct ClBuildProgramTests : public ApiTests {
     void SetUp() override {
         debugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        debugManager.flags.EnableAIL.set(false);
         ApiTests::setUp();
     }
     void TearDown() override {

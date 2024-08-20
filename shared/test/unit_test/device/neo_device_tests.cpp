@@ -1728,3 +1728,14 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedT
     EXPECT_EQ(1u, createDebuggerCallCount);
     EXPECT_NE(nullptr, deviceFactory.rootDevices[0]->getL0Debugger());
 }
+
+TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.EnableAIL.set(false);
+
+    auto hwInfo = *defaultHwInfo;
+    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo);
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    EXPECT_NE(nullptr, device.get());
+}
