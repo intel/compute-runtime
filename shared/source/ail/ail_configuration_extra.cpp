@@ -24,7 +24,9 @@ std::map<std::string_view, std::vector<AILEnumeration>> applicationMap = {{"blen
                                                                           // Modify reported platform name to ensure older versions of Adobe Premiere Pro are able to recognize the GPU device
                                                                           {"Adobe Premiere Pro", {AILEnumeration::enableLegacyPlatformName}}};
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::disableDirectSubmission}}};
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMapMTL = {{"svchost", {AILEnumeration::disableDirectSubmission}},
+                                                                             {"aomhost64", {AILEnumeration::disableDirectSubmission}},
+                                                                             {"Zoom", {AILEnumeration::disableDirectSubmission}}};
 
 const std::set<std::string_view> applicationsForceRcsDg2 = {};
 

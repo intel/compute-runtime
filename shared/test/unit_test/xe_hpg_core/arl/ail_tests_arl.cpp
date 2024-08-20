@@ -26,6 +26,14 @@ HWTEST2_F(AILTestsARL, givenArlWhenSvchostAppIsDetectedThenDisableDirectSubmissi
     ail.processName = "svchost";
     ail.apply(capabilityTable);
     EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
+
+    ail.processName = "aomhost64";
+    ail.apply(capabilityTable);
+    EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
+
+    ail.processName = "Zoom";
+    ail.apply(capabilityTable);
+    EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 }
 
 } // namespace NEO

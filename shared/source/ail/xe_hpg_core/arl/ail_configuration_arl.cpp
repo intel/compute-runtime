@@ -15,7 +15,9 @@
 
 namespace NEO {
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapARL = {{"svchost", {AILEnumeration::disableDirectSubmission}}};
+std::map<std::string_view, std::vector<AILEnumeration>> applicationMapARL = {{"svchost", {AILEnumeration::disableDirectSubmission}},
+                                                                             {"aomhost64", {AILEnumeration::disableDirectSubmission}},
+                                                                             {"Zoom", {AILEnumeration::disableDirectSubmission}}};
 
 static EnableAIL<IGFX_ARROWLAKE> enableAILARL;
 
