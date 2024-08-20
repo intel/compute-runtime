@@ -66,6 +66,10 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
         return BaseOperationsHandler::evictWithinOsContext(osContext, gfxAllocation);
     }
 
+    void processFlushResidency(CommandStreamReceiver *csr) override {
+        aubMemoryOperationsHandler->processFlushResidency(csr);
+    }
+
   protected:
     std::unique_ptr<AubMemoryOperationsHandler> aubMemoryOperationsHandler;
 };
