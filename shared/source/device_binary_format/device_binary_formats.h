@@ -34,8 +34,7 @@ enum class DecodeError : uint8_t {
     success,
     undefined,
     invalidBinary,
-    unhandledBinary,
-    unkownZeinfoAttribute
+    unhandledBinary
 };
 
 enum class GeneratorType : uint8_t {

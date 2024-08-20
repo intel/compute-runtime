@@ -261,7 +261,7 @@ kernels:
         arg_index:       0
       - bti_value:       1
         arg_index:       1
-)===";
+-)===";
 };
 
 template <NEO::Elf::ElfIdentifierClass numBits>
