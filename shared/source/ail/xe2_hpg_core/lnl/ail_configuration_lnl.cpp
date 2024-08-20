@@ -12,5 +12,11 @@
 namespace NEO {
 static EnableAIL<IGFX_LUNARLAKE> enableAILLNL;
 
+template <>
+bool AILConfigurationHw<IGFX_LUNARLAKE>::isBufferPoolEnabled() {
+    auto iterator = applicationsBufferPoolDisabled.find(processName);
+    return iterator == applicationsBufferPoolDisabled.end();
+}
+
 template class AILConfigurationHw<IGFX_LUNARLAKE>;
 } // namespace NEO
