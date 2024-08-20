@@ -637,6 +637,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableSetPair, -1, "Use SET_PAIR to pair two buf
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreferredAllocationMethod, -1, "Sets preferred allocation method for Wddm paths; values = -1: driver default, 0: UseUmdSystemPtr, 1: AllocateByKmd")
 DECLARE_DEBUG_VARIABLE(int32_t, EventTimestampRefreshIntervalInMilliSec, -1, "-1: use driver default, This value sets the refresh interval for getting synchronized GPU and CPU timestamp")
 DECLARE_DEBUG_VARIABLE(int64_t, ReadOnlyAllocationsTypeMask, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, set as read only resource.")
+DECLARE_DEBUG_VARIABLE(bool, IgnoreZebinUnknownAttributes, false, "enable to treat unknown zebin attributes as warning instead of error");
 
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")
