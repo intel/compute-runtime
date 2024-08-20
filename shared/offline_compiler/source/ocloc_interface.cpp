@@ -274,8 +274,7 @@ std::optional<int> invokeFormerOcloc(const std::string &formerOclocName, unsigne
 
     std::unique_ptr<OsLibrary> oclocLib(OsLibrary::loadFunc(formerOclocName));
 
-    if (!oclocLib ||
-        !oclocLib->isLoaded()) {
+    if (!oclocLib) {
         return {};
     }
 
