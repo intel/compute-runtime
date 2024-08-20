@@ -449,7 +449,9 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         if (this->getSlmTotalSize() > 0 && localMemSize < this->getSlmTotalSize()) {
             const auto device = static_cast<DeviceImp *>(module->getDevice());
             const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
-            driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
+
+            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
+            driverHandle->setErrorDescription(std::string(str.get()));
             PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", this->getSlmTotalSize(), localMemSize);
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }

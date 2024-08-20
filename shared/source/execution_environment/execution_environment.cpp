@@ -168,6 +168,42 @@ void ExecutionEnvironment::prepareRootDeviceEnvironment(const uint32_t rootDevic
     rootDeviceEnvironments[rootDeviceIndexForReInit] = std::make_unique<RootDeviceEnvironment>(*this);
 }
 
+int ExecutionEnvironment::setErrorDescription(const std::string &str) {
+    auto threadId = std::this_thread::get_id();
+    {
+        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
+        if (errorDescs.find(threadId) == errorDescs.end()) {
+            errorDescs[threadId] = str;
+        } else {
+            errorDescs[threadId].clear();
+            errorDescs[threadId] = str;
+        }
+    }
+    return static_cast<int>(str.size());
+}
+
+void ExecutionEnvironment::getErrorDescription(const char **ppString) {
+    auto threadId = std::this_thread::get_id();
+    {
+        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
+        if (errorDescs.find(threadId) == errorDescs.end()) {
+            errorDescs[threadId] = std::string();
+        }
+    }
+    *ppString = errorDescs[threadId].c_str();
+}
+
+int ExecutionEnvironment::clearErrorDescription() {
+    auto threadId = std::this_thread::get_id();
+    {
+        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
+        if (errorDescs.find(threadId) != errorDescs.end()) {
+            errorDescs[threadId].clear();
+        }
+    }
+    return 0;
+}
+
 bool ExecutionEnvironment::getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap) {
     if (mapOfSubDeviceIndices.find(index) != mapOfSubDeviceIndices.end()) {
         *subDeviceMap = mapOfSubDeviceIndices.at(index);

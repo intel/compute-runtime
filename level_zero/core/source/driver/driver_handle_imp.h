@@ -173,7 +173,7 @@ struct DriverHandleImp : public DriverHandle {
     // not based on the lifetime of the object of a class.
     std::unordered_map<std::thread::id, std::string> errorDescs;
     std::mutex errorDescsMutex;
-    int setErrorDescription(const char *fmt, ...) override;
+    int setErrorDescription(const std::string &str) override;
     ze_result_t getErrorDescription(const char **ppString) override;
     ze_result_t clearErrorDescription() override;
 };

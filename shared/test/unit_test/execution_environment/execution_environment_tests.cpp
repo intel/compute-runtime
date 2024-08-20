@@ -324,7 +324,9 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
                                                   (is64bit ? 18 : 14) +
                                                   sizeof(std::mutex) +
                                                   sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>) +
-                                                  sizeof(std::vector<std::tuple<std::string, uint32_t>>),
+                                                  sizeof(std::vector<std::tuple<std::string, uint32_t>>) +
+                                                  sizeof(std::unordered_map<std::thread::id, std::string>) +
+                                                  sizeof(std::mutex),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
@@ -616,6 +618,63 @@ TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithCombinedD
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     EXPECT_FALSE(executionEnvironment.isExposingSubDevicesAsDevices());
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetErrorDescriptionIsCalledThenGetErrorDescriptionGetsStringCorrectly) {
+    std::string errorString = "we manually created error";
+    std::string errorString2 = "here's the next string to pass with arguments: ";
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.setErrorDescription(std::string(errorString));
+
+    const char *pStr = nullptr;
+    executionEnvironment.getErrorDescription(&pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+
+    int result = [](MockExecutionEnvironment *exeEnv, const std::string &str) {
+        int res = exeEnv->setErrorDescription(std::string(str));
+        return res;
+    }(&executionEnvironment, errorString2);
+    EXPECT_NE(0, result);
+    executionEnvironment.getErrorDescription(&pStr);
+    std::string expectedString = errorString2;
+    printf("the received string is: \"%s\"\n", pStr);
+    printf("the expected string is: \"%s\"\n", expectedString.c_str());
+    EXPECT_EQ(0, strcmp(expectedString.c_str(), pStr));
+}
+
+TEST(ExecutionEnvironment, givenValidExecutionEnvironmentWhenClearErrorDescriptionIsCalledThenEmptyStringIsReturned) {
+    std::string errorString = "error string";
+    std::string emptyString = "";
+    const char *pStr = nullptr;
+    MockExecutionEnvironment executionEnvironment;
+
+    int result = executionEnvironment.clearErrorDescription();
+    EXPECT_EQ(0, result);
+    executionEnvironment.getErrorDescription(&pStr);
+    EXPECT_EQ(0, strcmp(emptyString.c_str(), pStr));
+    executionEnvironment.setErrorDescription(errorString);
+    executionEnvironment.getErrorDescription(&pStr);
+
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+    EXPECT_EQ(0, result);
+
+    result = executionEnvironment.clearErrorDescription();
+    EXPECT_EQ(0, result);
+    executionEnvironment.getErrorDescription(&pStr);
+    EXPECT_EQ(0, strcmp(emptyString.c_str(), pStr));
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenGetErrorDescriptionIsCalledThenEmptyStringIsReturned) {
+    std::string errorString = "";
+    MockExecutionEnvironment executionEnvironment;
+
+    const char *pStr = nullptr;
+    executionEnvironment.getErrorDescription(&pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
+
+    executionEnvironment.setErrorDescription(errorString);
+    executionEnvironment.getErrorDescription(&pStr);
+    EXPECT_EQ(0, strcmp(errorString.c_str(), pStr));
 }
 
 void ExecutionEnvironmentSortTests::SetUp() {

@@ -803,8 +803,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     }
 
     if (pDstRegion->width % groupSizeX || pDstRegion->height % groupSizeY || pDstRegion->depth % groupSizeZ) {
-        driverHandle->setErrorDescription("Invalid group size {%d, %d, %d} specified\n",
-                                          groupSizeX, groupSizeY, groupSizeZ);
+        CREATE_DEBUG_STRING(str, "Invalid group size {%d, %d, %d} specified\n", groupSizeX, groupSizeY, groupSizeZ);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
                            groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
@@ -917,11 +917,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     Kernel *builtinKernel = nullptr;
 
     switch (bytesPerPixel) {
-    default:
-        driverHandle->setErrorDescription("invalid bytesPerPixel of size: %u\n", bytesPerPixel);
+    default: {
+        CREATE_DEBUG_STRING(str, "Invalid bytesPerPixel of size: %u\n", bytesPerPixel);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "invalid bytesPerPixel of size: %u\n", bytesPerPixel);
         UNRECOVERABLE_IF(true);
         break;
+    }
     case 1u:
         builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
         break;
@@ -976,8 +978,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     }
 
     if (pSrcRegion->width % groupSizeX || pSrcRegion->height % groupSizeY || pSrcRegion->depth % groupSizeZ) {
-        driverHandle->setErrorDescription("Invalid group size {%d, %d, %d} specified\n",
-                                          groupSizeX, groupSizeY, groupSizeZ);
+        CREATE_DEBUG_STRING(str, "Invalid group size {%d, %d, %d} specified\n", groupSizeX, groupSizeY, groupSizeZ);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
                            groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
@@ -1118,8 +1120,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     }
 
     if (srcRegion.width % groupSizeX || srcRegion.height % groupSizeY || srcRegion.depth % groupSizeZ) {
-        driverHandle->setErrorDescription("Invalid group size {%d, %d, %d} specified\n",
-                                          groupSizeX, groupSizeY, groupSizeZ);
+        CREATE_DEBUG_STRING(str, "Invalid group size {%d, %d, %d} specified\n", groupSizeX, groupSizeY, groupSizeZ);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
                            groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
@@ -1786,8 +1788,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     }
 
     if (srcRegion->width % groupSizeX || srcRegion->height % groupSizeY || srcRegion->depth % groupSizeZ) {
-        driverHandle->setErrorDescription("Invalid group size {%d, %d, %d} specified\n",
-                                          groupSizeX, groupSizeY, groupSizeZ);
+        CREATE_DEBUG_STRING(str, "Invalid group size {%d, %d, %d} specified\n", groupSizeX, groupSizeY, groupSizeZ);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d, %d} specified\n",
                            groupSizeX, groupSizeY, groupSizeZ);
         DEBUG_BREAK_IF(true);
@@ -1856,8 +1858,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     }
 
     if (srcRegion->width % groupSizeX || srcRegion->height % groupSizeY) {
-        driverHandle->setErrorDescription("Invalid group size {%d, %d}\n",
-                                          groupSizeX, groupSizeY);
+        CREATE_DEBUG_STRING(str, "Invalid group size {%d, %d} specified\n", groupSizeX, groupSizeY);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Invalid group size {%d, %d}\n",
                            groupSizeX, groupSizeY);
         DEBUG_BREAK_IF(true);
@@ -2289,11 +2291,13 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
                                                                          const ze_image_region_t *region) {
     const auto driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
     switch (imageType) {
-    default:
-        driverHandle->setErrorDescription("invalid imageType: %d\n", imageType);
+    default: {
+        CREATE_DEBUG_STRING(str, "invalid imageType: %d\n", static_cast<int>(imageType));
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "invalid imageType: %d\n", imageType);
         UNRECOVERABLE_IF(true);
         break;
+    }
     case NEO::ImageType::image1D:
         return bufferRowPitch;
     case NEO::ImageType::image1DArray:

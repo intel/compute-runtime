@@ -276,8 +276,9 @@ ze_result_t ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t in
     if (isZebinAllowed == false) {
         const auto &rootDevice = neoDevice->getRootDevice();
         if (!rootDevice->getCompilerInterface()->addOptionDisableZebin(this->options, internalOptions)) {
-            driverHandle->setErrorDescription("Cannot build zebinary for this device with debugger enabled. Add \"-ze-intel-disable-zebin\" build flag\n");
-            updateBuildLog("Cannot build zebinary for this device with debugger enabled. Add \"-ze-intel-disable-zebin\" build flag");
+            CREATE_DEBUG_STRING(str, "%s", "Cannot build zebinary for this device with debugger enabled. Remove \"-ze-intel-enable-zebin\" build flag\n");
+            driverHandle->setErrorDescription(std::string(str.get()));
+            updateBuildLog(std::string(str.get()));
             return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
     }
@@ -305,7 +306,8 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
     }
     if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
-        driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
+        CREATE_DEBUG_STRING(str, "%s\n", decodeErrors.c_str());
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     } else {
@@ -378,7 +380,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     if (NEO::DecodeError::success != decodeError) {
-        driverHandle->setErrorDescription("%s\n", decodeErrors.c_str());
+        CREATE_DEBUG_STRING(str, "%s\n", decodeErrors.c_str());
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
@@ -400,8 +403,8 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     if (slmNeeded > slmAvailable) {
-        driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n",
-                                          static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n",
                            static_cast<uint32_t>(slmNeeded), static_cast<uint32_t>(slmAvailable));
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -977,7 +980,8 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
     for (const auto &kernelImmutableData : this->getKernelImmutableDataVector()) {
         auto slmInlineSize = kernelImmutableData->getDescriptor().kernelAttributes.slmInlineSize;
         if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
-            driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+            driverHandle->setErrorDescription(std::string(str.get()));
             PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
             res = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
             break;
@@ -1196,7 +1200,8 @@ ze_result_t ModuleImp::getFunctionPointer(const char *pFunctionName, void **pfnF
 
     if (*pfnFunction == nullptr) {
         if (!this->isFunctionSymbolExportEnabled) {
-            driverHandle->setErrorDescription("Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+            CREATE_DEBUG_STRING(str, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+            driverHandle->setErrorDescription(std::string(str.get()));
             PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Function Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         }
@@ -1223,7 +1228,8 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
             }
         } else {
             if (!this->isGlobalSymbolExportEnabled) {
-                driverHandle->setErrorDescription("Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                CREATE_DEBUG_STRING(str, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                driverHandle->setErrorDescription(std::string(str.get()));
                 PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
                 return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
@@ -1491,7 +1497,8 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
         if (numPatchedSymbols != moduleId->unresolvedExternalsInfo.size()) {
             driverHandle->clearErrorDescription();
             if (functionSymbolExportEnabledCounter == 0) {
-                driverHandle->setErrorDescription("Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+                CREATE_DEBUG_STRING(str, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
+                driverHandle->setErrorDescription(std::string(str.get()));
                 PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Dynamic Link Not Supported Without Compiler flag %s\n", BuildOptions::enableLibraryCompile.str().c_str());
             }
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;

@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/utilities/logger.h"
 
 #include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -1059,51 +1060,17 @@ uint32_t DriverHandleImp::getEventMaxKernelCount(uint32_t numDevices, ze_device_
     return maxCount;
 }
 
-int DriverHandleImp::setErrorDescription(const char *fmt, ...) {
-    int result = 0;
-    int size = -1;
-    va_list args;
-
-    auto threadId = std::this_thread::get_id();
-    {
-        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
-        if (errorDescs.find(threadId) == errorDescs.end()) {
-            errorDescs[threadId] = std::string();
-        }
-    }
-    errorDescs[threadId].clear();
-    va_start(args, fmt);
-    size = vsnprintf(nullptr, 0, fmt, args); // NOLINT(clang-analyzer-valist.Uninitialized)
-    va_end(args);
-    if (size > 0) {
-        va_start(args, fmt);
-        errorDescs[threadId].resize(size + 1); // to temporarilly copy \0
-        result = vsnprintf(errorDescs[threadId].data(), size + 1, fmt, args);
-        errorDescs[threadId].resize(size); // to remove \0
-        va_end(args);
-    }
-
-    return result;
+int DriverHandleImp::setErrorDescription(const std::string &str) {
+    return this->devices[0]->getNEODevice()->getExecutionEnvironment()->setErrorDescription(str);
 }
 
 ze_result_t DriverHandleImp::getErrorDescription(const char **ppString) {
-    auto threadId = std::this_thread::get_id();
-    {
-        std::lock_guard<std::mutex> errorDescsLock(errorDescsMutex);
-        if (errorDescs.find(threadId) == errorDescs.end()) {
-            errorDescs[threadId] = std::string();
-        }
-    }
-    *ppString = errorDescs[threadId].c_str();
+    this->devices[0]->getNEODevice()->getExecutionEnvironment()->getErrorDescription(ppString);
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DriverHandleImp::clearErrorDescription() {
-    auto threadId = std::this_thread::get_id();
-    if (errorDescs.find(threadId) != errorDescs.end()) {
-        errorDescs[threadId].clear();
-    }
-    return ZE_RESULT_SUCCESS;
+    return static_cast<ze_result_t>(this->devices[0]->getNEODevice()->getExecutionEnvironment()->clearErrorDescription());
 }
 
 } // namespace L0

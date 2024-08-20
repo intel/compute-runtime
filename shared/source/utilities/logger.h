@@ -12,11 +12,16 @@
 #include <sstream>
 #include <thread>
 
+#define CREATE_DEBUG_STRING(buffer, format, ...)                            \
+    std::unique_ptr<char[]> buffer(new char[NEO::maxErrorDescriptionSize]); \
+    snprintf(buffer.get(), NEO::maxErrorDescriptionSize, format, __VA_ARGS__)
+
 namespace NEO {
 class Kernel;
 struct MultiDispatchInfo;
 class GraphicsAllocation;
 
+static const int32_t maxErrorDescriptionSize = 1024;
 const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation);
 const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
 

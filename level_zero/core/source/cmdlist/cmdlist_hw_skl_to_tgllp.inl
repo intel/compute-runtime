@@ -175,7 +175,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
     auto slmTotalSize = kernelImp->getSlmTotalSize();
     if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
-        driverHandle->setErrorDescription("Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
