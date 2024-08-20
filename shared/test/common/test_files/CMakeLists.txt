@@ -70,13 +70,19 @@ macro(macro_for_each_platform)
     list(REMOVE_ITEM KERNELS_TO_COMPILE ${TEST_KERNELS_IMAGES})
   endif()
 
+  set(PREVIOUS_TARGET)
+
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} ${KERNELS_TO_COMPILE})
 
     add_custom_target(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${compiled_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}})
     set_target_properties(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")
-    add_dependencies(prepare_test_kernels_for_shared prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID})
+    add_dependencies(prepare_test_kernels_for_shared prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} ${PREVIOUS_TARGET})
+
+    if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+      set(PREVIOUS_TARGET ${prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID}})
+    endif()
   endforeach()
 endmacro()
 

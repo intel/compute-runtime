@@ -408,11 +408,18 @@ macro(macro_for_each_platform)
     endif()
   endif()
 
+  set(PREVIOUS_TARGET)
+
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
     add_custom_target(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${kernels_to_compile_${PLATFORM_IT_LOWER}_${REVISION_ID}} copy_compiler_files)
-    add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
+    add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} ${PREVIOUS_TARGET})
     set_target_properties(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")
+
+    if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+      set(PREVIOUS_TARGET ${prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}})
+    endif()
+
   endforeach()
 endmacro()
 

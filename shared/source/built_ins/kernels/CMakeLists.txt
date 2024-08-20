@@ -96,6 +96,8 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
     set(addrmode "bindful")
   endif()
 
+  set(OUTPUT_FILES_BINARIES_PREV)
+
   foreach(RELEASE ${${platform_it}_${core_type}_RELEASES})
     string(REPLACE "." "_" RELEASE_FILENAME ${RELEASE})
     set(OUTPUT_FILE_CPP
@@ -113,8 +115,11 @@ function(compile_builtin core_type platform_it builtin bits builtin_options mode
                          OUTPUT ${OUTPUT_FILES_BINARIES}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath_spv} -spirv_input -device ${RELEASE} ${builtin_options} -${bits} -stateful_address_mode ${addrmode} -output ${mode}_${BASENAME}_${RELEASE_FILENAME} -output_no_suffix -out_dir ${OUTPUTDIR} ${INTERNAL_OPTIONS} -options "$<JOIN:${__ocloc__options__}, >"
                          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                         DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files
+                         DEPENDS ${OUTPUT_FILE_SPV} ocloc copy_compiler_files ${OUTPUT_FILES_BINARIES_PREV}
       )
+      if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+        set(OUTPUT_FILES_BINARIES_PREV ${OUTPUT_FILES_BINARIES})
+      endif()
       add_custom_command(
                          OUTPUT ${OUTPUT_FILE_CPP}
                          COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${BINARY_OUTPUT}.bin --output ${OUTPUT_FILE_CPP} --array ${mode}_${BASENAME} --device ${RELEASE_FILENAME}
@@ -158,13 +163,17 @@ function(generate_cpp_spirv builtin)
   set(OUTPUT_FILE_CPP
       ${OUTPUTDIR}/${BASENAME}.cpp
   )
+
   if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
     add_custom_command(
                        OUTPUT ${GENERATED_SPV_INPUT}
                        COMMAND ${ocloc_cmd_prefix} -q -spv_only -file ${absolute_filepath} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                       DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files
+                       DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files ${OUTPUT_FILES_SPIRV_PREV}
     )
+    if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+      set(OUTPUT_FILES_SPIRV_PREV ${GENERATED_SPV_INPUT})
+    endif()
     add_custom_command(
                        OUTPUT ${OUTPUT_FILE_CPP}
                        COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${GENERATED_SPV_INPUT} --output ${OUTPUT_FILE_CPP} --array ${BASENAME}
@@ -260,6 +269,9 @@ macro(macro_for_each_core_type)
 endmacro()
 
 file(MAKE_DIRECTORY "${BUILTINS_OUTDIR_WITH_ARCH}/spirv")
+
+set(OUTPUT_FILES_SPIRV_PREV)
+
 foreach(builtin ${GENERATED_BUILTINS})
   generate_cpp_spirv(${builtin})
 endforeach()
