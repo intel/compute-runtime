@@ -45,4 +45,9 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 }
 
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+    return 16u;
+}
+
 } // namespace NEO

@@ -165,3 +165,8 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmAllocationR
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
+
+LNLTEST_F(LnlProductHelper, givenProductHelperWhenGettingThreadEuRatioForScratchThen16IsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_EQ(16u, productHelper->getThreadEuRatioForScratch(hwInfo));
+}

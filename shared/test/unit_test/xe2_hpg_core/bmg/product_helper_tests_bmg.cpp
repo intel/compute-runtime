@@ -98,3 +98,8 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideT
     productHelper->adjustNumberOfCcs(hwInfo);
     EXPECT_EQ(hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 1u);
 }
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingThreadEuRatioForScratchThen16IsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_EQ(16u, productHelper->getThreadEuRatioForScratch(hwInfo));
+}
