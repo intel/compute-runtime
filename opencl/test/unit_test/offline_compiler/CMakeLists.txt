@@ -91,6 +91,8 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_os_library.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_os_library.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.h

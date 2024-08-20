@@ -19,6 +19,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 
 #include "environment.h"
 #include "gtest/gtest.h"
@@ -1078,4 +1079,64 @@ TEST_F(OclocFallbackTests, GivenInvalidFormerOclocNameWhenInvalidDeviceErrorIsRe
     EXPECT_NE(std::string::npos, capturedStdout.find("Couldn't load former ocloc invalidName"));
     EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc invalidName"));
     EXPECT_TRUE(capturedStderr.empty());
+}
+
+int mockOclocInvokeResult = ocloc_error_t::OCLOC_SUCCESS;
+
+int mockOclocInvoke(unsigned int numArgs, const char *argv[],
+                    const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
+                    const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
+                    uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
+    return mockOclocInvokeResult;
+}
+
+TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsSuccessThenSuccessIsPropagatedAndCommandLineIsNotPrinted) {
+
+    Ocloc::oclocFormerLibName = "oclocFormer";
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+    osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+
+    VariableBackup<int> retCodeBackup{&mockOclocInvokeResult, ocloc_error_t::OCLOC_SUCCESS};
+    auto retVal = callOclocForInvalidDevice();
+
+    EXPECT_EQ(ocloc_error_t::OCLOC_SUCCESS, retVal);
+    EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+    EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc oclocFormer\n"));
+    EXPECT_EQ(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+    EXPECT_TRUE(capturedStderr.empty());
+}
+
+TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsErrorThenErrorIsPropagated) {
+
+    Ocloc::oclocFormerLibName = "oclocFormer";
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+    for (auto &error : {
+             ocloc_error_t::OCLOC_OUT_OF_HOST_MEMORY,
+             ocloc_error_t::OCLOC_BUILD_PROGRAM_FAILURE,
+             ocloc_error_t::OCLOC_INVALID_DEVICE,
+             ocloc_error_t::OCLOC_INVALID_PROGRAM,
+             ocloc_error_t::OCLOC_INVALID_COMMAND_LINE,
+             ocloc_error_t::OCLOC_INVALID_FILE,
+             ocloc_error_t::OCLOC_COMPILATION_CRASH}) {
+
+        MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+        auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+        osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+
+        VariableBackup<int> retCodeBackup{&mockOclocInvokeResult, error};
+
+        auto retVal = callOclocForInvalidDevice();
+
+        EXPECT_EQ(error, retVal);
+        EXPECT_NE(std::string::npos, capturedStdout.find("Could not determine device target: invalid_device.\n"));
+        EXPECT_NE(std::string::npos, capturedStdout.find("Error: Cannot get HW Info for device invalid_device.\n"));
+        EXPECT_NE(std::string::npos, capturedStdout.find("Invalid device error, trying to fallback to former ocloc oclocFormer\n"));
+        EXPECT_NE(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
+        EXPECT_TRUE(capturedStderr.empty());
+    }
 }
