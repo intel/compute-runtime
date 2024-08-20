@@ -164,6 +164,9 @@ void EngineInfo::setSupportedEnginesInfo(const RootDeviceEnvironment &rootDevice
         ccsInfo.NumberOfCCSEnabled = 0;
         ccsInfo.Instances.CCSEnableMask = 0;
     }
+    if (hwInfo->featureTable.wmtpInfoMask.any()) {
+        hwInfo->featureTable.flags.ftrWalkerMTP = true;
+    }
 }
 
 uint32_t EngineInfo::getEngineTileIndex(const EngineClassInstance &engine) {
