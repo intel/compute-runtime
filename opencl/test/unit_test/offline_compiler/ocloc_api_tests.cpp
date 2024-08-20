@@ -18,6 +18,7 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 
@@ -1028,22 +1029,38 @@ struct OclocFallbackTests : ::testing::Test {
             "-device",
             "invalid_device"};
         unsigned int argc = sizeof(argv) / sizeof(const char *);
+        if (passOutputs) {
+            auto retVal = oclocInvoke(argc, argv,
+                                      0, nullptr, nullptr, nullptr,
+                                      0, nullptr, nullptr, nullptr,
+                                      &numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+            return retVal;
+        } else {
+            testing::internal::CaptureStdout();
+            testing::internal::CaptureStderr();
 
-        testing::internal::CaptureStdout();
-        testing::internal::CaptureStderr();
-        auto retVal = oclocInvoke(argc, argv,
-                                  0, nullptr, nullptr, nullptr,
-                                  0, nullptr, nullptr, nullptr,
-                                  nullptr, nullptr, nullptr, nullptr);
-        capturedStdout = testing::internal::GetCapturedStdout();
-        capturedStderr = testing::internal::GetCapturedStderr();
-        return retVal;
+            auto retVal = oclocInvoke(argc, argv,
+                                      0, nullptr, nullptr, nullptr,
+                                      0, nullptr, nullptr, nullptr,
+                                      nullptr, nullptr, nullptr, nullptr);
+            capturedStdout = testing::internal::GetCapturedStdout();
+            capturedStderr = testing::internal::GetCapturedStderr();
+            return retVal;
+        }
     }
 
     void TearDown() override {
         Ocloc::oclocFormerLibName.clear();
         Ocloc::oclocFormerLibName.shrink_to_fit();
+        if (passOutputs) {
+            oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+        }
     }
+    bool passOutputs = false;
+    uint32_t numOutputs{};
+    uint8_t **dataOutputs{};
+    uint64_t *lenOutputs{};
+    char **nameOutputs{};
     std::string capturedStdout;
     std::string capturedStderr;
     VariableBackup<std::string> oclocFormerNameBackup{&Ocloc::oclocFormerLibName};
@@ -1087,6 +1104,27 @@ int mockOclocInvoke(unsigned int numArgs, const char *argv[],
                     const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
                     const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
                     uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
+
+    if (numOutputs && dataOutputs && lenOutputs && nameOutputs) {
+        numOutputs[0] = 2;
+        dataOutputs[0] = new uint8_t *[2];
+        dataOutputs[0][0] = new uint8_t[1];
+        dataOutputs[0][0][0] = 0xa;
+        dataOutputs[0][1] = new uint8_t[2];
+        dataOutputs[0][1][0] = 0x1;
+        dataOutputs[0][1][1] = 0x4;
+        lenOutputs[0] = new uint64_t[2];
+        lenOutputs[0][0] = 1;
+        lenOutputs[0][1] = 2;
+        nameOutputs[0] = new char *[2];
+        constexpr char outputName0[] = "out0";
+        constexpr char outputName1[] = "out1";
+        nameOutputs[0][0] = new char[sizeof(outputName0)];
+        nameOutputs[0][1] = new char[sizeof(outputName1)];
+        memcpy_s(nameOutputs[0][0], sizeof(outputName0), outputName0, sizeof(outputName0));
+        memcpy_s(nameOutputs[0][1], sizeof(outputName1), outputName1, sizeof(outputName1));
+    }
+
     return mockOclocInvokeResult;
 }
 
@@ -1139,4 +1177,42 @@ TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsErrorT
         EXPECT_NE(std::string::npos, capturedStdout.find("Command was: ocloc -file kernel.cl -device invalid_device\n"));
         EXPECT_TRUE(capturedStderr.empty());
     }
+}
+
+TEST_F(OclocFallbackTests, GivenValidFormerOclocNameWhenFormerOclocReturnsOutputsThenOutputIsPropagated) {
+    for (auto &expectedRetVal : {ocloc_error_t::OCLOC_SUCCESS,
+                                 ocloc_error_t::OCLOC_OUT_OF_HOST_MEMORY,
+                                 ocloc_error_t::OCLOC_BUILD_PROGRAM_FAILURE,
+                                 ocloc_error_t::OCLOC_INVALID_DEVICE,
+                                 ocloc_error_t::OCLOC_INVALID_PROGRAM,
+                                 ocloc_error_t::OCLOC_INVALID_COMMAND_LINE,
+                                 ocloc_error_t::OCLOC_INVALID_FILE,
+                                 ocloc_error_t::OCLOC_COMPILATION_CRASH}) {
+
+        passOutputs = true;
+        Ocloc::oclocFormerLibName = "oclocFormer";
+        VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+        MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+        auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+        osLibrary->procMap["oclocInvoke"] = reinterpret_cast<void *>(mockOclocInvoke);
+
+        VariableBackup<int> retCodeBackup{&mockOclocInvokeResult, expectedRetVal};
+        auto retVal = callOclocForInvalidDevice();
+        EXPECT_EQ(expectedRetVal, retVal);
+        EXPECT_TRUE(capturedStdout.empty());
+        EXPECT_TRUE(capturedStderr.empty());
+        EXPECT_EQ(2u, numOutputs);
+        EXPECT_STREQ("out0", nameOutputs[0]);
+        EXPECT_STREQ("out1", nameOutputs[1]);
+        EXPECT_EQ(1u, lenOutputs[0]);
+        EXPECT_EQ(2u, lenOutputs[1]);
+
+        EXPECT_EQ(0xa, dataOutputs[0][0]);
+        EXPECT_EQ(0x1, dataOutputs[1][0]);
+        EXPECT_EQ(0x4, dataOutputs[1][1]);
+
+        oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
+    }
+    passOutputs = false;
 }
