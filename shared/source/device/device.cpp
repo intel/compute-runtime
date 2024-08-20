@@ -686,8 +686,7 @@ bool Device::isBcsSplitSupported() {
 }
 
 bool Device::isInitDeviceWithFirstSubmissionSupported(CommandStreamReceiverType csrType) {
-    return !this->executionEnvironment->areMetricsEnabled() &&
-           getProductHelper().isInitDeviceWithFirstSubmissionRequired(getHardwareInfo()) &&
+    return getProductHelper().isInitDeviceWithFirstSubmissionRequired(getHardwareInfo()) &&
            Device::isInitDeviceWithFirstSubmissionEnabled(csrType);
 }
 
