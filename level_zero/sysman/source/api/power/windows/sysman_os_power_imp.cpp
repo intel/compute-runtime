@@ -325,7 +325,7 @@ ze_result_t WddmPowerImp::setEnergyThreshold(double threshold) {
 
 bool WddmPowerImp::isPowerModuleSupported() {
     powerLimitCount = 0;
-    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::RequestProperty> vRequests(4);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
 
@@ -333,13 +333,15 @@ bool WddmPowerImp::isPowerModuleSupported() {
     request.componentId = KmdSysman::Component::PowerComponent;
     request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
     request.requestId = KmdSysman::Requests::Power::PowerLimit1Enabled;
-    vRequests.push_back(request);
+    vRequests[0] = request;
 
     request.requestId = KmdSysman::Requests::Power::PowerLimit2Enabled;
-    vRequests.push_back(request);
+    vRequests[1] = request;
 
     request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
-    vRequests.push_back(request);
+    vRequests[2] = request;
+    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Dc;
+    vRequests[3] = request;
 
     ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
@@ -347,7 +349,7 @@ bool WddmPowerImp::isPowerModuleSupported() {
         return status;
     }
 
-    for (uint32_t i = 0; i < vResponses.size() - 1; i++) {
+    for (uint32_t i = 0; i < vResponses.size() - 2; i++) {
         ze_bool_t enabled = false;
         if (vResponses[i].returnCode == KmdSysman::Success) {
             memcpy_s(&enabled, sizeof(ze_bool_t), vResponses[i].dataBuffer, sizeof(ze_bool_t));
@@ -359,6 +361,10 @@ bool WddmPowerImp::isPowerModuleSupported() {
 
     // CurrentPowerLimit4Ac is not a bool hence check for it individually
     if (vResponses[2].returnCode == KmdSysman::Success) {
+        powerLimitCount++;
+    }
+
+    if (vResponses[3].returnCode == KmdSysman::Success) {
         powerLimitCount++;
     }
 
@@ -380,7 +386,7 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
 
     *pCount = std::min(*pCount, powerLimitCount);
 
-    std::vector<KmdSysman::RequestProperty> vRequests = {};
+    std::vector<KmdSysman::RequestProperty> vRequests(7);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
 
@@ -388,22 +394,25 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
     request.componentId = KmdSysman::Component::PowerComponent;
     request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
     request.requestId = KmdSysman::Requests::Power::PowerLimit1Enabled;
-    vRequests.push_back(request);
+    vRequests[0] = request;
 
     request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit1;
-    vRequests.push_back(request);
+    vRequests[1] = request;
 
     request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit1Tau;
-    vRequests.push_back(request);
+    vRequests[2] = request;
 
     request.requestId = KmdSysman::Requests::Power::PowerLimit2Enabled;
-    vRequests.push_back(request);
+    vRequests[3] = request;
 
     request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit2;
-    vRequests.push_back(request);
+    vRequests[4] = request;
 
     request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
-    vRequests.push_back(request);
+    vRequests[5] = request;
+
+    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Dc;
+    vRequests[6] = request;
 
     ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
@@ -464,7 +473,7 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
             count++;
         }
     }
-    // Peak
+    // Peak AC
     if (count < *pCount) {
         if (vResponses[5].returnCode == KmdSysman::Success) {
             uint32_t powerAC = 0;
@@ -475,13 +484,32 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
             pSustained[count].enabledStateLocked = true;
             pSustained[count].intervalValueLocked = true;
             pSustained[count].limitValueLocked = false;
-            pSustained[count].source = ZES_POWER_SOURCE_ANY;
+            pSustained[count].source = ZES_POWER_SOURCE_MAINS;
             pSustained[count].level = ZES_POWER_LEVEL_PEAK;
             pSustained[count].limitUnit = ZES_LIMIT_UNIT_POWER;
             pSustained[count].interval = 0;
             count++;
         }
     }
+    // Peak DC
+    if (count < *pCount) {
+        if (vResponses[6].returnCode == KmdSysman::Success) {
+            uint32_t powerDC = 0;
+            memset(&pSustained[count], 0, sizeof(zes_power_limit_ext_desc_t));
+            memcpy_s(&powerDC, sizeof(uint32_t), vResponses[6].dataBuffer, sizeof(uint32_t));
+            pSustained[count].enabled = true;
+            pSustained[count].limit = powerDC;
+            pSustained[count].enabledStateLocked = true;
+            pSustained[count].intervalValueLocked = true;
+            pSustained[count].limitValueLocked = false;
+            pSustained[count].source = ZES_POWER_SOURCE_BATTERY;
+            pSustained[count].level = ZES_POWER_LEVEL_PEAK;
+            pSustained[count].limitUnit = ZES_LIMIT_UNIT_POWER;
+            pSustained[count].interval = 0;
+            count++;
+        }
+    }
+
     *pCount = count;
     return result;
 }
@@ -519,11 +547,20 @@ ze_result_t WddmPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
                 return status;
             }
         } else if (pSustained[i].level == ZES_POWER_LEVEL_PEAK) {
-            request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
-            memcpy_s(request.dataBuffer, sizeof(uint32_t), &pSustained[i].limit, sizeof(uint32_t));
-            status = pKmdSysManager->requestSingle(request, response);
-            if (status != ZE_RESULT_SUCCESS) {
-                return status;
+            if (pSustained[i].source == ZES_POWER_SOURCE_MAINS) {
+                request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
+                memcpy_s(request.dataBuffer, sizeof(uint32_t), &pSustained[i].limit, sizeof(uint32_t));
+                status = pKmdSysManager->requestSingle(request, response);
+                if (status != ZE_RESULT_SUCCESS) {
+                    return status;
+                }
+            } else if (pSustained[i].source == ZES_POWER_SOURCE_BATTERY) {
+                request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Dc;
+                memcpy_s(request.dataBuffer, sizeof(uint32_t), &pSustained[i].limit, sizeof(uint32_t));
+                status = pKmdSysManager->requestSingle(request, response);
+                if (status != ZE_RESULT_SUCCESS) {
+                    return status;
+                }
             }
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

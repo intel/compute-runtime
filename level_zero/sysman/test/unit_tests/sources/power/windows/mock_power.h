@@ -12,7 +12,7 @@
 namespace L0 {
 namespace Sysman {
 namespace ult {
-constexpr uint32_t mockLimitCount = 3u;
+constexpr uint32_t mockLimitCount = 4u;
 
 struct PowerKmdSysManager : public MockKmdSysManager {
 

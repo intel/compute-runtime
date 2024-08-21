@@ -196,6 +196,14 @@ void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector
     VALIDATECALL(zesDeviceGet(sysmanDriverHandle, &deviceCount, sysmanDevices.data()));
 }
 
+std::string getPowerLimitSourceType(zes_power_source_t type) {
+    static const std::map<zes_power_source_t, std::string> powerLimitsSourceTypeMap{
+        {ZES_POWER_SOURCE_ANY, "ZES_POWER_SOURCE_ANY"},
+        {ZES_POWER_SOURCE_MAINS, "ZES_POWER_SOURCE_MAINS"},
+        {ZES_POWER_SOURCE_BATTERY, "ZES_POWER_SOURCE_BATTERY"}};
+    return powerLimitsSourceTypeMap.at(type);
+}
+
 void getPowerLimits(const zes_pwr_handle_t &handle) {
     uint32_t limitCount = 0;
     VALIDATECALL(zesPowerGetLimitsExt(handle, &limitCount, nullptr));
@@ -227,7 +235,7 @@ void getPowerLimits(const zes_pwr_handle_t &handle) {
                 std::cout << "powerLimit.intervalValueLocked = " << +allLimits[i].intervalValueLocked << std::endl;
                 std::cout << "powerLimit.enabledStateLocked = " << +allLimits[i].enabledStateLocked << std::endl;
                 std::cout << "powerLimit.limitValueLocked = " << +allLimits[i].limitValueLocked << std::endl;
-                std::cout << "powerLimit.source = " << allLimits[i].source << std::endl;
+                std::cout << "powerLimit.source = " << getPowerLimitSourceType(allLimits[i].source) << std::endl;
                 std::cout << "powerLimit.limitUnit = " << allLimits[i].limitUnit << std::endl;
                 std::cout << "powerLimit.limit = " << allLimits[i].limit << std::endl;
                 std::cout << "powerLimit.interval = " << allLimits[i].interval << std::endl;

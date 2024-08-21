@@ -399,9 +399,13 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPower
                 EXPECT_FALSE(allLimits[i].limitValueLocked);
                 EXPECT_TRUE(allLimits[i].enabledStateLocked);
                 EXPECT_TRUE(allLimits[i].intervalValueLocked);
-                EXPECT_EQ(ZES_POWER_SOURCE_ANY, allLimits[i].source);
                 EXPECT_EQ(ZES_LIMIT_UNIT_POWER, allLimits[i].limitUnit);
                 allLimits[i].limit = testLimit;
+                if (allLimits[i].source == ZES_POWER_SOURCE_MAINS) {
+                    EXPECT_EQ(ZES_POWER_SOURCE_MAINS, allLimits[i].source);
+                } else {
+                    EXPECT_EQ(ZES_POWER_SOURCE_BATTERY, allLimits[i].source);
+                }
             } else if (allLimits[i].level == ZES_POWER_LEVEL_BURST) {
                 EXPECT_FALSE(allLimits[i].limitValueLocked);
                 EXPECT_TRUE(allLimits[i].enabledStateLocked);
@@ -438,7 +442,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAnsSetPowerL
         std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
 
-        std::vector<uint32_t> requestId = {KmdSysman::Requests::Power::PowerLimit1Enabled, KmdSysman::Requests::Power::CurrentPowerLimit1, KmdSysman::Requests::Power::CurrentPowerLimit1Tau, KmdSysman::Requests::Power::PowerLimit2Enabled, KmdSysman::Requests::Power::CurrentPowerLimit2, KmdSysman::Requests::Power::CurrentPowerLimit4Ac};
+        std::vector<uint32_t> requestId = {KmdSysman::Requests::Power::PowerLimit1Enabled, KmdSysman::Requests::Power::CurrentPowerLimit1, KmdSysman::Requests::Power::CurrentPowerLimit1Tau, KmdSysman::Requests::Power::PowerLimit2Enabled, KmdSysman::Requests::Power::CurrentPowerLimit2, KmdSysman::Requests::Power::CurrentPowerLimit4Ac, KmdSysman::Requests::Power::CurrentPowerLimit4Dc};
         for (auto it = requestId.begin(); it != requestId.end(); it++) {
             pKmdSysManager->mockPowerFailure[*it] = 1;
             uint32_t count = limitCount;
@@ -447,7 +451,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAnsSetPowerL
         }
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
-        requestId = {KmdSysman::Requests::Power::CurrentPowerLimit1, KmdSysman::Requests::Power::CurrentPowerLimit1Tau, KmdSysman::Requests::Power::CurrentPowerLimit2, KmdSysman::Requests::Power::CurrentPowerLimit4Ac};
+        requestId = {KmdSysman::Requests::Power::CurrentPowerLimit1, KmdSysman::Requests::Power::CurrentPowerLimit1Tau, KmdSysman::Requests::Power::CurrentPowerLimit2, KmdSysman::Requests::Power::CurrentPowerLimit4Ac, KmdSysman::Requests::Power::CurrentPowerLimit4Dc};
         for (auto it = requestId.begin(); it != requestId.end(); it++) {
             pKmdSysManager->mockPowerFailure[*it] = 1;
             EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesPowerSetLimitsExt(handle, &limitCount, allLimits.data()));
