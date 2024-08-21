@@ -89,7 +89,7 @@ void *DebugSessionLinuxXe::asyncThreadFunction(void *arg) {
 }
 
 void DebugSessionLinuxXe::startAsyncThread() {
-    asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
+    asyncThread.thread = NEO::Thread::createFunc(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
 void DebugSessionLinuxXe::readInternalEventsAsync() {

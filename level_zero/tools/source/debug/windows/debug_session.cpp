@@ -113,7 +113,7 @@ bool DebugSessionWindows::closeConnection() {
 }
 
 void DebugSessionWindows::startAsyncThread() {
-    asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
+    asyncThread.thread = NEO::Thread::createFunc(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
 void DebugSessionWindows::closeAsyncThread() {

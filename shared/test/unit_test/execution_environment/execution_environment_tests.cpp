@@ -21,6 +21,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -224,6 +225,7 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenInitializ
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDirectSubmissionController.set(1);
 
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
     MockExecutionEnvironment executionEnvironment{};
     auto controller = executionEnvironment.initializeDirectSubmissionController();
 

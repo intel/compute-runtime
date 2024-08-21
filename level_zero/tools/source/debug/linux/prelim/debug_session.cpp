@@ -130,7 +130,7 @@ void *DebugSessionLinuxi915::asyncThreadFunction(void *arg) {
 }
 
 void DebugSessionLinuxi915::startAsyncThread() {
-    asyncThread.thread = NEO::Thread::create(asyncThreadFunction, reinterpret_cast<void *>(this));
+    asyncThread.thread = NEO::Thread::createFunc(asyncThreadFunction, reinterpret_cast<void *>(this));
 }
 
 bool DebugSessionLinuxi915::handleInternalEvent() {

@@ -419,7 +419,7 @@ struct MockAsyncThreadDebugSessionLinuxi915 : public MockDebugSessionLinuxi915 {
     }
 
     void startAsyncThread() override {
-        asyncThread.thread = NEO::Thread::create(mockAsyncThreadFunction, reinterpret_cast<void *>(this));
+        asyncThread.thread = NEO::Thread::createFunc(mockAsyncThreadFunction, reinterpret_cast<void *>(this));
     }
 
     std::atomic<bool> asyncThreadFinished{false};

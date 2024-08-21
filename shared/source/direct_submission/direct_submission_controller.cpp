@@ -82,7 +82,7 @@ void DirectSubmissionController::unregisterDirectSubmission(CommandStreamReceive
 }
 
 void DirectSubmissionController::startThread() {
-    directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
+    directSubmissionControllingThread = Thread::createFunc(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
 }
 
 void DirectSubmissionController::stopThread() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,7 +116,7 @@ std::unique_ptr<DeferredDeleter> createDeferredDeleter() {
 }
 
 void MockDeferredDeleter::runThread() {
-    worker = Thread::create(run, reinterpret_cast<void *>(this));
+    worker = Thread::createFunc(run, reinterpret_cast<void *>(this));
 }
 
 void MockDeferredDeleter::forceStop() {

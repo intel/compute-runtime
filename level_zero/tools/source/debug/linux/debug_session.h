@@ -32,7 +32,7 @@ struct DebugSessionLinux : DebugSessionImp {
     static void *readInternalEventsThreadFunction(void *arg);
 
     MOCKABLE_VIRTUAL void startInternalEventsThread() {
-        internalEventThread.thread = NEO::Thread::create(readInternalEventsThreadFunction, reinterpret_cast<void *>(this));
+        internalEventThread.thread = NEO::Thread::createFunc(readInternalEventsThreadFunction, reinterpret_cast<void *>(this));
     }
     void closeInternalEventsThread() {
         internalEventThread.close();

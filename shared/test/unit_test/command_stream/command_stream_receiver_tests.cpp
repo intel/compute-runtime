@@ -26,6 +26,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_thread.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -990,6 +991,7 @@ using InitDirectSubmissionTest = Test<InitDirectSubmissionFixture>;
 HWTEST_F(InitDirectSubmissionTest, givenDirectSubmissionControllerEnabledWhenInitDirectSubmissionThenCsrIsRegistered) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableDirectSubmissionController.set(1);
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
 
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex(), device->getDeviceBitfield());
     std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), device->getRootDeviceIndex(), 0,
@@ -5741,6 +5743,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenEnqueueWaitFor
     auto pagingFenceValue = 10u;
     EXPECT_FALSE(csr.enqueueWaitForPagingFence(pagingFenceValue));
 
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
     // enqueue waitForPagingFence is possible only if controller exists and direct submission is enabled
     auto controller = static_cast<DirectSubmissionControllerMock *>(executionEnvironment->initializeDirectSubmissionController());
     controller->stopThread();

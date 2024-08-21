@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ void DeferredDeleter::ensureThread() {
     if (worker != nullptr) {
         return;
     }
-    worker = Thread::create(run, reinterpret_cast<void *>(this));
+    worker = Thread::createFunc(run, reinterpret_cast<void *>(this));
 }
 
 bool DeferredDeleter::areElementsReleased() {

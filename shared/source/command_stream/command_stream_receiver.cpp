@@ -831,7 +831,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
                        this->tagAddress, static_cast<uint32_t>(osContext->getEngineType()));
 
     if (debugManager.flags.PauseOnEnqueue.get() != -1 || debugManager.flags.PauseOnBlitCopy.get() != -1) {
-        userPauseConfirmation = Thread::create(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
+        userPauseConfirmation = Thread::createFunc(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
     }
 
     this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);

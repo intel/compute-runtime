@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 namespace NEO {
 
 DrmGemCloseWorker::DrmGemCloseWorker(DrmMemoryManager &memoryManager) : memoryManager(memoryManager) {
-    thread = Thread::create(worker, reinterpret_cast<void *>(this));
+    thread = Thread::createFunc(worker, reinterpret_cast<void *>(this));
 }
 
 void DrmGemCloseWorker::closeThread() {
