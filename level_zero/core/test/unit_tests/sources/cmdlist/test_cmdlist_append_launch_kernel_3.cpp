@@ -518,6 +518,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     std::unique_ptr<L0::CommandList> cmdList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, result));
 
     CmdListKernelLaunchParams launchParams = {};
+    launchParams.additionalSizeParam = 4;
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
 
     auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
@@ -532,7 +533,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
 
     auto patchPtr2 = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
 
-    auto offset = alignUp(device->getHwInfo().gtSystemInfo.MaxSubSlicesSupported * sizeof(uint64_t), MemoryConstants::cacheLineSize);
+    size_t requestedNumberOfWorkgroups = groupCount.groupCountX * groupCount.groupCountY * groupCount.groupCountZ;
+
+    auto offset = alignUp((requestedNumberOfWorkgroups / launchParams.additionalSizeParam) * (launchParams.additionalSizeParam + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(patchPtr2, patchPtr + offset);
 }

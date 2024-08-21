@@ -58,13 +58,20 @@ HWTEST2_F(MultiTileImmediateCommandListTest, givenMultipleTilesWhenAllocatingBar
     auto cmdListImmediate = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(static_cast<L0::CommandListImp *>(commandList.get()));
     auto whiteBoxCmdList = static_cast<WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(cmdListImmediate);
 
-    whiteBoxCmdList->programRegionGroupBarrier(mockKernel);
+    ze_group_count_t threadGroupDimensions = {};
+    threadGroupDimensions.groupCountX = 32;
+    threadGroupDimensions.groupCountY = 2;
+    threadGroupDimensions.groupCountZ = 2;
+
+    size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
+
+    size_t additionalSizeParam = 4;
+
+    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, additionalSizeParam);
 
     auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(1);
 
-    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
-
-    size_t expectedOffset = alignUp(3 * hwInfo.gtSystemInfo.MaxSubSlicesSupported * sizeof(uint64_t), MemoryConstants::cacheLineSize);
+    size_t expectedOffset = alignUp((requestedNumberOfWorkgroups / additionalSizeParam) * (additionalSizeParam + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(patchData.second, expectedOffset);
 }

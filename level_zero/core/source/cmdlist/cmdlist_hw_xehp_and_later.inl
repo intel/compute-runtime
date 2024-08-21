@@ -288,7 +288,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (kernel->usesRegionGroupBarrier()) {
-        programRegionGroupBarrier(*kernel);
+        programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.additionalSizeParam);
     }
 
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());

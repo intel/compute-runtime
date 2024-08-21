@@ -2773,18 +2773,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel) {
+void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t additionalSizeParam) {
     auto neoDevice = device->getNEODevice();
 
     neoDevice->allocateSyncBufferHandler();
 
-    auto &gtSysInfo = device->getNEODevice()->getHardwareInfo().gtSystemInfo;
+    const size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
 
-    auto tileCount = std::max(gtSysInfo.MultiTileArchInfo.TileCount, uint8_t(1)); // Use physical count
-
-    constexpr size_t barrierSizePerSubslice = sizeof(uint64_t);
-
-    size_t size = alignUp(tileCount * gtSysInfo.MaxSubSlicesSupported * barrierSizePerSubslice, MemoryConstants::cacheLineSize);
+    size_t size = alignUp((requestedNumberOfWorkgroups / additionalSizeParam) * (additionalSizeParam + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(size);
 
