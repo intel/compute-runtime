@@ -4949,4 +4949,105 @@ TEST(OclocQuery, WhenQueryingDeviceOpenCFeaturesThenFeaturesStringWithVersionsIs
     ASSERT_NE(nullptr, found);
 }
 
+TEST(OclocOptionsTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    auto kernelSource = R"===(
+/*
+ * Copyright (C) 2018-2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+__kernel void CopyBuffer(__global unsigned int *src, __global unsigned int *dst) {
+    int id = (int)get_global_id(0);
+    dst[id] = lgamma((float)src[id]);
+    dst[id] = src[id];
+}
+)===";
+    Source source{reinterpret_cast<const uint8_t *>(kernelSource), sizeof(kernelSource), "kernel.cl"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
+
+    const char options[] = R"===(
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+-invalid_ocloc_option
+)===";
+    Source optionsOcloc{reinterpret_cast<const uint8_t *>(options), sizeof(options), "kernel_ocloc_options.txt"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(optionsOcloc);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        "kernel.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    testing::internal::CaptureStdout();
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, OCLOC_SUCCESS);
+
+    EXPECT_TRUE(output.find("Failed with ocloc options from file:\n"
+                            "-invalid_ocloc_option") != std::string::npos);
+    EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
+}
+
+TEST(OclocOptionsTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyAreNotPrinted) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    auto kernelSource = R"===(
+/*
+ * Copyright (C) 2018-2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+__kernel void CopyBuffer(__global unsigned int *src, __global unsigned int *dst) {
+    int id = (int)get_global_id(0);
+    dst[id] = lgamma((float)src[id]);
+    dst[id] = src[id];
+}
+)===";
+    Source source{reinterpret_cast<const uint8_t *>(kernelSource), sizeof(kernelSource), "kernel.cl"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
+
+    const char options[] = R"===(
+/*
+ * Copyright (C) 2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+-invalid_ocloc_option
+)===";
+    Source optionsOcloc{reinterpret_cast<const uint8_t *>(options), sizeof(options), "kernel_ocloc_options.txt"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(optionsOcloc);
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-qq",
+        "-file",
+        "kernel.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    testing::internal::CaptureStdout();
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, OCLOC_SUCCESS);
+
+    EXPECT_FALSE(output.find("Failed with ocloc options from file:\n"
+                             "-invalid_ocloc_option") != std::string::npos);
+    EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
+}
 } // namespace NEO

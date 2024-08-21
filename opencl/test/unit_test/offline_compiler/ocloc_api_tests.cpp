@@ -422,60 +422,6 @@ TEST(OclocApiTests, GivenInvalidOptionsAndInternalOptionsCommandArgumentsWhenCmd
                              "-shouldfailInternalOptions") != std::string::npos);
 }
 
-TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
-    ASSERT_TRUE(fileExists(clFiles + "valid_kernel.cl"));
-    ASSERT_TRUE(fileExists(clFiles + "valid_kernel_ocloc_options.txt"));
-    std::string clFileName(clFiles + "valid_kernel.cl");
-
-    const char *argv[] = {
-        "ocloc",
-        "-q",
-        "-file",
-        clFileName.c_str(),
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-    unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(argc, argv,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, OCLOC_SUCCESS);
-
-    EXPECT_TRUE(output.find("Failed with ocloc options from file:\n"
-                            "-invalid_ocloc_option") != std::string::npos);
-    EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
-}
-
-TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyAreNotPrinted) {
-    ASSERT_TRUE(fileExists(clFiles + "valid_kernel.cl"));
-    ASSERT_TRUE(fileExists(clFiles + "valid_kernel_ocloc_options.txt"));
-    std::string clFileName(clFiles + "valid_kernel.cl");
-
-    const char *argv[] = {
-        "ocloc",
-        "-qq",
-        "-file",
-        clFileName.c_str(),
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-    unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(argc, argv,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, OCLOC_SUCCESS);
-
-    EXPECT_FALSE(output.find("Failed with ocloc options from file:\n"
-                             "-invalid_ocloc_option") != std::string::npos);
-    EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
-}
-
 TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {
     auto prevFclDebugVars = NEO::getFclDebugVars();
     auto debugVars = prevFclDebugVars;
