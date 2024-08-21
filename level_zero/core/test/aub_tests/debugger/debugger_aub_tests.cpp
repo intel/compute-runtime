@@ -213,7 +213,7 @@ HWTEST2_F(DebuggerGlobalAllocatorAub, GivenKernelWithScratchWhenCmdListExecutedT
     dispatchTraits.groupCountY = groupCount[1];
     dispatchTraits.groupCountZ = groupCount[2];
 
-    module = static_cast<L0::ModuleImp *>(Module::fromHandle(createModuleFromFile("simple_spill_fill_kernel", context, device, "", true)));
+    module = static_cast<L0::ModuleImp *>(Module::fromHandle(createModuleFromFile("simple_spill_fill_kernel", context, device, "", false)));
 
     ze_kernel_handle_t kernel;
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
