@@ -395,14 +395,6 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupSize(const uint32_t grfCount
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
-    if (debugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
-        return debugManager.flags.SetAmountOfReusableAllocations.get();
-    }
-    return 1u;
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const {
     if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
         return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
