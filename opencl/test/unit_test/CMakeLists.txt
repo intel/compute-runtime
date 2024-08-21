@@ -334,7 +334,6 @@ set(TEST_KERNEL_PRINTF_internal_options_gen9lp
 )
 
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
-list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/shouldfail.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/stateless_kernel.cl")
 list(REMOVE_ITEM TEST_KERNELS ${TEST_KERNEL_VME})

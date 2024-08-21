@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_api.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
+#include "shared/offline_compiler/source/ocloc_interface.h"
 #include "shared/offline_compiler/source/ocloc_supported_devices_helper.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
@@ -2423,7 +2424,7 @@ TEST_F(OfflineCompilerTests, GivenInvalidKernelWhenBuildingThenBuildProgramFailu
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
-        clFiles + "shouldfail.cl",
+        clFiles + "copybuffer.cl",
         "-qq",
         "-device",
         gEnvironment->devicePrefix.c_str()};
@@ -3787,34 +3788,122 @@ TEST(OfflineCompilerTest, givenDashOAndOtherInvalidOptionsWhenCmdLineParsedThenE
 TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
+    const char kernelSource[] = R"===(
+/*
+ * Copyright (C) 2018-2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
 
-    ASSERT_TRUE(fileExists(clFiles + "shouldfail_options.txt"));
-    ASSERT_TRUE(fileExists(clFiles + "shouldfail_internal_options.txt"));
+__kernel void shouldfail(global ushort *dst) {
+    // idx and dummy are not defined, compiler should fail the build.
+    dst[idx] = dummy;
+}
+)===";
+    Source source{reinterpret_cast<const uint8_t *>(kernelSource), sizeof(kernelSource), "kernel.cl"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
 
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-q",
-        "-file",
-        clFiles + "shouldfail.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
+    const char internalOptions[] = R"===(
+/*
+ * Copyright (C) 2018-2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
 
-    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+-shouldfailInternalOptions
+)===";
+    Source internalOptionSource{reinterpret_cast<const uint8_t *>(internalOptions), sizeof(internalOptions), "kernel_internal_options.txt"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(internalOptionSource);
 
-    auto &options = mockOfflineCompiler->options;
-    auto &internalOptions = mockOfflineCompiler->internalOptions;
-    EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
-    EXPECT_TRUE(internalOptions.find("-shouldfailInternalOptions") != std::string::npos);
-    EXPECT_TRUE(mockOfflineCompiler->getOptionsReadFromFile().find("-shouldfailOptions") != std::string::npos);
-    EXPECT_TRUE(mockOfflineCompiler->getInternalOptionsReadFromFile().find("-shouldfailInternalOptions") != std::string::npos);
+    const char options[] = R"===(
+/*
+ * Copyright (C) 2018-2021 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
 
-    mockOfflineCompiler->build();
+-shouldfailOptions
+)===";
+    Source optionSource{reinterpret_cast<const uint8_t *>(options), sizeof(options), "kernel_options.txt"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(optionSource);
+    {
+        std::vector<std::string> args = {
+            "ocloc",
+            "-q",
+            "-file",
+            "kernel.cl",
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
 
-    EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
-    EXPECT_TRUE(internalOptions.find("-shouldfailInternalOptions") != std::string::npos);
-    EXPECT_TRUE(mockOfflineCompiler->getOptionsReadFromFile().find("-shouldfailOptions") != std::string::npos);
-    EXPECT_TRUE(mockOfflineCompiler->getInternalOptionsReadFromFile().find("-shouldfailInternalOptions") != std::string::npos);
+        testing::internal::CaptureStdout();
+        auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        EXPECT_NE(retVal, OCLOC_SUCCESS);
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_FALSE(output.find("Building with options:\n"
+                                 "-shouldfailOptions") != std::string::npos);
+
+        EXPECT_FALSE(output.find("Building with internal options:\n"
+                                 "-shouldfailInternalOptions") != std::string::npos);
+
+        EXPECT_TRUE(output.find("Compiling options read from file were:\n"
+                                "-shouldfailOptions") != std::string::npos);
+
+        EXPECT_TRUE(output.find("Internal options read from file were:\n"
+                                "-shouldfailInternalOptions") != std::string::npos);
+    }
+    {
+        std::vector<std::string> args = {
+            "ocloc",
+            "-file",
+            "kernel.cl",
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
+
+        testing::internal::CaptureStdout();
+        auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        EXPECT_NE(retVal, OCLOC_SUCCESS);
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_TRUE(output.find("Building with options:\n"
+                                "-shouldfailOptions") != std::string::npos);
+
+        EXPECT_TRUE(output.find("Building with internal options:\n"
+                                "-shouldfailInternalOptions") != std::string::npos);
+
+        EXPECT_TRUE(output.find("Compiling options read from file were:\n"
+                                "-shouldfailOptions") != std::string::npos);
+
+        EXPECT_TRUE(output.find("Internal options read from file were:\n"
+                                "-shouldfailInternalOptions") != std::string::npos);
+    }
+    {
+        std::vector<std::string> args = {
+            "ocloc",
+            "-file",
+            "kernel.cl",
+            "-options",
+            "-invalid_options",
+            "-internal_options",
+            "-invalid_internal_options",
+            "-device",
+            gEnvironment->devicePrefix.c_str()};
+
+        testing::internal::CaptureStdout();
+        auto retVal = Ocloc::Commands::compile(mockOfflineCompiler->argHelper, args);
+        EXPECT_NE(retVal, OCLOC_SUCCESS);
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_FALSE(output.find("Building with options:\n"
+                                 "-invalid_options") != std::string::npos);
+
+        EXPECT_FALSE(output.find("Building with internal options:\n"
+                                 "-invalid_internal_options") != std::string::npos);
+
+        EXPECT_FALSE(output.find("Compiling options read from file were:") != std::string::npos);
+
+        EXPECT_FALSE(output.find("Internal options read from file were:") != std::string::npos);
+    }
 }
 
 TEST(OfflineCompilerTest, givenInputOptionsFileWithSpecialCharsWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSet) {
@@ -4952,7 +5041,7 @@ TEST(OclocQuery, WhenQueryingDeviceOpenCFeaturesThenFeaturesStringWithVersionsIs
 TEST(OclocOptionsTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyArePrinted) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
-    auto kernelSource = R"===(
+    const char kernelSource[] = R"===(
 /*
  * Copyright (C) 2018-2021 Intel Corporation
  *

@@ -359,69 +359,6 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
     EXPECT_EQ(quotesCount, 4u);
 }
 
-TEST(OclocApiTests, givenInvalidInputOptionsAndInternalOptionsFilesWhenCmdlineIsPrintedThenTheyArePrinted) {
-    ASSERT_TRUE(fileExists(clFiles + "shouldfail.cl"));
-    ASSERT_TRUE(fileExists(clFiles + "shouldfail_options.txt"));
-    ASSERT_TRUE(fileExists(clFiles + "shouldfail_internal_options.txt"));
-
-    std::string clFileName(clFiles + "shouldfail.cl");
-    const char *argv[] = {
-        "ocloc",
-        "-q",
-        "-file",
-        clFileName.c_str(),
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-    unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(argc, argv,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(retVal, OCLOC_SUCCESS);
-
-    EXPECT_TRUE(output.find("Compiling options read from file were:\n"
-                            "-shouldfailOptions") != std::string::npos);
-
-    EXPECT_TRUE(output.find("Internal options read from file were:\n"
-                            "-shouldfailInternalOptions") != std::string::npos);
-}
-
-TEST(OclocApiTests, GivenInvalidOptionsAndInternalOptionsCommandArgumentsWhenCmdlineIsPrintedThenTheyAreNotPrinted) {
-    std::string clFileName(clFiles + "shouldfail.cl");
-
-    ASSERT_TRUE(fileExists(clFileName));
-
-    const char *argv[] = {
-        "ocloc",
-        "-q",
-        "-options",
-        "-invalid_option",
-        "-internal_options",
-        "-invalid_internal_option",
-        "-file",
-        clFileName.c_str(),
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-    unsigned int argc = sizeof(argv) / sizeof(const char *);
-
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(argc, argv,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_NE(OCLOC_SUCCESS, retVal);
-
-    EXPECT_FALSE(output.find("Compiling options read from file were:\n"
-                             "-shouldfailOptions") != std::string::npos);
-
-    EXPECT_FALSE(output.find("Internal options read from file were:\n"
-                             "-shouldfailInternalOptions") != std::string::npos);
-}
-
 TEST(OclocApiTests, GivenIncludeHeadersWhenCompilingThenPassesToFclHeadersPackedAsElf) {
     auto prevFclDebugVars = NEO::getFclDebugVars();
     auto debugVars = prevFclDebugVars;
