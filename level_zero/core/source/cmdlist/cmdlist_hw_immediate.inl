@@ -464,29 +464,27 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    ze_result_t status = ZE_RESULT_SUCCESS;
-
-    if (cmdQ == this->cmdQImmediate || cmdQ == this->cmdQImmediateCopyOffload) {
-        cmdQ->setTaskCount(completionStamp.taskCount);
-
-        if (this->isSyncModeQueue) {
-            lockCSR.unlock();
-            status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
-            lockCSR.lock();
-        }
-    }
-
     auto cmdQImp = static_cast<CommandQueueImp *>(cmdQ);
     cmdQImp->clearHeapContainer();
 
     this->cmdListCurrentStartOffset = commandStream->getUsed();
     this->containsAnyKernel = false;
-    this->kernelWithAssertAppended = false;
     this->handlePostSubmissionState();
 
     if (NEO::debugManager.flags.PauseOnEnqueue.get() != -1) {
         this->device->getNEODevice()->debugExecutionCounter++;
     }
+
+    lockCSR.unlock();
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    if (cmdQ == this->cmdQImmediate || cmdQ == this->cmdQImmediateCopyOffload) {
+        cmdQ->setTaskCount(completionStamp.taskCount);
+
+        if (this->isSyncModeQueue) {
+            status = hostSynchronize(std::numeric_limits<uint64_t>::max(), true);
+        }
+    }
+    this->kernelWithAssertAppended = false;
 
     return status;
 }
