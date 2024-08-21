@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -322,4 +322,49 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
         dst[currentOffset + 3] = contextEnd;
     }
 
+}
+
+__kernel void CopyBufferRectBytesMiddle2d(
+    const __global uint* src,
+    __global uint* dst,
+    ulong4 SrcOrigin,
+    ulong4 DstOrigin,
+    ulong2 SrcPitch,
+    ulong2 DstPitch )
+
+{
+    size_t x = get_global_id(0);
+    size_t y = get_global_id(1);
+
+    size_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
+    size_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+
+    src += LSrcOffset >> 2;
+    dst += LDstOffset >> 2;
+    
+    uint4 loaded = vload4(x,src);
+    vstore4(loaded,x,dst);
+}
+
+__kernel void CopyBufferRectBytesMiddle3d(
+    const __global uint* src,
+    __global uint* dst,
+    ulong4 SrcOrigin,
+    ulong4 DstOrigin,
+    ulong2 SrcPitch,
+    ulong2 DstPitch )
+
+{
+    size_t x = get_global_id(0); 
+    size_t y = get_global_id(1); 
+    size_t z = get_global_id(2); 
+ 
+    size_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
+    size_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
+
+    src += LSrcOffset >> 2;
+    dst += LDstOffset >> 2;
+    
+    uint4 loaded = vload4(x,src);
+    vstore4(loaded,x,dst);
 }
