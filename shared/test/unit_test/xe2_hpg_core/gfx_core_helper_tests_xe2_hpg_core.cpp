@@ -31,9 +31,9 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenAskingFor
     EXPECT_EQ(expectedAlignment, gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 }
 
-XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportThenReturnFalse) {
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
+    EXPECT_TRUE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgCoreWhenAskedForMinimialSimdThen16IsReturned) {
