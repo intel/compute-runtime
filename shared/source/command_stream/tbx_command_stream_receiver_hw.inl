@@ -576,19 +576,34 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWait) {
+    TaskCountType taskCountToWait = this->latestFlushedTaskCount;
+
     volatile TagAddressType *pollAddress = this->getTagAddress();
+
     for (uint32_t i = 0; i < this->activePartitions; i++) {
-        while (*pollAddress < this->latestFlushedTaskCount) {
+        while (*pollAddress < taskCountToWait) {
+            if (!blockingWait) {
+                return;
+            }
             this->downloadAllocation(*this->getTagAllocation());
         }
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
     auto lockCSR = this->obtainUniqueOwnership();
+
+    std::vector<GraphicsAllocation *> notReadyAllocations;
+
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
         this->downloadAllocation(*graphicsAllocation);
+
+        // Used again while waiting for completion. Another download will be needed.
+        if (graphicsAllocation->getTaskCount(this->osContext->getContextId()) > taskCountToWait) {
+            notReadyAllocations.push_back(graphicsAllocation);
+        }
     }
     this->allocationsForDownload.clear();
+    this->allocationsForDownload = std::set<GraphicsAllocation *>(notReadyAllocations.begin(), notReadyAllocations.end());
 }
 
 template <typename GfxFamily>

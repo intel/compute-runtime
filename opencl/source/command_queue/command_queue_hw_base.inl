@@ -178,10 +178,10 @@ bool CommandQueueHw<Family>::waitForTimestamps(Range<CopyEngineState> copyEngine
         }
 
         if (waited) {
-            getGpgpuCommandStreamReceiver().downloadAllocations();
+            getGpgpuCommandStreamReceiver().downloadAllocations(true);
             for (const auto &copyEngine : copyEnginesToWait) {
                 auto bcsCsr = getBcsCommandStreamReceiver(copyEngine.engineType);
-                bcsCsr->downloadAllocations();
+                bcsCsr->downloadAllocations(true);
             }
         }
     }

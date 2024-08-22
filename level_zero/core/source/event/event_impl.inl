@@ -251,11 +251,37 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
 }
 
 template <typename TagSizeT>
+void EventImp<TagSizeT>::downloadAllTbxAllocations() {
+    for (auto &csr : csrs) {
+        csr->downloadAllocations(true);
+    }
+
+    for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
+        for (auto const &engine : subDevice->getAllEngines()) {
+            auto osContextId = engine.commandStreamReceiver->getOsContext().getContextId();
+
+            auto poolAllocation = getPoolAllocation(this->device);
+            bool isUsed = (poolAllocation && poolAllocation->isUsedByOsContext(osContextId));
+
+            if (inOrderExecInfo) {
+                if (inOrderExecInfo->getDeviceCounterAllocation()) {
+                    isUsed |= inOrderExecInfo->getDeviceCounterAllocation()->isUsedByOsContext(osContextId);
+                } else {
+                    DEBUG_BREAK_IF(true); // external allocation - not able to download
+                }
+            }
+
+            if (isUsed) {
+                engine.commandStreamReceiver->downloadAllocations(false);
+            }
+        }
+    }
+}
+
+template <typename TagSizeT>
 void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
     if (this->tbxMode) {
-        for (auto &csr : csrs) {
-            csr->downloadAllocations();
-        }
+        downloadAllTbxAllocations();
     }
     this->setIsCompleted();
     unsetCmdQueue();

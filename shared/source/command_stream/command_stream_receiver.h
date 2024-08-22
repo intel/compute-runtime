@@ -229,7 +229,7 @@ class CommandStreamReceiver {
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
     WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
     MOCKABLE_VIRTUAL bool testTaskCountReady(volatile TagAddressType *pollAddress, TaskCountType taskCountToWait);
-    virtual void downloadAllocations(){};
+    virtual void downloadAllocations(bool blockingWait){};
     virtual void removeDownloadAllocation(GraphicsAllocation *alloc){};
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }

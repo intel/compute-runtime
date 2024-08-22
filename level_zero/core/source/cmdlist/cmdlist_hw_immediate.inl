@@ -1015,9 +1015,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
         }
 
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
-            mainQueueCsr->downloadAllocations();
+            mainQueueCsr->downloadAllocations(true);
             if (isCopyOffloadEnabled()) {
-                copyOffloadCsr->downloadAllocations();
+                copyOffloadCsr->downloadAllocations(true);
             }
         }
 

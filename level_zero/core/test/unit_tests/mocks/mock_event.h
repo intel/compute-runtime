@@ -22,6 +22,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::counterBasedMode;
     using BaseClass::csrs;
     using BaseClass::Event;
+    using BaseClass::eventPoolAllocation;
     using BaseClass::gpuHangCheckPeriod;
     using BaseClass::hostAddress;
     using BaseClass::isFromIpcPool;

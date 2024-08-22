@@ -4332,12 +4332,80 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     auto eventAllocation = event->getPoolAllocation(device);
     ultCsr0->makeResident(*eventAllocation);
 
+    auto hostAddress = static_cast<uint64_t *>(event->getCompletionFieldHostAddress());
+    *hostAddress = Event::STATE_SIGNALED;
+
     event->hostSynchronize(1);
 
+    EXPECT_EQ(1u, ultCsr0->downloadAllocationsCalledCount);
+    EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
     EXPECT_EQ(1u, downloadCounter0);
+
+    EXPECT_EQ(1u, ultCsr1->downloadAllocationsCalledCount);
+    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
     EXPECT_EQ(0u, downloadCounter1);
 
     event->destroy();
+}
+
+HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedOnSubDeviceButUsedOnDifferentSubdeviceWhenQueryingThenDownload, IsAtLeastXeHpCore) {
+    neoDevice->getExecutionEnvironment()->calculateMaxOsContextCount();
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<NEO::MockMemoryOperations>();
+
+    auto rootDevice = static_cast<MockDeviceImp *>(device);
+
+    ASSERT_TRUE(rootDevice->subDevices.size() > 1);
+
+    auto subDevice0 = rootDevice->subDevices[0];
+    auto subDevice1 = rootDevice->subDevices[1];
+
+    auto ultCsr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice0->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.count = 2;
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
+    auto event0 = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1));
+    auto event1 = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1));
+    event0->eventPoolAllocation = nullptr;
+    event1->eventPoolAllocation = nullptr;
+
+    auto inOrderExecInfo0 = NEO::InOrderExecInfo::create(device->getDeviceInOrderCounterAllocator()->getTag(), nullptr, *device->getNEODevice(), 1, false);
+    inOrderExecInfo0->setLastWaitedCounterValue(1);
+    event0->updateInOrderExecState(inOrderExecInfo0, 1, 0);
+
+    auto inOrderExecInfo1 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), 0x1, nullptr, nullptr, 1);
+    inOrderExecInfo1->setLastWaitedCounterValue(1);
+    event1->updateInOrderExecState(inOrderExecInfo1, 1, 0);
+
+    ultCsr0->makeResident(*inOrderExecInfo0->getDeviceCounterAllocation());
+
+    event0->hostSynchronize(1);
+
+    EXPECT_EQ(1u, ultCsr0->downloadAllocationsCalledCount);
+    EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
+
+    EXPECT_EQ(1u, ultCsr1->downloadAllocationsCalledCount);
+    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+
+    event1->hostSynchronize(1);
+
+    EXPECT_EQ(1u, ultCsr0->downloadAllocationsCalledCount);
+    EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
+
+    EXPECT_EQ(2u, ultCsr1->downloadAllocationsCalledCount);
+    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+
+    event0->destroy();
+    event1->destroy();
 }
 
 HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleOneTileDeviceThenMaxFromThisDeviceSelected, IsAtLeastXeHpCore) {

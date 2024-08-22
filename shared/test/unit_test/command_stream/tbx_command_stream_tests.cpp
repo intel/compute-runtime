@@ -473,12 +473,46 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenDownloadAllocatoinsCalledThen
     MockGraphicsAllocation allocation1, allocation2, allocation3;
     tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
 
+    allocation1.updateTaskCount(0, tbxCsr.getOsContext().getContextId());
+    allocation2.updateTaskCount(0, tbxCsr.getOsContext().getContextId());
+    allocation3.updateTaskCount(0, tbxCsr.getOsContext().getContextId());
+
     EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
-    tbxCsr.downloadAllocations();
+    tbxCsr.downloadAllocations(true);
     EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
 
     std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &allocation1, &allocation2, &allocation3};
     EXPECT_EQ(0u, tbxCsr.allocationsForDownload.size());
+}
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenUpdatingTaskCountDuringWaitThenDontRemoveFromContainer) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()};
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+
+    tbxCsr.setupContext(osContext);
+    tbxCsr.initializeTagAllocation();
+    *tbxCsr.getTagAddress() = 0u;
+    tbxCsr.latestFlushedTaskCount = 1;
+
+    MockGraphicsAllocation allocation1, allocation2, allocation3;
+    tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
+
+    tbxCsr.makeResident(allocation1);
+    tbxCsr.makeResident(allocation2);
+    tbxCsr.makeResident(allocation3);
+
+    allocation2.updateTaskCount(2u, tbxCsr.getOsContext().getContextId());
+
+    tbxCsr.downloadAllocations(false);
+    EXPECT_EQ(0u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(3u, tbxCsr.allocationsForDownload.size());
+
+    *tbxCsr.getTagAddress() = 1u;
+
+    tbxCsr.downloadAllocations(false);
+    EXPECT_EQ(1u, tbxCsr.obtainUniqueOwnershipCalled);
+    EXPECT_EQ(1u, tbxCsr.allocationsForDownload.size());
+    EXPECT_NE(tbxCsr.allocationsForDownload.find(&allocation2), tbxCsr.allocationsForDownload.end());
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {

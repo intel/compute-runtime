@@ -25,7 +25,7 @@ Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
 
 ze_result_t Fence::queryStatus() {
     auto csr = cmdQueue->getCsr();
-    csr->downloadAllocations();
+    csr->downloadAllocations(true);
 
     auto *hostAddr = csr->getTagAddress();
 

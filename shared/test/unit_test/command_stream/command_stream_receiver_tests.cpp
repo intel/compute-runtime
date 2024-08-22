@@ -350,7 +350,7 @@ TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotCh
 
     ASSERT_NE(nullptr, graphicsAllocation);
     auto numEvictionAllocsBefore = commandStreamReceiver->getEvictionAllocations().size();
-    commandStreamReceiver->CommandStreamReceiver::downloadAllocations();
+    commandStreamReceiver->CommandStreamReceiver::downloadAllocations(true);
     auto numEvictionAllocsAfter = commandStreamReceiver->getEvictionAllocations().size();
     EXPECT_EQ(numEvictionAllocsBefore, numEvictionAllocsAfter);
     EXPECT_EQ(0u, numEvictionAllocsAfter);

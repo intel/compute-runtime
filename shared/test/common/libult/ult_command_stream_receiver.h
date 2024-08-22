@@ -272,8 +272,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
-    void downloadAllocations() override {
+    void downloadAllocations(bool blockingWait) override {
         downloadAllocationsCalledCount++;
+        latestDownloadAllocationsBlocking = blockingWait;
     }
 
     void downloadAllocationUlt(GraphicsAllocation &gfxAllocation) {
@@ -558,6 +559,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::optional<SubmissionStatus> flushReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;
+    std::atomic<bool> latestDownloadAllocationsBlocking = false;
 
     bool renderStateCacheFlushed = false;
     bool renderStateCacheDcFlushForced = false;

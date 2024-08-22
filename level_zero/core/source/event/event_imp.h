@@ -59,6 +59,7 @@ struct EventImp : public Event {
 
   protected:
     ze_result_t waitForUserFence(uint64_t timeout);
+    void downloadAllTbxAllocations();
 
     bool handlePreQueryStatusOperationsAndCheckCompletion();
     bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
