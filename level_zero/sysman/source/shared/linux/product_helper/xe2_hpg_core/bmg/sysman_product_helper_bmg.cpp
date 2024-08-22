@@ -120,7 +120,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     }
 
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    for (auto it : telemNodes) {
+    for (auto &it : telemNodes) {
         std::string telemNodeDir = it.second;
 
         std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};

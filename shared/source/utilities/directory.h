@@ -23,8 +23,11 @@ class Directory {
     static void createDirectory(const std::string &path);
 
     Directory() = default;
-    Directory(const Directory &) = delete;
     Directory(const std::string &path) : path(path) {}
+    Directory(Directory &&other) noexcept = delete;
+    Directory(const Directory &other) = delete;
+    Directory &operator=(Directory &&other) noexcept = delete;
+    Directory &operator=(const Directory &other) = delete;
 
     inline std::optional<std::vector<std::string>> parseDirectories(char flags) {
         std::optional<std::vector<std::string>> directories;

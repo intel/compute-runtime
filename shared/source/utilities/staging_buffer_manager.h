@@ -27,6 +27,9 @@ class StagingBuffer {
   public:
     StagingBuffer(void *baseAddress, size_t size);
     StagingBuffer(StagingBuffer &&other);
+    StagingBuffer(const StagingBuffer &other) = delete;
+    StagingBuffer &operator=(StagingBuffer &&other) noexcept = delete;
+    StagingBuffer &operator=(const StagingBuffer &other) = delete;
 
     void *getBaseAddress() const {
         return baseAddress;
