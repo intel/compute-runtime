@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 R"===(
-
+//////////////////////////////////////////////////////////////////////////////
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
     __global char* dst,
@@ -25,10 +25,10 @@ __kernel void CopyBufferRectBytes2d(
     *( dst + LDstOffset )  = *( src + LSrcOffset );
 
 }
-
-__kernel void CopyBufferRectBytesMiddle2d(
-    const __global uint* src,
-    __global uint* dst,
+//////////////////////////////////////////////////////////////////////////////
+__kernel void CopyBufferRectBytes3d(
+    __global const char* src,
+    __global char* dst,
     ulong4 SrcOrigin,
     ulong4 DstOrigin,
     ulong2 SrcPitch,
@@ -37,57 +37,12 @@ __kernel void CopyBufferRectBytesMiddle2d(
 {
     size_t x = get_global_id(0);
     size_t y = get_global_id(1);
+    size_t z = get_global_id(2);
 
-    size_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    size_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
+    size_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y );
+    size_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y );
 
-    src += LSrcOffset >> 2;
-    dst += LDstOffset >> 2;
-    
-    uint4 loaded = vload4(x,src);
-    vstore4(loaded,x,dst);
-}
+    *( dst + LDstOffset )  = *( src + LSrcOffset );
 
-__kernel void CopyBufferRectBytes3d(
-    __global const char* src, 
-    __global char* dst, 
-    ulong4 SrcOrigin, 
-    ulong4 DstOrigin, 
-    ulong2 SrcPitch, 
-    ulong2 DstPitch ) 
- 
-{ 
-    size_t x = get_global_id(0); 
-    size_t y = get_global_id(1); 
-    size_t z = get_global_id(2); 
- 
-    size_t LSrcOffset = x + SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
-    size_t LDstOffset = x + DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
- 
-    *( dst + LDstOffset )  = *( src + LSrcOffset );  
- 
-}
-
-__kernel void CopyBufferRectBytesMiddle3d(
-    const __global uint* src,
-    __global uint* dst,
-    ulong4 SrcOrigin,
-    ulong4 DstOrigin,
-    ulong2 SrcPitch,
-    ulong2 DstPitch )
-
-{
-    size_t x = get_global_id(0); 
-    size_t y = get_global_id(1); 
-    size_t z = get_global_id(2); 
- 
-    size_t LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
-    size_t LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
-
-    src += LSrcOffset >> 2;
-    dst += LDstOffset >> 2;
-    
-    uint4 loaded = vload4(x,src);
-    vstore4(loaded,x,dst);
 }
 )==="

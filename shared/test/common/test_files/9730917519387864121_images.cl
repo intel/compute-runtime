@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -220,7 +220,7 @@ __kernel void FillBufferSSHOffset(
     pDst[dstIndex] = pSrc[srcIndex];
 }
 
-
+//////////////////////////////////////////////////////////////////////////////
 __kernel void CopyBufferRectBytes2d(
     __global const char* src,
     __global char* dst,
@@ -239,29 +239,7 @@ __kernel void CopyBufferRectBytes2d(
     *( dst + LDstOffset )  = *( src + LSrcOffset ); 
 
 }
-
-__kernel void CopyBufferRectBytesMiddle2d(
-    const __global uint* src,
-    __global uint* dst,
-    uint4 SrcOrigin,
-    uint4 DstOrigin,
-    uint2 SrcPitch,
-    uint2 DstPitch )
-
-{
-    int x = get_global_id(0);
-    int y = get_global_id(1);
-
-    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x );
-    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x );
-
-    src += LSrcOffset >> 2;
-    dst += LDstOffset >> 2;
-    
-    uint4 loaded = vload4(x,src);
-    vstore4(loaded,x,dst);
-}
-
+//////////////////////////////////////////////////////////////////////////////
 __kernel void CopyBufferRectBytes3d(
     __global const char* src, 
     __global char* dst, 
@@ -280,29 +258,6 @@ __kernel void CopyBufferRectBytes3d(
  
     *( dst + LDstOffset )  = *( src + LSrcOffset );  
  
-}
-
-__kernel void CopyBufferRectBytesMiddle3d(
-    const __global uint* src,
-    __global uint* dst,
-    uint4 SrcOrigin,
-    uint4 DstOrigin,
-    uint2 SrcPitch,
-    uint2 DstPitch )
-
-{
-    int x = get_global_id(0); 
-    int y = get_global_id(1); 
-    int z = get_global_id(2); 
- 
-    uint LSrcOffset = SrcOrigin.x + ( ( y + SrcOrigin.y ) * SrcPitch.x ) + ( ( z + SrcOrigin.z ) * SrcPitch.y ); 
-    uint LDstOffset = DstOrigin.x + ( ( y + DstOrigin.y ) * DstPitch.x ) + ( ( z + DstOrigin.z ) * DstPitch.y ); 
-
-    src += LSrcOffset >> 2;
-    dst += LDstOffset >> 2;
-    
-    uint4 loaded = vload4(x,src);
-    vstore4(loaded,x,dst);
 }
 
 void SetDstData(__global ulong* dst, uint currentOffset, ulong contextStart, ulong globalStart, ulong contextEnd, ulong globalEnd, uint useOnlyGlobalTimestamps) {
