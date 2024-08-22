@@ -1388,8 +1388,11 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
                                           "Invalid SIP binary.\n");
                 }
             }
-
-            stateSaveAreaHeader = NEO::SipKernel::getSipKernel(*neoDevice, nullptr).getStateSaveAreaHeader();
+            auto &sipKernel = NEO::SipKernel::getSipKernel(*neoDevice, nullptr);
+            stateSaveAreaHeader = sipKernel.getStateSaveAreaHeader();
+            if (sipKernel.getStateSaveAreaSize(neoDevice) == 0) {
+                *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+            }
         } else {
             *returnValue = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
