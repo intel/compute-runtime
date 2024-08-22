@@ -6,6 +6,7 @@
 
 set(NEO_CORE_DIRECT_SUBMISSION_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_controller_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_direct_submission.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_direct_submission.inl
 )

@@ -84,6 +84,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/os_environment_win.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sharedata_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_winmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_info.h

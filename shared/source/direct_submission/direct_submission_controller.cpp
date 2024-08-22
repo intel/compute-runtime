@@ -167,10 +167,6 @@ void DirectSubmissionController::checkNewSubmissions() {
     this->timeSinceLastCheck = getCpuTimestamp();
 }
 
-bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
-    return NEO::waitOnConditionWithPredicate(condVar, lock, std::chrono::microseconds(this->timeout), [&] { return !pagingFenceRequests.empty(); });
-}
-
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
     return SteadyClock::now();
 }
