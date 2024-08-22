@@ -92,6 +92,14 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciProperties(zes_pci_properties_t *properties) {
+    properties->haveBandwidthCounters = false;
+    properties->havePacketCounters = false;
+    properties->haveReplayCounters = false;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) {
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     uint32_t retValu32 = 0;

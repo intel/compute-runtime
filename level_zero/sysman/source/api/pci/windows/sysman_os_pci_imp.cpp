@@ -14,10 +14,8 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t WddmPciImp::getProperties(zes_pci_properties_t *properties) {
-    properties->haveBandwidthCounters = false;
-    properties->havePacketCounters = false;
-    properties->haveReplayCounters = false;
-    return ZE_RESULT_SUCCESS;
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPciProperties(properties);
 }
 
 ze_result_t WddmPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
@@ -111,9 +109,9 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
 
-    state->qualityIssues = ZES_PCI_LINK_QUAL_ISSUE_FLAG_FORCE_UINT32;
-    state->stabilityIssues = ZES_PCI_LINK_STAB_ISSUE_FLAG_FORCE_UINT32;
-    state->status = ZES_PCI_LINK_STATUS_FORCE_UINT32;
+    state->qualityIssues = 0;
+    state->stabilityIssues = 0;
+    state->status = ZES_PCI_LINK_STATUS_UNKNOWN;
 
     state->speed.gen = -1;
     state->speed.width = -1;

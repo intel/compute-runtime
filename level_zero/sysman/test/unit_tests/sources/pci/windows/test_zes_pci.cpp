@@ -308,6 +308,26 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingResizableBarEnab
     delete pPciImp;
 }
 
+HWTEST2_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPropertiesThenPropertiesAreSetToTrue, IsBMG) {
+    zes_pci_properties_t properties{};
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getProperties(&properties));
+    EXPECT_TRUE(properties.haveBandwidthCounters);
+    EXPECT_TRUE(properties.havePacketCounters);
+    EXPECT_TRUE(properties.haveReplayCounters);
+    delete pPciImp;
+}
+
+HWTEST2_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPropertiesThenPropertiesAreSetToFalse, IsNotBMG) {
+    zes_pci_properties_t properties{};
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getProperties(&properties));
+    EXPECT_FALSE(properties.haveBandwidthCounters);
+    EXPECT_FALSE(properties.havePacketCounters);
+    EXPECT_FALSE(properties.haveReplayCounters);
+    delete pPciImp;
+}
+
 HWTEST2_F(SysmanDevicePciFixture, GivenValidDeviceHandleWhenGettingZesDevicePciGetStatsThenValidReadingIsRetrieved, IsBMG) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));

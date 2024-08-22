@@ -30,6 +30,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Pci
     ze_result_t getPciStats(zes_pci_stats_t *pStats, WddmSysmanImp *pWddmSysmanImp) override;
+    ze_result_t getPciProperties(zes_pci_properties_t *properties) override;
 
     // Memory
     ze_result_t getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) override;

@@ -575,6 +575,9 @@ void testSysmanPci(ze_device_handle_t &device) {
         std::cout << "properties.maxSpeed.gen = " << std::dec << properties.maxSpeed.gen << std::endl;
         std::cout << "properties.maxSpeed.width = " << std::dec << properties.maxSpeed.width << std::endl;
         std::cout << "properties.maxSpeed.maxBandwidth = " << std::dec << properties.maxSpeed.maxBandwidth << std::endl;
+        std::cout << "properties.haveBandwidthCounters = " << static_cast<uint32_t>(properties.haveBandwidthCounters) << std::endl;
+        std::cout << "properties.havePacketCounters = " << static_cast<uint32_t>(properties.havePacketCounters) << std::endl;
+        std::cout << "properties.haveReplayCounters = " << static_cast<uint32_t>(properties.haveReplayCounters) << std::endl;
     }
 
     uint32_t count = 0;
@@ -595,10 +598,16 @@ void testSysmanPci(ze_device_handle_t &device) {
     zes_pci_stats_t pciStats = {};
     VALIDATECALL(zesDevicePciGetStats(device, &pciStats));
     if (verbose) {
-        std::cout << "pciStats.replayCounter = " << std::dec << pciStats.replayCounter << std::endl;
-        std::cout << "pciStats.packetCounter = " << std::dec << pciStats.packetCounter << std::endl;
-        std::cout << "pciStats.rxCounter = " << std::dec << pciStats.rxCounter << std::endl;
-        std::cout << "pciStats.txCounter = " << std::dec << pciStats.txCounter << std::endl;
+        if (properties.haveReplayCounters) {
+            std::cout << "pciStats.replayCounter = " << std::dec << pciStats.replayCounter << std::endl;
+        }
+        if (properties.havePacketCounters) {
+            std::cout << "pciStats.packetCounter = " << std::dec << pciStats.packetCounter << std::endl;
+        }
+        if (properties.haveBandwidthCounters) {
+            std::cout << "pciStats.rxCounter = " << std::dec << pciStats.rxCounter << std::endl;
+            std::cout << "pciStats.txCounter = " << std::dec << pciStats.txCounter << std::endl;
+        }
         std::cout << "pciStats.timestamp = " << std::dec << pciStats.timestamp << std::endl;
         std::cout << "pciStats.speed.gen = " << std::dec << pciStats.speed.gen << std::endl;
         std::cout << "pciStats.speed.width = " << std::dec << pciStats.speed.width << std::endl;

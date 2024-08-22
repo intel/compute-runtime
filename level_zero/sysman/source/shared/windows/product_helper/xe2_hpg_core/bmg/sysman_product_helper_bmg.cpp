@@ -457,6 +457,14 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
 }
 
 template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciProperties(zes_pci_properties_t *properties) {
+    properties->haveBandwidthCounters = true;
+    properties->havePacketCounters = true;
+    properties->haveReplayCounters = true;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();

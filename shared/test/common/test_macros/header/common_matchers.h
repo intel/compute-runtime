@@ -79,6 +79,8 @@ using IsDG2 = IsProduct<IGFX_DG2>;
 using IsPVC = IsProduct<IGFX_PVC>;
 
 using IsBMG = IsProduct<IGFX_BMG>;
+using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
+
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 
 using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
