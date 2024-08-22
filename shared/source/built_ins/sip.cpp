@@ -98,7 +98,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 
     auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
     size_t stateSaveAreaSize = 0;
-    if (hdr->versionHeader.version.major >= 3) {
+    if (hdr->versionHeader.version.major == 3) {
         stateSaveAreaSize = numSlices *
                                 hdr->regHeaderV3.num_subslices_per_slice *
                                 hdr->regHeaderV3.num_eus_per_subslice *
@@ -107,7 +107,7 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
                             hdr->versionHeader.size * 8 + hdr->regHeaderV3.state_area_offset;
         stateSaveAreaSize += hdr->regHeaderV3.fifo_size * sizeof(SIP::fifo_node);
 
-    } else {
+    } else if (hdr->versionHeader.version.major < 3) {
         stateSaveAreaSize = numSlices *
                                 hdr->regHeader.num_subslices_per_slice *
                                 hdr->regHeader.num_eus_per_subslice *

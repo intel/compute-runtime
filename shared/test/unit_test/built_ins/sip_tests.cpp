@@ -407,6 +407,14 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
     EXPECT_EQ(alignUp(fifoSize + stateSaveSize, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
 
+TEST_F(StateSaveAreaSipTest, givenNotsupportedStateSaveAreaHeaderVersionWhenGetStateSaveAreaSizeCalledThenNoSizeIsReturned) {
+    VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
+    MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
+    auto header = reinterpret_cast<SIP::StateSaveAreaHeader *>(MockSipData::mockSipKernel->mockStateSaveAreaHeader.data());
+    header->versionHeader.version.major = 4u;
+    EXPECT_EQ(0u, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+}
+
 TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThenDebugBindlessTypeIsReturned) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.UseBindlessDebugSip.set(1);
