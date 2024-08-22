@@ -27,11 +27,25 @@
 
 using namespace NEO;
 
-TEST(FileLogger, WhenFileLoggerIsCreatedThenItIsEnabled) {
+TEST(FileLogger, GivenFullyEnabledFileLoggerIsCreatedThenItIsEnabled) {
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(std::string(""), flags);
 
     EXPECT_TRUE(fileLogger.enabled());
+}
+
+TEST(FileLogger, GivenReleseInternalFileLoggerIsCreatedThenItIsEnabled) {
+    DebugVariables flags;
+    ReleaseInternalFileLogger fileLogger(std::string(""), flags);
+
+    EXPECT_TRUE(fileLogger.enabled());
+}
+
+TEST(FileLogger, GivenFullyDisabledFileLoggerIsCreatedThenItIsDisabled) {
+    DebugVariables flags;
+    FullyDisabledFileLogger fileLogger(std::string(""), flags);
+
+    EXPECT_FALSE(fileLogger.enabled());
 }
 
 TEST(FileLogger, GivenFileLoggerWhenSettingFileNameThenCorrectFilenameIsSet) {

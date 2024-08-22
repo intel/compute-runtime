@@ -35,7 +35,7 @@ class FileLogger {
     FileLogger &operator=(const FileLogger &) = delete;
 
     static constexpr bool enabled() {
-        return debugLevel == DebugFunctionalityLevel::full;
+        return debugLevel != DebugFunctionalityLevel::none;
     }
 
     void dumpKernel(const std::string &name, const std::string &src);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,3 +57,4 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
 
 using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::full>;
 using FullyDisabledFileLogger = TestFileLogger<DebugFunctionalityLevel::none>;
+using ReleaseInternalFileLogger = TestFileLogger<DebugFunctionalityLevel::regKeys>;
