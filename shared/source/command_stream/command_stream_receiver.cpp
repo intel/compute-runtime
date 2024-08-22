@@ -99,6 +99,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
 
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     this->heaplessModeEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    this->evictionAllocations.reserve(2 * MemoryConstants::kiloByte);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -182,7 +183,7 @@ void CommandStreamReceiver::processEviction() {
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.isResident(osContext->getContextId())) {
         if (gfxAllocation.peekEvictable() && !gfxAllocation.isAlwaysResident(osContext->getContextId())) {
-            this->getEvictionAllocations().push_back(&gfxAllocation);
+            this->addToEvictionContainer(gfxAllocation);
         } else {
             gfxAllocation.setEvictable(true);
         }
@@ -203,7 +204,7 @@ void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &alloc
     this->processEviction();
 }
 
-SubmissionStatus CommandStreamReceiver::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+SubmissionStatus CommandStreamReceiver::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     return SubmissionStatus::success;
 }
 
@@ -1166,6 +1167,10 @@ void CommandStreamReceiver::unregisterClient(void *client) {
 void CommandStreamReceiver::ensurePrimaryCsrInitialized(Device &device) {
     auto csrToInitialize = primaryCsr ? primaryCsr : this;
     csrToInitialize->initializeDeviceWithFirstSubmission(device);
+}
+
+void CommandStreamReceiver::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {
+    this->getEvictionAllocations().push_back(&gfxAllocation);
 }
 
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };

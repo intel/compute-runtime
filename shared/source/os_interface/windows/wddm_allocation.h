@@ -21,8 +21,6 @@ struct OsHandleWin : OsHandle {
     D3DKMT_HANDLE handle = 0;
 };
 
-constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
-
 class WddmAllocation : public GraphicsAllocation {
   public:
     struct RegistrationData {
@@ -33,7 +31,7 @@ class WddmAllocation : public GraphicsAllocation {
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedAddress, size_t sizeIn,
                    void *reservedAddr, MemoryPool pool, uint32_t shareable, size_t maxOsContextCount)
         : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, canonizedAddress, 0llu, sizeIn, pool, maxOsContextCount),
-          trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition), shareable(shareable) {
+          shareable(shareable) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
         handles.resize(gmms.size());
@@ -41,8 +39,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
                    osHandle sharedHandle, MemoryPool pool, size_t maxOsContextCount, uint64_t canonizedGpuAddress)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, maxOsContextCount, canonizedGpuAddress),
-          trimCandidateListPositions(maxOsContextCount, trimListUnusedPosition) {
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool, maxOsContextCount, canonizedGpuAddress) {
         handles.resize(gmms.size());
     }
 
@@ -79,17 +76,6 @@ class WddmAllocation : public GraphicsAllocation {
             return &ntSecureHandle;
         }
         return nullptr;
-    }
-
-    void setTrimCandidateListPosition(uint32_t osContextId, size_t position) {
-        trimCandidateListPositions[osContextId] = position;
-    }
-
-    size_t getTrimCandidateListPosition(uint32_t osContextId) const {
-        if (osContextId < trimCandidateListPositions.size()) {
-            return trimCandidateListPositions[osContextId];
-        }
-        return trimListUnusedPosition;
     }
 
     void setGpuAddress(uint64_t graphicsAddress) { this->gpuAddress = graphicsAddress; }
@@ -129,7 +115,7 @@ class WddmAllocation : public GraphicsAllocation {
         }
         return ss.str();
     }
-    std::vector<size_t> trimCandidateListPositions;
+
     StackVec<D3DKMT_HANDLE, EngineLimits::maxHandleCount> handles;
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
     uint32_t shareable = 0u;

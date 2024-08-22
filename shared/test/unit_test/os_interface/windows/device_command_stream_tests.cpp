@@ -687,26 +687,7 @@ TEST_F(WddmCommandStreamTest, WhenMakingNonResidentThenAllocationIsPlacedInEvict
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamTest, WhenProcessingEvictionThenAllAllocationsArePlacedOnTrimCandidateList) {
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    GraphicsAllocation *allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    ASSERT_NE(nullptr, allocation);
-    ASSERT_NE(nullptr, allocation2);
-
-    csr->getEvictionAllocations().push_back(allocation);
-    csr->getEvictionAllocations().push_back(allocation2);
-
-    EXPECT_EQ(2u, csr->getEvictionAllocations().size());
-
-    csr->processEviction();
-
-    EXPECT_EQ(2u, static_cast<OsContextWin &>(csr->getOsContext()).getResidencyController().peekTrimCandidateList().size());
-
-    memoryManager->freeGraphicsMemory(allocation);
-    memoryManager->freeGraphicsMemory(allocation2);
-}
-
-TEST_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAllocationsListIsCleared) {
+TEST_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAllocationsListIsNotCleared) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
@@ -716,7 +697,7 @@ TEST_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAllocationsList
 
     csr->processEviction();
 
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -888,16 +869,12 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidency
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(trimListUnusedPosition, static_cast<WddmAllocation *>(commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-
     csr->processResidency(csr->getResidencyAllocations(), 0u);
 
     csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), true);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
-
-    EXPECT_EQ(0u, static_cast<WddmAllocation *>(commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -980,12 +957,22 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenI
         EXPECT_TRUE(found);
     }
 
-    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(tagAllocation)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(commandBuffer)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_EQ(trimListUnusedPosition, static_cast<WddmAllocation *>(dshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_EQ(trimListUnusedPosition, static_cast<WddmAllocation *>(iohAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(sshAlloc)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
-    EXPECT_NE(trimListUnusedPosition, static_cast<WddmAllocation *>(csrCommandStream)->getTrimCandidateListPosition(csr->getOsContext().getContextId()));
+    struct {
+        GraphicsAllocation *gfxAlloc;
+        bool expectEviction;
+    } evictAllocs[] = {
+        {tagAllocation, true},
+        {commandBuffer, true},
+        {sshAlloc, true},
+        {csrCommandStream, true},
+        {dshAlloc, false},
+        {iohAlloc, false}};
+
+    for (auto &alloc : evictAllocs) {
+        // If eviction is required then allocation should be added to container
+        auto iter = std::find(csr->getEvictionAllocations().begin(), csr->getEvictionAllocations().end(), alloc.gfxAlloc);
+        EXPECT_EQ(alloc.expectEviction, iter != csr->getEvictionAllocations().end());
+    }
 
     memoryManager->freeGraphicsMemory(dshAlloc);
     memoryManager->freeGraphicsMemory(iohAlloc);

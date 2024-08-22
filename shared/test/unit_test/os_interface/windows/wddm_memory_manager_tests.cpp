@@ -4281,34 +4281,6 @@ TEST(WddmMemoryManagerTest3, WhenWddmMemoryManagerIsCreatedThenItIsNonAssignable
     EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
 }
 
-TEST(WddmMemoryManagerTest3, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
-    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
-    MockOsContext osContext(1u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular},
-                                                                             PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
-    allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
-    EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
-}
-
-TEST(WddmMemoryManagerTest3, givenAllocationCreatedWithOsContextCountOneWhenItIsCreatedThenMaxOsContextCountIsUsedInstead) {
-    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
-    allocation.setTrimCandidateListPosition(1u, 700u);
-    EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
-}
-
-TEST(WddmMemoryManagerTest3, givenRequestedContextIdTooLargeWhenGettingTrimCandidateListPositionThenReturnUnusedPosition) {
-    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1u));
-    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1000u));
-}
-
 TEST(WddmMemoryManagerTest3, givenAllocationTypeWhenPassedToWddmAllocationConstructorThenAllocationTypeIsStored) {
     WddmAllocation allocation{0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, nullptr, MemoryPool::memoryNull, 0u, 1u};
     EXPECT_EQ(AllocationType::commandBuffer, allocation.getAllocationType());

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
@@ -46,6 +47,7 @@ void Wddm::unregisterTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, V
 void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification) {
     auto residencyController = static_cast<WddmResidencyController *>(trimNotification->Context);
     DEBUG_BREAK_IF(residencyController == nullptr);
+    UNRECOVERABLE_IF(residencyController->csr == nullptr);
 
     auto lock = residencyController->acquireTrimCallbackLock();
     residencyController->trimResidency(trimNotification->Flags, trimNotification->NumBytesToTrim);
@@ -57,16 +59,19 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
     if (flags.PeriodicTrim) {
         uint64_t sizeToTrim = 0;
-        handlesToEvict.clear();
-        handlesToEvict.reserve(trimCandidatesCount);
         auto lock = this->acquireLock();
         WddmAllocation *wddmAllocation = nullptr;
-        while ((wddmAllocation = this->getTrimCandidateHead()) != nullptr) {
+        auto &allocations = csr->getEvictionAllocations();
+        handlesToEvict.clear();
+        handlesToEvict.reserve(allocations.size());
+        for (auto allocationIter = allocations.begin(); allocationIter != allocations.end();) {
+            wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
 
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", lastTrimFenceValue);
 
             if (wasAllocationUsedSinceLastTrim(wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId))) {
-                break;
+                allocationIter++;
+                continue;
             }
 
             if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
@@ -89,12 +94,9 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict allocation, gpu address = ", std::hex, wddmAllocation->getGpuAddress(), "lastFence =", wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId));
             wddmAllocation->getResidencyData().resident[osContextId] = false;
-            this->removeFromTrimCandidateList(wddmAllocation, false);
+            allocationIter = allocations.erase(allocationIter);
         }
 
-        if (this->checkTrimCandidateListCompaction()) {
-            this->compactTrimCandidateList();
-        }
         lock.unlock();
         this->wddm.evict(handlesToEvict.data(), static_cast<uint32_t>(handlesToEvict.size()), sizeToTrim, false);
     }
@@ -116,16 +118,20 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, std::unique_
     uint64_t sizeToTrim = 0;
     uint64_t numberOfBytesToTrim = bytes;
     WddmAllocation *wddmAllocation = nullptr;
-    handlesToEvict.clear();
-    handlesToEvict.reserve(trimCandidatesCount);
     perfLogResidencyTrimToBudget(wddm.getResidencyLogger(), bytes, this);
 
-    while (numberOfBytesToTrim > 0 && (wddmAllocation = this->getTrimCandidateHead()) != nullptr) {
+    auto &allocations = csr->getEvictionAllocations();
+    auto allocationIter = allocations.begin();
+    handlesToEvict.clear();
+    handlesToEvict.reserve(allocations.size());
+    while (numberOfBytesToTrim > 0 && allocationIter != allocations.end()) {
+        wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
         uint64_t lastFence = wddmAllocation->getResidencyData().getFenceValueForContextId(osContextId);
         auto &monitoredFence = this->getMonitoredFence();
 
         if (lastFence > monitoredFence.lastSubmittedFence) {
-            break;
+            allocationIter++;
+            continue;
         }
 
         uint64_t sizeEvicted = 0;
@@ -158,11 +164,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, std::unique_
         }
 
         wddmAllocation->getResidencyData().resident[osContextId] = false;
-        this->removeFromTrimCandidateList(wddmAllocation, false);
-    }
-
-    if (bytes > numberOfBytesToTrim && this->checkTrimCandidateListCompaction()) {
-        this->compactTrimCandidateList();
+        allocationIter = allocations.erase(allocationIter);
     }
 
     lock.unlock();

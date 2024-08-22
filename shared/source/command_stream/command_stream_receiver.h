@@ -126,7 +126,7 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     MOCKABLE_VIRTUAL void makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency, bool clearAllocations);
-    virtual SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId);
+    virtual SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId);
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
 
@@ -554,6 +554,8 @@ class CommandStreamReceiver {
     bool checkImplicitFlushForGpuIdle();
     void downloadTagAllocation(TaskCountType taskCountToWait);
     void printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start);
+    virtual void addToEvictionContainer(GraphicsAllocation &gfxAllocation);
+
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainHostPtrSurfaceCreationLock();
 
     std::vector<void *> registeredClients;

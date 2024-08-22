@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(void *ptr, CommandStrea
         auto &residencyController = static_cast<OsContextWin *>(&csr.getOsContext())->getResidencyController();
 
         auto lock = residencyController.acquireLock();
-        residencyController.addToTrimCandidateList(allocData->cpuAllocation);
+        csr.getEvictionAllocations().push_back(allocData->cpuAllocation);
     }
 }
 

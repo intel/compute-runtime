@@ -24,6 +24,7 @@ namespace NEO {
 class GraphicsAllocation;
 class WddmAllocation;
 class Wddm;
+class CommandStreamReceiver;
 
 class WddmResidencyController {
   public:
@@ -35,19 +36,8 @@ class WddmResidencyController {
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock();
     [[nodiscard]] std::unique_lock<SpinLock> acquireTrimCallbackLock();
 
-    WddmAllocation *getTrimCandidateHead();
-    void addToTrimCandidateList(GraphicsAllocation *allocation);
-    void removeFromTrimCandidateList(GraphicsAllocation *allocation, bool compactList);
-    void removeFromTrimCandidateListIfUsed(WddmAllocation *allocation, bool compactList);
-    void checkTrimCandidateCount();
-
-    MOCKABLE_VIRTUAL bool checkTrimCandidateListCompaction();
-    void compactTrimCandidateList();
-
     bool wasAllocationUsedSinceLastTrim(uint64_t fenceValue) { return fenceValue > lastTrimFenceValue; }
     void updateLastTrimFenceValue() { lastTrimFenceValue = *this->getMonitoredFence().cpuAddress; }
-    const ResidencyContainer &peekTrimCandidateList() const { return trimCandidateList; }
-    uint32_t peekTrimCandidatesCount() const { return trimCandidatesCount; }
 
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
@@ -60,15 +50,15 @@ class WddmResidencyController {
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }
 
-    bool makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
-    void makeNonResidentEvictionAllocations(const ResidencyContainer &evictionAllocations);
+    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
 
     bool isInitialized() const;
+
+    void setCommandStreamReceiver(CommandStreamReceiver *csr);
 
   protected:
     MonitoredFence monitoredFence = {};
 
-    ResidencyContainer trimCandidateList;
     std::vector<D3DKMT_HANDLE> handlesToEvict;
 
     SpinLock lock;
@@ -80,8 +70,9 @@ class WddmResidencyController {
     VOID *trimCallbackHandle = nullptr;
 
     uint32_t osContextId;
-    uint32_t trimCandidatesCount = 0;
 
     bool memoryBudgetExhausted = false;
+
+    CommandStreamReceiver *csr;
 };
 } // namespace NEO

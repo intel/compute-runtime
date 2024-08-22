@@ -363,7 +363,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
             : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, mode), expectedHandleId(inputHandleId) {
         }
 
-        SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(handleId, expectedHandleId);
             return DrmCommandStreamReceiver<GfxFamily>::processResidency(allocationsForResidency, handleId);
         }
@@ -678,7 +678,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
             execCalled++;
             return 0;
         }
-        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(0u, processResidencyCalled);
             EXPECT_EQ(0u, handleId);
             processResidencyCalled++;
@@ -715,7 +715,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
             execCalled++;
             return 0;
         }
-        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(execCalled, handleId);
             return SubmissionStatus::success;
         }

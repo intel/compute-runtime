@@ -253,7 +253,7 @@ int DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, ui
 }
 
 template <typename GfxFamily>
-SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     if (drm->isVmBindAvailable()) {
         return SubmissionStatus::success;
     }
@@ -325,7 +325,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSta
 }
 
 template <typename GfxFamily>
-SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     if (drm->useVMBindImmediate()) {
         auto osContextLinux = static_cast<OsContextLinux *>(this->osContext);
         osContextLinux->waitForPagingFence();

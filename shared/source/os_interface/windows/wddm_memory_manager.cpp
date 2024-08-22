@@ -721,7 +721,11 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     for (auto &engine : registeredEngines) {
         auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
         auto lock = residencyController.acquireLock();
-        residencyController.removeFromTrimCandidateListIfUsed(input, true);
+        auto &evictContainer = engine.commandStreamReceiver->getEvictionAllocations();
+        auto iter = std::find(evictContainer.begin(), evictContainer.end(), gfxAllocation);
+        if (iter != evictContainer.end()) {
+            evictContainer.erase(iter);
+        }
     }
 
     auto defaultGmm = gfxAllocation->getDefaultGmm();

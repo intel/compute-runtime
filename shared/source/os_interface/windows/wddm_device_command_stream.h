@@ -26,7 +26,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     ~WddmCommandStreamReceiver() override;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
+    SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void processEviction() override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     bool isTlbFlushRequiredForStateCacheFlush() override;
@@ -37,11 +37,13 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     }
     GmmPageTableMngr *createPageTableManager() override;
     void flushMonitorFence() override;
+    void setupContext(OsContext &osContext) override;
 
     using CommandStreamReceiver::pageTableManager;
 
   protected:
     void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
+    void addToEvictionContainer(GraphicsAllocation &gfxAllocation) override;
 
     Wddm *wddm;
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;

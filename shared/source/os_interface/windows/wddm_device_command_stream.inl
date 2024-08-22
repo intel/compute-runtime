@@ -146,14 +146,12 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 }
 
 template <typename GfxFamily>
-SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
     return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency, this->requiresBlockingResidencyHandling) ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processEviction() {
-    static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeNonResidentEvictionAllocations(this->getEvictionAllocations());
-    this->getEvictionAllocations().clear();
 }
 
 template <typename GfxFamily>
@@ -215,6 +213,19 @@ CommandStreamReceiver *createWddmDeviceCommandStreamReceiver(bool withAubDump,
     } else {
         return new WddmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield);
     }
+}
+
+template <typename GfxFamily>
+void WddmCommandStreamReceiver<GfxFamily>::setupContext(OsContext &osContext) {
+    this->osContext = &osContext;
+    static_cast<OsContextWin *>(this->osContext)->getResidencyController().setCommandStreamReceiver(this);
+}
+
+template <typename GfxFamily>
+void WddmCommandStreamReceiver<GfxFamily>::addToEvictionContainer(GraphicsAllocation &gfxAllocation) {
+    // Eviction allocations are shared with trim callback thread.
+    auto lock = static_cast<OsContextWin *>(this->osContext)->getResidencyController().acquireLock();
+    this->getEvictionAllocations().push_back(&gfxAllocation);
 }
 
 } // namespace NEO

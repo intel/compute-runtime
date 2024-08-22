@@ -45,7 +45,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     ~DrmCommandStreamReceiver() override;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
+    SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
     bool isKmdWaitModeActive() override;
@@ -69,7 +69,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::pageTableManager;
 
   protected:
-    MOCKABLE_VIRTUAL SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
+    MOCKABLE_VIRTUAL SubmissionStatus flushInternal(const BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
     MOCKABLE_VIRTUAL int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index);
     MOCKABLE_VIRTUAL void readBackAllocation(void *source);
     bool isUserFenceWaitActive();
