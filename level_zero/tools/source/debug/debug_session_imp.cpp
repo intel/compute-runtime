@@ -1688,7 +1688,11 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
         std::vector<uint32_t> fifoIndices(2);
         uint32_t fifoHeadIndex = 0, fifoTailIndex = 0;
 
-        readGpuMemory(vmHandle, reinterpret_cast<char *>(fifoIndices.data()), fifoIndices.size() * sizeof(uint32_t), gpuVa + offsetHead);
+        auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(fifoIndices.data()), fifoIndices.size() * sizeof(uint32_t), gpuVa + offsetHead);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("Reading FIFO indices failed, error = %d\n", retVal);
+            return retVal;
+        }
         fifoHeadIndex = fifoIndices[0];
         fifoTailIndex = fifoIndices[1];
 
@@ -1701,7 +1705,7 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
             std::vector<SIP::fifo_node> nodes(readSize);
             uint64_t currentFifoOffset = offsetFifo + (sizeof(SIP::fifo_node) * fifoTailIndex);
 
-            auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(nodes.data()), readSize * sizeof(SIP::fifo_node), currentFifoOffset);
+            retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(nodes.data()), readSize * sizeof(SIP::fifo_node), currentFifoOffset);
             if (retVal != ZE_RESULT_SUCCESS) {
                 PRINT_DEBUGGER_ERROR_LOG("Reading FIFO failed, error = %d\n", retVal);
                 return retVal;

@@ -1926,6 +1926,14 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenWriteGpuMemoryFailsWhileUpd
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
 }
 
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringFifoIndicesReadingThenErrorReturned) {
+
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->forcereadGpuMemoryFailOnCount = 1;
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringFifoReadingThenErrorReturned) {
 
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
