@@ -2936,7 +2936,7 @@ TEST(OfflineCompilerTest, givenInvalidGenBinarySizeAndNotNullPointerWhenGenerati
     MockOfflineCompiler mockOfflineCompiler;
 
     // Destructor of OfflineCompiler will deallocate the memory.
-    mockOfflineCompiler.genBinary = new char[0];
+    mockOfflineCompiler.genBinary = new char[1];
     mockOfflineCompiler.genBinarySize = 0;
 
     EXPECT_FALSE(mockOfflineCompiler.generateElfBinary());

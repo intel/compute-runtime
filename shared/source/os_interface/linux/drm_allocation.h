@@ -37,14 +37,16 @@ class DrmAllocation : public GraphicsAllocation {
     };
 
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool pool, uint64_t canonizedGpuAddress)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount, canonizedGpuAddress), bufferObjects(EngineLimits::maxHandleCount) {
-        bufferObjects[0] = bo;
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, sizeIn, sharedHandle, pool, MemoryManager::maxOsContextCount, canonizedGpuAddress) {
+        bufferObjects.push_back(bo);
+        resizeBufferObjects(EngineLimits::maxHandleCount);
         handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
     }
 
     DrmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, BufferObject *bo, void *ptrIn, uint64_t canonizedGpuAddress, size_t sizeIn, MemoryPool pool)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount), bufferObjects(EngineLimits::maxHandleCount) {
-        bufferObjects[0] = bo;
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, ptrIn, canonizedGpuAddress, 0, sizeIn, pool, MemoryManager::maxOsContextCount) {
+        bufferObjects.push_back(bo);
+        resizeBufferObjects(EngineLimits::maxHandleCount);
         handles.resize(EngineLimits::maxHandleCount, std::numeric_limits<uint64_t>::max());
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,11 +11,11 @@
 
 namespace NEO {
 GMM_RESOURCE_INFO *MockGmmClientContextBase::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {
-    return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[1]);
+    return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[sizeof(GMM_RESOURCE_INFO)]);
 }
 
 GMM_RESOURCE_INFO *MockGmmClientContextBase::copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) {
-    return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[1]);
+    return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[sizeof(GMM_RESOURCE_INFO)]);
 }
 
 void MockGmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {

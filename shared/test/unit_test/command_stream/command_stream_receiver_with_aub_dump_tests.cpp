@@ -126,9 +126,9 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
 
 template <typename BaseCSR>
 struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
-    MyMockCsrWithAubDump<BaseCSR>(bool createAubCSR,
-                                  ExecutionEnvironment &executionEnvironment,
-                                  const DeviceBitfield deviceBitfield)
+    MyMockCsrWithAubDump(bool createAubCSR,
+                         ExecutionEnvironment &executionEnvironment,
+                         const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverWithAUBDump<BaseCSR>("aubfile", executionEnvironment, 0, deviceBitfield) {
         this->aubCSR.reset(createAubCSR ? new MyMockCsr(executionEnvironment, 0, deviceBitfield) : nullptr);
     }

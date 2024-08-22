@@ -798,7 +798,7 @@ struct DrmDirectSubmissionFunctionsCalled {
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmissionToTestDtor : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockDrmDirectSubmissionToTestDtor<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver, DrmDirectSubmissionFunctionsCalled &functionsCalled)
+    MockDrmDirectSubmissionToTestDtor(const CommandStreamReceiver &commandStreamReceiver, DrmDirectSubmissionFunctionsCalled &functionsCalled)
         : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver), functionsCalled(functionsCalled) {
     }
     ~MockDrmDirectSubmissionToTestDtor() override {
@@ -842,7 +842,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmissionToTestRingStop : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockDrmDirectSubmissionToTestRingStop<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+    MockDrmDirectSubmissionToTestRingStop(const CommandStreamReceiver &commandStreamReceiver)
         : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::ringStart;
@@ -858,7 +858,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
 template <typename GfxFamily>
 struct MockDrmDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+    MockDrmDirectSubmissionDispatchCommandBuffer(const CommandStreamReceiver &commandStreamReceiver)
         : DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
 
@@ -872,7 +872,7 @@ struct MockDrmDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission
 
 template <typename GfxFamily>
 struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>> {
-    MockDrmBlitterDirectSubmissionDispatchCommandBuffer<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
+    MockDrmBlitterDirectSubmissionDispatchCommandBuffer(const CommandStreamReceiver &commandStreamReceiver)
         : DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>(commandStreamReceiver) {
     }
 
