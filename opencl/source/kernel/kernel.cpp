@@ -2210,7 +2210,11 @@ void Kernel::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceState
         }
     }
 
-    patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
+    const auto bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
+
+    if (!bindlessHeapsHelper) {
+        patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
+    }
 }
 
 void Kernel::setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo) {

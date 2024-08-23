@@ -1365,7 +1365,11 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
         }
     }
 
-    patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
+    const auto bindlessHeapsHelper = this->module && this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+
+    if (!bindlessHeapsHelper) {
+        patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
+    }
 }
 
 void KernelImp::patchSamplerBindlessOffsetsInCrossThreadData(uint64_t samplerStateOffset) const {

@@ -3956,6 +3956,48 @@ TEST_F(BindlessKernelTest, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCross
     EXPECT_EQ(0u, crossThreadData[0]);
 }
 
+TEST_F(BindlessKernelTest, givenGlobalBindlessAllocatorAndBindlessKernelWithImplicitArgsWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
+
+    Mock<Module> mockModule(this->device, nullptr);
+    Mock<KernelImp> mockKernel;
+    mockKernel.module = &mockModule;
+
+    mockKernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
+    mockKernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    auto argDescriptor = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptor.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptor.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptor.as<NEO::ArgDescPointer>().bindless = 0x0;
+    mockKernel.descriptor.payloadMappings.explicitArgs.push_back(argDescriptor);
+
+    mockKernel.descriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 0x8;
+    mockKernel.descriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+
+    mockKernel.isBindlessOffsetSet.resize(1, 1);
+    mockKernel.isBindlessOffsetSet[0] = true;
+
+    mockKernel.descriptor.initBindlessOffsetToSurfaceState();
+
+    mockKernel.crossThreadData = std::make_unique<uint8_t[]>(4 * sizeof(uint64_t));
+    mockKernel.crossThreadDataSize = 4 * sizeof(uint64_t);
+    memset(mockKernel.crossThreadData.get(), 0, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = 0x1000;
+    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData.get(), mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(0u, crossThreadData[0]);
+    EXPECT_EQ(0u, crossThreadData[1]);
+    EXPECT_EQ(0u, crossThreadData[2]);
+    EXPECT_EQ(0u, crossThreadData[3]);
+}
+
 TEST(KernelImmutableDataTest, givenBindlessKernelWhenInitializingImmDataThenSshTemplateIsAllocated) {
     HardwareInfo hwInfo = *defaultHwInfo;
 

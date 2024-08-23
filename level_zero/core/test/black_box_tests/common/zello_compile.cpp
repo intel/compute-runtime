@@ -73,7 +73,7 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-q", "-device", deviceName.c_str(), "-revision_id", revisionId.c_str(), "-file", mainFileName, "-o", "output.bin", "", "", "", ""};
+    const char *argv[] = {"ocloc", "-v", "-device", deviceName.c_str(), "-revision_id", revisionId.c_str(), "-file", mainFileName, "-o", "output.bin", "", "", "", ""};
     uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 4;
     int argIndex = 10;
     if (options.size() > 0) {
