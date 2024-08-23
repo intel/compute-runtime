@@ -91,7 +91,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
         auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !generationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
-        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - ImplicitArgs::getSize();
+        auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
         offsetCrossThreadData += sizeForLocalIdsProgramming;
 
         auto ptrToPatchImplicitArgs = indirectHeap.getSpace(sizeForImplicitArgsProgramming);
