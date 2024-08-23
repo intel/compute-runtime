@@ -2396,3 +2396,9 @@ TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndIoctlReturnsN
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
 }
+
+TEST(IoctlHelperXeTest, givenCorrectEuPerDssTypeWhenCheckingIfTopologyIsEuPerDssThenSuccessIsReturned) {
+    EXPECT_TRUE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_EU_PER_DSS));
+    EXPECT_FALSE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
+    EXPECT_FALSE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
+}

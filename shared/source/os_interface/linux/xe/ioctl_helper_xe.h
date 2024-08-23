@@ -174,6 +174,7 @@ class IoctlHelperXe : public IoctlHelper {
         uint16_t revision;
     };
     bool queryHwIpVersion(GtIpVersion &gtIpVersion);
+    static bool isEuPerDssTopologyType(uint16_t topologyType);
 
     int maxExecQueuePriority = 0;
     std::mutex xeLock;

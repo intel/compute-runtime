@@ -542,11 +542,12 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
                 fillMask(computeDss[tileId], topo);
                 receivedDssInfo = true;
                 break;
-            case DRM_XE_TOPO_EU_PER_DSS:
-                fillMask(euDss[tileId], topo);
-                break;
             default:
-                xeLog("Unhandle GT Topo type: %d\n", topo->type);
+                if (isEuPerDssTopologyType(topo->type)) {
+                    fillMask(euDss[tileId], topo);
+                } else {
+                    xeLog("Unhandle GT Topo type: %d\n", topo->type);
+                }
             }
         }
 
