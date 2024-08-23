@@ -41,4 +41,10 @@ template <>
 bool ProductHelperHw<gfxProduct>::isNewCoherencyModelSupported() const {
     return true;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+    return true;
+}
+
 } // namespace NEO

@@ -64,10 +64,6 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPage
     EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
 }
 
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupportedThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 using LnlHwInfoLinux = ::testing::Test;
 
 LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

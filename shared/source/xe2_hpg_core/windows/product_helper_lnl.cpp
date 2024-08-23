@@ -40,11 +40,6 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const {
     return true;
 }
