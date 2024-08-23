@@ -9,6 +9,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -740,7 +741,15 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnR
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetAndSingleTileCmdListWhenAskingForAtomicSignallingThenReturnTrue, IsAtLeastSkl) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_FALSE(immCmdList->inOrderAtomicSignalingEnabled);
+    auto &compilerProductHelper = device->getNEODevice()->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
+    if (heaplessEnabled) {
+        EXPECT_TRUE(immCmdList->inOrderAtomicSignalingEnabled);
+    } else {
+        EXPECT_FALSE(immCmdList->inOrderAtomicSignalingEnabled);
+    }
+
     EXPECT_EQ(1u, immCmdList->getInOrderIncrementValue());
 
     debugManager.flags.InOrderAtomicSignallingEnabled.set(1);
@@ -7038,10 +7047,8 @@ struct CopyOffloadInOrderTests : public InOrderCmdListTests {
     void SetUp() override {
         debugManager.flags.EnableLocalMemory.set(1);
         backupHwInfo = std::make_unique<VariableBackup<NEO::HardwareInfo>>(defaultHwInfo.get());
-
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
         defaultHwInfo->featureTable.ftrBcsInfo = 0b111;
-
         InOrderCmdListTests::SetUp();
     }
 
