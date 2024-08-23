@@ -1321,7 +1321,7 @@ HWTEST_F(CommandQueueTests, givenEnqueuesForSharedObjectsWithImageWhenUsingShari
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
     image->setSharingHandler(mockSharingHandler);
-    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage, context.getDevice(0)->getProductHelper());
 
     cl_mem memObject = image.get();
     cl_uint numObjects = 1;
@@ -1345,7 +1345,7 @@ HWTEST_F(CommandQueueTests, givenDirectSubmissionAndSharedImageWhenReleasingShar
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
     image->setSharingHandler(mockSharingHandler);
-    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage, context.getDevice(0)->getProductHelper());
 
     cl_mem memObject = image.get();
     cl_uint numObjects = 1;
@@ -1376,7 +1376,7 @@ HWTEST_F(CommandQueueTests, givenDcFlushMitigationAndDirectSubmissionAndBufferWh
 
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
     buffer->setSharingHandler(mockSharingHandler);
-    buffer->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedBuffer);
+    buffer->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedBuffer, context.getDevice(0)->getProductHelper());
 
     cl_mem memObject = buffer.get();
     cl_uint numObjects = 1;

@@ -36,6 +36,7 @@ class Gmm;
 class MemoryManager;
 class CommandStreamReceiver;
 class GraphicsAllocation;
+class ProductHelper;
 
 struct AllocationProperties;
 
@@ -150,7 +151,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     osHandle peekSharedHandle() const { return sharingInfo.sharedHandle; }
     void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
-    void setAllocationType(AllocationType allocationType);
+    void setAllocationType(AllocationType allocationType, const ProductHelper &productHelper);
     AllocationType getAllocationType() const { return allocationType; }
 
     MemoryPool getMemoryPool() const { return memoryPool; }

@@ -53,6 +53,7 @@ class Gmm {
     void applyAuxFlagsForBuffer(bool preferCompression);
     void applyMemoryFlags(const StorageInfo &storageInfo);
     void applyAppResource(const StorageInfo &storageInfo);
+    void applyResourceInfo();
 
     bool unifiedAuxTranslationCapable() const;
     bool hasMultisampleControlSurface() const;
@@ -62,6 +63,7 @@ class Gmm {
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
     void updateImgInfoAndDesc(ImageInfo &imgInfo, uint32_t arrayIndex, ImagePlane yuvPlaneType);
     void updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex);
+    void updateUsageAndCachableFlag(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, const GmmRequirements &gmmRequirements);
     uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, ImagePlane plane);
 
     uint32_t getUnifiedAuxPitchTiles();

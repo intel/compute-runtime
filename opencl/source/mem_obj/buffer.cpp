@@ -476,7 +476,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo.allocationType = AllocationType::bufferHostMemory;
         }
 
-        allocationInfo.memory->setAllocationType(allocationInfo.allocationType);
+        allocationInfo.memory->setAllocationType(allocationInfo.allocationType, defaultDevice->getProductHelper());
         auto isWritable = !(memoryProperties.flags.readOnly || memoryProperties.flags.hostReadOnly || memoryProperties.flags.hostNoAccess);
         allocationInfo.memory->setMemObjectsAllocationWithWritableFlags(isWritable);
 

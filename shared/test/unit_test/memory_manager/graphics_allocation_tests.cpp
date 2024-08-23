@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_aub_csr.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -636,4 +639,16 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationsWhenAllocationTypeIsRingBuf
     graphicsAllocation.hasAllocationReadOnlyTypeCallBase = true;
     graphicsAllocation.allocationType = AllocationType::ringBuffer;
     EXPECT_TRUE(graphicsAllocation.hasAllocationReadOnlyType());
+}
+using GraphicsAllocationSetAllocationTypeTest = Test<DeviceFixture>;
+HWTEST_F(GraphicsAllocationSetAllocationTypeTest, givenAnotherAllocationTypeWhenCalSetAllocationTypeThenUsageAndCacheableAreSetCorrectly) {
+    MockGraphicsAllocation graphicsAllocation;
+    GmmRequirements gmmRequirements{};
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(pDevice->getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    graphicsAllocation.setDefaultGmm(gmm.get());
+    auto &productHelper = getHelper<ProductHelper>();
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+
+    EXPECT_EQ(graphicsAllocation.getDefaultGmm()->resourceParams.Usage, GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER);
+    EXPECT_TRUE(graphicsAllocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable);
 }

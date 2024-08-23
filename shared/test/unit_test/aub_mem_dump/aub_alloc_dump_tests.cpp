@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,44 +36,44 @@ struct AubFileStreamMock : public AubMemDump::AubFileStream {
 HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenItsTypeCanBeCheckedIfItIsWritable) {
     auto memoryManager = pDevice->getMemoryManager();
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    gfxAllocation->setAllocationType(AllocationType::buffer);
+    auto &productHelper = pDevice->getProductHelper();
+    gfxAllocation->setAllocationType(AllocationType::buffer, productHelper);
     EXPECT_FALSE(gfxAllocation->isMemObjectsAllocationWithWritableFlags());
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::buffer);
+    gfxAllocation->setAllocationType(AllocationType::buffer, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::bufferHostMemory);
+    gfxAllocation->setAllocationType(AllocationType::bufferHostMemory, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::bufferHostMemory);
+    gfxAllocation->setAllocationType(AllocationType::bufferHostMemory, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::externalHostPtr);
+    gfxAllocation->setAllocationType(AllocationType::externalHostPtr, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::externalHostPtr);
+    gfxAllocation->setAllocationType(AllocationType::externalHostPtr, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::mapAllocation);
+    gfxAllocation->setAllocationType(AllocationType::mapAllocation, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::mapAllocation);
+    gfxAllocation->setAllocationType(AllocationType::mapAllocation, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::image);
+    gfxAllocation->setAllocationType(AllocationType::image, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(false);
     EXPECT_FALSE(AubAllocDump::isWritableImage(*gfxAllocation));
 
-    gfxAllocation->setAllocationType(AllocationType::image);
+    gfxAllocation->setAllocationType(AllocationType::image, productHelper);
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableImage(*gfxAllocation));
 

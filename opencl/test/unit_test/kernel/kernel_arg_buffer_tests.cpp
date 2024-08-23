@@ -206,7 +206,8 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAre
 
 TEST_F(KernelArgBufferTest, givenBufferWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer, productHelper);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -223,7 +224,8 @@ TEST_F(KernelArgBufferTest, givenBufferWhenHasDirectStatelessAccessToHostMemoryI
 
 TEST_F(KernelArgBufferTest, givenSharedBufferWhenHasDirectStatelessAccessToSharedBufferIsCalledThenReturnCorrectValue) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::sharedBuffer);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::sharedBuffer, productHelper);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -240,7 +242,8 @@ TEST_F(KernelArgBufferTest, givenSharedBufferWhenHasDirectStatelessAccessToShare
 
 TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -264,7 +267,8 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHost
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(AllocationType::buffer);
+    auto &productHelper = pClDevice->getProductHelper();
+    gfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
@@ -285,7 +289,8 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStateless
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pClDevice->getProductHelper();
+    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     for (auto pureStatefulBufferAccess : {false, true}) {
         pKernelInfo->setBufferStateful(0, pureStatefulBufferAccess);
@@ -329,8 +334,9 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
 
     MockKernel kernelWithIndirectUnifiedMemoryAllocation(pProgram, kernelInfo, *pClDevice);
     MockGraphicsAllocation gfxAllocation;
+    auto &productHelper = pClDevice->getProductHelper();
     for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type);
+        gfxAllocation.setAllocationType(type, productHelper);
         kernelWithIndirectUnifiedMemoryAllocation.setUnifiedMemoryExecInfo(&gfxAllocation);
         if (type == AllocationType::bufferHostMemory) {
             EXPECT_TRUE(kernelWithIndirectUnifiedMemoryAllocation.hasIndirectStatelessAccessToHostMemory());
@@ -385,7 +391,8 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessTo
     debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::sharedBuffer);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::sharedBuffer, productHelper);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -407,7 +414,8 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithDirectStatelessAccessTo
     debugManager.flags.EnableStatelessCompression.set(1);
 
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     auto val = (cl_mem)&buffer;
     auto pVal = &val;
@@ -457,7 +465,8 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccess
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
-    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pClDevice->getProductHelper();
+    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     auto retVal = pKernel->setArgSvmAlloc(0, ptr, &gfxAllocation, 0u);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -503,7 +512,8 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectS
     pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
     MockGraphicsAllocation gfxAllocation;
-    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pClDevice->getProductHelper();
+    gfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
@@ -526,9 +536,9 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
                                   AllocationType::bufferHostMemory};
 
     MockGraphicsAllocation gfxAllocation;
-
+    auto &productHelper = pClDevice->getProductHelper();
     for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type);
+        gfxAllocation.setAllocationType(type, productHelper);
 
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
 
@@ -569,9 +579,9 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     auto gmm = std::make_unique<Gmm>(pDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, StorageInfo{}, gmmRequirements);
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setDefaultGmm(gmm.get());
-
+    auto &productHelper = pClDevice->getProductHelper();
     for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type.allocationType);
+        gfxAllocation.setAllocationType(type.allocationType, productHelper);
 
         pKernel->setUnifiedMemoryExecInfo(&gfxAllocation);
         gmm->setCompressionEnabled(type.compressed);
@@ -616,9 +626,9 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
     SvmAllocationData allocData(0);
     allocData.gpuAllocations.addAllocation(&gfxAllocation);
     allocData.device = &pClDevice->getDevice();
-
+    auto &productHelper = pClDevice->getProductHelper();
     for (const auto type : allocationTypes) {
-        gfxAllocation.setAllocationType(type.allocationType);
+        gfxAllocation.setAllocationType(type.allocationType, productHelper);
 
         gmm->setCompressionEnabled(type.compressed);
 
@@ -733,7 +743,8 @@ HWTEST_F(KernelArgBufferTestBindless, givenBindlessBuffersWhenPatchBindlessOffse
 
 TEST_F(KernelArgBufferTest, givenBufferAsHostMemoryWhenSettingKernelArgThenKernelUsesSystemMemory) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     auto memVal = (cl_mem)&buffer;
     auto val = &memVal;
@@ -748,7 +759,8 @@ TEST_F(KernelArgBufferTest, givenBufferAsHostMemoryWhenSettingKernelArgThenKerne
 
 TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryWhenSettingKernelArgThenKernelNotUsesSystemMemory) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer, productHelper);
 
     auto memVal = (cl_mem)&buffer;
     auto val = &memVal;
@@ -763,7 +775,8 @@ TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryWhenSettingKernelArgThenKer
 
 TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryAndKernelIsAlreadySetToUseSystemWhenSettingKernelArgThenKernelUsesSystemMemory) {
     MockBuffer buffer;
-    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer);
+    auto &productHelper = pClDevice->getProductHelper();
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::buffer, productHelper);
 
     auto memVal = (cl_mem)&buffer;
     auto val = &memVal;

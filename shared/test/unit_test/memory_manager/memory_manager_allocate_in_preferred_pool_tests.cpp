@@ -1118,7 +1118,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndItIsSe
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MockGraphicsAllocation mockGa;
-    mockGa.setAllocationType(AllocationType::commandBuffer);
+    mockGa.setAllocationType(AllocationType::commandBuffer, *productHelper.get());
 
     mockGa.hasAllocationReadOnlyTypeResult = true;
 
@@ -1143,7 +1143,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationIsCommandBufferAndMultiC
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MockGraphicsAllocation mockGa;
-    mockGa.setAllocationType(AllocationType::commandBuffer);
+    mockGa.setAllocationType(AllocationType::commandBuffer, *productHelper.get());
 
     mockGa.hasAllocationReadOnlyTypeResult = true;
 
@@ -1169,7 +1169,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenAllocationTypeAndPlatrormSupportRe
     std::swap(executionEnvironment.rootDeviceEnvironments[0]->productHelper, productHelper);
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MockGraphicsAllocation mockGa;
-    mockGa.setAllocationType(AllocationType::buffer);
+    mockGa.setAllocationType(AllocationType::buffer, *productHelper.get());
 
     mockGa.hasAllocationReadOnlyTypeResult = true;
 

@@ -517,8 +517,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
-    srcSvmAlloc->setAllocationType(NEO::AllocationType::svmZeroCopy);
-    dstSvmAlloc->setAllocationType(NEO::AllocationType::svmZeroCopy);
+    auto &productHelper = pDevice->getProductHelper();
+    srcSvmAlloc->setAllocationType(NEO::AllocationType::svmZeroCopy, productHelper);
+    dstSvmAlloc->setAllocationType(NEO::AllocationType::svmZeroCopy, productHelper);
 
     // call enqueue on mock builder
     auto retVal = pCmdQ->enqueueSVMMemcpy(
@@ -594,8 +595,9 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
-    srcSvmAlloc->setAllocationType(NEO::AllocationType::svmGpu);
-    dstSvmAlloc->setAllocationType(NEO::AllocationType::svmGpu);
+    auto &productHelper = pDevice->getProductHelper();
+    srcSvmAlloc->setAllocationType(NEO::AllocationType::svmGpu, productHelper);
+    dstSvmAlloc->setAllocationType(NEO::AllocationType::svmGpu, productHelper);
 
     // call enqueue on mock builder
     auto retVal = pCmdQ->enqueueSVMMemcpy(

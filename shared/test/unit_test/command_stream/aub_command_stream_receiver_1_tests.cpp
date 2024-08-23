@@ -786,6 +786,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     aubCsr->initializeEngine();
+    auto &productHelper = pDevice->getProductHelper();
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -809,7 +810,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
     for (auto allocationType : onlyOneTimeAubWritableTypes) {
         gfxAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
-        gfxAllocation->setAllocationType(allocationType);
+        gfxAllocation->setAllocationType(allocationType, productHelper);
         aubCsr->writeMemory(*gfxAllocation);
 
         EXPECT_FALSE(aubCsr->isAubWritable(*gfxAllocation));

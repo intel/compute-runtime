@@ -3073,8 +3073,8 @@ HWTEST_F(MemoryAllocatorTest, givenUseLocalPreferredForCacheableBuffersAndCompre
         EXPECT_EQ(false, allocData.storageInfo.systemMemoryForced);
     }
 }
-
-TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {
+using MemoryTransferHelperTest = Test<DeviceFixture>;
+HWTEST_F(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallbackToCopyOnCPU) {
     constexpr uint32_t dataSize = 16;
     uint8_t destData[dataSize] = {};
     uint8_t srcData[dataSize] = {};
@@ -3082,7 +3082,8 @@ TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallback
         srcData[i] = i;
     }
     MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
-    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = getHelper<ProductHelper>();
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
@@ -3096,14 +3097,15 @@ TEST(MemoryTransferHelperTest, WhenBlitterIsSelectedButBlitCopyFailsThenFallback
     EXPECT_EQ(0, memcmp(destData, srcData, dataSize));
 }
 
-TEST(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvailableThenReturnUnsupported) {
+HWTEST_F(MemoryTransferHelperTest, givenBlitOperationSupportedWhenBcsEngineNotAvailableThenReturnUnsupported) {
     constexpr uint32_t dataSize = 16;
     uint8_t destData[dataSize] = {};
     uint8_t srcData[dataSize] = {};
 
     MockGraphicsAllocation graphicsAllocation{destData, sizeof(destData)};
     graphicsAllocation.storageInfo.memoryBanks = 1;
-    graphicsAllocation.setAllocationType(AllocationType::buffer);
+    auto &productHelper = getHelper<ProductHelper>();
+    graphicsAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;

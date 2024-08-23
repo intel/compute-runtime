@@ -644,7 +644,7 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenDefaultProductHelperHwWhenGet
     auto &productHelper = getHelper<ProductHelper>();
     MockGraphicsAllocation allocation;
     allocation.overrideMemoryPool(MemoryPool::localMemory);
-    allocation.setAllocationType(AllocationType::bufferHostMemory);
+    allocation.setAllocationType(AllocationType::bufferHostMemory, pDevice->getProductHelper());
     EXPECT_FALSE(productHelper.isBlitCopyRequiredForLocalMemory(pDevice->getRootDeviceEnvironment(), allocation));
 }
 

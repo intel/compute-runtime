@@ -524,7 +524,7 @@ HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequired
     pInHwInfo.capabilityTable.blitterOperationsSupported = true;
 
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory, *productHelper);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
 
@@ -556,7 +556,7 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(AllocationType::svmGpu);
+    graphicsAllocation.setAllocationType(AllocationType::svmGpu, *productHelper);
     EXPECT_FALSE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
 
@@ -596,7 +596,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGettingIsBlitCopyRequiredForL
 
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
-    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory, *productHelper);
 
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 }

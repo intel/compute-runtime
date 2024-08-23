@@ -803,7 +803,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedThenIsaIs
     bool isInternal = true;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->getIsaGraphicsAllocation()->setAllocationType(AllocationType::kernelIsaInternal);
+    mockKernelImmData->getIsaGraphicsAllocation()->setAllocationType(AllocationType::kernelIsaInternal, device->getProductHelper());
 
     size_t previouscopyMemoryToAllocationCalledTimes =
         mockMemoryManager->copyMemoryToAllocationCalledTimes;
@@ -878,7 +878,7 @@ TEST_P(KernelIsaCopyingMomentTest, givenInternalModuleWhenKernelIsCreatedThenIsa
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelMock.immutableData.surfaceStateHeapSize = 64;
     kernelMock.immutableData.surfaceStateHeapTemplate.reset(new uint8_t[64]);
-    kernelMock.immutableData.getIsaGraphicsAllocation()->setAllocationType(AllocationType::kernelIsaInternal);
+    kernelMock.immutableData.getIsaGraphicsAllocation()->setAllocationType(AllocationType::kernelIsaInternal, device->getProductHelper());
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
 
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);

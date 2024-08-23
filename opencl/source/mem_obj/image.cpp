@@ -268,7 +268,7 @@ Image *Image::create(Context *context,
         }
 
         if (parentBuffer == nullptr) {
-            allocationInfo.memory->setAllocationType(AllocationType::image);
+            allocationInfo.memory->setAllocationType(AllocationType::image, defaultDevice->getProductHelper());
         }
 
         if (parentImage) {

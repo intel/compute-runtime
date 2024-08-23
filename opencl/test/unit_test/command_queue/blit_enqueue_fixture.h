@@ -164,7 +164,7 @@ struct BlitEnqueueTests : public ::testing::Test {
     }
 
     void setAllocationType(GraphicsAllocation *graphicsAllocation, bool compressed) {
-        graphicsAllocation->setAllocationType(AllocationType::buffer);
+        graphicsAllocation->setAllocationType(AllocationType::buffer, device->getProductHelper());
 
         if (compressed && !graphicsAllocation->getDefaultGmm()) {
             auto gmmHelper = device->getRootDeviceEnvironment().getGmmHelper();

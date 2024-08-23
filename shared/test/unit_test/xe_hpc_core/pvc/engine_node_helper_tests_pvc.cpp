@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -590,7 +590,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequ
     auto &productHelper = getHelper<ProductHelper>();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
     EXPECT_TRUE(GraphicsAllocation::isLockable(graphicsAllocation.getAllocationType()));
     graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
     hwInfo.platform.usRevId = 0u;

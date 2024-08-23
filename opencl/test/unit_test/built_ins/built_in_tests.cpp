@@ -289,9 +289,9 @@ TEST_F(BuiltInTests, GivenCopyBufferToSystemMemoryBufferWhenDispatchInfoIsCreate
 
     MockBuffer &src = *srcPtr;
     MockBuffer &dst = *dstPtr;
-
-    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pDevice->getProductHelper();
+    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
+    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     BuiltinOpParams builtinOpsParams;
 
@@ -356,9 +356,9 @@ TEST_F(BuiltInTests, GivenCopyBufferToLocalMemoryBufferWhenDispatchInfoIsCreated
 
     MockBuffer &src = *srcPtr;
     MockBuffer &dst = *dstPtr;
-
-    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    auto &productHelper = pDevice->getProductHelper();
+    srcPtr->mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+    dstPtr->mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     BuiltinOpParams builtinOpsParams;
 
@@ -922,9 +922,9 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToSystemBufferRec
     srcBuffer.size = static_cast<size_t>(bigSize);
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pDevice->getProductHelper();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -963,8 +963,9 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRect
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    auto &productHelper = pDevice->getProductHelper();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -1003,8 +1004,9 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIs
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    auto &productHelper = pDevice->getProductHelper();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -1038,8 +1040,9 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillLocalBufferStatelessIsU
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    auto &productHelper = pDevice->getProductHelper();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -1101,7 +1104,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferSt
 
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, pDevice->getProductHelper());
     std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
@@ -1139,7 +1142,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToLocalBufferSta
 
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, pDevice->getProductHelper());
     std ::unique_ptr<Image> pSrcImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, pSrcImage.get());
 
@@ -2468,8 +2471,9 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToSystemBufferRectStatelessHeapless
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    const auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -2507,9 +2511,9 @@ HWTEST2_F(BuiltInTests, whenBuilderCopyBufferToLocalBufferRectStatelessHeaplessI
     srcBuffer.size = static_cast<size_t>(bigSize);
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    const auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -2547,9 +2551,9 @@ HWTEST2_F(BuiltInTests, whenBuilderFillSystemBufferStatelessHeaplessIsUsedThenPa
     srcBuffer.size = static_cast<size_t>(bigSize);
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
+    const auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
@@ -2582,9 +2586,9 @@ HWTEST2_F(BuiltInTests, whenBuilderFillLocalBufferStatelessHeaplessIsUsedThenPar
     srcBuffer.size = static_cast<size_t>(bigSize);
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
-
-    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory);
-    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    const auto &productHelper = pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer, productHelper);
 
     BuiltinOpParams dc;
     dc.srcMemObj = &srcBuffer;
