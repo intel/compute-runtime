@@ -34,22 +34,5 @@ inline void AILConfigurationHw<IGFX_BROXTON>::applyExt(RuntimeCapabilityTable &r
     }
 }
 
-template <>
-inline bool AILConfigurationHw<IGFX_BROXTON>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
-    std::string_view dummyKernelSource{"kernel void _(){}"};
-    if (sourcesContain(kernelSources, dummyKernelSource)) {
-        return true;
-    }
-
-    for (const auto &name : {"Resolve",
-                             "ArcControlAssist",
-                             "ArcControl"}) {
-        if (processName == name) {
-            return true;
-        }
-    }
-    return false;
-}
-
 template class AILConfigurationHw<IGFX_BROXTON>;
 } // namespace NEO

@@ -35,10 +35,4 @@ HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequireAILWhenCheckingIfPatchto
     }
 }
 
-HWTEST2_F(AILBaseTests, givenResolveNameWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtMostXeHpcCore) {
-    AILWhitebox<productFamily> ail;
-    ail.processName = "Resolve";
-    EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
-}
-
 } // namespace NEO

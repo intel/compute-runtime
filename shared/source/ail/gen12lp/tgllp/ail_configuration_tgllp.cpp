@@ -15,23 +15,6 @@ static EnableAIL<IGFX_TIGERLAKE_LP> enableAILTGLLP;
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapTGLLP = {};
 
-template <>
-inline bool AILConfigurationHw<IGFX_TIGERLAKE_LP>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
-    std::string_view dummyKernelSource{"kernel void _(){}"};
-    if (sourcesContain(kernelSources, dummyKernelSource)) {
-        return true;
-    }
-
-    for (const auto &name : {"Resolve",
-                             "ArcControlAssist",
-                             "ArcControl"}) {
-        if (processName == name) {
-            return true;
-        }
-    }
-    return false;
-}
-
 template class AILConfigurationHw<IGFX_TIGERLAKE_LP>;
 
 } // namespace NEO

@@ -34,22 +34,5 @@ inline void AILConfigurationHw<IGFX_ICELAKE_LP>::applyExt(RuntimeCapabilityTable
     }
 }
 
-template <>
-inline bool AILConfigurationHw<IGFX_ICELAKE_LP>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
-    std::string_view dummyKernelSource{"kernel void _(){}"};
-    if (sourcesContain(kernelSources, dummyKernelSource)) {
-        return true;
-    }
-
-    for (const auto &name : {"Resolve",
-                             "ArcControlAssist",
-                             "ArcControl"}) {
-        if (processName == name) {
-            return true;
-        }
-    }
-    return false;
-}
-
 template class AILConfigurationHw<IGFX_ICELAKE_LP>;
 } // namespace NEO
