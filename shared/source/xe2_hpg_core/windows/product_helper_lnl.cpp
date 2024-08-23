@@ -32,10 +32,6 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
         return 2; // L3: WB, L4: UC, 2-Way coh
     }
 
-    if (allocationType == AllocationType::sharedImage && patIndex == 8u && debugManager.flags.OverrideUncachedSharedImages.get()) { // L3: UC
-        return 13;                                                                                                                  // L3, L4: WB, Non coh
-    }
-
     return patIndex;
 }
 
