@@ -3847,8 +3847,14 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWhenPatchingCrossThreadDataThenCor
     EXPECT_EQ(patchValue1, crossThreadData[0]);
     EXPECT_EQ(patchValue2, crossThreadData[1]);
     EXPECT_EQ(0u, crossThreadData[2]);
-    EXPECT_EQ(patchValue3, crossThreadData[3]);
-    EXPECT_EQ(patchValue4, crossThreadData[4]);
+
+    if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->getBindlessHeapsHelper() == nullptr) {
+        EXPECT_EQ(patchValue3, crossThreadData[3]);
+        EXPECT_EQ(patchValue4, crossThreadData[4]);
+    } else {
+        EXPECT_EQ(0u, crossThreadData[3]);
+        EXPECT_EQ(0u, crossThreadData[4]);
+    }
 }
 
 TEST_F(BindlessKernelTest, givenBindlessKernelWithPatchedBindlessOffsetsWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
