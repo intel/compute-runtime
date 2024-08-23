@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,11 +25,5 @@ struct APITracer : _zet_tracer_exp_handle_t {
 };
 
 ze_result_t createAPITracer(zet_context_handle_t hContext, const zet_tracer_exp_desc_t *desc, zet_tracer_exp_handle_t *phTracer);
-
-struct APITracerContext {
-    virtual ~APITracerContext() = default;
-    virtual void *getActiveTracersList() = 0;
-    virtual void releaseActivetracersList() = 0;
-};
 
 } // namespace L0

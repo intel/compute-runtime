@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,18 +86,18 @@ class ThreadPrivateTracerData {
     ThreadPrivateTracerData &operator=(const ThreadPrivateTracerData &);
 };
 
-struct APITracerContextImp : APITracerContext {
+struct APITracerContextImp {
   public:
     APITracerContextImp() {
         activeTracerArray.store(&emptyTracerArray, std::memory_order_relaxed);
     };
 
-    ~APITracerContextImp() override;
+    ~APITracerContextImp();
 
     static void apiTracingEnable(ze_init_flag_t flag);
 
-    void *getActiveTracersList() override;
-    void releaseActivetracersList() override;
+    void *getActiveTracersList();
+    void releaseActivetracersList();
 
     ze_result_t enableTracingImp(struct APITracerImp *newTracer, ze_bool_t enable);
     ze_result_t finalizeDisableImpTracingWait(struct APITracerImp *oldTracer);
