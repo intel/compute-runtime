@@ -44,7 +44,7 @@ uint32_t getGrfSize(uint32_t simd) {
     return 32u;
 }
 
-uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) {
+uint32_t getSizeForImplicitArgsStruct(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (!pImplicitArgs) {
         return 0;
     }
@@ -53,17 +53,27 @@ uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const
     if (patchImplicitArgsBufferInCrossThread) {
         return alignUp(implicitArgsSize, MemoryConstants::cacheLineSize);
     } else {
+        return implicitArgsSize;
+    }
+}
+
+uint32_t getSizeForImplicitArgsPatching(const ImplicitArgs *pImplicitArgs, const KernelDescriptor &kernelDescriptor, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (!pImplicitArgs) {
+        return 0;
+    }
+    auto implicitArgsStructSize = getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, isHwLocalIdGeneration, rootDeviceEnvironment);
+    auto patchImplicitArgsBufferInCrossThread = NEO::isValidOffset<>(kernelDescriptor.payloadMappings.implicitArgs.implicitArgsBuffer);
+    uint32_t localIdsSize = 0;
+    if (false == patchImplicitArgsBufferInCrossThread) {
         auto simdSize = pImplicitArgs->simdWidth;
         auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
         auto grfSize = NEO::ImplicitArgsHelper::getGrfSize(simdSize);
         Vec3<size_t> localWorkSize = {pImplicitArgs->localSizeX, pImplicitArgs->localSizeY, pImplicitArgs->localSizeZ};
         auto itemsInGroup = Math::computeTotalElementsCount(localWorkSize);
-        uint32_t localIdsSizeNeeded =
-            alignUp(static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-                        simdSize, grfSize, grfCount, 3u, itemsInGroup, isHwLocalIdGeneration, rootDeviceEnvironment)),
-                    MemoryConstants::cacheLineSize);
-        return implicitArgsSize + localIdsSizeNeeded;
+        localIdsSize = static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(simdSize, grfSize, grfCount, 3u, itemsInGroup, isHwLocalIdGeneration, rootDeviceEnvironment));
+        localIdsSize = alignUp(localIdsSize, MemoryConstants::cacheLineSize);
     }
+    return implicitArgsStructSize + localIdsSize;
 }
 
 void *patchImplicitArgs(void *ptrToPatch, const ImplicitArgs &implicitArgs, const KernelDescriptor &kernelDescriptor, std::optional<std::pair<bool, uint32_t>> hwGenerationOfLocalIdsParams, const RootDeviceEnvironment &rootDeviceEnvironment, void **outImplicitArgsAddress) {

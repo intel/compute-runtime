@@ -246,6 +246,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto scratchAddressForImmediatePatching = EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching<heaplessModeEnabled>(container, args);
     uint32_t sizeThreadData = sizePerThreadDataForWholeGroup + sizeCrossThreadData;
     uint32_t sizeForImplicitArgsPatching = NEO::ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, !localIdsGenerationByRuntime, rootDeviceEnvironment);
+    uint32_t sizeForImplicitArgsStruct = NEO::ImplicitArgsHelper::getSizeForImplicitArgsStruct(pImplicitArgs, kernelDescriptor, true, rootDeviceEnvironment);
     uint32_t iohRequiredSize = sizeThreadData + sizeForImplicitArgsPatching + args.reserveExtraPayloadSpace;
     {
         void *ptr = nullptr;
@@ -263,7 +264,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             offsetThreadData = (is64bit ? heap->getHeapGpuStartOffset() : heap->getHeapGpuBase()) + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - args.reserveExtraPayloadSpace);
             auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
             if (pImplicitArgs) {
-                offsetThreadData -= ImplicitArgs::getSize();
+                offsetThreadData -= sizeForImplicitArgsStruct;
                 pImplicitArgs->localIdTablePtr = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed() - iohRequiredSize;
                 EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<heaplessModeEnabled>(*pImplicitArgs, scratchAddressForImmediatePatching, args.immediateScratchAddressPatching);
 
@@ -274,7 +275,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 auto gpuPtr = heap->getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(heap->getUsed() - sizeThreadData - inlineDataProgrammingOffset);
                 uint64_t implicitArgsGpuPtr = 0u;
                 if (pImplicitArgs) {
-                    implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - ImplicitArgs::getSize();
+                    implicitArgsGpuPtr = gpuPtr + inlineDataProgrammingOffset - sizeForImplicitArgsStruct;
                 }
                 EncodeIndirectParams<Family>::encode(container, gpuPtr, args.dispatchInterface, implicitArgsGpuPtr);
             }
