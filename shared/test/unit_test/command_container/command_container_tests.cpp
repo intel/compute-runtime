@@ -39,6 +39,7 @@ class MyMockCommandContainer : public CommandContainer {
     using CommandContainer::getAlignedCmdBufferSize;
     using CommandContainer::immediateReusableAllocationList;
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
+    using CommandContainer::skipHeapAllocationCreation;
 
     GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory) override {
         allocateCommandBufferCalled[!!forceHostMemory]++;
@@ -1439,8 +1440,17 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
     EXPECT_FALSE(heapHelper->storageForReuse->getAllocationsForReuse().peekIsEmpty());
-    EXPECT_EQ(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), 1u);
-    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 1);
+    EXPECT_EQ(heapHelper->storageForReuse->getAllocationsForReuse().peekHead()->getResidencyTaskCount(csr->getOsContext().getContextId()), GraphicsAllocation::objectNotResident);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
+    uint32_t numHeaps = 0;
+    for (int heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
+        if (!cmdContainer->skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
+            numHeaps++;
+        }
+    }
+    auto numAllocsAddedToResidencyContainer = amountToFill + (amountToFill * numHeaps);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
@@ -1463,7 +1473,16 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusa
 
     ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
     EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
-    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 2);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
+    uint32_t numHeaps = 0;
+    for (int heapType = 0; heapType < IndirectHeap::Type::numTypes; heapType++) {
+        if (!cmdContainer->skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
+            numHeaps++;
+        }
+    }
+    auto numAllocsAddedToResidencyContainer = 2 * amountToFill + (amountToFill * numHeaps);
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + numAllocsAddedToResidencyContainer);
 
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
