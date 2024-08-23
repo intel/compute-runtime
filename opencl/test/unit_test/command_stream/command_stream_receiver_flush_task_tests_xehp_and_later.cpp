@@ -276,10 +276,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCommandStreamReceiverWithInstructionCacheRequestWhenFlushTaskIsCalledThenPipeControlWithInstructionCacheIsEmitted) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
+    auto startRecursiveLockCounter = commandStreamReceiver.recursiveLockCounter.load();
     configureCSRtoNonDirtyState<FamilyType>(true);
 
     commandStreamReceiver.registerInstructionCacheFlush();
-    EXPECT_EQ(1u, commandStreamReceiver.recursiveLockCounter);
+    EXPECT_EQ(startRecursiveLockCounter + 1u, commandStreamReceiver.recursiveLockCounter);
 
     flushTask(commandStreamReceiver);
 

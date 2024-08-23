@@ -1126,7 +1126,16 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceTh
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     debugManager.flags.EnableDirectSubmission.set(1);
-
+    bool renderStreamerFound = false;
+    for (auto &engine : device->allEngines) {
+        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_RCS) {
+            renderStreamerFound = true;
+            break;
+        }
+    }
+    if (!renderStreamerFound) {
+        GTEST_SKIP();
+    }
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
 
@@ -1151,6 +1160,17 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     debugManager.flags.EnableDirectSubmission.set(1);
+
+    bool renderStreamerFound = false;
+    for (auto &engine : device->allEngines) {
+        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_RCS) {
+            renderStreamerFound = true;
+            break;
+        }
+    }
+    if (!renderStreamerFound) {
+        GTEST_SKIP();
+    }
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
@@ -1178,6 +1198,17 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+
+    bool renderStreamerFound = false;
+    for (auto &engine : device->allEngines) {
+        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_RCS) {
+            renderStreamerFound = true;
+            break;
+        }
+    }
+    if (!renderStreamerFound) {
+        GTEST_SKIP();
+    }
 
     debugManager.flags.EnableDirectSubmission.set(1);
 
@@ -1213,6 +1244,16 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
         MockWddmDirectSubmission<FamilyType, Dispatcher>;
 
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    bool renderStreamerFound = false;
+    for (auto &engine : device->allEngines) {
+        if (engine.osContext->getEngineType() == aub_stream::EngineType::ENGINE_RCS) {
+            renderStreamerFound = true;
+            break;
+        }
+    }
+    if (!renderStreamerFound) {
+        GTEST_SKIP();
+    }
 
     debugManager.flags.EnableDirectSubmission.set(1);
     debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);

@@ -392,12 +392,16 @@ HWTEST_F(DeviceTest, givenDeviceWhenAskingForDefaultEngineThenReturnValidValue) 
     executionEnvironment->prepareRootDeviceEnvironments(1u);
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
+
+    UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
     gfxCoreHelper.adjustDefaultEngineType(executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), productHelper, executionEnvironment->rootDeviceEnvironments[0]->ailConfiguration.get());
 
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0));
     auto osContext = device->getDefaultEngine().osContext;
 
-    EXPECT_EQ(device->getHardwareInfo().capabilityTable.defaultEngineType, osContext->getEngineType());
+    auto defaultEngineType = device->getHardwareInfo().capabilityTable.defaultEngineType;
+    auto engineType = osContext->getEngineType();
+    EXPECT_EQ(defaultEngineType, engineType);
     EXPECT_FALSE(osContext->isLowPriority());
 }
 

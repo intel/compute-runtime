@@ -32,6 +32,8 @@ struct RootDeviceEnvironment;
 struct UnitTestSetter {
     static void disableHeapless(const DebugManagerStateRestore &restorer);
     static void disableHeaplessStateInit(const DebugManagerStateRestore &restorer);
+    static void setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
+    static void setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

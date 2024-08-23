@@ -14,4 +14,7 @@ void UnitTestSetter::disableHeapless([[maybe_unused]] const DebugManagerStateRes
 
 void UnitTestSetter::disableHeaplessStateInit([[maybe_unused]] const DebugManagerStateRestore &restorer){};
 
+void UnitTestSetter::setCcsExposure(RootDeviceEnvironment &rootDeviceEnvironment) {}
+
+void UnitTestSetter::setRcsExposure(RootDeviceEnvironment &rootDeviceEnvironment) {}
 } // namespace NEO

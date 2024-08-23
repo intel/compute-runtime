@@ -14,6 +14,7 @@
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
@@ -56,7 +57,10 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
         getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution(hwInfo);
     }
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
+    UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+
     if (!executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface) {
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     }
@@ -112,6 +116,9 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
+
+        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
@@ -150,6 +157,9 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
 
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
+    UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
+    UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
+
     executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
 
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);

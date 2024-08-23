@@ -3206,6 +3206,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
         }
     }
 
+    bool renderStreamerFound = false;
+    for (auto &engine : device->allEngines) {
+        if (engine.osContext->getEngineType() == EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment())) {
+            renderStreamerFound = true;
+            break;
+        }
+    }
+
     struct CommandQueueTestValues {
         CommandQueueTestValues() = delete;
         CommandQueueTestValues(cl_queue_properties engineFamily, cl_queue_properties engineIndex, aub_stream::EngineType expectedEngine)
@@ -3228,7 +3236,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     auto retVal = CL_SUCCESS;
     const auto &ccsInstances = localHwInfo.gtSystemInfo.CCSInfo.Instances.Bits;
     std::vector<CommandQueueTestValues> commandQueueTestValues;
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::renderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment()), true);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::renderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment()), renderStreamerFound);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 0, aub_stream::ENGINE_CCS, ccsFound);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 1, aub_stream::ENGINE_CCS1, ccsInstances.CCS1Enabled);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::compute, 2, aub_stream::ENGINE_CCS2, ccsInstances.CCS2Enabled);
