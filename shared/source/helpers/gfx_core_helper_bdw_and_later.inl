@@ -100,7 +100,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const Hardwar
 
 template <typename GfxFamily>
 inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
-    return defaultMaxGroupSize;
+    return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
 }
 
 constexpr uint32_t planarYuvMaxHeight = 16352;

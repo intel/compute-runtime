@@ -6230,5 +6230,12 @@ TEST(ExtensionLookupTest, given2DBlockLoadTrueAnd2DBlockStoreTrueThenFlagsIndica
     ASSERT_TRUE(static_cast<bool>(blockArrayProps.flags & ZE_INTEL_DEVICE_EXP_FLAG_2D_BLOCK_STORE));
 }
 
+TEST_F(DeviceSimpleTests, whenWorkgroupSizeCheckedThenSizeLimitIs1kOrLess) {
+    ze_device_compute_properties_t properties{};
+    auto result = device->getComputeProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_LE(properties.maxTotalGroupSize, CommonConstants::maxWorkgroupSize);
+}
 } // namespace ult
 } // namespace L0

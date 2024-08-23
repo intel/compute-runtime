@@ -91,4 +91,5 @@ inline constexpr uint32_t invalidRevisionID = std::numeric_limits<uint16_t>::max
 inline constexpr uint32_t maximalSimdSize = 32;
 inline constexpr uint32_t maximalSizeOfAtomicType = 8;
 inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::maxEngineGroups);
+inline constexpr uint32_t maxWorkgroupSize = 1024u;
 } // namespace CommonConstants

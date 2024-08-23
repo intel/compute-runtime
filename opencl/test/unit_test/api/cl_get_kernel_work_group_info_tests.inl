@@ -74,6 +74,7 @@ TEST_F(ClGetKernelWorkGroupInfoTest, GivenNullDeviceWhenGettingWorkGroupInfoFrom
 
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
+
 TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
@@ -136,6 +137,23 @@ TEST_F(ClGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocatio
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(cl_ulong));
     EXPECT_EQ(paramValue, 0u);
+}
+
+TEST_F(ClGetKernelWorkGroupInfoTests, whenWorkgroupSizeCheckedThenSizeLimitIs1kOrLess) {
+    size_t paramValueSizeRet = 0;
+    size_t paramValue = 0;
+
+    retVal = clGetKernelWorkGroupInfo(
+        kernel,
+        testedClDevice,
+        CL_KERNEL_WORK_GROUP_SIZE,
+        sizeof(size_t),
+        &paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
+    EXPECT_LE(paramValue, CommonConstants::maxWorkgroupSize);
 }
 
 static cl_kernel_work_group_info paramNames[] = {

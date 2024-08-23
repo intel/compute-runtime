@@ -137,7 +137,7 @@ inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const Kern
     if (kernelDescriptor.kernelAttributes.simdSize != 32 && kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::largeGrfNumber) {
         defaultMaxGroupSize >>= 1;
     }
-    return defaultMaxGroupSize;
+    return std::min(defaultMaxGroupSize, CommonConstants::maxWorkgroupSize);
 }
 
 constexpr uint32_t planarYuvMaxHeight = 16128;
