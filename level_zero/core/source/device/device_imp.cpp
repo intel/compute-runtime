@@ -254,7 +254,20 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     auto cmdList = static_cast<L0::CommandListImp *>(CommandList::fromHandle(*commandList));
 
     cmdList->setOrdinal(desc->commandQueueGroupOrdinal);
-    cmdList->enableSynchronizedDispatch(syncDispatchMode);
+
+    if (syncDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+        if (cmdList->isInOrderExecutionEnabled()) {
+            cmdList->enableSynchronizedDispatch(syncDispatchMode);
+        } else {
+            returnValue = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
+    if (returnValue != ZE_RESULT_SUCCESS && cmdList) {
+        cmdList->destroy();
+        cmdList = nullptr;
+        *commandList = nullptr;
+    }
 
     return returnValue;
 }

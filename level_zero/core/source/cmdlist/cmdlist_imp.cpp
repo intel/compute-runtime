@@ -234,6 +234,14 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList->enableInOrderExecution();
         }
 
+        if (queueProperties.synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
+            if (commandList->isInOrderExecutionEnabled()) {
+                commandList->enableSynchronizedDispatch(queueProperties.synchronizedDispatchMode);
+            } else {
+                returnValue = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+        }
+
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
@@ -246,10 +254,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, &cmdQdesc, csr);
 
         commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
-
-        if (queueProperties.synchronizedDispatchMode != NEO::SynchronizedDispatchMode::disabled) {
-            commandList->enableSynchronizedDispatch(queueProperties.synchronizedDispatchMode);
-        }
 
         if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && !commandList->isCopyOnly() && commandList->isInOrderExecutionEnabled()) {
             commandList->enableCopyOperationOffload(productFamily, device, desc);
