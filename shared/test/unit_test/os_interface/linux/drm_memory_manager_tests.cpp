@@ -1757,7 +1757,18 @@ TEST_F(DrmMemoryManagerTest, whenCallingAllocateAndReleaseInterruptThenCallIoctl
 }
 
 TEST_F(DrmMemoryManagerTest, whenCallingCreateAndReleaseMediaContextThenCallIoctlHelper) {
-    auto mockIoctlHelper = new MockIoctlHelper(*mock);
+    class MyMockIoctlHelper : public MockIoctlHelper {
+      public:
+        using MockIoctlHelper::MockIoctlHelper;
+
+        bool createMediaContext(uint32_t vmId, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) override {
+            mediaContextVmId = vmId;
+            return MockIoctlHelper::createMediaContext(vmId, controlSharedMemoryBuffer, controlSharedMemoryBufferSize, controlBatchBuffer, controlBatchBufferSize, outDoorbell);
+        }
+
+        uint32_t mediaContextVmId = 0;
+    };
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
 
     auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(rootDeviceIndex));
     drm.ioctlHelper.reset(mockIoctlHelper);
@@ -1769,6 +1780,7 @@ TEST_F(DrmMemoryManagerTest, whenCallingCreateAndReleaseMediaContextThenCallIoct
 
     memoryManager->createMediaContext(rootDeviceIndex, nullptr, 0, nullptr, 0, handle);
     EXPECT_EQ(1u, mockIoctlHelper->createMediaContextCalled);
+    EXPECT_EQ(mock->getVirtualMemoryAddressSpace(0), mockIoctlHelper->mediaContextVmId);
     EXPECT_EQ(0u, mockIoctlHelper->releaseMediaContextCalled);
 
     memoryManager->releaseMediaContext(rootDeviceIndex, handle);
