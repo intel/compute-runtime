@@ -158,21 +158,6 @@ uint32_t Context::getMaxRootDeviceIndex() const {
 }
 
 CommandQueue *Context::getSpecialQueue(uint32_t rootDeviceIndex) {
-    if (specialQueues[rootDeviceIndex])
-        return specialQueues[rootDeviceIndex];
-
-    static std::mutex mtx;
-    std::lock_guard lock(mtx);
-
-    if (!specialQueues[rootDeviceIndex]) {
-        cl_int errcodeRet = CL_SUCCESS;
-        auto deviceOrdinal = std::distance(this->getRootDeviceIndices().begin(), std::find(this->getRootDeviceIndices().begin(), this->getRootDeviceIndices().end(), rootDeviceIndex));
-        auto commandQueue = CommandQueue::create(this, this->getDevice(deviceOrdinal), nullptr, true, errcodeRet);
-        DEBUG_BREAK_IF(commandQueue == nullptr);
-        DEBUG_BREAK_IF(errcodeRet != CL_SUCCESS);
-        overrideSpecialQueueAndDecrementRefCount(commandQueue, rootDeviceIndex);
-    }
-
     return specialQueues[rootDeviceIndex];
 }
 
@@ -194,7 +179,6 @@ bool Context::createImpl(const cl_context_properties *properties,
                          const ClDeviceVector &inputDevices,
                          void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
                          void *data, cl_int &errcodeRet) {
-    errcodeRet = CL_SUCCESS;
 
     auto propertiesCurrent = properties;
     bool interopUserSync = false;
@@ -301,6 +285,14 @@ bool Context::createImpl(const cl_context_properties *properties,
                                                           this->areMultiStorageAllocationsPreferred());
             this->svmAllocsManager->initUsmAllocationsCaches(device->getDevice());
             this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields);
+        }
+    }
+
+    for (auto &device : devices) {
+        if (!specialQueues[device->getRootDeviceIndex()]) {
+            auto commandQueue = CommandQueue::create(this, device, nullptr, true, errcodeRet); // NOLINT(clang-analyzer-cplusplus.NewDelete)
+            DEBUG_BREAK_IF(commandQueue == nullptr);
+            overrideSpecialQueueAndDecrementRefCount(commandQueue, device->getRootDeviceIndex());
         }
     }
 
