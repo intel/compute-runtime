@@ -120,7 +120,7 @@ TEST_F(ContextTest, WhenCreatingContextThenSpecialQueueIsAvailable) {
 TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
     MockContext context((ClDevice *)devices[0], true);
 
-    auto specialQ = context.getSpecialQueue(0u);
+    auto specialQ = context.specialQueues[0];
     EXPECT_EQ(specialQ, nullptr);
 
     auto cmdQ = new MockCommandQueue(&context, (ClDevice *)devices[0], 0, false);

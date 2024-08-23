@@ -435,7 +435,7 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
 }
 
 TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFails) {
-
+    [[maybe_unused]] auto cmdQ = pContext->getSpecialQueue(0);
     DebugManagerStateRestore restorer;
     for (auto &allocationInUSMShared : ::testing::Bool()) {
         debugManager.flags.GTPinAllocateBufferInSharedMemory.set(allocationInUSMShared);
