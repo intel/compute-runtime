@@ -357,9 +357,9 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
       public:
         ~MockDrmCommandStreamReceiver() override {
         }
-        MockDrmCommandStreamReceiver<GfxFamily>(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex,
-                                                DeviceBitfield deviceBitfield,
-                                                GemCloseWorkerMode mode, uint32_t inputHandleId)
+        MockDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex,
+                                     DeviceBitfield deviceBitfield,
+                                     GemCloseWorkerMode mode, uint32_t inputHandleId)
             : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, mode), expectedHandleId(inputHandleId) {
         }
 
