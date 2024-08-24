@@ -977,7 +977,7 @@ set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 set(BUILTINS_VME_LIB_NAME "builtins_vme")
 
 if(WIN32)
-  set(NEO_EXTRA_LIBS Ws2_32 winmm)
+  set(NEO_EXTRA_LIBS Ws2_32)
 else()
   set(NEO_EXTRA_LIBS dl pthread rt)
 endif()

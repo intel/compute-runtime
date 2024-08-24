@@ -10,29 +10,21 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/allocation_properties.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_os_context_win.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
-extern uint64_t cpuFence;
-namespace NEO {
 
-namespace SysCalls {
-extern size_t timeBeginPeriodCalled;
-extern MMRESULT timeBeginPeriodLastValue;
-extern size_t timeEndPeriodCalled;
-extern MMRESULT timeEndPeriodLastValue;
-} // namespace SysCalls
+using namespace NEO;
+
+extern uint64_t cpuFence;
 
 template <PreemptionMode preemptionMode>
 struct WddmDirectSubmissionFixture : public WddmFixture {
@@ -1139,21 +1131,3 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenUnblockPagingFenceSe
     wddmDirectSubmission.unblockPagingFenceSemaphore(pagingFenceValueToWait);
     EXPECT_GT(wddmDirectSubmission.semaphoreData->pagingFenceCounter, mockedPagingFence);
 }
-
-TEST(DirectSubmissionControllerWindowsTest, givenDirectSubmissionControllerWhenCallingSleepThenRequestHighResolutionTimers) {
-    VariableBackup<size_t> timeBeginPeriodCalledBackup(&SysCalls::timeBeginPeriodCalled, 0u);
-    VariableBackup<MMRESULT> timeBeginPeriodLastValueBackup(&SysCalls::timeBeginPeriodLastValue, 0u);
-    VariableBackup<size_t> timeEndPeriodCalledBackup(&SysCalls::timeEndPeriodCalled, 0u);
-    VariableBackup<MMRESULT> timeEndPeriodLastValueBackup(&SysCalls::timeEndPeriodLastValue, 0u);
-
-    DirectSubmissionControllerMock controller;
-    controller.callBaseSleepMethod = true;
-    std::unique_lock<std::mutex> lock(controller.condVarMutex);
-    controller.sleep(lock);
-    EXPECT_TRUE(controller.sleepCalled);
-    EXPECT_EQ(1u, SysCalls::timeBeginPeriodCalled);
-    EXPECT_EQ(1u, SysCalls::timeEndPeriodCalled);
-    EXPECT_EQ(1u, SysCalls::timeBeginPeriodLastValue);
-    EXPECT_EQ(1u, SysCalls::timeEndPeriodLastValue);
-}
-} // namespace NEO

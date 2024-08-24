@@ -65,7 +65,6 @@ set(RUNTIME_SRCS_DLL_WINDOWS
     ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
-    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls_winmm.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
     ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows/platform_teardown_win.cpp
