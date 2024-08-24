@@ -22,7 +22,6 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
@@ -30,7 +29,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     MockWddmAllocation allocation(getGmmHelper());
     allocation.handle = 4;
-    allocation.setAllocationType(AllocationType::buffer, productHelper);
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
     allocation.setGpuAddress(0x12345);
@@ -67,7 +66,6 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     DebugVariables flags;
     flags.LogAllocationMemoryPool.set(false);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
 
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
@@ -77,7 +75,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     allocation.handle = 4;
-    allocation.setAllocationType(AllocationType::buffer, productHelper);
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 

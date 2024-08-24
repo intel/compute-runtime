@@ -75,8 +75,7 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenCallingLockThenTrueRe
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerAndAllocationOfOneTimeAubWritableAllocationTypeWhenMakeResidentCalledTwoTimesThenWriteMemoryOnce) {
     ASSERT_TRUE(AubHelper::isOneTimeAubWritableAllocationType(AllocationType::buffer));
-    auto &productHelper = device->getProductHelper();
-    allocPtr->setAllocationType(AllocationType::buffer, productHelper);
+    allocPtr->setAllocationType(AllocationType::buffer);
 
     MockAubManager aubManager;
     getMemoryOperationsHandler()->setAubManager(&aubManager);

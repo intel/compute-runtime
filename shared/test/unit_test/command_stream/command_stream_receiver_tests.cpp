@@ -1654,8 +1654,7 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingN
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
     MockGraphicsAllocation mockAllocation;
-    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    mockAllocation.setAllocationType(AllocationType::kernelIsa, productHelper);
+    mockAllocation.setAllocationType(AllocationType::kernelIsa);
 
     csr.useNewResourceImplicitFlush = true;
     csr.newResources = false;

@@ -275,8 +275,7 @@ GEN12LPTEST_F(GfxCoreHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompa
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
-    auto &productHelper = device->getProductHelper();
-    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(AllocationType::buffer, productHelper);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(AllocationType::buffer);
 
     EXPECT_TRUE(gfxCoreHelper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }

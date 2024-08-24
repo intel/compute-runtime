@@ -18,7 +18,7 @@ GraphicsAllocation *AUBFixture::createHostPtrAllocationFromSvmPtr(void *svmPtr, 
     GraphicsAllocation *allocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, svmPtr);
     csr->makeResidentHostPtrAllocation(allocation);
     csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-    allocation->setAllocationType(AllocationType::buffer, csr->getProductHelper());
+    allocation->setAllocationType(AllocationType::buffer);
     allocation->setMemObjectsAllocationWithWritableFlags(true);
     return allocation;
 }

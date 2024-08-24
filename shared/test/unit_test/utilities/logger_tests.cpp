@@ -11,10 +11,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/utilities/logger.h"
-#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
@@ -495,17 +493,16 @@ TEST(AllocationTypeLoggingSingle, givenGraphicsAllocationTypeWhenConvertingToStr
 
     EXPECT_STREQ(result, "ILLEGAL_VALUE");
 }
-using AllocationTypeLoggingSingleTest = Test<DeviceFixture>;
-HWTEST_F(AllocationTypeLoggingSingleTest, givenAllocationTypeWhenConvertingToStringThenSupportAll) {
+
+TEST(AllocationTypeLoggingSingle, givenAllocationTypeWhenConvertingToStringThenSupportAll) {
     std::string testFile = "testfile";
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
-    auto &productHelper = getHelper<NEO::ProductHelper>();
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::count); i++) {
-        graphicsAllocation.setAllocationType(static_cast<AllocationType>(i), productHelper);
+        graphicsAllocation.setAllocationType(static_cast<AllocationType>(i));
 
         auto result = getAllocationTypeString(&graphicsAllocation);
 

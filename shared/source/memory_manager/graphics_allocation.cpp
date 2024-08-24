@@ -8,10 +8,8 @@
 #include "graphics_allocation.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -20,16 +18,9 @@
 #include "shared/source/utilities/logger.h"
 
 namespace NEO {
-void GraphicsAllocation::setAllocationType(AllocationType allocationType, const ProductHelper &productHelper) {
+void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     if (this->allocationType != allocationType) {
         this->allocationType = allocationType;
-        auto gmm = getDefaultGmm();
-        if (gmm) {
-            GmmRequirements gmmRequirements{};
-            auto gmmResourceUsage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
-            gmm->updateUsageAndCachableFlag(gmmResourceUsage, gmmRequirements);
-            gmm->applyResourceInfo();
-        }
         fileLoggerInstance().logAllocation(this);
     }
 }

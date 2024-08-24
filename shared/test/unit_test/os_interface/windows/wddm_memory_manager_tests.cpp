@@ -1415,7 +1415,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenDestroyingAllocationWithReservedGpuVirtu
 
 TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithReservedGpuVirtualAddressWhenMapCallFailsDuringCreateWddmAllocationThenReleasePreferredAddress) {
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), 1);
-    allocation.setAllocationType(AllocationType::kernelIsa, csr->getProductHelper());
+    allocation.setAllocationType(AllocationType::kernelIsa);
     uint64_t gpuAddress = 0x123;
     uint64_t sizeForFree = 0x1234;
     allocation.setReservedGpuVirtualAddress(gpuAddress);
@@ -1437,8 +1437,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaI
 
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
-
-    allocation.setAllocationType(AllocationType::buffer, csr->getProductHelper());
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.storageInfo.multiStorage = true;
 
     wddm->callBaseMapGpuVa = true;
@@ -1465,7 +1464,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysical
 
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
-    allocation.setAllocationType(AllocationType::buffer, csr->getProductHelper());
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.storageInfo.multiStorage = true;
 
     wddm->callBaseMapGpuVa = true;
@@ -1483,7 +1482,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationWhenCreatePhysical
 
     uint32_t numGmms = 10;
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper(), numGmms);
-    allocation.setAllocationType(AllocationType::buffer, csr->getProductHelper());
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.storageInfo.multiStorage = true;
 
     wddm->callBaseMapGpuVa = true;

@@ -1442,7 +1442,7 @@ HWTEST_F(CommandQueueHwTest, givenDirectSubmissionAndSharedDisplayableImageWhenR
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context));
     image->setSharingHandler(mockSharingHandler);
-    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage, pClDevice->getProductHelper());
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::sharedImage);
 
     cl_mem memObject = image.get();
     cl_uint numObjects = 1;

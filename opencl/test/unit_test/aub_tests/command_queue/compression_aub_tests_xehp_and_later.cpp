@@ -99,7 +99,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedBuffersWhenWriting
 
     auto notCompressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     auto nonCompressedAllocation = notCompressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
-    nonCompressedAllocation->setAllocationType(AllocationType::buffer, device->getProductHelper());
+    nonCompressedAllocation->setAllocationType(AllocationType::buffer);
     if (nonCompressedAllocation->getDefaultGmm()) {
         nonCompressedAllocation->getDefaultGmm()->setCompressionEnabled(false);
     }

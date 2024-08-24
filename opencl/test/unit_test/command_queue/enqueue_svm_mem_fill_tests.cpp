@@ -275,9 +275,7 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSys
     auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     svmData->size = static_cast<size_t>(bigSize);
-
-    auto &productHelper = device->getProductHelper();
-    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmZeroCopy, productHelper);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmZeroCopy);
 
     cmdQ->validateKernelSystemMemory = true;
     cmdQ->expectedKernelSystemMemory = true;
@@ -300,8 +298,7 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLoc
         GTEST_SKIP();
     }
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
-    auto &productHelper = device->getProductHelper();
-    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmGpu, productHelper);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::svmGpu);
 
     cmdQ->validateKernelSystemMemory = true;
     cmdQ->expectedKernelSystemMemory = false;

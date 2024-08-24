@@ -272,7 +272,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
     auto mockMemoryManager = new MockMemoryManager();
-    auto &productHelper = pDevice->getProductHelper();
 
     auto memoryManagerBackup = aubExecutionEnvironment->executionEnvironment->memoryManager.release();
     aubExecutionEnvironment->executionEnvironment->memoryManager.reset(mockMemoryManager);
@@ -282,7 +281,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndNotLockableAllocationWhe
     constexpr uint64_t initGpuAddress = 1234;
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
-    allocation.setAllocationType(AllocationType::buffer, productHelper);
+    allocation.setAllocationType(AllocationType::buffer);
     allocation.overrideMemoryPool(MemoryPool::localMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -320,8 +319,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenNoCpuPtrAndLockableAllocationWhenGe
     constexpr uint64_t initGpuAddress = 1234;
     constexpr size_t initSize = 10;
     MockGraphicsAllocation allocation(nullptr, initGpuAddress, initSize);
-    auto &productHelper = pDevice->getProductHelper();
-    allocation.setAllocationType(AllocationType::bufferHostMemory, productHelper);
+    allocation.setAllocationType(AllocationType::bufferHostMemory);
     allocation.overrideMemoryPool(MemoryPool::localMemory);
 
     aubExecutionEnvironment->executionEnvironment->rootDeviceEnvironments[0]->initGmm();

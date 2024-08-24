@@ -22,22 +22,6 @@
 #include "shared/source/memory_manager/definitions/storage_info.h"
 
 namespace NEO {
-void Gmm::updateUsageAndCachableFlag(GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage, const GmmRequirements &gmmRequirements) {
-    resourceParams.Usage = gmmResourceUsage;
-    this->preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
-    bool cacheable = !this->preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
-
-    gmmRequirements.overriderPreferNoCpuAccess.doOverride(this->preferNoCpuAccess);
-    gmmRequirements.overriderCacheable.doOverride(cacheable);
-    if (NEO::debugManager.flags.OverrideGmmCacheableField.get() != -1) {
-        cacheable = !!NEO::debugManager.flags.OverrideGmmCacheableField.get();
-    }
-    resourceParams.Flags.Info.Cacheable = cacheable;
-}
-
-void Gmm::applyResourceInfo() {
-    gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), &resourceParams));
-}
 Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_t alignment, GMM_RESOURCE_USAGE_TYPE_ENUM gmmResourceUsage,
          const StorageInfo &storageInfo, const GmmRequirements &gmmRequirements) : gmmHelper(gmmHelper) {
     resourceParams.Type = RESOURCE_BUFFER;
@@ -53,9 +37,20 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
         }
     }
 
+    resourceParams.Usage = gmmResourceUsage;
     resourceParams.Flags.Info.Linear = 1;
 
-    updateUsageAndCachableFlag(gmmResourceUsage, gmmRequirements);
+    this->preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(gmmResourceUsage, gmmHelper->getRootDeviceEnvironment());
+    bool cacheable = !this->preferNoCpuAccess && !CacheSettingsHelper::isUncachedType(gmmResourceUsage);
+
+    gmmRequirements.overriderPreferNoCpuAccess.doOverride(this->preferNoCpuAccess);
+    gmmRequirements.overriderCacheable.doOverride(cacheable);
+
+    if (NEO::debugManager.flags.OverrideGmmCacheableField.get() != -1) {
+        cacheable = !!NEO::debugManager.flags.OverrideGmmCacheableField.get();
+    }
+
+    resourceParams.Flags.Info.Cacheable = cacheable;
 
     resourceParams.Flags.Gpu.Texture = 1;
 
@@ -76,7 +71,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
     applyAppResource(storageInfo);
     applyDebugOverrides();
 
-    applyResourceInfo();
+    gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), &resourceParams));
 }
 
 Gmm::Gmm(GmmHelper *gmmHelper, GMM_RESOURCE_INFO *inputGmm) : Gmm(gmmHelper, inputGmm, false) {}

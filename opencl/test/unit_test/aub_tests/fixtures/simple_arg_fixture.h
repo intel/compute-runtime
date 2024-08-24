@@ -73,7 +73,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
 
         outBuffer = AUBCommandStreamFixture::createResidentAllocationAndStoreItInCsr(pDestMemory, sizeUserMemory);
         ASSERT_NE(nullptr, outBuffer);
-        outBuffer->setAllocationType(AllocationType::buffer, pClDevice->getProductHelper());
+        outBuffer->setAllocationType(AllocationType::buffer);
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);
     }
 

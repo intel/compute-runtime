@@ -75,8 +75,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenConstantSurfaceWhenProgrammingSurfaceStateT
         nullptr,
         retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    auto &productHelper = device->getProductHelper();
-    buffer->getGraphicsAllocation(0)->setAllocationType(AllocationType::constantSurface, productHelper);
+    buffer->getGraphicsAllocation(0)->setAllocationType(AllocationType::constantSurface);
 
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context->getDevice(0)->getDevice(), false);

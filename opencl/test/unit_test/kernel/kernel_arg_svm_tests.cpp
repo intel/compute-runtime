@@ -714,8 +714,7 @@ TEST_F(KernelArgSvmTest, GivenZeroCopySvmPtrWhenSettingKernelArgThenKernelUsesSy
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(alloc);
     auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(*pContext->getRootDeviceIndices().begin());
-    auto &productHelper = pClDevice->getProductHelper();
-    gpuAllocation->setAllocationType(NEO::AllocationType::svmZeroCopy, productHelper);
+    gpuAllocation->setAllocationType(NEO::AllocationType::svmZeroCopy);
 
     EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
 
@@ -741,8 +740,7 @@ TEST_F(KernelArgSvmTest, GivenGpuSvmPtrWhenSettingKernelArgThenKernelNotUsesSyst
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(alloc);
     auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(*pContext->getRootDeviceIndices().begin());
-    auto &productHelper = pClDevice->getProductHelper();
-    gpuAllocation->setAllocationType(NEO::AllocationType::svmGpu, productHelper);
+    gpuAllocation->setAllocationType(NEO::AllocationType::svmGpu);
 
     EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
 
@@ -768,8 +766,7 @@ TEST_F(KernelArgSvmTest, GivenGpuSvmPtrAndKernelIsAlreadySetToUseSystemWhenSetti
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(alloc);
     auto gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(*pContext->getRootDeviceIndices().begin());
-    auto &productHelper = pClDevice->getProductHelper();
-    gpuAllocation->setAllocationType(NEO::AllocationType::svmGpu, productHelper);
+    gpuAllocation->setAllocationType(NEO::AllocationType::svmGpu);
 
     EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
     pKernel->anyKernelArgumentUsingSystemMemory = true;
