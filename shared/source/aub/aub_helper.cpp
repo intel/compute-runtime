@@ -40,6 +40,7 @@ bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::assertBuffer:
     case AllocationType::tagBuffer:
+    case AllocationType::syncDispatchToken:
         return true;
     case AllocationType::bufferHostMemory:
         return NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.get() ? false : true;

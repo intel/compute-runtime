@@ -119,6 +119,7 @@ TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectR
         case AllocationType::gpuTimestampDeviceBuffer:
         case AllocationType::assertBuffer:
         case AllocationType::tagBuffer:
+        case AllocationType::syncDispatchToken:
             EXPECT_TRUE(isOneTimeWritable);
             break;
         default:
