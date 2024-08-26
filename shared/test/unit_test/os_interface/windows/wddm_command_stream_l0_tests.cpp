@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ struct MockWddmCsrL0 : public WddmCommandStreamReceiver<GfxFamily> {
         return ret;
     }
 
-    int flushCalledCount = 0;
+    uint32_t flushCalledCount = 0;
     std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
 
     bool callParentInitDirectSubmission = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->flush();
 
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
+    EXPECT_EQ(1u, mockCsr->flushCalledCount);
     EXPECT_EQ(PreemptionMode::ThreadGroup, mockCsr->passedDispatchFlags.preemptionMode);
 }
 
@@ -79,11 +79,11 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &userEvent, nullptr);
     pCmdQ->flush();
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
     userEventObj.setStatus(CL_COMPLETE);
     pCmdQ->flush();
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
+    EXPECT_EQ(1u, mockCsr->flushCalledCount);
     EXPECT_EQ(PreemptionMode::ThreadGroup, mockCsr->passedDispatchFlags.preemptionMode);
 }
 
@@ -100,6 +100,6 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKe
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->flush();
 
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
+    EXPECT_EQ(1u, mockCsr->flushCalledCount);
     EXPECT_EQ(PreemptionMode::Disabled, mockCsr->passedDispatchFlags.preemptionMode);
 }

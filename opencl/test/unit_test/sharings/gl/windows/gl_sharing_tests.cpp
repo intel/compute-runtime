@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -933,12 +934,15 @@ TEST_F(GlSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
         gfxAllocation->setGmm(new MockGmm(pClDevice->getGmmHelper()), handleId);
     }
+    auto &compilerProductHelper = pClDevice->getCompilerProductHelper();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
     auto commandQueue = CommandQueue::create(&context, pClDevice, 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     size_t offset = 1;
-    auto taskCount = commandQueue->taskCount;
+    auto taskCount = commandQueue->taskCount + (heaplessStateInit ? 1u : 0u);
     auto mappedPtr = clEnqueueMapBuffer(commandQueue, glBuffer, CL_TRUE, CL_MAP_WRITE, offset, (buffer->getSize() - offset),
                                         0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

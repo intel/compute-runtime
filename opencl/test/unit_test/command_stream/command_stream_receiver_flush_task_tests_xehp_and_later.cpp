@@ -495,7 +495,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
@@ -524,7 +524,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
@@ -564,7 +564,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
     auto &surfacesForResidency = mockCsr->getResidencyAllocations();
     EXPECT_EQ(0u, surfacesForResidency.size());
@@ -594,7 +594,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.lowPriority);
     EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
     EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
+    EXPECT_EQ(1u, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().peekIsEmpty());
 
@@ -611,12 +611,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
 
     configureCSRtoNonDirtyState<FamilyType>(true);
 
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
     auto previousFlushStamp = mockCsr->flushStamp->peekStamp();
     auto cmplStamp = flushTask(*mockCsr);
     EXPECT_EQ(mockCsr->flushStamp->peekStamp(), previousFlushStamp);
     EXPECT_EQ(previousFlushStamp, cmplStamp.flushStamp);
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr) {

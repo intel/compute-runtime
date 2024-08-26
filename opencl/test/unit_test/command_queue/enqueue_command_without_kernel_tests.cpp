@@ -60,7 +60,7 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
 
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0, csrDeps, nullptr, false);
-    EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), 1u);
+    EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), mockCmdQ->heaplessStateInitEnabled ? 2u : 1u);
 }
 
 template <bool enabled>

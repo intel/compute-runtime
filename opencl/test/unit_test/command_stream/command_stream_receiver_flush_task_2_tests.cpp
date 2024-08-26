@@ -1161,7 +1161,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatchingModeWhenflushTaskIsCalledWithDisabledPreemptionThenSubmissionIsNotRecorded) {
@@ -1190,7 +1190,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInNonDi
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
+    EXPECT_EQ(0u, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 

@@ -682,8 +682,10 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    DebugManagerStateRestore restorer{};
-    UnitTestSetter::disableHeapless(restorer);
+    auto &compilerProductHelper = this->pDevice->getCompilerProductHelper();
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
 
     struct MockSyncBufferHandler : SyncBufferHandler {
         using SyncBufferHandler::graphicsAllocation;

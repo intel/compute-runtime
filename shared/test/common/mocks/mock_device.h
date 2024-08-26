@@ -127,6 +127,8 @@ class MockDevice : public RootDevice {
         if (!executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface) {
             executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
         }
+
+        executionEnvironment->calculateMaxOsContextCount();
         T *device = new T(executionEnvironment, rootDeviceIndex);
         return createDeviceInternals(device);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -31,6 +32,9 @@ struct MigrationControllerTests : public ::testing::Test {
 
             memoryManager->localMemorySupported[rootDeviceIndex] = true;
         }
+        auto &compilerProductHelper = context.getDevice(0)->getCompilerProductHelper();
+        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
     }
     void TearDown() override {
     }
@@ -38,6 +42,7 @@ struct MigrationControllerTests : public ::testing::Test {
     CommandStreamReceiver *pCsr0 = nullptr;
     CommandStreamReceiver *pCsr1 = nullptr;
     MockMemoryManager *memoryManager = nullptr;
+    bool heaplessStateInit = false;
 };
 
 HWTEST2_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHandleMigrationThenNoMigrationIsPerformedAndProperLocationIsSet, IsAtLeastGen12lp) {
@@ -50,7 +55,7 @@ HWTEST2_F(MigrationControllerTests, givenAllocationWithUndefinedLocationWhenHand
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandleMigrationToTheSameLocationThenDontMigrateMemory, IsAtLeastGen12lp) {
@@ -64,7 +69,7 @@ HWTEST2_F(MigrationControllerTests, givenAllocationWithDefinedLocationWhenHandle
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteImage, IsAtLeastGen12lp) {
@@ -125,8 +130,8 @@ HWTEST2_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedL
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(1u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(1u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 2u : 1u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 2u : 1u, pCsr0->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaLockMemory, IsAtLeastGen12lp) {
@@ -147,8 +152,8 @@ HWTEST2_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLoca
 
     EXPECT_EQ(2u, memoryManager->lockResourceCalled);
     EXPECT_EQ(2u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheSameRootDeviceThenDontWaitOnCpuForTheFirstCsrCompletion, IsAtLeastGen12lp) {
@@ -172,8 +177,8 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
 }
 
@@ -201,8 +206,8 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
 
     EXPECT_EQ(2u, memoryManager->lockResourceCalled);
     EXPECT_EQ(2u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(1u, migrationSyncData->waitOnCpuCalled);
 }
 
@@ -228,8 +233,8 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 1u : 0u, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
 }
 

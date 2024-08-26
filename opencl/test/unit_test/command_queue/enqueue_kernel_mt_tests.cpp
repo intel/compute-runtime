@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,10 +64,10 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
 
     pCmdQ->finish();
 
-    EXPECT_GE(mockCsr->flushCalledCount, 1);
+    EXPECT_GE(mockCsr->flushCalledCount, 1u);
 
-    EXPECT_LE(mockCsr->flushCalledCount, enqueueCount * threadCount);
-    EXPECT_EQ(mockedSubmissionsAggregator->peekInspectionId() - 1, (uint32_t)mockCsr->flushCalledCount);
+    EXPECT_LE(static_cast<int>(mockCsr->flushCalledCount), enqueueCount * threadCount);
+    EXPECT_EQ(mockedSubmissionsAggregator->peekInspectionId() - 1u, mockCsr->flushCalledCount);
 }
 
 template <typename GfxFamily>

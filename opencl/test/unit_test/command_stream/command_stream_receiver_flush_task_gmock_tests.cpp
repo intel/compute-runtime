@@ -125,7 +125,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     auto batchBufferStart = genCmdCast<MI_BATCH_BUFFER_START *>(bbEndLocation);
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(lastBatchBufferAddress, batchBufferStart->getBatchBufferStartAddress());
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
+    EXPECT_EQ(1u, mockCsr->flushCalledCount);
     EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
     EXPECT_EQ(static_cast<unsigned int>(removePatchInfoDataCount), mockHelper->removePatchInfoDataCalled);
     EXPECT_EQ(4u, mockHelper->registerCommandChunkCalled);

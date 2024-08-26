@@ -214,7 +214,9 @@ using XeHpCommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushingCommandStreamReceiverThenExpectStateBaseAddressEqualsIndirectObjectBaseAddress) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     flushTask(commandStreamReceiver);
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
@@ -312,7 +314,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushi
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     flushTask(commandStreamReceiver);
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
@@ -331,6 +335,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushi
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
 
     flushTask(commandStreamReceiver);
     HardwareParse hwParserCsr;
