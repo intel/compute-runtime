@@ -56,6 +56,7 @@ class AggregatedSmallBuffersTestTemplate : public ::testing::Test {
         debugManager.flags.ExperimentalSmallBufferPoolAllocator.set(poolBufferFlag);
         debugManager.flags.EnableDeviceUsmAllocationPool.set(0);
         debugManager.flags.EnableHostUsmAllocationPool.set(0);
+        debugManager.flags.RenderCompressedBuffersEnabled.set(1);
         this->deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
         this->device = deviceFactory->rootDevices[rootDeviceIndex];
         this->mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
@@ -180,12 +181,13 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhen
     EXPECT_EQ(1u, MockBufferPoolAllocator::calculateMaxPoolCount(64 * MemoryConstants::megaByte, 2));
 }
 
-TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockable) {
+TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhenAllocatingMainStorageThenMakeDeviceBufferLockableAndNotCompressed) {
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
     EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
     EXPECT_NE(nullptr, mockMemoryManager->lastAllocationProperties);
     EXPECT_TRUE(mockMemoryManager->lastAllocationProperties->makeDeviceBufferLockable);
+    EXPECT_FALSE(mockMemoryManager->lastAllocationProperties->flags.preferCompressed);
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {
