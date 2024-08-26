@@ -2035,16 +2035,16 @@ class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
     void *hostPtr;
 };
 
-HWTEST_P(BufferL3CacheTests, DISABLED_givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
+HWTEST_P(BufferL3CacheTests, givenMisalignedAndAlignedBufferWhenClEnqueueWriteImageThenL3CacheIsOn) {
     auto device = ctx.getDevice(0);
     const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !ctx.getDevice(0)->getHardwareInfo().capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
-    CommandQueueHw<FamilyType> cmdQ(&ctx, ctx.getDevice(0), nullptr, false);
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(cmdQ.getGpgpuCommandStreamReceiver().getIndirectHeap(IndirectHeap::Type::surfaceState, 0).getSpace(0));
+    MockCommandQueueHw<FamilyType> cmdQ(&ctx, ctx.getDevice(0), nullptr, false);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
@@ -2064,11 +2064,21 @@ HWTEST_P(BufferL3CacheTests, DISABLED_givenMisalignedAndAlignedBufferWhenClEnque
 
     clEnqueueWriteImage(&cmdQ, image, false, origin, region, 0, 0, hostPtr, 0, nullptr, nullptr);
 
+    ASSERT_NE(0u, cmdQ.lastEnqueuedKernels.size());
+    Kernel *kernel = cmdQ.lastEnqueuedKernels[0];
+
+    auto argInfo = kernel->getKernelInfo().getArgDescriptorAt(0).template as<ArgDescPointer>();
+    ASSERT_TRUE(isValidOffset(argInfo.bindful));
+
+    auto surfaceStateAddress = ptrOffset(kernel->getSurfaceStateHeap(), argInfo.bindful);
+    ASSERT_NE(surfaceStateAddress, nullptr);
+    auto surfaceState = *reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateAddress);
+
     auto expect = ctx.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     auto expect2 = ctx.getDevice(0)->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
 
-    EXPECT_NE(0u, surfaceState->getMemoryObjectControlState());
-    EXPECT_TRUE(expect == surfaceState->getMemoryObjectControlState() || expect2 == surfaceState->getMemoryObjectControlState());
+    EXPECT_NE(0u, surfaceState.getMemoryObjectControlState());
+    EXPECT_TRUE(expect == surfaceState.getMemoryObjectControlState() || expect2 == surfaceState.getMemoryObjectControlState());
 
     clReleaseMemObject(image);
 }
