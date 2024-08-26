@@ -641,8 +641,6 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetErrorDescriptionIsCal
     EXPECT_NE(0, result);
     executionEnvironment.getErrorDescription(&pStr);
     std::string expectedString = errorString2;
-    printf("the received string is: \"%s\"\n", pStr);
-    printf("the expected string is: \"%s\"\n", expectedString.c_str());
     EXPECT_EQ(0, strcmp(expectedString.c_str(), pStr));
 }
 
