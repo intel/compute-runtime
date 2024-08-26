@@ -117,6 +117,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::flushBcsTask;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::globalFenceAllocation;
+    using BaseClass::CommandStreamReceiver::globalStatelessHeapAllocation;
     using BaseClass::CommandStreamReceiver::gpuHangCheckPeriod;
     using BaseClass::CommandStreamReceiver::gsbaFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::heaplessModeEnabled;

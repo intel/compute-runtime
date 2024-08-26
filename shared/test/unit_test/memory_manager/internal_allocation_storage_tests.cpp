@@ -144,7 +144,12 @@ TEST_F(InternalAllocationStorageTest, whenCompletedAllocationIsStoredAsReusableA
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAndThenCanBeObtained) {
+HWTEST_F(InternalAllocationStorageTest, whenNotUsedAllocationIsStoredAsReusableAndThenCanBeObtained) {
+
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    if (ultCsr->heaplessStateInitialized) {
+        ultCsr->taskCount.store(0);
+    }
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, MemoryConstants::pageSize, AllocationType::buffer, mockDeviceBitfield});
     EXPECT_NE(nullptr, allocation);

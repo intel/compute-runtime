@@ -1720,6 +1720,9 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsIniti
 TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedThenInitializeDebuggerOncePerRootDevice) {
     extern size_t createDebuggerCallCount;
 
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.set(1);
+
     createDebuggerCallCount = 0;
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::online);

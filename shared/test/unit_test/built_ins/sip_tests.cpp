@@ -723,14 +723,23 @@ TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenDebugSipForContextIsCreatedT
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
 
-    auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::regular}));
+    auto osContext = std::make_unique<OsContextMock>(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
     osContext->debuggableContext = true;
     osContext->offlineDumpCtxId = uint64_t(0xAA) << 32 | 0xBB;
-
     auto csr = mockDevice->createCommandStreamReceiver();
     csr->setupContext(*osContext);
 
     EXPECT_NE(nullptr, mockDevice);
+
+    // ensure once_flag has not already been satisfied
+    auto contextId = osContext->getContextId();
+    auto it = builtIns->perContextSipKernels.find(contextId);
+    if (it != builtIns->perContextSipKernels.end()) {
+        mockDevice->getMemoryManager()->freeGraphicsMemory(it->second.first->getSipAllocation());
+
+        builtIns->perContextSipKernels.erase(contextId);
+    }
+    builtIns->perContextSipKernels.erase(contextId);
 
     auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
 

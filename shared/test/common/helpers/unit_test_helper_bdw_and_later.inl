@@ -169,4 +169,10 @@ uint64_t UnitTestHelper<GfxFamily>::getWalkerPartitionEstimateSpaceRequiredInCom
     return 0u;
 }
 
+template <typename GfxFamily>
+void UnitTestHelper<GfxFamily>::getSpaceAndInitWalkerCmd(LinearStream &stream, bool heapless) {
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+    *stream.getSpaceForCmd<GPGPU_WALKER>() = GfxFamily::template getInitGpuWalker<GPGPU_WALKER>();
+}
+
 } // namespace NEO

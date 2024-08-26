@@ -2192,7 +2192,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
 
     ultCsr->programEndingCmd(commandStream, &endingPtr, true, true);
 
-    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+    auto lrrCmdIt = find<MI_LOAD_REGISTER_REG *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrrCmdIt);
+
     EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
     EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
@@ -2220,12 +2225,16 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingDisabledW
     ultCsr->blitterDirectSubmission.reset(directSubmission);
 
     auto &commandStream = ultCsr->getCS(0x100);
-
     auto endingPtr = commandStream.getSpace(0);
 
     ultCsr->programEndingCmd(commandStream, &endingPtr, true, false);
 
-    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(commandStream.getCpuBase());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+    auto bbStartCmdIt = find<MI_BATCH_BUFFER_START *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartCmdIt);
+
     ASSERT_NE(nullptr, bbStartCmd);
     EXPECT_EQ(0u, bbStartCmd->getIndirectAddressEnable());
 }
@@ -2248,7 +2257,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSet
 
     ultCsr->programEndingCmd(commandStream, &endingPtr, true, true);
 
-    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(commandStream.getCpuBase());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+    auto lrrCmdIt = find<MI_LOAD_REGISTER_REG *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrrCmdIt);
+
     EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
     EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
@@ -2277,7 +2291,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDep
 
     ultCsr->programEndingCmd(commandStream, &endingPtr, true, false);
 
-    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(commandStream.getCpuBase());
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+    auto bbStartCmdIt = find<MI_BATCH_BUFFER_START *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(*bbStartCmdIt);
+
     ASSERT_NE(nullptr, bbStartCmd);
     EXPECT_EQ(0u, bbStartCmd->getIndirectAddressEnable());
 }

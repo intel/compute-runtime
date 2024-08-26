@@ -384,6 +384,8 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMe
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[i]->initGmm();
     }
+    executionEnvironment.calculateMaxOsContextCount();
+
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getGpgpuCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();

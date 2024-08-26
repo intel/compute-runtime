@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -86,6 +87,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (heaplessEnabled) {
+        GTEST_SKIP();
+    }
+
     StreamProperties streamProperties{};
     streamProperties.initSupport(rootDeviceEnvironment);
     streamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::largeGrfNumber, 0u, PreemptionMode::Disabled);
