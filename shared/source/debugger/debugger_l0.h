@@ -29,6 +29,7 @@ struct StateSaveAreaHeader {
     union {
         struct SIP::intelgt_state_save_area regHeader;
         struct SIP::intelgt_state_save_area_V3 regHeaderV3;
+        uint64_t totalWmtpDataSize;
     };
 };
 

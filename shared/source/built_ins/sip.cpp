@@ -98,7 +98,9 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 
     auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
     size_t stateSaveAreaSize = 0;
-    if (hdr->versionHeader.version.major == 3) {
+    if (hdr->versionHeader.version.major == 4) {
+        stateSaveAreaSize = static_cast<size_t>(hdr->totalWmtpDataSize);
+    } else if (hdr->versionHeader.version.major == 3) {
         stateSaveAreaSize = numSlices *
                                 hdr->regHeaderV3.num_subslices_per_slice *
                                 hdr->regHeaderV3.num_eus_per_subslice *

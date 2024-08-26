@@ -24,6 +24,7 @@ bool called = false;
 bool returned = true;
 bool useMockSip = false;
 bool uninitializedSipRequested = false;
+uint64_t totalWmtpDataSize = 32 * MemoryConstants::megaByte;
 
 void clearUseFlags() {
     calledType = SipKernelType::count;
@@ -182,6 +183,20 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
     stateSaveAreaHeader3.versionHeader = versionHeader;
     stateSaveAreaHeader3.regHeaderV3 = regHeaderV3;
 
+    NEO::StateSaveAreaHeader stateSaveAreaHeader4 = {
+        {
+            // versionHeader
+            "tssarea", // magic
+            0,         // reserved1
+            {          // version
+             4,        // major
+             0,        // minor
+             0},       // patch
+            8,         // size
+            {0, 0, 0}, // reserved2
+        }};
+    stateSaveAreaHeader4.totalWmtpDataSize = totalWmtpDataSize;
+
     char *begin = nullptr;
     unsigned long sizeOfHeader = 0u;
     if (version == 1) {
@@ -201,6 +216,9 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
                                                         stateSaveAreaHeader3.regHeaderV3.num_threads_per_eu *
                                                         stateSaveAreaHeader3.regHeaderV3.state_save_size);
         sizeOfHeader = offsetof(NEO::StateSaveAreaHeader, regHeaderV3.msg) + sizeof(NEO::StateSaveAreaHeader::regHeaderV3.msg);
+    } else if (version == 4) {
+        begin = reinterpret_cast<char *>(&stateSaveAreaHeader4);
+        sizeOfHeader = offsetof(NEO::StateSaveAreaHeader, totalWmtpDataSize) + sizeof(stateSaveAreaHeader4.totalWmtpDataSize);
     }
 
     return std::vector<char>(begin, begin + sizeOfHeader);
