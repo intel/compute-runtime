@@ -84,6 +84,11 @@ class MockAubManager : public aub_stream::AubManager {
         return new MockHardwareContext(device);
     }
 
+    HardwareContext *createHardwareContext2(const aub_stream::CreateHardwareContext2Params &params, uint32_t device, uint32_t engine, uint32_t flags) override {
+        contextFlags = flags;
+        return new MockHardwareContext(device);
+    }
+
     bool releaseHardwareContext(HardwareContext *context) override {
         delete context;
         return true;
