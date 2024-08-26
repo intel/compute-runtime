@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,6 +204,8 @@ DEFINE_GET_SET(GTSystemInfo, 1, IsDynamicallyPopulated, bool);
 
 DEFINE_GET_SET(GTSystemInfo, 3, DualSubSliceCount, uint32_t);
 DEFINE_GET_SET(GTSystemInfo, 3, MaxDualSubSlicesSupported, uint32_t);
+
+DEFINE_GET_SET(GTSystemInfo, 4, SLMSizeInKb, uint32_t);
 
 #undef DEFINE_GET_SET
 
