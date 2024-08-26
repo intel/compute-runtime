@@ -19,8 +19,14 @@ using namespace NEO;
 
 using LnlProductHelperWindows = ProductHelperTest;
 
+LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenDcFlushMitigationThenReturnTrue) {
+    EXPECT_TRUE(productHelper->mitigateDcFlush());
+    EXPECT_TRUE(productHelper->isDcFlushMitigated());
+}
+
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(1);
 
     uint64_t expectedPatIndex = 6u;
     EXPECT_EQ(expectedPatIndex, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::bufferHostMemory));

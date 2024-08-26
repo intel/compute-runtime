@@ -1893,6 +1893,10 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     auto memoryManager = new MockMemoryManager(true, *executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
 
+    if (executionEnvironment->rootDeviceEnvironments[0]->getProductHelper().isDcFlushMitigated()) {
+        debugManager.flags.AllowDcFlush.set(1);
+    }
+
     MockClDevice device(new MockDevice(executionEnvironment, mockRootDeviceIndex));
     ASSERT_TRUE(device.createEngines());
     DeviceFactory::prepareDeviceEnvironments(*device.getExecutionEnvironment());
