@@ -17,6 +17,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -66,7 +67,17 @@ void RootDevice::initializeRootCommandStreamReceiver() {
 
     EngineDescriptor engineDescriptor(EngineTypeUsage{defaultEngineType, EngineUsage::regular}, getDeviceBitfield(), preemptionMode, true, false);
 
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    bool isPrimaryEngine = EngineHelpers::isCcs(defaultEngineType);
+    if (debugManager.flags.SecondaryContextEngineTypeMask.get() != -1) {
+        isPrimaryEngine &= (static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(defaultEngineType))) != 0;
+    }
+    const bool useContextGroup = isPrimaryEngine && gfxCoreHelper.areSecondaryContextsSupported();
+
     auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), engineDescriptor);
+
+    osContext->setContextGroup(useContextGroup);
+    osContext->setIsPrimaryEngine(isPrimaryEngine);
 
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeResources(false);
@@ -82,6 +93,20 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     EngineControl engine{commandStreamReceivers.back().get(), osContext};
     allEngines.push_back(engine);
     addEngineToEngineGroup(engine);
+
+    if (useContextGroup) {
+        auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
+        EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hwInfo);
+        auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType);
+
+        if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
+            highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
+        }
+        UNRECOVERABLE_IF(secondaryEngines.find(defaultEngineType) != secondaryEngines.end());
+        auto &secondaryEnginesForType = secondaryEngines[defaultEngineType];
+
+        createSecondaryContexts(engine, secondaryEnginesForType, contextCount, contextCount - highPriorityContextCount, highPriorityContextCount);
+    }
 }
 
 } // namespace NEO

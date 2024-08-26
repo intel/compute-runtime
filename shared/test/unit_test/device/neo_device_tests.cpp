@@ -1262,6 +1262,83 @@ HWTEST_F(DeviceTests, givenCCSEnginesAndContextGroupSizeEnabledWhenDeviceIsCreat
     EXPECT_NE(internalEngine.commandStreamReceiver, device->getSecondaryEngineCsr({aub_stream::EngineType::ENGINE_CCS, EngineUsage::internal}, false)->commandStreamReceiver);
 }
 
+HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhenDeviceIsCreatedThenSecondaryEnginesAreCreated) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestorer;
+    const uint32_t contextGroupSize = 8;
+    debugManager.flags.ContextGroupSize.set(contextGroupSize);
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &engineGroups = device->getRegularEngineGroups();
+
+    auto engineGroupType = EngineGroupType::compute;
+    size_t computeEnginesCount = 0;
+    for (const auto &engine : engineGroups) {
+        if (engine.engineGroupType == engineGroupType) {
+            computeEnginesCount = engine.engines.size();
+        }
+    }
+
+    if (computeEnginesCount == 0) {
+        GTEST_SKIP();
+    }
+
+    ASSERT_EQ(computeEnginesCount, device->secondaryEngines.size());
+    ASSERT_EQ(contextGroupSize, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
+
+    auto defaultEngine = device->getDefaultEngine();
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines[0].commandStreamReceiver);
+
+    const uint32_t regularContextCount = std::min(contextGroupSize / 2, 4u);
+
+    for (uint32_t ccsIndex = 0; ccsIndex < computeEnginesCount; ccsIndex++) {
+        auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
+
+        EXPECT_TRUE(secondaryEngines.engines[0].osContext->isPartOfContextGroup());
+        EXPECT_EQ(nullptr, secondaryEngines.engines[0].osContext->getPrimaryContext());
+
+        for (size_t i = 1; i < device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size(); i++) {
+            EXPECT_EQ(secondaryEngines.engines[0].osContext, secondaryEngines.engines[i].osContext->getPrimaryContext());
+            EXPECT_TRUE(secondaryEngines.engines[i].osContext->isPartOfContextGroup());
+        }
+
+        EXPECT_EQ(0u, secondaryEngines.regularCounter.load());
+        EXPECT_EQ(0u, secondaryEngines.highPriorityCounter.load());
+
+        EXPECT_EQ(regularContextCount, secondaryEngines.regularEnginesTotal);
+        EXPECT_EQ(contextGroupSize - regularContextCount, secondaryEngines.highPriorityEnginesTotal);
+
+        for (size_t contextId = 0; contextId < regularContextCount + 1; contextId++) {
+            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, false);
+            ASSERT_NE(nullptr, engine);
+
+            EXPECT_EQ(contextId + 1, secondaryEngines.regularCounter.load());
+            if (contextId == regularContextCount) {
+                EXPECT_EQ(&secondaryEngines.engines[0], engine);
+            }
+        }
+
+        for (size_t contextId = 0; contextId < contextGroupSize - regularContextCount + 1; contextId++) {
+            auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, false);
+            ASSERT_NE(nullptr, engine);
+
+            EXPECT_EQ(contextId + 1, secondaryEngines.highPriorityCounter.load());
+            if (contextId == contextGroupSize - regularContextCount) {
+                EXPECT_EQ(&secondaryEngines.engines[regularContextCount], engine);
+            }
+        }
+    }
+}
+
 HWTEST_F(DeviceTests, givenContextGroupSizeEnabledWhenMoreHpEnginesCreatedThenFreeEnginesAreAssignedUpToHalfOfContextGroup) {
     DebugManagerStateRestore dbgRestorer;
     const uint32_t contextGroupSize = 14;

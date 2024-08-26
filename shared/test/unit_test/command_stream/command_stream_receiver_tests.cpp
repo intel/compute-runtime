@@ -5782,7 +5782,7 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenMultipleSubDevicesAndContex
                           (numRegularEngines * device->getGfxCoreHelper().getContextGroupContextsCount()) +
                           (numHpEngines * device->getGfxCoreHelper().getContextGroupContextsCount());
 
-    osContextCount = osContextCount * 2 + 1;
+    osContextCount = osContextCount * 2 + 1 * device->getGfxCoreHelper().getContextGroupContextsCount();
 
     EXPECT_EQ(osContextCount, MemoryManager::maxOsContextCount);
 }

@@ -110,14 +110,17 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
             }
         }
 
+        uint32_t numRootContexts = hasRootCsr ? 1 : 0;
         uint32_t numSecondaryContexts = 0;
         if (gfxCoreHelper.getContextGroupContextsCount() > 0) {
             numSecondaryContexts += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
             numSecondaryContexts += numHpEngines * gfxCoreHelper.getContextGroupContextsCount();
             osContextCount -= (numRegularEngines + numHpEngines);
+
+            numRootContexts *= gfxCoreHelper.getContextGroupContextsCount();
         }
 
-        MemoryManager::maxOsContextCount += (numSecondaryContexts + osContextCount) * subDevicesCount + hasRootCsr;
+        MemoryManager::maxOsContextCount += (numSecondaryContexts + osContextCount) * subDevicesCount + numRootContexts;
 
         if (ccsCount > 1 && debugManager.flags.EngineInstancedSubDevices.get()) {
             MemoryManager::maxOsContextCount += ccsCount * subDevicesCount;
