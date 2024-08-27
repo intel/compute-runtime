@@ -76,11 +76,6 @@ bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isCopyBufferRectSplitSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQueue() const {
     return 0u;
 }

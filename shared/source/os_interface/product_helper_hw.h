@@ -94,7 +94,6 @@ class ProductHelperHw : public ProductHelper {
     bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override;
     bool isGrfNumReportedWithScm() const override;
     bool isThreadArbitrationPolicyReportedWithScm() const override;
-    bool isCopyBufferRectSplitSupported() const override;
     bool isFlatRingBufferSupported() const override;
     bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const override;
     bool isTimestampWaitSupportedForEvents() const override;
