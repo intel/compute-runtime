@@ -3030,6 +3030,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         return ret;
     }
 
+    for (uint32_t i = 0; i < numEvents; i++) {
+        auto event = Event::fromHandle(phEvents[i]);
+        if (event->isCounterBased()) {
+            appendWaitOnSingleEvent(event, nullptr, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+        }
+    }
+
     ze_group_count_t dispatchKernelArgs{numEvents / groupSizeX, 1u, 1u};
 
     auto dstValPtr = static_cast<uintptr_t>(dstPtrAllocationStruct.alloc->getGpuAddress());

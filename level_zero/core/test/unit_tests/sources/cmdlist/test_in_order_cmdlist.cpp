@@ -391,6 +391,92 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
     EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenRegularCmdListWhenAppendQueryKernelTimestampsCalledThenSynchronizeCounterBasedEvents, IsAtLeastXeHpCore) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(2, true);
+    events[0]->makeCounterBasedImplicitlyDisabled();
+
+    auto deviceMem = allocDeviceMem(128);
+
+    ze_event_handle_t queryEvents[2] = {events[0]->toHandle(), events[1]->toHandle()};
+
+    regularCmdList->appendQueryKernelTimestamps(2, queryEvents, deviceMem, nullptr, nullptr, 0, nullptr);
+
+    auto cmdStream = regularCmdList->getCmdContainer().getCommandStream();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, semaphores.size());
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphores[0]);
+
+    EXPECT_EQ(events[1]->getCompletionFieldGpuAddress(device), semaphoreCmd->getSemaphoreGraphicsAddress());
+
+    context->freeMem(deviceMem);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimestampThenEnsureItsCompletion, IsAtLeastXeHpCore) {
+    struct MyMockEvent : public L0::EventImp<uint64_t> {
+        using BaseClass = L0::EventImp<uint64_t>;
+
+        MyMockEvent(L0::EventPool *pool, L0::Device *device) : BaseClass::EventImp(0, device, false) {
+            this->eventPool = pool;
+
+            this->eventPoolAllocation = &pool->getAllocation();
+
+            this->totalEventSize = 128;
+            hostAddress = eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer();
+            this->csrs[0] = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+            this->maxKernelCount = 1;
+            this->maxPacketCount = 1;
+
+            this->kernelEventCompletionData = std::make_unique<KernelEventCompletionData<uint64_t>[]>(1);
+        }
+
+        uint32_t assignKernelEventCompletionDataCalled = 0;
+        uint32_t assignKernelEventCompletionDataFailCounter = 0;
+
+        void assignKernelEventCompletionData(void *address) override {
+            auto completionAddress = reinterpret_cast<uint64_t *>(getCompletionFieldHostAddress());
+            assignKernelEventCompletionDataCalled++;
+            if (assignKernelEventCompletionDataCalled <= assignKernelEventCompletionDataFailCounter) {
+                *completionAddress = Event::STATE_CLEARED;
+            } else {
+                *completionAddress = 0x123;
+            }
+
+            EventImp<uint64_t>::assignKernelEventCompletionData(address);
+        }
+    };
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto event = std::make_unique<MyMockEvent>(eventPool.get(), device);
+    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event->assignKernelEventCompletionDataFailCounter = 2;
+    event->setUsingContextEndOffset(true);
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+
+    *reinterpret_cast<uint64_t *>(event->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
+    event->getInOrderExecInfo()->setLastWaitedCounterValue(2);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());
+
+    ze_kernel_timestamp_result_t kernelTimestamps = {};
+
+    EXPECT_EQ(0u, event->assignKernelEventCompletionDataCalled);
+    event->queryKernelTimestamp(&kernelTimestamps);
+
+    EXPECT_EQ(event->assignKernelEventCompletionDataFailCounter + 1, event->assignKernelEventCompletionDataCalled);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInterruptableEventsWhenExecutingOnDifferentCsrThenAssignItToEventOnExecute, IsAtLeastXeHpCore) {
     auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
     auto cmdlistHandle = cmdList->toHandle();
