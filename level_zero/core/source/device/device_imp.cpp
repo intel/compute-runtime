@@ -1722,29 +1722,31 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         contextPriority = NEO::EngineUsage::lowPriority;
     }
 
-    if (contextPriority == NEO::EngineUsage::lowPriority) {
-        getCsrForLowPriority(csr, copyOnly);
-        return ZE_RESULT_SUCCESS;
-    }
-
     if (ordinal < numEngineGroups) {
+
+        if (contextPriority == NEO::EngineUsage::lowPriority) {
+            getCsrForLowPriority(csr, copyOnly);
+            return ZE_RESULT_SUCCESS;
+        }
+
         auto &engines = engineGroups[ordinal].engines;
         if (index >= engines.size()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         *csr = engines[index].commandStreamReceiver;
+
+        if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
+            if (getCsrForHighPriority(csr, copyOnly) != ZE_RESULT_SUCCESS) {
+                contextPriority = NEO::EngineUsage::regular;
+            }
+        }
+
     } else {
         auto subDeviceOrdinal = ordinal - numEngineGroups;
         if (index >= this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines.size()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
         *csr = this->subDeviceCopyEngineGroups[subDeviceOrdinal].engines[index].commandStreamReceiver;
-    }
-
-    if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
-        if (getCsrForHighPriority(csr, copyOnly) != ZE_RESULT_SUCCESS) {
-            contextPriority = NEO::EngineUsage::regular;
-        }
     }
 
     auto &osContext = (*csr)->getOsContext();

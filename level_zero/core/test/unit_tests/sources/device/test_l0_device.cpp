@@ -5049,13 +5049,21 @@ TEST_F(zeDeviceSystemBarrierTest, whenCallingSystemBarrierThenReturnErrorUnsuppo
 template <bool osLocalMemory, bool apiSupport, int32_t enablePartitionWalker, int32_t enableImplicitScaling>
 struct MultiSubDeviceFixture : public DeviceFixture {
     void setUp() {
+        setUp(nullptr);
+    }
+
+    void setUp(NEO::HardwareInfo *hwInfo) {
         debugManager.flags.CreateMultipleSubDevices.set(2);
         debugManager.flags.EnableWalkerPartition.set(enablePartitionWalker);
         debugManager.flags.EnableImplicitScaling.set(enableImplicitScaling);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, osLocalMemory);
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, apiSupport);
 
-        DeviceFixture::setUp();
+        if (hwInfo == nullptr) {
+            DeviceFixture::setUp();
+        } else {
+            DeviceFixture::setUpImpl(hwInfo);
+        }
 
         deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
         subDevice = neoDevice->getSubDevice(0);
@@ -5114,6 +5122,61 @@ TEST_F(MultiSubDeviceEnabledImplicitScalingTest, GivenEnabledImplicitScalingWhen
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
+}
+
+struct MultiSubDeviceWithContextGroupAndImplicitScalingTest : public MultiSubDeviceFixture<true, true, -1, 1>, public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(8);
+
+        hardwareInfo = *defaultHwInfo;
+        hardwareInfo.featureTable.ftrBcsInfo = 0b1111;
+        hardwareInfo.capabilityTable.blitterOperationsSupported = true;
+
+        MultiSubDeviceFixture<true, true, -1, 1>::setUp(&hardwareInfo);
+    }
+
+    void TearDown() override {
+        MultiSubDeviceFixture<true, true, -1, 1>::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+    HardwareInfo hardwareInfo;
+};
+
+HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingLowPriorityCsrForComputeEngineThenDefaultCsrReturned, IsAtLeastXeHpgCore) {
+    auto &defaultEngine = deviceImp->getActiveDevice()->getDefaultEngine();
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    EXPECT_ANY_THROW(deviceImp->getCsrForLowPriority(&csr, false));
+
+    auto ret = deviceImp->getCsrForOrdinalAndIndex(&csr, 0, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(defaultEngine.commandStreamReceiver, csr);
+}
+
+HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingLowPriorityCsrForCopyEngineThenRegularBcsIsReturned, IsAtLeastXeHpgCore) {
+    NEO::CommandStreamReceiver *csr = nullptr;
+    EXPECT_ANY_THROW(deviceImp->getCsrForLowPriority(&csr, true));
+    auto ordinal = deviceImp->getCopyEngineOrdinal();
+
+    auto ret = deviceImp->getCsrForOrdinalAndIndex(&csr, ordinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->getOsContext().isRegular());
+}
+
+HWTEST2_F(MultiSubDeviceWithContextGroupAndImplicitScalingTest, GivenRootDeviceWhenGettingHighPriorityCsrForCopyEngineThenRegularBcsIsReturned, IsAtLeastXeHpgCore) {
+
+    NEO::CommandStreamReceiver *csr = nullptr;
+    EXPECT_ANY_THROW(deviceImp->getCsrForLowPriority(&csr, true));
+    auto ordinal = deviceImp->getCopyEngineOrdinal();
+
+    auto ret = deviceImp->getCsrForOrdinalAndIndex(&csr, ordinal, 0, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->getOsContext().isRegular());
 }
 
 using DeviceSimpleTests = Test<DeviceFixture>;
