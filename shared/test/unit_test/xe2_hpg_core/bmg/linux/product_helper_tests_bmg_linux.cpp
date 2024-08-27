@@ -53,6 +53,10 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupportedThenFalseIsReturned) {
+    EXPECT_FALSE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}
+
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }

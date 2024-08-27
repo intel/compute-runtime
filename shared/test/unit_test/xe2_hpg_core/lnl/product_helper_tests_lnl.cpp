@@ -170,7 +170,3 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenGettingThreadEuRatioForScratch
     auto hwInfo = *defaultHwInfo;
     EXPECT_EQ(16u, productHelper->getThreadEuRatioForScratch(hwInfo));
 }
-
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}

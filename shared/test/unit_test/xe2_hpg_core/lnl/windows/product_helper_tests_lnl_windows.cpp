@@ -19,6 +19,10 @@ using namespace NEO;
 
 using LnlProductHelperWindows = ProductHelperTest;
 
+LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}
+
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
 
