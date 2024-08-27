@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <level_zero/ze_api.h>
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -23,6 +25,7 @@ extern const char *memcpyBytesWithPrintfTestKernelSrc;
 extern const char *openCLKernelsSource;
 
 extern const char *scratchKernelSrc;
+extern const char *scratchKernelBuildOptions;
 
 extern const char *printfKernelSource;
 
@@ -41,5 +44,10 @@ extern const char *importModuleSrcCircDep;
 extern const char *exportModuleSrcCircDep;
 extern const char *exportModuleSrc2CircDep;
 } // namespace DynamicLink
+
+void createScratchModuleKernel(ze_context_handle_t &context,
+                               ze_device_handle_t &device,
+                               ze_module_handle_t &module,
+                               ze_kernel_handle_t &kernel);
 
 } // namespace LevelZeroBlackBoxTests

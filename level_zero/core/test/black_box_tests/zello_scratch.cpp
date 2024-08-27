@@ -40,15 +40,15 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
         SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
     }
 
-    // Create two shared buffers
-    uint32_t arraySize = 32;
-    uint32_t vectorSize = 16;
-    uint32_t typeSize = sizeof(uint32_t);
-    uint32_t srcAdditionalMul = 3u;
+    uint32_t arraySize = 0;
+    uint32_t vectorSize = 0;
+    uint32_t srcAdditionalMul = 0;
 
-    uint32_t expectedMemorySize = arraySize * vectorSize * typeSize * 2;
-    uint32_t srcMemorySize = expectedMemorySize * srcAdditionalMul;
-    uint32_t idxMemorySize = arraySize * sizeof(uint32_t);
+    uint32_t expectedMemorySize = 0;
+    uint32_t srcMemorySize = 0;
+    uint32_t idxMemorySize = 0;
+
+    LevelZeroBlackBoxTests::prepareScratchTestValues(arraySize, vectorSize, expectedMemorySize, srcAdditionalMul, srcMemorySize, idxMemorySize);
 
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     if (allocFlagValue != 0) {
@@ -74,18 +74,7 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     memset(dstBuffer, 0, expectedMemorySize);
     memset(expectedMemory, 0, expectedMemorySize);
 
-    auto srcBufferLong = static_cast<uint64_t *>(srcBuffer);
-    auto expectedMemoryLong = static_cast<uint64_t *>(expectedMemory);
-
-    for (uint32_t i = 0; i < arraySize; ++i) {
-        static_cast<uint32_t *>(idxBuffer)[i] = 2;
-        for (uint32_t vecIdx = 0; vecIdx < vectorSize; ++vecIdx) {
-            for (uint32_t srcMulIdx = 0; srcMulIdx < srcAdditionalMul; ++srcMulIdx) {
-                srcBufferLong[(i * vectorSize * srcAdditionalMul) + srcMulIdx * vectorSize + vecIdx] = 1l;
-            }
-            expectedMemoryLong[i * vectorSize + vecIdx] = 2l;
-        }
-    }
+    LevelZeroBlackBoxTests::prepareScratchTestBuffers(srcBuffer, idxBuffer, expectedMemory, arraySize, vectorSize, expectedMemorySize, srcAdditionalMul);
 
     uint32_t groupSizeX = arraySize;
     uint32_t groupSizeY = 1u;
@@ -119,6 +108,11 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     // Validate
     outputValidationSuccessful = LevelZeroBlackBoxTests::validate(expectedMemory, dstBuffer, expectedMemorySize);
 
+    // Synchronize queue
+    if (!useImmediateCommandList) {
+        SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+    }
+
     // Cleanup
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
@@ -132,47 +126,6 @@ void executeGpuKernelAndValidate(ze_context_handle_t &context,
     if (!useImmediateCommandList) {
         SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     }
-}
-
-void createModuleKernel(ze_context_handle_t &context,
-                        ze_device_handle_t &device,
-                        ze_module_handle_t &module,
-                        ze_kernel_handle_t &kernel) {
-    std::string buildLog;
-    auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::scratchKernelSrc, "", buildLog);
-    LevelZeroBlackBoxTests::printBuildLog(buildLog);
-    SUCCESS_OR_TERMINATE((0 == spirV.size()));
-
-    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
-    ze_module_build_log_handle_t buildlog;
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = spirV.data();
-    moduleDesc.inputSize = spirV.size();
-    moduleDesc.pBuildFlags = "";
-
-    if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
-        size_t szLog = 0;
-        zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
-
-        char *strLog = (char *)malloc(szLog);
-        zeModuleBuildLogGetString(buildlog, &szLog, strLog);
-        LevelZeroBlackBoxTests::printBuildLog(strLog);
-
-        free(strLog);
-        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-        std::cerr << "\nZello Scratch Results validation FAILED. Module creation error."
-                  << std::endl;
-        SUCCESS_OR_TERMINATE_BOOL(false);
-    }
-    SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
-
-    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    kernelDesc.pKernelName = "scratch_kernel";
-    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
-
-    ze_kernel_properties_t kernelProperties{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
-    SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernelProperties));
-    std::cout << "Scratch size = " << std::dec << kernelProperties.spillMemSize << "\n";
 }
 
 int main(int argc, char *argv[]) {
@@ -195,7 +148,7 @@ int main(int argc, char *argv[]) {
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
-    createModuleKernel(context, device, module, kernel);
+    LevelZeroBlackBoxTests::createScratchModuleKernel(context, device, module, kernel);
 
     const std::string regularCaseName = "Regular Command List";
     const std::string immediateCaseName = "Immediate Command List";
