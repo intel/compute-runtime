@@ -312,11 +312,9 @@ HWTEST_F(ProductHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHw
 
 HWTEST_F(ProductHelperTest, givenDcFlushMitigationWhenOverridePatAndUsageForDcFlushMitigationThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
-    if (!productHelper->isDcFlushMitigated()) {
-        for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
-            auto allocationType = static_cast<AllocationType>(i);
-            EXPECT_FALSE(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType));
-        }
+    for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
+        auto allocationType = static_cast<AllocationType>(i);
+        EXPECT_FALSE(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType));
     }
     debugManager.flags.AllowDcFlush.set(0);
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
