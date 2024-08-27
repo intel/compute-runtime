@@ -19,6 +19,7 @@ namespace ult {
 
 template <>
 struct WhiteBox<::L0::DriverImp> : public ::L0::DriverImp {
+    using ::L0::DriverImp::gtPinInitializationStatus;
     using ::L0::DriverImp::pid;
 };
 
@@ -31,11 +32,12 @@ struct Mock<Driver> : public Driver {
 
     ze_result_t driverInit(ze_init_flags_t flag) override {
         initCalledCount++;
-
         if (initCalledCount == 1) {
             pid = NEO::SysCalls::getCurrentProcessId();
         }
-
+        if (driverInitCallBase) {
+            return DriverImp::driverInit(flag);
+        }
         if (failInitDriver) {
             return ZE_RESULT_ERROR_UNINITIALIZED;
         }
@@ -43,7 +45,11 @@ struct Mock<Driver> : public Driver {
     }
 
     void initialize(ze_result_t *result) override {
-
+        initializeCalledCount++;
+        if (initializeCallBase) {
+            DriverImp::initialize(result);
+            return;
+        }
         pid = NEO::SysCalls::getCurrentProcessId();
 
         if (failInitDriver) {
@@ -54,7 +60,10 @@ struct Mock<Driver> : public Driver {
 
     Driver *previousDriver = nullptr;
     uint32_t initCalledCount = 0;
+    uint32_t initializeCalledCount = 0;
     bool failInitDriver = false;
+    bool driverInitCallBase = false;
+    bool initializeCallBase = false;
 };
 
 } // namespace ult

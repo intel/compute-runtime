@@ -15,6 +15,7 @@ struct Driver {
     virtual void initialize(ze_result_t *result) = 0;
     static Driver *get() { return driver; }
     virtual ~Driver() = default;
+    virtual ze_result_t initGtpin() = 0;
 
     virtual unsigned int getPid() const = 0;
 

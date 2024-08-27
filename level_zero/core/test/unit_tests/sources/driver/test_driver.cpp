@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -1387,6 +1388,119 @@ TEST_F(DriverExperimentalApiTest, givenGetVersionStringAPIExistsThenGetCurrentVe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE("", driverVersionString);
     free(driverVersionString);
+}
+
+struct GtPinInitTest : public ::testing::Test {
+    void SetUp() override {
+        gtpinInitTimesCalled = 0u;
+        driver.driverInitCallBase = true;
+        driver.initializeCallBase = true;
+
+        uint32_t (*openPinHandler)(void *) = [](void *arg) -> uint32_t {
+            gtpinInitTimesCalled++;
+            uint32_t driverCount = 0;
+            ze_driver_handle_t driverHandle{};
+            auto result = zeDriverGet(&driverCount, nullptr);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+            EXPECT_EQ(1u, driverCount);
+            if (result != ZE_RESULT_SUCCESS || driverCount != 1) {
+                return 1;
+            }
+            result = zeDriverGet(&driverCount, &driverHandle);
+            EXPECT_EQ(1u, driverCount);
+            if (result != ZE_RESULT_SUCCESS || driverCount != 1) {
+                return 1;
+            }
+            EXPECT_EQ(globalDriverHandle, driverHandle);
+            if (globalDriverHandle != driverHandle) {
+                return 1;
+            }
+
+            return 0;
+        };
+        MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, false);
+
+        auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+
+        osLibrary->procMap["OpenGTPin"] = reinterpret_cast<void *>(openPinHandler);
+    }
+    void TearDown() override {
+        delete MockOsLibrary::loadLibraryNewObject;
+        delete globalDriverHandle;
+        gtpinInitTimesCalled = 0u;
+    }
+
+    Mock<Driver> driver;
+    static uint32_t gtpinInitTimesCalled;
+    VariableBackup<uint32_t> gtpinCounterBackup{&gtpinInitTimesCalled, 0};
+    VariableBackup<uint32_t> mockGetenvCalledBackup{&IoFunctions::mockGetenvCalled, 0};
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_INSTRUMENTATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup{&IoFunctions::mockableEnvValues, &mockableEnvs};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
+    VariableBackup<NEO::OsLibrary *> osLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
+    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle, nullptr};
+    VariableBackup<decltype(L0::globalDriver)> globalDriverBackup{&L0::globalDriver, nullptr};
+    VariableBackup<uint32_t> driverCountBackup{&driverCount};
+};
+uint32_t GtPinInitTest::gtpinInitTimesCalled = 0u;
+
+TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeInitMultipleTimesThenGtPinIsNotInitialized) {
+    EXPECT_EQ(Mock<Driver>::GtPinInitializationStatus::notNeeded, driver.gtPinInitializationStatus.load());
+    auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_EQ(Mock<Driver>::GtPinInitializationStatus::pending, driver.gtPinInitializationStatus.load());
+    driver.gtPinInitializationStatus = Mock<Driver>::GtPinInitializationStatus::notNeeded;
+    result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_EQ(Mock<Driver>::GtPinInitializationStatus::notNeeded, driver.gtPinInitializationStatus.load());
+}
+
+TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeDriverGetMultipleTimesThenGtPinIsInitializedOnlyOnce) {
+    auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    uint32_t driverCount = 0;
+    ze_driver_handle_t driverHandle{};
+    result = zeDriverGet(&driverCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    result = zeDriverGet(&driverCount, &driverHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    EXPECT_EQ(globalDriverHandle, driverHandle);
+
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(1u, gtpinInitTimesCalled);
+}
+
+TEST_F(GtPinInitTest, givenGtPinInitializationFailureWhenCallingZeDriverGetThenDependencyErrorIsReturnedEveryTime) {
+
+    uint32_t (*gtPinInit)(void *) = [](void *arg) -> uint32_t {
+        return 1;
+    };
+
+    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+    osLibrary->procMap["OpenGTPin"] = reinterpret_cast<void *>(gtPinInit);
+    auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    uint32_t driverCount = 0;
+    result = zeDriverGet(&driverCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
+
+    result = zeDriverGet(&driverCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
 }
 
 } // namespace ult
