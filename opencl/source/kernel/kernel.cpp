@@ -1701,9 +1701,12 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
 
         void *surfaceState = nullptr;
         if (isValidOffset(argAsImg.bindless)) {
-            auto &gfxCoreHelper = this->getGfxCoreHelper();
-            auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
-            surfaceState = ptrOffset(getSurfaceStateHeap(), surfaceStateSize * argIndex);
+            auto ssIndex = getSurfaceStateIndexForBindlessOffset(argAsImg.bindless);
+            if (ssIndex < std::numeric_limits<uint32_t>::max()) {
+                auto &gfxCoreHelper = this->getGfxCoreHelper();
+                auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+                surfaceState = ptrOffset(getSurfaceStateHeap(), ssIndex * surfaceStateSize);
+            }
         } else {
             DEBUG_BREAK_IF(isUndefinedOffset(argAsImg.bindful));
             surfaceState = ptrOffset(getSurfaceStateHeap(), argAsImg.bindful);

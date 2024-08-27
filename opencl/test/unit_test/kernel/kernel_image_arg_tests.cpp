@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
@@ -322,12 +323,13 @@ class KernelImageArgTestBindless : public KernelImageArgTest {
   public:
     void SetUp() override {
         debugManager.flags.UseBindlessMode.set(1);
-        debugManager.flags.UseBindlessMode.set(1);
         KernelImageArgTest::SetUp();
 
         auto &img = pKernelInfo->argAsImg(0);
         img.bindful = undefined<SurfaceStateHeapOffset>;
         img.bindless = bindlessOffset;
+
+        pKernelInfo->kernelDescriptor.initBindlessOffsetToSurfaceState();
     }
     void TearDown() override {
         KernelImageArgTest::TearDown();
@@ -345,4 +347,29 @@ HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArg
     pKernel->setArg(0, sizeof(memObj), &memObj);
 
     EXPECT_EQ(0xdeadu, *patchLocation);
+}
+
+HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArgThenSurfaceStateIsSet) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+
+    cl_mem memObj = image.get();
+    pKernel->setArg(0, sizeof(memObj), &memObj);
+
+    const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
+    const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    const auto ssIndex = pKernelInfo->kernelDescriptor.bindlessArgsMap.find(bindlessOffset)->second;
+    const auto ssOffset = ssIndex * surfaceStateSize;
+
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+        ptrOffset(pKernel->getSurfaceStateHeap(),
+                  ssOffset));
+    const auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
+
+    NEO::SurfaceOffsets surfaceOffsets;
+    image->getSurfaceOffsets(surfaceOffsets);
+    const auto expectedBaseAddress = image->getMultiGraphicsAllocation().getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset;
+
+    EXPECT_EQ(expectedBaseAddress, surfaceAddress);
 }
