@@ -79,6 +79,11 @@ bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCopyBufferRectSplitSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }

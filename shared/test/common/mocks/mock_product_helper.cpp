@@ -222,6 +222,11 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isInitBuiltinAsyncSupported(const HardwareIn
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isCopyBufferRectSplitSupported() const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
     return false;
 }

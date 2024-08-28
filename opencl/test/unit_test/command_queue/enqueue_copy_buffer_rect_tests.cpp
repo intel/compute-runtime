@@ -373,7 +373,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DTh
     // Verify GPGPU_WALKER parameters
     EXPECT_NE(0u, cmd->getThreadGroupIdXDimension());
     EXPECT_NE(0u, cmd->getThreadGroupIdYDimension());
-    EXPECT_LT(1u, cmd->getThreadGroupIdZDimension());
+    EXPECT_NE(0u, cmd->getThreadGroupIdZDimension());
     EXPECT_NE(0u, cmd->getRightExecutionMask());
     EXPECT_NE(0u, cmd->getBottomExecutionMask());
     EXPECT_EQ(GPGPU_WALKER::SIMD_SIZE_SIMD32, cmd->getSimdSize());

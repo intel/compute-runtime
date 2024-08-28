@@ -153,6 +153,7 @@ class ProductHelper {
     virtual bool isIpSamplingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGrfNumReportedWithScm() const = 0;
     virtual bool isThreadArbitrationPolicyReportedWithScm() const = 0;
+    virtual bool isCopyBufferRectSplitSupported() const = 0;
     virtual bool isCooperativeEngineSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isTimestampWaitSupportedForEvents() const = 0;
     virtual bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const = 0;
