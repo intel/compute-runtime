@@ -13,13 +13,16 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 #include <memory>
 #include <vector>
 
-struct _ze_kernel_handle_t {};
+struct _ze_kernel_handle_t {
+    const uint64_t objMagic = objMagicValue;
+};
 
 namespace NEO {
 class Device;

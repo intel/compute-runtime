@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -19,7 +20,9 @@
 
 static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
-struct _ze_device_handle_t {};
+struct _ze_device_handle_t {
+    const uint64_t objMagic = objMagicValue;
+};
 namespace NEO {
 class CommandStreamReceiver;
 class DebuggerL0;

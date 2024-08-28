@@ -13,7 +13,7 @@
 
 namespace L0 {
 ZE_APIEXPORT ze_result_t ZE_APICALL zeIntelMediaCommunicationCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_intel_media_communication_desc_t *desc, ze_intel_media_doorbell_handle_desc_t *phDoorbell) {
-    auto device = Device::fromHandle(hDevice);
+    auto device = Device::fromHandle(toInternalType(hDevice));
 
     if (!device || !desc || !phDoorbell) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -28,7 +28,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeIntelMediaCommunicationCreate(ze_context_h
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeIntelMediaCommunicationDestroy(ze_context_handle_t hContext, ze_device_handle_t hDevice, ze_intel_media_doorbell_handle_desc_t *phDoorbell) {
-    auto device = Device::fromHandle(hDevice);
+    auto device = Device::fromHandle(toInternalType(hDevice));
 
     if (!device || !phDoorbell) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

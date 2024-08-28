@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -15,6 +16,7 @@
 #include <vector>
 
 struct _ze_driver_handle_t {
+    const uint64_t objMagic = objMagicValue;
     virtual ~_ze_driver_handle_t() = default;
 };
 

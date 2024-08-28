@@ -7,9 +7,12 @@
 
 #pragma once
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
-struct _ze_image_handle_t {};
+struct _ze_image_handle_t {
+    const uint64_t objMagic = objMagicValue;
+};
 
 namespace NEO {
 struct ImageInfo;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,6 +7,7 @@
 target_sources(${L0_STATIC_LIB_NAME}
                PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/api_handle_helper.h
                ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config_l0.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0.h

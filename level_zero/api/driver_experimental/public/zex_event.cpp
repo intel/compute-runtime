@@ -20,7 +20,7 @@ namespace L0 {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address) {
-    auto eventObj = Event::fromHandle(event);
+    auto eventObj = Event::fromHandle(toInternalType(event));
 
     if (!eventObj || !completionValue || !address) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -58,7 +58,7 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         false,                             // ipcPool
     };
 
-    auto device = Device::fromHandle(hDevice);
+    auto device = Device::fromHandle(toInternalType(hDevice));
 
     if (!hDevice || !desc || !phEvent) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -85,7 +85,7 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
-    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
 
     if (!context) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -99,7 +99,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_handle_t hContext, uint32_t networkInterruptId) {
-    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(toInternalType(hContext)));
 
     if (!context || !context->getDriverHandle()->getMemoryManager()->releaseInterrupt(networkInterruptId, context->rootDeviceIndices[0])) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;

@@ -10,10 +10,12 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
 struct _ze_context_handle_t {
+    const uint64_t objMagic = objMagicValue;
     virtual ~_ze_context_handle_t() = default;
 };
 

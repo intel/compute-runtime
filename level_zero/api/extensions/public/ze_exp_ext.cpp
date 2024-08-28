@@ -191,13 +191,13 @@ ze_result_t ZE_APICALL zeMemGetPitchFor2dImage(
     size_t imageHeight,
     unsigned int elementSizeInBytes,
     size_t *rowPitch) {
-    return L0::Context::fromHandle(hContext)->getPitchFor2dImage(hDevice, imageWidth, imageHeight, elementSizeInBytes, rowPitch);
+    return L0::Context::fromHandle(toInternalType(hContext))->getPitchFor2dImage(toInternalType(hDevice), imageWidth, imageHeight, elementSizeInBytes, rowPitch);
 }
 
 ze_result_t ZE_APICALL zeImageGetDeviceOffsetExp(
     ze_image_handle_t hImage,
     uint64_t *pDeviceOffset) {
-    return L0::Image::fromHandle(hImage)->getDeviceOffset(pDeviceOffset);
+    return L0::Image::fromHandle(toInternalType(hImage))->getDeviceOffset(pDeviceOffset);
 }
 
 } // namespace L0

@@ -20,7 +20,7 @@ zexDeviceGetConcurrentMetricGroups(
     uint32_t *pConcurrentGroupCount,
     uint32_t *pCountPerConcurrentGroup) {
 
-    auto device = Device::fromHandle(hDevice);
+    auto device = Device::fromHandle(toInternalType(hDevice));
     return static_cast<MetricDeviceContext &>(device->getMetricDeviceContext()).getConcurrentMetricGroups(metricGroupCount, phMetricGroups, pConcurrentGroupCount, pCountPerConcurrentGroup);
 }
 

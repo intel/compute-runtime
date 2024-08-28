@@ -20,6 +20,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -28,7 +29,9 @@
 #include <unordered_map>
 #include <vector>
 
-struct _ze_command_list_handle_t {};
+struct _ze_command_list_handle_t {
+    const uint64_t objMagic = objMagicValue;
+};
 
 namespace NEO {
 class ScratchSpaceController;
