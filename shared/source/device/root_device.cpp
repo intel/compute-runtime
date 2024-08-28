@@ -97,7 +97,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     if (useContextGroup) {
         auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
         EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hwInfo);
-        auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType);
+        auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType, false);
 
         if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
             highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());

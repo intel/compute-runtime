@@ -732,7 +732,10 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupContextsCount() const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupHpContextsCount(EngineGroupType type) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const {
+    if (hpEngineAvailable) {
+        return 0;
+    }
     return std::min(getContextGroupContextsCount() / 2, 4u);
 }
 

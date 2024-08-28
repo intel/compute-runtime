@@ -1808,6 +1808,8 @@ TEST_F(GfxCoreHelperTest, givenContextGroupEnabledWithDebugKeyWhenContextGroupCo
     debugManager.flags.ContextGroupSize.set(2);
     EXPECT_EQ(2u, gfxCoreHelper.getContextGroupContextsCount());
     EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
+    EXPECT_EQ(1u, gfxCoreHelper.getContextGroupHpContextsCount(EngineGroupType::copy, false));
+    EXPECT_EQ(0u, gfxCoreHelper.getContextGroupHpContextsCount(EngineGroupType::copy, true));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenAskingIf48bResourceNeededForCmdBufferThenReturnTrue) {

@@ -365,6 +365,8 @@ bool Device::createEngines() {
 
     if (gfxCoreHelper.areSecondaryContextsSupported()) {
 
+        auto hpCopyEngine = getHpCopyEngine();
+
         for (auto engineGroupType : {EngineGroupType::compute, EngineGroupType::copy, EngineGroupType::linkedCopy}) {
             auto engineGroup = tryGetRegularEngineGroup(engineGroupType);
 
@@ -373,7 +375,13 @@ bool Device::createEngines() {
             }
 
             auto contextCount = gfxCoreHelper.getContextGroupContextsCount();
-            auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType);
+            bool hpEngineAvailable = false;
+
+            if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType)) {
+                hpEngineAvailable = hpCopyEngine != nullptr;
+            }
+
+            auto highPriorityContextCount = gfxCoreHelper.getContextGroupHpContextsCount(engineGroupType, hpEngineAvailable);
 
             if (debugManager.flags.OverrideNumHighPriorityContexts.get() != -1) {
                 highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
@@ -395,7 +403,6 @@ bool Device::createEngines() {
             }
         }
 
-        auto hpCopyEngine = getHpCopyEngine();
         if (hpCopyEngine) {
             auto engineType = hpCopyEngine->getEngineType();
             if ((static_cast<uint32_t>(debugManager.flags.SecondaryContextEngineTypeMask.get()) & (1 << static_cast<uint32_t>(engineType))) != 0) {

@@ -1736,9 +1736,7 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
         *csr = engines[index].commandStreamReceiver;
 
         if (copyOnly && contextPriority == NEO::EngineUsage::highPriority) {
-            if (getCsrForHighPriority(csr, copyOnly) != ZE_RESULT_SUCCESS) {
-                contextPriority = NEO::EngineUsage::regular;
-            }
+            getCsrForHighPriority(csr, copyOnly);
         }
 
     } else {

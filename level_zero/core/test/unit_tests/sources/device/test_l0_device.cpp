@@ -4762,14 +4762,19 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
         result = deviceImp.getCsrForOrdinalAndIndex(&highPriorityCsr, ordinal, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 
-        // When no HP copy engine, then regular engine is returned
-        NEO::CommandStreamReceiver *bcsEngine = nullptr;
+        // When no HP copy engine, then hp csr from group is returned
+        NEO::CommandStreamReceiver *bcsEngine = nullptr, *bcsEngine2 = nullptr;
         EXPECT_EQ(nullptr, neoMockDevice->getHpCopyEngine());
 
         result = deviceImp.getCsrForOrdinalAndIndex(&bcsEngine, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         ASSERT_NE(nullptr, bcsEngine);
-        EXPECT_TRUE(bcsEngine->getOsContext().isRegular());
+        EXPECT_TRUE(bcsEngine->getOsContext().isHighPriority());
+
+        result = deviceImp.getCsrForOrdinalAndIndex(&bcsEngine2, ordinalCopy, index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        ASSERT_EQ(bcsEngine2, bcsEngine->getPrimaryCsr());
+        EXPECT_TRUE(bcsEngine2->getOsContext().isRegular());
     }
 }
 
