@@ -1909,6 +1909,16 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWithFlagEnable64kbpage
     EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
 }
 
+TEST(OsAgnosticMemoryManager, givenStartAddressAndSizeWhenReservingCpuAddressThenPageAlignedAddressRangeIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto addressRange = memoryManager.reserveCpuAddress(0, 1234);
+    EXPECT_NE(0u, addressRange.address);
+    EXPECT_EQ(1234u, addressRange.size);
+    EXPECT_EQ(0u, addressRange.address & (MemoryConstants::pageSize - 1));
+    memoryManager.freeCpuAddress(addressRange);
+}
+
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
     MockExecutionEnvironment executionEnvironment{};
     MockMemoryManager memoryManager(false, true, executionEnvironment);

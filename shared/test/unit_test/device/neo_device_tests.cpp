@@ -530,6 +530,8 @@ TEST_F(DeviceGetCapsTest, givenFlagEnabled64kbPagesWhenCallConstructorMemoryMana
             return MemoryConstants::pageSize64k;
         }
         void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+        AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
+        void freeCpuAddress(AddressRange addressRange) override{};
         GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override { return nullptr; };
         GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override { return nullptr; };
         GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override { return nullptr; };

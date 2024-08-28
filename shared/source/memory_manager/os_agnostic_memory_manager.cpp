@@ -555,6 +555,14 @@ void OsAgnosticMemoryManager::releaseReservedCpuAddressRange(void *reserved, siz
     alignedFreeWrapper(reserved);
 }
 
+AddressRange OsAgnosticMemoryManager::reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) {
+    return {castToUint64(alignedMallocWrapper(size, MemoryConstants::pageSize)), size};
+}
+
+void OsAgnosticMemoryManager::freeCpuAddress(AddressRange addressRange) {
+    alignedFreeWrapper(reinterpret_cast<void *>(addressRange.address));
+}
+
 MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType allocationType, void *driverAllocatedCpuPointer,
                                                                   void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count,
                                                                   MemoryPool pool, uint32_t rootDeviceIndex, bool uncacheable,

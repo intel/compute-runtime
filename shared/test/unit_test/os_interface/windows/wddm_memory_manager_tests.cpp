@@ -1317,6 +1317,13 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReserv
     memoryManager->freeGpuAddress(addressRange, 0);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenCpuAddressIsReservedAndFreedThenAddressRangeIsNonZero) {
+    auto addressRange = memoryManager->reserveCpuAddress(0, 1234);
+    EXPECT_NE(0u, addressRange.address);
+    EXPECT_EQ(1234u, addressRange.size);
+    memoryManager->freeCpuAddress(addressRange);
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenAllocatingWithGpuVaThenNullptrIsReturned) {
     AllocationData allocationData;
 

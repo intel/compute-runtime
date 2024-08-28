@@ -48,6 +48,8 @@ class OsAgnosticMemoryManager : public MemoryManager {
     AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override;
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
+    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
+    void freeCpuAddress(AddressRange addressRange) override;
     bool is64kbPagesEnabled(const HardwareInfo *hwInfo);
 
   protected:

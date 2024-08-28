@@ -95,6 +95,7 @@ DrmMemoryManager::DrmMemoryManager(GemCloseWorkerMode mode,
         const auto heapIndex = customAlignment >= MemoryConstants::pageSize2M ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
         alignmentSelector.addCandidateAlignment(customAlignment, true, AlignmentSelector::anyWastage, heapIndex);
     }
+    osMemory = OSMemory::create();
 
     initialize(mode);
 }
@@ -1519,6 +1520,18 @@ AddressRange DrmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredSt
 
 void DrmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
     releaseGpuRange(reinterpret_cast<void *>(addressRange.address), addressRange.size, rootDeviceIndex);
+}
+
+AddressRange DrmMemoryManager::reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) {
+    void *ptr = osMemory->osReserveCpuAddressRange(reinterpret_cast<void *>(requiredStartAddress), size, false);
+    if (ptr == MAP_FAILED) {
+        ptr = nullptr;
+    }
+    return {castToUint64(ptr), size};
+}
+
+void DrmMemoryManager::freeCpuAddress(AddressRange addressRange) {
+    osMemory->osReleaseCpuAddressRange(reinterpret_cast<void *>(addressRange.address), addressRange.size);
 }
 
 std::unique_lock<std::mutex> DrmMemoryManager::acquireAllocLock() {

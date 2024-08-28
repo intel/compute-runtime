@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/os_memory.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 
 #include <d3dkmthk.h>
@@ -69,6 +70,8 @@ class WddmMemoryManager : public MemoryManager {
     AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override;
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
+    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
+    void freeCpuAddress(AddressRange addressRange) override;
     bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) override;
     bool isNTHandle(osHandle handle, uint32_t rootDeviceIndex) override;
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
@@ -117,6 +120,7 @@ class WddmMemoryManager : public MemoryManager {
     void adjustGpuPtrToHostAddressSpace(WddmAllocation &wddmAllocation, void *&requiredGpuVa);
     bool isStatelessAccessRequired(AllocationType type);
     AlignedMallocRestrictions mallocRestrictions;
+    std::unique_ptr<OSMemory> osMemory;
 
     Wddm &getWddm(uint32_t rootDeviceIndex) const;
 };
