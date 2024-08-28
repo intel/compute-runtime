@@ -106,13 +106,15 @@ HWTEST2_F(CommandListCreateNegativeStateBaseAddressTest,
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
+    auto sizeUsedBefore = csrStream.getUsed();
+
     ze_result_t returnValue;
     memoryManager->forceFailureInPrimaryAllocation = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandList);
 
-    EXPECT_EQ(0u, csrStream.getUsed());
+    EXPECT_EQ(sizeUsedBefore, csrStream.getUsed());
 }
 
 TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandListImmediateCreateThenAppropriateValueIsReturned) {

@@ -2813,6 +2813,8 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, ZE_COMMAND_LIST_FLAG_IN_ORDER);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
+    bool heapless = commandList->isHeaplessModeEnabled();
+
     auto &commandContainer = commandList->getCmdContainer();
     auto cmdStream = commandContainer.getCommandStream();
 
@@ -2848,24 +2850,26 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     auto eventCompletionAddress = event->getCompletionFieldGpuAddress(device);
 
-    ASSERT_EQ(2u, outCbEventCmds.size());
-
-    size_t expectedSdi = commandList->inOrderAtomicSignalingEnabled ? 1 : 2;
+    ASSERT_EQ(heapless ? 0u : 2u, outCbEventCmds.size());
+    size_t expectedSdi = heapless ? 0 : commandList->inOrderAtomicSignalingEnabled ? 1
+                                                                                   : 2;
 
     auto storeDataImmList = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedSdi, storeDataImmList.size());
     auto computeWalkerList = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, computeWalkerList.size());
     auto semaphoreWaitList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, semaphoreWaitList.size());
+    ASSERT_EQ(heapless ? 0u : 1u, semaphoreWaitList.size());
 
-    EXPECT_EQ(CommandToPatch::CbEventTimestampClearStoreDataImm, outCbEventCmds[0].type);
-    EXPECT_EQ(*storeDataImmList[0], outCbEventCmds[0].pDestination);
-    auto storeDataImmCmd = genCmdCast<MI_STORE_DATA_IMM *>(outCbEventCmds[0].pDestination);
-    ASSERT_NE(nullptr, storeDataImmCmd);
-    EXPECT_EQ(eventCompletionAddress, storeDataImmCmd->getAddress());
-
+    if (!heapless) {
+        EXPECT_EQ(CommandToPatch::CbEventTimestampClearStoreDataImm, outCbEventCmds[0].type);
+        EXPECT_EQ(*storeDataImmList[0], outCbEventCmds[0].pDestination);
+        auto storeDataImmCmd = genCmdCast<MI_STORE_DATA_IMM *>(outCbEventCmds[0].pDestination);
+        ASSERT_NE(nullptr, storeDataImmCmd);
+        EXPECT_EQ(eventCompletionAddress, storeDataImmCmd->getAddress());
+    }
     EXPECT_EQ(launchParams.outWalker, *computeWalkerList[0]);
+
     ASSERT_NE(nullptr, launchParams.outWalker);
     auto eventBaseAddress = event->getGpuAddress(device);
 
@@ -2880,11 +2884,14 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     },
                walkerVariant);
 
-    EXPECT_EQ(CommandToPatch::CbEventTimestampPostSyncSemaphoreWait, outCbEventCmds[1].type);
-    EXPECT_EQ(*semaphoreWaitList[0], outCbEventCmds[1].pDestination);
-    auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outCbEventCmds[1].pDestination);
-    ASSERT_NE(nullptr, semaphoreWaitCmd);
-    EXPECT_EQ(eventCompletionAddress, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+    if (!heapless) {
+
+        EXPECT_EQ(CommandToPatch::CbEventTimestampPostSyncSemaphoreWait, outCbEventCmds[1].type);
+        EXPECT_EQ(*semaphoreWaitList[0], outCbEventCmds[1].pDestination);
+        auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outCbEventCmds[1].pDestination);
+        ASSERT_NE(nullptr, semaphoreWaitCmd);
+        EXPECT_EQ(eventCompletionAddress, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
+    }
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel,
@@ -2994,7 +3001,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 HWTEST2_F(CommandListAppendLaunchKernel,
           givenCmdListParamHasWalkerCpuBufferWhenAppendingKernelThenCopiedWalkerHasTheSameContentAsInGfxMemory,
           IsAtLeastXeHpCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using WalkerVariant = typename FamilyType::WalkerVariant;
 
     Mock<::L0::KernelImp> kernel;
     auto mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -3003,15 +3010,16 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = commandList->initialize(device, NEO::EngineGroupType::compute, 0);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    bool heapless = commandList->isHeaplessModeEnabled();
 
     auto &commandContainer = commandList->getCmdContainer();
     auto cmdStream = commandContainer.getCommandStream();
 
-    auto walkerBuffer = std::make_unique<DefaultWalkerType>();
+    auto *walkerBuffer = NEO::UnitTestHelper<FamilyType>::getInitWalkerCmd(heapless);
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    launchParams.cmdWalkerBuffer = walkerBuffer.get();
+    launchParams.cmdWalkerBuffer = walkerBuffer;
     auto commandStreamOffset = cmdStream->getUsed();
     result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3025,8 +3033,13 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     auto computeWalkerList = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
     ASSERT_EQ(1u, computeWalkerList.size());
 
-    auto walkerGfxMemory = reinterpret_cast<DefaultWalkerType *>(*computeWalkerList[0]);
-    EXPECT_EQ(0, memcmp(walkerGfxMemory, launchParams.cmdWalkerBuffer, sizeof(DefaultWalkerType)));
+    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*computeWalkerList[0]);
+    std::visit([&launchParams, &walkerBuffer](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
+        EXPECT_EQ(0, memcmp(walker, launchParams.cmdWalkerBuffer, sizeof(WalkerType)));
+        delete static_cast<WalkerType *>(walkerBuffer);
+    },
+               walkerVariant);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel,

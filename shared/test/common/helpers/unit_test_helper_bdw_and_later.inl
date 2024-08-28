@@ -175,4 +175,10 @@ void UnitTestHelper<GfxFamily>::getSpaceAndInitWalkerCmd(LinearStream &stream, b
     *stream.getSpaceForCmd<GPGPU_WALKER>() = GfxFamily::template getInitGpuWalker<GPGPU_WALKER>();
 }
 
+template <typename GfxFamily>
+void *UnitTestHelper<GfxFamily>::getInitWalkerCmd(bool heapless) {
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+    return new GPGPU_WALKER;
+}
+
 } // namespace NEO

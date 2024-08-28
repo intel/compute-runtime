@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gen9/reg_configs.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/per_thread_data.h"
@@ -317,7 +318,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
 
     auto groupCountStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimX);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset - sizeof(INLINE_DATA));
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+
+    bool heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(heapless);
+
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset - inlineDataSize);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -327,7 +333,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
     groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimY);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset - sizeof(INLINE_DATA));
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset - inlineDataSize);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -337,7 +343,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
     groupCountStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimZ);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset - sizeof(INLINE_DATA));
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset - inlineDataSize);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -354,7 +360,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeXOffset - sizeof(INLINE_DATA));
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeXOffset - inlineDataSize);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -367,7 +373,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeYOffset - sizeof(INLINE_DATA));
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeYOffset - inlineDataSize);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -383,7 +389,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeZOffset - sizeof(INLINE_DATA));
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::indirectObject)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeZOffset - inlineDataSize);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());

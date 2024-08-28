@@ -120,7 +120,7 @@ struct UnitTestHelper {
     static std::vector<GenCmdList::iterator> findAllWalkerTypeCmds(GenCmdList::iterator begin, GenCmdList::iterator end);
     static typename GfxFamily::WalkerVariant getWalkerVariant(void *walkerItor);
     static void getSpaceAndInitWalkerCmd(LinearStream &stream, bool heapless);
-
+    static void *getInitWalkerCmd(bool heapless);
     static size_t getWalkerSize(bool isHeaplessEnabled);
 };
 

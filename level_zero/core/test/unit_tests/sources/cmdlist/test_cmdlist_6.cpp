@@ -112,6 +112,9 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+    if (commandListImmediate.isHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
 
@@ -235,6 +238,9 @@ HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListI
     ze_result_t returnValue;
     commandList.reset(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
+    if (commandListImmediate.isHeaplessStateInitEnabled()) {
+        GTEST_SKIP();
+    }
 
     auto &currentCsrStreamProperties = commandListImmediate.getCsr(false)->getStreamProperties();
     EXPECT_EQ(-1, currentCsrStreamProperties.stateComputeMode.isCoherencyRequired.value);
@@ -1269,6 +1275,10 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::surfaceState));
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    if (ultCsr.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
     auto &csrStream = ultCsr.commandStream;
 
     const ze_group_count_t groupCount{1, 1, 1};

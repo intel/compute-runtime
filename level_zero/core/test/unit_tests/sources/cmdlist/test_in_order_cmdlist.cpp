@@ -7725,9 +7725,15 @@ HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAlloc
 
     auto eventPool = createEvents<FamilyType>(1, false);
 
-    auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
-    auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
-    *hostAddress = 2;
+    if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+        uint64_t *hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress();
+        *hostAddress = 2;
+    } else {
+        auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+        auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
+        *hostAddress = 2;
+    }
+
     *mainQueueCsr->getTagAddress() = 2;
     *offloadCsr->getTagAddress() = 2;
 

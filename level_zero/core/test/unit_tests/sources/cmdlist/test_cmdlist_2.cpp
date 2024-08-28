@@ -1997,7 +1997,11 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
-    EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+    if (ultCsr->heaplessStateInitialized) {
+        EXPECT_NE(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+    } else {
+        EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+    }
 
     size_t queueUsedSize = cmdQueueStream.getUsed();
     auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;
@@ -2039,7 +2043,12 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &cmdQueueStream = commandQueue->commandStream;
-    EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    if (ultCsr->heaplessStateInitialized) {
+        EXPECT_NE(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+    } else {
+        EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+    }
 
     size_t queueUsedSize = cmdQueueStream.getUsed();
     auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;

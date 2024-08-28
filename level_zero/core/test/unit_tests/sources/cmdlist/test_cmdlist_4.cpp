@@ -1437,6 +1437,9 @@ HWTEST2_F(ImmediateCmdListSharedHeapsImmediateFlushTaskTest,
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (ultCsr.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     auto &csrStream = ultCsr.commandStream;
 
     size_t csrUsedBefore = csrStream.getUsed();
