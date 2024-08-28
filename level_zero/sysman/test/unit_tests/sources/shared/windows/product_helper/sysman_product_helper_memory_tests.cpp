@@ -143,7 +143,7 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
         ze_result_t result = zesMemoryGetBandwidth(handle, &bandwidth);
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(mockMemoryMaxBandwidth * MemoryConstants::megaByte));
+        EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(mockMemoryMaxBandwidth * MemoryConstants::megaByte * 100));
         EXPECT_EQ(bandwidth.readCounter, mockMemoryCurrentBandwidthRead);
         EXPECT_EQ(bandwidth.writeCounter, mockMemoryCurrentBandwidthWrite);
         EXPECT_EQ(bandwidth.timestamp, mockMemoryBandwidthTimestamp);
