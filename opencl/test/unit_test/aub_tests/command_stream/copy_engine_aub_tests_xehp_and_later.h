@@ -403,7 +403,7 @@ void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenSrcCompressedBuffer
 template <uint32_t numTiles, bool testLocalMemory>
 template <typename FamilyType>
 void CopyEngineXeHPAndLater<numTiles, testLocalMemory>::givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompressImpl() {
-    if (this->context->getDevice(0u)->areSharedSystemAllocationsAllowed() || !compressionSupported()) {
+    if (this->context->getDevice(0u)->areSharedSystemAllocationsAllowed() || !compressionSupported() || this->context->getDevice(0u)->getProductHelper().isDcFlushMitigated()) {
         // no support for scenarios where stateless is mixed with blitter compression
         GTEST_SKIP();
     }

@@ -469,7 +469,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCal
     EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+    EXPECT_EQ(!zeroCopyBuffer && !pCmdQ->getDevice().getProductHelper().isDcFlushMitigated(), containsHint(expectedHint, userData));
 
     alignedFree(address);
     delete buffer;
@@ -499,7 +499,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnque
     EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer.get()));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+    EXPECT_EQ(!zeroCopyBuffer && !pCmdQ->getDevice().getProductHelper().isDcFlushMitigated(), containsHint(expectedHint, userData));
 
     alignedFree(address);
 }
@@ -597,7 +597,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
     pCmdQ->enqueueUnmapMemObject(buffer, mapPtr, 0, nullptr, nullptr);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buffer));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+    EXPECT_EQ(!zeroCopyBuffer && !pCmdQ->getDevice().getProductHelper().isDcFlushMitigated(), containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
     EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
@@ -629,7 +629,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyAndBlockedEventFlagWhenEnqueu
     EXPECT_FALSE(pCmdQ->isQueueBlocked());
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buffer.get()));
-    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+    EXPECT_EQ(!zeroCopyBuffer && !pCmdQ->getDevice().getProductHelper().isDcFlushMitigated(), containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
     EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
