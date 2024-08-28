@@ -117,7 +117,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else if (this->heaplessStateInitEnabled) {
         ctx.globalInit = false;
-        ret = this->executeCommandListsRegularHeapless(ctx, numCommandLists, phCommandLists, hFence, nullptr, 0, nullptr);
+        ret = this->executeCommandListsRegularHeapless(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else {
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     }
@@ -135,13 +135,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     uint32_t numCommandLists,
     ze_command_list_handle_t *commandListHandles,
     ze_fence_handle_t hFence,
-    ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
+    NEO::LinearStream *parentImmediateCommandlistLinearStream) {
 
     auto neoDevice = this->device->getNEODevice();
     this->csr->initializeDeviceWithFirstSubmission(*neoDevice);
 
-    this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence, nullptr);
+    this->setupCmdListsAndContextParams(ctx, commandListHandles, numCommandLists, hFence, parentImmediateCommandlistLinearStream);
     ctx.isDirectSubmissionEnabled = this->csr->isDirectSubmissionEnabled();
     bool instructionCacheFlushRequired = this->csr->isInstructionCacheFlushRequired();
     bool stateCacheFlushRequired = neoDevice->getBindlessHeapsHelper() ? neoDevice->getBindlessHeapsHelper()->getStateDirtyForContext(this->csr->getOsContext().getContextId()) : false;
@@ -164,6 +163,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
         return ret;
     }
 
+    NEO::LinearStream *streamForDispatch = parentImmediateCommandlistLinearStream ? parentImmediateCommandlistLinearStream : &child;
+
     this->getGlobalFenceAndMakeItResident();
     this->getWorkPartitionAndMakeItResident();
     this->getGlobalStatelessHeapAndMakeItResident(ctx);
@@ -176,22 +177,22 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     this->makeCsrTagAllocationResident();
 
     if (instructionCacheFlushRequired) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(child);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(*streamForDispatch);
         this->csr->setInstructionCacheFlushed();
     }
 
     if (stateCacheFlushRequired) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(child, neoDevice->getRootDeviceEnvironment());
+        NEO::MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(*streamForDispatch, neoDevice->getRootDeviceEnvironment());
         neoDevice->getBindlessHeapsHelper()->clearStateDirtyForContext(this->csr->getOsContext().getContextId());
     }
 
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(commandListHandles[i]);
 
-        ctx.childGpuAddressPositionBeforeDynamicPreamble = child.getCurrentGpuAddressPosition();
+        ctx.childGpuAddressPositionBeforeDynamicPreamble = (*streamForDispatch).getCurrentGpuAddressPosition();
 
         this->patchCommands(*commandList, ctx);
-        this->programOneCmdListBatchBufferStart(commandList, child, ctx);
+        this->programOneCmdListBatchBufferStart(commandList, *streamForDispatch, ctx);
 
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
         if (commandList->hasKernelWithAssert()) {
@@ -202,18 +203,29 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     }
 
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
-    this->programLastCommandListReturnBbStart(child, ctx);
+    this->programLastCommandListReturnBbStart(*streamForDispatch, ctx);
     this->assignCsrTaskCountToFenceIfAvailable(hFence);
-    this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, child);
+    this->dispatchTaskCountPostSyncRegular(ctx.isDispatchTaskCountPostSyncRequired, *streamForDispatch);
 
-    auto submitResult = this->prepareAndSubmitBatchBuffer(ctx, child);
+    auto submitResult = NEO::SubmissionStatus::failed;
+    if (parentImmediateCommandlistLinearStream) {
+        submitResult = NEO::SubmissionStatus::success;
+    } else {
+        submitResult = this->prepareAndSubmitBatchBuffer(ctx, *streamForDispatch);
+    }
+
     this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
     this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
 
-    auto completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+    auto completionResult = ZE_RESULT_SUCCESS;
+    if (!parentImmediateCommandlistLinearStream) {
+        completionResult = this->waitForCommandQueueCompletionAndCleanHeapContainer();
+    }
     ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
 
-    this->csr->getResidencyAllocations().clear();
+    if (!parentImmediateCommandlistLinearStream) {
+        this->csr->getResidencyAllocations().clear();
+    }
     return retVal;
 }
 
