@@ -4169,5 +4169,37 @@ TEST_F(BindlessKernelTest, givenBindlessKernelWithInlineSamplersWhenPatchingSamp
     EXPECT_EQ(patchValue2, crossThreadData[6]);
 }
 
+using KernelSyncBufferTest = Test<ModuleFixture>;
+
+TEST_F(KernelSyncBufferTest, GivenSyncBufferArgWhenPatchingSyncBufferThenPtrIsCorrectlyPatchedInCrossThreadData) {
+    Mock<KernelImp> kernel;
+    neoDevice->incRefInternal();
+
+    Mock<Module> mockModule(device, nullptr);
+    kernel.module = &mockModule;
+
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(64);
+    kernel.crossThreadDataSize = 64;
+
+    auto &syncBuffer = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress;
+    syncBuffer.stateless = 0x8;
+    syncBuffer.pointerSize = 8;
+
+    NEO::MockGraphicsAllocation alloc;
+    alloc.setGpuPtr(0xffff800300060000);
+    alloc.setGpuBaseAddress(0xffff800300000000);
+    alloc.allocationOffset = 0x0;
+
+    size_t bufferOffset = 0u;
+
+    kernel.patchSyncBuffer(&alloc, bufferOffset);
+
+    auto patchValue = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), syncBuffer.stateless));
+    auto expectedPatchValue = ptrOffset(alloc.getGpuAddress(), bufferOffset);
+    EXPECT_EQ(expectedPatchValue, patchValue);
+
+    neoDevice->decRefInternal();
+}
+
 } // namespace ult
 } // namespace L0
