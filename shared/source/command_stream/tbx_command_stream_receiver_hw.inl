@@ -576,18 +576,31 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWait) {
-    TaskCountType taskCountToWait = this->latestFlushedTaskCount;
-
+void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWait, TaskCountType taskCount) {
     volatile TagAddressType *pollAddress = this->getTagAddress();
+    constexpr uint64_t timeoutMs = 1000 * 2; // 2s
+
+    auto waitTaskCount = std::min(taskCount, this->latestFlushedTaskCount.load());
 
     for (uint32_t i = 0; i < this->activePartitions; i++) {
-        while (*pollAddress < taskCountToWait) {
-            if (!blockingWait) {
-                return;
-            }
+        if (*pollAddress < waitTaskCount) {
             this->downloadAllocation(*this->getTagAllocation());
+
+            auto startTime = std::chrono::high_resolution_clock::now();
+            uint64_t timeDiff = 0;
+
+            while (*pollAddress < waitTaskCount) {
+                if (!blockingWait) {
+                    // Additional delay to reach PC in case of Event wait
+                    timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
+                    if (timeDiff > timeoutMs) {
+                        return;
+                    }
+                }
+                this->downloadAllocation(*this->getTagAllocation());
+            }
         }
+
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncWriteOffset);
     }
     auto lockCSR = this->obtainUniqueOwnership();
@@ -598,7 +611,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWai
         this->downloadAllocation(*graphicsAllocation);
 
         // Used again while waiting for completion. Another download will be needed.
-        if (graphicsAllocation->getTaskCount(this->osContext->getContextId()) > taskCountToWait) {
+        if (graphicsAllocation->getTaskCount(this->osContext->getContextId()) > taskCount) {
             notReadyAllocations.push_back(graphicsAllocation);
         }
     }

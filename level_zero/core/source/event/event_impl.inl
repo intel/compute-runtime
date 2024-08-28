@@ -251,28 +251,38 @@ ze_result_t EventImp<TagSizeT>::queryCounterBasedEventStatus() {
 }
 
 template <typename TagSizeT>
+TaskCountType EventImp<TagSizeT>::getTaskCount(const NEO::CommandStreamReceiver &csr) const {
+    auto contextId = csr.getOsContext().getContextId();
+
+    TaskCountType taskCount = getPoolAllocation(this->device) ? getPoolAllocation(this->device)->getTaskCount(contextId) : 0;
+
+    if (inOrderExecInfo) {
+        if (inOrderExecInfo->getDeviceCounterAllocation()) {
+            taskCount = std::max(taskCount, inOrderExecInfo->getDeviceCounterAllocation()->getTaskCount(contextId));
+        } else {
+            DEBUG_BREAK_IF(true); // external allocation - not able to download
+        }
+    }
+
+    return taskCount;
+}
+
+template <typename TagSizeT>
 void EventImp<TagSizeT>::downloadAllTbxAllocations() {
     for (auto &csr : csrs) {
-        csr->downloadAllocations(true);
+        auto taskCount = getTaskCount(*csr);
+        if (taskCount == NEO::GraphicsAllocation::objectNotUsed) {
+            taskCount = csr->peekLatestFlushedTaskCount();
+        }
+        csr->downloadAllocations(true, taskCount);
     }
 
     for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
         for (auto const &engine : subDevice->getAllEngines()) {
-            auto osContextId = engine.commandStreamReceiver->getOsContext().getContextId();
+            auto taskCount = getTaskCount(*engine.commandStreamReceiver);
 
-            auto poolAllocation = getPoolAllocation(this->device);
-            bool isUsed = (poolAllocation && poolAllocation->isUsedByOsContext(osContextId));
-
-            if (inOrderExecInfo) {
-                if (inOrderExecInfo->getDeviceCounterAllocation()) {
-                    isUsed |= inOrderExecInfo->getDeviceCounterAllocation()->isUsedByOsContext(osContextId);
-                } else {
-                    DEBUG_BREAK_IF(true); // external allocation - not able to download
-                }
-            }
-
-            if (isUsed) {
-                engine.commandStreamReceiver->downloadAllocations(false);
+            if (taskCount != NEO::GraphicsAllocation::objectNotUsed) {
+                engine.commandStreamReceiver->downloadAllocations(false, taskCount);
             }
         }
     }

@@ -4399,11 +4399,11 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
 
     event1->hostSynchronize(1);
 
-    EXPECT_EQ(1u, ultCsr0->downloadAllocationsCalledCount);
+    EXPECT_EQ(2u, ultCsr0->downloadAllocationsCalledCount);
     EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
 
-    EXPECT_EQ(2u, ultCsr1->downloadAllocationsCalledCount);
-    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+    EXPECT_EQ(3u, ultCsr1->downloadAllocationsCalledCount);
+    EXPECT_FALSE(ultCsr1->latestDownloadAllocationsBlocking);
 
     event0->destroy();
     event1->destroy();

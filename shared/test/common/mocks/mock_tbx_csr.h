@@ -79,6 +79,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
 
 template <typename GfxFamily>
 struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxFamily> {
+    using CommandStreamReceiver::downloadAllocationImpl;
+    using CommandStreamReceiver::downloadAllocations;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::tagsMultiAllocation;
     using TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations;

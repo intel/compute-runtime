@@ -64,6 +64,7 @@ struct EventImp : public Event {
     bool handlePreQueryStatusOperationsAndCheckCompletion();
     bool tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
     void tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation);
+    TaskCountType getTaskCount(const NEO::CommandStreamReceiver &csr) const;
 
     ze_result_t calculateProfilingData();
     ze_result_t queryStatusEventPackets();

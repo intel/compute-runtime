@@ -28,6 +28,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::aubManager;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::hardwareContextController;
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::writeMemory;
+    using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::downloadAllocations;
 
   public:
     uint32_t getMemoryBank(GraphicsAllocation *allocation) const {

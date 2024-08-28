@@ -273,7 +273,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
-    void downloadAllocations(bool blockingWait) override {
+    void downloadAllocations(bool blockingWait, TaskCountType taskCount) override {
         downloadAllocationsCalledCount++;
         latestDownloadAllocationsBlocking = blockingWait;
     }

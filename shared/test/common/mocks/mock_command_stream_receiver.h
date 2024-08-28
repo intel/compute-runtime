@@ -177,7 +177,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         return commandStreamReceiverType;
     }
 
-    void downloadAllocations(bool blockingWait) override {
+    void downloadAllocations(bool blockingWait, TaskCountType taskCount) override {
         downloadAllocationsCalledCount++;
     }
 
