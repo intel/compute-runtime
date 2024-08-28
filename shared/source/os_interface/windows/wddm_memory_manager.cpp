@@ -720,7 +720,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     auto &registeredEngines = getRegisteredEngines(gfxAllocation->getRootDeviceIndex());
     for (auto &engine : registeredEngines) {
         auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
-        auto lock = residencyController.acquireLock();
+        auto lock = residencyController.acquireTrimCallbackLock();
         auto &evictContainer = engine.commandStreamReceiver->getEvictionAllocations();
         auto iter = std::find(evictContainer.begin(), evictContainer.end(), gfxAllocation);
         if (iter != evictContainer.end()) {
