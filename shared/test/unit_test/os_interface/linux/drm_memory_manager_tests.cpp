@@ -7385,6 +7385,28 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBuf
     EXPECT_FALSE(ret);
 }
 
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectFailsThenReturnFalseTestErrorDescription) {
+    mock->ioctlExpected.gemMmapOffset = 2;
+    BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);
+    mock->failOnMmapOffset = true;
+
+    // To set the error value used to create the debug string in retrieveMmapOffsetForBufferObject()
+    mock->errnoValue = -2;
+
+    uint64_t offset = 0;
+    auto ret = memoryManager->retrieveMmapOffsetForBufferObject(rootDeviceIndex, bo, 0, offset);
+
+    const char *systemErrorDescription = nullptr;
+    executionEnvironment->getErrorDescription(&systemErrorDescription);
+
+    char expectedErrorDescription[256];
+    snprintf(expectedErrorDescription, 256, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", -1, mock->getErrno(), strerror(mock->getErrno()));
+
+    EXPECT_STREQ(expectedErrorDescription, systemErrorDescription);
+
+    EXPECT_FALSE(ret);
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmWhenRetrieveMmapOffsetForBufferObjectIsCalledForLocalMemoryThenApplyCorrectFlags) {
     mock->ioctlExpected.gemMmapOffset = 5;
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);

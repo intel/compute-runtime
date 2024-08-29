@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
@@ -27,6 +28,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/utilities/logger.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -403,8 +405,12 @@ bool IoctlHelperPrelim20::setVmBoAdviseForChunking(int32_t handle, uint64_t star
     int ret = IoctlHelper::ioctl(DrmIoctl::gemVmAdvise, &vmAdvise);
     if (ret != 0) {
         int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
+
         return false;
     }
     return true;
@@ -422,8 +428,12 @@ bool IoctlHelperPrelim20::setVmBoAdvise(int32_t handle, uint32_t attribute, void
     int ret = IoctlHelper::ioctl(DrmIoctl::gemVmAdvise, &vmAdvise);
     if (ret != 0) {
         int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
+
         return false;
     }
     return true;
@@ -440,8 +450,12 @@ bool IoctlHelperPrelim20::setVmPrefetch(uint64_t start, uint64_t length, uint32_
     int ret = IoctlHelper::ioctl(DrmIoctl::gemVmPrefetch, &vmPrefetch);
     if (ret != 0) {
         int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_PREFETCH) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_I915_GEM_VM_PREFETCH) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
+
         return false;
     }
     return true;
@@ -1090,7 +1104,13 @@ uint32_t IoctlHelperPrelim20::registerIsaCookie(uint32_t isaHandle) {
     const auto result = registerUuid(uuid, isaHandle, 0, 0);
 
     PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_UUID_REGISTER: isa handle = %lu, uuid = %s, data = %p, handle = %lu, ret = %d\n", isaHandle, std::string(uuid, 36).c_str(), 0, result.handle, result.retVal);
-    DEBUG_BREAK_IF(result.retVal != 0);
+    if (result.retVal != 0) {
+        int err = errno;
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_IOCTL_I915_UUID_REGISTER) failed with %d. errno=%d(%s)\n", result.retVal, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        DEBUG_BREAK_IF(true);
+    }
 
     return result.handle;
 }
@@ -1098,7 +1118,13 @@ uint32_t IoctlHelperPrelim20::registerIsaCookie(uint32_t isaHandle) {
 void IoctlHelperPrelim20::unregisterResource(uint32_t handle) {
     PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER: handle = %lu\n", handle);
     [[maybe_unused]] const auto ret = unregisterUuid(handle);
-    DEBUG_BREAK_IF(ret != 0);
+    if (ret != 0) {
+        int err = errno;
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        DEBUG_BREAK_IF(true);
+    }
 }
 
 std::string IoctlHelperPrelim20::generateUUID() {
@@ -1149,7 +1175,14 @@ uint32_t IoctlHelperPrelim20::registerResource(DrmResourceClass classType, const
     const auto result = registerUuid(uuid, uuidClass, ptr, size);
 
     PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_UUID_REGISTER: classType = %d, uuid = %s, data = %p, handle = %lu, ret = %d\n", (int)classType, std::string(uuid, 36).c_str(), ptr, result.handle, result.retVal);
-    DEBUG_BREAK_IF(result.retVal != 0);
+
+    if (result.retVal != 0) {
+        int err = errno;
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRELIM_DRM_IOCTL_I915_UUID_REGISTER) failed with %d. errno=%d(%s)\n", result.retVal, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        DEBUG_BREAK_IF(true);
+    }
 
     return result.handle;
 }

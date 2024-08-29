@@ -280,6 +280,14 @@ TEST_F(DrmMemoryManagerUsmSharedHandleTest, givenMultiRootDeviceEnvironmentAndMe
 
     auto ptr = memoryManager->createUSMHostAllocationFromSharedHandle(1, properties, nullptr, true);
 
+    const char *systemErrorDescription = nullptr;
+    executionEnvironment->getErrorDescription(&systemErrorDescription);
+
+    char expectedErrorDescription[256];
+    snprintf(expectedErrorDescription, 256, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", mock->fdToHandleRetVal, mock->getErrno(), strerror(mock->getErrno()));
+
+    EXPECT_FALSE(strncmp(expectedErrorDescription, systemErrorDescription, 256));
+
     EXPECT_EQ(ptr, nullptr);
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);

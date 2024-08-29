@@ -2243,8 +2243,12 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
     }
     if (ret != 0) {
         int err = drm.getErrno();
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        DEBUG_BREAK_IF(ret != 0);
+
+        CREATE_DEBUG_STRING(str, "ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        DEBUG_BREAK_IF(true);
+
         return false;
     }
 
@@ -2615,8 +2619,12 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto ret = ioctlHelper->ioctl(DrmIoctl::primeFdToHandle, &openFd);
     if (ret != 0) {
         int err = drm.getErrno();
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        DEBUG_BREAK_IF(ret != 0);
+
+        CREATE_DEBUG_STRING(str, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm.getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+        DEBUG_BREAK_IF(true);
+
         return nullptr;
     }
 

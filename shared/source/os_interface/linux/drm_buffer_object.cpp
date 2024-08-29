@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -129,8 +130,12 @@ bool BufferObject::close() {
     int ret = ioctlHelper->ioctl(DrmIoctl::gemClose, &close);
     if (ret != 0) {
         int err = errno;
-        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+
+        CREATE_DEBUG_STRING(str, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        drm->getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
         DEBUG_BREAK_IF(true);
+
         return false;
     }
 

@@ -102,6 +102,40 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegiste
     EXPECT_EQ(ioctlHelper->classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
 }
 
+TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithoutDataThenRegisterUUIDIoctlReturnsWithError) {
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
+
+    const auto result = ioctlHelper->registerResourceClasses();
+    EXPECT_TRUE(result);
+
+    const auto handle = drm.context.uuidHandle;
+
+    // To induce the error at IoctlHelperPrelim20::registerUuid()
+    drm.context.uuidControlReturn = -2;
+
+    auto registeredHandle = ioctlHelper->registerResource(DrmResourceClass::isa, nullptr, 0);
+
+    const char *systemErrorDescription = nullptr;
+    executionEnvironment->getErrorDescription(&systemErrorDescription);
+
+    char expectedErrorDescription[256];
+    snprintf(expectedErrorDescription, 256, "ioctl(PRELIM_DRM_IOCTL_I915_UUID_REGISTER) failed with %d. errno=%d(%s)\n", drm.context.uuidControlReturn, drm.getErrno(), strerror(drm.getErrno()));
+
+    EXPECT_STREQ(expectedErrorDescription, systemErrorDescription);
+
+    EXPECT_EQ(handle + 1, drm.context.uuidHandle);
+    EXPECT_EQ(handle, registeredHandle);
+
+    const auto &receivedUuid = drm.context.receivedRegisterUuid;
+    ASSERT_TRUE(receivedUuid);
+
+    EXPECT_EQ(nullptr, receivedUuid->ptr);
+    EXPECT_EQ(0u, receivedUuid->size);
+    EXPECT_TRUE(hasSubstr(std::string(receivedUuid->uuid), std::string("00000000-0000-0000")));
+    EXPECT_EQ(ioctlHelper->classHandles[static_cast<uint32_t>(DrmResourceClass::isa)], receivedUuid->uuidClass);
+}
+
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringResourceWithDataThenRegisterUUIDIoctlIsCalledWithCorrectData) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = std::make_unique<MockIoctlHelperPrelimResourceRegistration>(drm);
@@ -150,6 +184,39 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIo
     EXPECT_EQ(0u, receivedUuid->extensions);
 }
 
+TEST_F(DrmDebugPrelimTest, GivenDrmWhenUnregisteringResourceThenUnregisterUUIDIoctlReturnsWithError) {
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto result = drm.registerResourceClasses();
+    EXPECT_TRUE(result);
+
+    uint64_t data = 0x12345678;
+    auto registeredHandle = drm.registerResource(DrmResourceClass::isa, &data, sizeof(uint64_t));
+
+    // To induce the error at IoctlHelperPrelim20::registerUuid()
+    drm.context.uuidControlReturn = -2;
+
+    drm.unregisterResource(registeredHandle);
+
+    const char *systemErrorDescription = nullptr;
+    executionEnvironment->getErrorDescription(&systemErrorDescription);
+
+    char expectedErrorDescription[256];
+    snprintf(expectedErrorDescription, 256, "ioctl(PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER) failed with %d. errno=%d(%s)\n", drm.context.uuidControlReturn, drm.getErrno(), strerror(drm.getErrno()));
+
+    EXPECT_STREQ(expectedErrorDescription, systemErrorDescription);
+
+    const auto &receivedUuid = drm.context.receivedUnregisterUuid;
+    ASSERT_TRUE(receivedUuid);
+
+    EXPECT_EQ(registeredHandle, receivedUuid->handle);
+    EXPECT_EQ(nullptr, receivedUuid->ptr);
+    EXPECT_EQ(0u, receivedUuid->size);
+    EXPECT_EQ(0u, receivedUuid->uuidClass);
+    EXPECT_EQ(0u, receivedUuid->flags);
+    EXPECT_EQ(0u, receivedUuid->extensions);
+}
+
 TEST_F(DrmDebugPrelimTest, GivenDrmWhenNotifyFirstCommandQueueCreatedCalledThenCorrectUuidIsRegisteredWithCorrectData) {
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
@@ -181,6 +248,31 @@ TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctl
 
     auto prevIoctls = drm.ioctlCallsCount;
     auto registeredHandle = drm.registerIsaCookie(3);
+
+    EXPECT_EQ(prevIoctls + 1u, drm.ioctlCallsCount);
+    EXPECT_EQ(drm.context.uuidHandle - 1, registeredHandle);
+    EXPECT_EQ(3u, drm.context.receivedRegisterUuid->uuidClass);
+}
+
+TEST_F(DrmDebugPrelimTest, GivenDrmWhenRegisteringIsaCookieThenRegisterUUIDIoctlReturnsError) {
+    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto result = drm.registerResourceClasses();
+    EXPECT_TRUE(result);
+
+    // To induce the error at IoctlHelperPrelim20::registerUuid()
+    drm.context.uuidControlReturn = -2;
+
+    auto prevIoctls = drm.ioctlCallsCount;
+    auto registeredHandle = drm.registerIsaCookie(3);
+
+    const char *systemErrorDescription = nullptr;
+    executionEnvironment->getErrorDescription(&systemErrorDescription);
+
+    char expectedErrorDescription[256];
+    snprintf(expectedErrorDescription, 256, "ioctl(PRELIM_DRM_IOCTL_I915_UUID_REGISTER) failed with %d. errno=%d(%s)\n", drm.context.uuidControlReturn, drm.getErrno(), strerror(drm.getErrno()));
+
+    EXPECT_STREQ(expectedErrorDescription, systemErrorDescription);
 
     EXPECT_EQ(prevIoctls + 1u, drm.ioctlCallsCount);
     EXPECT_EQ(drm.context.uuidHandle - 1, registeredHandle);
