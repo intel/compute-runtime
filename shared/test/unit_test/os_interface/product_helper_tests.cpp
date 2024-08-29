@@ -310,12 +310,12 @@ HWTEST_F(ProductHelperTest, givenVariousValuesWhenGettingAubStreamSteppingFromHw
     EXPECT_EQ(AubMemDump::SteppingValues::A, mockProductHelper.getAubStreamSteppingFromHwRevId(pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenDcFlushMitigationWhenOverridePatAndUsageForDcFlushMitigationThenReturnCorrectValue) {
+HWTEST_F(ProductHelperTest, givenDcFlushMitigationWhenOverridePatToUCAndCohForDcFlushMitigationThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     if (!productHelper->isDcFlushMitigated()) {
         for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
             auto allocationType = static_cast<AllocationType>(i);
-            EXPECT_FALSE(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType));
+            EXPECT_FALSE(productHelper->overridePatToUCAndCohForDcFlushMitigation(allocationType));
         }
     }
     debugManager.flags.AllowDcFlush.set(0);
@@ -333,9 +333,9 @@ HWTEST_F(ProductHelperTest, givenDcFlushMitigationWhenOverridePatAndUsageForDcFl
             allocationType == AllocationType::linearStream ||
             allocationType == AllocationType::internalHeap ||
             allocationType == AllocationType::printfSurface) {
-            EXPECT_EQ(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType), productHelper->isDcFlushMitigated());
+            EXPECT_EQ(productHelper->overrideUsageForDcFlushMitigation(allocationType), productHelper->isDcFlushMitigated());
         } else {
-            EXPECT_FALSE(productHelper->overridePatAndUsageForDcFlushMitigation(allocationType));
+            EXPECT_FALSE(productHelper->overridePatToUCAndCohForDcFlushMitigation(allocationType));
         }
     }
 }

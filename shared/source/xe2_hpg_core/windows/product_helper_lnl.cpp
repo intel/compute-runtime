@@ -28,8 +28,12 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <>
 uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint64_t patIndex, AllocationType allocationType) const {
-    if (this->overridePatAndUsageForDcFlushMitigation(allocationType)) {
+    if (this->overridePatToUCAndCohForDcFlushMitigation(allocationType)) {
         return 2; // L3: WB, L4: UC, 2-Way coh
+    }
+
+    if (this->overridePatToUCAndNonCohForDcFlushMitigation(allocationType)) {
+        return 0; // L3: WB, L4: UC, Non coh
     }
 
     return patIndex;
