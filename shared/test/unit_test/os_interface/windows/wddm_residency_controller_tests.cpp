@@ -561,55 +561,6 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAlloca
     EXPECT_TRUE(allocation3.getResidencyData().resident[osContextId]);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrimResidencyToBudgetCalledThenDontEvict) {
-    gdi->setNonZeroNumBytesToTrimInEvict();
-
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
-
-    allocation.getResidencyData().resident[osContextId] = true;
-    allocation.getResidencyData().updateCompletionData(0, osContextId);
-
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
-
-    wddm->evictResult.called = 0;
-
-    csr->getEvictionAllocations().push_back(&allocation);
-    allocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContextId);
-
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    residencyController->trimResidencyToBudget(3 * 4096, lock);
-
-    EXPECT_TRUE(allocation.getResidencyData().resident[osContextId]);
-}
-
-TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrimResidencyCalledThenDontEvict) {
-    gdi->setNonZeroNumBytesToTrimInEvict();
-
-    MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
-
-    allocation.getResidencyData().resident[osContextId] = true;
-    allocation.getResidencyData().updateCompletionData(0, osContextId);
-
-    *residencyController->getMonitoredFence().cpuAddress = 1;
-    residencyController->getMonitoredFence().lastSubmittedFence = 1;
-    residencyController->getMonitoredFence().currentFenceValue = 1;
-
-    wddm->evictResult.called = 0;
-
-    csr->getEvictionAllocations().push_back(&allocation);
-    allocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContextId);
-
-    D3DKMT_TRIMNOTIFICATION trimNotification = {0};
-    trimNotification.Flags.PeriodicTrim = 1;
-    trimNotification.NumBytesToTrim = 0;
-    residencyController->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
-
-    EXPECT_TRUE(allocation.getResidencyData().resident[osContextId]);
-}
-
 TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredWhenTrimmingToBudgetThenWaitForCpu) {
     gdi->setNonZeroNumBytesToTrimInEvict();
 

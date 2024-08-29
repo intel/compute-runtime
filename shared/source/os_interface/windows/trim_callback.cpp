@@ -74,11 +74,6 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
                 continue;
             }
 
-            if (wddmAllocation->isAlwaysResident(osContextId)) {
-                allocationIter = allocations.erase(allocationIter);
-                continue;
-            }
-
             if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
                 for (auto i = 0u; i < wddmAllocation->getNumGmms(); i++) {
                     handlesToEvict.push_back(wddmAllocation->getHandles()[i]);
@@ -136,11 +131,6 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, std::unique_
 
         if (lastFence > monitoredFence.lastSubmittedFence) {
             allocationIter++;
-            continue;
-        }
-
-        if (wddmAllocation->isAlwaysResident(osContextId)) {
-            allocationIter = allocations.erase(allocationIter);
             continue;
         }
 
