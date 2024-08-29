@@ -80,6 +80,37 @@ lint:
       - ci
       - performance
       - test
+    mapping:
+      files:
+        'l0_blackbox_runner_configs.yml':
+        - ci
+        '*.md':
+        - documentation
+      directory_0:
+        '.github':
+        - ci
+      directory:
+        test:
+        - test
+        source:
+        - feature
+        - fix
+        - refactor
+        - performance
+        - build
+      manifest:
+        infra:
+        - ci
+        _default:
+        - build
+    strict:
+    - feature
+    priority:
+      0:
+      - test
+      - documentation
+      1:
+      - ci
     scope:
       values:
         - usm
