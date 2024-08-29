@@ -739,6 +739,14 @@ struct IsAnyProducts {
     }
 };
 
+template <PRODUCT_FAMILY... args>
+struct IsNoneProducts {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return (... && !(IsProduct<args>::template isMatched<productFamily>()));
+    }
+};
+
 struct MatchAny {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() { return true; }

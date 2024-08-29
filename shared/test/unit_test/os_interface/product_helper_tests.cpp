@@ -28,6 +28,7 @@
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "clos_matchers.h"
 #include "gtest/gtest.h"
 #include "test_traits_common.h"
 
@@ -613,8 +614,12 @@ HWTEST_F(ProductHelperTest, givenSamplerStateWhenAdjustSamplerStateThenNothingIs
     EXPECT_EQ(0, memcmp(&initialState, &state, sizeof(SAMPLER_STATE)));
 }
 
-HWTEST_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
+HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero, IsClosUnsupported) {
     EXPECT_EQ(0u, productHelper->getNumCacheRegions());
+}
+
+HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnNonZero, IsClosSupported) {
+    EXPECT_NE(0u, productHelper->getNumCacheRegions());
 }
 
 HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters, IsAtLeastGen12lp) {
