@@ -65,6 +65,7 @@ BufferObjectHandleWrapper::~BufferObjectHandleWrapper() {
     if (controlBlock->refCount == 0 && controlBlock->weakRefCount == 0) {
         lock.unlock();
         delete controlBlock;
+        controlBlock = nullptr;
     }
 }
 

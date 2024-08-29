@@ -76,7 +76,7 @@ class BufferObjectHandleWrapper {
 
     int boHandle{};
     Ownership ownership{Ownership::strong};
-    ControlBlock *controlBlock{};
+    ControlBlock *controlBlock{nullptr};
 };
 
 class BufferObject {
