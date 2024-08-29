@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
@@ -164,6 +165,17 @@ bool WddmResidencyController::isInitialized() const {
 
 void WddmResidencyController::setCommandStreamReceiver(CommandStreamReceiver *csr) {
     this->csr = csr;
+}
+
+void WddmResidencyController::removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation) {
+    std::unique_lock<std::mutex> lock1(this->lock, std::defer_lock);
+    std::unique_lock<std::mutex> lock2(this->trimCallbackLock, std::defer_lock);
+    std::lock(lock1, lock2);
+
+    auto iter = std::find(container.begin(), container.end(), gfxAllocation);
+    if (iter != container.end()) {
+        container.erase(iter);
+    }
 }
 
 } // namespace NEO

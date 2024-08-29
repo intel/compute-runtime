@@ -56,6 +56,8 @@ class WddmResidencyController {
 
     void setCommandStreamReceiver(CommandStreamReceiver *csr);
 
+    void removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
+
   protected:
     MonitoredFence monitoredFence = {};
 
