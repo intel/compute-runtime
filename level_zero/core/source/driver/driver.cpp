@@ -91,8 +91,8 @@ void DriverImp::initialize(ze_result_t *result) {
                 globalDriver = nullptr;
                 driverCount = 0;
             } else if (envVariables.pin) {
-                std::unique_lock<std::recursive_mutex> mtx{this->gtpinInitMtx};
-                this->gtPinInitializationStatus = GtPinInitializationStatus::pending;
+                std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
+                this->gtPinInitializationNeeded = true;
             }
         }
     }
@@ -110,10 +110,7 @@ ze_result_t DriverImp::driverInit(ze_init_flags_t flags) {
 }
 
 ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {
-    auto retVal = Driver::get()->initGtpin();
-    if (retVal != ZE_RESULT_SUCCESS) {
-        return retVal;
-    }
+    Driver::get()->tryInitGtpin();
     if (*pCount == 0) {
         *pCount = driverCount;
         return ZE_RESULT_SUCCESS;
@@ -134,26 +131,16 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverImp::initGtpin() {
-    auto retVal = ZE_RESULT_SUCCESS;
-    if (this->gtPinInitializationStatus == GtPinInitializationStatus::notNeeded) {
-        return retVal;
+void DriverImp::tryInitGtpin() {
+    if (!this->gtPinInitializationNeeded) {
+        return;
     }
-    std::unique_lock<std::recursive_mutex> mtx{this->gtpinInitMtx};
-    if (this->gtPinInitializationStatus == GtPinInitializationStatus::inProgress) {
-        return retVal;
-    }
-    if (this->gtPinInitializationStatus == GtPinInitializationStatus::pending) {
-        this->gtPinInitializationStatus = GtPinInitializationStatus::inProgress;
+    std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
+    if (this->gtPinInitializationNeeded) {
+        this->gtPinInitializationNeeded = false;
         std::string gtpinFuncName{"OpenGTPin"};
-        if (false == NEO::PinContext::init(gtpinFuncName)) {
-            this->gtPinInitializationStatus = GtPinInitializationStatus::error;
-        }
+        NEO::PinContext::init(gtpinFuncName);
     }
-    if (this->gtPinInitializationStatus == GtPinInitializationStatus::error) {
-        retVal = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
-    }
-    return retVal;
 }
 
 static DriverImp driverImp;

@@ -1445,20 +1445,20 @@ struct GtPinInitTest : public ::testing::Test {
 uint32_t GtPinInitTest::gtpinInitTimesCalled = 0u;
 
 TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeInitMultipleTimesThenGtPinIsNotInitialized) {
-    EXPECT_EQ(Mock<Driver>::GtPinInitializationStatus::notNeeded, driver.gtPinInitializationStatus.load());
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
     auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, driver.initCalledCount);
     EXPECT_EQ(1u, driver.initializeCalledCount);
     EXPECT_EQ(0u, gtpinInitTimesCalled);
-    EXPECT_EQ(Mock<Driver>::GtPinInitializationStatus::pending, driver.gtPinInitializationStatus.load());
-    driver.gtPinInitializationStatus = Mock<Driver>::GtPinInitializationStatus::notNeeded;
+    EXPECT_TRUE(driver.gtPinInitializationNeeded.load());
+    driver.gtPinInitializationNeeded = false;
     result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(2u, driver.initCalledCount);
     EXPECT_EQ(1u, driver.initializeCalledCount);
     EXPECT_EQ(0u, gtpinInitTimesCalled);
-    EXPECT_EQ(Mock<Driver>::GtPinInitializationStatus::notNeeded, driver.gtPinInitializationStatus.load());
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
 }
 
 TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeDriverGetMultipleTimesThenGtPinIsInitializedOnlyOnce) {
@@ -1482,10 +1482,10 @@ TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeDriverGetMultipleTime
     EXPECT_EQ(1u, gtpinInitTimesCalled);
 }
 
-TEST_F(GtPinInitTest, givenGtPinInitializationFailureWhenCallingZeDriverGetThenDependencyErrorIsReturnedEveryTime) {
+TEST_F(GtPinInitTest, givenFailureWhenInitializingGtpinThenTheErrorIsNotExposedInZeDriverGetFunction) {
 
     uint32_t (*gtPinInit)(void *) = [](void *arg) -> uint32_t {
-        return 1;
+        return 1; // failure
     };
 
     auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
@@ -1494,13 +1494,15 @@ TEST_F(GtPinInitTest, givenGtPinInitializationFailureWhenCallingZeDriverGetThenD
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, driver.initCalledCount);
     EXPECT_EQ(1u, driver.initializeCalledCount);
-    EXPECT_EQ(0u, gtpinInitTimesCalled);
     uint32_t driverCount = 0;
+    ze_driver_handle_t driverHandle{};
     result = zeDriverGet(&driverCount, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
-
-    result = zeDriverGet(&driverCount, nullptr);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    result = zeDriverGet(&driverCount, &driverHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    EXPECT_EQ(globalDriverHandle, driverHandle);
 }
 
 } // namespace ult

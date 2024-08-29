@@ -23,21 +23,14 @@ class DriverImp : public Driver {
     unsigned int getPid() const override {
         return pid;
     }
-    ze_result_t initGtpin() override;
-
-    enum class GtPinInitializationStatus {
-        notNeeded,
-        pending,
-        inProgress,
-        error
-    };
+    void tryInitGtpin() override;
 
   protected:
     uint32_t pid = 0;
     std::once_flag initDriverOnce;
     static ze_result_t initStatus;
-    std::atomic<GtPinInitializationStatus> gtPinInitializationStatus{GtPinInitializationStatus::notNeeded};
-    std::recursive_mutex gtpinInitMtx;
+    std::atomic<bool> gtPinInitializationNeeded{false};
+    std::mutex gtpinInitMtx;
 };
 
 struct L0EnvVariables {
