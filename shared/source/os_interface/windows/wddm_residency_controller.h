@@ -76,5 +76,6 @@ class WddmResidencyController {
     bool memoryBudgetExhausted = false;
 
     CommandStreamReceiver *csr;
+    ResidencyContainer filteredResidencyContainer;
 };
 } // namespace NEO

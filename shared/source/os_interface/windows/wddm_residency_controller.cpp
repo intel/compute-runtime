@@ -61,23 +61,25 @@ void WddmResidencyController::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, u
  * @return returns true if all allocations either succeeded or are pending to be resident
  */
 bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling) {
+    const size_t residencyCount = allocationsForResidency.size();
     constexpr uint32_t stackAllocations = 64;
     constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount * stackAllocations;
     StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForResidency;
-    uint32_t totalHandlesCount = 0;
     size_t totalSize = 0;
-    const auto currentFence = this->getMonitoredFence().currentFenceValue;
+
     requiresBlockingResidencyHandling = false;
     if (debugManager.flags.WaitForPagingFenceInController.get() != -1) {
         requiresBlockingResidencyHandling = !debugManager.flags.WaitForPagingFenceInController.get();
     }
 
     auto lock = this->acquireLock();
+    const auto currentFence = this->getMonitoredFence().currentFenceValue;
+    filteredResidencyContainer.clear();
+    filteredResidencyContainer.reserve(residencyCount);
 
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", this->getMonitoredFence().currentFenceValue);
-    auto iter = allocationsForResidency.begin();
-    while (iter != allocationsForResidency.end()) {
-        WddmAllocation *allocation = static_cast<WddmAllocation *>(*iter);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", currentFence);
+    for (uint32_t i = 0; i < residencyCount; i++) {
+        WddmAllocation *allocation = static_cast<WddmAllocation *>(allocationsForResidency[i]);
         ResidencyData &residencyData = allocation->getResidencyData();
         static constexpr int maxFragments = 3;
         bool fragmentResidency[maxFragments] = {false, false, false};
@@ -89,15 +91,11 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), residencyData.resident[osContextId] ? "resident" : "not resident");
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation, gpu address = ", std::hex, allocation->getGpuAddress(), "fence value to reach for eviction = ", currentFence);
 
-        allocation->getResidencyData().updateCompletionData(currentFence, this->osContextId);
         bool isAlreadyResident = true;
         if (fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < fragmentCount; allocationId++) {
-                auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
-                residencyData->updateCompletionData(currentFence, this->osContextId);
                 if (!fragmentResidency[allocationId]) {
                     handlesForResidency.push_back(static_cast<OsHandleWin *>(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage)->handle);
-                    totalHandlesCount++;
                     requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
                     isAlreadyResident = false;
                 }
@@ -105,23 +103,20 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
         } else if (!residencyData.resident[osContextId]) {
             for (uint32_t gmmId = 0; gmmId < allocation->getNumGmms(); ++gmmId) {
                 handlesForResidency.push_back(allocation->getHandle(gmmId));
-                totalHandlesCount++;
                 requiresBlockingResidencyHandling |= (allocation->getAllocationType() != AllocationType::buffer && allocation->getAllocationType() != AllocationType::bufferHostMemory);
                 isAlreadyResident = false;
             }
         }
 
-        if (isAlreadyResident) {
-            iter = allocationsForResidency.erase(iter);
-        } else {
-            iter++;
+        if (!isAlreadyResident) {
+            filteredResidencyContainer.push_back(allocation);
         }
     }
 
     bool result = true;
-    if (totalHandlesCount) {
+    if (!handlesForResidency.empty()) {
         uint64_t bytesToTrim = 0;
-        while ((result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, false, &bytesToTrim, totalSize)) == false) {
+        while ((result = wddm.makeResident(&handlesForResidency[0], static_cast<uint32_t>(handlesForResidency.size()), false, &bytesToTrim, totalSize)) == false) {
             this->setMemoryBudgetExhausted();
             const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim, lock);
             if (!trimmingDone) {
@@ -131,7 +126,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
                 }
                 DEBUG_BREAK_IF(evictionStatus != MemoryOperationsStatus::memoryNotFound);
                 do {
-                    result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, true, &bytesToTrim, totalSize);
+                    result = wddm.makeResident(&handlesForResidency[0], static_cast<uint32_t>(handlesForResidency.size()), true, &bytesToTrim, totalSize);
                 } while (debugManager.flags.WaitForMemoryRelease.get() && result == false);
                 break;
             }
@@ -139,17 +134,19 @@ bool WddmResidencyController::makeResidentResidencyAllocations(ResidencyContaine
     }
 
     if (result == true) {
-        iter = allocationsForResidency.begin();
-        while (iter != allocationsForResidency.end()) {
-            WddmAllocation *allocation = static_cast<WddmAllocation *>(*iter);
+        for (uint32_t i = 0; i < residencyCount; i++) {
+            WddmAllocation *allocation = static_cast<WddmAllocation *>(allocationsForResidency[i]);
             allocation->getResidencyData().resident[osContextId] = true;
+            allocation->getResidencyData().updateCompletionData(currentFence, this->osContextId);
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
                 auto residencyData = allocation->fragmentsStorage.fragmentStorageData[allocationId].residency;
                 residencyData->resident[osContextId] = true;
+                residencyData->updateCompletionData(currentFence, this->osContextId);
             }
-            iter++;
         }
     }
+    // Remove already resident allocations from the container
+    allocationsForResidency = std::move(filteredResidencyContainer);
 
     return result;
 }
