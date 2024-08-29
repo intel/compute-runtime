@@ -245,8 +245,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         DEBUG_BREAK_IF(relaxedOrderingForGpgpuAllowed(1)); // IOQ has >=1 dependencies
         PipeControlArgs args;
         args.csStallOnly = true;
-        args.hdcPipelineFlush = true;
-        args.unTypedDataPortCacheFlush = true;
+        args.hdcPipelineFlush = false;
+        args.unTypedDataPortCacheFlush = false;
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);
     }
 

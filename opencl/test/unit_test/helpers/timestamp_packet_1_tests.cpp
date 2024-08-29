@@ -1743,13 +1743,14 @@ HWTEST2_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesR
         PIPE_CONTROL *pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*it);
         MI_BATCH_BUFFER_END *miBatchBufferEnd = genCmdCast<MI_BATCH_BUFFER_END *>(*it);
         if (pipeControlCmd != nullptr) {
-            EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
-            EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
-            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
             if (currentEnqueue == 1) {
                 ++pipeControlCountFirstEnqueue;
             } else if (currentEnqueue == 2) {
-                ++pipeControlCountSecondEnqueue;
+                if (++pipeControlCountSecondEnqueue == 1) {
+                    EXPECT_FALSE(pipeControlCmd->getHdcPipelineFlush());
+                    EXPECT_FALSE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+                    EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+                }
             }
         } else if (semaphoreWaitCmd != nullptr) {
             ++semaphoreWaitCount;
