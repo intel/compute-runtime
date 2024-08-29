@@ -4,9 +4,12 @@
 # SPDX-License-Identifier: MIT
 #
 
-if(UNIX AND NEO_ENABLE_i915_PRELIM_DETECTION)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_cache_reservation_impl_prelim.cpp
-  )
+if(UNIX)
+  if(NEO_ENABLE_i915_PRELIM_DETECTION)
+    target_sources(${TARGET_NAME} PRIVATE
+                   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                   ${CMAKE_CURRENT_SOURCE_DIR}/test_cache_reservation_impl_prelim.cpp
+    )
+  endif()
+  add_subdirectories()
 endif()
