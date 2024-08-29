@@ -524,6 +524,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         BaseClass::unblockPagingFenceSemaphore(pagingFenceValue);
     }
 
+    void drainPagingFenceQueue() override {
+        drainPagingFenceQueueCalled++;
+        BaseClass::drainPagingFenceQueue();
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -549,6 +554,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t pollForCompletionCalled = 0;
     uint32_t initializeDeviceWithFirstSubmissionCalled = 0;
+    uint32_t drainPagingFenceQueueCalled = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;

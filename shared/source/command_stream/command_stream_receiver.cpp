@@ -659,6 +659,13 @@ bool CommandStreamReceiver::enqueueWaitForPagingFence(uint64_t pagingFenceValue)
     return false;
 }
 
+void CommandStreamReceiver::drainPagingFenceQueue() {
+    auto controller = this->executionEnvironment.directSubmissionController.get();
+    if (this->isAnyDirectSubmissionEnabled() && controller) {
+        controller->drainPagingFenceQueue();
+    }
+}
+
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
     if (primaryCsr) {

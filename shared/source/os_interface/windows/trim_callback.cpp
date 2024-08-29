@@ -120,6 +120,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
 }
 
 bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, std::unique_lock<std::mutex> &lock) {
+    this->csr->drainPagingFenceQueue();
     uint64_t sizeToTrim = 0;
     uint64_t numberOfBytesToTrim = bytes;
     WddmAllocation *wddmAllocation = nullptr;

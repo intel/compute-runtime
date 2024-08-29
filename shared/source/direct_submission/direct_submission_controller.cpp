@@ -208,6 +208,16 @@ void DirectSubmissionController::enqueueWaitForPagingFence(CommandStreamReceiver
     condVar.notify_one();
 }
 
+void DirectSubmissionController::drainPagingFenceQueue() {
+    std::lock_guard lock(this->condVarMutex);
+
+    while (!pagingFenceRequests.empty()) {
+        auto request = pagingFenceRequests.front();
+        pagingFenceRequests.pop();
+        request.csr->unblockPagingFenceSemaphore(request.pagingFenceValue);
+    }
+}
+
 void DirectSubmissionController::handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions) {
     UNRECOVERABLE_IF(!lock.owns_lock())
     while (!pagingFenceRequests.empty()) {

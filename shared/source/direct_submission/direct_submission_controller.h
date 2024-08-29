@@ -57,6 +57,7 @@ class DirectSubmissionController {
     static bool isSupported();
 
     void enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue);
+    void drainPagingFenceQueue();
 
   protected:
     struct DirectSubmissionState {

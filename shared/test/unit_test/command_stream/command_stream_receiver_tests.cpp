@@ -43,6 +43,7 @@
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
@@ -5859,5 +5860,38 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenEnqueueWaitFor
     std::unique_lock<std::mutex> lock(mtx);
     csr.directSubmissionAvailable = false;
     controller->handlePagingFenceRequests(lock, false);
+    EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenDrainPagingFenceQueueThenQueueDrained) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableDirectSubmissionController.set(1);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(csr);
+    csr.directSubmission.reset(directSubmission);
+
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    auto pagingFenceValue = 10u;
+    EXPECT_FALSE(csr.enqueueWaitForPagingFence(pagingFenceValue));
+
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
+
+    csr.drainPagingFenceQueue();
+    EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
+
+    auto controller = static_cast<DirectSubmissionControllerMock *>(executionEnvironment->initializeDirectSubmissionController());
+    controller->stopThread();
+    csr.directSubmissionAvailable = true;
+    EXPECT_TRUE(csr.enqueueWaitForPagingFence(pagingFenceValue));
+    EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lock(mtx);
+    csr.directSubmissionAvailable = false;
+    csr.drainPagingFenceQueue();
+    EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
+
+    csr.directSubmissionAvailable = true;
+    csr.drainPagingFenceQueue();
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
 }

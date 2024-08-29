@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/create_command_stream.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
@@ -417,11 +418,14 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallb
     EXPECT_EQ(20u, residencyController->lastTrimFenceValue);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, GivenZeroWhenTrimmingToBudgetThenTrueIsReturned) {
+HWTEST_F(WddmResidencyControllerWithGdiTest, GivenZeroWhenTrimmingToBudgetThenTrueIsReturnedAndDrainPagingFenceQueueCalled) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(csr.get());
+    EXPECT_EQ(0u, ultCsr->drainPagingFenceQueueCalled);
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
     bool status = residencyController->trimResidencyToBudget(0, lock);
     EXPECT_TRUE(status);
+    EXPECT_EQ(1u, ultCsr->drainPagingFenceQueueCalled);
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAllocationsAreTrimmed) {

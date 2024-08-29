@@ -587,6 +587,27 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueue
     EXPECT_EQ(0u, csr.pagingFenceValueToUnblock);
 }
 
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenDrainPagingFenceQueueThenPagingFenceHandled) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    DeviceBitfield deviceBitfield(1);
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+
+    DirectSubmissionControllerMock controller;
+    EXPECT_TRUE(controller.pagingFenceRequests.empty());
+    controller.enqueueWaitForPagingFence(&csr, 10u);
+    EXPECT_FALSE(controller.pagingFenceRequests.empty());
+
+    auto request = controller.pagingFenceRequests.front();
+    EXPECT_EQ(request.csr, &csr);
+    EXPECT_EQ(request.pagingFenceValue, 10u);
+
+    controller.drainPagingFenceQueue();
+    EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
+}
+
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueueWaitForPagingFenceWithCheckSubmissionsThenCheckSubmissions) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
