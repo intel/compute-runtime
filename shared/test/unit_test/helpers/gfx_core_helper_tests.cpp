@@ -1800,6 +1800,8 @@ TEST_F(GfxCoreHelperTest, givenContextGroupEnabledWithDebugKeyWhenContextGroupCo
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(8u, gfxCoreHelper.getContextGroupContextsCount());
     EXPECT_TRUE(gfxCoreHelper.areSecondaryContextsSupported());
+    EXPECT_EQ(4u, gfxCoreHelper.getContextGroupHpContextsCount(EngineGroupType::copy, false));
+    EXPECT_EQ(0u, gfxCoreHelper.getContextGroupHpContextsCount(EngineGroupType::copy, true));
 
     debugManager.flags.ContextGroupSize.set(1);
     EXPECT_EQ(1u, gfxCoreHelper.getContextGroupContextsCount());
