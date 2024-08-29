@@ -256,6 +256,7 @@ foreach(target_name "neo_libult_common" "neo_libult")
   set_target_properties(${target_name} PROPERTIES FOLDER ${SHARED_TEST_PROJECTS_FOLDER})
   set_property(TARGET ${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
   target_include_directories(${target_name} PRIVATE
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
                              $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
                              $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
   )
