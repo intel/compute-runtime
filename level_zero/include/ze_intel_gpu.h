@@ -219,6 +219,15 @@ typedef struct _ze_intel_device_block_array_exp_properties_t {
     ze_intel_device_block_array_exp_flags_t flags;                          ///< [out] 0 (none) or a valid combination of ::ze_intel_device_block_array_exp_flag_t
 } ze_intel_device_block_array_exp_properties_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Device 2D block array properties driver extension versions
+typedef enum _ze_intel_device_block_array_exp_properties_version_t {
+    ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0), ///< version 1.0
+    ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES_VERSION_FORCE_UINT32 = 0x7fffffff
+
+} ze_intel_device_block_array_exp_properties_version_t;
+
 /// @brief Query to read the Intel Level Zero Driver Version String
 ///
 /// @details

@@ -11,7 +11,6 @@
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_pvc_and_later.inl"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_xe_hpc.inl"
 
 #include "aubstream/product_family.h"
