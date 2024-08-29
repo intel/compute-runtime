@@ -11,13 +11,16 @@
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include <level_zero/ze_api.h>
 
 #include <atomic>
 #include <mutex>
 #include <vector>
 
-struct _ze_command_queue_handle_t {};
+struct _ze_command_queue_handle_t {
+    const uint64_t objMagic = objMagicValue;
+};
 
 namespace NEO {
 class CommandStreamReceiver;
