@@ -141,6 +141,9 @@ HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWith
 
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
+    if (csr.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
 
     auto commandList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
 

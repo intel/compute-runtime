@@ -1274,10 +1274,6 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenExecuteComma
 HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphicsTaskCountsLatestFlushedTaskCountZero, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
 
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-    auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
-
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
 
@@ -1299,13 +1295,8 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
 
-    if (heaplessStateInitEnabled) {
-        EXPECT_EQ(1u, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
-        EXPECT_EQ(1u, graphicsAllocation2.getTaskCount(csr->getOsContext().getContextId()));
-    } else {
-        EXPECT_EQ(NEO::GraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
-        EXPECT_EQ(NEO::GraphicsAllocation::objectNotUsed, graphicsAllocation2.getTaskCount(csr->getOsContext().getContextId()));
-    }
+    EXPECT_EQ(NEO::GraphicsAllocation::objectNotUsed, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
+    EXPECT_EQ(NEO::GraphicsAllocation::objectNotUsed, graphicsAllocation2.getTaskCount(csr->getOsContext().getContextId()));
 
     commandQueue->destroy();
     commandList->destroy();
@@ -1314,10 +1305,6 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
 
 HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphicsTaskCountsLatestFlushedTaskCountNonZero, IsAtLeastSkl) {
     ze_command_queue_desc_t desc = {};
-
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
-    auto heaplessStateInitEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
 
     NEO::CommandStreamReceiver *csr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
@@ -1340,7 +1327,7 @@ HWTEST2_F(ExecuteCommandListTests, givenFailingSubmitBatchBufferThenResetGraphic
     auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
 
-    auto expectedTaskCount = heaplessStateInitEnabled ? 3u : 2u;
+    auto expectedTaskCount = 2u;
     EXPECT_EQ(expectedTaskCount, graphicsAllocation1.getTaskCount(csr->getOsContext().getContextId()));
     EXPECT_EQ(expectedTaskCount, graphicsAllocation2.getTaskCount(csr->getOsContext().getContextId()));
     commandQueue->destroy();

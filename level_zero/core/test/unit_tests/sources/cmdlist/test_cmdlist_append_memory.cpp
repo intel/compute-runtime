@@ -402,7 +402,7 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
-
+    bool heaplessStateInit = ultCsr->heaplessStateInitialized;
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
     cmdQueue->isCopyOnlyCommandQueue = true;
@@ -421,7 +421,13 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
 
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
+
+    if (heaplessStateInit) {
+        EXPECT_NE(0u, ultCsr->getCS(0).getUsed());
+    } else {
+        EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
+    }
+    auto sizeUsedBefore = ultCsr->getCS(0).getUsed();
 
     bool hwContextProgrammingRequired = (ultCsr->getCmdsSizeForHardwareContext() > 0);
 
@@ -432,7 +438,8 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false));
 
-    EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed());
+    EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed() - sizeUsedBefore);
+
     EXPECT_TRUE(ultCsr->isMadeResident(commandList->commandContainer.getCommandStream()->getGraphicsAllocation()));
 
     size_t offset = 0;
@@ -497,6 +504,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(1);
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->storeMakeResidentAllocations = true;
+    bool heaplessStateInit = ultCsr->heaplessStateInitialized;
 
     auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
     cmdQueue->csr = ultCsr;
@@ -517,7 +525,15 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
 
     ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
+
+    if (heaplessStateInit) {
+        EXPECT_NE(0u, ultCsr->getCS(0).getUsed());
+
+    } else {
+        EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
+    }
+
+    auto sizeUsedBefore = ultCsr->getCS(0).getUsed();
 
     bool hwContextProgrammingRequired = (ultCsr->getCmdsSizeForHardwareContext() > 0);
 
@@ -528,7 +544,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopy
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false));
 
-    EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed());
+    EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed() - sizeUsedBefore);
     EXPECT_TRUE(ultCsr->isMadeResident(commandList->commandContainer.getCommandStream()->getGraphicsAllocation()));
 
     size_t offset = 0;

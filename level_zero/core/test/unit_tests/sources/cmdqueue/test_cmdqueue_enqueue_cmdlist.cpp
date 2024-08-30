@@ -441,6 +441,10 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
 
     auto currentCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
 
+    if (reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(currentCsr)->heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
+
     std::array<bool, 2> testedInternalFlags = {true, false};
 
     for (auto flagInternal : testedInternalFlags) {
@@ -495,6 +499,9 @@ HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsA
     desc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
 
     auto currentCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    if (reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(currentCsr)->heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
 
     std::array<bool, 2> testedInternalFlags = {true, false};
 
@@ -968,6 +975,7 @@ struct CommandQueueExecuteCommandListSWTagsTestsFixture : public DeviceFixture {
     void setUp() {
         debugManager.flags.EnableSWTags.set(true);
         debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
         DeviceFixture::setUp();
 
         ze_result_t returnValue;
@@ -1011,6 +1019,9 @@ HWTEST_F(CommandQueueExecuteCommandListSWTagsTests, givenEnableSWTagsWhenExecuti
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using Parse = typename FamilyType::Parse;
 
+    if (commandQueue->heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, false, nullptr);

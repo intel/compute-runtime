@@ -1978,6 +1978,9 @@ HWTEST2_F(ImmediateFlushTaskGlobalStatelessCmdListTest,
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
+    if (csrImmediate.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
     auto &csrStream = csrImmediate.commandStream;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -2093,6 +2096,9 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
+    if (csrImmediate.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     auto &csrStream = csrImmediate.commandStream;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -2235,6 +2241,9 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (csrImmediate.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     csrImmediate.storeMakeResidentAllocations = true;
     auto &csrStream = csrImmediate.commandStream;
 
@@ -2297,7 +2306,9 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
-
+    if (csrImmediate.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     size_t csrUsedBefore = csrStream.getUsed();
     auto result = commandListImmediate->appendBarrier(nullptr, 0, nullptr, false);
     size_t csrUsedAfter = csrStream.getUsed();
@@ -2326,6 +2337,9 @@ HWTEST2_F(ImmediateFlushTaskCsrSharedHeapCmdListTest,
 
     auto bindlessHeapsHelper = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.get();
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (csrImmediate.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     auto &csrStream = csrImmediate.commandStream;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -2422,6 +2436,10 @@ HWTEST2_F(ImmediateFlushTaskPrivateHeapCmdListTest,
 
     auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     csrImmediate.storeMakeResidentAllocations = true;
+
+    if (csrImmediate.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     auto &csrStream = csrImmediate.commandStream;
 
     commandListImmediate->getCmdContainer().prepareBindfulSsh();

@@ -705,6 +705,8 @@ TEST_F(CommandQueueInitTests, givenMultipleSubDevicesWhenInitializingThenAllocat
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
 
+    memoryManager->storedAllocationProperties.clear();
+
     ze_result_t returnValue;
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily, device, csr.get(), &desc, false, false, false, returnValue);
     EXPECT_NE(nullptr, commandQueue);

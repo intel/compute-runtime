@@ -522,7 +522,9 @@ HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsEx
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, false, returnValue));
     ASSERT_NE(nullptr, commandQueue);
-
+    if (commandQueue->heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
     auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
