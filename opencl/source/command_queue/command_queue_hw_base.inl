@@ -142,6 +142,7 @@ bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
 
 template <typename TSPacketType>
 inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container, CommandStreamReceiver &csr, WaitStatus &status) {
+    bool printWaitForCompletion = debugManager.flags.LogWaitingForCompletion.get();
     bool waited = false;
     status = WaitStatus::notReady;
 
@@ -149,13 +150,22 @@ inline bool waitForTimestampsWithinContainer(TimestampPacketContainer *container
         auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
         for (const auto &timestamp : container->peekNodes()) {
             for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                if (printWaitForCompletion) {
+                    printf("\nWaiting for TS 0x%" PRIx64, timestamp->getGpuAddress() + (i * timestamp->getSinglePacketSize()));
+                }
                 while (timestamp->getContextEndValue(i) == 1) {
                     csr.downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(csr.getRootDeviceIndex()));
                     WaitUtils::waitFunctionWithPredicate<const TSPacketType>(static_cast<TSPacketType const *>(timestamp->getContextEndAddress(i)), 1u, std::not_equal_to<TSPacketType>());
                     if (csr.checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime)) {
                         status = WaitStatus::gpuHang;
+                        if (printWaitForCompletion) {
+                            printf("\nWaiting for TS failed");
+                        }
                         return false;
                     }
+                }
+                if (printWaitForCompletion) {
+                    printf("\nWaiting for TS completed");
                 }
                 status = WaitStatus::ready;
                 waited = true;

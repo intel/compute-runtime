@@ -35,6 +35,7 @@ struct MockEvent : public BaseEventType {
     FORWARD_FUNC(submitCommand, BaseEventType);
 
     using BaseEventType::timeStampNode;
+    using Event::areTimestampsCompleted;
     using Event::calcProfilingData;
     using Event::cmdToSubmit;
     using Event::isWaitForTimestampsEnabled;

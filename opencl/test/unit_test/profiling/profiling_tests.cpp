@@ -579,6 +579,106 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
     eventObj->release();
 }
 
+HWTEST_F(ProfilingTests, givenDebugFlagSetWhenWaitingForTimestampThenPrint) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LogWaitingForCompletion.set(true);
+    debugManager.flags.EnableTimestampWaitForQueues.set(4);
+    debugManager.flags.EnableTimestampWaitForEvents.set(4);
+
+    using TimestampPacketType = typename FamilyType::TimestampPacketType;
+    using TimestampPacketsT = TimestampPackets<TimestampPacketType, FamilyType::timestampPacketCount>;
+
+    MockGraphicsAllocation alloc;
+    MultiGraphicsAllocation multiAlloc(1);
+    multiAlloc.addAllocation(&alloc);
+
+    struct MyMockTagNode : public TagNode<TimestampPacketsT> {
+      public:
+        using TagNode<TimestampPacketsT>::gfxAllocation;
+        MyMockTagNode(MultiGraphicsAllocation *alloc) {
+            this->gfxAllocation = alloc;
+        }
+        uint64_t getContextEndValue(uint32_t packetIndex) const override {
+            EXPECT_NE(0u, failCountdown);
+            failCountdown--;
+
+            if (failCountdown == 0) {
+                storage = 123;
+            }
+
+            return storage;
+        }
+
+        void const *getContextEndAddress(uint32_t packetIndex) const override {
+            return &storage;
+        }
+
+        void returnTag() override {}
+
+        mutable uint32_t failCountdown = 2;
+        mutable uint32_t storage = 1;
+    };
+
+    auto node = std::make_unique<MyMockTagNode>(&multiAlloc);
+
+    auto queue = std::make_unique<MockCommandQueueHw<FamilyType>>(pCmdQ->getContextPtr(), pClDevice, nullptr);
+    queue->timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    auto container = queue->timestampPacketContainer.get();
+
+    testing::internal::CaptureStdout();
+
+    Range<CopyEngineState> copyEngineStates;
+    WaitStatus status;
+
+    container->add(node.get());
+
+    queue->waitForTimestamps(copyEngineStates, status, container, nullptr);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.npos, output.find("Waiting for TS 0x"));
+    EXPECT_NE(output.npos, output.find("Waiting for TS completed"));
+    EXPECT_EQ(output.npos, output.find("Waiting for TS failed"));
+
+    testing::internal::CaptureStdout();
+
+    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(queue->getGpgpuCommandStreamReceiver());
+    csr.forceReturnGpuHang = true;
+    node->failCountdown = 2;
+    node->storage = 1;
+    queue->waitForTimestamps(copyEngineStates, status, container, nullptr);
+
+    output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.npos, output.find("Waiting for TS 0x"));
+    EXPECT_EQ(output.npos, output.find("Waiting for TS completed"));
+    EXPECT_NE(output.npos, output.find("Waiting for TS failed"));
+
+    MockEvent<Event> event(queue.get(), CL_COMMAND_READ_BUFFER, 0, 0);
+    event.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+
+    event.timestampPacketContainer->add(node.get());
+
+    testing::internal::CaptureStdout();
+    node->failCountdown = 2;
+    node->storage = 1;
+    event.areTimestampsCompleted();
+
+    output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.npos, output.find("Checking TS 0x"));
+    EXPECT_EQ(output.npos, output.find("TS ready"));
+    EXPECT_NE(output.npos, output.find("TS not ready"));
+
+    testing::internal::CaptureStdout();
+    event.areTimestampsCompleted();
+    output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(output.npos, output.find("Checking TS 0x"));
+    EXPECT_NE(output.npos, output.find("TS ready"));
+    EXPECT_EQ(output.npos, output.find("TS not ready"));
+}
+
 using EventProfilingTest = ProfilingTests;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {

@@ -824,13 +824,24 @@ bool Event::isWaitForTimestampsEnabled() const {
 bool Event::areTimestampsCompleted() {
     if (this->timestampPacketContainer.get()) {
         if (this->isWaitForTimestampsEnabled()) {
+            bool printWaitForCompletion = debugManager.flags.LogWaitingForCompletion.get();
+
             for (const auto &timestamp : this->timestampPacketContainer->peekNodes()) {
                 for (uint32_t i = 0; i < timestamp->getPacketsUsed(); i++) {
+                    if (printWaitForCompletion) {
+                        printf("\nChecking TS 0x%" PRIx64, timestamp->getGpuAddress() + (i * timestamp->getSinglePacketSize()));
+                    }
                     this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocation(*timestamp->getBaseGraphicsAllocation()->getGraphicsAllocation(this->cmdQueue->getGpgpuCommandStreamReceiver().getRootDeviceIndex()));
                     if (timestamp->getContextEndValue(i) == 1) {
+                        if (printWaitForCompletion) {
+                            printf("\nTS not ready");
+                        }
                         return false;
                     }
                 }
+            }
+            if (printWaitForCompletion) {
+                printf("\nTS ready");
             }
             this->cmdQueue->getGpgpuCommandStreamReceiver().downloadAllocations(true);
             const auto &bcsStates = this->cmdQueue->peekActiveBcsStates();
