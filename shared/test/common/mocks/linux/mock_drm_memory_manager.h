@@ -199,10 +199,12 @@ struct MockDrmGemCloseWorker : DrmGemCloseWorker {
 };
 
 struct MockDrmMemoryManager : DrmMemoryManager {
+    using BaseClass = DrmMemoryManager;
     using DrmMemoryManager::DrmMemoryManager;
     using DrmMemoryManager::gemCloseWorker;
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
+    ADDMETHOD_CONST(emitPinningRequestForBoContainer, SubmissionStatus, true, SubmissionStatus::success, (BufferObject * *bo, uint32_t boCount, uint32_t rootDeviceIndex), (bo, boCount, rootDeviceIndex));
 };
 
 } // namespace NEO

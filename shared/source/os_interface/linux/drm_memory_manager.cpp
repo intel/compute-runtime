@@ -347,8 +347,12 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
     if (forcePinEnabled && pinBBs.at(rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBBs.at(rootDeviceIndex)->pin(&bo, 1, getDefaultOsContext(rootDeviceIndex), 0, getDefaultDrmContextId(rootDeviceIndex));
+        emitPinningRequestForBoContainer(&bo, 1, rootDeviceIndex);
     }
+}
+SubmissionStatus DrmMemoryManager::emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const {
+    auto ret = pinBBs.at(rootDeviceIndex)->pin(bo, boCount, getDefaultOsContext(rootDeviceIndex), 0, getDefaultDrmContextId(rootDeviceIndex));
+    return ret == 0 ? SubmissionStatus::success : SubmissionStatus::outOfMemory;
 }
 
 StorageInfo DrmMemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {

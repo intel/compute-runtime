@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <optional>
 #include <vector>
@@ -31,6 +32,7 @@ using namespace NEO;
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
+    using BaseClass = CommandStreamReceiver;
     using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::baseWaitFunction;
     using CommandStreamReceiver::checkForNewResources;

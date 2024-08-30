@@ -20,7 +20,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     ~DrmMemoryOperationsHandlerDefault() override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override;
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;
@@ -30,6 +30,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     [[nodiscard]] std::unique_lock<std::mutex> lockHandlerIfUsed() override;
 
     MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
+    MOCKABLE_VIRTUAL MemoryOperationsStatus flushDummyExec(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations);
 
   protected:
     std::unordered_set<GraphicsAllocation *> residency;
