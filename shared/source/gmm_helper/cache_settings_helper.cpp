@@ -94,6 +94,9 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::timestampPacketTagBuffer:
+        if (debugManager.flags.ForceNonCoherentModeForTimestamps.get()) {
+            return GMM_RESOURCE_USAGE_OCL_BUFFER;
+        }
         if (productHelper.isDcFlushAllowed()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
@@ -110,6 +113,12 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED;
+    case AllocationType::timestampPacketTagBuffer:
+    case AllocationType::gpuTimestampDeviceBuffer:
+        if (debugManager.flags.ForceNonCoherentModeForTimestamps.get()) {
+            return GMM_RESOURCE_USAGE_OCL_BUFFER;
+        }
+        [[fallthrough]];
     default:
         return productHelper.isNewCoherencyModelSupported() ? GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC : GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
