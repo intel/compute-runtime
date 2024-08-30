@@ -1258,7 +1258,9 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
     auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, AllocationType::commandBuffer, pDevice->getDeviceBitfield()}));
 
     std::vector<Surface *> surfaces;
-    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *pDevice->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage());
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    auto kernelOperation = std::make_unique<KernelOperation>(cmdStream, *csr->getInternalAllocationStorage());
     kernelOperation->setHeaps(ih1, ih2, ih3);
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(*pCmdQ, kernelOperation, surfaces, kernel);
@@ -1269,7 +1271,8 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
 
     virtualEvent->submitCommand(false);
 
-    uint32_t expectedLockCounter = pDevice->getDefaultEngine().commandStreamReceiver->getClearColorAllocation() ? 5u : 4u;
+    uint32_t expectedLockCounter = csr->getClearColorAllocation() ? 5u : 4u;
+    expectedLockCounter += (pDevice->getUltCommandStreamReceiver<FamilyType>().heaplessStateInitialized ? 1 : 0);
 
     EXPECT_EQ(expectedLockCounter, pDevice->getUltCommandStreamReceiver<FamilyType>().recursiveLockCounter);
 }
@@ -1594,7 +1597,7 @@ HWTEST_F(EventTest, GivenEventCreatedOnMapBufferWithoutCommandWhenSubmittingComm
 
     EXPECT_EQ(CompletionStamp::notReady, ev.peekTaskCount());
     ev.submitCommand(false);
-    EXPECT_EQ(0u, ev.peekTaskCount());
+    EXPECT_EQ(this->pCmdQ->getHeaplessStateInitEnabled() ? 1u : 0u, ev.peekTaskCount());
 }
 
 HWTEST_F(EventTest, GivenEventCreatedOnMapImageWithoutCommandWhenSubmittingCommandThenTaskCountIsNotUpdated) {
@@ -1602,7 +1605,7 @@ HWTEST_F(EventTest, GivenEventCreatedOnMapImageWithoutCommandWhenSubmittingComma
 
     EXPECT_EQ(CompletionStamp::notReady, ev.peekTaskCount());
     ev.submitCommand(false);
-    EXPECT_EQ(0u, ev.peekTaskCount());
+    EXPECT_EQ(this->pCmdQ->getHeaplessStateInitEnabled() ? 1u : 0u, ev.peekTaskCount());
 }
 
 TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFalseIsReturned) {

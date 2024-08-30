@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -206,7 +206,8 @@ TEST_F(MarkerTest, givenMultipleEventWhenTheyArePassedToMarkerThenOutputEventHas
             &event3};
     cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
     cl_event event = nullptr;
-    auto initialTaskCount = pCmdQ->taskCount;
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto initialTaskCount = std::max(pCmdQ->taskCount, csr.peekTaskCount());
 
     pCmdQ->enqueueMarkerWithWaitList(
         numEventsInWaitList,
@@ -215,7 +216,7 @@ TEST_F(MarkerTest, givenMultipleEventWhenTheyArePassedToMarkerThenOutputEventHas
 
     std::unique_ptr<Event> pEvent((Event *)(event));
 
-    if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (csr.peekTimestampPacketWriteEnabled()) {
         EXPECT_EQ(initialTaskCount + 1, pCmdQ->taskCount);
         EXPECT_EQ(initialTaskCount + 1, pEvent->peekTaskCount());
     } else {

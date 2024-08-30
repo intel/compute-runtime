@@ -332,7 +332,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
 
     auto neoEvent = castToObject<Event>(mapEventReturned);
     // if task count of csr is higher then event task count with proper dc flushing then we are fine
-    EXPECT_EQ(1u, neoEvent->getCompletionStamp());
+    EXPECT_EQ(this->heaplessStateInit ? 2u : 1u, neoEvent->getCompletionStamp());
     // this can't be completed as task count is not reached yet
     EXPECT_FALSE(neoEvent->updateStatusAndCheckCompletion());
     EXPECT_TRUE(CL_COMMAND_MAP_BUFFER == neoEvent->getCommandType());

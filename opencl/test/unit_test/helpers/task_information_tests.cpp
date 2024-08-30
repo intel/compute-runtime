@@ -38,6 +38,9 @@ TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMapUnmapThenCsrIsFlushed) {
     CompletionStamp completionStamp = command->submit(20, false);
 
     auto expectedTaskCount = initialTaskCount + 1;
+    if (csr.heaplessStateInitialized) {
+        expectedTaskCount++;
+    }
     EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
 }
 
@@ -71,7 +74,14 @@ TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMarkerThenCsrIsNotFlushed) {
     std::unique_ptr<Command> command(new CommandWithoutKernel(*cmdQ));
     CompletionStamp completionStamp = command->submit(20, false);
 
-    EXPECT_EQ(initialTaskCount, completionStamp.taskCount);
+    auto heaplessStateInit = cmdQ->getHeaplessStateInitEnabled();
+    if (heaplessStateInit) {
+        EXPECT_EQ(1u, initialTaskCount);
+    } else {
+        EXPECT_EQ(0u, initialTaskCount);
+    }
+
+    EXPECT_EQ(0u, completionStamp.taskCount);
     EXPECT_EQ(initialTaskCount, csr.peekTaskCount());
 }
 

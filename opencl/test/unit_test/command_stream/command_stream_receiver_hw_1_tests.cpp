@@ -167,6 +167,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateDirt
 
 HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateWhenHeapsAreAskedForDirtyStatusThenTrueIsReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
 
     EXPECT_EQ(0u, commandStreamReceiver.peekTaskCount());
     EXPECT_EQ(0u, commandStreamReceiver.peekTaskLevel());

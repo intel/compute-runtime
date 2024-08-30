@@ -145,6 +145,32 @@ class MockCsr : public MockCsrBase<GfxFamily> {
             device);
     }
 
+    CompletionStamp flushTaskStateless(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
+        TaskCountType taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
+        this->flushTaskStamp = *this->executionStamp;
+        (*this->executionStamp)++;
+        slmUsedInLastFlushTask = dispatchFlags.useSLM;
+        this->latestSentTaskCount = ++this->taskCount;
+        lastTaskLevelToFlushTask = taskLevel;
+
+        return CommandStreamReceiverHw<GfxFamily>::flushTaskStateless(
+            commandStream,
+            commandStreamStart,
+            dsh,
+            ioh,
+            ssh,
+            taskLevel,
+            dispatchFlags,
+            device);
+    }
+
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
     bool slmUsedInLastFlushTask = false;

@@ -533,7 +533,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllEnginesReadyWhenWaitingForEventThenCl
     auto &gpgpuCsr = mockCmdQ->getGpgpuCommandStreamReceiver();
     auto gpgpuTagAddress = gpgpuCsr.getTagAddress();
 
-    EXPECT_EQ(3u, mockCmdQ->taskCount);
+    EXPECT_EQ(mockCmdQ->heaplessStateInitEnabled ? 4u : 3u, mockCmdQ->taskCount);
 
     *gpgpuTagAddress = mockCmdQ->taskCount - 1;
 

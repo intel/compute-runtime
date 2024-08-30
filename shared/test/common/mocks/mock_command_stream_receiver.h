@@ -39,6 +39,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::gpuHangCheckPeriod;
+    using CommandStreamReceiver::heaplessStateInitialized;
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;

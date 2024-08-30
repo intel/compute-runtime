@@ -1202,7 +1202,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowed
 
     status = clFinish(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, status);
-    EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(expectedStamp, pCmdQ->flushStamp->peekStamp());
 
     status = clReleaseEvent(event);
     EXPECT_EQ(CL_SUCCESS, status);

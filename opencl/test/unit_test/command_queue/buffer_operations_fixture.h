@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,19 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
         zeroCopyBuffer.reset(nullptr);
         delete BufferDefaults::context;
         CommandEnqueueFixture::tearDown();
+    }
+
+    int32_t adjustBuiltInType(bool isHeaplessEnabled, int32_t builtInType) {
+
+        if (isHeaplessEnabled) {
+            switch (builtInType) {
+            case EBuiltInOps::copyBufferToBuffer:
+            case EBuiltInOps::copyBufferToBufferStateless:
+                return EBuiltInOps::copyBufferToBufferStatelessHeapless;
+            }
+        }
+
+        return builtInType;
     }
 
   protected:
