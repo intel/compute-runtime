@@ -1132,10 +1132,11 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
             operationHandler->evict(device, allocation);
             EXPECT_EQ(expectedIndex, mock->context.receivedVmUnbindPatIndex.value());
         } else {
-            EXPECT_EQ(3u, mock->context.receivedVmBindPatIndex.value());
+            auto expectedPatIndex = productHelper.getPatIndex(CacheRegion::defaultRegion, CachePolicy::writeBack);
+            EXPECT_EQ(expectedPatIndex, mock->context.receivedVmBindPatIndex.value());
 
             operationHandler->evict(device, allocation);
-            EXPECT_EQ(3u, mock->context.receivedVmUnbindPatIndex.value());
+            EXPECT_EQ(expectedPatIndex, mock->context.receivedVmUnbindPatIndex.value());
         }
     }
 }
