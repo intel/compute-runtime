@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
-    LevelZeroBlackBoxTests::createScratchModuleKernel(context, device, module, kernel);
+    LevelZeroBlackBoxTests::createScratchModuleKernel(context, device, module, kernel, nullptr);
 
     const std::string regularCaseName = "Regular Command List";
     const std::string immediateCaseName = "Immediate Command List";

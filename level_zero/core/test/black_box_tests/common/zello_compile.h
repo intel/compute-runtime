@@ -48,6 +48,7 @@ extern const char *exportModuleSrc2CircDep;
 void createScratchModuleKernel(ze_context_handle_t &context,
                                ze_device_handle_t &device,
                                ze_module_handle_t &module,
-                               ze_kernel_handle_t &kernel);
+                               ze_kernel_handle_t &kernel,
+                               std::string *additionalBuildOptions);
 
 } // namespace LevelZeroBlackBoxTests

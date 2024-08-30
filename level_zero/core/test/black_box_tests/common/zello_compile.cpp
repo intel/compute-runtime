@@ -392,18 +392,23 @@ int lib_func_add5(int x) {
 void createScratchModuleKernel(ze_context_handle_t &context,
                                ze_device_handle_t &device,
                                ze_module_handle_t &module,
-                               ze_kernel_handle_t &kernel) {
+                               ze_kernel_handle_t &kernel,
+                               std::string *additionalBuildOptions) {
     std::string buildLog;
     auto spirV = LevelZeroBlackBoxTests::compileToSpirV(LevelZeroBlackBoxTests::scratchKernelSrc, "", buildLog);
     LevelZeroBlackBoxTests::printBuildLog(buildLog);
     SUCCESS_OR_TERMINATE((0 == spirV.size()));
 
+    std::string buildOptions = LevelZeroBlackBoxTests::scratchKernelBuildOptions;
+    if (additionalBuildOptions != nullptr) {
+        buildOptions += (*additionalBuildOptions);
+    }
     ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
     ze_module_build_log_handle_t buildlog;
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = spirV.data();
     moduleDesc.inputSize = spirV.size();
-    moduleDesc.pBuildFlags = LevelZeroBlackBoxTests::scratchKernelBuildOptions;
+    moduleDesc.pBuildFlags = buildOptions.c_str();
 
     if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
         size_t szLog = 0;
