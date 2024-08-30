@@ -4613,7 +4613,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingLowPriorityCsrThenCorr
     auto hwInfo = *NEO::defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
     MockExecutionEnvironment mockExecutionEnvironment{&hwInfo};
     RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]);
@@ -4734,7 +4734,7 @@ HWTEST_F(DeviceTest, givenContextGroupSupportedWhenGettingHighPriorityCsrThenCor
 
         auto &secondaryEngines = neoMockDevice->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(index)];
 
-        ASSERT_EQ(8u, secondaryEngines.engines.size());
+        ASSERT_EQ(8u / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, secondaryEngines.engines.size());
 
         auto highPriorityIndex = secondaryEngines.regularEnginesTotal;
         ASSERT_LT(highPriorityIndex, static_cast<uint32_t>(secondaryEngines.engines.size()));
