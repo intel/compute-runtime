@@ -40,8 +40,6 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledT
     EXPECT_EQ(expectedPatIndex, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHostMemory));
     EXPECT_EQ(expectedPatIndex, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::timestampPacketTagBuffer));
     EXPECT_EQ(expectedPatIndex, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::tagBuffer));
-    EXPECT_EQ(expectedPatIndex, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::linearStream));
-    EXPECT_EQ(expectedPatIndex, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHeap));
 
     debugManager.flags.AllowDcFlush.set(0);
 
@@ -53,10 +51,6 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledT
     EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHostMemory));
     EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::timestampPacketTagBuffer));
     EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::tagBuffer));
-
-    expectedPatIndexOverride = 0u;
-    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::linearStream));
-    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHeap));
 }
 
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabledThenTrueIsReturned) {
