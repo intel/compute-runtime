@@ -14,9 +14,9 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
+#include "shared/test/common/os_interface/linux/xe/mock_drm_xe.h"
+#include "shared/test/common/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/os_interface/linux/xe/mock_drm_xe.h"
-#include "shared/test/unit_test/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 using namespace NEO;
 
 TEST(IoctlHelperXeTest, givenXeDrmVersionsWhenGettingIoctlHelperThenValidIoctlHelperIsReturned) {

@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/test/common/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/os_interface/linux/xe/mock_ioctl_helper_xe.h"
 
 std::unique_ptr<DrmMockXe> DrmMockXe::create(RootDeviceEnvironment &rootDeviceEnvironment) {
     auto drm = std::unique_ptr<DrmMockXe>(new DrmMockXe{rootDeviceEnvironment});
