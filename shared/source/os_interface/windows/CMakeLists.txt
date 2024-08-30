@@ -18,7 +18,6 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}driver_info_windows_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
@@ -64,7 +63,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/environment_variables.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_logging.cpp

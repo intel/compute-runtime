@@ -254,7 +254,6 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
-                   ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
                    ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp

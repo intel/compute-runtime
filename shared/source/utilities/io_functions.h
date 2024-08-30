@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <stdlib.h>
+#include <string.h>
 
 namespace NEO {
 namespace IoFunctions {
@@ -40,6 +41,13 @@ inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
     int ret = IoFunctions::vfprintfPtr(fileDesc, formatStr, args);
     va_end(args);
     return ret;
+}
+
+inline bool getEnvToBool(const char *name) {
+    const char *env = getenvPtr(name);
+    if ((nullptr == env) || (0 == strcmp("0", env)))
+        return false;
+    return (0 == strcmp("1", env));
 }
 } // namespace IoFunctions
 
