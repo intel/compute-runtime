@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
@@ -567,7 +566,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
     maxBandwidth = maxBandwidth >> 16;
 
     // PMT reports maxBandwidth in units of 100 MBps. Need to convert it into Bytes/sec, unit to be returned by sysman.
-    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * MemoryConstants::megaByte * 100;
+    pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * megaBytesToBytes * 100;
 
     // timestamp calcuation
     uint32_t timeStampL = 0;

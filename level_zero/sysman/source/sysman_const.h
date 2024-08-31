@@ -76,6 +76,7 @@ constexpr uint16_t milliSecsToMicroSecs = 1000;
 constexpr uint32_t milliFactor = 1000u;
 constexpr uint32_t microFactor = milliFactor * milliFactor;
 constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
+constexpr uint64_t megaBytesToBytes = 1000 * 1000;
 
 constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
