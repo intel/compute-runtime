@@ -53,8 +53,6 @@ class MetricSource {
     virtual bool isAvailable() = 0;
     virtual ze_result_t appendMetricMemoryBarrier(CommandList &commandList) = 0;
     virtual ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) = 0;
-    virtual ze_result_t getTimerResolution(uint64_t &resolution) = 0;
-    virtual ze_result_t getTimestampValidBits(uint64_t &validBits) = 0;
     virtual ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) = 0;
     virtual ze_result_t activateMetricGroupsAlreadyDeferred() = 0;
     virtual ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) = 0;
@@ -71,6 +69,7 @@ class MetricSource {
     uint32_t getType() const {
         return type;
     }
+    virtual ze_result_t handleMetricGroupExtendedProperties(void *pNext) = 0;
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;
@@ -194,7 +193,6 @@ struct MetricGroup : _zet_metric_group_handle_t {
         zet_device_handle_t hDevice,
         const zet_metric_query_pool_desc_t *desc,
         zet_metric_query_pool_handle_t *phMetricQueryPool) = 0;
-    ze_result_t getMetricGroupExtendedProperties(MetricSource &metricSource, void *pnext);
     virtual ze_result_t getExportData(const uint8_t *pRawData, size_t rawDataSize, size_t *pExportDataSize,
                                       uint8_t *pExportData) = 0;
 };

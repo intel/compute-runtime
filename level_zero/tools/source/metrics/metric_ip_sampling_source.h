@@ -40,8 +40,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingpOsInterface.get(); }
     IpSamplingMetricStreamerImp *pActiveStreamer = nullptr;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
-    ze_result_t getTimerResolution(uint64_t &resolution) override;
-    ze_result_t getTimestampValidBits(uint64_t &validBits) override;
+    ze_result_t handleMetricGroupExtendedProperties(void *pNext) override;
     void setActivationTracker(MultiDomainDeferredActivationTracker *inputActivationTracker) {
         activationTracker.reset(inputActivationTracker);
     }
@@ -55,6 +54,8 @@ class IpSamplingMetricSourceImp : public MetricSource {
     std::unique_ptr<MetricIpSamplingOsInterface> metricIPSamplingpOsInterface = nullptr;
     std::unique_ptr<MetricGroup> cachedMetricGroup = nullptr;
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
+    ze_result_t getTimerResolution(uint64_t &resolution);
+    ze_result_t getTimestampValidBits(uint64_t &validBits);
 };
 
 struct IpSamplingMetricGroupBase : public MetricGroupImp {

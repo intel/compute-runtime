@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
+#include "level_zero/api/driver_experimental/public/zex_metric.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -206,6 +207,33 @@ ze_result_t IpSamplingMetricSourceImp::getConcurrentMetricGroups(std::vector<zet
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(void *pNext) {
+    ze_result_t retVal = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    while (pNext) {
+        auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
+
+        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP) {
+
+            zet_metric_global_timestamps_resolution_exp_t *metricsTimestampProperties =
+                reinterpret_cast<zet_metric_global_timestamps_resolution_exp_t *>(extendedProperties);
+
+            getTimerResolution(metricsTimestampProperties->timerResolution);
+            getTimestampValidBits(metricsTimestampProperties->timestampValidBits);
+            retVal = ZE_RESULT_SUCCESS;
+        }
+
+        if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP) {
+            zet_intel_metric_group_type_exp_t *groupType = reinterpret_cast<zet_intel_metric_group_type_exp_t *>(extendedProperties);
+            groupType->type = ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER;
+            retVal = ZE_RESULT_SUCCESS;
+        }
+
+        pNext = extendedProperties->pNext;
+    }
+
+    return retVal;
+}
+
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
                                                    std::vector<IpSamplingMetricImp> &metrics) : IpSamplingMetricGroupBase(metricSource) {
     this->metrics.reserve(metrics.size());
@@ -228,7 +256,7 @@ ze_result_t IpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_
     pProperties->pNext = pNext;
 
     if (pNext) {
-        return getMetricGroupExtendedProperties(metricSource, pNext);
+        return metricSource.handleMetricGroupExtendedProperties(pNext);
     }
 
     return ZE_RESULT_SUCCESS;

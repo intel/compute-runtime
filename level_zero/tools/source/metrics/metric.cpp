@@ -299,38 +299,6 @@ ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_
     return MetricGroup::fromHandle(hMetricGroup)->streamerOpen(hContext, hDevice, pDesc, hNotificationEvent, phMetricStreamer);
 }
 
-ze_result_t MetricGroup::getMetricGroupExtendedProperties(MetricSource &metricSource, void *pNext) {
-    ze_result_t retVal = ZE_RESULT_ERROR_INVALID_ARGUMENT;
-
-    while (pNext) {
-        zet_base_desc_t *extendedProperties = reinterpret_cast<zet_base_desc_t *>(pNext);
-
-        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP) {
-
-            zet_metric_global_timestamps_resolution_exp_t *metricsTimestampProperties =
-                reinterpret_cast<zet_metric_global_timestamps_resolution_exp_t *>(extendedProperties);
-
-            retVal = metricSource.getTimerResolution(metricsTimestampProperties->timerResolution);
-            if (retVal != ZE_RESULT_SUCCESS) {
-                metricsTimestampProperties->timerResolution = 0;
-                metricsTimestampProperties->timestampValidBits = 0;
-                return retVal;
-            }
-
-            retVal = metricSource.getTimestampValidBits(metricsTimestampProperties->timestampValidBits);
-            if (retVal != ZE_RESULT_SUCCESS) {
-                metricsTimestampProperties->timerResolution = 0;
-                metricsTimestampProperties->timestampValidBits = 0;
-                return retVal;
-            }
-        }
-
-        pNext = const_cast<void *>(extendedProperties->pNext);
-    }
-
-    return retVal;
-}
-
 bool MultiDomainDeferredActivationTracker::activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
 
     // Activation: postpone until zetMetricStreamerOpen or zeCommandQueueExecuteCommandLists

@@ -8,6 +8,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/api/driver_experimental/public/zex_metric.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
@@ -2677,6 +2678,69 @@ TEST_F(MetricEnumerationTest, givenMetricSetWhenWaitForReportsIsCalledWaitForRep
 
     uint32_t timeout = 1;
     EXPECT_EQ(metricGroup.waitForReports(timeout), ZE_RESULT_NOT_READY);
+}
+
+TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupPropertiesIsCalledToQueryGroupTypeThenReturnsSuccess) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    zet_intel_metric_group_type_exp_t metricGroupType{};
+    metricGroupType.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
+    metricGroupType.pNext = nullptr;
+    metricGroupType.type = static_cast<zet_intel_metric_group_type_exp_flags_t>(0xffffffff);
+
+    metricGroupProperties.pNext = &metricGroupType;
+
+    // Metric group properties.
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupProperties.domain, 0u);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
+    EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
+    EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
+
+    EXPECT_EQ(metricGroupType.type, ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER);
 }
 
 } // namespace ult

@@ -14,6 +14,28 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
+#define ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP (static_cast<zet_structure_type_t>(0x00010006))
+#define ZET_INTEL_STRUCTURE_TYPE_EXPORT_DMA_EXP_PROPERTIES (static_cast<zet_structure_type_t>(0x00010007))
+#define ZET_INTEL_METRIC_TYPE_EXPORT_DMA_BUF (0x7ffffffd)
+
+typedef struct _zet_intel_export_dma_buf_exp_properties_t {
+    zet_structure_type_t stype;
+    void *pNext;
+    int fd;      // [out] the file descriptor handle that could be used to import the memory by the host process.
+    size_t size; // [out] size in bytes of the dma_buf
+} zet_intel_export_dma_buf_exp_properties_t;
+
+typedef enum _zet_intel_metric_group_type_exp_flags_t {
+    ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER = ZE_BIT(0),
+    ZET_INTEL_METRIC_GROUP_TYPE_EXP_EXPORT_DMA_BUF = ZE_BIT(1)
+} zet_intel_metric_group_type_exp_flags_t;
+
+typedef struct _zet_intel_metric_group_type_exp_t {
+    zet_structure_type_t stype;
+    void *pNext;
+    zet_intel_metric_group_type_exp_flags_t type; //[out] metric group type
+} zet_intel_metric_group_type_exp_t;
+
 namespace L0 {
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Get sets of metric groups which could be collected concurrently.

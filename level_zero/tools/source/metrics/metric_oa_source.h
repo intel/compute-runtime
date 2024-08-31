@@ -34,15 +34,13 @@ class OaMetricSourceImp : public MetricSource {
     std::unique_ptr<MetricsLibrary> &getMetricsLibraryObject() { return metricsLibrary; }
     std::unique_ptr<MetricEnumeration> &getMetricEnumerationObject() { return metricEnumeration; }
 
-    ze_result_t getTimerResolution(uint64_t &resolution) override;
-    ze_result_t getTimestampValidBits(uint64_t &validBits) override;
-
     ze_result_t activateMetricGroupsAlreadyDeferred() override;
     ze_result_t activateMetricGroupsPreferDeferred(const uint32_t count,
                                                    zet_metric_group_handle_t *phMetricGroups) override;
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override;
     ze_result_t getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
                                           uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup) override;
+    ze_result_t handleMetricGroupExtendedProperties(void *pNext) override;
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
     bool isMetricGroupActivatedInHw() const;
     void setUseCompute(const bool useCompute);
@@ -63,6 +61,8 @@ class OaMetricSourceImp : public MetricSource {
     bool useCompute = false;
     std::unique_ptr<MetricOAOsInterface> metricOAOsInterface = nullptr;
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
+    ze_result_t getTimerResolution(uint64_t &resolution);
+    ze_result_t getTimestampValidBits(uint64_t &validBits);
 };
 
 template <>

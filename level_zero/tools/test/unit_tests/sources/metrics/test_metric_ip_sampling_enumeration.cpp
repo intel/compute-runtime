@@ -9,6 +9,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
+#include "level_zero/api/driver_experimental/public/zex_metric.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/include/zet_intel_gpu_metric.h"
@@ -278,6 +279,38 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadi
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
         EXPECT_EQ(metricTimestampProperties.timerResolution, deviceProps.timerResolution);
         EXPECT_EQ(metricTimestampProperties.timestampValidBits, deviceProps.timestampValidBits);
+    }
+}
+
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQueryingMetricGroupTypeThenAppropriateGroupTypeIsReturned, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
+        device->getProperties(&deviceProps);
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        zet_intel_metric_group_type_exp_t metricGroupType{};
+        metricGroupType.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
+        metricGroupType.pNext = nullptr;
+        metricGroupType.type = static_cast<zet_intel_metric_group_type_exp_flags_t>(0xffffffff);
+
+        zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricGroupType};
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(metricGroupProperties.description, "EU stall sampling"), 0);
+        EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
+        EXPECT_EQ(metricGroupType.type, ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER);
     }
 }
 
