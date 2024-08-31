@@ -47,7 +47,7 @@ bool CacheSettingsHelper::preferNoCpuAccess(GMM_RESOURCE_USAGE_TYPE_ENUM gmmReso
 }
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper) {
-    if (productHelper.overrideUsageForDcFlushMitigation(allocationType)) {
+    if (productHelper.overridePatAndUsageForDcFlushMitigation(allocationType)) {
         return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
     }
 

@@ -135,9 +135,7 @@ class ProductHelper {
     virtual bool isDcFlushAllowed() const = 0;
     virtual bool isDcFlushMitigated() const = 0;
     virtual bool mitigateDcFlush() const = 0;
-    virtual bool overrideUsageForDcFlushMitigation(AllocationType allocationType) const = 0;
-    virtual bool overridePatToUCAndTwoWayCohForDcFlushMitigation(AllocationType allocationType) const = 0;
-    virtual bool overridePatToUCAndOneWayCohForDcFlushMitigation(AllocationType allocationType) const = 0;
+    virtual bool overridePatAndUsageForDcFlushMitigation(AllocationType allocationType) const = 0;
     virtual bool overrideCacheableForDcFlushMitigation(AllocationType allocationType) const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
     virtual bool getUuid(NEO::DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const = 0;
