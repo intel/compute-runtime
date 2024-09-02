@@ -19,8 +19,8 @@ namespace ult {
 
 std::vector<wchar_t> pmtInterface(pmtInterfaceName.begin(), pmtInterfaceName.end());
 const std::map<std::string, std::pair<uint32_t, uint32_t>> dummyKeyOffsetMap = {
-    {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", {42, 1}},
-     {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", {43, 1}}}};
+    {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", {41, 1}},
+     {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", {42, 1}}}};
 
 class SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
 

@@ -26,8 +26,8 @@ static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetM
     {0x1e2f8200, // BMG PUNIT rev 1
      {{"VRAM_BANDWIDTH", 14}}},
     {0x5e2f8210, // BMG OOBMSM rev 15
-     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 42},
-      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 43},
+     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 41},
+      {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 42},
       {"rx_byte_count_lsb", 70},
       {"rx_byte_count_msb", 69},
       {"tx_byte_count_lsb", 72},
@@ -565,7 +565,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
 
     maxBandwidth = maxBandwidth >> 16;
 
-    // PMT reports maxBandwidth in units of 100 MBps. Need to convert it into Bytes/sec, unit to be returned by sysman.
+    // PMT reports maxBandwidth in units of 100 MBps (decimal). Need to convert it into Bytes/sec, unit to be returned by sysman.
     pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * megaBytesToBytes * 100;
 
     // timestamp calcuation
