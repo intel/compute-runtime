@@ -311,7 +311,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         bindlessInfo = info;
     }
 
-    SurfaceStateInHeapInfo getBindlessInfo() {
+    const SurfaceStateInHeapInfo &getBindlessInfo() const {
         return bindlessInfo;
     }
     bool canBeReadOnly() {
