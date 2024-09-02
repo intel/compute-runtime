@@ -595,6 +595,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
             savedSurfaceStateArgs = args;
             ++encodeBufferSurfaceStateCalled;
+            NEO::GfxCoreHelperHw<FamilyType>::encodeBufferSurfaceState(args);
         }
     };
 
@@ -651,6 +652,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
 }
 
 HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -667,6 +669,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
             savedSurfaceStateArgs = args;
             ++encodeBufferSurfaceStateCalled;
+            NEO::GfxCoreHelperHw<FamilyType>::encodeBufferSurfaceState(args);
         }
     };
 
@@ -724,12 +727,17 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalConstBufferAndBindlessExpl
         EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
         EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
 
-        EXPECT_EQ(globalConstBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+        EXPECT_NE(globalConstBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+
+        const auto surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(globalConstBuffer.getBindlessInfo().ssPtr);
+        ASSERT_NE(nullptr, surfState);
+        EXPECT_EQ(gpuAddress, surfState->getSurfaceBaseAddress());
         EXPECT_EQ(&globalConstBuffer, savedSurfaceStateArgs.allocation);
     }
 }
 
 HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplicitAndImplicitArgsAndBindlessHeapsHelperWhenInitializeKernelImmutableDataThenSurfaceStateIsSetAndImplicitArgBindlessOffsetIsPatched, IsAtLeastXeHpgCore) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     HardwareInfo hwInfo = *defaultHwInfo;
 
     auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -746,6 +754,7 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         void encodeBufferSurfaceState(EncodeSurfaceStateArgs &args) const override {
             savedSurfaceStateArgs = args;
             ++encodeBufferSurfaceStateCalled;
+            NEO::GfxCoreHelperHw<FamilyType>::encodeBufferSurfaceState(args);
         }
     };
 
@@ -803,7 +812,11 @@ HWTEST2_F(KernelImmutableDataBindlessTest, givenGlobalVarBufferAndBindlessExplic
         EXPECT_EQ(allocSize, savedSurfaceStateArgs.size);
         EXPECT_EQ(gpuAddress, savedSurfaceStateArgs.graphicsAddress);
 
-        EXPECT_EQ(globalVarBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+        EXPECT_NE(globalVarBuffer.getBindlessInfo().ssPtr, savedSurfaceStateArgs.outMemory);
+
+        const auto surfState = reinterpret_cast<RENDER_SURFACE_STATE *>(globalVarBuffer.getBindlessInfo().ssPtr);
+        ASSERT_NE(nullptr, surfState);
+        EXPECT_EQ(gpuAddress, surfState->getSurfaceBaseAddress());
         EXPECT_EQ(&globalVarBuffer, savedSurfaceStateArgs.allocation);
     }
 }
