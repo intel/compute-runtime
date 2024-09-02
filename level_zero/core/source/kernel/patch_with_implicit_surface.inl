@@ -42,6 +42,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     void *surfaceStateAddress = nullptr;
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    bool useTempBuffer = false;
 
     if (NEO::isValidOffset(ptr.bindless)) {
         if (device.getBindlessHeapsHelper()) {
@@ -50,6 +51,7 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
             auto patchLocation = ptrOffset(crossThreadData.begin(), ptr.bindless);
             auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
             patchWithRequiredSize(const_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+            useTempBuffer = true;
         } else {
             auto index = std::numeric_limits<uint32_t>::max();
             const auto &iter = kernelDescriptor.getBindlessOffsetToSurfaceState().find(ptr.bindless);
@@ -64,12 +66,18 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
     }
 
     if (surfaceStateAddress) {
+        std::unique_ptr<uint64_t[]> surfaceState;
+
+        if (useTempBuffer) {
+            surfaceState = std::make_unique<uint64_t[]>(surfaceStateSize / sizeof(uint64_t));
+        }
+
         auto addressToPatch = allocation->getGpuAddress();
         size_t sizeToPatch = allocation->getUnderlyingBufferSize();
         auto isDebuggerActive = device.getDebugger() != nullptr;
 
         NEO::EncodeSurfaceStateArgs args;
-        args.outMemory = surfaceStateAddress;
+        args.outMemory = useTempBuffer ? surfaceState.get() : surfaceStateAddress;
         args.graphicsAddress = addressToPatch;
         args.size = sizeToPatch;
         args.mocs = gfxCoreHelper.getMocsIndex(*device.getGmmHelper(), true, false) << 1;
@@ -81,5 +89,10 @@ inline void patchImplicitArgBindlessOffsetAndSetSurfaceState(ArrayRef<uint8_t> c
         args.isDebuggerActive = isDebuggerActive;
 
         gfxCoreHelper.encodeBufferSurfaceState(args);
+
+        if (useTempBuffer) {
+            memcpy_s(surfaceStateAddress, surfaceStateSize,
+                     surfaceState.get(), surfaceStateSize);
+        }
     }
 }
