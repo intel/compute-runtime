@@ -570,6 +570,9 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
     } else {
         getHeapHelper()->storeHeapAllocation(allocation);
     }
+    if (device->getProductHelper().isDcFlushMitigated()) {
+        this->immediateCmdListCsr->registerDcFlushForDcMitigation();
+    }
     this->immediateCmdListCsr->flushTagUpdate();
 }
 

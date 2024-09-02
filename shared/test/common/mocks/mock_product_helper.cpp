@@ -292,7 +292,17 @@ bool ProductHelperHw<IGFX_UNKNOWN>::mitigateDcFlush() const {
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::overridePatAndUsageForDcFlushMitigation(AllocationType allocationType) const {
+bool ProductHelperHw<IGFX_UNKNOWN>::overridePatToUCAndTwoWayCohForDcFlushMitigation(AllocationType allocationType) const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::overrideUsageForDcFlushMitigation(AllocationType allocationType) const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::overridePatToUCAndOneWayCohForDcFlushMitigation(AllocationType allocationType) const {
     return false;
 }
 
