@@ -1138,11 +1138,6 @@ TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperWhenMoveConstructingAnotherOb
 }
 
 TEST_F(DrmBufferObjectTest, givenDrmWhenBindOperationFailsWithENOMEMThenBindWithoutLockingIsTried) {
-    struct IoctlHelperPageFaultSupport : public MockIoctlHelper {
-        using MockIoctlHelper::MockIoctlHelper;
-        bool isPageFaultSupported() override { return true; }
-    };
-
     auto executionEnvironment = new ExecutionEnvironment;
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -1153,8 +1148,9 @@ TEST_F(DrmBufferObjectTest, givenDrmWhenBindOperationFailsWithENOMEMThenBindWith
     auto drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->requirePerContextVM = false;
     drm->isVMBindImmediateSupported = true;
+    drm->pageFaultSupported = true;
 
-    auto ioctlHelper = std::make_unique<IoctlHelperPageFaultSupport>(*drm);
+    auto ioctlHelper = std::make_unique<MockIoctlHelper>(*drm);
     ioctlHelper->vmBindResult = -1;
     ioctlHelper->isWaitBeforeBindRequiredResult = true;
     drm->ioctlHelper.reset(ioctlHelper.release());

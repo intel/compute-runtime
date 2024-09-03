@@ -1530,7 +1530,7 @@ int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObjec
         errno = 0;
         static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
         ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
-        if ((getErrno() == ENOMEM) && ioctlHelper->isPageFaultSupported()) {
+        if ((getErrno() == ENOMEM) && pageFaultSupported) {
             DEBUG_BREAK_IF(true);
             bo->setIsLockable(false);
             ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
