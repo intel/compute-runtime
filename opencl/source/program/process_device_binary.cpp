@@ -353,10 +353,12 @@ void Program::processDebugData(uint32_t rootDeviceIndex) {
 Zebin::Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].constStringSectionData.initData),
                                        buildInfos[rootDeviceIndex].constStringSectionData.size};
-    std::vector<std::pair<std::string_view, NEO::GraphicsAllocation *>> kernels;
-    for (const auto &kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray)
-        kernels.push_back({kernelInfo->kernelDescriptor.kernelMetadata.kernelName, kernelInfo->getGraphicsAllocation()});
+    std::vector<NEO::Zebin::Debug::Segments::KernelNameIsaTupleT> kernels;
+    for (const auto &kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray) {
 
+        NEO::Zebin::Debug::Segments::Segment segment = {static_cast<uintptr_t>(kernelInfo->getGraphicsAllocation()->getGpuAddress()), kernelInfo->getGraphicsAllocation()->getUnderlyingBufferSize()};
+        kernels.push_back({kernelInfo->kernelDescriptor.kernelMetadata.kernelName, segment});
+    }
     return Zebin::Debug::Segments(getGlobalSurface(rootDeviceIndex), getConstantSurface(rootDeviceIndex), strings, kernels);
 }
 
