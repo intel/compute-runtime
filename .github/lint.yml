@@ -101,6 +101,10 @@ lint:
       manifest:
         infra:
         - ci
+        i915_kmd:
+        - ci
+        xe_kmd:
+        - ci
         _default:
         - build
     strict:
