@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,3 +10,5 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_debugger_linux.cpp
   )
 endif()
+
+add_subdirectories()

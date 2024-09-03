@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -24,8 +25,13 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 
         const bool vmBindAvailable = drm->isVmBindAvailable();
         const bool perContextVms = drm->isPerContextVMRequired();
-        const bool allowDebug = (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) ||
-                                (perContextVms && drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::online);
+        bool allowDebug = false;
+
+        if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::online) {
+            allowDebug = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled() ? true : perContextVms;
+        } else if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::offline) {
+            allowDebug = true;
+        }
 
         if (vmBindAvailable && allowDebug) {
             drm->registerResourceClasses();
