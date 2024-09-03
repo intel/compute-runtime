@@ -70,10 +70,7 @@ struct VirtualMemoryReservation {
     MemoryFlags flags;
     std::map<void *, MemoryMappedRange *> mappedAllocations;
     uint32_t rootDeviceIndex;
-    bool isSvmReservation;
     size_t reservationSize;
-    uint64_t reservationBase;
-    size_t reservationTotalSize;
 };
 
 struct PhysicalMemoryAllocation {
@@ -251,8 +248,6 @@ class MemoryManager {
     virtual AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) = 0;
     virtual size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) = 0;
     virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
-    virtual AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) = 0;
-    virtual void freeCpuAddress(AddressRange addressRange) = 0;
     static HeapIndex selectInternalHeap(bool useLocalMemory);
     static HeapIndex selectExternalHeap(bool useLocalMemory);
 

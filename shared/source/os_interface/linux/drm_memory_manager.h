@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
-#include "shared/source/os_interface/os_memory.h"
 
 #include <limits>
 #include <map>
@@ -71,8 +70,6 @@ class DrmMemoryManager : public MemoryManager {
     AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override;
     size_t selectAlignmentAndHeap(size_t size, HeapIndex *heap) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
-    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override;
-    void freeCpuAddress(AddressRange addressRange) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(uint32_t rootDeviceIndex, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress, size_t size,
                                                                     DeviceBitfield memoryBanks, size_t maxOsContextCount, int32_t pairHandle, bool isSystemMemoryPool, bool isUsmHostAllocation);
 
@@ -181,7 +178,6 @@ class DrmMemoryManager : public MemoryManager {
     bool forcePinEnabled = false;
     const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
-    std::unique_ptr<OSMemory> osMemory;
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
     decltype(&close) closeFunction = close;

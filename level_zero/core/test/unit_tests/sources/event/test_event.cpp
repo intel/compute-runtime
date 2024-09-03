@@ -89,8 +89,6 @@ class MemoryManagerEventPoolFailMock : public NEO::MemoryManager {
         return MemoryConstants::pageSize64k;
     }
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
-    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override { return {}; }
-    void freeCpuAddress(AddressRange addressRange) override{};
     NEO::GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const NEO::AllocationData &allocationData) override { return nullptr; };
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithAlignment(const NEO::AllocationData &allocationData) override { return nullptr; };

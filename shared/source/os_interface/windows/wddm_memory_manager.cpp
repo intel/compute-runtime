@@ -74,7 +74,6 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     if (customAlignment > 0) {
         alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
     }
-    osMemory = OSMemory::create();
 
     initialized = true;
 }
@@ -1024,15 +1023,6 @@ AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredS
 
 void WddmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
     getWddm(rootDeviceIndex).freeGpuVirtualAddress(addressRange.address, addressRange.size);
-}
-
-AddressRange WddmMemoryManager::reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) {
-    void *ptr = osMemory->osReserveCpuAddressRange(reinterpret_cast<void *>(requiredStartAddress), size, false);
-    return {castToUint64(ptr), size};
-}
-
-void WddmMemoryManager::freeCpuAddress(AddressRange addressRange) {
-    osMemory->osReleaseCpuAddressRange(reinterpret_cast<void *>(addressRange.address), addressRange.size);
 }
 
 bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress) {
