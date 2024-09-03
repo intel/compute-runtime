@@ -44,6 +44,9 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
         commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        auto commandList = CommandList::fromHandle(commandLists[0]);
+        this->heaplessStateInit = commandList->isHeaplessStateInitEnabled();
     }
 
     void tearDown() {
@@ -65,6 +68,7 @@ struct CommandQueueExecuteCommandListsFixture : DeviceFixture {
 
     const static uint32_t numCommandLists = 2;
     ze_command_list_handle_t commandLists[numCommandLists];
+    bool heaplessStateInit = false;
 };
 
 using CommandQueueExecuteCommandLists = Test<CommandQueueExecuteCommandListsFixture>;
@@ -908,14 +912,25 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
 }
 
 HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsAtLeastSkl) {
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
     twoCommandListCommandPreemptionTest<FamilyType>(false);
 }
 
 HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce, IsAtLeastSkl) {
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
+
     twoCommandListCommandPreemptionTest<FamilyType>(true);
 }
 
 HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopyCommandListThenExpectNoPreemptionProgramming) {
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
+
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -1154,7 +1169,12 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
 
     // 1st call then initialize registers
     GenCmdList cmdList;
-    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore1stExecute), usedSpaceOn1stExecute));
+
+    if (csr->commandStreamHeaplessStateInit) {
+        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(csr->commandStreamHeaplessStateInit->getCpuBase(), 0), csr->commandStreamHeaplessStateInit->getUsed()));
+    } else {
+        ASSERT_TRUE(Parse::parseCommandBuffer(cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), usedSpaceBefore1stExecute), usedSpaceOn1stExecute));
+    }
     findPartitionRegister<FamilyType>(cmdList, true);
 
     auto usedSpaceBefore2ndExecute = commandQueue->commandStream.getUsed();

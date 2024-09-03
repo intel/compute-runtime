@@ -5138,11 +5138,19 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+
+        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
     }
+    executionEnvironment->calculateMaxOsContextCount();
+
     auto memoryManager = new NEO::MockMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
+
     NEO::Device *neoDevice0 = NEO::Device::create<RootDevice>(executionEnvironment, 0u);
     debugManager.flags.CreateMultipleSubDevices.set(4);
+
+    executionEnvironment->calculateMaxOsContextCount();
     NEO::Device *neoDevice1 = NEO::Device::create<RootDevice>(executionEnvironment, 1u);
 
     NEO::DeviceVector devices;

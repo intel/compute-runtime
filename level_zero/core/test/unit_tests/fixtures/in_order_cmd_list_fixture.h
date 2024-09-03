@@ -273,5 +273,42 @@ bool InOrderCmdListFixture::verifyInOrderDependency(GenCmdList::iterator &cmd, u
     cmd++;
     return true;
 }
+
+struct MultiTileInOrderCmdListFixture : public InOrderCmdListFixture {
+    void SetUp() override {
+        NEO::debugManager.flags.CreateMultipleSubDevices.set(partitionCount);
+        NEO::debugManager.flags.EnableImplicitScaling.set(4);
+
+        InOrderCmdListFixture::SetUp();
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>> createMultiTileImmCmdList() {
+        auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+        cmdList->partitionCount = partitionCount;
+
+        return cmdList;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    DestroyableZeUniquePtr<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>> createMultiTileRegularCmdList(bool copyOnly) {
+        auto cmdList = createRegularCmdList<gfxCoreFamily>(copyOnly);
+
+        cmdList->partitionCount = partitionCount;
+
+        return cmdList;
+    }
+
+    const uint32_t partitionCount = 2;
+};
+
+struct MultiTileSynchronizedDispatchFixture : public MultiTileInOrderCmdListFixture {
+    void SetUp() override {
+        NEO::debugManager.flags.ForceSynchronizedDispatchMode.set(1);
+        MultiTileInOrderCmdListFixture::SetUp();
+    }
+};
+
 } // namespace ult
 } // namespace L0

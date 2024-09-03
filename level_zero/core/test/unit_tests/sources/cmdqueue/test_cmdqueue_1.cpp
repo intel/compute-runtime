@@ -1903,7 +1903,8 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledWhenExecutingCmdLi
 
     auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
 
-    ASSERT_EQ(2u, bbStartCmds.size());
+    auto heaplessStateInitEnabled = commandList->heaplessStateInitEnabled;
+    EXPECT_EQ(heaplessStateInitEnabled ? 1u : 2u, bbStartCmds.size());
 
     for (auto &cmd : bbStartCmds) {
         auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmd);
@@ -1948,7 +1949,8 @@ HWTEST_F(ExecuteCommandListTests, givenDirectSubmissionEnabledAndDebugFlagSetWhe
 
     auto bbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
 
-    EXPECT_EQ(2u, bbStartCmds.size());
+    auto heaplessStateInitEnabled = commandList->heaplessStateInitEnabled;
+    EXPECT_EQ(heaplessStateInitEnabled ? 1u : 2u, bbStartCmds.size());
 
     for (auto &cmd : bbStartCmds) {
         auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmd);

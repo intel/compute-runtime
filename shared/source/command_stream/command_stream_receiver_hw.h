@@ -195,7 +195,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     uint64_t getScratchPatchAddress();
 
     SubmissionStatus programHeaplessProlog(Device &device);
-    void programHeaplessStateProlog(Device &device, LinearStream &commandStream);
+    MOCKABLE_VIRTUAL void programHeaplessStateProlog(Device &device, LinearStream &commandStream);
     void programStateBaseAddressHeapless(Device &device, LinearStream &commandStream);
     void programComputeModeHeapless(Device &device, LinearStream &commandStream);
     void handleAllocationsResidencyForflushTaskStateless(const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh, Device &device);

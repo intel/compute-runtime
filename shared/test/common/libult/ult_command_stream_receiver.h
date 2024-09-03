@@ -254,6 +254,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::initializeDeviceWithFirstSubmission(device);
     }
 
+    void programHeaplessStateProlog(Device &device, LinearStream &commandStream) override {
+        this->commandStreamHeaplessStateInit = &commandStream;
+        return BaseClass::programHeaplessStateProlog(device, commandStream);
+    }
+
     bool writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) override {
         writeMemoryParams.totalCallCount++;
         if (isChunkCopy) {
@@ -541,6 +546,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;
+    LinearStream *commandStreamHeaplessStateInit = nullptr;
+
     const IndirectHeap *recordedSsh = nullptr;
 
     std::mutex mutex;

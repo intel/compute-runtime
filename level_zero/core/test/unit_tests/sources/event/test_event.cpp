@@ -2820,7 +2820,10 @@ struct EventPoolCreateNegativeTest : public ::testing::Test {
         for (uint32_t i = 0; i < numRootDevices; i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+            UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+            UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         }
+        executionEnvironment->calculateMaxOsContextCount();
 
         std::vector<std::unique_ptr<NEO::Device>> devices;
         for (uint32_t i = 0; i < numRootDevices; i++) {
