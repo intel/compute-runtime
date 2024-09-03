@@ -2402,3 +2402,28 @@ TEST(IoctlHelperXeTest, givenCorrectEuPerDssTypeWhenCheckingIfTopologyIsEuPerDss
     EXPECT_FALSE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
     EXPECT_FALSE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
 }
+
+TEST(IoctlHelperXeTest, givenIoctlHelperWhenSettingExtContextThenCallExternalIoctlFunction) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    bool ioctlCalled = false;
+    ResetStats resetStats{};
+    EXPECT_TRUE(ioctlHelper.ioctl(DrmIoctl::getResetStats, &resetStats));
+    EXPECT_FALSE(ioctlCalled);
+
+    int handle = 0;
+    IoctlFunc ioctl = [&](void *, int, unsigned long int, void *, bool) { ioctlCalled=true; return 0; };
+    ExternalCtx ctx{&handle, ioctl};
+
+    ioctlHelper.setExternalContext(&ctx);
+    ioctlCalled = false;
+    EXPECT_EQ(0, ioctlHelper.ioctl(DrmIoctl::getResetStats, &resetStats));
+    EXPECT_TRUE(ioctlCalled);
+
+    ioctlHelper.setExternalContext(nullptr);
+    ioctlCalled = false;
+    EXPECT_TRUE(ioctlHelper.ioctl(DrmIoctl::getResetStats, &resetStats));
+    EXPECT_FALSE(ioctlCalled);
+}

@@ -18,6 +18,7 @@
 #include <cinttypes>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -87,6 +88,13 @@ struct ResetStatsFault {
     uint16_t flags;
 };
 
+using IoctlFunc = std::function<int(void *, int, unsigned long int, void *, bool)>;
+
+struct ExternalCtx {
+    void *handle = nullptr;
+    IoctlFunc ioctl = nullptr;
+};
+
 using MemRegionsVec = StackVec<MemoryClassInstance, 5>;
 using VmBindExtSetPatT = uint8_t[40];
 using VmBindExtUserFenceT = uint8_t[56];
@@ -98,6 +106,7 @@ class IoctlHelper {
     static std::unique_ptr<IoctlHelper> getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm);
     virtual int ioctl(DrmIoctl request, void *arg);
     virtual int ioctl(int fd, DrmIoctl request, void *arg);
+    virtual void setExternalContext(ExternalCtx *ctx);
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
@@ -214,6 +223,7 @@ class IoctlHelper {
 
   protected:
     Drm &drm;
+    ExternalCtx *externalCtx = nullptr;
 };
 
 class IoctlHelperI915 : public IoctlHelper {

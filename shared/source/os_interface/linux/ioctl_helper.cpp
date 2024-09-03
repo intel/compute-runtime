@@ -22,7 +22,14 @@
 
 namespace NEO {
 
+void IoctlHelper::setExternalContext(ExternalCtx *ctx) {
+    externalCtx = ctx;
+}
+
 int IoctlHelper::ioctl(DrmIoctl request, void *arg) {
+    if (externalCtx) {
+        return externalCtx->ioctl(externalCtx->handle, drm.getFileDescriptor(), getIoctlRequestValue(request), arg, false);
+    }
     return drm.ioctl(request, arg);
 }
 
