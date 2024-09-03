@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using namespace NEO::Zebin::Elf;
 
 Segments::Segments() {}
 
-Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaPairT> &kernels) {
+Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAllocation *globalConstAlloc, ArrayRef<const uint8_t> &globalStrings, std::vector<KernelNameIsaTupleT> &kernels) {
     if (globalVarAlloc) {
         varData = {static_cast<uintptr_t>(globalVarAlloc->getGpuAddress()), globalVarAlloc->getUnderlyingBufferSize()};
     }
@@ -28,9 +28,8 @@ Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAlloc
     if (false == globalStrings.empty()) {
         stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings.size()};
     }
-    for (auto &[kernelName, isa] : kernels) {
-        Debug::Segments::Segment kernelSegment = {static_cast<uintptr_t>(isa->getGpuAddress()), isa->getUnderlyingBufferSize()};
-        nameToSegMap.insert(std::pair(kernelName, kernelSegment));
+    for (auto &[kernelName, isaSegment] : kernels) {
+        nameToSegMap.insert(std::pair(kernelName, isaSegment));
     }
 }
 

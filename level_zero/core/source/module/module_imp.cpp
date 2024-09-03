@@ -523,9 +523,16 @@ ModuleImp::~ModuleImp() {
 }
 
 NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
-    std::vector<std::pair<std::string_view, NEO::GraphicsAllocation *>> kernels;
-    for (const auto &kernelImmData : kernelImmDatas)
-        kernels.push_back({kernelImmData->getDescriptor().kernelMetadata.kernelName, kernelImmData->getIsaGraphicsAllocation()});
+    std::vector<NEO::Zebin::Debug::Segments::KernelNameIsaTupleT> kernels;
+    for (const auto &kernelImmData : kernelImmDatas) {
+        NEO::Zebin::Debug::Segments::Segment segment = {kernelImmData->getIsaGraphicsAllocation()->getGpuAddress(), kernelImmData->getIsaGraphicsAllocation()->getUnderlyingBufferSize()};
+        if (kernelImmData->getIsaParentAllocation()) {
+            segment.address += kernelImmData->getIsaOffsetInParentAllocation();
+            segment.size = kernelImmData->getIsaSubAllocationSize();
+        }
+        kernels.push_back({kernelImmData->getDescriptor().kernelMetadata.kernelName, segment});
+    }
+
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(translationUnit->programInfo.globalStrings.initData),
                                        translationUnit->programInfo.globalStrings.size};
     return NEO::Zebin::Debug::Segments(translationUnit->globalVarBuffer, translationUnit->globalConstBuffer, strings, kernels);

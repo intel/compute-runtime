@@ -4834,6 +4834,65 @@ TEST_F(ModuleWithZebinTest, givenValidZebinWhenGettingDebugInfoThenDebugZebinIsC
     EXPECT_EQ(retCode, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(ModuleTranslationUnitTest, givenModuleWithMultipleKernelsWhenDebugInfoQueriedThenCorrectSegmentsAreDefined) {
+    std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+kernels:
+    - name : kernel1
+      execution_env :
+        simd_size : 8
+    - name : kernel2
+      execution_env :
+        simd_size : 8
+)===";
+    MockElfEncoder<> elfEncoder;
+    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
+    elfEncoder.getElfFileHeader().machine = productFamily;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel1", std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel2", std::string{});
+    elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfo);
+    auto zebin = elfEncoder.encode();
+
+    auto module = new Module(device, nullptr, ModuleType::user);
+
+    ze_module_desc_t moduleDesc = {ZE_STRUCTURE_TYPE_MODULE_DESC};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.inputSize = zebin.size();
+    moduleDesc.pInputModule = zebin.data();
+    moduleDesc.pNext = nullptr;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    result = module->initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    size_t debugDataSize;
+    module->getDebugInfo(&debugDataSize, nullptr);
+    auto debugData = std::make_unique<uint8_t[]>(debugDataSize);
+    result = module->getDebugInfo(&debugDataSize, debugData.get());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    ASSERT_NE(nullptr, module->translationUnit->debugData.get());
+
+    std::string errors, warnings;
+    auto outElf = Elf::decodeElf<NEO::Elf::EI_CLASS_64>(ArrayRef<const uint8_t>(debugData.get(), debugDataSize), errors, warnings);
+
+    auto kernel1 = module->kernelImmDatas[0].get();
+    auto kernel2 = module->kernelImmDatas[1].get();
+    EXPECT_EQ(kernel1->getIsaGraphicsAllocation(), kernel2->getIsaGraphicsAllocation());
+    EXPECT_EQ(kernel1->getIsaGraphicsAllocation(), kernel2->getIsaGraphicsAllocation());
+    EXPECT_NE(nullptr, kernel1->getIsaParentAllocation());
+
+    auto kernel1Address = kernel1->getIsaGraphicsAllocation()->getGpuAddress() + kernel1->getIsaOffsetInParentAllocation();
+    auto kernel1Size = kernel1->getIsaSubAllocationSize();
+
+    EXPECT_EQ(kernel1Address, outElf.programHeaders[0].header->vAddr);
+    EXPECT_EQ(kernel1Size, outElf.programHeaders[0].header->memSz);
+
+    auto kernel2Address = kernel2->getIsaGraphicsAllocation()->getGpuAddress() + kernel2->getIsaOffsetInParentAllocation();
+    auto kernel2Size = kernel2->getIsaSubAllocationSize();
+
+    EXPECT_EQ(kernel2Address, outElf.programHeaders[1].header->vAddr);
+    EXPECT_EQ(kernel2Size, outElf.programHeaders[1].header->memSz);
+
+    module->destroy();
+}
+
 TEST_F(ModuleWithZebinTest, givenValidZebinAndPassedDataSmallerThanDebugDataThenErrorIsReturned) {
     module->addEmptyZebin();
     module->addSegments();
