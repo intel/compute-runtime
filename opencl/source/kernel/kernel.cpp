@@ -154,7 +154,7 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
             auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
 
             if (clDevice.getDevice().getBindlessHeapsHelper()) {
-                auto ssInHeap = allocation.getBindlessInfo();
+                auto &ssInHeap = allocation.getBindlessInfo();
                 surfaceState = ssInHeap.ssPtr;
                 auto patchLocation = ptrOffset(crossThreadData, arg.bindless);
                 auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));

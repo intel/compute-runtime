@@ -3355,7 +3355,7 @@ HWTEST_F(KernelTest, givenBindlessHeapsHelperAndBindlessArgBufferWhenPatchWithIm
     uint64_t crossThreadData = 0;
     kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
 
-    auto ssInHeapInfo = mockAllocation.getBindlessInfo();
+    auto &ssInHeapInfo = mockAllocation.getBindlessInfo();
 
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(kernel.mockKernel->crossThreadData, bindlessOffset));
     auto patchValue = device->getGfxCoreHelper().getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeapInfo.surfaceStateOffset));

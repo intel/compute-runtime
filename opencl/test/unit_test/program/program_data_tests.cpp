@@ -362,12 +362,12 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndConstantsAndVariablesMemor
     ASSERT_NE(nullptr, pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex()));
 
     auto globalConstantsAlloc = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
-    auto ssInHeap1 = globalConstantsAlloc->getBindlessInfo();
+    auto &ssInHeap1 = globalConstantsAlloc->getBindlessInfo();
 
     EXPECT_NE(nullptr, ssInHeap1.heapAllocation);
 
     auto globalVariablesAlloc = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
-    auto ssInHeap2 = globalVariablesAlloc->getBindlessInfo();
+    auto &ssInHeap2 = globalVariablesAlloc->getBindlessInfo();
 
     EXPECT_NE(nullptr, ssInHeap2.heapAllocation);
 }
@@ -400,7 +400,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalConstantsMemorySurfa
     auto globalConstantsAlloc = pProgram->getConstantSurface(pContext->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, globalConstantsAlloc);
 
-    auto ssInHeap = globalConstantsAlloc->getBindlessInfo();
+    auto &ssInHeap = globalConstantsAlloc->getBindlessInfo();
     EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
 }
 
@@ -432,7 +432,7 @@ TEST_F(ProgramDataBindlessTest, givenBindlessKernelAndGlobalVariablesMemorySurfa
     auto globalVariablesAlloc = pProgram->getGlobalSurface(pContext->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, globalVariablesAlloc);
 
-    auto ssInHeap = globalVariablesAlloc->getBindlessInfo();
+    auto &ssInHeap = globalVariablesAlloc->getBindlessInfo();
     EXPECT_EQ(nullptr, ssInHeap.heapAllocation);
 }
 

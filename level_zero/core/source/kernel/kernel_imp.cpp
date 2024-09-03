@@ -143,7 +143,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalConstBuffer)) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
-        auto ssInHeap = globalConstBuffer->getBindlessInfo();
+        auto &ssInHeap = globalConstBuffer->getBindlessInfo();
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
@@ -166,7 +166,7 @@ ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device 
         if (!neoDevice->getMemoryManager()->allocateBindlessSlot(globalVarBuffer)) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
-        auto ssInHeap = globalVarBuffer->getBindlessInfo();
+        auto &ssInHeap = globalVarBuffer->getBindlessInfo();
 
         patchImplicitArgBindlessOffsetAndSetSurfaceState(crossThreadDataArrayRef, surfaceStateHeapArrayRef,
                                                          globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
@@ -1221,7 +1221,7 @@ uint32_t KernelImp::getSurfaceStateHeapDataSize() const {
 
 void *KernelImp::patchBindlessSurfaceState(NEO::GraphicsAllocation *alloc, uint32_t bindless) {
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-    auto ssInHeap = alloc->getBindlessInfo();
+    auto &ssInHeap = alloc->getBindlessInfo();
 
     auto patchLocation = ptrOffset(getCrossThreadData(), bindless);
     auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(ssInHeap.surfaceStateOffset));
