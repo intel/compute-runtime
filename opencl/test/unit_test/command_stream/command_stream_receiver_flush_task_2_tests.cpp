@@ -53,10 +53,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
 
+    auto usedBefore = commandStreamCSR.getUsed();
     commandQueue.enqueueWriteBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 1, &blockingEvent, 0);
+    auto usedAfter = commandStreamCSR.getUsed();
 
     // Expect nothing was sent
-    EXPECT_EQ(0u, commandStreamCSR.getUsed());
+    EXPECT_EQ(usedBefore, usedAfter);
 
     // Unblock Event
     mockEvent.setStatus(CL_COMPLETE);
@@ -172,12 +174,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEmptyQueueWhenFinishingThenTa
     commandStreamReceiver.taskLevel = taskCount;
     commandStreamReceiver.taskCount = taskCount;
 
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
     mockCmdQueue.finish();
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
     mockCmdQueue.finish();
     // nothings sent to the HW, no need to bump tags
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
     EXPECT_EQ(0u, mockCmdQueue.latestTaskCountWaited);
 }
 
@@ -210,7 +212,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonDcFlushWithInitialTaskCoun
     mockCmdQueue.taskLevel = taskCount;
     commandStreamReceiver.taskLevel = taskCount;
     commandStreamReceiver.taskCount = taskCount;
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
 
     // finish after enqueued kernel(cmdq task count = 1)
     mockCmdQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
@@ -244,7 +246,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenDcFlushWhenFinishingThenTaskC
     mockCmdQueue.taskLevel = taskCount;
     commandStreamReceiver.taskLevel = taskCount;
     commandStreamReceiver.taskCount = taskCount;
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
 
     // finish(dcFlush=true) from blocking MapBuffer after enqueued kernel
     mockCmdQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
@@ -318,7 +320,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEventIsQueriedWhenEnqueuingTh
     commandQueue.taskLevel = taskCount;
     commandStreamReceiver.taskLevel = taskCount;
     commandStreamReceiver.taskCount = taskCount;
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 1u : 0u, commandStreamReceiver.peekLatestSentTaskCount());
 
     commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 0, 0, &event);
 
@@ -353,17 +355,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapEnqueueWhenFini
     commandQueue.taskLevel = taskCount;
     commandStreamReceiver.taskLevel = taskCount;
     commandStreamReceiver.taskCount = taskCount;
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    auto expectedTaskCount = commandStreamReceiver.heaplessStateInitialized ? 1u : 0u;
+    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
     auto ptr = commandQueue.enqueueMapBuffer(&mockBuffer, CL_FALSE, CL_MAP_READ, 0, sizeof(tempBuffer), 0, nullptr, nullptr, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(nullptr, ptr);
 
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
     commandQueue.finish();
 
-    EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
+    EXPECT_EQ(expectedTaskCount, commandStreamReceiver.peekLatestSentTaskCount());
 
     auto &commandStreamTask = commandQueue.getCS(1024);
     parseCommands<FamilyType>(commandStreamTask, 0);

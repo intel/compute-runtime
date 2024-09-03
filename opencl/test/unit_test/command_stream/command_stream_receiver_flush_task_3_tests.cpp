@@ -186,11 +186,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushSmallTaskThenCommandStrea
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
+    auto usedBefore = csr.commandStream.getUsed();
+
     auto &stream = csr.getCS(2 * MemoryConstants::cacheLineSize);
     stream.getSpace(MemoryConstants::cacheLineSize - sizeof(MI_BATCH_BUFFER_END) - 2);
     EXPECT_EQ(SubmissionStatus::success, csr.flushSmallTask(stream, stream.getUsed()));
 
-    auto used = csr.commandStream.getUsed();
+    auto usedAfter = csr.commandStream.getUsed();
+
+    auto used = usedAfter - usedBefore;
     auto expected = 2 * MemoryConstants::cacheLineSize;
     EXPECT_EQ(used, expected);
 }
@@ -674,6 +678,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitEnable
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTaskIsCalledThenFlushedTaskCountIsModifed) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
+    bool heaplessStateInit = commandQueue.getHeaplessStateInitEnabled();
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
@@ -690,8 +695,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
                   dispatchFlags,
                   *pDevice);
 
-    EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(1u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 2u : 1u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(heaplessStateInit ? 2u : 1u, csr.peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTaskIsCalledGivenNumberOfTimesThenFlushIsCalled) {
@@ -719,8 +724,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                   dispatchFlags,
                   *pDevice);
 
-    EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(0u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 2u : 1u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 1u : 0u, csr.peekLatestFlushedTaskCount());
     dispatchFlags.implicitFlush = false;
 
     csr.flushTask(commandStream,
@@ -732,7 +737,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                   dispatchFlags,
                   *pDevice);
 
-    EXPECT_EQ(2u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.peekLatestSentTaskCount());
     EXPECT_EQ(2u, csr.peekLatestFlushedTaskCount());
 
     dispatchFlags.implicitFlush = false;
@@ -746,8 +751,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                   dispatchFlags,
                   *pDevice);
 
-    EXPECT_EQ(3u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(2u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 4u : 3u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForTaskCountIsCalledWithTaskCountThatWasNotYetFlushedThenBatchedCommandBuffersAreSubmitted) {

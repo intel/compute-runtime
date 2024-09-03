@@ -96,7 +96,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenTaskCountIsInc
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWhenFlushTaskIsCalledThenNoCommandsAreAdded) {
@@ -530,7 +530,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingTaskThenCompletionStam
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto completionStamp = flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(1u, completionStamp.taskCount);
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, completionStamp.taskCount);
     EXPECT_EQ(taskLevel, completionStamp.taskLevel);
     EXPECT_EQ(commandStreamReceiver.flushStamp->peekStamp(), completionStamp.flushStamp);
 }
@@ -596,6 +596,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgrammi
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlush) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
+
     configureCSRtoNonDirtyState<FamilyType>(false);
     ioh.replaceBuffer(ptrOffset(ioh.getCpuBase(), +1u), ioh.getMaxAvailableSpace() + MemoryConstants::pageSize * 3);
 
@@ -859,7 +863,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockingWithNoPreviousDepende
     flushTask(commandStreamReceiver, blocking);
 
     EXPECT_EQ(7u, commandStreamReceiver.peekTaskLevel());
-    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingWithNoPreviousDependenciesWhenFlushingTaskThenTaskLevelIsNotIncremented) {
@@ -872,7 +876,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingWithNoPreviousDepe
     flushTask(commandStreamReceiver, blocking);
 
     EXPECT_EQ(6u, commandStreamReceiver.peekTaskLevel());
-    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiver.heaplessStateInitialized ? 2u : 1u, commandStreamReceiver.peekTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
@@ -1226,10 +1230,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
 
+    auto usedBefore = commandStreamCSR.getUsed();
+
     commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, nullptr, 1, &blockingEvent, 0);
 
+    auto usedAfter = commandStreamCSR.getUsed();
+
     // Expect nothing was sent
-    EXPECT_EQ(0u, commandStreamCSR.getUsed());
+    EXPECT_EQ(usedBefore, usedAfter);
 
     // Unblock Event
     mockEvent.setStatus(CL_COMPLETE);
@@ -1237,7 +1245,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
 
     cmdList.clear();
     // Parse command list
-    parseCommands<FamilyType>(commandStreamTask, 0);
+    parseCommands<FamilyType>(commandStreamTask, usedBefore);
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
