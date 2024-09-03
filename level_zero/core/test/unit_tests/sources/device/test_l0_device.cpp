@@ -840,6 +840,12 @@ TEST_F(DeviceTest, givenNonEmptyAllocationsListAndUnproperAllocationTypeWhenRequ
     EXPECT_FALSE(deviceImp->allocationsForReuse->peekIsEmpty());
 }
 
+TEST_F(DeviceTest, givenNoOsInterfaceWhenUseCacheReservationApiThenUnsupportedFeatureErrorIsReturned) {
+    EXPECT_EQ(nullptr, neoDevice->getRootDeviceEnvironment().osInterface.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->reserveCache(0, 0));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->setCacheAdvice(nullptr, 0, ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_REGION_DEFAULT));
+}
+
 struct DeviceHostPointerTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();

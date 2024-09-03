@@ -1166,7 +1166,8 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
 }
 
 ze_result_t DeviceImp::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
-    if (getOsInterface().getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    if (!osInterface || osInterface->getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -1187,7 +1188,8 @@ ze_result_t DeviceImp::reserveCache(size_t cacheLevel, size_t cacheReservationSi
 }
 
 ze_result_t DeviceImp::setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) {
-    if (getOsInterface().getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
+    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    if (!osInterface || osInterface->getDriverModel()->getDriverModelType() != NEO::DriverModelType::drm) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
