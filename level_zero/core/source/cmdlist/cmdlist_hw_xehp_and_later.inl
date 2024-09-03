@@ -131,8 +131,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool kernelNeedsScratchSpace = false;
     if (!launchParams.makeKernelCommandView) {
         for (uint32_t slotId = 0u; slotId < 2; slotId++) {
-            auto currentPerThreadScratchSize = std::max<uint32_t>(launchParams.externalPerThreadScratchSize[slotId], kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId]);
-            commandListPerThreadScratchSize[slotId] = std::max<uint32_t>(commandListPerThreadScratchSize[slotId], currentPerThreadScratchSize);
+            auto currentPerThreadScratchSize = kernelDescriptor.kernelAttributes.perThreadScratchSize[slotId];
+            if (launchParams.externalPerThreadScratchSize[slotId] > currentPerThreadScratchSize) {
+                currentPerThreadScratchSize = launchParams.externalPerThreadScratchSize[slotId];
+            }
+            if (currentPerThreadScratchSize > commandListPerThreadScratchSize[slotId]) {
+                commandListPerThreadScratchSize[slotId] = currentPerThreadScratchSize;
+            }
             if (commandListPerThreadScratchSize[slotId] > 0) {
                 needScratchSpace = true;
             }
