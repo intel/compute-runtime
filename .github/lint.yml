@@ -82,7 +82,9 @@ lint:
       - test
     mapping:
       files:
-        'l0_blackbox_runner_configs.yml':
+        '*/l0_blackbox_runner_configs.yml':
+        - ci
+        'manifests/ci.yml':
         - ci
         '*.md':
         - documentation
