@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
 #include "level_zero/core/source/cmdqueue/cmdqueue_xe_hp_core_and_later.inl"
-
-#include "cmdqueue_extended.inl"
 
 namespace L0 {
 template struct CommandQueueHw<IGFX_XE_HPG_CORE>;

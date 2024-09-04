@@ -28,9 +28,6 @@ struct CommandQueueHw : public CommandQueueImp {
                                     ze_command_list_handle_t *phCommandLists,
                                     ze_fence_handle_t hFence, bool performMigration,
                                     NEO::LinearStream *parentImmediateCommandlistLinearStream) override;
-    ze_result_t executeCommands(uint32_t numCommands,
-                                void *phCommands,
-                                ze_fence_handle_t hFence) override;
 
     void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();

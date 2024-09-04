@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,6 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw_skl_to_tgllp.inl"
-
-#include "cmdqueue_extended.inl"
 
 namespace L0 {
 template struct CommandQueueHw<IGFX_GEN12LP_CORE>;

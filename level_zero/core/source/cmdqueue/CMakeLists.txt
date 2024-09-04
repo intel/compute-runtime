@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,6 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_hw_skl_to_tgllp.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_imp.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_extended${BRANCH_DIR_SUFFIX}cmdqueue_extended.inl
 )
 if(SUPPORT_XEHP_AND_LATER)
   target_sources(${L0_STATIC_LIB_NAME}
