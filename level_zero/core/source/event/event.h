@@ -25,6 +25,7 @@
 
 struct _ze_event_handle_t {
     const uint64_t objMagic = objMagicValue;
+    static const zel_handle_type_t handleType = ZEL_HANDLE_EVENT;
 };
 
 struct _ze_event_pool_handle_t {};

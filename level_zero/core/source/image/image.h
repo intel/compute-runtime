@@ -12,6 +12,7 @@
 
 struct _ze_image_handle_t {
     const uint64_t objMagic = objMagicValue;
+    static const zel_handle_type_t handleType = ZEL_HANDLE_IMAGE;
 };
 
 namespace NEO {

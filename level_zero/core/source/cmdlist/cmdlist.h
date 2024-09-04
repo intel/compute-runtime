@@ -31,6 +31,7 @@
 
 struct _ze_command_list_handle_t {
     const uint64_t objMagic = objMagicValue;
+    static const zel_handle_type_t handleType = ZEL_HANDLE_COMMAND_LIST;
 };
 
 namespace NEO {

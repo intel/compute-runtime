@@ -19,7 +19,6 @@
 #include <vector>
 
 struct _ze_command_queue_handle_t {
-    const uint64_t objMagic = objMagicValue;
 };
 
 namespace NEO {

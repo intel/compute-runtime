@@ -22,6 +22,7 @@ static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
 struct _ze_device_handle_t {
     const uint64_t objMagic = objMagicValue;
+    static const zel_handle_type_t handleType = ZEL_HANDLE_DEVICE;
 };
 namespace NEO {
 class CommandStreamReceiver;

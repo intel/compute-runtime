@@ -16,6 +16,7 @@
 
 struct _ze_context_handle_t {
     const uint64_t objMagic = objMagicValue;
+    static const zel_handle_type_t handleType = ZEL_HANDLE_CONTEXT;
     virtual ~_ze_context_handle_t() = default;
 };
 
