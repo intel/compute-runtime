@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 namespace NEO {
 
@@ -120,6 +121,15 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::heapInLocalMem(const HardwareInfo &hwInfo) const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t kernelIndirectDetectionVersion) const {
+    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
+    const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
+    constexpr auto minimalIndirectDetectionVersion = 3u;
+    const bool indirectDetectionValid = !isPrecompiled || kernelIndirectDetectionVersion >= minimalIndirectDetectionVersion;
+    return isZebin && indirectDetectionValid && !isCMKernelHeuristic;
 }
 
 } // namespace NEO

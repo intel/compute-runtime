@@ -287,44 +287,6 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsIpSamplingSupportedThenCo
     }
 }
 
-PVCTEST_F(PvcProductHelper, givenPvcProductHelperAndKernelBinaryFormatsWhenCheckingIsDetectIndirectAccessInKernelSupportedThenCorrectValueIsReturned) {
-    KernelDescriptor kernelDescriptor;
-    const uint32_t notAcceptedIndirectDetectionVersion = 2u;
-    const uint32_t acceptedIndirectDetectionVersion = 3u;
-    {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
-        kernelDescriptor.kernelAttributes.simdSize = 8u;
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, acceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, acceptedIndirectDetectionVersion));
-    }
-    {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
-        kernelDescriptor.kernelAttributes.simdSize = 1u;
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, acceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, acceptedIndirectDetectionVersion));
-    }
-    {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
-        kernelDescriptor.kernelAttributes.simdSize = 1u;
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, acceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, acceptedIndirectDetectionVersion));
-    }
-    {
-        kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
-        kernelDescriptor.kernelAttributes.simdSize = 8u;
-        EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersion));
-        EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, notAcceptedIndirectDetectionVersion));
-        EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, acceptedIndirectDetectionVersion));
-        EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, acceptedIndirectDetectionVersion));
-    }
-}
-
 PVCTEST_F(PvcProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
     EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
 }
