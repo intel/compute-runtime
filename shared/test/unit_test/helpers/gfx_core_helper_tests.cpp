@@ -1902,7 +1902,7 @@ HWTEST_F(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncod
     LinearStream stream(streamBuffer, bufferSize);
     uint64_t fstAddress = 0;
     uint64_t sndAddress = 0;
-    MemorySynchronizationCommands<FamilyType>::encodeAdditionalTimestampOffsets(stream, fstAddress, sndAddress);
+    MemorySynchronizationCommands<FamilyType>::encodeAdditionalTimestampOffsets(stream, fstAddress, sndAddress, false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream, 0);

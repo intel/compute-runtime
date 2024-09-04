@@ -102,8 +102,8 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommandsSingleAddressSpace(NEO::
         const auto gmmHelper = device->getGmmHelper();
         const auto gpuVaOfDataDWORD1 = gmmHelper->decanonize(gpuVaOfData + 4);
 
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemLow, RegisterOffsets::csGprR1, gpuVaOfAddress, false);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemHigh, RegisterOffsets::csGprR1 + 4, gpuVaOfAddress + 4, false);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemLow, RegisterOffsets::csGprR1, gpuVaOfAddress, false, false);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(miStoreRegMemHigh, RegisterOffsets::csGprR1 + 4, gpuVaOfAddress + 4, false, false);
 
         MI_STORE_DATA_IMM setSbaBufferAddress = GfxFamily::cmdInitStoreDataImm;
         gpuVaOfData = gmmHelper->decanonize(gpuVaOfData);

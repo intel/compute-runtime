@@ -284,7 +284,7 @@ HWTEST2_F(EncodeConditionalBatchBufferStartTest, whenProgrammingConditionalRegRe
             uint8_t buffer[expectedSize] = {};
             LinearStream cmdStream(buffer, expectedSize);
 
-            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalRegRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg1, compareReg2, compareOperation, indirect);
+            EncodeBatchBufferStartOrEnd<FamilyType>::programConditionalRegRegBatchBufferStart(cmdStream, indirect ? 0 : startAddress, compareReg1, compareReg2, compareOperation, indirect, false);
 
             EXPECT_EQ(expectedSize, cmdStream.getUsed());
 

@@ -20,10 +20,10 @@ static constexpr uint32_t queueSizeMultiplier = 4;
 static constexpr uint32_t maxQueueSize = 16;
 
 template <typename GfxFamily>
-void encodeRegistersBeforeDependencyCheckers(LinearStream &cmdStream) {
+void encodeRegistersBeforeDependencyCheckers(LinearStream &cmdStream, bool isBcs) {
     // Indirect BB_START operates only on GPR_0
-    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR4);
-    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR4 + 4);
+    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, RegisterOffsets::csGprR0, RegisterOffsets::csGprR4, isBcs);
+    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, RegisterOffsets::csGprR0 + 4, RegisterOffsets::csGprR4 + 4, isBcs);
 }
 
 template <typename GfxFamily>

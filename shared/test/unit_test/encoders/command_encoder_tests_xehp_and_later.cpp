@@ -119,7 +119,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenWorkloadPart
                                         offset,
                                         gpuAddress,
                                         true,
-                                        nullptr);
+                                        nullptr,
+                                        false);
 
     auto storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
     ASSERT_NE(nullptr, storeRegMem);
@@ -131,7 +132,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenWorkloadPart
                                         offset,
                                         gpuAddress,
                                         true,
-                                        &outCmdBuffer);
+                                        &outCmdBuffer,
+                                        false);
 
     storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(ptrOffset(buffer, beforeEncode));
     ASSERT_NE(nullptr, storeRegMem);
