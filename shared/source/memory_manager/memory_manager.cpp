@@ -891,8 +891,6 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
 }
 
 bool MemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
-    DEBUG_BREAK_IF(graphicsAllocation->storageInfo.getNumBanks() > 1 && handleMask.count() > 0);
-
     memcpy_s(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()), destinationOffset),
              (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
     return true;
