@@ -76,6 +76,8 @@ ze_result_t CommandListImp::destroy() {
         }
     }
 
+    this->forceDcFlushForDcFlushMitigation();
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }

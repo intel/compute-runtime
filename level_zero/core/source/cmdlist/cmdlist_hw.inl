@@ -157,6 +157,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     this->inOrderPatchCmds.clear();
 
+    this->forceDcFlushForDcFlushMitigation();
+
     return ZE_RESULT_SUCCESS;
 }
 

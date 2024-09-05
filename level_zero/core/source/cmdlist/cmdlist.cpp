@@ -79,6 +79,17 @@ void CommandList::removeHostPtrAllocations() {
     hostPtrMap.clear();
 }
 
+void CommandList::forceDcFlushForDcFlushMitigation() {
+    if (this->device && this->device->getProductHelper().isDcFlushMitigated()) {
+        for (const auto &engine : this->device->getNEODevice()->getMemoryManager()->getRegisteredEngines(this->device->getNEODevice()->getRootDeviceIndex())) {
+            if (engine.commandStreamReceiver->isDirectSubmissionEnabled()) {
+                engine.commandStreamReceiver->registerDcFlushForDcMitigation();
+                engine.commandStreamReceiver->flushTagUpdate();
+            }
+        }
+    }
+}
+
 void CommandList::removeMemoryPrefetchAllocations() {
     if (this->performMemoryPrefetch) {
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
