@@ -87,6 +87,8 @@ lint:
         - ci
         'manifests/ci.yml':
         - ci
+        '.lint-revision':
+        - ci
         '*.md':
         - documentation
       directory_0:
