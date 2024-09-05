@@ -4187,7 +4187,6 @@ TEST_F(KernelSyncBufferTest, GivenSyncBufferArgWhenPatchingSyncBufferThenPtrIsCo
 
     NEO::MockGraphicsAllocation alloc;
     alloc.setGpuPtr(0xffff800300060000);
-    alloc.setGpuBaseAddress(0xffff800300000000);
     alloc.allocationOffset = 0x0;
 
     size_t bufferOffset = 0u;
@@ -4195,7 +4194,7 @@ TEST_F(KernelSyncBufferTest, GivenSyncBufferArgWhenPatchingSyncBufferThenPtrIsCo
     kernel.patchSyncBuffer(&alloc, bufferOffset);
 
     auto patchValue = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), syncBuffer.stateless));
-    auto expectedPatchValue = ptrOffset(alloc.getGpuAddress(), bufferOffset);
+    auto expectedPatchValue = ptrOffset(alloc.getGpuAddressToPatch(), bufferOffset);
     EXPECT_EQ(expectedPatchValue, patchValue);
 
     neoDevice->decRefInternal();

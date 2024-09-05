@@ -83,6 +83,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     case AllocationType::commandBuffer:
     case AllocationType::internalHeap:
     case AllocationType::linearStream:
+    case AllocationType::syncBuffer:
         storageInfo.cloningOfPageTables = properties.flags.multiOsContextCapable;
         if (!properties.flags.multiOsContextCapable) {
             storageInfo.pageTablesVisibility = preferredTile;

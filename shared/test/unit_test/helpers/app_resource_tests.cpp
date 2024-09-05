@@ -87,6 +87,7 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::svmCpu, "SVM_CPU"},
     {AllocationType::svmGpu, "SVM_GPU"},
     {AllocationType::svmZeroCopy, "SVM0COPY"},
+    {AllocationType::syncBuffer, "SYNCBUFF"},
     {AllocationType::tagBuffer, "TAGBUFER"},
     {AllocationType::globalFence, "GLBLFENC"},
     {AllocationType::timestampPacketTagBuffer, "TSPKTGBF"},

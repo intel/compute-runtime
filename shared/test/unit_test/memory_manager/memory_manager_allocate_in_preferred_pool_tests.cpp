@@ -1292,6 +1292,7 @@ static const AllocationType allocationHaveNotToBeForcedTo48Bit[] = {
     AllocationType::svmCpu,
     AllocationType::svmGpu,
     AllocationType::svmZeroCopy,
+    AllocationType::syncBuffer,
     AllocationType::tagBuffer,
     AllocationType::globalFence,
     AllocationType::writeCombined,

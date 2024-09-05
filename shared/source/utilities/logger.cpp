@@ -214,6 +214,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "SVM_GPU";
     case AllocationType::svmZeroCopy:
         return "SVM_ZERO_COPY";
+    case AllocationType::syncBuffer:
+        return "SYNC_BUFFER";
     case AllocationType::tagBuffer:
         return "TAG_BUFFER";
     case AllocationType::globalFence:

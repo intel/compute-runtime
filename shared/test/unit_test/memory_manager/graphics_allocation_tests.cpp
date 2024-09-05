@@ -159,6 +159,7 @@ TEST(GraphicsAllocationTest, givenAllocationTypeWhenCheckingCpuAccessRequiredThe
         case AllocationType::debugModuleArea:
         case AllocationType::assertBuffer:
         case AllocationType::syncDispatchToken:
+        case AllocationType::syncBuffer:
             EXPECT_TRUE(GraphicsAllocation::isCpuAccessRequired(allocType));
             break;
         default:

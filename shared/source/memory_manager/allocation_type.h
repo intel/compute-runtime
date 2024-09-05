@@ -43,6 +43,7 @@ enum class AllocationType {
     svmCpu,
     svmGpu,
     svmZeroCopy,
+    syncBuffer,
     tagBuffer,
     globalFence,
     timestampPacketTagBuffer,

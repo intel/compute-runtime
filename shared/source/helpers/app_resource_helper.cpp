@@ -86,6 +86,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "SVM_GPU";
     case AllocationType::svmZeroCopy:
         return "SVM0COPY";
+    case AllocationType::syncBuffer:
+        return "SYNCBUFF";
     case AllocationType::tagBuffer:
         return "TAGBUFER";
     case AllocationType::globalFence:

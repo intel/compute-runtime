@@ -446,7 +446,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
-    std::array<std::pair<NEO::AllocationType, const char *>, 40> allocationTypeValues = {
+    std::array<std::pair<NEO::AllocationType, const char *>, 41> allocationTypeValues = {
         {{AllocationType::buffer, "BUFFER"},
          {AllocationType::bufferHostMemory, "BUFFER_HOST_MEMORY"},
          {AllocationType::commandBuffer, "COMMAND_BUFFER"},
@@ -478,6 +478,7 @@ TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThe
          {AllocationType::svmCpu, "SVM_CPU"},
          {AllocationType::svmGpu, "SVM_GPU"},
          {AllocationType::svmZeroCopy, "SVM_ZERO_COPY"},
+         {AllocationType::syncBuffer, "SYNC_BUFFER"},
          {AllocationType::tagBuffer, "TAG_BUFFER"},
          {AllocationType::globalFence, "GLOBAL_FENCE"},
          {AllocationType::timestampPacketTagBuffer, "TIMESTAMP_PACKET_TAG_BUFFER"},
