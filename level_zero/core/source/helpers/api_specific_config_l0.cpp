@@ -6,10 +6,12 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/release_helper/release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 #include <string>
 #include <vector>
@@ -93,4 +95,11 @@ std::string ApiSpecificConfig::compilerCacheFileExtension() {
 int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {
     return 1l;
 }
+
+bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) {
+
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0::L0GfxCoreHelper>();
+    return l0GfxCoreHelper.getHeapAddressModel(rootDeviceEnvironment) == HeapAddressModel::globalStateless;
+}
+
 } // namespace NEO

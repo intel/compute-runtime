@@ -15,6 +15,7 @@
 
 namespace NEO {
 class ReleaseHelper;
+struct RootDeviceEnvironment;
 
 struct ApiSpecificConfig {
     enum ApiType { OCL,
@@ -26,6 +27,7 @@ struct ApiSpecificConfig {
     static bool isHostAllocationCacheEnabled();
     static bool isDeviceUsmPoolingEnabled();
     static bool isHostUsmPoolingEnabled();
+    static bool isGlobalStatelessEnabled(const RootDeviceEnvironment &rootDeviceEnvironment);
     static ApiType getApiType();
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);

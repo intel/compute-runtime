@@ -15,6 +15,9 @@ namespace NEO {
 class ReleaseHelper;
 
 ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
+
+bool globalStatelessL0 = false;
+bool globalStatelessOcl = false;
 bool isStatelessCompressionSupportedForUlts = true;
 
 StackVec<const char *, 4> validUltL0Prefixes = {"NEO_L0_", "NEO_", ""};
@@ -111,6 +114,16 @@ std::string ApiSpecificConfig::compilerCacheFileExtension() {
 
 int64_t ApiSpecificConfig::compilerCacheDefaultEnabled() {
     return 1l;
+}
+
+bool ApiSpecificConfig::isGlobalStatelessEnabled(const RootDeviceEnvironment &rootDeviceEnvironment) {
+
+    if (apiTypeForUlts == ApiSpecificConfig::L0) {
+        return globalStatelessL0;
+
+    } else {
+        return globalStatelessOcl;
+    }
 }
 
 } // namespace NEO
