@@ -8,9 +8,6 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
-#include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
-#include "shared/test/common/mocks/mock_command_stream_receiver.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/test.h"
@@ -20,12 +17,8 @@
 using namespace NEO;
 
 struct MockDrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandlerDefault {
-    using BaseClass = DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::residency;
-    ADDMETHOD(makeResidentWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable), (osContext, gfxAllocations, evictable));
-    ADDMETHOD(flushDummyExec, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations), (device, gfxAllocations));
-    ADDMETHOD(evictWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, GraphicsAllocation &gfxAllocation), (osContext, gfxAllocation));
 };
 struct DrmMemoryOperationsHandlerBaseTest : public ::testing::Test {
     void SetUp() override {
@@ -73,7 +66,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenMakingAllocationResidentThenAlloc
     initializeAllocation(1);
     EXPECT_EQ(1u, drmAllocation->storageInfo.getNumBanks());
 
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::success);
@@ -84,7 +77,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingResidentAllocationThenAll
     EXPECT_EQ(1u, drmAllocation->storageInfo.getNumBanks());
 
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
@@ -167,88 +160,4 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithChunk
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
     EXPECT_FALSE(drmAllocation->isLockedMemory());
     EXPECT_FALSE(mockBos[0]->isExplicitLockedMemoryRequired());
-}
-
-TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenCallingMakeResidentWithDummyExecNotNeededThenFlushDummyExecNotCalled) {
-    drmMemoryOperationsHandler->flushDummyExecCallBase = false;
-    drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
-
-    initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false);
-    EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 0u);
-}
-TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenMakeResidentWithinOsContextReturnFailhenFlushDummyExecNotCalled) {
-    drmMemoryOperationsHandler->flushDummyExecCallBase = false;
-    drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
-    drmMemoryOperationsHandler->makeResidentWithinOsContextResult = MemoryOperationsStatus::failed;
-
-    initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
-    EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 0u);
-}
-
-TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenCallingMakeResidentWithDummyExecNeededThenFlushDummyExecCalled) {
-    drmMemoryOperationsHandler->flushDummyExecCallBase = false;
-    drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
-
-    initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
-    EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 1u);
-}
-struct DrmMemoryOperationsHandlerBaseTestFlushDummyExec : public DrmMemoryOperationsHandlerBaseTest {
-    using BaseClass = DrmMemoryOperationsHandlerBaseTest;
-    void SetUp() override {
-        BaseClass::SetUp();
-        drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
-        drmMemoryOperationsHandler->evictWithinOsContextCallBase = false;
-        auto mockExecutionEnvironment = std::make_unique<MockExecutionEnvironment>();
-
-        auto rootDeviceEnvironment = mockExecutionEnvironment->rootDeviceEnvironments[0].get();
-        rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
-        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
-        rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(new DrmMock(*rootDeviceEnvironment)));
-
-        auto memoryManager = std::make_unique<MockDrmMemoryManager>(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, *mockExecutionEnvironment);
-        memoryManager->emitPinningRequestForBoContainerCallBase = false;
-        pMemManager = memoryManager.get();
-        mockExecutionEnvironment->memoryManager.reset(memoryManager.release());
-        device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(mockExecutionEnvironment.release(), 0u));
-        initializeAllocation(1);
-    }
-
-    void TearDown() override {
-        BaseClass::TearDown();
-    }
-    MockDrmMemoryManager *pMemManager;
-    std::unique_ptr<MockDevice> device;
-    std::unique_ptr<MockCommandStreamReceiver> commandStreamReceiver;
-};
-
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestCalledThenEmitPinRequestCalled) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
-    drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(pMemManager->emitPinningRequestForBoContainerCalled, 1u);
-}
-
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnFailThenOutOfMemoryReturned) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
-    auto ret = drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(ret, MemoryOperationsStatus::outOfMemory);
-}
-
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnFailThenEvictWithinOsContextCalled) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
-    drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 1u);
-}
-
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnSuccessThenSuccessReturned) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::success;
-    auto ret = drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(ret, MemoryOperationsStatus::success);
-}
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnSuccessThenEvictWithinOsContextNotCalled) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::success;
-    drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 0u);
 }

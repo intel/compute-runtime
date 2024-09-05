@@ -21,9 +21,9 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
     using AubMemoryOperationsHandler::getMemoryBanksBitfield;
     using AubMemoryOperationsHandler::residentAllocations;
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
         makeResidentCalled = true;
-        return AubMemoryOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded);
+        return AubMemoryOperationsHandler::makeResident(device, gfxAllocations);
     }
 
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {

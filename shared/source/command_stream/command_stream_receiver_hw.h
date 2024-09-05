@@ -137,7 +137,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     SubmissionStatus flushPipeControl(bool stateCacheFlush);
     SubmissionStatus flushSmallTask(LinearStream &commandStreamTask,
                                     size_t commandStreamStartTask);
-    MOCKABLE_VIRTUAL SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
+    SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
     SubmissionStatus sendRenderStateCacheFlush() override;
 
     bool isUpdateTagFromWaitEnabled() override;
