@@ -14,14 +14,16 @@ if(BUILD_WITH_L0)
     get_filename_component(LEVEL_ZERO_ROOT "${LEVEL_ZERO_ROOT}" ABSOLUTE)
   else()
     get_filename_component(LEVEL_ZERO_ROOT_tmp "${NEO_SOURCE_DIR}/../level_zero" ABSOLUTE)
-    # Level Zero Headers if read from the git repo are in include/core & include/tools.
-    # To support the installation path of level_zero headers which is include/level_zero/*
-    # the header files are combined into the path include/level_zero/* in the commands below.
+    # Level Zero Headers have all includes in include folder and its subdirectories,
+    # while devel/sdk package has all the includes in include/level_zero subdirectory.
     if(IS_DIRECTORY "${LEVEL_ZERO_ROOT_tmp}")
       set(CUSTOM_L0_INCLUDE_PATH "${LEVEL_ZERO_ROOT_tmp}/include/level_zero/")
       file(GLOB LEVEL_ZERO_SOURCE_HEADERS
            "${LEVEL_ZERO_ROOT_tmp}/include/*.h"
       )
+      if(IS_DIRECTORY "${LEVEL_ZERO_ROOT_tmp}/include/loader")
+        list(APPEND LEVEL_ZERO_SOURCE_HEADERS ${LEVEL_ZERO_ROOT_tmp}/include/loader)
+      endif()
       file(MAKE_DIRECTORY ${CUSTOM_L0_INCLUDE_PATH})
       file(COPY ${LEVEL_ZERO_SOURCE_HEADERS} DESTINATION ${CUSTOM_L0_INCLUDE_PATH})
       set(LEVEL_ZERO_ROOT "${LEVEL_ZERO_ROOT_tmp}")
