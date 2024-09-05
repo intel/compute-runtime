@@ -898,6 +898,8 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
 
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenCallItAgainWithCantTrimFurtherSetToTrue) {
     MockWddmAllocation allocation1(gmmHelper);
+    allocation1.getResidencyData().updateCompletionData(0, osContextId);
+    residencyController->getMonitoredFence().currentFenceValue = 10;
 
     wddm->makeResidentNumberOfBytesToTrim = 4 * 4096;
     wddm->makeResidentStatus = false;
@@ -909,6 +911,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallin
     EXPECT_FALSE(result);
     EXPECT_NE(wddm->makeResidentParamsPassed[0].cantTrimFurther, wddm->makeResidentParamsPassed[1].cantTrimFurther);
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
+    EXPECT_EQ(0u, allocation1.getResidencyData().getFenceValueForContextId(osContextId));
 }
 
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCallingMakeResidentResidencyAllocationsThenItIsUsed) {
@@ -934,8 +937,10 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(cpuPtr)));
     WddmAllocation allocationToTrim(0, 1u /*num gmms*/, AllocationType::unknown, cpuPtr, canonizedAddress, allocationSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
 
-    allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContext->getContextId());
+    allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContextId);
+    allocationToTrim.getResidencyData().resident[osContextId] = true;
 
+    csr->getEvictionAllocations().push_back(&allocationToTrim);
     wddm->makeResidentNumberOfBytesToTrim = allocationSize;
     wddm->makeResidentResults = {false, true};
 
@@ -946,7 +951,36 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     EXPECT_TRUE(result);
 
     EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_FALSE(allocationToTrim.getResidencyData().resident[osContextId]);
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
+    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+}
+
+TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToBudgetSuceedsWhenCallingMakeResidentWithTrimmedAllocationThenSucceed) {
+    MockWddmAllocation allocation1(gmmHelper);
+    void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
+    size_t allocationSize = 0x1000;
+    auto canonizedAddress = gmmHelper->canonize(castToUint64(const_cast<void *>(cpuPtr)));
+    WddmAllocation allocationAlreadyResident(0, 1u /*num gmms*/, AllocationType::unknown, cpuPtr, canonizedAddress, allocationSize, nullptr, MemoryPool::memoryNull, 0u, 1u);
+
+    allocationAlreadyResident.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContextId);
+    allocationAlreadyResident.getResidencyData().resident[osContextId] = true;
+
+    csr->getEvictionAllocations().push_back(&allocationAlreadyResident);
+    wddm->makeResidentNumberOfBytesToTrim = allocationSize;
+    wddm->makeResidentResults = {false, true};
+
+    ResidencyContainer residencyPack{&allocation1, &allocationAlreadyResident};
+    bool requiresBlockingResidencyHandling = true;
+    bool result = residencyController->makeResidentResidencyAllocations(residencyPack, requiresBlockingResidencyHandling);
+
+    EXPECT_TRUE(result);
+
+    EXPECT_TRUE(allocation1.getResidencyData().resident[osContextId]);
+    EXPECT_TRUE(allocationAlreadyResident.getResidencyData().resident[osContextId]);
+    EXPECT_EQ(2u, wddm->makeResidentResult.called);
+    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
+    EXPECT_EQ(2u, residencyPack.size());
 }
 
 TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsWhenCallingMakeResidentResidencyAllocationsThenMemoryBudgetExhaustedIsSetToTrue) {

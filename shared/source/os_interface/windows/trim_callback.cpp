@@ -62,7 +62,7 @@ void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS 
         auto lock = this->acquireLock();
         WddmAllocation *wddmAllocation = nullptr;
         auto &allocations = csr->getEvictionAllocations();
-        handlesToEvict.clear();
+        std::vector<D3DKMT_HANDLE> handlesToEvict;
         handlesToEvict.reserve(allocations.size());
         for (auto allocationIter = allocations.begin(); allocationIter != allocations.end();) {
             wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
@@ -128,7 +128,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, std::unique_
 
     auto &allocations = csr->getEvictionAllocations();
     auto allocationIter = allocations.begin();
-    handlesToEvict.clear();
+    std::vector<D3DKMT_HANDLE> handlesToEvict;
     handlesToEvict.reserve(allocations.size());
     while (numberOfBytesToTrim > 0 && allocationIter != allocations.end()) {
         wddmAllocation = reinterpret_cast<WddmAllocation *>(*allocationIter);
