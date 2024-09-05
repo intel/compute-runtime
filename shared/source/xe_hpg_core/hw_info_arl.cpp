@@ -77,7 +77,7 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     false,                                                     // p2pAccessSupported
     false,                                                     // p2pAtomicAccessSupported
     true,                                                      // fusedEuEnabled
-    false,                                                     // l0DebuggerSupported
+    true,                                                      // l0DebuggerSupported
     true,                                                      // supportsFloatAtomics
     0                                                          // cxlType
 };
