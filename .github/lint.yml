@@ -71,6 +71,7 @@ lint:
         - ocldev@intel.com
 
   commit_message_subject:
+    validate: true
     types:
       - feature
       - fix
