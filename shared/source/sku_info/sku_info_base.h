@@ -75,6 +75,7 @@ struct FeatureTableBase {
     };
 
     BcsInfoMask ftrBcsInfo = 1;
+    uint32_t regionCount = 1;
 
     union {
         Flags flags;
