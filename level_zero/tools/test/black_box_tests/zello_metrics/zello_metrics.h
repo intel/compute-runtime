@@ -16,15 +16,17 @@
 #include <map>
 #include <vector>
 
-#define VALIDATECALL(myZeCall)                  \
-    do {                                        \
-        if ((myZeCall) != ZE_RESULT_SUCCESS) {  \
-            std::cout << "Validate Error at "   \
-                      << #myZeCall << ": "      \
-                      << __FILE__ << ": "       \
-                      << __LINE__ << std::endl; \
-            std::terminate();                   \
-        }                                       \
+#define VALIDATECALL(myZeCall)                           \
+    do {                                                 \
+        if ((myZeCall) != ZE_RESULT_SUCCESS) {           \
+            std::cout << "Validate Error: "              \
+                      << static_cast<uint32_t>(myZeCall) \
+                      << " at "                          \
+                      << #myZeCall << ": "               \
+                      << __FILE__ << ": "                \
+                      << __LINE__ << std::endl;          \
+            std::terminate();                            \
+        }                                                \
     } while (0);
 
 #define EXPECT(cond)                                                           \
