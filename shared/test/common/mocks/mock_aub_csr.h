@@ -70,6 +70,14 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         return AUBCommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
+    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
+                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        recordedDispatchFlags = dispatchFlags;
+
+        return AUBCommandStreamReceiverHw<GfxFamily>::flushTaskStateless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
+
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
     }

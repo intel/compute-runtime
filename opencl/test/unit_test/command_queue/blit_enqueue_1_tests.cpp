@@ -1138,7 +1138,9 @@ struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
         SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-            latestFlushedCounter = ++(*flushCounter);
+            if (flushCounter) {
+                latestFlushedCounter = ++(*flushCounter);
+            }
             return UltCommandStreamReceiver<FamilyType>::flush(batchBuffer, allocationsForResidency);
         }
 

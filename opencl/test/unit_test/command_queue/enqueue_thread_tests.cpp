@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -32,20 +33,27 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     std::vector<GraphicsAllocation *> toFree; // pointers to be freed on destruction
     Device *pDevice;
     ClDevice *pClDevice;
+    bool heaplessStateInit = false;
 
   public:
     size_t expectedToFreeCount = (size_t)-1;
     CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield()) {
         this->pDevice = pDevice;
         this->pClDevice = pDevice->getSpecializedDevice<ClDevice>();
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+        this->heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
     }
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
-        toFree.push_back(batchBuffer.commandBufferAllocation);
-        batchBuffer.stream->replaceBuffer(nullptr, 0);
-        batchBuffer.stream->replaceGraphicsAllocation(nullptr);
+        if (!heaplessStateInit) {
+            toFree.push_back(batchBuffer.commandBufferAllocation);
+            batchBuffer.stream->replaceBuffer(nullptr, 0);
+            batchBuffer.stream->replaceGraphicsAllocation(nullptr);
+        }
 
         EXPECT_TRUE(this->ownershipMutex.try_lock());
         this->ownershipMutex.unlock();
@@ -54,10 +62,13 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
     ~CommandStreamReceiverMock() override {
         EXPECT_FALSE(pClDevice->hasOwnership());
-        if (expectedToFreeCount == (size_t)-1) {
-            EXPECT_GT(toFree.size(), 0u); // make sure flush was called
-        } else {
-            EXPECT_EQ(toFree.size(), expectedToFreeCount);
+
+        if (!heaplessStateInit) {
+            if (expectedToFreeCount == (size_t)-1) {
+                EXPECT_GT(toFree.size(), 0u); // make sure flush was called
+            } else {
+                EXPECT_EQ(toFree.size(), expectedToFreeCount);
+            }
         }
 
         auto memoryManager = this->getMemoryManager();

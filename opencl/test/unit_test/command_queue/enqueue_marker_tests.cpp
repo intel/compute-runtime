@@ -22,7 +22,7 @@ using namespace NEO;
 using MarkerTest = Test<CommandEnqueueFixture>;
 
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeControlIsAdded) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     // Set task levels to known values.
@@ -51,7 +51,12 @@ HWTEST_F(MarkerTest, GivenCsrAndCmdqWithSameTaskLevelWhenEnqueingMarkerThenPipeC
 
     // If CSR == CQ then a PC is required.
     auto itorCmd = reverseFind<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
-    EXPECT_EQ(cmdList.rend(), itorCmd);
+
+    if (mockCmdQ->getHeaplessStateInitEnabled()) {
+        EXPECT_NE(cmdList.rend(), itorCmd);
+    } else {
+        EXPECT_EQ(cmdList.rend(), itorCmd);
+    }
 }
 
 HWTEST_F(MarkerTest, GivenCsrAndCmdqWithDifferentTaskLevelsWhenEnqueingMarkerThenPipeControlIsNotAdded) {
@@ -241,7 +246,8 @@ TEST_F(MarkerTest, givenMultipleEventsAndCompletedUserEventWhenTheyArePassedToMa
             &userEvent};
     cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
     cl_event event = nullptr;
-    auto initialTaskCount = pCmdQ->taskCount;
+
+    auto initialTaskCount = std::max(pCmdQ->getGpgpuCommandStreamReceiver().peekTaskCount(), pCmdQ->taskCount);
 
     pCmdQ->enqueueMarkerWithWaitList(
         numEventsInWaitList,

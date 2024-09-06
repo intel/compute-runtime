@@ -1052,8 +1052,14 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorre
 
     // First submission with global state
     flushBcsTask(&csr, blitProperties, false, *pDevice);
-    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
-    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    if (csr.heaplessStateInitialized) {
+        EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+        EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    } else {
+        EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+        EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    }
 
     auto cmdsOffset = csr.commandStream.getUsed();
 
@@ -1136,8 +1142,14 @@ HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedO
 
     // First submission with global state
     flushBcsTask(&csr, blitProperties, false, *pDevice);
-    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
-    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    if (csr.heaplessStateInitialized) {
+        EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+        EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    } else {
+        EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+        EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    }
 
     debugManager.flags.UpdateTaskCountFromWait.set(0);
 
@@ -1173,6 +1185,10 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
     uint32_t expectedResursiveLockCount = csr.resourcesInitialized ? 1u : 0u;
+    if (csr.heaplessStateInitialized) {
+        expectedResursiveLockCount++;
+    }
+
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
     auto bufferGpuVa = ptrOffset(buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), buffer->getOffset());
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,

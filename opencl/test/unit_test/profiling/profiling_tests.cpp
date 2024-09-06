@@ -1143,7 +1143,12 @@ HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCount
     ASSERT_NE(nullptr, pAfterPC);
     EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
 
-    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_NO_WRITE, pBeforePC->getPostSyncOperation());
+    if (pCmdQ->getHeaplessStateInitEnabled()) {
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pBeforePC->getPostSyncOperation());
+
+    } else {
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_NO_WRITE, pBeforePC->getPostSyncOperation());
+    }
 
     // expect MI_REPORT_PERF_COUNT after WALKER
     auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());

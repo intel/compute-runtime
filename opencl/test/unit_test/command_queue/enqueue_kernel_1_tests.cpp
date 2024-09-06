@@ -1040,7 +1040,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTwoEnqueueProgrammedWithinS
     hwParse.parseCommands<FamilyType>(*pCmdQ);
     auto bbsCommands = findAll<typename FamilyType::MI_BATCH_BUFFER_START *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
 
-    EXPECT_EQ(bbsCommands.size(), 1u);
+    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 0u : 1u, bbsCommands.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesSubmissionsAreFlushed) {
@@ -2040,14 +2040,14 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInse
 
     findLoadRegImms<FamilyType>(hwParser.cmdList);
 
-    EXPECT_EQ(0u, loadRegImmsFound);
+    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 1u : 0u, loadRegImmsFound);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findLoadRegImms<FamilyType>(hwParser.cmdList);
 
-    EXPECT_EQ(1u, loadRegImmsFound);
+    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u, loadRegImmsFound);
 }
 
 HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatcMultiplehWalkersThenInsertLoadRegisterImmCommandOnlyOnce) {

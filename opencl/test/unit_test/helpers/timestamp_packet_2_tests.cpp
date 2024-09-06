@@ -69,6 +69,27 @@ class MockCommandStreamReceiverHW : public UltCommandStreamReceiver<FamilyType> 
             dispatchFlags,
             device);
     }
+
+    CompletionStamp flushTaskStateless(
+        LinearStream &commandStream,
+        size_t commandStreamStart,
+        const IndirectHeap *dsh,
+        const IndirectHeap *ioh,
+        const IndirectHeap *ssh,
+        TaskCountType taskLevel,
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
+        stream = &commandStream;
+        return UltCommandStreamReceiver<FamilyType>::flushTaskStateless(
+            commandStream,
+            commandStreamStart,
+            dsh,
+            ioh,
+            ssh,
+            taskLevel,
+            dispatchFlags,
+            device);
+    }
     LinearStream *stream = nullptr;
 };
 
@@ -419,7 +440,12 @@ HWTEST_F(TimestampPacketTests, givenPipeControlRequestWhenFlushingThenProgramPip
 
     auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*hwParser.pipeControlList.begin());
     ASSERT_NE(nullptr, pipeControl);
-    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
+
+    if (cmdQ.heaplessStateInitEnabled) {
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+    } else {
+        EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
+    }
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

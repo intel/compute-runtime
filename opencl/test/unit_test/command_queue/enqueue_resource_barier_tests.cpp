@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,8 @@ HWTEST_F(ResourceBarrierTest, whenEnqueueResourceBarrierCalledThenUpdateQueueCom
 
     BarrierCommand barrierCommand(pCmdQ, &descriptor, 1);
 
-    auto previousTaskCount = pCmdQ->taskCount;
+    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto previousTaskCount = std::max(pCmdQ->taskCount, csr.peekTaskCount());
     auto previousTaskLevel = pCmdQ->taskLevel;
 
     const auto enqueueResult = pCmdQ->enqueueResourceBarrier(&barrierCommand, 0, nullptr, nullptr);

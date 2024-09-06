@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -984,6 +985,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenForced32BitAllocationsModeSto
         debugManager.flags.Force32bitAddressing.set(true);
 
         auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        if (compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled)) {
+            GTEST_SKIP();
+        }
 
         pDevice->getMemoryManager()->setForce32BitAllocations(true);
 

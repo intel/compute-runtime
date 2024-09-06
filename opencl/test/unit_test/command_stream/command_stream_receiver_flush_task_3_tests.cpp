@@ -686,14 +686,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
 
     auto &csr = commandQueue.getGpgpuCommandStreamReceiver();
 
-    csr.flushTask(commandStream,
-                  0,
-                  &dsh,
-                  &ioh,
-                  &ssh,
-                  taskLevel,
-                  dispatchFlags,
-                  *pDevice);
+    flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
     EXPECT_EQ(heaplessStateInit ? 2u : 1u, csr.peekLatestSentTaskCount());
     EXPECT_EQ(heaplessStateInit ? 2u : 1u, csr.peekLatestFlushedTaskCount());
@@ -715,44 +708,23 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     csr.useGpuIdleImplicitFlush = false;
     dispatchFlags.implicitFlush = false;
 
-    csr.flushTask(commandStream,
-                  0,
-                  &dsh,
-                  &ioh,
-                  &ssh,
-                  taskLevel,
-                  dispatchFlags,
-                  *pDevice);
+    flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
     EXPECT_EQ(csr.heaplessStateInitialized ? 2u : 1u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(csr.heaplessStateInitialized ? 1u : 0u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 2u : 0u, csr.peekLatestFlushedTaskCount());
     dispatchFlags.implicitFlush = false;
 
-    csr.flushTask(commandStream,
-                  0,
-                  &dsh,
-                  &ioh,
-                  &ssh,
-                  taskLevel,
-                  dispatchFlags,
-                  *pDevice);
+    flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
     EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.peekLatestSentTaskCount());
     EXPECT_EQ(2u, csr.peekLatestFlushedTaskCount());
 
     dispatchFlags.implicitFlush = false;
 
-    csr.flushTask(commandStream,
-                  0,
-                  &dsh,
-                  &ioh,
-                  &ssh,
-                  taskLevel,
-                  dispatchFlags,
-                  *pDevice);
+    flushTaskMethod<FamilyType>(csr, commandStream, 0, &dsh, &ioh, &ssh, taskLevel, dispatchFlags, *pDevice);
 
     EXPECT_EQ(csr.heaplessStateInitialized ? 4u : 3u, csr.peekLatestSentTaskCount());
-    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr.heaplessStateInitialized ? 4u : 2u, csr.peekLatestFlushedTaskCount());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForTaskCountIsCalledWithTaskCountThatWasNotYetFlushedThenBatchedCommandBuffersAreSubmitted) {
@@ -1914,6 +1886,15 @@ class UltCommandStreamReceiverForDispatchFlags : public UltCommandStreamReceiver
         return BaseClass::flushTask(commandStream, commandStreamStart,
                                     dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
+
+    CompletionStamp flushTaskStateless(LinearStream &commandStream, size_t commandStreamStart,
+                                       const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                       TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        savedDispatchFlags = dispatchFlags;
+        return BaseClass::flushTaskStateless(commandStream, commandStreamStart,
+                                             dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+    }
+
     DispatchFlags savedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 };
 

@@ -920,17 +920,17 @@ HWTEST_F(TimestampPacketTests, givenEventWhenReleasingThenCheckQueueResources) {
     cmdQ->flush();
 
     auto tagAddress = csr.getTagAddress();
-    *tagAddress = 1;
+    *tagAddress = csr.heaplessStateInitialized ? 2 : 1;
 
-    EXPECT_EQ(2u, csr.taskCount);
-    EXPECT_EQ(2u, cmdQ->taskCount);
+    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, csr.taskCount);
+    EXPECT_EQ(csr.heaplessStateInitialized ? 3u : 2u, cmdQ->taskCount);
 
     clWaitForEvents(1, &clEvent);
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-    *tagAddress = 2;
+    *tagAddress = csr.heaplessStateInitialized ? 3 : 2;
 
     clReleaseEvent(clEvent);
 
@@ -964,10 +964,10 @@ HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearD
 
     cmdQ->flush();
 
-    EXPECT_EQ(2u, csr.taskCount);
+    EXPECT_EQ(cmdQ->heaplessStateInitEnabled ? 3u : 2u, csr.taskCount);
 
     auto tagAddress = csr.getTagAddress();
-    *tagAddress = 1;
+    *tagAddress = cmdQ->heaplessStateInitEnabled ? 2 : 1;
 
     auto eventObj1 = castToObjectOrAbort<Event>(event1);
     auto eventObj2 = castToObjectOrAbort<Event>(event2);
@@ -985,7 +985,7 @@ HWTEST_F(TimestampPacketTests, givenAllEnginesReadyWhenWaitingForEventThenClearD
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-    *tagAddress = 2;
+    *tagAddress = cmdQ->heaplessStateInitEnabled ? 3 : 2;
 
     eventObj1->wait(false, false);
     EXPECT_EQ(0u, deferredTimestampPackets->peekNodes().size());
@@ -1031,11 +1031,11 @@ HWTEST_F(TimestampPacketTests, givenNewSubmissionWhileWaitingThenDontReleaseDefe
 
     cmdQ->flush();
 
-    EXPECT_EQ(2u, csr.taskCount);
-    EXPECT_EQ(2u, cmdQ->taskCount);
+    EXPECT_EQ(cmdQ->getHeaplessStateInitEnabled() ? 3u : 2u, csr.taskCount);
+    EXPECT_EQ(cmdQ->getHeaplessStateInitEnabled() ? 3u : 2u, cmdQ->taskCount);
 
     auto tagAddress = csr.getTagAddress();
-    *tagAddress = 2;
+    *tagAddress = cmdQ->getHeaplessStateInitEnabled() ? 3 : 2;
 
     cmdQ->finish();
 
@@ -1083,20 +1083,20 @@ HWTEST_F(TimestampPacketTests, givenNewBcsSubmissionWhileWaitingThenDontReleaseD
 
     cmdQ->flush();
 
-    EXPECT_EQ(2u, csr.taskCount);
-    cmdQ->bcsStates[0].taskCount = 2;
+    EXPECT_EQ(cmdQ->getHeaplessStateInitEnabled() ? 3u : 2u, csr.taskCount);
+    cmdQ->bcsStates[0].taskCount = cmdQ->getHeaplessStateInitEnabled() ? 3 : 2;
 
     auto tagAddress = csr.getTagAddress();
-    *tagAddress = 2;
+    *tagAddress = cmdQ->getHeaplessStateInitEnabled() ? 3 : 2;
 
     cmdQ->finish();
 
-    EXPECT_EQ(3u, cmdQ->bcsStates[0].taskCount);
+    EXPECT_EQ(cmdQ->getHeaplessStateInitEnabled() ? 4u : 3u, cmdQ->bcsStates[0].taskCount);
 
     EXPECT_EQ(1u, deferredTimestampPackets->peekNodes().size());
     EXPECT_EQ(1u, timestampPacketContainer->peekNodes().size());
 
-    *tagAddress = 3;
+    *tagAddress = cmdQ->getHeaplessStateInitEnabled() ? 4 : 3;
 
     cmdQ->bcsEngines[0] = nullptr;
     cmdQ->bcsStates[0].engineType = aub_stream::EngineType::NUM_ENGINES;
@@ -1140,10 +1140,10 @@ HWTEST_F(TimestampPacketTests, givenEnableTimestampWaitForQueuesWhenFinishThenCa
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
 
     auto &csr = cmdQ->getGpgpuCommandStreamReceiver();
-    *csr.getTagAddress() = 0;
+    *csr.getTagAddress() = cmdQ->getHeaplessStateInitEnabled() ? 1 : 0;
 
     CpuIntrinsicsTests::pauseAddress = csr.getTagAddress();
-    CpuIntrinsicsTests::pauseValue = 3u;
+    CpuIntrinsicsTests::pauseValue = cmdQ->getHeaplessStateInitEnabled() ? 4u : 3u;
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
         CpuIntrinsicsTests::pauseAddress = csr.getTagAddress();
     };

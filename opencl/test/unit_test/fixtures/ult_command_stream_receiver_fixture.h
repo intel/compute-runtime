@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -48,6 +49,11 @@ struct UltCommandStreamReceiverTest
         flushTaskFlags.threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
         pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
+
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+        auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+        this->heaplessStateEnabled = compilerProductHelper.isHeaplessStateInitEnabled(heaplessEnabled);
     }
 
     void initHeaps() {
@@ -88,6 +94,19 @@ struct UltCommandStreamReceiverTest
         ClDeviceFixture::tearDown();
     }
 
+    template <typename GfxFamily, typename CommandStreamReceiverType>
+    CompletionStamp flushTaskMethod(CommandStreamReceiverType &commandStreamReceiver, LinearStream &commandStream, size_t commandStreamStart,
+                                    const IndirectHeap *dsh, const IndirectHeap *ioh, const IndirectHeap *ssh,
+                                    TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) {
+
+        if (reinterpret_cast<UltCommandStreamReceiver<GfxFamily> *>(&commandStreamReceiver)->heaplessStateInitialized) {
+            return commandStreamReceiver.flushTaskStateless(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+
+        } else {
+            return commandStreamReceiver.flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+        }
+    }
+
     template <typename CommandStreamReceiverType>
     CompletionStamp flushTask(CommandStreamReceiverType &commandStreamReceiver,
                               bool block = false,
@@ -95,19 +114,35 @@ struct UltCommandStreamReceiverTest
                               bool requiresCoherency = false,
                               bool lowPriority = false) {
 
-        flushTaskFlags.blocking = block;
-        flushTaskFlags.lowPriority = lowPriority;
-        flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+        if (commandStreamReceiver.heaplessStateInitialized) {
+            flushTaskFlags.blocking = block;
+            flushTaskFlags.lowPriority = lowPriority;
+            flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
-        return commandStreamReceiver.flushTask(
-            commandStream,
-            startOffset,
-            &dsh,
-            &ioh,
-            &ssh,
-            taskLevel,
-            flushTaskFlags,
-            *pDevice);
+            return commandStreamReceiver.flushTaskStateless(
+                commandStream,
+                startOffset,
+                &dsh,
+                &ioh,
+                &ssh,
+                taskLevel,
+                flushTaskFlags,
+                *pDevice);
+        } else {
+            flushTaskFlags.blocking = block;
+            flushTaskFlags.lowPriority = lowPriority;
+            flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+
+            return commandStreamReceiver.flushTask(
+                commandStream,
+                startOffset,
+                &dsh,
+                &ioh,
+                &ssh,
+                taskLevel,
+                flushTaskFlags,
+                *pDevice);
+        }
     }
 
     template <typename CommandStreamReceiverType>
@@ -181,5 +216,6 @@ struct UltCommandStreamReceiverTest
 
     const size_t sizeStream = 512;
     const size_t alignmentStream = 0x1000;
+    bool heaplessStateEnabled = false;
 };
 } // namespace NEO

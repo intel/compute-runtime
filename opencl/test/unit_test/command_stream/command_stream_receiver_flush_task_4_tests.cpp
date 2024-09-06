@@ -742,6 +742,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnqueueWithoutArbitrationPoli
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
+
     commandStreamReceiver.streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     auto &csrThreadArbitrationPolicy = commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value;
 

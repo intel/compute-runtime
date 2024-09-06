@@ -763,7 +763,8 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     auto hostAllocationPtr2 = allocateAlignedMemory(hostAllocationSize, MemoryConstants::pageSize);
     void *hostPtr2 = reinterpret_cast<void *>(hostAllocationPtr2.get());
 
-    EXPECT_EQ(0u, csr.makeSurfacePackNonResidentCalled);
+    auto expectedCalled = csr.heaplessStateInitialized ? 1u : 0u;
+    EXPECT_EQ(expectedCalled, csr.makeSurfacePackNonResidentCalled);
     auto graphicsAllocation1 = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     auto graphicsAllocation2 = buffer2->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
@@ -783,12 +784,13 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
 
     csr.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
 
+    expectedCalled++;
     uint32_t residentAllocationsNum = 5u;
     EXPECT_TRUE(csr.isMadeResident(graphicsAllocation1));
     EXPECT_TRUE(csr.isMadeResident(graphicsAllocation2));
     EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
     EXPECT_TRUE(csr.isMadeResident(csr.getTagAllocation()));
-    EXPECT_EQ(1u, csr.makeSurfacePackNonResidentCalled);
+    EXPECT_EQ(expectedCalled, csr.makeSurfacePackNonResidentCalled);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
     if (getHelper<ProductHelper>().isDummyBlitWaRequired()) {
         residentAllocationsNum++;
@@ -883,7 +885,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     auto &commandStream = csr.getCS(MemoryConstants::pageSize);
     size_t commandStreamOffset = 4;
     commandStream.getSpace(commandStreamOffset);
-
+    commandStreamOffset = commandStream.getUsed();
     uint32_t newTaskCount = 17;
     csr.taskCount = newTaskCount - 1;
 
@@ -922,6 +924,7 @@ HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
     auto &commandStream = csr.getCS(MemoryConstants::pageSize);
     size_t commandStreamOffset = 4;
     commandStream.getSpace(commandStreamOffset);
+    commandStreamOffset = commandStream.getUsed();
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::hostPtrToBuffer,
                                                                           csr, graphicsAllocation, nullptr, hostPtr,

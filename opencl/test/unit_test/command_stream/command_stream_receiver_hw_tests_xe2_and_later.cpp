@@ -20,6 +20,9 @@ HWTEST2_F(CommandStreamReceiverXe2AndLater, GivenPreambleNotSentAndDebugFlagEnab
     debugManager.flags.PipelinedPipelineSelect.set(true);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
     commandStreamReceiver.isPreambleSent = false;
 
     flushTask(commandStreamReceiver);

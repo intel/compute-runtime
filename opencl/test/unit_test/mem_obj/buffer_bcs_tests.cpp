@@ -804,6 +804,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
 
     resetCopyEngineSelector();
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
     auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ->getGpgpuCommandStreamReceiver());
@@ -814,10 +815,11 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     buffer->forceDisallowCPUCopy = true;
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
+    auto offset = queueCsr->commandStream.getUsed();
     cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
 
     HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(queueCsr->commandStream);
+    hwParser.parseCommands<FamilyType>(queueCsr->commandStream, offset);
 
     uint64_t pipeControlWriteAddress = 0;
     for (auto &cmd : hwParser.cmdList) {
@@ -843,6 +845,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
         EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]))->getSemaphoreGraphicsAddress());
     } else {
         EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 3u : 1u, semaphores.size());
+
         EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))->getSemaphoreGraphicsAddress());
     }
 }
@@ -890,12 +893,14 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenStallingCommandsOnNextFlushWhenReleasing
     };
 
     auto &csrStream = cmdQ->getGpgpuCommandStreamReceiver().getCS(0);
+    auto csrOffset = csrStream.getUsed();
+
     EXPECT_TRUE(cmdQ->isStallingCommandsOnNextFlushRequired());
     userEvent0.setStatus(CL_COMPLETE);
     EXPECT_FALSE(cmdQ->isStallingCommandsOnNextFlushRequired());
-    EXPECT_TRUE(pipeControlLookup(csrStream, 0, device->getRootDeviceEnvironment()));
+    EXPECT_TRUE(pipeControlLookup(csrStream, csrOffset, device->getRootDeviceEnvironment()));
 
-    auto csrOffset = csrStream.getUsed();
+    csrOffset = csrStream.getUsed();
     userEvent1.setStatus(CL_COMPLETE);
     EXPECT_FALSE(pipeControlLookup(csrStream, csrOffset, device->getRootDeviceEnvironment()));
     cmdQ->isQueueBlocked();
@@ -977,6 +982,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenp
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr->commandStream);
 
+    auto heaplessStateInit = cmdQ->getHeaplessStateInitEnabled();
+
     uint32_t miFlushDwCmdsWithOutputCount = 0;
     bool blitCmdFound = false;
     for (auto &cmd : hwParser.cmdList) {
@@ -985,19 +992,21 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenp
                 continue;
             }
 
-            EXPECT_EQ(miFlushDwCmdsWithOutputCount == 0,
+            bool correctMiFlushDwCmdsWithOutputCount = heaplessStateInit ? miFlushDwCmdsWithOutputCount == 1 : miFlushDwCmdsWithOutputCount == 0;
+
+            EXPECT_EQ(correctMiFlushDwCmdsWithOutputCount,
                       timestampPacketGpuWriteAddress == miFlushDwCmd->getDestinationAddress());
-            EXPECT_EQ(miFlushDwCmdsWithOutputCount == 0,
+            EXPECT_EQ(correctMiFlushDwCmdsWithOutputCount,
                       0u == miFlushDwCmd->getImmediateData());
 
             miFlushDwCmdsWithOutputCount++;
         } else if (genCmdCast<typename FamilyType::XY_COPY_BLT *>(cmd)) {
             blitCmdFound = true;
-            EXPECT_EQ(0u, miFlushDwCmdsWithOutputCount);
+            EXPECT_EQ(heaplessStateInit ? 1u : 0u, miFlushDwCmdsWithOutputCount);
         }
     }
 
-    EXPECT_EQ(2u, miFlushDwCmdsWithOutputCount); // TimestampPacket + taskCount
+    EXPECT_EQ(heaplessStateInit ? 3u : 2u, miFlushDwCmdsWithOutputCount); // TimestampPacket + taskCount
 
     EXPECT_TRUE(blitCmdFound);
 }

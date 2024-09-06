@@ -587,7 +587,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     event.submitCommand(false);
 
-    EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
+    EXPECT_EQ(mockCmdQueue.getHeaplessStateInitEnabled() ? 2u : 1u, mockCmdQueue.latestTaskCountWaited);
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());

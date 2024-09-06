@@ -73,6 +73,8 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     debugManager.flags.CreateMultipleSubDevices.set(2);
+    UnitTestSetter::disableHeaplessStateInit(restorer);
+
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     initPlatform();
     auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
@@ -108,7 +110,9 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
 TEST(SubDevicesTest, givenDeviceWithSubDevicesAndSubDevicesAsDevicesIsSetWhenSubDeviceApiRefCountsAreChangedThenChangeIsNotPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
+    UnitTestSetter::disableHeaplessStateInit(restorer);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
     initPlatform();
     platform()->peekExecutionEnvironment()->setExposeSubDevicesAsDevices(1);
     auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
@@ -144,6 +148,7 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesAndSubDevicesAsDevicesIsSetWhenSub
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     debugManager.flags.CreateMultipleSubDevices.set(2);
+
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     device->incRefInternal();

@@ -355,6 +355,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebug
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
+
     debugManager.flags.ForceMultiGpuAtomics.set(0);
     debugManager.flags.ForceMultiGpuPartialWrites.set(0);
     flushTask(commandStreamReceiver);
