@@ -572,6 +572,13 @@ if(UNIX)
   endif()
   message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
 
+  if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
+    set(NEO_ENABLE_XE_PRELIM_DETECTION TRUE)
+  elseif(NOT DEFINED NEO_ENABLE_XE_PRELIM_DETECTION)
+    set(NEO_ENABLE_XE_PRELIM_DETECTION FALSE)
+  endif()
+  message(STATUS "xe prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
+
   # drm-xe support
   if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
     set(NEO_ENABLE_XE_EU_DEBUG_SUPPORT TRUE)
