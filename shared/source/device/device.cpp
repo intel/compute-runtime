@@ -556,6 +556,10 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
         addEngineToEngineGroup(engine);
     }
 
+    if (NEO::EngineHelpers::isBcs(engine.osContext->getEngineType()) && engine.osContext->isHighPriority()) {
+        hpCopyEngine = &allEngines[allEngines.size() - 1];
+    }
+
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;
@@ -920,16 +924,7 @@ EngineControl *Device::getInternalCopyEngine() {
 }
 
 EngineControl *Device::getHpCopyEngine() {
-    if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
-        return nullptr;
-    }
-    for (auto &engine : allEngines) {
-        if (NEO::EngineHelpers::isBcs(engine.osContext->getEngineType()) &&
-            engine.osContext->isHighPriority()) {
-            return &engine;
-        }
-    }
-    return nullptr;
+    return hpCopyEngine;
 }
 
 RTDispatchGlobalsInfo *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {

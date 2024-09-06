@@ -1788,10 +1788,11 @@ ze_result_t DeviceImp::getCsrForLowPriority(NEO::CommandStreamReceiver **csr, bo
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 ze_result_t DeviceImp::getCsrForHighPriority(NEO::CommandStreamReceiver **csr, bool copyOnly) {
-    for (auto &it : getActiveDevice()->getAllEngines()) {
-        bool engineTypeMatch = NEO::EngineHelpers::isBcs(it.osContext->getEngineType()) == copyOnly;
-        if (it.osContext->isHighPriority() && engineTypeMatch) {
-            *csr = it.commandStreamReceiver;
+
+    if (copyOnly) {
+        auto engine = getActiveDevice()->getHpCopyEngine();
+        if (engine) {
+            *csr = engine->commandStreamReceiver;
             return ZE_RESULT_SUCCESS;
         }
     }

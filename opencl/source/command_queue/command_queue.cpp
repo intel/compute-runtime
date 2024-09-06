@@ -371,16 +371,19 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
         auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::internal : EngineUsage::regular;
 
         if (priority == QueuePriority::high) {
-            const auto &hwInfo = device->getHardwareInfo();
-            auto hpEngine = gfxCoreHelper.getDefaultHpCopyEngine(hwInfo);
-            if (hpEngine != aub_stream::EngineType::NUM_ENGINES) {
-                bcsEngineType = hpEngine;
-                bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
+            auto hpBcs = neoDevice.getHpCopyEngine();
+
+            if (hpBcs) {
+                bcsEngineType = hpBcs->getEngineType();
                 engineUsage = EngineUsage::highPriority;
+                bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
+                bcsEngines[bcsIndex] = hpBcs;
             }
         }
 
-        bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
+        if (bcsEngines[bcsIndex] == nullptr) {
+            bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
+        }
 
         if (bcsEngines[bcsIndex]) {
             bcsQueueEngineType = bcsEngineType;

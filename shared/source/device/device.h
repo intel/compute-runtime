@@ -280,6 +280,7 @@ class Device : public ReferenceTrackedObject<Device> {
     GraphicsAllocation *debugSurface = nullptr;
 
     SelectorCopyEngine selectorCopyEngine = {};
+    EngineControl *hpCopyEngine = nullptr;
 
     DeviceBitfield deviceBitfield = 1;
 
