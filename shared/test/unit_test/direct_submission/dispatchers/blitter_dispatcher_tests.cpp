@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,4 +100,8 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingTlbFlushThenDispatchMi
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenCheckingForMultiTileSynchronizationSupportThenExpectFalse) {
     EXPECT_FALSE(BlitterDispatcher<FamilyType>::isMultiTileSynchronizationSupported());
+}
+
+HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingIsCopyThenReturnTrue) {
+    EXPECT_TRUE(BlitterDispatcher<FamilyType>::isCopy());
 }

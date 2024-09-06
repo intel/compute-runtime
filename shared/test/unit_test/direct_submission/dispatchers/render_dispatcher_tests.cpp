@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -214,4 +214,8 @@ HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFe
         }
     }
     EXPECT_TRUE(foundMonitorFence);
+}
+
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingIsCopyThenReturnFalse) {
+    EXPECT_FALSE(RenderDispatcher<FamilyType>::isCopy());
 }

@@ -16,7 +16,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchPartitionRegister
     ImplicitScalingDispatch<GfxFamily>::dispatchRegisterConfiguration(ringCommandStream,
                                                                       this->workPartitionAllocation->getGpuAddress(),
                                                                       this->immWritePostSyncOffset,
-                                                                      EngineHelpers::isBcs(this->osContext.getEngineType()));
+                                                                      Dispatcher::isCopy());
 }
 
 template <typename GfxFamily, typename Dispatcher>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,9 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
     static size_t getSizeTlbFlush(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isMultiTileSynchronizationSupported() {
         return true;
+    }
+    static constexpr bool isCopy() {
+        return false;
     }
 };
 } // namespace NEO
