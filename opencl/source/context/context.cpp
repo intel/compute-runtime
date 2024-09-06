@@ -183,10 +183,13 @@ void Context::setSpecialQueue(CommandQueue *commandQueue, uint32_t rootDeviceInd
     specialQueues[rootDeviceIndex] = commandQueue;
 }
 void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue, uint32_t rootDeviceIndex) {
-    setSpecialQueue(commandQueue, rootDeviceIndex);
     commandQueue->setIsSpecialCommandQueue(true);
+
     // decrement ref count that special queue added
     this->decRefInternal();
+
+    // above decRefInternal doesn't delete this
+    setSpecialQueue(commandQueue, rootDeviceIndex); // NOLINT(clang-analyzer-cplusplus.NewDelete)
 };
 
 bool Context::areMultiStorageAllocationsPreferred() {
