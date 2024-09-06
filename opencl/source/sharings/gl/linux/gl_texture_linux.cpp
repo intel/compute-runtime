@@ -27,6 +27,7 @@
 
 #include "CL/cl_gl.h"
 #include "config.h"
+#include "third_party/uapi/upstream/drm/drm_fourcc.h"
 #include <GL/gl.h>
 
 namespace NEO {
@@ -39,9 +40,11 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     cl_image_format imgFormat = {};
     McsSurfaceInfo mcsSurfaceInfo = {};
 
-    /* Prepare export request */
+    /* Prepare flush & export request */
     struct mesa_glinterop_export_in texIn = {};
     struct mesa_glinterop_export_out texOut = {};
+    struct mesa_glinterop_flush_out flushOut = {};
+    int fenceFd = -1;
 
     texIn.version = 2;
     texIn.target = getBaseTargetType(target);
@@ -69,13 +72,22 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         return nullptr;
     }
 
+    flushOut.version = 1;
+    flushOut.fence_fd = &fenceFd;
+
     texOut.version = 2;
 
     /* Call MESA interop */
     GLSharingFunctionsLinux *sharingFunctions = context->getSharing<GLSharingFunctionsLinux>();
+    bool success;
+    int retValue;
 
-    int retValue = sharingFunctions->exportObject(&texIn, &texOut);
-    if ((retValue != MESA_GLINTEROP_SUCCESS) || (texOut.version != 2)) {
+    success = sharingFunctions->flushObjectsAndWait(1, &texIn, &flushOut, &retValue);
+    if (success) {
+        retValue = sharingFunctions->exportObject(&texIn, &texOut);
+    }
+
+    if (!success || (retValue != MESA_GLINTEROP_SUCCESS) || (texOut.version != 2)) {
         switch (retValue) {
         case MESA_GLINTEROP_INVALID_DISPLAY:
         case MESA_GLINTEROP_INVALID_CONTEXT:
@@ -124,7 +136,28 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     imgInfo.imgDesc.imageHeight = imgDesc.image_height;
     imgInfo.imgDesc.imageDepth = imgDesc.image_depth;
     imgInfo.imgDesc.imageRowPitch = imgDesc.image_row_pitch;
-    imgInfo.linearStorage = (texOut.modifier == 0);
+
+    switch (texOut.modifier) {
+    case DRM_FORMAT_MOD_LINEAR:
+        imgInfo.linearStorage = true;
+        break;
+    case I915_FORMAT_MOD_X_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiledX;
+        break;
+    case I915_FORMAT_MOD_Y_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiledY;
+        break;
+    case I915_FORMAT_MOD_Yf_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiledYf;
+        break;
+    case I915_FORMAT_MOD_4_TILED:
+        imgInfo.forceTiling = ImageTilingMode::tiled4;
+        break;
+    default:
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
+                         "Unexpected format in CL-GL sharing");
+        return nullptr;
+    }
 
     errorCode.set(CL_SUCCESS);
 

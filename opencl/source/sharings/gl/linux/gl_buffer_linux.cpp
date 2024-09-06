@@ -25,9 +25,11 @@ using namespace NEO;
 Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, unsigned int bufferId, cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
 
-    /* Prepare export request */
+    /* Prepare flush & export request */
     struct mesa_glinterop_export_in objIn = {};
     struct mesa_glinterop_export_out objOut = {};
+    struct mesa_glinterop_flush_out flushOut = {};
+    int fenceFd = -1;
 
     objIn.version = 2;
     objIn.target = GL_ARRAY_BUFFER;
@@ -48,13 +50,22 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
         return nullptr;
     }
 
+    flushOut.version = 1;
+    flushOut.fence_fd = &fenceFd;
+
     objOut.version = 2;
 
     /* Call MESA interop */
     GLSharingFunctionsLinux *sharingFunctions = context->getSharing<GLSharingFunctionsLinux>();
+    bool success;
+    int retValue;
 
-    int retValue = sharingFunctions->exportObject(&objIn, &objOut);
-    if ((retValue != MESA_GLINTEROP_SUCCESS) || (objOut.version != 2)) {
+    success = sharingFunctions->flushObjectsAndWait(1, &objIn, &flushOut, &retValue);
+    if (success) {
+        retValue = sharingFunctions->exportObject(&objIn, &objOut);
+    }
+
+    if (!success || (retValue != MESA_GLINTEROP_SUCCESS) || (objOut.version != 2)) {
         switch (retValue) {
         case MESA_GLINTEROP_INVALID_DISPLAY:
         case MESA_GLINTEROP_INVALID_CONTEXT:

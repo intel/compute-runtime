@@ -95,7 +95,7 @@ class GLSharingFunctionsLinux : public GLSharingFunctions {
             return -ENOTSUP;
         }
     }
-    bool flushObjectsAndWait(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out);
+    bool flushObjectsAndWait(unsigned count, struct mesa_glinterop_export_in *resources, struct mesa_glinterop_flush_out *out, int *retValPtr = nullptr);
     GLContext getBackupContextHandle() {
         return glHGLRCHandleBkpCtx;
     }

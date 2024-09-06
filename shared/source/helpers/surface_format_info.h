@@ -230,6 +230,17 @@ struct ImageDescriptor {
     bool fromParent;
 };
 
+enum class ImageTilingMode {
+    tiledAuto = 0,
+    tiledW,
+    tiledX,
+    tiledY,
+    tiledYf,
+    tiledYs,
+    tiled4,
+    tiled64,
+};
+
 struct ImageInfo {
     ImageDescriptor imgDesc;
     const SurfaceFormatInfo *surfaceFormat;
@@ -247,6 +258,7 @@ struct ImageInfo {
     bool linearStorage;
     bool useLocalMemory;
     bool isDisplayable;
+    ImageTilingMode forceTiling;
 };
 
 struct ImageImplicitArgs {
