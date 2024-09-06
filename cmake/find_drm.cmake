@@ -17,7 +17,7 @@ endif()
 message(STATUS "i915 includes dir: ${NEO_I915_HEADERS_DIR}")
 
 if(NOT DEFINED NEO_I915_PRELIM_HEADERS_DIR OR NEO_I915_PRELIM_HEADERS_DIR STREQUAL "")
-  get_filename_component(NEO_I915_PRELIM_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party/drm-uapi-helper" ABSOLUTE)
+  get_filename_component(NEO_I915_PRELIM_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party/drm-uapi-helper/master" ABSOLUTE)
 endif()
 
 message(STATUS "i915 prelim includes dir: ${NEO_I915_PRELIM_HEADERS_DIR}")
@@ -29,7 +29,7 @@ endif()
 message(STATUS "xe includes dir: ${NEO_XE_HEADERS_DIR}")
 
 if(NOT DEFINED NEO_IAF_HEADERS_DIR OR NEO_IAF_HEADERS_DIR STREQUAL "")
-  get_filename_component(NEO_IAF_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party/uapi/drm-uapi-helper" ABSOLUTE)
+  get_filename_component(NEO_IAF_HEADERS_DIR "${NEO_SOURCE_DIR}/third_party/uapi/drm-uapi-helper/master" ABSOLUTE)
 endif()
 
 message(STATUS "iaf includes dir: ${NEO_IAF_HEADERS_DIR}")
