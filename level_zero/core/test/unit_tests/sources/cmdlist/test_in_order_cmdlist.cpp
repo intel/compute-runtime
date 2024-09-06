@@ -1520,8 +1520,14 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     }
 
-    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
-    *hostAddress = immCmdList->inOrderExecInfo->getCounterValue();
+    if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+
+        auto hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress();
+        *hostAddress = immCmdList->inOrderExecInfo->getCounterValue();
+    } else {
+        auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+        *hostAddress = immCmdList->inOrderExecInfo->getCounterValue();
+    }
 
     immCmdList->copyThroughLockedPtrEnabled = true;
     events[0]->makeCounterBasedInitiallyDisabled();
@@ -5141,8 +5147,12 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
 
             auto gpuAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress();
 
-            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress, immCmdList->isQwordInOrderCounter(), false));
-            ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress + device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), immCmdList->isQwordInOrderCounter(), false));
+            if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+                ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 2, gpuAddress, immCmdList->isQwordInOrderCounter(), false));
+            } else {
+                ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress, immCmdList->isQwordInOrderCounter(), false));
+                ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, gpuAddress + device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset(), immCmdList->isQwordInOrderCounter(), false));
+            }
         }
     }
 }
