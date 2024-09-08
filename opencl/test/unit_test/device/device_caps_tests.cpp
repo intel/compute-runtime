@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
@@ -200,9 +201,12 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_LE(sharedCaps.maxReadImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(sharedCaps.maxWriteImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(128u * MemoryConstants::megaByte, sharedCaps.maxMemAllocSize);
-    if (!device->areSharedSystemAllocationsAllowed()) {
+    const auto &compilerProductHelper = device->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
+
+    if (!compilerProductHelper.isForceToStatelessRequired()) {
         EXPECT_GE((4 * MemoryConstants::gigaByte) - (8 * MemoryConstants::kiloByte), sharedCaps.maxMemAllocSize);
     }
+
     EXPECT_LE(65536u, sharedCaps.imageMaxBufferSize);
 
     EXPECT_GT(sharedCaps.maxWorkGroupSize, 0u);
@@ -463,25 +467,21 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     EXPECT_EQ(sharedCaps.globalMemSize, expectedSize);
 }
 
-HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
+HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndStatelessNotSupportedWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
     DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getSharedDeviceInfo();
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
+        GTEST_SKIP();
+    }
 
-    uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    expectedSize = std::min(expectedSize, gfxCoreHelper.getMaxMemAllocSize());
+    const auto &caps = device->getSharedDeviceInfo();
+    uint64_t expectedSize = std::max(caps.globalMemSize, static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
+
+    expectedSize = std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), device->getGfxCoreHelper().getMaxMemAllocSize());
+
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
-}
-
-TEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsSupportedWhenCalculatingMaxAllocSizeThenEqualsToGlobalMemSize) {
-    DebugManagerStateRestore dbgRestorer;
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    const auto &caps = device->getSharedDeviceInfo();
-
-    EXPECT_EQ(caps.maxMemAllocSize, caps.globalMemSize);
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtensionsStringEndsWithSpace) {

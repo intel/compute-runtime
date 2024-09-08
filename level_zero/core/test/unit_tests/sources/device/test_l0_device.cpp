@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -1429,12 +1430,18 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     device->getProperties(&deviceProperties);
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
 
-    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     auto expectedSize = this->neoDevice->getDeviceInfo().globalMemSize;
-    if (!this->neoDevice->areSharedSystemAllocationsAllowed()) {
-        expectedSize = std::min(expectedSize, gfxCoreHelper.getMaxMemAllocSize());
+
+    auto &rootDeviceEnvironment = this->neoDevice->getRootDeviceEnvironment();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+
+    if (compilerProductHelper.isForceToStatelessRequired()) {
+        EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
+    } else {
+        EXPECT_EQ(deviceProperties.maxMemAllocSize,
+                  std::min(ApiSpecificConfig::getReducedMaxAllocSize(expectedSize), gfxCoreHelper.getMaxMemAllocSize()));
     }
-    EXPECT_EQ(deviceProperties.maxMemAllocSize, expectedSize);
 }
 
 TEST_F(DeviceTest, givenNodeOrdinalFlagWhenCallAdjustCommandQueueDescThenDescOrdinalProperlySet) {

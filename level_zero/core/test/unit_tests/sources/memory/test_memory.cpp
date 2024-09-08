@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
@@ -2615,9 +2616,12 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2640,9 +2644,12 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndDebugFlagThenAllocationIsMade) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+
     DebugManagerStateRestore restorer;
     debugManager.flags.AllowUnrestrictedSize.set(1);
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
@@ -2663,6 +2670,12 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanGlobalMemSizeAndRelaxedFlagThenAllocationIsNotMade) {
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
+        GTEST_SKIP();
+    }
+
     size_t size = device->getNEODevice()->getDeviceInfo().globalMemSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2854,9 +2867,12 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -2881,9 +2897,12 @@ TEST_F(MemoryRelaxedSizeTests,
 
 TEST_F(MemoryRelaxedSizeTests,
        givenCallToSharedAllocWithLargerThanAllowedSizeAndDebugFlagThenAllocationIsMade) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+
     DebugManagerStateRestore restorer;
     debugManager.flags.AllowUnrestrictedSize.set(1);
     size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
@@ -6141,19 +6160,21 @@ HWTEST2_F(MultipleDevicePeerImageTest,
 }
 
 TEST_F(MemoryRelaxedSizeTests, givenMultipleExtensionsPassedToCreateSharedMemThenAllExtensionsAreParsed) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
+
     auto mockProductHelper = std::make_unique<MockProductHelper>();
     mockProductHelper->is48bResourceNeededForRayTracingResult = true;
     std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
-    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
     currSvmAllocsManager->validateMemoryProperties = [](const SVMAllocsManager::UnifiedMemoryProperties &memoryProperties) -> void {
         EXPECT_TRUE(memoryProperties.allocationFlags.flags.resource48Bit);
     };
 
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
-    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
+    size_t size = neoDevice->getDeviceInfo().maxMemAllocSize + 1;
     size_t alignment = 1u;
     void *ptr = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};

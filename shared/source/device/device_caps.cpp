@@ -15,6 +15,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_info_helper.h"
@@ -83,14 +84,13 @@ void Device::initializeCaps() {
     uint32_t subDeviceCount = gfxCoreHelper.getSubDevicesCount(&getHardwareInfo());
     auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
     bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
 
-    if (((NEO::ImplicitScalingHelper::isImplicitScalingEnabled(
-            getDeviceBitfield(), platformImplicitScaling))) &&
+    if ((NEO::ImplicitScalingHelper::isImplicitScalingEnabled(
+            getDeviceBitfield(), platformImplicitScaling)) &&
         (!isSubDevice()) && (subDeviceCount > 1)) {
         deviceInfo.maxMemAllocSize = deviceInfo.globalMemSize;
-    }
-
-    if (!areSharedSystemAllocationsAllowed()) {
+    } else if (!compilerProductHelper.isForceToStatelessRequired()) {
         deviceInfo.maxMemAllocSize = ApiSpecificConfig::getReducedMaxAllocSize(deviceInfo.maxMemAllocSize);
         deviceInfo.maxMemAllocSize = std::min(deviceInfo.maxMemAllocSize, gfxCoreHelper.getMaxMemAllocSize());
     }

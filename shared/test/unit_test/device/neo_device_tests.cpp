@@ -353,24 +353,12 @@ TEST_F(DeviceGetCapsTest,
     pDevice->deviceBitfield = 15;
 
     debugManager.flags.EnableWalkerPartition.set(1);
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize == pDevice->getDeviceInfo().globalMemSize);
+    EXPECT_EQ(pDevice->getDeviceInfo().maxMemAllocSize, pDevice->getDeviceInfo().globalMemSize);
 
     debugManager.flags.EnableWalkerPartition.set(0);
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize <= pDevice->getDeviceInfo().globalMemSize);
-
-    debugManager.flags.EnableWalkerPartition.set(1);
-    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
-    pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
-
-    debugManager.flags.EnableWalkerPartition.set(0);
-    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
-    pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize < pDevice->getDeviceInfo().globalMemSize);
+    EXPECT_LE(pDevice->getDeviceInfo().maxMemAllocSize, pDevice->getDeviceInfo().globalMemSize);
 }
 
 TEST_F(DeviceGetCapsTest,
@@ -382,9 +370,8 @@ TEST_F(DeviceGetCapsTest,
 
     debugManager.flags.EnableImplicitScaling.set(1);
     debugManager.flags.EnableWalkerPartition.set(1);
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize == pDevice->getDeviceInfo().globalMemSize);
+    EXPECT_EQ(pDevice->getDeviceInfo().maxMemAllocSize, pDevice->getDeviceInfo().globalMemSize);
 }
 
 TEST_F(DeviceGetCapsTest,
@@ -396,9 +383,8 @@ TEST_F(DeviceGetCapsTest,
 
     debugManager.flags.EnableImplicitScaling.set(0);
     debugManager.flags.EnableWalkerPartition.set(1);
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1);
     pDevice->initializeCaps();
-    EXPECT_TRUE(pDevice->getDeviceInfo().maxMemAllocSize <= pDevice->getDeviceInfo().globalMemSize);
+    EXPECT_LE(pDevice->getDeviceInfo().maxMemAllocSize, pDevice->getDeviceInfo().globalMemSize);
 }
 
 TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {
