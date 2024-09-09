@@ -820,7 +820,16 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     argumentsResidencyContainer[argIndex] = image->getAllocation();
 
     if (image->getImplicitArgsAllocation()) {
-        this->argumentsResidencyContainer.push_back(image->getImplicitArgsAllocation());
+        if (implicitArgsResidencyContainerIndices[argIndex] == std::numeric_limits<size_t>::max()) {
+            implicitArgsResidencyContainerIndices[argIndex] = argumentsResidencyContainer.size();
+            argumentsResidencyContainer.push_back(image->getImplicitArgsAllocation());
+        } else {
+            argumentsResidencyContainer[implicitArgsResidencyContainerIndices[argIndex]] = image->getImplicitArgsAllocation();
+        }
+    } else {
+        if (implicitArgsResidencyContainerIndices[argIndex] != std::numeric_limits<size_t>::max()) {
+            argumentsResidencyContainer[implicitArgsResidencyContainerIndices[argIndex]] = nullptr;
+        }
     }
 
     auto imageInfo = image->getImageInfo();
@@ -1085,6 +1094,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     argumentsResidencyContainer.resize(this->kernelArgHandlers.size(), nullptr);
+    implicitArgsResidencyContainerIndices.resize(this->kernelArgHandlers.size(), std::numeric_limits<size_t>::max());
 
     auto &kernelAttributes = kernelDescriptor.kernelAttributes;
     if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
@@ -1179,14 +1189,24 @@ bool KernelImp::usesRegionGroupBarrier() const {
 }
 
 void KernelImp::patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    this->internalResidencyContainer.push_back(gfxAllocation);
+    if (syncBufferIndex == std::numeric_limits<size_t>::max()) {
+        syncBufferIndex = this->internalResidencyContainer.size();
+        this->internalResidencyContainer.push_back(gfxAllocation);
+    } else {
+        this->internalResidencyContainer[syncBufferIndex] = gfxAllocation;
+    }
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.syncBufferAddress,
                       static_cast<uintptr_t>(ptrOffset(gfxAllocation->getGpuAddressToPatch(), bufferOffset)));
 }
 
 void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) {
-    this->internalResidencyContainer.push_back(gfxAllocation);
+    if (regionGroupBarrierIndex == std::numeric_limits<size_t>::max()) {
+        regionGroupBarrierIndex = this->internalResidencyContainer.size();
+        this->internalResidencyContainer.push_back(gfxAllocation);
+    } else {
+        this->internalResidencyContainer[regionGroupBarrierIndex] = gfxAllocation;
+    }
 
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                       this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.regionGroupBarrierBuffer,

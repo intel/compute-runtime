@@ -45,6 +45,7 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::dynamicStateHeapData;
     using ::L0::KernelImp::dynamicStateHeapDataSize;
     using ::L0::KernelImp::groupSize;
+    using ::L0::KernelImp::implicitArgsResidencyContainerIndices;
     using ::L0::KernelImp::internalResidencyContainer;
     using ::L0::KernelImp::isBindlessOffsetSet;
     using ::L0::KernelImp::kernelHasIndirectAccess;
@@ -61,12 +62,14 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
     using ::L0::KernelImp::pImplicitArgs;
     using ::L0::KernelImp::printfBuffer;
+    using ::L0::KernelImp::regionGroupBarrierIndex;
     using ::L0::KernelImp::requiredWorkgroupOrder;
     using ::L0::KernelImp::setAssertBuffer;
     using ::L0::KernelImp::slmArgsTotalSize;
     using ::L0::KernelImp::suggestGroupSizeCache;
     using ::L0::KernelImp::surfaceStateHeapData;
     using ::L0::KernelImp::surfaceStateHeapDataSize;
+    using ::L0::KernelImp::syncBufferIndex;
     using ::L0::KernelImp::unifiedMemoryControls;
     using ::L0::KernelImp::usingSurfaceStateHeap;
 

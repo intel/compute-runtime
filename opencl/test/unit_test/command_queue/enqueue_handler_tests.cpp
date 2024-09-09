@@ -17,6 +17,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -686,10 +687,6 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
     if (compilerProductHelper.isHeaplessModeEnabled()) {
         GTEST_SKIP();
     }
-
-    struct MockSyncBufferHandler : SyncBufferHandler {
-        using SyncBufferHandler::graphicsAllocation;
-    };
 
     pDevice->allocateSyncBufferHandler();
 

@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -21,13 +21,6 @@
 #include "aubstream/engine_node.h"
 
 using namespace NEO;
-
-class MockSyncBufferHandler : public SyncBufferHandler {
-  public:
-    using SyncBufferHandler::bufferSize;
-    using SyncBufferHandler::graphicsAllocation;
-    using SyncBufferHandler::usedBufferSize;
-};
 
 class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
   public:

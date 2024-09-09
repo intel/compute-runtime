@@ -215,10 +215,13 @@ struct KernelImp : Kernel {
     std::vector<KernelArgInfo> kernelArgInfos;
     std::vector<KernelImp::KernelArgHandler> kernelArgHandlers;
     std::vector<NEO::GraphicsAllocation *> argumentsResidencyContainer;
+    std::vector<size_t> implicitArgsResidencyContainerIndices;
     std::vector<NEO::GraphicsAllocation *> internalResidencyContainer;
 
     std::mutex *devicePrintfKernelMutex = nullptr;
     NEO::GraphicsAllocation *printfBuffer = nullptr;
+    size_t syncBufferIndex = std::numeric_limits<size_t>::max();
+    size_t regionGroupBarrierIndex = std::numeric_limits<size_t>::max();
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
     uint32_t numThreadsPerThreadGroup = 1u;

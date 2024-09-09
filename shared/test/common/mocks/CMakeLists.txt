@@ -90,6 +90,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sip.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_svm_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_sync_buffer_handler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_packet.h
