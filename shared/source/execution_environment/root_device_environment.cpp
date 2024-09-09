@@ -166,6 +166,7 @@ void RootDeviceEnvironment::initHelpers() {
 void RootDeviceEnvironment::initGfxCoreHelper() {
     if (gfxCoreHelper == nullptr) {
         gfxCoreHelper = GfxCoreHelper::create(this->getHardwareInfo()->platform.eRenderCoreFamily);
+        gfxCoreHelper->initializeDefaultHpCopyEngine(*this->getHardwareInfo());
     }
 }
 

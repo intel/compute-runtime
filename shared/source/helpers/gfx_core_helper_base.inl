@@ -741,8 +741,12 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getContextGroupHpContextsCount(EngineGroupT
 
 template <typename GfxFamily>
 aub_stream::EngineType GfxCoreHelperHw<GfxFamily>::getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const {
+    return hpCopyEngineType;
+}
 
-    return aub_stream::EngineType::NUM_ENGINES;
+template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) {
+    hpCopyEngineType = aub_stream::EngineType::NUM_ENGINES;
 }
 
 template <typename GfxFamily>

@@ -181,6 +181,7 @@ class GfxCoreHelper {
     virtual uint32_t getContextGroupContextsCount() const = 0;
     virtual uint32_t getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const = 0;
     virtual aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const = 0;
+    virtual void initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) = 0;
 
     virtual bool is48ResourceNeededForCmdBuffer() const = 0;
     virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
@@ -415,6 +416,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getContextGroupContextsCount() const override;
     uint32_t getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const override;
     aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override;
+    void initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) override;
 
     bool is48ResourceNeededForCmdBuffer() const override;
 
@@ -438,6 +440,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     ~GfxCoreHelperHw() override = default;
 
   protected:
+    aub_stream::EngineType hpCopyEngineType = aub_stream::EngineType::NUM_ENGINES;
+
     static const AuxTranslationMode defaultAuxTranslationMode;
     GfxCoreHelperHw() = default;
 };
