@@ -111,6 +111,11 @@ struct MockTbxCsrRegisterDownloadedAllocations : TbxCommandStreamReceiverHw<GfxF
         obtainUniqueOwnershipCalled++;
         return TbxCommandStreamReceiverHw<GfxFamily>::obtainUniqueOwnership();
     }
+
+    uint64_t getNonBlockingDownloadTimeoutMs() const override {
+        return 1;
+    }
+
     std::set<GraphicsAllocation *> downloadedAllocations;
     bool flushBatchedSubmissionsCalled = false;
     bool flushTagCalled = false;

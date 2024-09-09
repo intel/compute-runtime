@@ -31,6 +31,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
     void flushSubmissionsAndDownloadAllocations(TaskCountType taskCount, bool skipAllocationsDownload);
+    MOCKABLE_VIRTUAL uint64_t getNonBlockingDownloadTimeoutMs() const {
+        return 2000; // 2s
+    }
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;

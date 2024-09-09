@@ -578,7 +578,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAlloca
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWait, TaskCountType taskCount) {
     volatile TagAddressType *pollAddress = this->getTagAddress();
-    constexpr uint64_t timeoutMs = 1000 * 2; // 2s
 
     auto waitTaskCount = std::min(taskCount, this->latestFlushedTaskCount.load());
 
@@ -593,7 +592,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations(bool blockingWai
                 if (!blockingWait) {
                     // Additional delay to reach PC in case of Event wait
                     timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-                    if (timeDiff > timeoutMs) {
+                    if (timeDiff > getNonBlockingDownloadTimeoutMs()) {
                         return;
                     }
                 }
