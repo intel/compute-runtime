@@ -11,6 +11,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
+#include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -232,6 +233,7 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
         filesData[i].nFileSizeHigh = 0;
         filesData[i].nFileSizeLow = cacheFileSize;
         filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        filesData[i].dwFileAttributes = 0;
 
         SysCalls::findNextFileAFileData[i] = filesData[i];
     }
@@ -248,6 +250,41 @@ TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteWhenEvictCache
     EXPECT_EQ(2u, SysCalls::deleteFileACalled);
     EXPECT_EQ(0, strcmp(deletedFiles[0].c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
     EXPECT_EQ(0, strcmp(deletedFiles[1].c_str(), "somePath\\cl_cache\\file_1.cl_cache"));
+}
+
+TEST_F(CompilerCacheWindowsTest, GivenCompilerCacheWithOneMegabyteAnd3CacheFilesAnd1DirectoryWhenEvictCacheIsCalledThenDeleteTwoOldestFilesSkippingDirectory) {
+    WIN32_FIND_DATAA filesData[4];
+    DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
+
+    filesData[0].ftLastAccessTime.dwLowDateTime = 6u;
+    filesData[1].ftLastAccessTime.dwLowDateTime = 4u; // Directory
+    filesData[2].ftLastAccessTime.dwLowDateTime = 8u;
+    filesData[3].ftLastAccessTime.dwLowDateTime = 2u;
+
+    StackVec<DWORD, 4> fileAttributes = {0, FILE_ATTRIBUTE_DIRECTORY, 0, 0};
+
+    for (size_t i = 0; i < 4; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "file_%zu.cl_cache", i);
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = cacheFileSize;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        filesData[i].dwFileAttributes = fileAttributes[i];
+
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    SysCalls::findFirstFileAResult = reinterpret_cast<HANDLE>(0x1234);
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+    auto &deletedFiles = SysCalls::deleteFiles;
+
+    uint64_t bytesEvicted{0u};
+    auto result = cache.evictCache(bytesEvicted);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(2u, SysCalls::deleteFileACalled);
+    EXPECT_EQ(0, strcmp(deletedFiles[0].c_str(), "somePath\\cl_cache\\file_3.cl_cache"));
+    EXPECT_EQ(0, strcmp(deletedFiles[1].c_str(), "somePath\\cl_cache\\file_0.cl_cache"));
 }
 
 TEST_F(CompilerCacheWindowsTest, givenEvictCacheWhenFileSearchFailedThenDebugMessageWithErrorIsPrinted) {
@@ -419,6 +456,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
         filesData[i].nFileSizeHigh = 0;
         filesData[i].nFileSizeLow = cacheFileSize;
         filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        filesData[i].dwFileAttributes = 0;
 
         SysCalls::findNextFileAFileData[i] = filesData[i];
     }
@@ -437,6 +475,63 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
     EXPECT_EQ(expectedDirectorySize, directorySize);
 
     EXPECT_EQ(0u, SysCalls::readFileCalled);
+    EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
+    EXPECT_EQ(0u, SysCalls::closeHandleCalled);
+}
+
+TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingConfigFailsAndCreateNewConfigFailsAndSecondTimeOpenExistingConfigSucceedsThenPrintErrorMessageFromCreateConfigFail) {
+    DebugManagerStateRestore restore;
+    NEO::debugManager.flags.PrintDebugMessages.set(1);
+
+    const size_t readCacheDirSize = 840 * MemoryConstants::kiloByte;
+    SysCalls::createFileAResults[0] = INVALID_HANDLE_VALUE;
+    SysCalls::createFileAResults[1] = INVALID_HANDLE_VALUE;
+    SysCalls::createFileAResults[2] = reinterpret_cast<HANDLE>(0x1234);
+    SysCalls::lockFileExResult = TRUE;
+
+    SysCalls::callBaseReadFile = false;
+    SysCalls::readFileResult = TRUE;
+    SysCalls::readFileBufferData = readCacheDirSize;
+
+    SysCalls::getLastErrorResult = ERROR_FILE_NOT_FOUND;
+
+    WIN32_FIND_DATAA filesData[4];
+    DWORD cacheFileSize = (MemoryConstants::megaByte / 6) + 10;
+
+    filesData[0].ftLastAccessTime.dwLowDateTime = 6u;
+    filesData[1].ftLastAccessTime.dwLowDateTime = 4u;
+    filesData[2].ftLastAccessTime.dwLowDateTime = 8u;
+    filesData[3].ftLastAccessTime.dwLowDateTime = 2u;
+
+    for (size_t i = 0; i < 4; i++) {
+        snprintf(filesData[i].cFileName, MAX_PATH, "file_%zu.cl_cache", i);
+        filesData[i].nFileSizeHigh = 0;
+        filesData[i].nFileSizeLow = cacheFileSize;
+        filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        filesData[i].dwFileAttributes = 0;
+
+        SysCalls::findNextFileAFileData[i] = filesData[i];
+    }
+
+    const size_t cacheSize = MemoryConstants::megaByte - 2u;
+    CompilerCacheMockWindows cache({true, ".cl_cache", "somePath\\cl_cache", cacheSize});
+
+    UnifiedHandle configFileHandle{nullptr};
+    size_t directorySize = 0u;
+    ::testing::internal::CaptureStderr();
+    cache.lockConfigFileAndReadSize("somePath\\cl_cache\\config.file", configFileHandle, directorySize);
+    auto capturedStderr = ::testing::internal::GetCapturedStderr();
+
+    std::string expectedStderrSubstr("[Cache failure]: Create config file failed! error code:");
+
+    EXPECT_TRUE(hasSubstr(capturedStderr, expectedStderrSubstr));
+
+    EXPECT_EQ(3u, SysCalls::createFileACalled);
+    EXPECT_EQ(1u, SysCalls::lockFileExCalled);
+
+    EXPECT_EQ(readCacheDirSize, directorySize);
+
+    EXPECT_EQ(1u, SysCalls::readFileCalled);
     EXPECT_EQ(0u, SysCalls::unlockFileExCalled);
     EXPECT_EQ(0u, SysCalls::closeHandleCalled);
 }
@@ -469,6 +564,7 @@ TEST_F(CompilerCacheWindowsTest, givenLockConfigFileAndReadSizeWhenOpenExistingC
         filesData[i].nFileSizeHigh = 0;
         filesData[i].nFileSizeLow = cacheFileSize;
         filesData[i].ftLastAccessTime.dwHighDateTime = 0;
+        filesData[i].dwFileAttributes = 0;
 
         SysCalls::findNextFileAFileData[i] = filesData[i];
     }

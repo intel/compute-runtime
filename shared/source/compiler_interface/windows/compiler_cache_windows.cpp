@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,17 +28,11 @@ struct ElementsStruct {
 
 std::vector<ElementsStruct> getFiles(const std::string &path) {
     std::vector<ElementsStruct> files;
-    std::string newPath;
 
     WIN32_FIND_DATAA ffd{0};
     HANDLE hFind = INVALID_HANDLE_VALUE;
 
-    if (path.c_str()[path.size() - 1] == '\\') {
-        return files;
-    } else {
-        newPath = path + "/*";
-    }
-
+    std::string newPath = joinPath(path, "*");
     hFind = NEO::SysCalls::findFirstFileA(newPath.c_str(), &ffd);
 
     if (hFind == INVALID_HANDLE_VALUE) {
@@ -47,6 +41,10 @@ std::vector<ElementsStruct> getFiles(const std::string &path) {
     }
 
     do {
+        if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            continue;
+        }
+
         auto fileName = joinPath(path, ffd.cFileName);
         if (fileName.find(".cl_cache") != fileName.npos ||
             fileName.find(".l0_cache") != fileName.npos) {
@@ -118,6 +116,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
                                                               NULL);
 
         if (std::get<void *>(handle) == INVALID_HANDLE_VALUE) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "PID %d [Cache failure]: Create config file failed! error code: %lu\n", GetCurrentProcessId(), GetLastError());
             std::get<void *>(handle) = NEO::SysCalls::createFileA(configFilePath.c_str(),
                                                                   GENERIC_READ | GENERIC_WRITE,
                                                                   FILE_SHARE_READ | FILE_SHARE_WRITE,
