@@ -10,12 +10,13 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/cpu_info.h"
 
 #include "level_zero/api/driver_experimental/public/zex_memory.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -1012,21 +1013,59 @@ NEO::VirtualMemoryReservation *ContextImp::findSupportedVirtualReservation(const
 ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
                                           size_t size,
                                           void **pptr) {
-    NEO::HeapIndex heap;
-    size_t pageSize;
-    if ((getPageAlignedSizeRequired(size, &heap, &pageSize) != size)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+    uint64_t maxCpuVa = 0;
+    if (this->driverHandle->getMemoryManager()->peek32bit()) {
+        maxCpuVa = maxNBitValue(32);
+    } else {
+        maxCpuVa = NEO::CpuInfo::getInstance().getVirtualAddressSize() == 57u ? maxNBitValue(56) : maxNBitValue(47);
     }
+    bool reserveOnSvmHeap = pStart == nullptr;
+    if (castToUint64(pStart) <= maxCpuVa) {
+        reserveOnSvmHeap = true;
+    }
+
+    NEO::AddressRange addressRange{};
+    uint32_t reservedOnRootDeviceIndex = 0;
+    uint64_t reservationBase = 0;
+    size_t reservationTotalSize = 0;
+
+    if (reserveOnSvmHeap) {
+        if (alignUp(size, MemoryConstants::pageSize) != size) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+        }
+        reservationTotalSize = size + MemoryConstants::pageSize2M;
+        addressRange = this->driverHandle->getMemoryManager()->reserveCpuAddressWithZeroBaseRetry(castToUint64(pStart), reservationTotalSize);
+        if (addressRange.address == 0) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        DEBUG_BREAK_IF(addressRange.address + reservationTotalSize > maxCpuVa);
+        reservationBase = addressRange.address;
+        addressRange.address = alignUp(addressRange.address, MemoryConstants::pageSize2M);
+        addressRange.size = size;
+    } else {
+        NEO::HeapIndex heap;
+        size_t pageSize;
+        if ((getPageAlignedSizeRequired(size, &heap, &pageSize) != size)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
+        }
+        addressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(castToUint64(pStart), size, this->driverHandle->rootDeviceIndices, &reservedOnRootDeviceIndex, heap, pageSize);
+        if (addressRange.address == 0) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+        reservationBase = addressRange.address;
+        reservationTotalSize = addressRange.size;
+    }
+
     NEO::VirtualMemoryReservation *virtualMemoryReservation = new NEO::VirtualMemoryReservation;
-    virtualMemoryReservation->virtualAddressRange = this->driverHandle->getMemoryManager()->reserveGpuAddressOnHeap(reinterpret_cast<uint64_t>(pStart), size, this->driverHandle->rootDeviceIndices, &virtualMemoryReservation->rootDeviceIndex, heap, pageSize);
-    if (virtualMemoryReservation->virtualAddressRange.address == 0) {
-        delete virtualMemoryReservation;
-        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-    }
+    virtualMemoryReservation->virtualAddressRange = addressRange;
+    virtualMemoryReservation->isSvmReservation = reserveOnSvmHeap;
+    virtualMemoryReservation->rootDeviceIndex = reservedOnRootDeviceIndex;
     virtualMemoryReservation->flags.readWrite = false;
     virtualMemoryReservation->flags.readOnly = false;
     virtualMemoryReservation->flags.noAccess = true;
     virtualMemoryReservation->reservationSize = size;
+    virtualMemoryReservation->reservationBase = reservationBase;
+    virtualMemoryReservation->reservationTotalSize = reservationTotalSize;
     auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
     this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().insert(std::pair<void *, NEO::VirtualMemoryReservation *>(reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address), virtualMemoryReservation));
     *pptr = reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address);
@@ -1047,7 +1086,12 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
         if (virtualMemoryReservation->reservationSize != size) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        this->driverHandle->getMemoryManager()->freeGpuAddress(virtualMemoryReservation->virtualAddressRange, virtualMemoryReservation->rootDeviceIndex);
+        NEO::AddressRange addressRange{virtualMemoryReservation->reservationBase, virtualMemoryReservation->reservationTotalSize};
+        if (virtualMemoryReservation->isSvmReservation) {
+            this->driverHandle->getMemoryManager()->freeCpuAddress(addressRange);
+        } else {
+            this->driverHandle->getMemoryManager()->freeGpuAddress(addressRange, virtualMemoryReservation->rootDeviceIndex);
+        }
         delete virtualMemoryReservation;
         this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().erase(it);
         virtualMemoryReservation = nullptr;

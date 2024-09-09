@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ void *OSMemoryWindows::osReserveCpuAddressRange(void *baseAddress, size_t sizeTo
 }
 
 void OSMemoryWindows::osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t size) {
-    virtualFreeWrapper(reservedCpuAddressRange, size, MEM_RELEASE);
+    virtualFreeWrapper(reservedCpuAddressRange, 0, MEM_RELEASE);
 }
 
 LPVOID OSMemoryWindows::virtualAllocWrapper(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {
