@@ -182,9 +182,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
     }
 
     std::visit([kernel, expectedEmitLocal](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
         EXPECT_EQ(1u, walker->getEmitInlineParameter());
         EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
-        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), kernel->getCrossThreadData(), sizeof(INLINE_DATA)));
+
+        constexpr auto inlineSize = WalkerType::getInlineDataSize();
+
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), kernel->getCrossThreadData(), inlineSize));
     },
                walkerVariant);
 
@@ -194,8 +198,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSizeMoreThanSingleGrfWhenInlineDataAllowedThenCopyGrfCrossThreadToInline) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
-
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     auto *kernel = this->kernels[3].get();
     if (!EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernel->getKernelInfo().kernelDescriptor)) {
@@ -243,12 +245,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
     std::visit([kernel, expectedEmitLocal, &ih](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
         EXPECT_EQ(1u, walker->getEmitInlineParameter());
 
         EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
         char *crossThreadData = kernel->getCrossThreadData();
         size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
-        auto inlineSize = sizeof(INLINE_DATA);
+
+        constexpr auto inlineSize = WalkerType::getInlineDataSize();
+
         EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadData, inlineSize));
 
         crossThreadDataSize -= inlineSize;
