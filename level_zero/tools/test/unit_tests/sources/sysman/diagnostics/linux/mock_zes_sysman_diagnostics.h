@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ struct MockDiagnosticsFwInterface : public FirmwareUtil {
     void setFwInitRetVal(ze_result_t val) {
         mockFwInitResult = val;
     }
-    ze_result_t getFirstDevice(igsc_device_info *info) override {
+    ze_result_t getFirstDevice(IgscDeviceInfo *info) override {
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t fwSupportedDiagTests(std::vector<std::string> &supportedDiagTests) override {

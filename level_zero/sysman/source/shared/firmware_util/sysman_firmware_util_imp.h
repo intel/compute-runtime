@@ -27,7 +27,7 @@ typedef int (*pIgscDeviceFwVersion)(struct igsc_device_handle *handle,
                                     struct igsc_fw_version *version);
 typedef int (*pIgscDeviceIteratorCreate)(struct igsc_device_iterator **iter);
 typedef int (*pIgscDeviceIteratorNext)(struct igsc_device_iterator *iter,
-                                       struct igsc_device_info *info);
+                                       IgscDeviceInfo *info);
 typedef void (*pIgscDeviceIteratorDestroy)(struct igsc_device_iterator *iter);
 typedef int (*pIgscDeviceFwUpdate)(struct igsc_device_handle *handle,
                                    const uint8_t *buffer,
@@ -135,7 +135,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     NEO::OsLibrary *libraryHandle = nullptr;
 
   protected:
-    ze_result_t getFirstDevice(igsc_device_info *);
+    ze_result_t getFirstDevice(IgscDeviceInfo *);
     ze_result_t fwGetVersion(std::string &fwVersion);
     ze_result_t opromGetVersion(std::string &fwVersion);
     ze_result_t pscGetVersion(std::string &fwVersion);

@@ -26,7 +26,7 @@ typedef int (*pIgscDeviceFwVersion)(struct igsc_device_handle *handle,
                                     struct igsc_fw_version *version);
 typedef int (*pIgscDeviceIteratorCreate)(struct igsc_device_iterator **iter);
 typedef int (*pIgscDeviceIteratorNext)(struct igsc_device_iterator *iter,
-                                       struct igsc_device_info *info);
+                                       IgscDeviceInfo *info);
 typedef void (*pIgscDeviceIteratorDestroy)(struct igsc_device_iterator *iter);
 typedef int (*pIgscDeviceFwUpdate)(struct igsc_device_handle *handle,
                                    const uint8_t *buffer,
@@ -107,7 +107,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
     ~FirmwareUtilImp() override;
     ze_result_t fwDeviceInit() override;
-    ze_result_t getFirstDevice(igsc_device_info *) override;
+    ze_result_t getFirstDevice(IgscDeviceInfo *) override;
     ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) override;
     ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) override;
     ze_result_t fwIfrApplied(bool &ifrStatus) override;

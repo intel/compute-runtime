@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class FirmwareUtil {
   public:
     static FirmwareUtil *create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
     virtual ze_result_t fwDeviceInit() = 0;
-    virtual ze_result_t getFirstDevice(igsc_device_info *) = 0;
+    virtual ze_result_t getFirstDevice(IgscDeviceInfo *) = 0;
     virtual ze_result_t getFwVersion(std::string fwType, std::string &firmwareVersion) = 0;
     virtual ze_result_t flashFirmware(std::string fwType, void *pImage, uint32_t size) = 0;
     virtual ze_result_t fwIfrApplied(bool &ifrStatus) = 0;

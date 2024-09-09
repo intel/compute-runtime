@@ -77,7 +77,7 @@ ze_result_t FirmwareUtilImp::getFlashFirmwareProgress(uint32_t *pCompletionPerce
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
+ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {
     igsc_device_iterator *iter;
     int ret = deviceIteratorCreate(&iter);
     if (ret != IGSC_SUCCESS) {
@@ -106,7 +106,7 @@ ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
 
 ze_result_t FirmwareUtilImp::fwDeviceInit() {
     int ret;
-    igsc_device_info info;
+    IgscDeviceInfo info;
     ze_result_t result = getFirstDevice(&info);
     if (result != ZE_RESULT_SUCCESS) {
         return result;

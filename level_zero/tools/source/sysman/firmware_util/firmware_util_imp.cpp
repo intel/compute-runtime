@@ -61,7 +61,7 @@ static void progressFunc(uint32_t done, uint32_t total, void *ctx) {
     PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stdout, "Progess: %d/%d:%d/%\n", done, total, percent);
 }
 
-ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
+ze_result_t FirmwareUtilImp::getFirstDevice(IgscDeviceInfo *info) {
     igsc_device_iterator *iter;
     int ret = deviceIteratorCreate(&iter);
     if (ret != IGSC_SUCCESS) {
@@ -90,7 +90,7 @@ ze_result_t FirmwareUtilImp::getFirstDevice(igsc_device_info *info) {
 
 ze_result_t FirmwareUtilImp::fwDeviceInit() {
     int ret;
-    igsc_device_info info;
+    IgscDeviceInfo info;
     ze_result_t result = getFirstDevice(&info);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
