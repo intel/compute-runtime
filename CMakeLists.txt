@@ -587,7 +587,12 @@ if(UNIX)
   endif()
   message(STATUS "Xe EU Debug support: ${NEO_ENABLE_XE_EU_DEBUG_SUPPORT}")
 
-  get_filename_component(XE_DEBUG_INCLUDE_DIR "${NEO_SOURCE_DIR}/shared/source/debugger/linux${BRANCH_DIR_SUFFIX}" ABSOLUTE)
+  if((NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM OR NOT NEO_ENABLE_XE_PRELIM_DETECTION) AND ("${BRANCH_TYPE}" STREQUAL ""))
+    get_filename_component(XE_DEBUG_INCLUDE_DIR "${NEO_SOURCE_DIR}/shared/source/debugger/linux/" ABSOLUTE)
+  else()
+    get_filename_component(XE_DEBUG_INCLUDE_DIR "${NEO_SOURCE_DIR}/shared/source/debugger/linux/prelim" ABSOLUTE)
+  endif()
+
   include_directories(BEFORE ${XE_DEBUG_INCLUDE_DIR})
 endif()
 
