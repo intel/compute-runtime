@@ -680,6 +680,81 @@ HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStatePar
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
+HWTEST2_F(CommandEncoderTests, givenMiStoreRegisterMemWhenEncodeAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    uint64_t baseAddr = 0x10;
+    uint32_t offset = 0x2000;
+
+    constexpr size_t bufferSize = 2100;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+    auto buf = cmdStream.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+
+    bool isBcs = true;
+    EncodeStoreMMIO<FamilyType>::encode(buf, offset, baseAddr, true, isBcs);
+    auto storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
+    ASSERT_NE(nullptr, storeRegMem);
+    EXPECT_EQ(storeRegMem->getRegisterAddress(), RegisterOffsets::bcs0Base + offset);
+
+    isBcs = false;
+    EncodeStoreMMIO<FamilyType>::encode(buf, offset, baseAddr, true, isBcs);
+    storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(buffer);
+    ASSERT_NE(nullptr, storeRegMem);
+    EXPECT_EQ(storeRegMem->getRegisterAddress(), offset);
+}
+
+HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterMemWhenEncodememAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+
+    uint64_t baseAddr = 0x10;
+    uint32_t offset = 0x2000;
+
+    constexpr size_t bufferSize = 2100;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+    uint8_t *ptr = buffer;
+    bool isBcs = true;
+
+    EncodeSetMMIO<FamilyType>::encodeMEM(cmdStream, offset, baseAddr, isBcs);
+    auto loadRegMem = genCmdCast<MI_LOAD_REGISTER_MEM *>(ptr);
+    ASSERT_NE(nullptr, loadRegMem);
+    EXPECT_EQ(loadRegMem->getRegisterAddress(), RegisterOffsets::bcs0Base + offset);
+
+    isBcs = false;
+    ptr += sizeof(MI_LOAD_REGISTER_MEM);
+    EncodeSetMMIO<FamilyType>::encodeMEM(cmdStream, offset, baseAddr, isBcs);
+    loadRegMem = genCmdCast<MI_LOAD_REGISTER_MEM *>(ptr);
+    ASSERT_NE(nullptr, loadRegMem);
+    EXPECT_EQ(loadRegMem->getRegisterAddress(), offset);
+}
+
+HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterRegwhenencoderegAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+
+    uint32_t srcOffset = 0x2000;
+    uint32_t dstOffset = 0x2004;
+
+    constexpr size_t bufferSize = 2100;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+    uint8_t *ptr = buffer;
+    bool isBcs = true;
+
+    EncodeSetMMIO<FamilyType>::encodeREG(cmdStream, dstOffset, srcOffset, isBcs);
+    auto storeRegReg = genCmdCast<MI_LOAD_REGISTER_REG *>(buffer);
+    ASSERT_NE(nullptr, storeRegReg);
+    EXPECT_EQ(storeRegReg->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + srcOffset);
+    EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + dstOffset);
+
+    isBcs = false;
+    ptr += sizeof(MI_LOAD_REGISTER_REG);
+    EncodeSetMMIO<FamilyType>::encodeREG(cmdStream, dstOffset, srcOffset, isBcs);
+    storeRegReg = genCmdCast<MI_LOAD_REGISTER_REG *>(ptr);
+    EXPECT_EQ(storeRegReg->getSourceRegisterAddress(), srcOffset);
+    EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), dstOffset);
+}
+
 HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtLeastGen12lp) {
 
     DebugManagerStateRestore dbgRestore;

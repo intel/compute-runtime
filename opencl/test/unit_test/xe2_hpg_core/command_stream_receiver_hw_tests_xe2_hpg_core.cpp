@@ -102,7 +102,7 @@ XE2_HPG_CORETEST_F(CommandStreamReceiverXe2HpgCoreTests, givenProfilingEnabledWh
 
         auto lriCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*cmdIterator);
 
-        EXPECT_EQ(expectRegister, lriCmd->getRegisterAddress());
+        EXPECT_EQ(expectRegister + RegisterOffsets::bcs0Base, lriCmd->getRegisterAddress());
         EXPECT_EQ(expectedAddress, lriCmd->getMemoryAddress());
     };
 
