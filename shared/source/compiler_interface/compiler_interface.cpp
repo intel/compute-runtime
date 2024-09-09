@@ -344,6 +344,10 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
         typeOfSystemRoutine = IGC::SystemRoutineType::debug;
         bindlessSip = true;
         break;
+    case SipKernelType::dbgHeapless:
+        typeOfSystemRoutine = IGC::SystemRoutineType::debug;
+        bindlessSip = false;
+        break;
     default:
         break;
     }

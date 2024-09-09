@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ enum class SipKernelType : std::uint32_t {
     dbgCsr,
     dbgCsrLocal,
     dbgBindless,
+    dbgHeapless,
     count
 };
 

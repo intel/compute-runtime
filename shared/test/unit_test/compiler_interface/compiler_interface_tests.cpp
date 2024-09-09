@@ -1096,6 +1096,12 @@ TEST_F(CompilerInterfaceTest, WhenRequestingBindlessDebugSipThenProperSystemRout
     EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
     EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindless, getIgcDebugVars().receivedSipAddressingType);
 
+    err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::dbgHeapless, sipBinary, stateAreaHeader);
+    EXPECT_EQ(TranslationOutput::ErrorCode::success, err);
+    EXPECT_NE(0U, sipBinary.size());
+    EXPECT_EQ(IGC::SystemRoutineType::debug, getIgcDebugVars().typeOfSystemRoutine);
+    EXPECT_EQ(MockCompilerDebugVars::SipAddressingType::bindful, getIgcDebugVars().receivedSipAddressingType);
+
     gEnvironment->igcPopDebugVars();
 }
 

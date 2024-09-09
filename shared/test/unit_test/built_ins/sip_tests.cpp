@@ -17,11 +17,14 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/mocks/mock_builtins.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -433,6 +436,22 @@ TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThen
     auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
 
     EXPECT_EQ(SipKernelType::dbgBindless, sipType);
+}
+
+TEST(DebugHeaplessSip, givenDebuggerAndUseHeaplessModeWhenGettingSipTypeThenDebugHeaplessTypeIsReturned) {
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(mockDevice.get());
+    auto compilerHelper = std::unique_ptr<MockCompilerProductHelper>(new MockCompilerProductHelper());
+    auto releaseHelper = std::unique_ptr<MockReleaseHelper>(new MockReleaseHelper());
+    compilerHelper->isHeaplessModeEnabledResult = true;
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->compilerProductHelper.reset(compilerHelper.release());
+    mockDevice->executionEnvironment->rootDeviceEnvironments[0]->releaseHelper.reset(releaseHelper.release());
+
+    auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
+
+    EXPECT_EQ(SipKernelType::dbgHeapless, sipType);
 }
 
 TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {

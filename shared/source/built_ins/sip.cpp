@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -122,7 +123,12 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
 
 SipKernelType SipKernel::getSipKernelType(Device &device) {
     if (device.getDebugger() != nullptr) {
-        return SipKernelType::dbgBindless;
+        auto &compilerProductHelper = device.getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+        if (compilerProductHelper.isHeaplessModeEnabled()) {
+            return SipKernelType::dbgHeapless;
+        } else {
+            return SipKernelType::dbgBindless;
+        }
     }
     bool debuggingEnabled = device.getDebugger() != nullptr;
     return getSipKernelType(device, debuggingEnabled);
