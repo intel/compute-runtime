@@ -53,6 +53,7 @@ class MockCompilerProductHelper : public CompilerProductHelper {
     ADDMETHOD_CONST_NOBASE(getDeviceExtensions, std::string, {}, (const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper));
     using getDeviceOpenCLCVersionsRetType = StackVec<OclCVersion, 5>;
     ADDMETHOD_CONST_NOBASE(getDeviceOpenCLCVersions, getDeviceOpenCLCVersionsRetType, {}, (const HardwareInfo &hwInfo, OclCVersion max));
+    ADDMETHOD_CONST_NOBASE_VOIDRETURN(applyDeviceBlobFixesOnHwInfo, (HardwareInfo & hwInfo));
     ADDMETHOD_CONST_NOBASE_VOIDRETURN(adjustHwInfoForIgc, (HardwareInfo & hwInfo));
     ADDMETHOD_CONST_NOBASE(isHeaplessModeEnabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isHeaplessStateInitEnabled, bool, false, (bool heaplessModeEnabled));

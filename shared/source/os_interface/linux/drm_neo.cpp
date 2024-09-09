@@ -16,6 +16,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -494,6 +495,8 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     if (systemInfo) {
         systemInfo->checkSysInfoMismatch(hwInfo);
         setupSystemInfo(hwInfo, systemInfo.get());
+        auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+        compilerProductHelper.applyDeviceBlobFixesOnHwInfo(*hwInfo);
     }
     if (!queryMemoryInfo()) {
         setPerContextVMRequired(true);

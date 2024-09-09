@@ -285,6 +285,10 @@ bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const Re
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void CompilerProductHelperHw<gfxProduct>::applyDeviceBlobFixesOnHwInfo(HardwareInfo &hwInfo) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void CompilerProductHelperHw<gfxProduct>::adjustHwInfoForIgc(HardwareInfo &hwInfo) const {
 }
 
