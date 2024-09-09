@@ -361,10 +361,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, WhenEnqueueDimension
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
     std::visit([kernel, expectedEmitLocal](auto &&walker) {
+        using WalkerType = std::decay_t<decltype(*walker)>;
         EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
         EXPECT_EQ(1u, walker->getGenerateLocalId());
 
-        auto kernelAllocationGpuAddr = kernel->getKernelInfo().kernelAllocation->getGpuAddressToPatch();
+        constexpr bool isHeapless = FamilyType::template isHeaplessMode<WalkerType>();
+        auto kernelAllocationGpuAddr = isHeapless ? kernel->getKernelInfo().kernelAllocation->getGpuAddress()
+                                                  : kernel->getKernelInfo().kernelAllocation->getGpuAddressToPatch();
         auto skipOffset = kernel->getKernelInfo().kernelDescriptor.entryPoints.skipPerThreadDataLoad;
         uint64_t kernelStartPointer = kernelAllocationGpuAddr + skipOffset;
 
