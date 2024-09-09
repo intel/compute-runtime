@@ -22,7 +22,7 @@
 
 template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
 constexpr inline TNoRef alignUp(T before, size_t alignment) {
-    UNRECOVERABLE_IF(!Math::isPow2(alignment));
+    OPTIONAL_UNRECOVERABLE_IF(!Math::isPow2(alignment));
     TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return (before + mask) & ~mask;
 }
@@ -43,7 +43,7 @@ constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
 
 template <typename T, typename TNoRef = typename std::remove_reference<T>::type>
 constexpr inline TNoRef alignDown(T before, size_t alignment) {
-    UNRECOVERABLE_IF(!Math::isPow2(alignment));
+    OPTIONAL_UNRECOVERABLE_IF(!Math::isPow2(alignment));
     TNoRef mask = static_cast<TNoRef>(alignment - 1);
     return before & ~mask;
 }
@@ -108,7 +108,7 @@ inline bool isAligned(T *ptr) {
 
 template <typename T1, typename T2>
 inline bool isAligned(T1 ptr, T2 alignment) {
-    UNRECOVERABLE_IF(!Math::isPow2(alignment));
+    OPTIONAL_UNRECOVERABLE_IF(!Math::isPow2(alignment));
     return ((static_cast<size_t>(ptr)) & (static_cast<size_t>(alignment) - 1u)) == 0;
 }
 
