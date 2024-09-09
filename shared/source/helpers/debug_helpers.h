@@ -15,7 +15,7 @@
 
 #define UNREACHABLE(...) std::abort()
 
-#ifdef MOCKABLE
+#if defined(MOCKABLE) || defined(_DEBUG)
 #define OPTIONAL_UNRECOVERABLE_IF(expression) UNRECOVERABLE_IF(expression)
 #else
 #define OPTIONAL_UNRECOVERABLE_IF(expression) (void)0
