@@ -77,7 +77,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     template <typename FamilyType>
     void validatePartitionProgramming(uint64_t postSyncAddress, int32_t partitionCount) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+        using WalkerVariant = typename FamilyType::WalkerVariant;
         uint32_t totalWorkgroupCount = 1u;
         uint32_t totalWorkItemsInWorkgroup = 1u;
         uint32_t totalWorkItemsCount = 1;
@@ -96,31 +96,37 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
         }
 
         hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
+        hwParser.findHardwareCommands<FamilyType>();
 
-        uint32_t walkersCount = hwParser.getCommandWalkerCount<FamilyType>();
-        EXPECT_EQ(walkersCount, 1u);
-        GenCmdList walkerList = hwParser.getCommandsList<DefaultWalkerType>();
-        DefaultWalkerType *walkerCmd = static_cast<DefaultWalkerType *>(*walkerList.begin());
-        EXPECT_EQ(0u, walkerCmd->getPartitionId());
-        if (partitionCount > 1) {
-            EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
-            EXPECT_EQ(partitionSize, walkerCmd->getPartitionSize());
-            EXPECT_EQ(partitionType, walkerCmd->getPartitionType());
-        } else {
-            EXPECT_FALSE(walkerCmd->getWorkloadPartitionEnable());
-            EXPECT_EQ(0u, walkerCmd->getPartitionSize());
-            EXPECT_EQ(0u, walkerCmd->getPartitionType());
-        }
+        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
 
-        EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
-        EXPECT_EQ(postSyncAddress, walkerCmd->getPostSync().getDestinationAddress());
+        std::visit([&](auto &&walkerCmd) {
+            using WalkerType = std::decay_t<decltype(*walkerCmd)>;
+            using PostSyncType = typename WalkerType::PostSyncType;
 
-        int notExpectedValue[] = {1, 1, 1, 1};
+            EXPECT_EQ(0u, walkerCmd->getPartitionId());
 
-        for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
-            expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
-            postSyncAddress += 16; // next post sync needs to be right after the previous one
-        }
+            if (partitionCount > 1) {
+                EXPECT_TRUE(walkerCmd->getWorkloadPartitionEnable());
+                EXPECT_EQ(partitionSize, walkerCmd->getPartitionSize());
+                EXPECT_EQ(partitionType, walkerCmd->getPartitionType());
+            } else {
+                EXPECT_FALSE(walkerCmd->getWorkloadPartitionEnable());
+                EXPECT_EQ(0u, walkerCmd->getPartitionSize());
+                EXPECT_EQ(0u, walkerCmd->getPartitionType());
+            }
+
+            EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, walkerCmd->getPostSync().getOperation());
+            EXPECT_EQ(postSyncAddress, walkerCmd->getPostSync().getDestinationAddress());
+
+            int notExpectedValue[] = {1, 1, 1, 1};
+
+            for (auto partitionId = 0; partitionId < debugManager.flags.ExperimentalSetWalkerPartitionCount.get(); partitionId++) {
+                expectNotEqualMemory<FamilyType>(reinterpret_cast<void *>(postSyncAddress), &notExpectedValue, sizeof(notExpectedValue));
+                postSyncAddress += 16; // next post sync needs to be right after the previous one
+            }
+        },
+                   walkerVariant);
 
         auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
         expectMemory<FamilyType>(dstGpuAddress, &totalWorkItemsCount, sizeof(uint32_t));
@@ -259,8 +265,6 @@ struct AubWalkerPartitionZeroFixture : public AubWalkerPartitionFixture {
 using AubWalkerPartitionZeroTest = Test<AubWalkerPartitionZeroFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetToZeroThenProvideEqualSingleWalker) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PARTITION_TYPE = typename FamilyType::DefaultWalkerType::PARTITION_TYPE;
 
     size_t globalWorkOffset[3] = {0, 0, 0};
     cl_uint numEventsInWaitList = 0;
@@ -282,22 +286,34 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, whenPartitionCountSetTo
 
     pCmdQ->flush();
 
-    auto cmdPartitionType = static_cast<PARTITION_TYPE>(partitionType);
-    uint32_t cmdPartitionCount = static_cast<uint32_t>(partitionCount);
+    auto cmdPartitionCount = static_cast<uint32_t>(partitionCount);
 
-    hwParser.parseCommands<FamilyType>(pCmdQ->getCS(0), 0);
-    uint32_t walkersCount = hwParser.getCommandWalkerCount<FamilyType>();
+    using WalkerVariant = typename FamilyType::WalkerVariant;
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, pCmdQ->getCS(0).getCpuBase(), pCmdQ->getCS(0).getUsed()));
+
+    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
+
+    auto walkersCount = static_cast<uint32_t>(walkerCmds.size());
     EXPECT_EQ(cmdPartitionCount + 1, walkersCount);
 
-    GenCmdList walkerList = hwParser.getCommandsList<DefaultWalkerType>();
-    EXPECT_EQ(walkersCount, static_cast<uint32_t>(walkerList.size()));
+    for (auto &walkerCmd : walkerCmds) {
 
-    uint32_t i = 0;
-    for (GenCmdList::iterator walker = walkerList.begin(); walker != walkerList.end(); ++walker, ++i) {
-        DefaultWalkerType *walkerCmd = static_cast<DefaultWalkerType *>(*walker);
-        EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionId());
-        EXPECT_EQ(cmdPartitionType, walkerCmd->getPartitionType());
-        EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionSize());
+        WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmd);
+
+        std::visit([&](auto &&walkerCmd) {
+            using WalkerType = std::decay_t<decltype(*walkerCmd)>;
+            using PARTITION_TYPE = typename WalkerType::PARTITION_TYPE;
+
+            auto cmdPartitionType = static_cast<PARTITION_TYPE>(partitionType);
+
+            EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionId());
+            EXPECT_EQ(cmdPartitionType, walkerCmd->getPartitionType());
+            EXPECT_EQ(cmdPartitionCount, walkerCmd->getPartitionSize());
+        },
+                   walkerVariant);
     }
 
     auto dstGpuAddress = addrToPtr(ptrOffset(dstBuffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress(), dstBuffer->getOffset()));
