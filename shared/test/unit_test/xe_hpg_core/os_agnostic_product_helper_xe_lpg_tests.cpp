@@ -186,6 +186,10 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenIsInitBuiltinAsyncSuppo
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
+HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse, IsXeLpg) {
+    EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
+}
+
 HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue, IsXeLpg) {
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }

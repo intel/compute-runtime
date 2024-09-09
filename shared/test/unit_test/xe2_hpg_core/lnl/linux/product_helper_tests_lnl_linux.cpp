@@ -68,6 +68,10 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupp
     EXPECT_FALSE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
 
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
+    EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
+}
+
 using LnlHwInfoLinux = ::testing::Test;
 
 LNLTEST_F(LnlHwInfoLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

@@ -104,6 +104,10 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsInitBuiltinAsyncSupported
     EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }
 
+PVCTEST_F(PvcProductHelper, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse) {
+    EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
+}
+
 PVCTEST_F(PvcProductHelper, givenPvcSteppingWhenQueryIsComputeDispatchAllWalkerEnableInCfeStateRequiredThenAppropriateValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
 

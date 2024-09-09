@@ -62,3 +62,7 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledT
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabledThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }
+
+LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse) {
+    EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
+}
