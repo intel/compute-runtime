@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -45,13 +46,17 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0, false);
 
-        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
+        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
+        executionEnvironment->calculateMaxOsContextCount();
+
         executionEnvironment->initializeMemoryManager();
 
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
