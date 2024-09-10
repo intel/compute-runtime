@@ -577,7 +577,7 @@ if(UNIX)
   elseif(NOT DEFINED NEO_ENABLE_XE_PRELIM_DETECTION)
     set(NEO_ENABLE_XE_PRELIM_DETECTION FALSE)
   endif()
-  message(STATUS "xe prelim headers detection: ${NEO_ENABLE_i915_PRELIM_DETECTION}")
+  message(STATUS "xe prelim headers detection: ${NEO_ENABLE_XE_PRELIM_DETECTION}")
 
   # drm-xe support
   if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
