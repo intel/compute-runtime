@@ -7,6 +7,7 @@
 
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
@@ -93,6 +94,14 @@ void DrmMemoryManagerFixture::tearDown() {
     if (csr->getPreemptionAllocation()) {
         mock->ioctlExpected.gemClose += enginesCount;
         mock->ioctlExpected.gemWait += enginesCount;
+    }
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto isHeapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
+    if (isHeaplessStateInit) {
+        mock->ioctlExpected.gemClose += 1;
+        mock->ioctlExpected.gemWait += 1;
     }
 
     mock->ioctlExpected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
