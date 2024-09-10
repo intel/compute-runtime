@@ -987,6 +987,41 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToLocalBufferRect
     }
 }
 
+TEST_F(BuiltInTests, givenMisalignedDstPitchWhenBuilderCopyBufferRectSplitIsUsedThenParamsAreCorrect) {
+    if (is32bit || !pClDevice->getProductHelper().isCopyBufferRectSplitSupported()) {
+        GTEST_SKIP();
+    }
+
+    BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferRectStateless, *pClDevice);
+
+    uint64_t bigSize = 10ull * MemoryConstants::gigaByte;
+    uint64_t size = 4ull * MemoryConstants::gigaByte;
+
+    MockBuffer srcBuffer;
+    srcBuffer.size = static_cast<size_t>(bigSize);
+    MockBuffer dstBuffer;
+    dstBuffer.size = static_cast<size_t>(bigSize);
+
+    srcBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+    dstBuffer.mockGfxAllocation.setAllocationType(AllocationType::buffer);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = &srcBuffer;
+    dc.dstMemObj = &dstBuffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {static_cast<size_t>(size), 1, 1};
+    dc.srcRowPitch = static_cast<size_t>(size);
+    dc.srcSlicePitch = 0;
+    dc.dstRowPitch = static_cast<size_t>(size);
+    dc.dstSlicePitch = 1;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
 TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillSystemBufferStatelessIsUsedThenParamsAreCorrect) {
     if (is32bit) {
         GTEST_SKIP();

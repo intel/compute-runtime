@@ -240,17 +240,20 @@ class BuiltInOp<EBuiltInOps::copyBufferRect> : public BuiltinDispatchInfoBuilder
             leftSize = (leftSize > 0) ? (middleAlignment - leftSize) : 0; // calc left leftover size
             leftSize = std::min(leftSize, operationParams.size.x);        // clamp left leftover size to requested size
 
-            uintptr_t rightSize = (start + operationParams.size.x) % middleAlignment;                                       // calc right leftover size
-            rightSize = std::min(rightSize, (operationParams.size.x > leftSize) ? (operationParams.size.x - leftSize) : 0); // clamp
+            uintptr_t rightSize = (start + operationParams.size.x) % middleAlignment; // calc right leftover size
+            rightSize = std::min(rightSize, operationParams.size.x - leftSize);       // clamp
 
             const uintptr_t middleSizeBytes = (operationParams.size.x > leftSize + rightSize) ? operationParams.size.x - leftSize - rightSize : 0u; // calc middle size
 
             // corner case - fully optimized kernel requires DWORD alignment. If we don't have it, run slower, misaligned kernel
             const auto srcMiddleStart = reinterpret_cast<uintptr_t>(srcPtr) + operationParams.srcOffset.x + leftSize;
             const auto srcMisalignment = srcMiddleStart % sizeof(uint32_t);
-            const auto rowPitchMisalignment = operationParams.srcRowPitch % sizeof(uint32_t);
-            const auto slicePitchMisalignment = operationParams.srcSlicePitch % sizeof(uint32_t);
-            const auto isSrcMisaligned = srcMisalignment != 0u || rowPitchMisalignment != 0u || slicePitchMisalignment != 0u;
+            const auto srcRowPitchMisalignment = operationParams.srcRowPitch % sizeof(uint32_t);
+            const auto srcSlicePitchMisalignment = operationParams.srcSlicePitch % sizeof(uint32_t);
+            const auto dstRowPitchMisalignment = operationParams.dstRowPitch % sizeof(uint32_t);
+            const auto dstSlicePitchMisalignment = operationParams.dstSlicePitch % sizeof(uint32_t);
+            const auto isSrcMisaligned = srcMisalignment != 0u || srcRowPitchMisalignment != 0u || srcSlicePitchMisalignment != 0u || dstRowPitchMisalignment != 0u || dstSlicePitchMisalignment != 0u;
+            ;
 
             const auto middleSizeEls = middleSizeBytes / middleElSize; // num work items in middle walker
 
