@@ -110,6 +110,12 @@ lint:
         - ci
         xe_kmd:
         - ci
+        kernels_bin:
+        - feature
+        - fix
+        - build
+        - performance
+        - test
         _default:
         - build
     strict:
