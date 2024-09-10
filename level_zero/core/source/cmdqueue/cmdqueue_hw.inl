@@ -796,8 +796,6 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
             if (commandList->containsCooperativeKernels()) {
                 ctx.anyCommandListWithCooperativeKernels = true;
-            } else {
-                ctx.anyCommandListWithoutCooperativeKernels = true;
             }
 
             if (commandList->getRequiredStreamState().frontEndState.disableEUFusion.value == 1) {

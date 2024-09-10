@@ -92,7 +92,6 @@ struct CommandQueueHw : public CommandQueueImp {
         UnifiedMemoryControls unifiedMemoryControls{};
 
         bool anyCommandListWithCooperativeKernels = false;
-        bool anyCommandListWithoutCooperativeKernels = false;
         bool anyCommandListRequiresDisabledEUFusion = false;
         bool cachedMOCSAllowed = true;
         bool containsAnyRegularCmdList = false;

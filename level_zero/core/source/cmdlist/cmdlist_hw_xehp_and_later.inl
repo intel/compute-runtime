@@ -276,13 +276,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             kernelDescriptor.kernelMetadata.kernelName.c_str(), 0u);
     }
 
-    bool isMixingRegularAndCooperativeKernelsAllowed = NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
-    if (!containsAnyKernel || isMixingRegularAndCooperativeKernelsAllowed) {
-        containsCooperativeKernelsFlag |= launchParams.isCooperative;
-    } else if (containsCooperativeKernelsFlag != launchParams.isCooperative) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
+    containsCooperativeKernelsFlag |= launchParams.isCooperative;
     if (kernel->usesSyncBuffer()) {
         auto retVal = (launchParams.isCooperative
                            ? programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions)

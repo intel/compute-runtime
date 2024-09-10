@@ -1057,7 +1057,7 @@ size_t estimateAllCommmandLists(MockCommandQueueHw<gfxCoreFamily> *commandQueue,
 
 HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculatedAndCorrectStateIsSet, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+
     debugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;

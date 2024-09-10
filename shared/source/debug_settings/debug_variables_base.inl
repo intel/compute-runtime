@@ -71,7 +71,6 @@ DECLARE_DEBUG_VARIABLE(bool, GlobalSequencerFlushOnCopyEngine, false, "Add globa
 DECLARE_DEBUG_VARIABLE(bool, UseImmDataWriteModeOnPostSyncOperation, false, "Use IMM data write mode as post sync operation in Compute Walker")
 DECLARE_DEBUG_VARIABLE(bool, EnableResourceTags, false, "Enable resource tagging in GmmLib")
 DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "Do not free resources")
-DECLARE_DEBUG_VARIABLE(bool, AllowMixingRegularAndCooperativeKernels, false, "Allow mixing regular and cooperative kernels in a single command list and in a single execute")
 DECLARE_DEBUG_VARIABLE(bool, AllowPatchingVfeStateInCommandLists, false, "Allow programming MEDIA_VFE_STATE in a command list")
 DECLARE_DEBUG_VARIABLE(bool, PrintMemoryRegionSizes, false, "Print memory bank: type, instance, size")
 DECLARE_DEBUG_VARIABLE(bool, UpdateCrossThreadDataSize, false, "Turn on cross thread data size calculation for PATCH TOKEN binary")

@@ -977,8 +977,6 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
 
-    NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-
     auto &cmdStream = *commandList->getCmdContainer().getCommandStream();
     auto &cmdBuffers = commandList->getCmdContainer().getCmdBufferAllocations();
 
@@ -1393,8 +1391,6 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
-
-    NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
 
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandQueue->frontEndStateTracking);

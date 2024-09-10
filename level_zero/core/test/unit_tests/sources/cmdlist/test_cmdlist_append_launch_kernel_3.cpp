@@ -597,6 +597,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQue
         engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
     }
     pCommandList->initialize(device, engineGroupType, 0u);
+    pCommandList->isFlushTaskSubmissionEnabled = true;
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -697,7 +698,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeKernelWhenAppendLaunchC
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllowedWhenAppendLaunchCooperativeKernelIsCalledThenCommandListTypeIsProperlySet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+
     createKernel();
     kernel->setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -726,7 +727,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenAnyCooperativeKernelAndMixingAllow
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsAndAllowMixingWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
-    debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();

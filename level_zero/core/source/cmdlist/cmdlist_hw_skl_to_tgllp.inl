@@ -150,13 +150,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->indirectAllocationsAllowed = true;
     }
 
-    bool isMixingRegularAndCooperativeKernelsAllowed = NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.get();
-    if ((!containsAnyKernel) || isMixingRegularAndCooperativeKernelsAllowed) {
-        containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || launchParams.isCooperative);
-    } else if (containsCooperativeKernelsFlag != launchParams.isCooperative) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
+    containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || launchParams.isCooperative);
     if (kernel->usesSyncBuffer()) {
         auto retVal = (launchParams.isCooperative
                            ? programSyncBuffer(*kernel, *device->getNEODevice(), threadGroupDimensions)

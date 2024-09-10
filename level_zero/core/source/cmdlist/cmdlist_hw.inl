@@ -3046,7 +3046,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto dstAllocationType = dstPtrAllocationStruct.alloc->getAllocationType();
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isBuiltInKernel = true;
-    launchParams.isCooperative = containsCooperativeKernelsFlag;
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);

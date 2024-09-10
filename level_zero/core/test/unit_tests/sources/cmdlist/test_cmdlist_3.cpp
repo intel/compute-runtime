@@ -1724,8 +1724,6 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x40;
 
-    NEO::debugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
-
     EXPECT_TRUE(commandList->frontEndStateTracking);
     EXPECT_TRUE(commandQueue->frontEndStateTracking);
 
