@@ -153,15 +153,21 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         printf("\nPID:%u, TSP used for Walker: 0x%" PRIX64 ", cmdBuffer pos: 0x%" PRIX64, SysCalls::getProcessId(), gpuVa, commandStream.getCurrentGpuAddressPosition());
     }
 
+    uint32_t workgroupSize = static_cast<uint32_t>(walkerArgs.localWorkSizes[0] * walkerArgs.localWorkSizes[1] * walkerArgs.localWorkSizes[2]);
+
+    uint32_t maxWgCountPerTile = kernel.getMaxWorkGroupCount(dim, walkerArgs.localWorkSizes, &commandQueue, true);
+
     if (partitionWalker) {
         const uint64_t workPartitionAllocationGpuVa = queueCsr.getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
         RequiredPartitionDim requiredPartitionDim = kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none;
 
+        void *outWalker = nullptr;
+
         ImplicitScalingDispatchCommandArgs implicitScalingArgs{
             workPartitionAllocationGpuVa,        // workPartitionAllocationGpuVa
             &hwInfo,                             // hwInfo
-            nullptr,                             // outWalkerPtr
+            &outWalker,                          // outWalkerPtr
             requiredPartitionDim,                // requiredPartitionDim
             partitionCount,                      // partitionCount
             false,                               // useSecondaryBatchBuffer
@@ -174,6 +180,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                                                   walkerCmd,
                                                                                   devices,
                                                                                   implicitScalingArgs);
+        EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*static_cast<WalkerType *>(outWalker), hwInfo, implicitScalingArgs.partitionCount, workgroupSize, maxWgCountPerTile, requiredWalkOrder != 0);
 
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
             queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), implicitScalingArgs.partitionCount));
@@ -183,6 +190,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             timestampPacketNode->setPacketsUsed(implicitScalingArgs.partitionCount);
         }
     } else {
+        EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(walkerCmd, hwInfo, 1, workgroupSize, maxWgCountPerTile, requiredWalkOrder != 0);
         auto computeWalkerOnStream = commandStream.getSpaceForCmd<WalkerType>();
         *computeWalkerOnStream = walkerCmd;
     }

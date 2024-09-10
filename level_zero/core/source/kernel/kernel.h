@@ -144,8 +144,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual void patchGlobalOffset() = 0;
     virtual void patchRegionParams(const CmdListKernelLaunchParams &launchParams) = 0;
 
-    virtual ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount, NEO::EngineGroupType engineGroupType,
-                                                        bool isEngineInstanced) = 0;
+    virtual uint32_t suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, bool isEngineInstanced, bool forceSingleTileQuery) = 0;
     virtual ze_result_t setCacheConfig(ze_cache_config_flags_t flags) = 0;
 
     virtual ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) = 0;

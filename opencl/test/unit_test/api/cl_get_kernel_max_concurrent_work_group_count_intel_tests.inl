@@ -68,7 +68,7 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim, globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    size_t expectedMaxConcurrentWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+    size_t expectedMaxConcurrentWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue, false);
     EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
 
     retVal = clGetKernelMaxConcurrentWorkGroupCountINTEL(pCommandQueue, pMultiDeviceKernel, workDim, nullptr, localWorkSize,
@@ -83,7 +83,7 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenVariousInputWhenGetting
                                                          globalWorkOffset, localWorkSize,
                                                          &maxConcurrentWorkGroupCount);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    expectedMaxConcurrentWorkGroupCount = pKernelWithExecutionEnvironmentPatch->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+    expectedMaxConcurrentWorkGroupCount = pKernelWithExecutionEnvironmentPatch->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue, false);
     EXPECT_EQ(expectedMaxConcurrentWorkGroupCount, maxConcurrentWorkGroupCount);
 }
 
@@ -98,12 +98,12 @@ TEST_F(clGetKernelMaxConcurrentWorkGroupCountTests, GivenMultiTileWhenGettingMax
 
     mockDevice.deviceBitfield = 0b1;
 
-    auto baseCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+    auto baseCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue, false);
 
     debugManager.flags.EnableImplicitScaling.set(1);
     mockDevice.deviceBitfield = 0b11;
 
-    auto countWithSubDevices = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+    auto countWithSubDevices = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue, false);
 
     auto &helper = pDevice->getGfxCoreHelper();
 

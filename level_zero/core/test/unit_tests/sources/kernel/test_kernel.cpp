@@ -375,6 +375,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeDimensionWhenSettingGro
     mockKernel.module = &mockModule;
 
     uint32_t groupSize[3] = {1, 1, 1};
+    mockKernel.groupSize[0] = 0;
     auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION, ret);
 }

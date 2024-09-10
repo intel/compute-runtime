@@ -164,7 +164,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncB
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingConcurrentKernelThenSuccessIsReturned) {
-    auto maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
+    auto maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue, false);
     workgroupCount[0] = maxWorkGroupCount;
 
     auto retVal = enqueueNDCount();
@@ -172,7 +172,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingCon
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuingConcurrentKernelThenErrorIsReturned) {
-    size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
+    size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue, false);
     workgroupCount[0] = maxWorkGroupCount + 1;
 
     auto retVal = enqueueNDCount();

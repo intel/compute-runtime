@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -53,7 +54,10 @@ HWTEST2_F(CommandQueueLinuxTests, givenExecBufferErrorOnXeHpcWhenExecutingComman
                                                           returnValue));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    Mock<KernelImp> kernel;
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
+
+    Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     kernel.immutableData.isaGraphicsAllocation.reset(neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), MemoryConstants::pageSize, NEO::AllocationType::kernelIsa, neoDevice->getDeviceBitfield()}));
     kernel.immutableData.device = device;

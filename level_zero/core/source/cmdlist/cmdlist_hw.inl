@@ -2758,12 +2758,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kernel, NEO::Device &device,
                                                                     const ze_group_count_t &threadGroupDimensions) {
-    uint32_t maximalNumberOfWorkgroupsAllowed;
-    auto ret = kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, this->engineGroupType,
-                                                      device.isEngineInstanced());
-    UNRECOVERABLE_IF(ret != ZE_RESULT_SUCCESS);
-    size_t requestedNumberOfWorkgroups = (threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY *
-                                          threadGroupDimensions.groupCountZ);
+    uint32_t maximalNumberOfWorkgroupsAllowed = kernel.suggestMaxCooperativeGroupCount(this->engineGroupType, device.isEngineInstanced(), false);
+
+    size_t requestedNumberOfWorkgroups = (threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ);
     if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

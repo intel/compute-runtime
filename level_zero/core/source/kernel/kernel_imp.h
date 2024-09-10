@@ -69,8 +69,7 @@ struct KernelImp : Kernel {
 
     ze_result_t getKernelName(size_t *pSize, char *pName) override;
 
-    ze_result_t suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount, NEO::EngineGroupType engineGroupType,
-                                                bool isEngineInstanced) override;
+    uint32_t suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, bool isEngineInstanced, bool forceSingleTileQuery) override;
 
     const uint8_t *getCrossThreadData() const override { return crossThreadData.get(); }
     uint32_t getCrossThreadDataSize() const override { return crossThreadDataSize; }

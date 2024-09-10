@@ -42,6 +42,10 @@ Mock<::L0::KernelImp>::Mock() : BaseClass() {
     immutableData.kernelDescriptor = &descriptor;
     immutableData.kernelInfo = &info;
     crossThreadData.reset(new uint8_t[100]);
+
+    groupSize[0] = 1;
+    groupSize[1] = 1;
+    groupSize[2] = 1;
 }
 Mock<::L0::KernelImp>::~Mock() {
     delete immutableData.isaGraphicsAllocation.release();

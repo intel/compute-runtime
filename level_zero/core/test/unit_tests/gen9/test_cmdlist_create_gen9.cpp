@@ -18,6 +18,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include <vector>
 
@@ -44,6 +45,7 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
         DeviceFixture::tearDown();
     }
 
+    std::vector<std::unique_ptr<L0::ult::Module>> mockModules;
     std::vector<void *> isaBuffers;
     ze_group_count_t dispatchKernelArguments;
     void *buffer = nullptr;
@@ -85,6 +87,13 @@ class CommandListCreateGen9 : public DeviceFixture, public testing::Test {
         kernel.perThreadDataSize = perThreadDataSize;
 
         kernel.kernelImmData = &kernelData;
+
+        kernel.groupSize[0] = 1;
+        kernel.groupSize[1] = 1;
+        kernel.groupSize[2] = 1;
+
+        mockModules.emplace_back(std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin));
+        kernel.module = mockModules.back().get();
     }
     void cleanupKernel(WhiteBox<::L0::KernelImmutableData> &kernelData) {
         kernelData.isaGraphicsAllocation.reset(nullptr);

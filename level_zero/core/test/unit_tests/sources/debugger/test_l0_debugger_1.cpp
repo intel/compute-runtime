@@ -231,7 +231,9 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
@@ -273,7 +275,9 @@ HWTEST2_P(L0DebuggerParameterizedTests, givenDebuggerWhenAppendingKernelToComman
 
     auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
@@ -648,7 +652,9 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
     raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ze_group_count_t groupCount{1, 1, 1};
@@ -719,7 +725,9 @@ HWTEST2_F(L0DebuggerTest, givenFlushTaskSubmissionAndSharedHeapsEnabledWhenAppen
     kernelImmData->kernelDescriptor = kernelDescriptor.get();
     kernelImmData->isaGraphicsAllocation.reset(new MockGraphicsAllocation());
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     kernel.kernelImmData = kernelImmData.get();
 
     CmdListKernelLaunchParams launchParams = {};
@@ -776,7 +784,9 @@ HWTEST2_F(L0DebuggerTest, givenImmediateFlushTaskWhenAppendingKernelUsingNewHeap
     kernelImmData->kernelDescriptor = kernelDescriptor.get();
     kernelImmData->isaGraphicsAllocation.reset(new MockGraphicsAllocation());
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     kernel.kernelImmData = kernelImmData.get();
 
     CmdListKernelLaunchParams launchParams = {};
@@ -864,7 +874,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingKer
     DebugManagerStateRestore restore;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     kernel.descriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     kernel.descriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
     ze_result_t returnValue;
@@ -897,7 +909,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenExecutingCmd
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
 
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -928,7 +942,9 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingToI
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
 
     memoryOperationsHandler->captureGfxAllocationsForMakeResident = true;
 

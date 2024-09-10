@@ -357,7 +357,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipl
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirectKernelIsCalledThenSuccessIsReturned, IsAtLeastSkl) {
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
+
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
     kernel.groupSize[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
     kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;

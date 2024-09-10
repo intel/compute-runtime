@@ -341,7 +341,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
     void getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
                                    size_t *localWorkSize);
-    uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const;
+    uint32_t getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue, bool forceSingleTileQuery) const;
 
     uint64_t getKernelStartAddress(const bool localIdsGenerationByRuntime, const bool kernelUsesLocalIds, const bool isCssUsed, const bool returnFullAddress) const;
 

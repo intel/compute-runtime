@@ -1185,7 +1185,7 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
         localWorkSize[2] = suggestedLws.z;
 }
 
-uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const {
+uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue, bool forceSingleTileQuery) const {
     auto &hardwareInfo = getHardwareInfo();
     auto &rootDeviceEnvironment = this->getDevice().getRootDeviceEnvironment();
     auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
@@ -1201,7 +1201,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
     bool platformImplicitScaling = helper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     auto deviceBitfield = commandQueue->getClDevice().getDeviceBitfield();
 
-    if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling)) {
+    if (!forceSingleTileQuery && NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling)) {
         numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
     }
 

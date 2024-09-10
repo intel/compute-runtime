@@ -6252,7 +6252,7 @@ cl_int CL_API_CALL clGetKernelMaxConcurrentWorkGroupCountINTEL(cl_command_queue 
     }
 
     withCastToInternal(commandQueue, &pCommandQueue);
-    *suggestedWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+    *suggestedWorkGroupCount = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue, false);
 
     TRACING_EXIT(ClGetKernelMaxConcurrentWorkGroupCountINTEL, &retVal);
     return retVal;
@@ -6332,7 +6332,7 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         for (size_t i = 0; i < workDim; i++) {
             requestedNumberOfWorkgroups *= workgroupCount[i];
         }
-        size_t maximalNumberOfWorkgroupsAllowed = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue);
+        size_t maximalNumberOfWorkgroupsAllowed = pKernel->getMaxWorkGroupCount(workDim, localWorkSize, pCommandQueue, false);
         if (requestedNumberOfWorkgroups > maximalNumberOfWorkgroupsAllowed) {
             retVal = CL_INVALID_VALUE;
             TRACING_EXIT(ClEnqueueNDCountKernelINTEL, &retVal);

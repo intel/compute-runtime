@@ -83,6 +83,9 @@ TEST_F(KernelImpTest, givenExecutionMaskWithoutReminderWhenProgrammingItsValueTh
     kernel.module = &module;
 
     const std::array<uint32_t, 4> testedSimd = {{1, 8, 16, 32}};
+    kernel.groupSize[0] = 0;
+    kernel.groupSize[1] = 0;
+    kernel.groupSize[2] = 0;
 
     for (auto simd : testedSimd) {
         descriptor.kernelAttributes.simdSize = simd;

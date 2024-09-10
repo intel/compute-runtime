@@ -29,6 +29,8 @@ template void NEO::EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy<Family
 template uint64_t NEO::EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching<false>(CommandContainer &container, EncodeDispatchKernelArgs &args);
 template void NEO::EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs<false>(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrPatchingRequired);
 template void NEO::EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd);
+template void NEO::EncodeDispatchKernel<Family>::setWalkerRegionSettings<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const HardwareInfo &hwInfo, uint32_t partitionCount,
+                                                                                                    uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder);
 
 template struct NEO::EncodeStates<Family>;
 template struct NEO::EncodeMath<Family>;

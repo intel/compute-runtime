@@ -66,6 +66,7 @@ struct EncodeDispatchKernelArgs {
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t partitionCount = 0u;
     uint32_t reserveExtraPayloadSpace = 0;
+    uint32_t maxWgCountPerTile = 0;
     int32_t defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent;
     bool isIndirect = false;
     bool isPredicate = false;
@@ -180,6 +181,9 @@ struct EncodeDispatchKernel {
 
     template <typename WalkerType>
     static void setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
+
+    template <typename WalkerType>
+    static void setWalkerRegionSettings(WalkerType &walkerCmd, const HardwareInfo &hwInfo, uint32_t partitionCount, uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder);
 
     template <typename WalkerType>
     static void setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);

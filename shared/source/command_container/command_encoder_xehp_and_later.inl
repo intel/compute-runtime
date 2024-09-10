@@ -415,6 +415,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
+    uint32_t workgroupSize = args.dispatchInterface->getGroupSize()[0] * args.dispatchInterface->getGroupSize()[1] * args.dispatchInterface->getGroupSize()[2];
+
     if (args.partitionCount > 1 && !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
 
@@ -435,8 +437,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           args.device->getDeviceBitfield(),
                                                           implicitScalingArgs);
         args.partitionCount = implicitScalingArgs.partitionCount;
+
+        void *walkerToModify = args.outWalkerPtr ? args.outWalkerPtr : &walkerCmd;
+
+        EncodeDispatchKernel<Family>::setWalkerRegionSettings(*static_cast<WalkerType *>(walkerToModify), hwInfo, args.partitionCount, workgroupSize, args.maxWgCountPerTile, args.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none);
     } else {
         args.partitionCount = 1;
+        EncodeDispatchKernel<Family>::setWalkerRegionSettings(walkerCmd, hwInfo, args.partitionCount, workgroupSize, args.maxWgCountPerTile, args.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none);
+
         if (!args.makeCommandView) {
             auto buffer = listCmdBufferStream->getSpaceForCmd<WalkerType>();
             args.outWalkerPtr = buffer;
@@ -993,5 +1001,4 @@ void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t a
     auto &postSync = walkerCmd->getPostSync();
     postSync.setImmediateData(baseCounterValue + appendCounterValue);
 }
-
 } // namespace NEO

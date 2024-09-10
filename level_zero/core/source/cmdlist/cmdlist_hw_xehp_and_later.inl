@@ -345,6 +345,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    auto maxWgCountPerTile = kernel->suggestMaxCooperativeGroupCount(this->engineGroupType, device->getNEODevice()->isEngineInstanced(), true);
+
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         eventAddress,                                           // eventAddress
         static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
@@ -366,6 +368,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.additionalSizeParam,                       // additionalSizeParam
         this->partitionCount,                                   // partitionCount
         launchParams.reserveExtraPayloadSpace,                  // reserveExtraPayloadSpace
+        maxWgCountPerTile,                                      // maxWgCountPerTile
         this->defaultPipelinedThreadArbitrationPolicy,          // defaultPipelinedThreadArbitrationPolicy
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate

@@ -59,6 +59,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
         1,                                          // partitionCount
         0,                                          // reserveExtraPayloadSpace
+        1,                                          // maxWgCountPerTile
         NEO::ThreadArbitrationPolicy::NotPresent,   // defaultPipelinedThreadArbitrationPolicy
         false,                                      // isIndirect
         false,                                      // isPredicate

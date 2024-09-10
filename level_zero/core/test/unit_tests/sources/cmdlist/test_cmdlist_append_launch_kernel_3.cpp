@@ -78,7 +78,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
+    std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
+
     Mock<::L0::KernelImp> kernel;
+    kernel.module = mockModule.get();
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -494,8 +498,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     }
     {
         VariableBackup<uint32_t> groupCountX{&groupCount.groupCountX};
-        uint32_t maximalNumberOfWorkgroupsAllowed;
-        kernel.suggestMaxCooperativeGroupCount(&maximalNumberOfWorkgroupsAllowed, engineGroupType, false);
+        uint32_t maximalNumberOfWorkgroupsAllowed = kernel.suggestMaxCooperativeGroupCount(engineGroupType, false, false);
         groupCountX = maximalNumberOfWorkgroupsAllowed + 1;
         pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
         pCommandList->initialize(device, engineGroupType, 0u);
@@ -794,6 +797,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
         0,                                          // partitionCount
         0,                                          // reserveExtraPayloadSpace
+        1,                                          // maxWgCountPerTile
         NEO::ThreadArbitrationPolicy::NotPresent,   // defaultPipelinedThreadArbitrationPolicy
         false,                                      // isIndirect
         false,                                      // isPredicate
