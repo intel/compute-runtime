@@ -35,7 +35,7 @@ BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireSharedOwnership() {
     std::lock_guard lock{controlBlock->blockMutex};
     controlBlock->refCount++;
 
-    return BufferObjectHandleWrapper{boHandle, Ownership::strong, controlBlock};
+    return BufferObjectHandleWrapper{boHandle, rootDeviceIndex, Ownership::strong, controlBlock};
 }
 
 BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireWeakOwnership() {
@@ -46,7 +46,7 @@ BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireWeakOwnership() {
     std::lock_guard lock{controlBlock->blockMutex};
     controlBlock->weakRefCount++;
 
-    return BufferObjectHandleWrapper{boHandle, Ownership::weak, controlBlock};
+    return BufferObjectHandleWrapper{boHandle, rootDeviceIndex, Ownership::weak, controlBlock};
 }
 
 BufferObjectHandleWrapper::~BufferObjectHandleWrapper() {
@@ -78,7 +78,7 @@ bool BufferObjectHandleWrapper::canCloseBoHandle() {
 }
 
 BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount)
-    : BufferObject(rootDeviceIndex, drm, patIndex, BufferObjectHandleWrapper{handle}, size, maxOsContextCount) {}
+    : BufferObject(rootDeviceIndex, drm, patIndex, BufferObjectHandleWrapper{handle, rootDeviceIndex}, size, maxOsContextCount) {}
 
 BufferObject::BufferObject(uint32_t rootDeviceIndex, Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount)
     : drm(drm), handle(std::move(handle)), size(size), refCount(1), rootDeviceIndex(rootDeviceIndex) {

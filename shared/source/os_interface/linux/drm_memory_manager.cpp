@@ -241,13 +241,13 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
         if (bo->peekIsReusableAllocation()) {
             eraseSharedBufferObject(bo);
         }
-
+        auto rootDeviceIndex = bo->getRootDeviceIndex();
         int boHandle = bo->getHandle();
         bo->close();
 
         if (bo->isBoHandleShared() && bo->getHandle() != boHandle) {
             // Shared BO was closed - handle was invalidated. Remove weak reference from container.
-            eraseSharedBoHandleWrapper(boHandle);
+            eraseSharedBoHandleWrapper(boHandle, rootDeviceIndex);
         }
 
         if (lock) {
@@ -928,7 +928,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             totalSize += size;
 
             auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
-            auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
+            auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
 
             bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
             i++;
@@ -1009,32 +1009,32 @@ void DrmMemoryManager::registerSharedBoHandleAllocation(DrmAllocation *drmAlloca
     }
 
     auto &bos = drmAllocation->getBOs();
+    auto rootDeviceIndex = drmAllocation->getRootDeviceIndex();
 
     for (auto *bo : bos) {
         if (bo == nullptr) {
             continue;
         }
 
-        auto foundHandleWrapperIt = sharedBoHandles.find(bo->getHandle());
+        auto foundHandleWrapperIt = sharedBoHandles.find(std::pair<int, uint32_t>(bo->getHandle(), rootDeviceIndex));
         if (foundHandleWrapperIt == std::end(sharedBoHandles)) {
-            sharedBoHandles.emplace(bo->getHandle(), bo->acquireWeakOwnershipOfBoHandle());
+            sharedBoHandles.emplace(std::make_pair(bo->getHandle(), rootDeviceIndex), bo->acquireWeakOwnershipOfBoHandle());
         } else {
             bo->markAsSharedBoHandle();
         }
     }
 }
 
-BufferObjectHandleWrapper DrmMemoryManager::tryToGetBoHandleWrapperWithSharedOwnership(int boHandle) {
-    auto foundHandleWrapperIt = sharedBoHandles.find(boHandle);
+BufferObjectHandleWrapper DrmMemoryManager::tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex) {
+    auto foundHandleWrapperIt = sharedBoHandles.find(std::make_pair(boHandle, rootDeviceIndex));
     if (foundHandleWrapperIt == std::end(sharedBoHandles)) {
-        return BufferObjectHandleWrapper{boHandle};
+        return BufferObjectHandleWrapper{boHandle, rootDeviceIndex};
     }
-
     return foundHandleWrapperIt->second.acquireSharedOwnership();
 }
 
-void DrmMemoryManager::eraseSharedBoHandleWrapper(int boHandle) {
-    auto foundHandleWrapperIt = sharedBoHandles.find(boHandle);
+void DrmMemoryManager::eraseSharedBoHandleWrapper(int boHandle, uint32_t rootDeviceIndex) {
+    auto foundHandleWrapperIt = sharedBoHandles.find(std::make_pair(boHandle, rootDeviceIndex));
     if (foundHandleWrapperIt != std::end(sharedBoHandles)) {
         sharedBoHandles.erase(foundHandleWrapperIt);
     }
@@ -1081,7 +1081,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
         UNRECOVERABLE_IF(size == std::numeric_limits<size_t>::max());
 
         auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::defaultRegion, CachePolicy::writeBack, false, MemoryPoolHelper::isSystemMemoryPool(memoryPool));
-        auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
+        auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
 
         bo = new (std::nothrow) BufferObject(properties.rootDeviceIndex, &drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
 
@@ -2623,7 +2623,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     }
 
     auto boHandle = static_cast<int>(openFd.handle);
-    auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
+    auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle, properties.rootDeviceIndex} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle, properties.rootDeviceIndex);
 
     const bool useBooMmap = drm.getMemoryInfo() && properties.useMmapObject;
     if (!useBooMmap) {
