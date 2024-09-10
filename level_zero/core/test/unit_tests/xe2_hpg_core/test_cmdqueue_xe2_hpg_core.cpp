@@ -21,7 +21,7 @@ namespace ult {
 
 using CommandQueueCommandsXe2HpgCore = Test<DeviceFixture>;
 
-HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsThenStateSystemMemFenceAddressCmdIsGenerated, IsAtLeastXe2HpgCore) {
+HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsThenStateSystemMemFenceAddressCmdIsGenerated, IsXe2HpgCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -52,7 +52,7 @@ HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandL
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsForTheSecondTimeThenStateSystemMemFenceAddressCmdIsNotGenerated, IsAtLeastXe2HpgCore) {
+HWTEST2_F(CommandQueueCommandsXe2HpgCore, givenCommandQueueWhenExecutingCommandListsForTheSecondTimeThenStateSystemMemFenceAddressCmdIsNotGenerated, IsXe2HpgCore) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
