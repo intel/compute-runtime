@@ -58,6 +58,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::isAllocationTypeToCapture;
     using MemoryManager::isCopyRequired;
     using MemoryManager::latestContextId;
+    using MemoryManager::localMemAllocsSize;
     using MemoryManager::localMemorySupported;
     using MemoryManager::reservedMemory;
     using MemoryManager::secondaryEngines;
@@ -279,6 +280,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool callBaseAllocateGraphicsMemoryForNonSvmHostPtr = true;
     bool failMapPhysicalToVirtualMemory = false;
     bool returnMockGAFromDevicePool = false;
+    bool returnMockGAFromHostPool = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;

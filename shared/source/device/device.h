@@ -38,6 +38,7 @@ class GfxCoreHelper;
 class ProductHelper;
 class CompilerProductHelper;
 class ReleaseHelper;
+class UsmMemAllocPoolsManager;
 
 struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<bool> isMainUsed = false;
@@ -194,6 +195,9 @@ class Device : public ReferenceTrackedObject<Device> {
     ISAPoolAllocator &getIsaPoolAllocator() {
         return isaPoolAllocator;
     }
+    UsmMemAllocPoolsManager *getUsmMemAllocPoolsManager() {
+        return deviceUsmMemAllocPoolsManager.get();
+    }
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
     bool isAnyDirectSubmissionEnabled();
     bool isStateSipRequired() const {
@@ -290,6 +294,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::vector<RTDispatchGlobalsInfo *> rtDispatchGlobalsInfos;
 
     ISAPoolAllocator isaPoolAllocator;
+    std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
 
     struct {
         bool isValid = false;

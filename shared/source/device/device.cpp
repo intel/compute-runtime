@@ -23,6 +23,7 @@
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_pooling.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -66,6 +67,9 @@ Device::~Device() {
 
     syncBufferHandler.reset();
     isaPoolAllocator.releasePools();
+    if (deviceUsmMemAllocPoolsManager) {
+        deviceUsmMemAllocPoolsManager->cleanup();
+    }
     secondaryCsrs.clear();
     executionEnvironment->memoryManager->releaseSecondaryOsContexts(this->getRootDeviceIndex());
     commandStreamReceivers.clear();
@@ -277,6 +281,17 @@ void Device::initializeCommonResources() {
              false,
              false,
              getDeviceBitfield()});
+    }
+
+    if (ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
+        getProductHelper().isUsmPoolAllocatorSupported() &&
+        NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.get() == 2) {
+
+        RootDeviceIndicesContainer rootDeviceIndices;
+        rootDeviceIndices.pushUnique(getRootDeviceIndex());
+        std::map<uint32_t, DeviceBitfield> deviceBitfields;
+        deviceBitfields.emplace(getRootDeviceIndex(), getDeviceBitfield());
+        deviceUsmMemAllocPoolsManager.reset(new UsmMemAllocPoolsManager(getMemoryManager(), rootDeviceIndices, deviceBitfields, this, InternalMemoryType::deviceUnifiedMemory));
     }
 }
 

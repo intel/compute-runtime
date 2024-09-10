@@ -19,6 +19,7 @@ ApiSpecificConfig::ApiType apiTypeForUlts = ApiSpecificConfig::OCL;
 bool globalStatelessL0 = false;
 bool globalStatelessOcl = false;
 bool isStatelessCompressionSupportedForUlts = true;
+bool isDeviceUsmPoolingEnabledForUlts = true;
 
 StackVec<const char *, 4> validUltL0Prefixes = {"NEO_L0_", "NEO_", ""};
 StackVec<NEO::DebugVarPrefix, 4> validUltL0PrefixTypes = {DebugVarPrefix::neoL0, DebugVarPrefix::neo, DebugVarPrefix::none};
@@ -59,7 +60,7 @@ bool ApiSpecificConfig::isHostAllocationCacheEnabled() {
 }
 
 bool ApiSpecificConfig::isDeviceUsmPoolingEnabled() {
-    return false;
+    return isDeviceUsmPoolingEnabledForUlts;
 }
 
 bool ApiSpecificConfig::isHostUsmPoolingEnabled() {

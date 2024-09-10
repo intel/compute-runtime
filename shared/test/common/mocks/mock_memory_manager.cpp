@@ -172,6 +172,9 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
+    if (returnMockGAFromHostPool) {
+        return mockGa;
+    }
     if (failInAllocateWithSizeAndAlignment) {
         return nullptr;
     }

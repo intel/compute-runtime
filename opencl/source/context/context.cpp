@@ -539,7 +539,7 @@ void Context::initializeUsmAllocationPools() {
         SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::deviceUnifiedMemory, MemoryConstants::pageSize2M,
                                                                    getRootDeviceIndices(), subDeviceBitfields);
         memoryProperties.device = &neoDevice;
-        usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
+        usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize, 0u, 1 * MemoryConstants::megaByte);
     }
 
     enabled = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
@@ -554,7 +554,7 @@ void Context::initializeUsmAllocationPools() {
         subDeviceBitfields[neoDevice.getRootDeviceIndex()] = neoDevice.getDeviceBitfield();
         SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::hostUnifiedMemory, MemoryConstants::pageSize2M,
                                                                    getRootDeviceIndices(), subDeviceBitfields);
-        usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize);
+        usmHostMemAllocPool.initialize(svmMemoryManager, memoryProperties, poolSize, 0u, 1 * MemoryConstants::megaByte);
     }
     this->usmPoolInitialized = true;
 }

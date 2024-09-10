@@ -47,7 +47,7 @@ bool ApiSpecificConfig::isHostAllocationCacheEnabled() {
 }
 
 bool ApiSpecificConfig::isDeviceUsmPoolingEnabled() {
-    return false;
+    return true;
 }
 
 bool ApiSpecificConfig::isHostUsmPoolingEnabled() {

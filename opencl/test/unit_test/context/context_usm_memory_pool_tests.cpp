@@ -39,6 +39,7 @@ struct ContextUsmPoolFlagValuesTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
     MockUsmMemAllocPool *mockDeviceUsmMemAllocPool;
     MockUsmMemAllocPool *mockHostUsmMemAllocPool;
+    constexpr static auto poolAllocationThreshold = 1 * MemoryConstants::megaByte;
 };
 
 using ContextUsmPoolDefaultFlagsTest = ContextUsmPoolFlagValuesTest<-1, -1>;
@@ -71,12 +72,12 @@ HWTEST2_F(ContextUsmPoolDefaultFlagsTest, givenDefaultDebugFlagsWhenCreatingCont
 using ContextUsmPoolEnabledFlagsTest = ContextUsmPoolFlagValuesTest<1, 3>;
 TEST_F(ContextUsmPoolEnabledFlagsTest, givenEnabledDebugFlagsWhenCreatingAllocaitonsThenPoolsAreInitialized) {
     cl_int retVal = CL_SUCCESS;
-    void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, UsmMemAllocPool::allocationThreshold, 0, &retVal);
+    void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, pooledDeviceAlloc);
     clMemFreeINTEL(mockContext.get(), pooledDeviceAlloc);
 
-    void *pooledHostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, UsmMemAllocPool::allocationThreshold, 0, &retVal);
+    void *pooledHostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, poolAllocationThreshold, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, pooledHostAlloc);
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
@@ -98,12 +99,12 @@ TEST_F(ContextUsmPoolEnabledFlagsTestDefault, givenDefaultDebugSettingsThenPoolI
     EXPECT_FALSE(mockHostUsmMemAllocPool->isInitialized());
 
     cl_int retVal = CL_SUCCESS;
-    void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, UsmMemAllocPool::allocationThreshold, 0, &retVal);
+    void *pooledDeviceAlloc = clDeviceMemAllocINTEL(mockContext.get(), static_cast<cl_device_id>(mockContext->getDevice(0)), nullptr, poolAllocationThreshold, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, pooledDeviceAlloc);
     clMemFreeINTEL(mockContext.get(), pooledDeviceAlloc);
 
-    void *pooledHostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, UsmMemAllocPool::allocationThreshold, 0, &retVal);
+    void *pooledHostAlloc = clHostMemAllocINTEL(mockContext.get(), nullptr, poolAllocationThreshold, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, pooledHostAlloc);
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
