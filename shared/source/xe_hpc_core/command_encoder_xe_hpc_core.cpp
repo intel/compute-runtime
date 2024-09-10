@@ -193,9 +193,7 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptor
     const uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-
-    const uint32_t workgroupSlmSize = gfxCoreHelper.alignSlmSize(slmTotalSize);
+    const uint32_t workgroupSlmSize = EncodeDispatchKernel<Family>::alignSlmSize(slmTotalSize);
 
     uint32_t slmSize = 0u;
 

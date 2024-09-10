@@ -402,23 +402,12 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) const {
-    if (slmSize == 0u) {
-        return 0u;
-    }
-    slmSize = std::max(slmSize, 1024u);
-    slmSize = Math::nextPowerOfTwo(slmSize);
-    UNRECOVERABLE_IF(slmSize > 64u * MemoryConstants::kiloByte);
-    return slmSize;
+    return EncodeDispatchKernel<GfxFamily>::alignSlmSize(slmSize);
 }
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
-    auto value = std::max(slmSize, 1024u);
-    value = Math::nextPowerOfTwo(value);
-    value = Math::getMinLsbSet(value);
-    value = value - 9;
-    DEBUG_BREAK_IF(value > 7);
-    return value * !!slmSize;
+    return EncodeDispatchKernel<GfxFamily>::computeSlmValues(hwInfo, slmSize);
 }
 
 template <typename GfxFamily>
@@ -756,7 +745,7 @@ bool GfxCoreHelperHw<GfxFamily>::is48ResourceNeededForCmdBuffer() const {
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) const {
-    return cooperativeKernel;
+    return EncodeDispatchKernel<GfxFamily>::singleTileExecImplicitScalingRequired(cooperativeKernel);
 }
 
 template <typename GfxFamily>

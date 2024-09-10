@@ -34,8 +34,8 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptor
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
     const uint32_t workGroupCountPerDss = threadsPerDssCount / threadsPerThreadGroup;
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    const uint32_t workgroupSlmSize = gfxCoreHelper.alignSlmSize(slmTotalSize);
+
+    const uint32_t workgroupSlmSize = EncodeDispatchKernel<Family>::alignSlmSize(slmTotalSize);
 
     uint32_t slmSize = 0u;
 
@@ -193,6 +193,30 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
             walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
         }
     }
+}
+
+template <>
+uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
+    if (slmSize == 0u) {
+        return 0u;
+    }
+    slmSize = std::max(slmSize, 1024u);
+    slmSize = Math::nextPowerOfTwo(slmSize);
+    UNRECOVERABLE_IF(slmSize > 64u * MemoryConstants::kiloByte);
+    return slmSize;
+}
+
+template <>
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+    using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
+
+    auto slmValue = std::max(slmSize, 1024u);
+    slmValue = Math::nextPowerOfTwo(slmValue);
+    slmValue = Math::getMinLsbSet(slmValue);
+    slmValue = slmValue - 9;
+    DEBUG_BREAK_IF(slmValue > 7);
+    slmValue *= !!slmSize;
+    return slmValue;
 }
 
 template <>

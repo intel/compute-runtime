@@ -63,7 +63,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto pImplicitArgs = args.dispatchInterface->getImplicitArgs();
 
     auto &hwInfo = args.device->getHardwareInfo();
-    auto &gfxCoreHelper = args.device->getGfxCoreHelper();
     auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
@@ -95,8 +94,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::programBarrierEnable(idd,
                                                        kernelDescriptor.kernelAttributes.barrierCount,
                                                        hwInfo);
-    auto slmSize = static_cast<uint32_t>(
-        gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
+    auto slmSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize());
     idd.setSharedLocalMemorySize(slmSize);
 
     uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
@@ -641,6 +639,32 @@ inline size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKe
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd) {
+}
+
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
+    if (slmSize == 0u) {
+        return 0u;
+    }
+    slmSize = std::max(slmSize, 1024u);
+    slmSize = Math::nextPowerOfTwo(slmSize);
+    UNRECOVERABLE_IF(slmSize > 64u * MemoryConstants::kiloByte);
+    return slmSize;
+}
+
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+    auto value = std::max(slmSize, 1024u);
+    value = Math::nextPowerOfTwo(value);
+    value = Math::getMinLsbSet(value);
+    value = value - 9;
+    DEBUG_BREAK_IF(value > 7);
+    return value * !!slmSize;
+}
+
+template <typename Family>
+bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) {
+    return cooperativeKernel;
 }
 
 template <typename Family>
