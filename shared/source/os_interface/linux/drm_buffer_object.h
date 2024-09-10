@@ -45,11 +45,11 @@ class BufferObjectHandleWrapper {
     };
 
   public:
-    explicit BufferObjectHandleWrapper(int boHandle) noexcept
-        : boHandle{boHandle} {}
+    explicit BufferObjectHandleWrapper(int boHandle, uint32_t rootDeviceIndex) noexcept
+        : boHandle{boHandle}, rootDeviceIndex(rootDeviceIndex) {}
 
     BufferObjectHandleWrapper(BufferObjectHandleWrapper &&other) noexcept
-        : boHandle(std::exchange(other.boHandle, -1)), ownership(other.ownership), controlBlock(std::exchange(other.controlBlock, nullptr)) {}
+        : boHandle(std::exchange(other.boHandle, -1)), rootDeviceIndex(std::exchange(other.rootDeviceIndex, UINT32_MAX)), ownership(other.ownership), controlBlock(std::exchange(other.controlBlock, nullptr)) {}
 
     ~BufferObjectHandleWrapper();
 
@@ -65,16 +65,23 @@ class BufferObjectHandleWrapper {
     int getBoHandle() const {
         return boHandle;
     }
+    uint32_t getRootDeviceIndex() const {
+        return rootDeviceIndex;
+    }
 
     void setBoHandle(int handle) {
         boHandle = handle;
     }
+    void setRootDeviceIndex(uint32_t index) {
+        rootDeviceIndex = index;
+    }
 
   protected:
-    BufferObjectHandleWrapper(int boHandle, Ownership ownership, ControlBlock *controlBlock)
-        : boHandle{boHandle}, ownership{ownership}, controlBlock{controlBlock} {}
+    BufferObjectHandleWrapper(int boHandle, uint32_t rootDeviceIndex, Ownership ownership, ControlBlock *controlBlock)
+        : boHandle{boHandle}, rootDeviceIndex{rootDeviceIndex}, ownership{ownership}, controlBlock{controlBlock} {}
 
     int boHandle{};
+    uint32_t rootDeviceIndex{UINT32_MAX};
     Ownership ownership{Ownership::strong};
     ControlBlock *controlBlock{nullptr};
 };

@@ -24,6 +24,12 @@ enum class AtomicAccessMode : uint32_t;
 
 enum class GemCloseWorkerMode;
 
+struct BoHandleDeviceIndexPairComparer {
+    bool operator()(std::pair<int, uint32_t> const &lhs, std::pair<int, uint32_t> const &rhs) const {
+        return (lhs.first < rhs.first) || (lhs.second < rhs.second);
+    }
+};
+
 class DrmMemoryManager : public MemoryManager {
   public:
     DrmMemoryManager(GemCloseWorkerMode mode,
@@ -114,8 +120,8 @@ class DrmMemoryManager : public MemoryManager {
 
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
-    BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle);
-    void eraseSharedBoHandleWrapper(int boHandle);
+    BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);
+    void eraseSharedBoHandleWrapper(int boHandle, uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBufferObject(BufferObject *bo);
@@ -187,7 +193,7 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;
 
-    std::map<int, BufferObjectHandleWrapper> sharedBoHandles;
+    std::map<std::pair<int, uint32_t>, BufferObjectHandleWrapper, BoHandleDeviceIndexPairComparer> sharedBoHandles;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<size_t> localMemBanksCount;
     std::vector<GraphicsAllocation *> sysMemAllocs;
