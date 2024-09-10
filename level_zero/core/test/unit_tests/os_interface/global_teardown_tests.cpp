@@ -88,6 +88,18 @@ TEST(GlobalTearDownTests, givenInitializedDriverAndTeardownFunctionIsAvailableWh
     EXPECT_EQ(1u, teardownCalled);
 }
 
+TEST(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCallTeardownFunc) {
+    VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized};
+    VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc};
+
+    levelZeroDriverInitialized = false;
+    setDriverTeardownFunc = []() -> ze_result_t {
+        EXPECT_TRUE(false);
+        return ZE_RESULT_SUCCESS;
+    };
+    EXPECT_NO_THROW(globalDriverTeardown());
+}
+
 TEST(GlobalTearDownTests, givenInitializedDriverAndTeardownFunctionFailsWhenCallGlobalTeardownThenDontCrash) {
     VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized};
     VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc};
