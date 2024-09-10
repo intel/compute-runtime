@@ -1311,7 +1311,8 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSend
 HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTimestampWriteEnableOnMultiTileQueueWhenMarkerProfilingWithoutWaitListThenSizeHasFourMMIOStoresAndCrossTileBarrier) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
-    csr.activePartitions = 2;
+
+    VariableBackup<uint32_t> backupActivePartitions(&csr.activePartitions, 2);
     csr.activePartitionsConfig = 2;
     csr.staticWorkPartitioningEnabled = true;
 
