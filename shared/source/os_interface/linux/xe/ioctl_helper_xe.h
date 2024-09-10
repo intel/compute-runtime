@@ -113,7 +113,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;
     void setupIpVersion() override;
-    void getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss, std::vector<std::bitset<8>> *euDss, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
+    void getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss, std::vector<std::bitset<8>> *euDss, std::vector<std::bitset<8>> *l3BanksMask, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
     void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
@@ -134,6 +134,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
     virtual bool isEuPerDssTopologyType(uint16_t topologyType) const;
+    virtual bool isL3BankTopologyType(uint16_t topologyType) const;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

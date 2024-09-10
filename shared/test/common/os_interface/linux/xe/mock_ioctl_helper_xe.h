@@ -12,6 +12,8 @@
 using namespace NEO;
 
 struct MockIoctlHelperXe : IoctlHelperXe {
+    static const uint16_t mockL3BankTopologyType = 0x100;
+
     using IoctlHelperXe::bindInfo;
     using IoctlHelperXe::contextParamEngine;
     using IoctlHelperXe::defaultEngine;
@@ -54,6 +56,14 @@ struct MockIoctlHelperXe : IoctlHelperXe {
         }
         return IoctlHelperXe::ioctl(fd, request, arg);
     }
+    bool isL3BankTopologyType(uint16_t topologyType) const override {
+        if (isL3BankTopologyTypeCallBase) {
+            return IoctlHelperXe::isL3BankTopologyType(topologyType);
+        }
+        return topologyType == mockL3BankTopologyType;
+    }
+
+    bool isL3BankTopologyTypeCallBase = true;
     bool failPerfDisable = false;
     bool failPerfEnable = false;
     bool failPerfOpen = false;
