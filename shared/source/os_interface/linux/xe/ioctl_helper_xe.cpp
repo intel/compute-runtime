@@ -1719,4 +1719,7 @@ void IoctlHelperXe::querySupportedFeatures() {
     };
     supportedFeatures.flags.pageFault = checkVmCreateFlagsSupport(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE);
 };
+bool IoctlHelperXe::isEuPerDssTopologyType(uint16_t topologyType) const {
+    return topologyType == DRM_XE_TOPO_EU_PER_DSS;
+}
 } // namespace NEO

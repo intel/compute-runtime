@@ -2398,9 +2398,12 @@ TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndIoctlReturnsN
 }
 
 TEST(IoctlHelperXeTest, givenCorrectEuPerDssTypeWhenCheckingIfTopologyIsEuPerDssThenSuccessIsReturned) {
-    EXPECT_TRUE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_EU_PER_DSS));
-    EXPECT_FALSE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
-    EXPECT_FALSE(MockIoctlHelperXe::isEuPerDssTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+    EXPECT_TRUE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_EU_PER_DSS));
+    EXPECT_FALSE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
+    EXPECT_FALSE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperWhenSettingExtContextThenCallExternalIoctlFunction) {

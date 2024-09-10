@@ -14,6 +14,13 @@ if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_debugger_tests.cpp
   )
 endif()
+
+if(NEO_ENABLE_XE_PRELIM_DETECTION)
+  list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX_XE
+       ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_prelim_tests.cpp
+  )
+endif()
+
 set_property(GLOBAL APPEND PROPERTY NEO_CORE_OS_INTERFACE_TESTS_LINUX ${NEO_CORE_OS_INTERFACE_TESTS_LINUX_XE})
 
 if(UNIX)

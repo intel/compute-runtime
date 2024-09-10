@@ -13,7 +13,7 @@ namespace NEO {
 class IoctlHelperXePrelim : public IoctlHelperXe {
   public:
     using IoctlHelperXe::IoctlHelperXe;
-    ~IoctlHelperXePrelim() override;
+    bool isEuPerDssTopologyType(uint16_t topologyType) const override;
 };
 
 } // namespace NEO

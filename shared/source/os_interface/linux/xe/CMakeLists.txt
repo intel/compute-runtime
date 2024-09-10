@@ -11,7 +11,6 @@ set(NEO_CORE_OS_INTERFACE_LINUX_XE
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/ioctl_helper_xe_perf.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/ioctl_helper_xe_eu_dss.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/xedrm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/xedrm_prelim.h
 )

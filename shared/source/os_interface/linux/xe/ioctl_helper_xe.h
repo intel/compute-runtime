@@ -133,6 +133,7 @@ class IoctlHelperXe : public IoctlHelper {
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
+    virtual bool isEuPerDssTopologyType(uint16_t topologyType) const;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
@@ -174,7 +175,6 @@ class IoctlHelperXe : public IoctlHelper {
         uint16_t revision;
     };
     bool queryHwIpVersion(GtIpVersion &gtIpVersion);
-    static bool isEuPerDssTopologyType(uint16_t topologyType);
 
     int maxExecQueuePriority = 0;
     std::mutex xeLock;

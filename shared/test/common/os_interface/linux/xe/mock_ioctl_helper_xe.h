@@ -19,7 +19,6 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::getFdFromVmExport;
     using IoctlHelperXe::ioctl;
     using IoctlHelperXe::IoctlHelperXe;
-    using IoctlHelperXe::isEuPerDssTopologyType;
     using IoctlHelperXe::maxContextSetProperties;
     using IoctlHelperXe::maxExecQueuePriority;
     using IoctlHelperXe::queryGtListData;

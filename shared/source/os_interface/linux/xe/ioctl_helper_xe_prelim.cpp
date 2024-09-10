@@ -11,7 +11,8 @@
 
 namespace NEO {
 
-IoctlHelperXePrelim::~IoctlHelperXePrelim() {
-    xeLog("IoctlHelperXePrelim::~IoctlHelperXePrelim\n", "");
+bool IoctlHelperXePrelim::isEuPerDssTopologyType(uint16_t topologyType) const {
+    return topologyType == DRM_XE_TOPO_EU_PER_DSS ||
+           topologyType == DRM_XE_TOPO_SIMD16_EU_PER_DSS;
 }
 } // namespace NEO
