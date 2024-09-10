@@ -252,6 +252,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     }
 
     auto cmdList = static_cast<L0::CommandListImp *>(CommandList::fromHandle(*commandList));
+    UNRECOVERABLE_IF(cmdList == nullptr);
 
     cmdList->setOrdinal(desc->commandQueueGroupOrdinal);
 
@@ -263,7 +264,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
         }
     }
 
-    if (returnValue != ZE_RESULT_SUCCESS && cmdList) {
+    if (returnValue != ZE_RESULT_SUCCESS) {
         cmdList->destroy();
         cmdList = nullptr;
         *commandList = nullptr;

@@ -1356,6 +1356,7 @@ void KernelImp::setAssertBuffer() {
 }
 
 void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const {
+    UNRECOVERABLE_IF(this->module == nullptr);
 
     auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
@@ -1385,7 +1386,7 @@ void KernelImp::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceSt
         }
     }
 
-    const auto bindlessHeapsHelper = this->module && this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
+    const auto bindlessHeapsHelper = this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
 
     if (!bindlessHeapsHelper) {
         patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);

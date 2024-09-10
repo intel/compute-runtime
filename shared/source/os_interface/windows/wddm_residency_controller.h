@@ -75,7 +75,7 @@ class WddmResidencyController {
 
     bool memoryBudgetExhausted = false;
 
-    CommandStreamReceiver *csr;
+    CommandStreamReceiver *csr = nullptr;
 
     ResidencyContainer filteredResidencyContainer;  // Stores allocations which are not yet resident
     std::vector<D3DKMT_HANDLE> handlesForResidency; // Stores D3DKMT handles of allocations which are not yet resident
