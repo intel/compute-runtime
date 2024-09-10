@@ -26,16 +26,6 @@ namespace NEO {
 
 namespace SysCalls {
 
-bool pathExists(const std::string &path) {
-    struct stat statbuf = {};
-
-    if (stat(path.c_str(), &statbuf) == -1) {
-        return false;
-    }
-
-    return (statbuf.st_mode & S_IFDIR) != 0;
-}
-
 void exit(int code) {
     std::exit(code);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,4 +27,6 @@ inline std::string joinPath(const std::string &lhs, const std::string &rhs) {
 
     return lhs + PATH_SEPARATOR + rhs;
 }
+
+bool pathExists(const std::string &path);
 } // namespace NEO

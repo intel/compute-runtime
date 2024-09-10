@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/path.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/utilities/debug_settings_reader.h"
@@ -39,7 +40,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
                 return ret;
             }
         } else {
-            if (!NEO::SysCalls::pathExists(ret.cacheDir)) {
+            if (!NEO::pathExists(ret.cacheDir)) {
                 ret.cacheDir = "";
                 ret.enabled = false;
                 return ret;

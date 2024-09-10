@@ -169,6 +169,16 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions/command_encoder_args.h
 )
 
+if(WIN32)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/windows/path.cpp
+  )
+else()
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/path.cpp
+  )
+endif()
+
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_and_later.inl

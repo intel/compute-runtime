@@ -33,11 +33,6 @@
 #include <memory>
 
 using namespace NEO;
-namespace NEO {
-namespace SysCalls {
-extern bool pathExistsMock;
-} // namespace SysCalls
-} // namespace NEO
 
 TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
     Hash hash;
@@ -382,27 +377,6 @@ TEST(CompilerCacheTests, GivenNonExistantConfigWhenLoadingFromCacheThenNullIsRet
     auto ret = cache.loadCachedBinary("----do-not-exists----", size);
     EXPECT_EQ(nullptr, ret);
     EXPECT_EQ(0U, size);
-}
-
-TEST(CompilerCacheTests, GivenPrintDebugMessagesWhenCacheIsEnabledThenMessageWithPathIsPrintedToStdout) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.PrintDebugMessages.set(true);
-
-    std::unordered_map<std::string, std::string> mockableEnvs;
-    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
-
-    bool pathExistsMock = true;
-    VariableBackup<bool> pathExistsMockBackup(&NEO::SysCalls::pathExistsMock, pathExistsMock);
-
-    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
-    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
-
-    testing::internal::CaptureStdout();
-    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
-    std::string output = testing::internal::GetCapturedStdout();
-
-    EXPECT_TRUE(cacheConfig.enabled);
-    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
 }
 
 TEST(CompilerInterfaceCachedTests, GivenNoCachedBinaryWhenBuildingThenErrorIsReturned) {

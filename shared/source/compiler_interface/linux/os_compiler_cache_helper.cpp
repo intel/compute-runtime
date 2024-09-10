@@ -19,8 +19,8 @@
 
 namespace NEO {
 bool createCompilerCachePath(std::string &cacheDir) {
-    if (NEO::SysCalls::pathExists(cacheDir)) {
-        if (NEO::SysCalls::pathExists(joinPath(cacheDir, "neo_compiler_cache"))) {
+    if (NEO::pathExists(cacheDir)) {
+        if (NEO::pathExists(joinPath(cacheDir, "neo_compiler_cache"))) {
             cacheDir = joinPath(cacheDir, "neo_compiler_cache");
             return true;
         }
@@ -52,14 +52,14 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariabl
 
         // .cache might not exist on fresh installation
         cacheDir = joinPath(cacheDir, ".cache/");
-        if (!NEO::SysCalls::pathExists(cacheDir)) {
+        if (!NEO::pathExists(cacheDir)) {
             NEO::SysCalls::mkdir(cacheDir);
         }
 
         return createCompilerCachePath(cacheDir);
     }
 
-    if (NEO::SysCalls::pathExists(cacheDir)) {
+    if (NEO::pathExists(cacheDir)) {
         return createCompilerCachePath(cacheDir);
     }
 

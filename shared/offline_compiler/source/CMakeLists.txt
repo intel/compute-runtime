@@ -73,6 +73,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info_helper.h
+    ${NEO_SHARED_DIRECTORY}/helpers/path.h
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.cpp
@@ -148,6 +149,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_inc.h
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
+       ${NEO_SHARED_DIRECTORY}/helpers/windows/path.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
        ${OCLOC_DIRECTORY}/source/windows/ocloc_supported_devices_helper_windows.cpp
@@ -161,6 +163,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_inc.h
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_library_linux.h
+       ${NEO_SHARED_DIRECTORY}/helpers/linux/path.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp

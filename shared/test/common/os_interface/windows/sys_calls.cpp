@@ -12,6 +12,7 @@
 #include "os_inc.h"
 
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 namespace NEO {
@@ -41,9 +42,6 @@ uint64_t regQueryValueExpectedData = 0ull;
 const HKEY validHkey = reinterpret_cast<HKEY>(0);
 bool getNumThreadsCalled = false;
 bool mmapAllowExtendedPointers = false;
-bool pathExistsMock = false;
-extern const size_t pathExistsPathsSize = 5;
-std::string pathExistsPaths[pathExistsPathsSize];
 const char *driverStorePath = nullptr;
 
 size_t closeHandleCalled = 0u;
@@ -92,7 +90,8 @@ WIN32_FIND_DATAA findNextFileAFileData[findNextFileAFileDataCount];
 size_t findCloseCalled = 0u;
 
 size_t getFileAttributesCalled = 0u;
-DWORD getFileAttributesResult = TRUE;
+DWORD getFileAttributesResult = INVALID_FILE_ATTRIBUTES;
+std::unordered_map<std::string, DWORD> pathAttributes;
 
 size_t setFilePointerCalled = 0u;
 DWORD setFilePointerResult = 0;
@@ -120,29 +119,6 @@ LPVOID(*sysCallsHeapAlloc)
 
 BOOL(*sysCallsHeapFree)
 (HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) = nullptr;
-
-bool pathExists(const std::string &path) {
-    std::string tempP1 = path;
-    if (!path.empty() && path.back() == PATH_SEPARATOR) {
-        tempP1.pop_back();
-    }
-
-    for (const auto &p : pathExistsPaths) {
-        if (p.empty())
-            continue;
-
-        std::string tempP2 = p;
-        if (tempP2.back() == PATH_SEPARATOR) {
-            tempP2.pop_back();
-        }
-
-        if (tempP1 == tempP2) {
-            return true;
-        }
-    }
-
-    return pathExistsMock;
-}
 
 void exit(int code) {
 }
@@ -211,12 +187,7 @@ BOOL getOverlappedResult(HANDLE hFile, LPOVERLAPPED lpOverlapped, LPDWORD lpNumb
 BOOL createDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
     createDirectoryACalled++;
     if (createDirectoryAResult) {
-        for (size_t i = 0; i < pathExistsPathsSize; i++) {
-            if (pathExistsPaths[i].empty()) {
-                pathExistsPaths[i] = lpPathName;
-                break;
-            }
-        }
+        pathAttributes[lpPathName] = FILE_ATTRIBUTE_DIRECTORY;
     }
     return createDirectoryAResult;
 }
@@ -289,6 +260,26 @@ BOOL findClose(HANDLE hFindFile) {
 
 DWORD getFileAttributesA(LPCSTR lpFileName) {
     getFileAttributesCalled++;
+
+    std::string tempP1 = lpFileName;
+    if (!tempP1.empty() && tempP1.back() == PATH_SEPARATOR) {
+        tempP1.pop_back();
+    }
+
+    for (const auto &[path, attributes] : pathAttributes) {
+        if (path.empty())
+            continue;
+
+        std::string tempP2 = path;
+        if (tempP2.back() == PATH_SEPARATOR) {
+            tempP2.pop_back();
+        }
+
+        if (tempP1 == tempP2) {
+            return attributes;
+        }
+    }
+
     return getFileAttributesResult;
 }
 

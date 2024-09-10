@@ -20,8 +20,6 @@ unsigned long getNumThreads();
 
 void exit(int code);
 
-bool pathExists(const std::string &path);
-
 } // namespace SysCalls
 
 } // namespace NEO

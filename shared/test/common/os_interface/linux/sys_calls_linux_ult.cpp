@@ -70,7 +70,6 @@ int fsyncRetVal = 0;
 std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
 bool mmapCaptureExtendedPointers = false;
-bool pathExistsMock = false;
 bool mmapAllowExtendedPointers = false;
 bool failMmap = false;
 uint32_t mmapFuncCalled = 0u;
@@ -100,7 +99,6 @@ int (*sysCallsUnlink)(const std::string &pathname) = nullptr;
 int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr;
 int (*sysCallsMkstemp)(char *fileName) = nullptr;
 int (*sysCallsMkdir)(const std::string &dir) = nullptr;
-bool (*sysCallsPathExists)(const std::string &path) = nullptr;
 DIR *(*sysCallsOpendir)(const char *name) = nullptr;
 struct dirent *(*sysCallsReaddir)(DIR *dir) = nullptr;
 int (*sysCallsClosedir)(DIR *dir) = nullptr;
@@ -115,14 +113,6 @@ int mkdir(const std::string &path) {
     }
 
     return 0;
-}
-
-bool pathExists(const std::string &path) {
-    if (sysCallsPathExists != nullptr) {
-        return sysCallsPathExists(path);
-    }
-
-    return pathExistsMock;
 }
 
 void exit(int code) {

@@ -32,9 +32,9 @@ std::string getKnownFolderPath(REFKNOWNFOLDERID rfid) {
 }
 
 bool createCompilerCachePath(std::string &cacheDir) {
-    if (NEO::SysCalls::pathExists(cacheDir)) {
+    if (pathExists(cacheDir)) {
         cacheDir = joinPath(cacheDir, "neo_compiler_cache");
-        if (NEO::SysCalls::pathExists(cacheDir)) {
+        if (pathExists(cacheDir)) {
             return true;
         }
 
@@ -60,11 +60,11 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariabl
     }
 
     cacheDir = joinPath(cacheDir, "NEO\\");
-    if (!SysCalls::pathExists(cacheDir)) {
+    if (!pathExists(cacheDir)) {
         SysCalls::createDirectoryA(cacheDir.c_str(), NULL);
     }
 
-    if (NEO::SysCalls::pathExists(cacheDir)) {
+    if (pathExists(cacheDir)) {
         return createCompilerCachePath(cacheDir);
     }
 

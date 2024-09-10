@@ -17,16 +17,41 @@
 
 namespace NEO {
 
-namespace SysCalls {
-extern bool pathExistsMock;
+namespace AllPathsExist {
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    statbuf->st_mode = S_IFDIR;
+    return 0;
+}
+} // namespace AllPathsExist
+
+TEST(ClCacheDefaultConfigLinuxTest, GivenPrintDebugMessagesWhenCacheIsEnabledThenMessageWithPathIsPrintedToStdout) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+
+    std::unordered_map<std::string, std::string> mockableEnvs;
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, AllPathsExist::statMock);
+
+    mockableEnvs["NEO_CACHE_PERSISTENT"] = "1";
+    mockableEnvs["NEO_CACHE_DIR"] = "ult\\directory\\";
+
+    testing::internal::CaptureStdout();
+    auto cacheConfig = NEO::getDefaultCompilerCacheConfig();
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_TRUE(cacheConfig.enabled);
+    EXPECT_STREQ(output.c_str(), "NEO_CACHE_PERSISTENT is enabled. Cache is located in: ult\\directory\\\n\n");
 }
 
 namespace AllVariablesCorrectlySet {
-bool pathExistsMock(const std::string &path) {
-    if (path.find("ult/directory/") != path.npos)
-        return true;
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    if (filePath.find("ult/directory/") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
+    }
 
-    return false;
+    return -1;
 }
 } // namespace AllVariablesCorrectlySet
 
@@ -37,7 +62,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenAllEnvVarWhenProperlySetThenProperConfi
     mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, AllVariablesCorrectlySet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, AllVariablesCorrectlySet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -48,9 +73,10 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenAllEnvVarWhenProperlySetThenProperConfi
 }
 
 namespace NonExistingPathIsSet {
-bool pathExistsMock(const std::string &path) {
-    return false;
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    return -1;
 }
+
 } // namespace NonExistingPathIsSet
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenNonExistingPathWhenGetCompilerCacheConfigThenConfigWithDisabledCacheIsReturned) {
@@ -60,7 +86,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenNonExistingPathWhenGetCompilerCacheConf
     mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, NonExistingPathIsSet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, NonExistingPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -69,14 +95,18 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenNonExistingPathWhenGetCompilerCacheConf
 }
 
 namespace XDGEnvPathIsSet {
-bool pathExistsMock(const std::string &path) {
-    if (path.find("xdg/directory/neo_compiler_cache") != path.npos) {
-        return true;
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    if (filePath.find("xdg/directory/neo_compiler_cache") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    if (path.find("xdg/directory") != path.npos) {
-        return true;
+
+    if (filePath.find("xdg/directory") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    return false;
+
+    return -1;
 }
 } // namespace XDGEnvPathIsSet
 
@@ -87,7 +117,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgCachePathSetWhenGetCompilerCacheConf
     mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, XDGEnvPathIsSet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XDGEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -104,7 +134,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgCachePathWithoutTrailingSlashSetWhen
     mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, XDGEnvPathIsSet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XDGEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -115,15 +145,20 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgCachePathWithoutTrailingSlashSetWhen
 }
 
 namespace HomeEnvPathIsSet {
-bool pathExistsMock(const std::string &path) {
-    if (path.find("home/directory/.cache/neo_compiler_cache") != path.npos) {
-        return true;
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    if (filePath.find("home/directory/.cache/neo_compiler_cache") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    if (path.find("home/directory/.cache/") != path.npos) {
-        return true;
+
+    if (filePath.find("home/directory/.cache/") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    return false;
+
+    return -1;
 }
+
 } // namespace HomeEnvPathIsSet
 
 TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheConfigThenConfigWithEnabledCacheIsReturned) {
@@ -133,7 +168,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWhenGetCompilerCacheCon
     mockableEnvs["HOME"] = "home/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, HomeEnvPathIsSet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -150,7 +185,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathWithoutTrailingSlashSetWhe
     mockableEnvs["HOME"] = "home/directory";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, HomeEnvPathIsSet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -167,7 +202,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigT
     mockableEnvs["NEO_CACHE_DIR"] = "ult/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, AllVariablesCorrectlySet::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, AllVariablesCorrectlySet::statMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
 
@@ -178,18 +213,27 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenCacheMaxSizeSetTo0WhenGetDefaultConfigT
 }
 
 namespace HomeEnvPathIsSetButDotCacheDoesNotExist {
-bool pathExistsMock(const std::string &path) {
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
     static bool called = false;
-    if (path.find("home/directory/.cache/neo_compiler_cache") != path.npos) {
-        return true;
+
+    if (filePath.find("home/directory/.cache/neo_compiler_cache") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    if (path.find("home/directory/.cache/") != path.npos) {
-        bool result = called;
-        called = true;
-        return result;
+
+    if (filePath.find("home/directory/.cache/") != filePath.npos) {
+        if (!called) {
+            called = true;
+            return -1;
+        }
+
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    return false;
+
+    return -1;
 }
+
 int mkdirMock(const std::string &dir) {
     return 0;
 }
@@ -202,7 +246,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathSetWithoutExistingDotCache
     mockableEnvs["HOME"] = "home/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, HomeEnvPathIsSetButDotCacheDoesNotExist::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSetButDotCacheDoesNotExist::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomeEnvPathIsSetButDotCacheDoesNotExist::mkdirMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -220,7 +264,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathWithoutExistingDotCacheWit
     mockableEnvs["HOME"] = "home/directory";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, HomeEnvPathIsSetButDotCacheDoesNotExist::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, HomeEnvPathIsSetButDotCacheDoesNotExist::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, HomeEnvPathIsSetButDotCacheDoesNotExist::mkdirMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -232,15 +276,20 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenHomeCachePathWithoutExistingDotCacheWit
 }
 
 namespace XdgPathIsSetAndNeedToCreate {
-bool pathExistsMock(const std::string &path) {
-    if (path.find("xdg/directory/neo_compiler_cache") != path.npos) {
-        return false;
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    if (filePath.find("xdg/directory/neo_compiler_cache") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    if (path.find("xdg/directory") != path.npos) {
-        return true;
+
+    if (filePath.find("xdg/directory") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    return false;
+
+    return -1;
 }
+
 int mkdirMock(const std::string &dir) {
     return 0;
 }
@@ -253,7 +302,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenNeoCompilerCacheNotExistsThen
     mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory/";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, XdgPathIsSetAndNeedToCreate::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndNeedToCreate::mkdirMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -271,7 +320,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWithoutTrailingSlashWhenNeoCompil
     mockableEnvs["XDG_CACHE_HOME"] = "xdg/directory";
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, XdgPathIsSetAndNeedToCreate::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndNeedToCreate::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndNeedToCreate::mkdirMock);
 
     auto cacheConfig = getDefaultCompilerCacheConfig();
@@ -285,15 +334,19 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWithoutTrailingSlashWhenNeoCompil
 namespace XdgPathIsSetAndOtherProcessCreatesPath {
 bool mkdirCalled = false;
 
-bool pathExistsMock(const std::string &path) {
-    if (path.find("xdg/directory/neo_compiler_cache") != path.npos) {
-        return false;
+int statMock(const std::string &filePath, struct stat *statbuf) noexcept {
+    if (filePath.find("xdg/directory/neo_compiler_cache") != filePath.npos) {
+        return -1;
     }
-    if (path.find("xdg/directory/") != path.npos) {
-        return true;
+
+    if (filePath.find("xdg/directory/") != filePath.npos) {
+        statbuf->st_mode = S_IFDIR;
+        return 0;
     }
-    return false;
+
+    return -1;
 }
+
 int mkdirMock(const std::string &dir) {
     if (dir.find("xdg/directory/neo_compiler_cache") != dir.npos) {
         mkdirCalled = true;
@@ -312,7 +365,7 @@ TEST(ClCacheDefaultConfigLinuxTest, GivenXdgEnvWhenOtherProcessCreatesNeoCompile
     bool mkdirCalledTemp = false;
 
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&NEO::IoFunctions::mockableEnvValues, &mockableEnvs);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPathExists)> pathExistsBackup(&NEO::SysCalls::sysCallsPathExists, XdgPathIsSetAndOtherProcessCreatesPath::pathExistsMock);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> statBackup(&NEO::SysCalls::sysCallsStat, XdgPathIsSetAndOtherProcessCreatesPath::statMock);
     VariableBackup<decltype(NEO::SysCalls::sysCallsMkdir)> mkdirBackup(&NEO::SysCalls::sysCallsMkdir, XdgPathIsSetAndOtherProcessCreatesPath::mkdirMock);
     VariableBackup<bool> mkdirCalledBackup(&XdgPathIsSetAndOtherProcessCreatesPath::mkdirCalled, mkdirCalledTemp);
 
