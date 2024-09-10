@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_SUB_FOLDER "prepare test files")
-function(compile_kernels_gen device revision_id platform_name)
+function(compile_kernels_gen device revision_id platform_name use_stateless_suffix)
 
   set(outputdir "${TargetDir}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
@@ -17,6 +17,10 @@ function(compile_kernels_gen device revision_id platform_name)
     get_filename_component(absolute_filepath ${filepath} ABSOLUTE)
 
     set(outputname_base "${basename}_${platform_name}")
+    if(${use_stateless_suffix})
+      set(outputname_base "${outputname_base}-cl-intel-greater-than-4GB-buffer-required_")
+    endif()
+
     set(outputpath_base "${outputdir}${outputname_base}")
 
     if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
@@ -34,15 +38,15 @@ function(compile_kernels_gen device revision_id platform_name)
 
       list(APPEND compiled_kernels_${platform_name}_${revision_id} ${output_files})
     else()
-      foreach(_file_name "spv" "bin")
-        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${platform_name}.${_file_name}")
+      foreach(file_extension "spv" "bin")
+        set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_name}/${revision_id}/test_files/${NEO_ARCH}/${outputname_base}.${file_extension}")
         add_custom_command(
-                           OUTPUT ${outputpath_base}.${_file_name}
+                           OUTPUT ${outputpath_base}.${file_extension}
                            COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
         )
 
-        list(APPEND compiled_kernels_${platform_name}_${revision_id} ${outputpath_base}.${_file_name})
+        list(APPEND compiled_kernels_${platform_name}_${revision_id} ${outputpath_base}.${file_extension})
       endforeach()
     endif()
   endforeach()
@@ -70,11 +74,18 @@ macro(macro_for_each_platform)
     list(REMOVE_ITEM KERNELS_TO_COMPILE ${TEST_KERNELS_IMAGES})
   endif()
 
+  set(HEAPLES_SUPPORT FALSE)
+  CORE_CONTAINS_PLATFORM("SUPPORTED_HEAPLESS" ${CORE_TYPE} ${PLATFORM_IT} HEAPLES_SUPPORT)
+
   set(PREVIOUS_TARGET)
 
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} ${KERNELS_TO_COMPILE})
+    compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} FALSE ${KERNELS_TO_COMPILE})
+
+    if(${HEAPLES_SUPPORT})
+      compile_kernels_gen(${DEVICE_ID} ${REVISION_ID} ${PLATFORM_IT_LOWER} TRUE ${KERNELS_TO_COMPILE})
+    endif()
 
     add_custom_target(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${compiled_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}})
     set_target_properties(prepare_test_kernels_for_shared_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}/${SHARED_TEST_PROJECTS_SUB_FOLDER}/${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")
