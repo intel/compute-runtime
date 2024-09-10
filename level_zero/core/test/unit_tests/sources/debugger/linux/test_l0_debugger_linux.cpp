@@ -9,6 +9,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -40,6 +41,9 @@ struct L0DebuggerLinuxFixture {
         executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
         MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
+        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
+        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
+        executionEnvironment->calculateMaxOsContextCount();
         executionEnvironment->initializeMemoryManager();
         auto osInterface = new OSInterface();
         drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
