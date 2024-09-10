@@ -25,6 +25,7 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::setContextProperties;
     using IoctlHelperXe::supportedFeatures;
     using IoctlHelperXe::tileIdToGtId;
+    using IoctlHelperXe::updateBindInfo;
     using IoctlHelperXe::UserFenceExtension;
     using IoctlHelperXe::xeGetBindFlagNames;
     using IoctlHelperXe::xeGetBindOperationName;

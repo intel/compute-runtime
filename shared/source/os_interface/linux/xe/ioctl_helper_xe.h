@@ -178,6 +178,7 @@ class IoctlHelperXe : public IoctlHelper {
 
     int maxExecQueuePriority = 0;
     std::mutex xeLock;
+    std::mutex gemCloseLock;
     std::vector<BindInfo> bindInfo;
     std::vector<uint32_t> hwconfig;
     std::vector<XeDrm::drm_xe_engine_class_instance> contextParamEngine;

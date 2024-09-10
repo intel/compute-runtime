@@ -1099,6 +1099,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         xeLog(" -> IoctlHelperXe::ioctl GemContextSetparam r=%d\n", ret);
     } break;
     case DrmIoctl::gemClose: {
+        std::unique_lock<std::mutex> lock(gemCloseLock);
         struct GemClose *d = static_cast<struct GemClose *>(arg);
         int found = -1;
         xeShowBindTable();
