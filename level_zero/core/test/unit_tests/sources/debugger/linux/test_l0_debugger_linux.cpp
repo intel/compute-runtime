@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -204,8 +205,15 @@ TEST(L0DebuggerLinux, givenPrintDebugSettingsAndIncorrectSetupWhenInitializingDe
 
     result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
     output = testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("Debugging not enabled. VmBind: 1, per-context VMs: 0\n"), output);
-    EXPECT_FALSE(result);
+    auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
+    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled()) {
+        EXPECT_NE(std::string("Debugging not enabled. VmBind: 1, per-context VMs: 0\n"), output);
+        EXPECT_TRUE(result);
+
+    } else {
+        EXPECT_EQ(std::string("Debugging not enabled. VmBind: 1, per-context VMs: 0\n"), output);
+        EXPECT_FALSE(result);
+    }
 }
 
 TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
@@ -223,8 +231,15 @@ TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsTh
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drmMock));
 
     auto result = NEO::WhiteBox<NEO::DebuggerL0>::initDebuggingInOs(osInterface);
-    EXPECT_FALSE(result);
-    EXPECT_FALSE(drmMock->registerClassesCalled);
+    auto drm = osInterface->getDriverModel()->as<NEO::Drm>();
+
+    if (drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>().isHeaplessModeEnabled()) {
+        EXPECT_TRUE(result);
+        EXPECT_TRUE(drmMock->registerClassesCalled);
+    } else {
+        EXPECT_FALSE(result);
+        EXPECT_FALSE(drmMock->registerClassesCalled);
+    }
 }
 
 TEST_F(L0DebuggerLinuxTest, whenRegisterElfAndLinkWithAllocationIsCalledThenItRegistersBindExtHandles) {
