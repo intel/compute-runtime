@@ -5584,10 +5584,10 @@ typedef struct tagCOMPUTE_WALKER {
         return reinterpret_cast<uint32_t *>(&TheStructure.Common.InlineData);
     }
     static constexpr uint32_t getInlineDataSize() { // patched
-        return 32u;
+        return sizeof(TheStructure.Common.InlineData);
     }
-    using InterfaceDescriptorType = INTERFACE_DESCRIPTOR_DATA; // patched
-    using PostSyncType = POSTSYNC_DATA;                        // patched
+    using InterfaceDescriptorType = std::decay_t<decltype(TheStructure.Common.InterfaceDescriptor)>; // patched
+    using PostSyncType = std::decay_t<decltype(TheStructure.Common.PostSync)>;                       // patched
 
 } COMPUTE_WALKER;
 STATIC_ASSERT(156 == sizeof(COMPUTE_WALKER));
