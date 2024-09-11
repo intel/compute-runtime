@@ -654,7 +654,7 @@ GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const Allocati
         return nullptr;
     }
 
-    fileLoggerInstance().logAllocation(allocation);
+    fileLoggerInstance().logAllocation(allocation, this);
     registerAllocationInOs(allocation);
     return allocation;
 }
@@ -692,7 +692,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         allocation->setAsReadOnly();
     }
 
-    fileLoggerInstance().logAllocation(allocation);
+    fileLoggerInstance().logAllocation(allocation, this);
     registerAllocationInOs(allocation);
     return allocation;
 }

@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/io_functions.h"
 
 #include <fstream>
@@ -93,7 +94,7 @@ void FileLogger<debugLevel>::logApiCall(const char *function, bool enter, int32_
 }
 
 template <DebugFunctionalityLevel debugLevel>
-void FileLogger<debugLevel>::logAllocation(GraphicsAllocation const *graphicsAllocation) {
+void FileLogger<debugLevel>::logAllocation(GraphicsAllocation const *graphicsAllocation, MemoryManager const *memoryManager) {
     if (logAllocationType) {
         printDebugString(true, stdout, "Created Graphics Allocation of type %s\n", getAllocationTypeString(graphicsAllocation));
     }
@@ -107,14 +108,20 @@ void FileLogger<debugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         std::thread::id thisThread = std::this_thread::get_id();
 
         ss << " ThreadID: " << thisThread;
-        ss << " AllocationType: " << getAllocationTypeString(graphicsAllocation);
-        ss << " MemoryPool: " << getMemoryPoolString(graphicsAllocation);
-        ss << " Root device index: " << graphicsAllocation->getRootDeviceIndex();
+        ss << " Type: " << getAllocationTypeString(graphicsAllocation);
+        ss << " Pool: " << getMemoryPoolString(graphicsAllocation);
+        ss << " Root index: " << graphicsAllocation->getRootDeviceIndex();
         ss << " Size: " << graphicsAllocation->getUnderlyingBufferSize();
-        ss << " GPU address: 0x" << std::hex << graphicsAllocation->getGpuAddress() << " - 0x" << std::hex << graphicsAllocation->getGpuAddress() + graphicsAllocation->getUnderlyingBufferSize() - 1;
+        ss << " GPU VA: 0x" << std::hex << graphicsAllocation->getGpuAddress() << " - 0x" << std::hex << graphicsAllocation->getGpuAddress() + graphicsAllocation->getUnderlyingBufferSize() - 1;
 
         ss << graphicsAllocation->getAllocationInfoString();
         ss << graphicsAllocation->getPatIndexInfoString();
+
+        if (memoryManager) {
+            ss << " Total sys mem allocated: " << memoryManager->getUsedSystemMemorySize();
+            ss << " Total lmem allocated: " << memoryManager->getUsedLocalMemorySize(graphicsAllocation->getRootDeviceIndex());
+        }
+
         ss << std::endl;
         auto str = ss.str();
         if (logAllocationStdout) {

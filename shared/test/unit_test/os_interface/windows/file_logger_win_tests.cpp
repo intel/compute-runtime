@@ -26,6 +26,9 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
+    auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
 
     MockWddmAllocation allocation(getGmmHelper());
     allocation.handle = 4;
@@ -35,7 +38,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.setGpuAddress(0x12345);
     allocation.size = 777u;
 
-    fileLogger.logAllocation(&allocation);
+    fileLogger.logAllocation(&allocation, executionEnvironment->memoryManager.get());
 
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -43,13 +46,19 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
+    memoryPoolCheck << " Pool: " << getMemoryPoolString(&allocation);
 
     std::stringstream gpuAddressCheck;
-    gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
+    gpuAddressCheck << " GPU VA: 0x" << std::hex << allocation.getGpuAddress();
 
     std::stringstream rootDeviceIndexCheck;
-    rootDeviceIndexCheck << " Root device index: " << allocation.getRootDeviceIndex();
+    rootDeviceIndexCheck << " Root index: " << allocation.getRootDeviceIndex();
+
+    std::stringstream totalSystemMemoryCheck;
+    totalSystemMemoryCheck << "Total sys mem allocated: " << executionEnvironment->memoryManager->getUsedSystemMemorySize();
+
+    std::stringstream totalLocalMemoryCheck;
+    totalLocalMemoryCheck << "Total lmem allocated: " << executionEnvironment->memoryManager->getUsedLocalMemorySize(0);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
@@ -58,8 +67,10 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
         EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("AllocationType: BUFFER") != std::string::npos);
+        EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
         EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
+        EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);
+        EXPECT_TRUE(str.find(totalLocalMemoryCheck.str()) != std::string::npos);
     }
 }
 
@@ -75,13 +86,14 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
 
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
     MockWddmAllocation allocation(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper());
     allocation.handle = 4;
     allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
-    fileLogger.logAllocation(&allocation);
+    fileLogger.logAllocation(&allocation, nullptr);
 
     std::thread::id thisThread = std::this_thread::get_id();
 

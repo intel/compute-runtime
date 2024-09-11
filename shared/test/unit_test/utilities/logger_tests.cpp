@@ -535,7 +535,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     testing::internal::CaptureStdout();
-    fileLogger.logAllocation(&graphicsAllocation);
+    fileLogger.logAllocation(&graphicsAllocation, nullptr);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
@@ -557,7 +557,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     EXPECT_FALSE(logFileCreated);
 
     testing::internal::CaptureStdout();
-    fileLogger.logAllocation(&graphicsAllocation);
+    fileLogger.logAllocation(&graphicsAllocation, nullptr);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
@@ -566,7 +566,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
-        EXPECT_TRUE(str.find("AllocationType: ") != std::string::npos);
+        EXPECT_TRUE(str.find("Type: ") != std::string::npos);
     } else {
         EXPECT_FALSE(true);
     }

@@ -27,6 +27,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     EXPECT_FALSE(logFileCreated);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->initializeMemoryManager();
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
     auto gmmHelper = executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper();
@@ -46,7 +47,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     allocation.bufferObjects[0] = &bo;
 
-    fileLogger.logAllocation(&allocation);
+    fileLogger.logAllocation(&allocation, executionEnvironment->memoryManager.get());
 
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -54,13 +55,19 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
+    memoryPoolCheck << " Pool: " << getMemoryPoolString(&allocation);
 
     std::stringstream gpuAddressCheck;
-    gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
+    gpuAddressCheck << " GPU VA: 0x" << std::hex << allocation.getGpuAddress();
 
     std::stringstream rootDeviceIndexCheck;
-    rootDeviceIndexCheck << " Root device index: " << allocation.getRootDeviceIndex();
+    rootDeviceIndexCheck << " Root index: " << allocation.getRootDeviceIndex();
+
+    std::stringstream totalSystemMemoryCheck;
+    totalSystemMemoryCheck << "Total sys mem allocated: " << executionEnvironment->memoryManager->getUsedSystemMemorySize();
+
+    std::stringstream totalLocalMemoryCheck;
+    totalLocalMemoryCheck << "Total lmem allocated: " << executionEnvironment->memoryManager->getUsedLocalMemorySize(0);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
@@ -68,8 +75,10 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
         EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("AllocationType: BUFFER") != std::string::npos);
+        EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
         EXPECT_TRUE(str.find("Handle: 4") != std::string::npos);
+        EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);
+        EXPECT_TRUE(str.find(totalLocalMemoryCheck.str()) != std::string::npos);
     }
 }
 
@@ -105,7 +114,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     allocation.bufferObjects[0] = &bo;
 
     testing::internal::CaptureStdout();
-    fileLogger.logAllocation(&allocation);
+    fileLogger.logAllocation(&allocation, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
 
     std::thread::id thisThread = std::this_thread::get_id();
@@ -114,19 +123,19 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
+    memoryPoolCheck << " Pool: " << getMemoryPoolString(&allocation);
 
     std::stringstream gpuAddressCheck;
-    gpuAddressCheck << " GPU address: 0x" << std::hex << allocation.getGpuAddress();
+    gpuAddressCheck << " GPU VA: 0x" << std::hex << allocation.getGpuAddress();
 
     std::stringstream rootDeviceIndexCheck;
-    rootDeviceIndexCheck << " Root device index: " << allocation.getRootDeviceIndex();
+    rootDeviceIndexCheck << " Root index: " << allocation.getRootDeviceIndex();
 
     EXPECT_TRUE(output.find(threadIDCheck.str()) != std::string::npos);
     EXPECT_TRUE(output.find(memoryPoolCheck.str()) != std::string::npos);
     EXPECT_TRUE(output.find(gpuAddressCheck.str()) != std::string::npos);
     EXPECT_TRUE(output.find(rootDeviceIndexCheck.str()) != std::string::npos);
-    EXPECT_TRUE(output.find("AllocationType: BUFFER") != std::string::npos);
+    EXPECT_TRUE(output.find("Type: BUFFER") != std::string::npos);
     EXPECT_TRUE(output.find("Handle: 4") != std::string::npos);
     EXPECT_TRUE(output.find("\n") != std::string::npos);
 
@@ -152,20 +161,20 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
 
     allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
-    fileLogger.logAllocation(&allocation);
+    fileLogger.logAllocation(&allocation, nullptr);
     std::thread::id thisThread = std::this_thread::get_id();
 
     std::stringstream threadIDCheck;
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
+    memoryPoolCheck << " Pool: " << getMemoryPoolString(&allocation);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
         EXPECT_TRUE(str.find(threadIDCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
-        EXPECT_TRUE(str.find("AllocationType: BUFFER") != std::string::npos);
+        EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
         EXPECT_FALSE(str.find("Handle: 4") != std::string::npos);
     }
 }
@@ -181,7 +190,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     EXPECT_FALSE(logFileCreated);
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
-    fileLogger.logAllocation(&allocation);
+    fileLogger.logAllocation(&allocation, nullptr);
 
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -189,12 +198,12 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     threadIDCheck << " ThreadID: " << thisThread;
 
     std::stringstream memoryPoolCheck;
-    memoryPoolCheck << " MemoryPool: " << getMemoryPoolString(&allocation);
+    memoryPoolCheck << " Pool: " << getMemoryPoolString(&allocation);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());
         EXPECT_FALSE(str.find(threadIDCheck.str()) != std::string::npos);
         EXPECT_FALSE(str.find(memoryPoolCheck.str()) != std::string::npos);
-        EXPECT_FALSE(str.find("AllocationType: BUFFER") != std::string::npos);
+        EXPECT_FALSE(str.find("Type: BUFFER") != std::string::npos);
     }
 }

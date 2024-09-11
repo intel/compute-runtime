@@ -21,7 +21,7 @@ namespace NEO {
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     if (this->allocationType != allocationType) {
         this->allocationType = allocationType;
-        fileLoggerInstance().logAllocation(this);
+        fileLoggerInstance().logAllocation(this, nullptr);
     }
 }
 
