@@ -14,6 +14,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -48,6 +49,9 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
 
         auto &productHelper = pDevice->getProductHelper();
         miMemFenceSupported = pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice ? false : productHelper.isGlobalFenceInDirectSubmissionRequired(pDevice->getHardwareInfo());
+
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
     }
 
     template <typename FamilyType>
@@ -111,35 +115,40 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
     }
 
     bool miMemFenceSupported = false;
+    bool heaplessStateInit = false;
 };
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenInitializingDirectSubmissionThenEnableMiMemFenceProgramming) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
+    uint32_t expectedSysMemFenceAddress = heaplessStateInit ? 0 : 1;
+
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
-    EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_EQ(heaplessStateInit && miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
     EXPECT_TRUE(directSubmission.initialize(true, false));
 
     EXPECT_EQ(miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
-    validateFenceProgramming<FamilyType>(directSubmission, 1, 1);
+    validateFenceProgramming<FamilyType>(directSubmission, 1, expectedSysMemFenceAddress);
 }
 
 HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenDispatchingWithoutInitThenEnableMiMemFenceProgramming) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     FlushStampTracker flushStamp(true);
 
+    uint32_t expectedSysMemFenceAddress = heaplessStateInit ? 0 : 1;
+
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
-    EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_EQ(heaplessStateInit && miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
     EXPECT_TRUE(directSubmission.initialize(false, false));
 
-    EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
+    EXPECT_EQ(heaplessStateInit && miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
     EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 
-    validateFenceProgramming<FamilyType>(directSubmission, 1, 1);
+    validateFenceProgramming<FamilyType>(directSubmission, 1, expectedSysMemFenceAddress);
 
     EXPECT_EQ(miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 }

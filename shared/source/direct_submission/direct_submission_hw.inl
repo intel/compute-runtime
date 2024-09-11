@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -48,6 +49,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
     auto &productHelper = inputParams.rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &compilerProductHelper = inputParams.rootDeviceEnvironment.getHelper<CompilerProductHelper>();
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
@@ -76,6 +78,11 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     if (debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() != -1) {
         miMemFenceRequired = debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get();
     }
+
+    if (miMemFenceRequired && compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled())) {
+        this->systemMemoryFenceAddressSet = true;
+    }
+
     if (debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get() != -1) {
         sfenceMode = static_cast<DirectSubmissionSfenceMode>(debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.get());
     }
@@ -477,7 +484,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
 
             this->partitionConfigSet = true;
         }
-        if (this->miMemFenceRequired) {
+        if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
             startBufferSize += getSizeSystemMemoryFenceAddress();
             dispatchSystemMemoryFenceAddress();
 
