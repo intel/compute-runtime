@@ -242,6 +242,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
     ASSERT_NE(nullptr, commandList0);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
 
     std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
     commandListRegular->close();
@@ -250,7 +251,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithComputeQueueAnd
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
+    EXPECT_EQ(heaplessStateInit ? 2u : 1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }
 
 HWTEST2_F(CommandListAppendSignalEvent, givenCopyOnlyImmediateCmdListAndAppendingRegularCommandlistWithWaitOnEventsAndSignalEventThenUseSemaphoreAndFlushDw, IsAtLeastXeHpcCore) {
@@ -335,6 +336,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
     ASSERT_NE(nullptr, commandList0);
 
     auto &commandStreamReceiver = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
 
     std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
     commandListRegular->close();
@@ -343,7 +345,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = commandList0->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
+    EXPECT_EQ(heaplessStateInit ? 2u : 1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }
 
 HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeControlAppendedCorrectly, IsAtLeastSkl) {
