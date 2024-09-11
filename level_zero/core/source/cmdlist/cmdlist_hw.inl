@@ -1514,6 +1514,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         kernelCounter += rightSize > 0 ? 1 : 0;
     }
 
+    if (NEO::debugManager.flags.ForceNonWalkerSplitMemoryCopy.get() == 1) {
+        leftSize = size;
+        middleSizeBytes = 0;
+        rightSize = 0;
+        kernelCounter = 1;
+    }
+
     bool waitForImplicitInOrderDependency = !isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed;
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, nullptr, relaxedOrderingDispatch, false, waitForImplicitInOrderDependency, false);
