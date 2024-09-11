@@ -44,12 +44,15 @@ struct ImplicitScalingDispatchCommandArgs {
 
     RequiredPartitionDim requiredPartitionDim = RequiredPartitionDim::none;
     uint32_t partitionCount = 0;
+    uint32_t workgroupSize = 0;
+    uint32_t maxWgCountPerTile = 0;
 
     bool useSecondaryBatchBuffer = false;
     bool apiSelfCleanup = false;
     bool dcFlush = false;
     bool forceExecutionOnSingleTile = false;
     bool blockDispatchToCommandBuffer = false;
+    bool isRequiredWorkGroupOrder = false;
 };
 
 template <typename GfxFamily>

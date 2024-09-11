@@ -17,6 +17,8 @@ struct WalkerPartitionArgs {
     uint64_t postSyncImmediateValue = 0;
     uint32_t partitionCount = 0;
     uint32_t tileCount = 0;
+    uint32_t workgroupSize = 0;
+    uint32_t maxWgCountPerTile = 0;
     bool emitBatchBufferEnd = false;
     bool secondaryBatchBuffer = false;
     bool synchronizeBeforeExecution = false;
@@ -33,6 +35,7 @@ struct WalkerPartitionArgs {
     bool dcFlushEnable = false;
     bool forceExecutionOnSingleTile = false;
     bool blockDispatchToCommandBuffer = false;
+    bool isRequiredWorkGroupOrder = false;
 };
 
 inline constexpr uint32_t wparidCCSOffset = 0x221C;

@@ -47,11 +47,14 @@ ImplicitScalingDispatchCommandArgs ImplicitScalingFixture::createDispatchCommand
         nullptr,                         // outWalkerPtr
         NEO::RequiredPartitionDim::none, // requiredPartitionDim
         partitionCount,                  // partitionCount
+        1,                               // workgroupSize
+        1,                               // maxWgCountPerTile
         true,                            // useSecondaryBatchBuffer
         false,                           // apiSelfCleanup
         dcFlushFlag,                     // dcFlush
         forceExecutionOnSingleTileFlag,  // forceExecutionOnSingleTile
-        false};                          // blockDispatchToCommandBuffer
+        false,                           // blockDispatchToCommandBuffer
+        false};                          // isRequiredWorkGroupOrder
 
     return args;
 }

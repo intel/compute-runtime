@@ -494,16 +494,14 @@ uint64_t computeWalkerSectionStart(WalkerPartitionArgs &args) {
 template <typename GfxFamily, typename WalkerType>
 void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgrammed,
                                WalkerType *inputWalker,
-                               uint32_t partitionCount,
-                               uint32_t tileCount,
-                               bool forceExecutionOnSingleTile,
-                               bool blockDispatchToCommandBuffer) {
+                               WalkerPartitionArgs &args,
+                               const NEO::HardwareInfo &hwInfo) {
     WalkerType *computeWalker = nullptr;
-    if (!blockDispatchToCommandBuffer) {
+    if (!args.blockDispatchToCommandBuffer) {
         computeWalker = putCommand<WalkerType>(inputAddress, totalBytesProgrammed);
     }
 
-    if (partitionCount > 1) {
+    if (args.partitionCount > 1) {
         auto partitionType = inputWalker->getPartitionType();
 
         assert(inputWalker->getThreadGroupIdStartingX() == 0u);
@@ -522,16 +520,23 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
             workgroupCount = inputWalker->getThreadGroupIdZDimension();
         }
 
-        if (forceExecutionOnSingleTile) {
+        if (args.forceExecutionOnSingleTile) {
             inputWalker->setPartitionSize(workgroupCount);
         } else {
-            inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, partitionCount));
+            inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, args.partitionCount));
         }
 
-        appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, tileCount, workgroupCount);
+        NEO::EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*inputWalker,
+                                                                      hwInfo,
+                                                                      args.partitionCount,
+                                                                      args.workgroupSize,
+                                                                      args.maxWgCountPerTile,
+                                                                      args.isRequiredWorkGroupOrder);
+
+        appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, args.tileCount, workgroupCount);
     }
 
-    if (!blockDispatchToCommandBuffer) {
+    if (computeWalker != nullptr) {
         *computeWalker = *inputWalker;
     }
 
@@ -645,7 +650,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         args.secondaryBatchBuffer);
 
     // Walker section
-    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.tileCount, args.forceExecutionOnSingleTile, args.blockDispatchToCommandBuffer);
+    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args, hwInfo);
     if (outWalkerPtr) {
         *outWalkerPtr = walkerPtr;
     }
@@ -742,7 +747,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
         }
     }
 
-    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args.partitionCount, args.tileCount, args.forceExecutionOnSingleTile, args.blockDispatchToCommandBuffer);
+    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args, hwInfo);
 
     if (!args.blockDispatchToCommandBuffer) {
         if (outWalkerPtr) {

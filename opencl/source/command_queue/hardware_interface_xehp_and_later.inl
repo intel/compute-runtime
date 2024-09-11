@@ -162,25 +162,25 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         uint32_t partitionCount = 0u;
         RequiredPartitionDim requiredPartitionDim = kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none;
 
-        void *outWalker = nullptr;
-
         ImplicitScalingDispatchCommandArgs implicitScalingArgs{
             workPartitionAllocationGpuVa,        // workPartitionAllocationGpuVa
             &hwInfo,                             // hwInfo
-            &outWalker,                          // outWalkerPtr
+            nullptr,                             // outWalkerPtr
             requiredPartitionDim,                // requiredPartitionDim
             partitionCount,                      // partitionCount
+            workgroupSize,                       // workgroupSize
+            maxWgCountPerTile,                   // maxWgCountPerTile
             false,                               // useSecondaryBatchBuffer
             false,                               // apiSelfCleanup
             queueCsr.getDcFlushSupport(),        // dcFlush
             kernel.isSingleSubdevicePreferred(), // forceExecutionOnSingleTile
-            false};                              // blockDispatchToCommandBuffer
+            false,                               // blockDispatchToCommandBuffer
+            requiredWalkOrder != 0};             // isRequiredWorkGroupOrder
 
         ImplicitScalingDispatch<GfxFamily>::template dispatchCommands<WalkerType>(commandStream,
                                                                                   walkerCmd,
                                                                                   devices,
                                                                                   implicitScalingArgs);
-        EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*static_cast<WalkerType *>(outWalker), hwInfo, implicitScalingArgs.partitionCount, workgroupSize, maxWgCountPerTile, requiredWalkOrder != 0);
 
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
             queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), implicitScalingArgs.partitionCount));
