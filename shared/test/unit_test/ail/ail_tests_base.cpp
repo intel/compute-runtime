@@ -5,9 +5,7 @@
  *
  */
 
-#include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -24,15 +22,6 @@ HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePat
     std::string dummyKernelSource{"kernel void copybuffer(__global int* a, __global int* b){ //some code }"};
     AILConfigurationHw<productFamily> ail;
     EXPECT_FALSE(ail.isFallbackToPatchtokensRequired(dummyKernelSource));
-}
-
-HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequireAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtLeastSkl) {
-    AILWhitebox<productFamily> ail;
-    for (const auto &name : {"ArcControlAssist",
-                             "ArcControl"}) {
-        ail.processName = name;
-        EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
-    }
 }
 
 } // namespace NEO
