@@ -40,7 +40,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingpOsInterface.get(); }
     IpSamplingMetricStreamerImp *pActiveStreamer = nullptr;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
-    ze_result_t handleMetricGroupExtendedProperties(void *pNext) override;
+    ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) override;
     void setActivationTracker(MultiDomainDeferredActivationTracker *inputActivationTracker) {
         activationTracker.reset(inputActivationTracker);
     }

@@ -200,7 +200,7 @@ ze_result_t OaMetricSourceImp::getConcurrentMetricGroups(std::vector<zet_metric_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(void *pNext) {
+ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) {
     ze_result_t retVal = ZE_RESULT_ERROR_INVALID_ARGUMENT;
     while (pNext) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);

@@ -207,7 +207,7 @@ ze_result_t IpSamplingMetricSourceImp::getConcurrentMetricGroups(std::vector<zet
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(void *pNext) {
+ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) {
     ze_result_t retVal = ZE_RESULT_ERROR_INVALID_ARGUMENT;
     while (pNext) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
@@ -256,7 +256,7 @@ ze_result_t IpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_
     pProperties->pNext = pNext;
 
     if (pNext) {
-        return metricSource.handleMetricGroupExtendedProperties(pNext);
+        return metricSource.handleMetricGroupExtendedProperties(toHandle(), pNext);
     }
 
     return ZE_RESULT_SUCCESS;

@@ -15,8 +15,8 @@
 #include <level_zero/zet_api.h>
 
 #define ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP (static_cast<zet_structure_type_t>(0x00010006))
-#define ZET_INTEL_STRUCTURE_TYPE_EXPORT_DMA_EXP_PROPERTIES (static_cast<zet_structure_type_t>(0x00010007))
-#define ZET_INTEL_METRIC_TYPE_EXPORT_DMA_BUF (0x7ffffffd)
+#define ZET_INTEL_STRUCTURE_TYPE_EXPORT_DMA_PROPERTIES_EXP (static_cast<zet_structure_type_t>(0x00010007))
+#define ZET_INTEL_METRIC_TYPE_EXPORT_DMA_BUF_EXP (0x7ffffffd)
 
 typedef struct _zet_intel_export_dma_buf_exp_properties_t {
     zet_structure_type_t stype;

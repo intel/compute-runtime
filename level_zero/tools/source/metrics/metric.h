@@ -69,7 +69,7 @@ class MetricSource {
     uint32_t getType() const {
         return type;
     }
-    virtual ze_result_t handleMetricGroupExtendedProperties(void *pNext) = 0;
+    virtual ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) = 0;
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;
