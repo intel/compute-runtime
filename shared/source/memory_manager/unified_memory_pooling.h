@@ -122,7 +122,7 @@ class UsmMemAllocPoolsManager {
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitFields;
     Device *device;
     InternalMemoryType poolMemoryType;
-    size_t totalSize;
+    size_t totalSize{};
     std::mutex mtx;
     std::map<PoolInfo, std::vector<std::unique_ptr<UsmMemAllocPool>>> pools;
 };
