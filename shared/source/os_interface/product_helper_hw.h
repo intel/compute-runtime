@@ -130,7 +130,8 @@ class ProductHelperHw : public ProductHelper {
     bool useGemCreateExtInAllocateMemoryByKMD() const override;
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;
-    bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t kernelIndirectDetectionVersion) const override;
+    bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const override;
+    uint32_t getRequiredDetectIndirectVersion() const override;
     bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const override;
     bool isTranslationExceptionSupported() const override;
     uint32_t getMaxNumSamplers() const override;

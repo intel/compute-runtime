@@ -16,6 +16,7 @@
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -26,8 +27,10 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "aubstream/engine_node.h"
+#include "ocl_igc_shared/indirect_access_detection/version.h"
 
 #include <bitset>
+#include <limits>
 
 namespace NEO {
 
@@ -67,9 +70,20 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t kernelIndirectDetectionVersion) const {
-    constexpr bool enabled = false;
-    return enabled;
+bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const {
+    if (std::numeric_limits<uint32_t>::max() == getRequiredDetectIndirectVersion()) {
+        return false;
+    }
+    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
+    const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
+    const auto currentIndirectDetectionVersion = isPrecompiled ? precompiledKernelIndirectDetectionVersion : INDIRECT_ACCESS_DETECTION_VERSION;
+    const bool indirectDetectionValid = currentIndirectDetectionVersion >= getRequiredDetectIndirectVersion();
+    return isZebin && indirectDetectionValid && !isCMKernelHeuristic;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersion() const {
+    return std::numeric_limits<uint32_t>::max();
 }
 
 template <PRODUCT_FAMILY gfxProduct>
