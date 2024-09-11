@@ -195,7 +195,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
         auto *crossThreadData = reinterpret_cast<uint8_t *>(kernel->getCrossThreadData());
         crossThreadData = ptrOffset(crossThreadData, offsetInBytes);
 
-        EXPECT_EQ(0, memcmp(inlineDataPointer, crossThreadData, inlineSize - offsetInBytes));
+        auto crossThreadDataSize = kernel->getCrossThreadDataSize();
+        auto sizeToCompare = std::min(inlineSize - offsetInBytes, crossThreadDataSize - offsetInBytes);
+
+        EXPECT_EQ(0, memcmp(inlineDataPointer, crossThreadData, sizeToCompare));
     },
                walkerVariant);
 
