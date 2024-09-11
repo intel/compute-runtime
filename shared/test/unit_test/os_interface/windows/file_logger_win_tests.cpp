@@ -33,6 +33,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
     allocation.setGpuAddress(0x12345);
+    allocation.size = 777u;
 
     fileLogger.logAllocation(&allocation);
 
@@ -58,6 +59,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
         EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find("AllocationType: BUFFER") != std::string::npos);
+        EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
     }
 }
 
