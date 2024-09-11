@@ -57,8 +57,16 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipAllocationThenValidSipTypeIs
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSipTypeThenDebugBindlessIsReturned) {
+    auto &compilerProductHelper = neoDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
     auto sipType = SipKernel::getSipKernelType(*neoDevice);
-    EXPECT_EQ(NEO::SipKernelType::dbgBindless, sipType);
+    if (heaplessEnabled) {
+        EXPECT_EQ(NEO::SipKernelType::dbgHeapless, sipType);
+
+    } else {
+        EXPECT_EQ(NEO::SipKernelType::dbgBindless, sipType);
+    }
 }
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {

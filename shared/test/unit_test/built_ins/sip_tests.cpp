@@ -435,7 +435,14 @@ TEST(DebugBindlessSip, givenDebuggerAndUseBindlessDebugSipWhenGettingSipTypeThen
 
     auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
 
-    EXPECT_EQ(SipKernelType::dbgBindless, sipType);
+    auto &compilerProductHelper = mockDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    if (heaplessEnabled) {
+        EXPECT_EQ(SipKernelType::dbgHeapless, sipType);
+
+    } else {
+        EXPECT_EQ(SipKernelType::dbgBindless, sipType);
+    }
 }
 
 TEST(DebugHeaplessSip, givenDebuggerAndUseHeaplessModeWhenGettingSipTypeThenDebugHeaplessTypeIsReturned) {
