@@ -757,6 +757,47 @@ HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterMemwhenRemapAndIsBcsThenRegist
     EXPECT_EQ(loadRegMem->getRegisterAddress(), offset);
 }
 
+HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterRegwhenRemapAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+
+    uint32_t srcOffset = 0x2000; // remapable
+    uint32_t dstOffset = 0x2000;
+
+    constexpr size_t bufferSize = 2100;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+    uint8_t *ptr = buffer;
+    bool isBcs = true;
+
+    EncodeSetMMIO<FamilyType>::encodeREG(cmdStream, srcOffset, dstOffset, isBcs);
+    auto storeRegReg = genCmdCast<MI_LOAD_REGISTER_REG *>(buffer);
+    ASSERT_NE(nullptr, storeRegReg);
+    EXPECT_EQ(storeRegReg->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + srcOffset);
+    EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + dstOffset);
+
+    isBcs = false;
+    ptr += sizeof(MI_LOAD_REGISTER_REG);
+    EncodeSetMMIO<FamilyType>::encodeREG(cmdStream, srcOffset, dstOffset, isBcs);
+    storeRegReg = genCmdCast<MI_LOAD_REGISTER_REG *>(ptr);
+    EXPECT_EQ(storeRegReg->getSourceRegisterAddress(), srcOffset);
+    EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), dstOffset);
+
+    srcOffset = 0x1900; // not remapable
+    dstOffset = 0x1900;
+    ptr += sizeof(MI_LOAD_REGISTER_REG);
+    EncodeSetMMIO<FamilyType>::encodeREG(cmdStream, srcOffset, dstOffset, isBcs);
+    storeRegReg = genCmdCast<MI_LOAD_REGISTER_REG *>(ptr);
+    EXPECT_EQ(storeRegReg->getSourceRegisterAddress(), srcOffset);
+    EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), dstOffset);
+
+    isBcs = true;
+    ptr += sizeof(MI_LOAD_REGISTER_REG);
+    EncodeSetMMIO<FamilyType>::encodeREG(cmdStream, srcOffset, dstOffset, isBcs);
+    storeRegReg = genCmdCast<MI_LOAD_REGISTER_REG *>(ptr);
+    EXPECT_EQ(storeRegReg->getSourceRegisterAddress(), srcOffset);
+    EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), dstOffset);
+}
+
 HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtLeastGen12lp) {
 
     DebugManagerStateRestore dbgRestore;

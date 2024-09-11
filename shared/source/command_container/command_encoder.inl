@@ -387,6 +387,8 @@ void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, 
 template <typename Family>
 void EncodeSetMMIO<Family>::encodeREG(LinearStream &cmdStream, uint32_t dstOffset, uint32_t srcOffset, bool isBcs) {
     MI_LOAD_REGISTER_REG cmd = Family::cmdInitLoadRegisterReg;
+    srcOffset += (isBcs && isRemapApplicable(srcOffset)) ? RegisterOffsets::bcs0Base : 0x0;
+    dstOffset += (isBcs && isRemapApplicable(dstOffset)) ? RegisterOffsets::bcs0Base : 0x0;
     cmd.setSourceRegisterAddress(srcOffset);
     cmd.setDestinationRegisterAddress(dstOffset);
     remapOffset(&cmd);
