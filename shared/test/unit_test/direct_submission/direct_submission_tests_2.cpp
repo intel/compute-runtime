@@ -199,6 +199,10 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
 
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
+
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
     EXPECT_TRUE(directSubmission.miMemFenceRequired);
@@ -246,7 +250,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
                         directSubmission.getSizeSemaphoreSection(false) +
                         sizeof(MI_LOAD_REGISTER_IMM) +
                         sizeof(MI_LOAD_REGISTER_MEM);
-    if (directSubmission.miMemFenceRequired) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -629,7 +633,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
                         directSubmission.getSizeSemaphoreSection(false);
-    if (directSubmission.miMemFenceRequired) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -683,7 +687,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
 
     size_t submitSize = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false)) - directSubmission.getSizeNewResourceHandler();
-    if (directSubmission.miMemFenceRequired) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -709,7 +713,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.submitCount);
     size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
                         directSubmission.getSizeSemaphoreSection(false);
-    if (directSubmission.miMemFenceRequired) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -760,7 +764,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
 
     size_t submitSize = directSubmission.getSizeDispatch(false, false, directSubmission.dispatchMonitorFenceRequired(false)) - directSubmission.getSizeNewResourceHandler();
-    if (directSubmission.miMemFenceRequired) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission.isRelaxedOrderingEnabled()) {
@@ -853,7 +857,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
                         directSubmission.getSizeSemaphoreSection(false) +
                         sizeof(MI_LOAD_REGISTER_IMM) +
                         sizeof(MI_LOAD_REGISTER_MEM);
-    if (directSubmission.miMemFenceRequired) {
+    if (directSubmission.miMemFenceRequired && !heaplessStateInit) {
         submitSize += directSubmission.getSizeSystemMemoryFenceAddress();
     }
 

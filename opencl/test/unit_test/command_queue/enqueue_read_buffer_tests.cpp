@@ -174,8 +174,18 @@ HWTEST_F(EnqueueReadBufferTypeTest, WhenReadingBufferThenIndirectDataIsAdded) {
     auto kernel = multiDispatchInfo.begin()->getKernel();
     auto kernelDescriptor = &kernel->getKernelInfo().kernelDescriptor;
 
+    auto crossThreadDatSize = kernel->getCrossThreadDataSize();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(pCmdQ->getHeaplessModeEnabled());
+    bool crossThreadDataFitsInInlineData = (crossThreadDatSize <= inlineDataSize);
+
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), kernelDescriptor, rootDeviceIndex));
-    EXPECT_NE(iohBefore, pIOH->getUsed());
+
+    if (crossThreadDataFitsInInlineData) {
+        EXPECT_EQ(iohBefore, pIOH->getUsed());
+    } else {
+        EXPECT_NE(iohBefore, pIOH->getUsed());
+    }
+
     if (kernel->usesBindfulAddressingForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }

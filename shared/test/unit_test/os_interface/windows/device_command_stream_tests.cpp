@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -1329,7 +1330,10 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
                           Dispatcher::getSizePreemption() +
                           directSubmission->getSizeDispatch(false, false, directSubmission->dispatchMonitorFenceRequired(false));
 
-    if (directSubmission->miMemFenceRequired) {
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
+
+    if (directSubmission->miMemFenceRequired && !heaplessStateInit) {
         expectedSize += directSubmission->getSizeSystemMemoryFenceAddress();
     }
     if (directSubmission->isRelaxedOrderingEnabled()) {

@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
@@ -129,21 +130,26 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
 
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
-    allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
+    allocation->updateTaskCount(heaplessStateInit ? 3 : 2, defaultEngine.osContext->getContextId());
 
     volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
     completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
-    *completionAddress = 1;
+    *completionAddress = heaplessStateInit ? 2 : 1;
+
     completionAddress += (postSyncOffset / sizeof(TagAddressType));
-    *completionAddress = 1;
+    *completionAddress = heaplessStateInit ? 2 : 1;
 
     memoryManager->handleFenceCompletion(allocation);
 
     uint64_t expectedAddress = castToUint64(const_cast<TagAddressType *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
                                TagAllocationLayout::completionFenceOffset +
                                postSyncOffset;
-    constexpr uint64_t expectedValue = 2;
+    uint64_t expectedValue = heaplessStateInit ? 3 : 2;
 
     EXPECT_EQ(2u, mock->waitUserFenceCall.called);
     EXPECT_EQ(expectedAddress, mock->waitUserFenceCall.address);

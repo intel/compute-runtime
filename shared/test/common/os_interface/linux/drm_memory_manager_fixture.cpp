@@ -10,6 +10,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -25,11 +26,15 @@ void DrmMemoryManagerBasic::SetUp() {
     for (auto i = 0u; i < numRootDevices; i++) {
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
+        UnitTestSetter::setCcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
+        UnitTestSetter::setRcsExposure(*executionEnvironment.rootDeviceEnvironments[i]);
+
         auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
         executionEnvironment.rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, i, false);
         executionEnvironment.rootDeviceEnvironments[i]->initGmm();
     }
+    executionEnvironment.calculateMaxOsContextCount();
 }
 
 void DrmMemoryManagerFixture::setUp() {
@@ -51,6 +56,9 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
     for (auto i = 0u; i < numRootDevices; i++) {
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
         rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+        UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
+
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->setDriverModel(DrmMockCustom::create(*rootDeviceEnvironment));
         rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>(), i, false);
@@ -58,6 +66,7 @@ void DrmMemoryManagerFixture::setUp(DrmMockCustom *mock, bool localMemoryEnabled
         rootDeviceEnvironment->initGmm();
     }
 
+    executionEnvironment->calculateMaxOsContextCount();
     rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
     rootDeviceEnvironment->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
 
@@ -118,10 +127,13 @@ void DrmMemoryManagerFixture::tearDown() {
 
 void DrmMemoryManagerWithLocalMemoryFixture::setUp() {
     backup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
-    ultHwConfig.csrBaseCallCreatePreemption = false;
+    ultHwConfig.csrBaseCallCreatePreemption = true;
 
     MemoryManagementFixture::setUp();
+
     executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
+
+    executionEnvironment->calculateMaxOsContextCount();
     auto drmMock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[1]).release();
     drmMock->memoryInfo.reset(new MockMemoryInfo{*drmMock});
     DrmMemoryManagerFixture::setUp(drmMock, true);

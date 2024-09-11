@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/submissions_aggregator.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
@@ -52,6 +53,9 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
         batchBuffer.usedSize = 0x40;
         batchBuffer.taskStartAddress = 0x881112340000;
         batchBuffer.stream = stream.get();
+
+        auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+        heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
     }
 
     void tearDown() {
@@ -66,4 +70,6 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
     GraphicsAllocation *commandBuffer;
     DebugManagerStateRestore restorer;
     std::unique_ptr<LinearStream> stream;
+
+    bool heaplessStateInit = false;
 };
