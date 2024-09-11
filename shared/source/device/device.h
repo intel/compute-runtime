@@ -255,6 +255,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void setAsEngineInstanced();
     void finalizeRayTracing();
     void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t regularPriorityCount, uint32_t highPriorityContextCount);
+    void allocateDebugSurface(size_t debugSurfaceSize);
 
     DeviceInfo deviceInfo = {};
 

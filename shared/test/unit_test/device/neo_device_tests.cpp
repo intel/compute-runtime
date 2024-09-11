@@ -1153,6 +1153,21 @@ TEST(Device, givenDifferentEngineTypesWhenIsSecondaryContextEngineTypeCalledThen
     }
 }
 
+TEST(Device, whenAllocateDebugSurfaceIsCalledThenEachSubDeviceContainsCorrectDebugSurface) {
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.CreateMultipleSubDevices.set(4);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    size_t size = 8u;
+    device->allocateDebugSurface(size);
+    auto *debugSurface = device->getDebugSurface();
+
+    for (auto *subDevice : device->getSubDevices()) {
+        EXPECT_EQ(debugSurface, subDevice->getDebugSurface());
+    }
+}
+
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenCCSEngineAndContextGroupSizeEnabledWhenCreatingEngineThenItsContextHasContextGroupFlagSet) {
     DebugManagerStateRestore dbgRestorer;
     const uint32_t contextGroupSize = 8;

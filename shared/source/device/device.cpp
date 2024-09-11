@@ -272,15 +272,9 @@ void Device::initializeCommonResources() {
         debugSurfaceSize = NEO::SipKernel::getSipKernel(*this, nullptr).getStateSaveAreaSize(this);
     }
 
-    const bool allocateDebugSurface = getL0Debugger();
-    if (allocateDebugSurface) {
-        debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties(
-            {getRootDeviceIndex(), true,
-             debugSurfaceSize,
-             NEO::AllocationType::debugContextSaveArea,
-             false,
-             false,
-             getDeviceBitfield()});
+    const bool isDebugSurfaceRequired = getL0Debugger();
+    if (isDebugSurfaceRequired) {
+        allocateDebugSurface(debugSurfaceSize);
     }
 
     if (ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
@@ -467,7 +461,23 @@ void Device::createSecondaryContexts(const EngineControl &primaryEngine, Seconda
     }
 
     primaryEngine.osContext->setContextGroup(true);
-};
+}
+
+void Device::allocateDebugSurface(size_t debugSurfaceSize) {
+    this->debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {getRootDeviceIndex(), true,
+         debugSurfaceSize,
+         NEO::AllocationType::debugContextSaveArea,
+         false,
+         false,
+         getDeviceBitfield()});
+
+    for (auto &subdevice : this->subdevices) {
+        if (subdevice) {
+            subdevice->debugSurface = this->debugSurface;
+        }
+    }
+}
 
 void Device::addEngineToEngineGroup(EngineControl &engine) {
     auto &hardwareInfo = this->getHardwareInfo();

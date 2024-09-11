@@ -29,6 +29,13 @@ RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
 
 RootDevice::~RootDevice() {
     if (getDebugSurface()) {
+
+        for (auto *subDevice : this->getSubDevices()) {
+            if (subDevice) {
+                subDevice->setDebugSurface(nullptr);
+            }
+        }
+
         getMemoryManager()->freeGraphicsMemory(debugSurface);
         debugSurface = nullptr;
     }
