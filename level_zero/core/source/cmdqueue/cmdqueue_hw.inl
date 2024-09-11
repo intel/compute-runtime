@@ -215,7 +215,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     }
 
     this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
-    this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+    if (!parentImmediateCommandlistLinearStream) {
+        this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+    }
 
     auto completionResult = ZE_RESULT_SUCCESS;
     if (!parentImmediateCommandlistLinearStream) {
@@ -434,7 +436,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->csr->setPreemptionMode(ctx.statePreemption);
     this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
 
-    this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+    if (!parentImmediateCommandlistLinearStream) {
+        this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+    }
 
     auto completionResult = ZE_RESULT_SUCCESS;
     if (!parentImmediateCommandlistLinearStream) {
@@ -519,7 +523,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     }
 
     this->updateTaskCountAndPostSync(ctx.isDispatchTaskCountPostSyncRequired);
-    this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+
+    if (!parentImmediateCommandlistLinearStream) {
+        this->csr->makeSurfacePackNonResident(this->csr->getResidencyAllocations(), false);
+    }
 
     auto completionResult = ZE_RESULT_SUCCESS;
     if (!parentImmediateCommandlistLinearStream) {
