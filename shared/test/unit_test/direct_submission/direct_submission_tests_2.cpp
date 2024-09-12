@@ -2211,12 +2211,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBcsRelaxedOrderingEnabledWh
     auto lrrCmdIt = find<MI_LOAD_REGISTER_REG *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrrCmdIt);
 
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
@@ -2276,12 +2276,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSet
     auto lrrCmdIt = find<MI_LOAD_REGISTER_REG *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrrCmdIt);
 
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0);
 
     lrrCmd++;
-    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR3 + 4);
-    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::csGprR0 + 4);
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), RegisterOffsets::csGprR3 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), RegisterOffsets::csGprR0 + 4);
 
     auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
     EXPECT_EQ(1u, bbStartCmd->getIndirectAddressEnable());
