@@ -406,6 +406,27 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         connection->vmToContextStateSaveAreaBindInfo[vmBindData.vmBind.vm_handle] = {vmBindOp.addr, vmBindOp.range};
                     }
                     if (metaDataEntry.metadata.type == WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA) {
+                        isaAddr = vmBindOp.addr;
+                        if (connection->isaMap[0].find(vmBindOp.addr) == connection->isaMap[0].end()) {
+                            auto &isaMap = connection->isaMap[0];
+                            auto isa = std::make_unique<IsaAllocation>();
+                            isa->bindInfo = {vmBindOp.addr, vmBindOp.range};
+                            isa->vmHandle = vmBindData.vmBind.vm_handle;
+                            isa->elfHandle = invalidHandle;
+                            isa->moduleBegin = 0;
+                            isa->moduleEnd = 0;
+                            isa->tileInstanced = !(this->debugArea.isShared);
+                            isa->validVMs.insert(vmBindData.vmBind.vm_handle);
+                            uint32_t deviceBitfield = 0;
+                            auto &debugModule = connection->metaDataToModule[vmBindOpMetadata.metadata_handle];
+                            memcpy_s(&deviceBitfield, sizeof(uint32_t),
+                                     &debugModule.deviceBitfield,
+                                     sizeof(debugModule.deviceBitfield));
+                            const NEO::DeviceBitfield devices(deviceBitfield);
+                            isa->deviceBitfield = devices;
+                            isa->perKernelModule = false;
+                            isaMap[vmBindOp.addr] = std::move(isa);
+                        }
                         connection->vmToModuleDebugAreaBindInfo[vmBindData.vmBind.vm_handle] = {vmBindOp.addr, vmBindOp.range};
                     }
                 }

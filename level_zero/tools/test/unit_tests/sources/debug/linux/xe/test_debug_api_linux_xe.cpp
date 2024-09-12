@@ -2333,6 +2333,128 @@ TEST_F(DebugApiLinuxTestXe, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaTh
     EXPECT_EQ(4u, session->debugArea.pgsize);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenSharedModuleDebugAreaWhenVmBindDebugAreaThenIsaMapUpdatedAndDebugIsaNotTileInstanced) {
+    constexpr uint64_t debugAreaVA = 0x1234000;
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->debugArea.isShared = true;
+
+    constexpr uint64_t metadataHandle = 10;
+    drm_xe_eudebug_event_metadata metadata = {};
+    metadata.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadata.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadata.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadata_handle = metadataHandle;
+    metadata.len = 0x1000;
+    metadata.type = WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_MODULE_AREA;
+
+    auto &clientConnection = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle];
+    clientConnection->metaDataMap[metadataHandle].metadata = std::move(metadata);
+
+    auto handler = new MockIoctlHandlerXe;
+    session->ioctlHandler.reset(handler);
+
+    drm_xe_eudebug_event_vm vm1 = {};
+    drm_xe_eudebug_event_vm vm2 = {};
+    vm1.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    vm1.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    vm1.vm_handle = 1;
+    vm2.base.type = DRM_XE_EUDEBUG_EVENT_VM;
+    vm2.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    vm2.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    vm2.vm_handle = 2;
+
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm1));
+    session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vm2));
+
+    uint64_t vmHandle = 1;
+    session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmToModuleDebugAreaBindInfo[vmHandle] = {debugAreaVA, 0x1000};
+
+    {
+        drm_xe_eudebug_event_vm_bind vmBindEvent = {};
+        vmBindEvent.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND;
+        vmBindEvent.base.flags = DRM_XE_EUDEBUG_EVENT_STATE_CHANGE;
+        vmBindEvent.base.len = sizeof(drm_xe_eudebug_event_vm_bind);
+        vmBindEvent.base.seqno = 1;
+        vmBindEvent.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+        vmBindEvent.vm_handle = 1;
+        vmBindEvent.flags = DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
+        vmBindEvent.num_binds = 1;
+        session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindEvent.base));
+
+        auto &vmBindMap = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap;
+        EXPECT_EQ(vmBindMap.size(), 1u);
+
+        drm_xe_eudebug_event_vm_bind_op vmBindOp{};
+        vmBindOp.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND_OP;
+        vmBindOp.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+        vmBindOp.base.len = sizeof(drm_xe_eudebug_event_vm_bind_op);
+        vmBindOp.base.seqno = 2;
+        vmBindOp.num_extensions = 1;
+        vmBindOp.addr = debugAreaVA;
+        vmBindOp.range = 0x1000;
+        vmBindOp.vm_bind_ref_seqno = vmBindEvent.base.seqno;
+        session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindOp.base));
+
+        drm_xe_eudebug_event_vm_bind_op_metadata vmBindOpMetadata{};
+        vmBindOpMetadata.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA;
+        vmBindOpMetadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+        vmBindOpMetadata.base.len = sizeof(drm_xe_eudebug_event_vm_bind_op_metadata);
+        vmBindOpMetadata.base.seqno = 3;
+        vmBindOpMetadata.vm_bind_op_ref_seqno = vmBindOp.base.seqno;
+        vmBindOpMetadata.metadata_handle = metadataHandle;
+        session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindOpMetadata.base));
+
+        drm_xe_eudebug_event_vm_bind_ufence vmBindUfence{};
+        vmBindUfence.base.type = DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE;
+        vmBindUfence.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE | DRM_XE_EUDEBUG_EVENT_NEED_ACK;
+        vmBindUfence.base.len = sizeof(drm_xe_eudebug_event_vm_bind_ufence);
+        vmBindUfence.base.seqno = 4;
+        vmBindUfence.vm_bind_ref_seqno = vmBindEvent.base.seqno;
+        session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&vmBindUfence.base));
+    }
+
+    DebugAreaHeader debugArea;
+    debugArea.reserved1 = 1;
+    debugArea.pgsize = uint8_t(4);
+    debugArea.version = 1;
+    debugArea.isShared = 1;
+
+    constexpr size_t bufSize = sizeof(session->debugArea);
+    handler->mmapRet = reinterpret_cast<char *>(&debugArea);
+    handler->pwriteRetVal = bufSize;
+    handler->preadRetVal = bufSize;
+
+    handler->setPreadMemory(reinterpret_cast<char *>(&debugArea), sizeof(debugArea), debugAreaVA);
+    handler->setPwriteMemory(reinterpret_cast<char *>(&debugArea), sizeof(debugArea), debugAreaVA);
+
+    session->readModuleDebugArea();
+    EXPECT_EQ(1u, session->debugArea.version);
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = debugAreaVA;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    memset(buffer, 1, sizeof(buffer));
+    handler->pwriteRetVal = 16;
+
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &isaMap = clientConnection->isaMap[0];
+    EXPECT_EQ(isaMap.size(), 1u);
+    EXPECT_FALSE(isaMap[debugAreaVA]->tileInstanced);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenFifoPollEnvironmentVariableWhenAsyncThreadLaunchedThenDebugUmdFifoPollIntervalUpdated) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.DebugUmdFifoPollInterval.set(100);
