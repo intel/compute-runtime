@@ -32,7 +32,7 @@ const DeviceDescriptor deviceDescriptorTable[] = {
     {0, nullptr, nullptr, ""}};
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto drm = std::unique_ptr<Drm>(new Drm(std::move(hwDeviceId), rootDeviceEnvironment));
+    std::unique_ptr<Drm> drm{new Drm(std::move(hwDeviceId), rootDeviceEnvironment)};
 
     if (!drm->queryDeviceIdAndRevision()) {
         return nullptr;
