@@ -50,7 +50,6 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     }
 
     setPropertiesExtraPerContext();
-    setPropertiesExtraPerKernel();
 }
 
 void StateComputeModeProperties::copyPropertiesAll(const StateComputeModeProperties &properties) {
@@ -70,8 +69,6 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
 void StateComputeModeProperties::copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties) {
     largeGrfMode.isDirty = false;
     threadArbitrationPolicy.isDirty = false;
-
-    clearIsDirtyExtraPerKernel();
 
     largeGrfMode.set(properties.largeGrfMode.value);
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
@@ -94,7 +91,6 @@ void StateComputeModeProperties::clearIsDirty() {
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty = false;
 
     clearIsDirtyExtraPerContext();
-    clearIsDirtyExtraPerKernel();
 }
 
 void StateComputeModeProperties::setCoherencyProperty(bool requiresCoherency) {
@@ -179,11 +175,9 @@ void StateComputeModeProperties::setPropertiesGrfNumberThreadArbitration(uint32_
 
     this->threadArbitrationPolicy.isDirty = false;
     this->largeGrfMode.isDirty = false;
-    clearIsDirtyExtraPerKernel();
 
     setGrfNumberProperty(numGrfRequired);
     setThreadArbitrationProperty(threadArbitrationPolicy);
-    setPropertiesExtraPerKernel();
 }
 
 void FrontEndProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {

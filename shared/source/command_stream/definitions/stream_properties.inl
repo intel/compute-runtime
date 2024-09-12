@@ -46,12 +46,10 @@ struct StateComputeModeProperties {
 
   protected:
     void clearIsDirtyExtraPerContext();
-    void clearIsDirtyExtraPerKernel();
     bool isDirtyExtra() const;
     void resetStateExtra();
 
     void setPropertiesExtraPerContext();
-    void setPropertiesExtraPerKernel();
 
     void copyPropertiesExtra(const StateComputeModeProperties &properties);
 
