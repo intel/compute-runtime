@@ -8287,6 +8287,114 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWh
     givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
 }
 
+template <bool blockOnFence = false>
+struct RootSessionTileFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
+    void setUp() {
+        NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
+        DebugApiLinuxMultiDeviceFixture::setUp();
+
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+        rootSession = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+        ASSERT_NE(nullptr, rootSession);
+        rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
+        rootSession->debugArea.isShared = true;
+        rootSession->blockOnFenceMode = blockOnFence;
+
+        setupSessionClassHandlesAndUuidMap(rootSession.get());
+        setupVmToTile(rootSession.get());
+    }
+
+    void tearDown() {
+        DebugApiLinuxMultiDeviceFixture::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<MockDebugSessionLinuxi915> rootSession;
+};
+
+using DebugApiLinuxMultiDeviceVmBindRootDeviceSessionTest = Test<RootSessionTileFixture<false>>;
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindRootDeviceSessionTest, givenTileInstancedModuleDebugAreaWhenWritingDebugAreaThenBothInstancesAreWrittenTo) {
+    DebugSessionLinuxi915::UuidData debugAreaUUIDData = {
+        .handle = debugAreaUUID,
+        .classHandle = moduleDebugClassHandle,
+        .classIndex = NEO::DrmResourceClass::moduleHeapDebugArea,
+        .data = std::make_unique<char[]>(0x1000),
+        .dataSize = 0x1000};
+
+    auto debugAreaVA = 0x1234000;
+
+    auto handler = new MockIoctlHandlerI915;
+    rootSession->ioctlHandler.reset(handler);
+
+    rootSession->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
+    rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[debugAreaUUID] = std::move(debugAreaUUIDData);
+    rootSession->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->vmToModuleDebugAreaBindInfo[vm0] = {0x1234000, 0x1000};
+
+    {
+        uint64_t vmBindDebugData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
+        prelim_drm_i915_debug_event_vm_bind *vmBindDebugArea = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(vmBindDebugData);
+
+        vmBindDebugArea->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+        vmBindDebugArea->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+
+        vmBindDebugArea->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + sizeof(typeOfUUID);
+        vmBindDebugArea->base.seqno = 20u;
+        vmBindDebugArea->client_handle = MockDebugSessionLinuxi915::mockClientHandle;
+        vmBindDebugArea->va_start = debugAreaVA;
+        vmBindDebugArea->va_length = 0x2000;
+        vmBindDebugArea->vm_handle = vm0;
+        vmBindDebugArea->num_uuids = 1;
+
+        typeOfUUID uuidTemp[1];
+        uuidTemp[0] = debugAreaUUID;
+        memcpy_s(vmBindDebugArea->uuids, sizeof(uuidTemp), uuidTemp, sizeof(uuidTemp));
+
+        rootSession->handleEvent(&vmBindDebugArea->base);
+
+        vmBindDebugArea->vm_handle = vm1;
+        rootSession->handleEvent(&vmBindDebugArea->base);
+    }
+
+    DebugAreaHeader debugArea;
+    debugArea.reserved1 = 1;
+    debugArea.pgsize = uint8_t(4);
+    debugArea.version = 1;
+    debugArea.isShared = 1;
+
+    constexpr size_t bufSize = sizeof(rootSession->debugArea);
+    char buffer2[bufSize];
+
+    handler->mmapRet = reinterpret_cast<char *>(&debugArea);
+    handler->pwriteRetVal = bufSize;
+    handler->preadRetVal = bufSize;
+
+    handler->setPreadMemory(reinterpret_cast<char *>(&debugArea), sizeof(debugArea), debugAreaVA);
+    handler->setPwriteMemory(reinterpret_cast<char *>(&debugArea), sizeof(debugArea), debugAreaVA);
+
+    rootSession->readModuleDebugArea();
+    EXPECT_EQ(1u, rootSession->debugArea.version);
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc{};
+    desc.address = debugAreaVA;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+    uint8_t buffer[16];
+    handler->pwriteRetVal = 16;
+
+    auto result = rootSession->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2, handler->pwriteCalled);
+
+    // Read From tile0
+    rootSession->readGpuMemory(vm0, buffer2, bufSize, debugAreaVA);
+    EXPECT_EQ(0, memcmp(&debugArea, buffer2, bufSize));
+    memset(buffer2, 0, bufSize);
+    // Read From tile1
+    rootSession->readGpuMemory(vm1, buffer2, bufSize, debugAreaVA);
+    EXPECT_EQ(0, memcmp(&debugArea, buffer2, bufSize));
+}
+
 using DebugLinuxMultiDeviceVmBindBlockOnFenceTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<true>>;
 
 TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {

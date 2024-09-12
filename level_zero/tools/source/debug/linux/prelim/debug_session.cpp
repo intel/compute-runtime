@@ -527,7 +527,27 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
 
             if (connection->classHandleToIndex[classUuid].second ==
                 static_cast<uint32_t>(NEO::DrmResourceClass::moduleHeapDebugArea)) {
-                connection->vmToModuleDebugAreaBindInfo[vmHandle] = {vmBind->va_start, vmBind->va_length};
+                auto &isaMap = connection->isaMap[tileIndex];
+                {
+                    auto isa = std::make_unique<IsaAllocation>();
+                    isa->bindInfo = {vmBind->va_start, vmBind->va_length};
+                    isa->vmHandle = vmHandle;
+                    isa->elfHandle = invalidHandle;
+                    isa->moduleBegin = 0;
+                    isa->moduleEnd = 0;
+                    isa->tileInstanced = !(this->debugArea.isShared);
+                    isa->perKernelModule = false;
+                    uint32_t deviceBitfield = 0;
+                    auto &debugModule = connection->uuidToModule[uuid];
+                    memcpy_s(&deviceBitfield, sizeof(uint32_t),
+                             &debugModule.deviceBitfield,
+                             sizeof(debugModule.deviceBitfield));
+                    const NEO::DeviceBitfield devices(deviceBitfield);
+                    isa->deviceBitfield = devices;
+                    isaMap[vmBind->va_start] = std::move(isa);
+                    connection->vmToModuleDebugAreaBindInfo[vmHandle] = {vmBind->va_start,
+                                                                         vmBind->va_length};
+                }
             }
 
             if (connection->classHandleToIndex[classUuid].second ==

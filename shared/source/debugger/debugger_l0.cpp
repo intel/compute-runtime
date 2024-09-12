@@ -91,6 +91,11 @@ void DebuggerL0::initialize() {
         debugArea.scratchBegin = sizeof(DebugAreaHeader);
         debugArea.scratchEnd = MemoryConstants::pageSize64k - sizeof(DebugAreaHeader);
 
+        const auto &productHelper = device->getProductHelper();
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *moduleDebugArea),
+                                                              *device, moduleDebugArea, 0, &debugArea,
+                                                              sizeof(DebugAreaHeader));
+
         NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
         if (memoryOperationsIface) {
             memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
@@ -101,10 +106,6 @@ void DebuggerL0::initialize() {
             }
         }
 
-        const auto &productHelper = device->getProductHelper();
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *moduleDebugArea),
-                                                              *device, moduleDebugArea, 0, &debugArea,
-                                                              sizeof(DebugAreaHeader));
         if (productHelper.disableL3CacheForDebug(hwInfo)) {
             device->getGmmHelper()->forceAllResourcesUncached();
         }
