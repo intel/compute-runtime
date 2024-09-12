@@ -617,6 +617,8 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     setupCacheInfo(*hwInfo);
     hwInfo->capabilityTable.deviceName = device->devName;
 
+    rootDeviceEnvironment.initializeGfxCoreHelperFromHwInfo();
+
     return 0;
 }
 

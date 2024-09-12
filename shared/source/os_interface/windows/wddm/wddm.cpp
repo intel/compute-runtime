@@ -119,6 +119,7 @@ bool Wddm::init() {
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
+    rootDeviceEnvironment.initializeGfxCoreHelperFromHwInfo();
     rootDeviceEnvironment.initAilConfigurationHelper();
     if (false == rootDeviceEnvironment.initAilConfiguration()) {
         return false;
