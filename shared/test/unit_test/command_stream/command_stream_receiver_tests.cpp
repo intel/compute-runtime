@@ -3390,11 +3390,7 @@ HWTEST_F(CommandStreamReceiverTest, givenL1CachePolicyInitializedInCsrWhenGettin
 
 HWTEST_F(CommandStreamReceiverHwTest, givenCreateGlobalStatelessHeapAllocationWhenGettingIndirectHeapObjectThenHeapAndAllocationAreInitialized) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    if (commandStreamReceiver.heaplessStateInitialized) {
-        EXPECT_NE(nullptr, commandStreamReceiver.getGlobalStatelessHeap());
-    } else {
-        EXPECT_EQ(nullptr, commandStreamReceiver.getGlobalStatelessHeap());
-    }
+    EXPECT_EQ(nullptr, commandStreamReceiver.getGlobalStatelessHeap());
 
     commandStreamReceiver.createGlobalStatelessHeap();
     auto heap = commandStreamReceiver.getGlobalStatelessHeap();

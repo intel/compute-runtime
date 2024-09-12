@@ -134,6 +134,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     auto heapless = compilerProductHelper.isHeaplessModeEnabled();
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
 
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
+
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
     allocation->updateTaskCount(heaplessStateInit ? 3 : 2, defaultEngine.osContext->getContextId());
 
@@ -168,6 +172,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     mock->completionFenceSupported = true;
     mock->isVmBindAvailableCall.callParent = false;
     mock->isVmBindAvailableCall.returnValue = true;
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+
+    if (heaplessStateInit) {
+        GTEST_SKIP();
+    }
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
