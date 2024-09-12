@@ -955,16 +955,6 @@ double WddmMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceI
     return 0.94;
 }
 
-AllocationStatus WddmMemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
-    this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
-    return AllocationStatus::Success;
-}
-
-AllocationStatus WddmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
-    this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
-    return AllocationStatus::Success;
-}
-
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
     return &mallocRestrictions;
 }

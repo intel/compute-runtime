@@ -64,10 +64,10 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     rootDeviceIndexCheck << " Root index: " << allocation.getRootDeviceIndex();
 
     std::stringstream totalSystemMemoryCheck;
-    totalSystemMemoryCheck << "Total sys mem allocated: " << executionEnvironment->memoryManager->getUsedSystemMemorySize();
+    totalSystemMemoryCheck << "Total sys mem allocated: " << std::dec << executionEnvironment->memoryManager->getUsedSystemMemorySize();
 
     std::stringstream totalLocalMemoryCheck;
-    totalLocalMemoryCheck << "Total lmem allocated: " << executionEnvironment->memoryManager->getUsedLocalMemorySize(0);
+    totalLocalMemoryCheck << "Total lmem allocated: " << std::dec << executionEnvironment->memoryManager->getUsedLocalMemorySize(0);
 
     if (fileLogger.wasFileCreated(fileLogger.getLogFileName())) {
         auto str = fileLogger.getFileString(fileLogger.getLogFileName());

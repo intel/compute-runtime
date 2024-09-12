@@ -150,6 +150,16 @@ HeapIndex MemoryManager::selectExternalHeap(bool useLocalMemory) {
     return useLocalMemory ? HeapIndex::heapExternalDeviceMemory : HeapIndex::heapExternal;
 }
 
+inline MemoryManager::AllocationStatus MemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
+    this->sysMemAllocsSize += allocation->getUnderlyingBufferSize();
+    return AllocationStatus::Success;
+}
+
+inline MemoryManager::AllocationStatus MemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
+    this->localMemAllocsSize[rootDeviceIndex] += allocation->getUnderlyingBufferSize();
+    return AllocationStatus::Success;
+}
+
 void MemoryManager::zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
     if (allocationData.flags.zeroMemory) {
         memset(cpuPtr, 0, size);

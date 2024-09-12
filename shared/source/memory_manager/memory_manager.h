@@ -262,8 +262,8 @@ class MemoryManager {
     virtual bool isCpuCopyRequired(const void *ptr) { return false; }
     virtual bool isWCMemory(const void *ptr) { return false; }
 
-    virtual AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) { return AllocationStatus::Success; };
-    virtual AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) { return AllocationStatus::Success; };
+    virtual AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation);
+    virtual AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex);
 
     virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
     virtual bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }

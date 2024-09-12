@@ -118,8 +118,8 @@ void FileLogger<debugLevel>::logAllocation(GraphicsAllocation const *graphicsAll
         ss << graphicsAllocation->getPatIndexInfoString();
 
         if (memoryManager) {
-            ss << " Total sys mem allocated: " << memoryManager->getUsedSystemMemorySize();
-            ss << " Total lmem allocated: " << memoryManager->getUsedLocalMemorySize(graphicsAllocation->getRootDeviceIndex());
+            ss << " Total sys mem allocated: " << std::dec << memoryManager->getUsedSystemMemorySize();
+            ss << " Total lmem allocated: " << std::dec << memoryManager->getUsedLocalMemorySize(graphicsAllocation->getRootDeviceIndex());
         }
 
         ss << std::endl;
