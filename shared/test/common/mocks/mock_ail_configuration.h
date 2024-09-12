@@ -18,10 +18,6 @@ class MockAILConfiguration : public AILConfiguration {
     }
     void modifyKernelIfRequired(std::string &kernel) override {}
 
-    bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override {
-        return false;
-    }
-
     bool contextSyncFlagReturn = false;
     bool isContextSyncFlagRequired() override {
         return contextSyncFlagReturn;

@@ -65,8 +65,6 @@ class AILConfiguration {
 
     virtual void modifyKernelIfRequired(std::string &kernel) = 0;
 
-    virtual bool isFallbackToPatchtokensRequired(const std::string &kernelSources) = 0;
-
     virtual bool isContextSyncFlagRequired() = 0;
 
     virtual bool isBufferPoolEnabled() = 0;
@@ -103,7 +101,6 @@ class AILConfigurationHw : public AILConfiguration {
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override;
 
     void modifyKernelIfRequired(std::string &kernel) override;
-    bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override;
     bool isContextSyncFlagRequired() override;
     bool isBufferPoolEnabled() override;
     bool useLegacyValidationLogic() override;
