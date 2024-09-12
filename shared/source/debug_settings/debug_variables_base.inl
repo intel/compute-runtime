@@ -291,6 +291,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEStackIDControl, -1, "Set Stack ID Control in 
 DECLARE_DEBUG_VARIABLE(int32_t, StandaloneInOrderTimestampAllocationEnabled, -1, "-1: default, 0: disabled, 1: enabled. If enabled, use internal allocations, instead of Event pool for timestamps")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlushWithWrite, -1, "-1: ignore. >=0: Force PostSync cache flush and override postSync immediate write address to given value")
 DECLARE_DEBUG_VARIABLE(int32_t, DeferStateInitSubmissionToFirstRegularUsage, -1, "-1: ignore, 0: disabled, 1: enabled. If set, instead of initializing at Device creation, submit initial state during first usage (eg. kernel submission)")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceNonWalkerSplitMemoryCopy, -1, "-1: default, 0: disabled, 1: enabled. If set, memory copy will be executed as single byte copy Walker without performance optimizations")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
@@ -436,7 +437,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingQueueSizeLimit, -
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingMinNumberOfClients, -1, "-1: default, >0: Enables RelaxedOrdering mode only if specified number of clients is assigned to given CSR.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMonitorFenceInputPolicy, -1, "-1: default, 0: stalling command flag, 1: explicit monitor fence flag. Selects policy to dispatch monitor fence upon input flag, either for every stalling command or explicit motor fence dispatch")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionPrintSemaphoreUsage, -1, "-1: default, 0: disabled, 1: enabled. If set, print DirectSubmission semaphore programming and unlocking")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceNonWalkerSplitMemoryCopy, -1, "-1: default, 0: disabled, 1: enabled. If set, memory copy will be executed as single byte copy Walker without performance optimizations")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitForPagingFenceInController, -1, "Instead of waiting for paging fence on user thread, program additional semaphore which will be signaled by direct submission controller when paging fence reaches required value -1: default, 0 - disable, 1 - enable.")
 
