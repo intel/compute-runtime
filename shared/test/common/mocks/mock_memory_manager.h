@@ -47,7 +47,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::pageFaultManager;
     using MemoryManager::prefetchManager;
     using MemoryManager::supportsMultiStorageResources;
-    using MemoryManager::unMapPhysicalToVirtualMemory;
+    using MemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
+    using MemoryManager::unMapPhysicalHostMemoryFromVirtualMemory;
     using MemoryManager::useNonSvmHostPtrAlloc;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
@@ -83,6 +84,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocateMemoryByKMD(const AllocationData &allocationData) override;
     GraphicsAllocation *allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     GraphicsAllocation *allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) override;
+    GraphicsAllocation *allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) override;
     int redundancyRatio = 1;
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
@@ -217,6 +219,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         }
         return allocateGraphicsMemoryForNonSvmHostPtrResult;
     }
+
     bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override {
         if (overrideAllocateAsPackReturn != -1) {
             return !!overrideAllocateAsPackReturn;
@@ -225,12 +228,19 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         }
     }
 
-    bool mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+    bool mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
         if (failMapPhysicalToVirtualMemory) {
             return false;
         }
-        return OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(physicalAllocation, gpuRange, bufferSize);
-    };
+        return OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(physicalAllocation, gpuRange, bufferSize);
+    }
+
+    bool mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) override {
+        if (failMapPhysicalToVirtualMemory) {
+            return false;
+        }
+        return OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(rootDeviceIndices, multiGraphicsAllocation, physicalAllocation, gpuRange, bufferSize);
+    }
 
     void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
         registerIpcExportedAllocationCalled++;

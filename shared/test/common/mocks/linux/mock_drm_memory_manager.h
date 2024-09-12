@@ -42,6 +42,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::allocateGraphicsMemoryWithHostPtr;
     using DrmMemoryManager::allocateMemoryByKMD;
     using DrmMemoryManager::allocatePhysicalDeviceMemory;
+    using DrmMemoryManager::allocatePhysicalHostMemory;
     using DrmMemoryManager::allocatePhysicalLocalDeviceMemory;
     using DrmMemoryManager::allocationTypeForCompletionFence;
     using DrmMemoryManager::allocUserptr;
@@ -64,7 +65,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::localMemBanksCount;
     using DrmMemoryManager::lockBufferObject;
     using DrmMemoryManager::lockResourceImpl;
-    using DrmMemoryManager::mapPhysicalToVirtualMemory;
+    using DrmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory;
+    using DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory;
     using DrmMemoryManager::memoryForPinBBs;
     using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::munmapFunction;
@@ -83,7 +85,8 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::supportsMultiStorageResources;
     using DrmMemoryManager::tryToGetBoHandleWrapperWithSharedOwnership;
     using DrmMemoryManager::unlockBufferObject;
-    using DrmMemoryManager::unMapPhysicalToVirtualMemory;
+    using DrmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
+    using DrmMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory;
     using DrmMemoryManager::waitOnCompletionFence;
     using MemoryManager::allocateGraphicsMemoryInDevicePool;
     using MemoryManager::allRegisteredEngines;

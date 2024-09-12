@@ -235,6 +235,9 @@ class BufferObject {
     void setUserptr(uint64_t ptr) { this->userptr = ptr; };
     uint64_t getUserptr() const { return this->userptr; };
 
+    void setMmapOffset(uint64_t offset) { this->mmapOffset = offset; };
+    uint64_t getMmapOffset() const { return this->mmapOffset; };
+
     static constexpr int gpuHangDetected{-7171};
 
     uint32_t getOsContextId(OsContext *osContext);
@@ -257,6 +260,7 @@ class BufferObject {
     uint64_t unmapSize = 0;
     uint64_t patIndex = CommonConstants::unsupportedPatIndex;
     uint64_t userptr = 0u;
+    uint64_t mmapOffset = 0u;
     size_t colourChunk = 0;
     uint64_t gpuAddress = 0llu;
 

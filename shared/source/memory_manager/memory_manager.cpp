@@ -655,14 +655,24 @@ GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const Allocati
     getAllocationData(allocationData, properties, nullptr, createStorageInfoFromProperties(properties));
 
     AllocationStatus status = AllocationStatus::Error;
-    if (this->localMemorySupported[allocationData.rootDeviceIndex]) {
-        allocation = allocatePhysicalLocalDeviceMemory(allocationData, status);
-        if (allocation) {
-            getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
-            status = this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
+    if (allocationData.flags.isUSMDeviceMemory) {
+        if (this->localMemorySupported[allocationData.rootDeviceIndex]) {
+            allocation = allocatePhysicalLocalDeviceMemory(allocationData, status);
+            if (allocation) {
+                getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
+                status = this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
+            }
+        } else {
+            allocation = allocatePhysicalDeviceMemory(allocationData, status);
+            if (allocation) {
+                status = this->registerSysMemAlloc(allocation);
+            }
         }
     } else {
-        allocation = allocatePhysicalDeviceMemory(allocationData, status);
+        allocation = allocatePhysicalHostMemory(allocationData, status);
+        if (allocation) {
+            status = this->registerSysMemAlloc(allocation);
+        }
     }
     if (allocation && status != AllocationStatus::Success) {
         freeGraphicsMemory(allocation);

@@ -2906,12 +2906,12 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
 
         auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
         auto virtualAlloc = svmAllocsManager->getSVMAlloc(ptr);
-        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation->allocation->setSize((MemoryConstants::gigaByte * 4) - MemoryConstants::pageSize64k);
+        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation.allocation->setSize((MemoryConstants::gigaByte * 4) - MemoryConstants::pageSize64k);
 
         L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
         kernel->setArgBuffer(0, sizeof(ptr), &ptr);
 
-        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation->allocation->setSize(size);
+        virtualAlloc->virtualReservationData->mappedAllocations.at(offsetAddress)->mappedAllocation.allocation->setSize(size);
 
         bool phys1Resident = false;
         bool phys2Resident = false;

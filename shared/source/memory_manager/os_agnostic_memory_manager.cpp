@@ -25,6 +25,7 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_allocation.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -416,14 +417,33 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uin
     }
 }
 
-void OsAgnosticMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
+void OsAgnosticMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize, OsContext *osContext, uint32_t rootDeviceIndex) {
     physicalAllocation->setGpuPtr(0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
 }
 
-bool OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+void OsAgnosticMemoryManager::unMapPhysicalHostMemoryFromVirtualMemory(MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+    for (uint32_t i = 0; i < static_cast<uint32_t>(multiGraphicsAllocation.getGraphicsAllocations().size()); i++) {
+        delete multiGraphicsAllocation.getGraphicsAllocation(i);
+        multiGraphicsAllocation.removeAllocation(i);
+    }
+}
+
+bool OsAgnosticMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
     physicalAllocation->setGpuPtr(gpuRange);
     physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
+    return true;
+}
+
+bool OsAgnosticMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesContainer &rootDeviceIndices, MultiGraphicsAllocation &multiGraphicsAllocation, GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
+    for (size_t i = 0; i < rootDeviceIndices.size(); i++) {
+        auto allocation = new GraphicsAllocation(rootDeviceIndices[i], 1u, AllocationType::bufferHostMemory, addrToPtr(gpuRange), bufferSize, physicalAllocation->peekSharedHandle(), MemoryPool::systemCpuInaccessible, 1, gpuRange);
+        if (i == 0) {
+            allocation->setGpuPtr(gpuRange);
+            allocation->setReservedAddressRange(addrToPtr(gpuRange), bufferSize);
+        }
+        multiGraphicsAllocation.addAllocation(allocation);
+    }
     return true;
 }
 
@@ -491,6 +511,34 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
         alloc->setDefaultGmm(gmm.release());
         status = AllocationStatus::Success;
     }
+    return alloc;
+}
+
+GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    status = AllocationStatus::Error;
+
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                     allocationData.storageInfo, gmmRequirements);
+
+    GraphicsAllocation *alloc = nullptr;
+
+    auto ptr = allocateSystemMemory(alignUp(allocationData.size, MemoryConstants::pageSize), MemoryConstants::pageSize2M);
+    if (ptr != nullptr) {
+        alloc = new MemoryAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, ptr, ptr, 0u, allocationData.size,
+                                     counter, MemoryPool::system4KBPages, allocationData.flags.uncacheable, allocationData.flags.flushL3, maxOsContextCount);
+        counter++;
+    }
+
+    if (alloc) {
+        alloc->setDefaultGmm(gmm.release());
+        status = AllocationStatus::Success;
+    }
+
     return alloc;
 }
 

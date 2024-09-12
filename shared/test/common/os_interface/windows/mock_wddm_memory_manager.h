@@ -24,6 +24,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::allocateMemoryByKMD;
     using BaseClass::allocatePhysicalDeviceMemory;
+    using BaseClass::allocatePhysicalHostMemory;
     using BaseClass::allocatePhysicalLocalDeviceMemory;
     using BaseClass::allRegisteredEngines;
     using BaseClass::createGraphicsAllocation;
@@ -32,9 +33,11 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::getWddm;
     using BaseClass::gfxPartitions;
     using BaseClass::localMemorySupported;
-    using BaseClass::mapPhysicalToVirtualMemory;
+    using BaseClass::mapPhysicalDeviceMemoryToVirtualMemory;
+    using BaseClass::mapPhysicalHostMemoryToVirtualMemory;
     using BaseClass::supportsMultiStorageResources;
-    using BaseClass::unMapPhysicalToVirtualMemory;
+    using BaseClass::unMapPhysicalDeviceMemoryFromVirtualMemory;
+    using BaseClass::unMapPhysicalHostMemoryFromVirtualMemory;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
     using BaseClass::executionEnvironment;
     using BaseClass::getHugeGfxMemoryChunkSize;

@@ -130,7 +130,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
     DebugManagerStateRestore restore;
     const uint32_t rootDeviceIndex = 1u;
-    const uint32_t numRootDevices = 2u;
+    const uint32_t numRootDevices = 3u;
 };
 
 class DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation : public DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {

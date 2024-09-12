@@ -2406,7 +2406,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
             for (const auto &mappedAllocationData : allocData->virtualReservationData->mappedAllocations) {
                 // Add additional allocations to the residency container if the virtual reservation spans multiple allocations.
                 if (buffer != mappedAllocationData.second->ptr) {
-                    commandContainer.addToResidencyContainer(mappedAllocationData.second->mappedAllocation->allocation);
+                    commandContainer.addToResidencyContainer(mappedAllocationData.second->mappedAllocation.allocation);
                 }
             }
         }

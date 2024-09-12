@@ -83,8 +83,8 @@ struct MockWddmLinuxMemoryManager : NEO::WddmMemoryManager {
     using WddmMemoryManager::allocatePhysicalLocalDeviceMemory;
     using WddmMemoryManager::createPhysicalAllocation;
     using WddmMemoryManager::localMemorySupported;
-    using WddmMemoryManager::mapPhysicalToVirtualMemory;
-    using WddmMemoryManager::unMapPhysicalToVirtualMemory;
+    using WddmMemoryManager::mapPhysicalDeviceMemoryToVirtualMemory;
+    using WddmMemoryManager::unMapPhysicalDeviceMemoryFromVirtualMemory;
     using WddmMemoryManager::WddmMemoryManager;
     NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex) override {
         if (failCreateInternalNTHandle) {

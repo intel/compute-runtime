@@ -134,6 +134,10 @@ GraphicsAllocation *MockMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     return OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(allocationData, status);
 }
 
+GraphicsAllocation *MockMemoryManager::allocatePhysicalHostMemory(const AllocationData &allocationData, AllocationStatus &status) {
+    return OsAgnosticMemoryManager::allocatePhysicalHostMemory(allocationData, status);
+}
+
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     allocation64kbPageCreated = true;
     preferCompressedFlagPassed = forceCompressed ? true : allocationData.flags.preferCompressed;

@@ -268,6 +268,8 @@ struct DrmMockCustom : public Drm {
     uint64_t mmapOffsetFlags = 0;
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
+    bool failOnSecondPrimeFdToHandle = false;
+    bool failOnPrimeHandleToFd = false;
 
     // DRM_IOCTL_I915_GEM_CREATE_EXT
     uint64_t createExtSize = 0;

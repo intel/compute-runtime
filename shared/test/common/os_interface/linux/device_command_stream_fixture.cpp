@@ -117,6 +117,11 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fileDescriptor;
         ioctlCnt.primeFdToHandle++;
+        if (failOnSecondPrimeFdToHandle == true) {
+            failOnSecondPrimeFdToHandle = false;
+            failOnPrimeFdToHandle = true;
+            break;
+        }
         if (failOnPrimeFdToHandle == true) {
             return -1;
         }
@@ -131,6 +136,9 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
             outputFd++;
         }
         ioctlCnt.handleToPrimeFd++;
+        if (failOnPrimeHandleToFd == true) {
+            return -1;
+        }
     } break;
     case DrmIoctl::gemSetDomain: {
         auto setDomainParams = static_cast<NEO::GemSetDomain *>(arg);
