@@ -1223,13 +1223,13 @@ uint32_t KernelImp::getSurfaceStateHeapDataSize() const {
             }
         }
 
-        const bool noBindlessExplicitArgs = std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; });
+        const bool noneOfExplicitArgsRequireLocalSsh = std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; });
 
         if (isBindlessImplicitArgPresent && !bindlessHeapsHelper) {
             return surfaceStateHeapDataSize;
         }
 
-        if (noBindlessExplicitArgs) {
+        if (noneOfExplicitArgsRequireLocalSsh) {
             return 0;
         }
     }
