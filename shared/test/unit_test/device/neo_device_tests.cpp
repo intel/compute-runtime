@@ -993,12 +993,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
 
 TEST(FailDeviceTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     auto hwInfo = defaultHwInfo.get();
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
 
     EXPECT_EQ(nullptr, pDevice);
 }
 
 TEST(FailDeviceTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
+    VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
+    VariableBackup<bool> mockSipCalled(&NEO::MockSipData::called, false);
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());

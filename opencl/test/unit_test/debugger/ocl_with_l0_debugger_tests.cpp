@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ struct DebuggerClFixture
         ASSERT_NE(nullptr, clDevice);
 
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initDebuggerL0(device);
+        device->getL0Debugger()->initialize();
         this->osContext = device->getDefaultEngine().osContext;
 
         cl_device_id deviceId = clDevice;

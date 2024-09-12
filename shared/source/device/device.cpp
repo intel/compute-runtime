@@ -217,6 +217,12 @@ bool Device::createDeviceImpl() {
         return false;
     }
 
+    preemptionMode = PreemptionHelper::getDefaultPreemptionMode(getHardwareInfo());
+    if (!isSubDevice()) {
+        // initialize common resources once
+        initializeCommonResources();
+    }
+
     // create engines
     if (!initDeviceWithEngines()) {
         return false;
@@ -227,8 +233,9 @@ bool Device::createDeviceImpl() {
         return true;
     }
 
-    // initialize common resources once
-    initializeCommonResources();
+    if (getL0Debugger()) {
+        getL0Debugger()->initialize();
+    }
 
     // continue proper init for all devices
     return initDeviceFully();
@@ -237,11 +244,8 @@ bool Device::createDeviceImpl() {
 bool Device::initDeviceWithEngines() {
     setAsEngineInstanced();
 
-    auto &hwInfo = getHardwareInfo();
-    preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
-
     auto &productHelper = getProductHelper();
-    if (getDebugger() && productHelper.disableL3CacheForDebug(hwInfo)) {
+    if (getDebugger() && productHelper.disableL3CacheForDebug(getHardwareInfo())) {
         getGmmHelper()->forceAllResourcesUncached();
     }
 

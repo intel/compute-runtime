@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -53,6 +54,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerInitializedWhe
     DebugManagerStateRestore restore;
     debugManager.flags.ForceL1Caching.set(1u);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    pDevice->getL0Debugger()->initialize();
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);

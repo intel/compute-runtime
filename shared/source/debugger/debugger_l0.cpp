@@ -32,7 +32,6 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
         commandQueueCount[i] = 0;
         uuidL0CommandQueueHandle[i] = 0;
     }
-    initialize();
 }
 
 void DebuggerL0::initialize() {

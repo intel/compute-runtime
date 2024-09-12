@@ -47,6 +47,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenDebugFlagForceSbaTrackingModeSetWhenDeb
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(1);
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     EXPECT_TRUE(debugger->singleAddressSpaceSbaTracking);
 
     NEO::debugManager.flags.DebuggerForceSbaTrackingMode.set(0);
@@ -56,6 +57,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenDebugFlagForceSbaTrackingModeSetWhenDeb
 
 HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreatedThenSbaTrackingGpuVaIsNotReserved) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
 
     EXPECT_EQ(0u, debugger->sbaTrackingGpuVa.address);
     EXPECT_EQ(0u, debugger->sbaTrackingGpuVa.size);
@@ -79,6 +81,7 @@ HWTEST_F(SingleAddressSpaceFixture, givenSingleAddressSpaceWhenDebuggerIsCreated
 
 HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenAbortIsCalledAndNoCommandsAreAddedToStream, IsAtMostGen11) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -109,6 +112,7 @@ HWTEST2_F(SingleAddressSpaceFixture, WhenProgrammingSbaTrackingCommandsForSingle
 
 HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenCorrectSequenceOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -229,6 +233,7 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
 
 HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenONlyPartOfCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -342,6 +347,7 @@ INSTANTIATE_TEST_SUITE_P(BBLevelForSbaTracking, L0DebuggerBBlevelParameterizedTe
 
 HWTEST2_F(SingleAddressSpaceFixture, GivenAllZeroSbaAddressesWhenProgrammingSbaTrackingCommandsForSingleAddressSpaceThenNoCommandsAreAddedToStream, IsAtLeastGen12lp) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     AllocationProperties commandBufferProperties = {pDevice->getRootDeviceIndex(),
                                                     true,
                                                     MemoryConstants::pageSize,

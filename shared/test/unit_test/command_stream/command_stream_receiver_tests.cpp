@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
@@ -4752,6 +4753,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    pDevice->getL0Debugger()->initialize();
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessStateInitialized) {
@@ -4810,6 +4812,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
+    pDevice->getL0Debugger()->initialize();
     pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::offline);
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 

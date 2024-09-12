@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,10 +98,12 @@ struct SingleAddressSpaceLinuxFixture : public Test<NEO::DeviceFixture> {
 
 HWTEST_F(SingleAddressSpaceLinuxFixture, givenDebuggingModeOfflineWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     EXPECT_FALSE(debugger->singleAddressSpaceSbaTracking);
 
     pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::offline);
 
     debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    debugger->initialize();
     EXPECT_TRUE(debugger->singleAddressSpaceSbaTracking);
 }
