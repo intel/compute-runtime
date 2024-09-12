@@ -375,7 +375,6 @@ inline void EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled
 template <typename Family>
 void EncodeSetMMIO<Family>::encodeMEM(LinearStream &cmdStream, uint32_t offset, uint64_t address, bool isBcs) {
     MI_LOAD_REGISTER_MEM cmd = Family::cmdInitLoadRegisterMem;
-    offset += (isBcs && isRemapApplicable(offset)) ? RegisterOffsets::bcs0Base : 0x0;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
     remapOffset(&cmd);
@@ -406,7 +405,6 @@ void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_
 template <typename Family>
 inline void EncodeStoreMMIO<Family>::encode(MI_STORE_REGISTER_MEM *cmdBuffer, uint32_t offset, uint64_t address, bool workloadPartition, bool isBcs) {
     MI_STORE_REGISTER_MEM cmd = Family::cmdInitStoreRegisterMem;
-    offset += (isBcs && EncodeSetMMIO<Family>::isRemapApplicable(offset)) ? RegisterOffsets::bcs0Base : 0x0;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
     appendFlags(&cmd, workloadPartition);
