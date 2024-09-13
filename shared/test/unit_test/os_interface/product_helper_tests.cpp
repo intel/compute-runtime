@@ -867,7 +867,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationRe
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_TRUE(productHelper->isHostUsmAllocationReuseSupported());
+    EXPECT_FALSE(productHelper->isHostUsmAllocationReuseSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtLeastMtl) {
