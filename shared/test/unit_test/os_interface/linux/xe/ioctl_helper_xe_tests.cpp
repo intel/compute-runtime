@@ -2201,21 +2201,26 @@ TEST(IoctlHelperXeVmBindTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGet
 
     for (const auto &bindImmediateSupport : ::testing::Bool()) {
         for (const auto &bindReadOnlySupport : ::testing::Bool()) {
-            xeIoctlHelper->supportedFeatures.flags.vmBindImmediate = bindImmediateSupport;
-            xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly = bindReadOnlySupport;
+            for (const auto &bindMakeResidentSupport : ::testing::Bool()) {
+                xeIoctlHelper->supportedFeatures.flags.vmBindImmediate = bindImmediateSupport;
+                xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly = bindReadOnlySupport;
 
-            uint64_t expectedFlags = DRM_XE_VM_BIND_FLAG_DUMPABLE;
+                uint64_t expectedFlags = DRM_XE_VM_BIND_FLAG_DUMPABLE;
 
-            if (bindImmediateSupport) {
-                expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+                if (bindImmediateSupport) {
+                    expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+                }
+                if (bindReadOnlySupport) {
+                    expectedFlags |= DRM_XE_VM_BIND_FLAG_READONLY;
+                }
+                if (bindMakeResidentSupport) {
+                    expectedFlags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
+                }
+
+                auto bindFlags = xeIoctlHelper->getFlagsForVmBind(true, bindImmediateSupport, bindMakeResidentSupport, false, bindReadOnlySupport);
+
+                EXPECT_EQ(expectedFlags, bindFlags);
             }
-            if (bindReadOnlySupport) {
-                expectedFlags |= DRM_XE_VM_BIND_FLAG_READONLY;
-            }
-
-            auto bindFlags = xeIoctlHelper->getFlagsForVmBind(true, true, false, false, true);
-
-            EXPECT_EQ(expectedFlags, bindFlags);
         }
     }
 }
