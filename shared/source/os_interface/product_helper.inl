@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
@@ -71,19 +72,32 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const {
-    if (std::numeric_limits<uint32_t>::max() == getRequiredDetectIndirectVersion()) {
-        return false;
-    }
-    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
     const bool isCMKernelHeuristic = kernelDescriptor.kernelAttributes.simdSize == 1;
+    const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
     const auto currentIndirectDetectionVersion = isPrecompiled ? precompiledKernelIndirectDetectionVersion : INDIRECT_ACCESS_DETECTION_VERSION;
-    const bool indirectDetectionValid = currentIndirectDetectionVersion >= getRequiredDetectIndirectVersion();
-    return isZebin && indirectDetectionValid && !isCMKernelHeuristic;
+    bool indirectDetectionValid = false;
+    if (isCMKernelHeuristic) {
+        if (IndirectDetectionVersions::disabled == getRequiredDetectIndirectVersionVC()) {
+            return false;
+        }
+        indirectDetectionValid = currentIndirectDetectionVersion >= getRequiredDetectIndirectVersionVC();
+    } else {
+        if (IndirectDetectionVersions::disabled == getRequiredDetectIndirectVersion()) {
+            return false;
+        }
+        indirectDetectionValid = currentIndirectDetectionVersion >= getRequiredDetectIndirectVersion();
+    }
+    return isZebin && indirectDetectionValid;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersion() const {
-    return std::numeric_limits<uint32_t>::max();
+    return IndirectDetectionVersions::disabled;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersionVC() const {
+    return IndirectDetectionVersions::disabled;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

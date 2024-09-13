@@ -189,6 +189,7 @@ class ProductHelper {
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const = 0;
     virtual uint32_t getRequiredDetectIndirectVersion() const = 0;
+    virtual uint32_t getRequiredDetectIndirectVersionVC() const = 0;
     virtual bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const = 0;
     virtual bool isTranslationExceptionSupported() const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;

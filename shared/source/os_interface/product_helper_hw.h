@@ -132,6 +132,7 @@ class ProductHelperHw : public ProductHelper {
     bool isDummyBlitWaRequired() const override;
     bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const override;
     uint32_t getRequiredDetectIndirectVersion() const override;
+    uint32_t getRequiredDetectIndirectVersionVC() const override;
     bool isLinearStoragePreferred(bool isImage1d, bool forceLinearStorage) const override;
     bool isTranslationExceptionSupported() const override;
     uint32_t getMaxNumSamplers() const override;
