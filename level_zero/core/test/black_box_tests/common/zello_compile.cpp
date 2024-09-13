@@ -70,12 +70,12 @@ std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &o
     return ret;
 }
 
-std::vector<uint8_t> compileToNative(const std::string &src, const std::string &deviceName, const std::string &revisionId, const std::string &options, const std::string &internalOptions, std::string &outCompilerLog) {
+std::vector<uint8_t> compileToNative(const std::string &src, const std::string &deviceName, const std::string &revisionId, const std::string &options, const std::string &internalOptions, const std::string &statefulMode, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;
 
     const char *mainFileName = "main.cl";
-    const char *argv[] = {"ocloc", "-v", "-device", deviceName.c_str(), "-revision_id", revisionId.c_str(), "-file", mainFileName, "-o", "output.bin", "", "", "", ""};
-    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 4;
+    const char *argv[] = {"ocloc", "-v", "-device", deviceName.c_str(), "-revision_id", revisionId.c_str(), "-file", mainFileName, "-o", "output.bin", "", "", "", "", "", ""};
+    uint32_t numArgs = sizeof(argv) / sizeof(argv[0]) - 6;
     int argIndex = 10;
     if (options.size() > 0) {
         argv[argIndex++] = "-options";
@@ -85,6 +85,11 @@ std::vector<uint8_t> compileToNative(const std::string &src, const std::string &
     if (internalOptions.size() > 0) {
         argv[argIndex++] = "-internal_options";
         argv[argIndex++] = internalOptions.c_str();
+        numArgs += 2;
+    }
+    if (statefulMode.size() > 0) {
+        argv[argIndex++] = "-stateful_address_mode";
+        argv[argIndex++] = statefulMode.c_str();
         numArgs += 2;
     }
     const unsigned char *sources[] = {reinterpret_cast<const unsigned char *>(src.c_str())};
