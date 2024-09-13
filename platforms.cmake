@@ -211,6 +211,10 @@ macro(DISABLE_FLAGS_FOR CORE_TYPE)
   endforeach()
 endmacro()
 
+macro(DISABLE_32BIT_FLAGS_FOR CORE_TYPE)
+  DISABLE_FLAGS_FOR(${CORE_TYPE} ${ARGN})
+endmacro()
+
 macro(DISABLE_WDDM_LINUX_FOR CORE_TYPE)
   if(SUPPORT_${CORE_TYPE})
     foreach(SKU_NAME ${ARGN})
