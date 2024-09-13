@@ -227,6 +227,7 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_AOT_MTL
     {"mtl-u", MTL_U_B0},
     {"mtl-s", MTL_U_B0},
+    {"mtl-m", MTL_U_B0},
     {"arl-u", MTL_U_B0},
     {"arl-s", MTL_U_B0},
     {"mtl-h", MTL_H_B0},

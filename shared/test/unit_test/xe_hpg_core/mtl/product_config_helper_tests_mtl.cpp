@@ -46,7 +46,7 @@ MTLTEST_F(ProductConfigHelperMtlTests, givenMtlConfigsWhenSearchForDeviceAcronym
 
 MTLTEST_F(ProductConfigHelperMtlTests, givenPubliclyAvailableAcronymsForMtlDevicesWhenGetProductConfigThenCorrectValueIsReturned) {
     auto productConfigHelper = std::make_unique<ProductConfigHelper>();
-    std::vector<std::string> mtlUAcronyms = {"mtl-s", "mtl-u"};
+    std::vector<std::string> mtlUAcronyms = {"mtl-s", "mtl-u", "mtl-m"};
     std::vector<std::string> mtlHAcronyms = {"mtl-h", "mtl-p"};
     for (auto &acronym : mtlUAcronyms) {
         ProductConfigHelper::adjustDeviceName(acronym);
