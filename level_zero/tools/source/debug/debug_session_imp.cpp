@@ -906,17 +906,14 @@ void DebugSessionImp::generateEventsForPendingInterrupts() {
 }
 
 void DebugSessionImp::resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds) {
-    std::vector<ze_device_thread_t> threads[4];
     std::vector<EuThread::ThreadId> threadIdsPerDevice[4];
 
     for (auto &threadID : threadIds) {
-        ze_device_thread_t thread = {static_cast<uint32_t>(threadID.slice), static_cast<uint32_t>(threadID.subslice), static_cast<uint32_t>(threadID.eu), static_cast<uint32_t>(threadID.thread)};
         uint32_t deviceIndex = static_cast<uint32_t>(threadID.tileIndex);
 
         UNRECOVERABLE_IF((connectedDevice->getNEODevice()->getNumSubDevices() > 0) &&
                          (deviceIndex >= connectedDevice->getNEODevice()->getNumSubDevices()));
 
-        threads[deviceIndex].push_back(thread);
         threadIdsPerDevice[deviceIndex].push_back(threadID);
     }
 
