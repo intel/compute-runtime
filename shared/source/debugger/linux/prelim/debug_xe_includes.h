@@ -9,6 +9,8 @@
 
 #include "shared/source/os_interface/linux/xe/xedrm_prelim.h"
 
+constexpr const char *sysFsXeEuDebugFile = "/device/prelim_enable_eudebug";
+
 #define DRM_IOCTL_XE_DEBUG_METADATA_DESTROY PRELIM_DRM_IOCTL_XE_DEBUG_METADATA_DESTROY
 #define DRM_IOCTL_XE_DEBUG_METADATA_CREATE PRELIM_DRM_IOCTL_XE_DEBUG_METADATA_CREATE
 #define DRM_IOCTL_XE_EUDEBUG_CONNECT PRELIM_DRM_IOCTL_XE_EUDEBUG_CONNECT

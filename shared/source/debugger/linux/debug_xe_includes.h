@@ -8,3 +8,5 @@
 #pragma once
 
 #include "third_party/uapi-eudebug/drm/xe_drm.h"
+
+constexpr const char *sysFsXeEuDebugFile = "/device/enable_eudebug";
