@@ -6,24 +6,6 @@ SPDX-License-Identifier: MIT
 
 -->
 
-# Release Notes v1.6
-
-Level Zero Core API.
-
-September 2024
-
-Changes in this release:
-
-The update involves changes introduced in Level Zero spec v1.6. Some of the important changes are as follows:
-
-| Feature	| Spec link	| Notes |
-| ------------------ | -------------------| ----------------------------- |
-| Support for zeCommandListHostSynchronize API |	https://spec.oneapi.io/level-zero/latest/core/api.html#zecommandlisthostsynchronize | |	
-| Support for zeDriverGetLastErrorDescription API |	https://spec.oneapi.io/level-zero/latest/core/api.html#zedrivergetlasterrordescription | |
-| Support for zeMemPutIpcHandle API | https://spec.oneapi.io/level-zero/latest/core/api.html#zememputipchandle | |
-| Support for EventPool Get and put IPC handle APIs | https://spec.oneapi.io/level-zero/latest/core/api.html#zeeventpoolgetipchandle , https://spec.oneapi.io/level-zero/latest/core/api.html#zeeventpoolputipchandle | |
-| Support for host mapped and synchronized event timestamp extension API | https://spec.oneapi.io/level-zero/latest/core/api.html#eventquerykerneltimestamps | |
-
 # Release Notes v1.5
 
 Level Zero Core API.
