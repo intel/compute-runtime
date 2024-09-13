@@ -844,6 +844,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
             anyUncacheableArgs = true;
         }
     }
+    UNRECOVERABLE_IF(kernel == nullptr);
 
     if (mediaSamplerRequired) {
         DEBUG_BREAK_IF(device->getDeviceInfo().preemptionSupported != false);
