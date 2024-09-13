@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,16 +40,15 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     static constexpr SizeT onStackCaps = onStackCapacity;
 
     StackVec() {
-        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+        switchToStackMem();
     }
 
     template <typename ItType>
     StackVec(ItType beginIt, ItType endIt) {
-        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+        switchToStackMem();
         size_t count = (endIt - beginIt);
         if (count > onStackCapacity) {
             dynamicMem = new std::vector<DataType>(beginIt, endIt);
-            setUsesDynamicMem();
             return;
         }
 
@@ -61,10 +60,9 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     }
 
     StackVec(const StackVec &rhs) {
-        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+        switchToStackMem();
         if (onStackCaps < rhs.size()) {
             dynamicMem = new std::vector<DataType>(rhs.begin(), rhs.end());
-            setUsesDynamicMem();
             return;
         }
 
@@ -75,12 +73,12 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
 
     explicit StackVec(size_t initialSize)
         : StackVec() {
-        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+        switchToStackMem();
         resize(initialSize);
     }
 
     StackVec(std::initializer_list<DataType> init) {
-        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
+        switchToStackMem();
         reserve(init.size());
         for (const auto &obj : init) {
             push_back(obj);
@@ -100,7 +98,6 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
 
         if (onStackCaps < rhs.size()) {
             this->dynamicMem = new std::vector<DataType>(rhs.begin(), rhs.end());
-            setUsesDynamicMem();
             return *this;
         }
 
@@ -115,8 +112,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
         if (rhs.usesDynamicMem()) {
             this->dynamicMem = rhs.dynamicMem;
-            setUsesDynamicMem();
-            rhs.onStackSize = 0U;
+            rhs.switchToStackMem();
             return;
         }
 
@@ -138,8 +134,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
                 delete this->dynamicMem;
             }
             this->dynamicMem = rhs.dynamicMem;
-            this->setUsesDynamicMem();
-            rhs.onStackSize = 0U;
+            rhs.switchToStackMem();
             return *this;
         }
 
@@ -334,7 +329,7 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
     }
 
     bool usesDynamicMem() const {
-        return std::numeric_limits<decltype(onStackSize)>::max() == this->onStackSize;
+        return reinterpret_cast<uintptr_t>(this->onStackMem) != reinterpret_cast<uintptr_t>(onStackMemRawBytes) && this->dynamicMem;
     }
 
     auto data() {
@@ -347,9 +342,6 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
   private:
     template <typename RhsDataType, size_t rhsOnStackCapacity, typename RhsStackSizeT>
     friend class StackVec;
-    void setUsesDynamicMem() {
-        this->onStackSize = std::numeric_limits<decltype(onStackSize)>::max();
-    }
 
     void resizeImpl(size_t newSize, const DataType *value) {
         // new size does not fit into internal mem
@@ -408,7 +400,6 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
             }
             clearStackObjects();
         }
-        setUsesDynamicMem();
     }
 
     void clearStackObjects() {
@@ -421,6 +412,9 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
         for (auto it = reinterpret_cast<DataType *>(onStackMemRawBytes) + offset, end = reinterpret_cast<DataType *>(onStackMemRawBytes) + offset + count; it != end; ++it) {
             it->~DataType();
         }
+    }
+    void switchToStackMem() {
+        onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
     }
 
     union {
