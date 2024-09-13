@@ -22,6 +22,12 @@ namespace NEO {
 
 uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, const KernelDescriptor &kernelDescriptor, uint32_t numSubDevices,
                                             uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType, bool isEngineInstanced) {
+    return KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment, kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, kernelDescriptor.kernelAttributes.barrierCount,
+                                              numSubDevices, usedSlmSize, workDim, localWorkSize, engineGroupType, isEngineInstanced);
+}
+
+uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, uint16_t numGrfRequired, uint8_t simdSize, uint8_t barrierCount,
+                                            uint32_t numSubDevices, uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType, bool isEngineInstanced) {
     if (debugManager.flags.OverrideMaxWorkGroupCount.get() != -1) {
         return static_cast<uint32_t>(debugManager.flags.OverrideMaxWorkGroupCount.get());
     }
@@ -34,7 +40,7 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         dssCount = hwInfo.gtSystemInfo.SubSliceCount;
     }
 
-    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, kernelDescriptor.kernelAttributes.numGrfRequired);
+    auto availableThreadCount = helper.calculateAvailableThreadCount(hwInfo, numGrfRequired);
     auto availableSlmSize = static_cast<uint32_t>(dssCount * MemoryConstants::kiloByte * hwInfo.capabilityTable.slmSize);
     auto maxBarrierCount = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
 
@@ -46,11 +52,11 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
         workGroupSize *= localWorkSize[i];
     }
     UNRECOVERABLE_IF(workGroupSize == 0);
-    auto numThreadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, kernelDescriptor.kernelAttributes.simdSize));
+    auto numThreadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simdSize));
     auto maxWorkGroupsCount = availableThreadCount / numThreadsPerThreadGroup;
 
-    if (kernelDescriptor.kernelAttributes.barrierCount > 0) {
-        auto maxWorkGroupsCountDueToBarrierUsage = dssCount * (maxBarrierCount / kernelDescriptor.kernelAttributes.barrierCount);
+    if (barrierCount > 0) {
+        auto maxWorkGroupsCountDueToBarrierUsage = dssCount * (maxBarrierCount / barrierCount);
         maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToBarrierUsage);
     }
 
