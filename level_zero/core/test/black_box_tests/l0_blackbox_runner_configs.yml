@@ -29,3 +29,15 @@ zello_metrics:
 zello_function_pointers_cl:
   exclude:
     - skl
+
+zello_bindless_kernel:
+  cases:
+    - exclude:
+        - skl
+        - tgllp
+
+zello_global_bindless_kernel:
+  cases:
+    - exclude:
+        - skl
+        - tgllp
