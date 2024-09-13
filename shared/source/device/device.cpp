@@ -264,6 +264,7 @@ void Device::initializeCommonResources() {
         if (rootDeviceEnvironment->debugger == nullptr) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
                                   "Debug mode is not enabled in the system.\n");
+            getExecutionEnvironment()->setDebuggingMode(DebuggingMode::disabled);
         }
     }
 
