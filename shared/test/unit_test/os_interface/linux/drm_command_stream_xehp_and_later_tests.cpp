@@ -54,6 +54,15 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->memoryManager.reset(memoryManager);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+
+        auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
+        auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
+
+        if (heaplessStateInit) {
+            GTEST_SKIP();
+        }
+
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->calculateMaxOsContextCount();
