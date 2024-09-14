@@ -25,7 +25,7 @@ void *OSMemoryWindows::osReserveCpuAddressRange(void *baseAddress, size_t sizeTo
 }
 
 void OSMemoryWindows::osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t size) {
-    virtualFreeWrapper(reservedCpuAddressRange, 0, MEM_RELEASE);
+    virtualFreeWrapper(reservedCpuAddressRange, size, MEM_RELEASE);
 }
 
 LPVOID OSMemoryWindows::virtualAllocWrapper(LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect) {

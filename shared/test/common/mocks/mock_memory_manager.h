@@ -132,17 +132,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return OsAgnosticMemoryManager::reserveCpuAddressRange(size, rootDeviceIndex);
     }
 
-    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override {
-        if (failReserveAddress) {
-            return {};
-        }
-        return OsAgnosticMemoryManager::reserveCpuAddress(requiredStartAddress, size);
-    }
-
-    void freeCpuAddress(AddressRange addressRange) override {
-        return OsAgnosticMemoryManager::freeCpuAddress(addressRange);
-    }
-
     void *createMultiGraphicsAllocationInSystemMemoryPool(RootDeviceIndicesContainer &rootDeviceIndices,
                                                           AllocationProperties &properties,
                                                           MultiGraphicsAllocation &multiGraphicsAllocation) override {

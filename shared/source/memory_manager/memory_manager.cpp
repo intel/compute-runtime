@@ -135,14 +135,6 @@ GmmHelper *MemoryManager::getGmmHelper(uint32_t rootDeviceIndex) {
     return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
 }
 
-AddressRange MemoryManager::reserveCpuAddressWithZeroBaseRetry(const uint64_t requiredStartAddress, size_t size) {
-    auto addressRange = reserveCpuAddress(requiredStartAddress, size);
-    if ((addressRange.address == 0) && (requiredStartAddress != 0)) {
-        addressRange = reserveCpuAddress(0, size);
-    }
-    return addressRange;
-}
-
 HeapIndex MemoryManager::selectInternalHeap(bool useLocalMemory) {
     return useLocalMemory ? HeapIndex::heapInternalDeviceMemory : HeapIndex::heapInternal;
 }
