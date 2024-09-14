@@ -400,6 +400,14 @@ struct CommandList : _ze_command_list_handle_t {
 
     void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
 
+    NEO::EngineGroupType getEngineGroupType() const {
+        return engineGroupType;
+    }
+
+    bool getLocalDispatchSupport() const {
+        return localDispatchSupport;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize, bool copyOffload);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
@@ -491,6 +499,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool requiresDcFlushForDcMitigation = false;
     bool statelessBuiltinsEnabled = false;
     bool lastAppendedKernelBindlessMode = false;
+    bool localDispatchSupport = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
