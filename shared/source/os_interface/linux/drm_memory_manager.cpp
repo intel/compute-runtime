@@ -27,6 +27,8 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency.h"
@@ -45,6 +47,7 @@
 #include "shared/source/os_interface/product_helper.h"
 
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <sys/ioctl.h>
 
@@ -92,7 +95,6 @@ DrmMemoryManager::DrmMemoryManager(GemCloseWorkerMode mode,
         const auto heapIndex = customAlignment >= MemoryConstants::pageSize2M ? HeapIndex::heapStandard2MB : HeapIndex::heapStandard64KB;
         alignmentSelector.addCandidateAlignment(customAlignment, true, AlignmentSelector::anyWastage, heapIndex);
     }
-    osMemory = OSMemory::create();
 
     initialize(mode);
 }
@@ -1523,18 +1525,6 @@ AddressRange DrmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredSt
 
 void DrmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
     releaseGpuRange(reinterpret_cast<void *>(addressRange.address), addressRange.size, rootDeviceIndex);
-}
-
-AddressRange DrmMemoryManager::reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) {
-    void *ptr = osMemory->osReserveCpuAddressRange(addrToPtr(requiredStartAddress), size, false);
-    if (ptr == MAP_FAILED) {
-        ptr = nullptr;
-    }
-    return {castToUint64(ptr), size};
-}
-
-void DrmMemoryManager::freeCpuAddress(AddressRange addressRange) {
-    osMemory->osReleaseCpuAddressRange(addrToPtr(addressRange.address), addressRange.size);
 }
 
 std::unique_lock<std::mutex> DrmMemoryManager::acquireAllocLock() {

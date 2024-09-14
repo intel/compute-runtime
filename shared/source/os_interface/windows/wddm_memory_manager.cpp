@@ -40,6 +40,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <algorithm>
 #include <emmintrin.h>
@@ -73,7 +74,6 @@ WddmMemoryManager::WddmMemoryManager(ExecutionEnvironment &executionEnvironment)
     if (customAlignment > 0) {
         alignmentSelector.addCandidateAlignment(customAlignment, false, AlignmentSelector::anyWastage);
     }
-    osMemory = OSMemory::create();
 
     initialized = true;
 }
@@ -1013,15 +1013,6 @@ AddressRange WddmMemoryManager::reserveGpuAddressOnHeap(const uint64_t requiredS
 
 void WddmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
     getWddm(rootDeviceIndex).freeGpuVirtualAddress(addressRange.address, addressRange.size);
-}
-
-AddressRange WddmMemoryManager::reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) {
-    void *ptr = osMemory->osReserveCpuAddressRange(addrToPtr(requiredStartAddress), size, false);
-    return {castToUint64(ptr), size};
-}
-
-void WddmMemoryManager::freeCpuAddress(AddressRange addressRange) {
-    osMemory->osReleaseCpuAddressRange(addrToPtr(addressRange.address), addressRange.size);
 }
 
 bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocation, const void *preferredGpuVirtualAddress) {

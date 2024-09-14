@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
@@ -44,12 +45,6 @@
 #include <fcntl.h>
 #include <memory>
 #include <vector>
-
-namespace NEO {
-namespace SysCalls {
-extern bool failMmap;
-} // namespace SysCalls
-} // namespace NEO
 
 namespace {
 using DrmMemoryManagerTest = Test<DrmMemoryManagerFixture>;
@@ -7839,31 +7834,6 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGp
     EXPECT_LE(memoryManager->getGfxPartition(1)->getHeapBase(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
     EXPECT_GT(memoryManager->getGfxPartition(1)->getHeapLimit(HeapIndex::heapStandard), gmmHelper->decanonize(addressRange.address));
     memoryManager->freeGpuAddress(addressRange, 1);
-}
-
-TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCpuAddressReservationIsAttemptedThenCorrectAddressRangesAreReturned) {
-    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
-    RootDeviceIndicesContainer rootDeviceIndices;
-    rootDeviceIndices.pushUnique(1);
-
-    auto addressRange = memoryManager->reserveCpuAddress(0, 0);
-    EXPECT_EQ(0u, addressRange.address);
-    EXPECT_EQ(0u, addressRange.size);
-
-    addressRange = memoryManager->reserveCpuAddress(0, MemoryConstants::pageSize);
-    EXPECT_NE(0u, addressRange.address);
-    EXPECT_EQ(MemoryConstants::pageSize, addressRange.size);
-    memoryManager->freeCpuAddress(addressRange);
-
-    addressRange = memoryManager->reserveCpuAddress(MemoryConstants::pageSize * 1234, MemoryConstants::pageSize);
-    EXPECT_NE(0u, addressRange.address);
-    EXPECT_EQ(MemoryConstants::pageSize, addressRange.size);
-    memoryManager->freeCpuAddress(addressRange);
-
-    VariableBackup<bool> backup(&SysCalls::failMmap, true);
-    addressRange = memoryManager->reserveCpuAddress(0, 0);
-    EXPECT_EQ(0u, addressRange.address);
-    EXPECT_EQ(0u, addressRange.size);
 }
 
 TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingHostUSMThenAddressFromExtendedHeapIsPassedAsHintAndSetAsGpuAddressAndReservedAddress) {
