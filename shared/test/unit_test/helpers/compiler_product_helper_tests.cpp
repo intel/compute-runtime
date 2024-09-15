@@ -382,17 +382,6 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
     EXPECT_EQ(compilerProductHelper.getHwIpVersion(hwInfo), config);
 }
 
-HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenAdjustingHwInfoThenHwInfoIsCorrected, IsAtMostXe2HpgCore) {
-    auto hwInfo = *pDevice->getRootDeviceEnvironment().getHardwareInfo();
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    const auto maxSubSlices = hwInfo.gtSystemInfo.MaxSubSlicesSupported;
-    const auto maxDualSubSlices = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported;
-    compilerProductHelper.applyDeviceBlobFixesOnHwInfo(hwInfo);
-    EXPECT_EQ(maxSubSlices, hwInfo.gtSystemInfo.MaxSubSlicesSupported);
-    EXPECT_EQ(maxDualSubSlices, hwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
-}
-
 HWTEST_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled());

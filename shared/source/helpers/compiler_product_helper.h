@@ -78,7 +78,6 @@ class CompilerProductHelper {
     virtual uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const = 0;
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
     virtual StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const = 0;
-    virtual void applyDeviceBlobFixesOnHwInfo(HardwareInfo &hwInfo) const = 0;
     virtual void adjustHwInfoForIgc(HardwareInfo &hwInfo) const = 0;
     virtual bool isHeaplessModeEnabled() const = 0;
     virtual bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const = 0;
@@ -130,7 +129,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     uint32_t matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const override;
     std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
     StackVec<OclCVersion, 5> getDeviceOpenCLCVersions(const HardwareInfo &hwInfo, OclCVersion max) const override;
-    void applyDeviceBlobFixesOnHwInfo(HardwareInfo &hwInfo) const override;
     void adjustHwInfoForIgc(HardwareInfo &hwInfo) const override;
     bool isHeaplessModeEnabled() const override;
     bool isHeaplessStateInitEnabled(bool heaplessModeEnabled) const override;
