@@ -14,12 +14,6 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
 
-namespace NEO {
-const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
-    return nullptr;
-}
-} // namespace NEO
-
 namespace L0 {
 
 BuiltinFunctionsLibImpl::BuiltinData::~BuiltinData() {

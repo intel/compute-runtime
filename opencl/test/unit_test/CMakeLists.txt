@@ -59,7 +59,6 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:mock_gmm>
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
-    $<TARGET_OBJECTS:${BUILTINS_VME_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
@@ -311,12 +310,6 @@ set(TEST_KERNEL_STATELESS
     test_files/stateless_kernel.cl
 )
 
-set(TEST_KERNEL_VME
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_files/vme_kernels.cl
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_backend.cl
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_files/media_kernels_frontend.cl
-)
-
 set(TEST_KERNEL_BINDLESS_internal_options
     "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode"
 )
@@ -336,12 +329,10 @@ set(TEST_KERNEL_PRINTF_internal_options_gen9lp
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/stateless_kernel.cl")
-list(REMOVE_ITEM TEST_KERNELS ${TEST_KERNEL_VME})
 list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_KERNEL_PRINTF}")
 
 macro(macro_for_each_platform)
   set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${CORE_TYPE}_${PLATFORM_IT}_PLATFORM})
-  set(PLATFORM_VME_LOWER ${DEFAULT_SUPPORTED_VME_${CORE_TYPE}_${PLATFORM_IT}_PLATFORM})
 
   set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
   set(IMAGE_SUPPORT FALSE)
@@ -396,12 +387,6 @@ macro(macro_for_each_platform)
       foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
         parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
         neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
-      endforeach()
-    endif()
-    if(PLATFORM_VME_LOWER)
-      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} TRUE ${TEST_KERNEL_VME})
       endforeach()
     endif()
   endif()

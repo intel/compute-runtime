@@ -69,7 +69,6 @@ BuiltinResourceT createBuiltinResource(const BuiltinResourceT &r);
 std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::string &extension);
 StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, BuiltinCode::ECodeType type, const Device &device);
 const char *getBuiltinAsString(EBuiltInOps::Type builtin);
-const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin);
 
 class Storage {
   public:

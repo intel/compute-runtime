@@ -1,8 +1,0 @@
-/*
- * Copyright (C) 2018-2021 Intel Corporation
- *
- * SPDX-License-Identifier: MIT
- *
- */
-
--D cl_intel_device_side_vme_enable -D HW_NULL_CHECK

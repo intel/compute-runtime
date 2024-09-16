@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 Intel Corporation
+# Copyright (C) 2021-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -20,7 +20,6 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
     add_subdirectory(source "${NEO_BUILD_DIR}/${LIB_NAME}" EXCLUDE_FROM_ALL)
   endif()
   target_compile_definitions(${BUILTINS_SOURCES_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
-  target_compile_definitions(${BUILTINS_VME_LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=)
 
   if(${MOCKABLE})
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)

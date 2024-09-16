@@ -23,10 +23,6 @@
 namespace NEO {
 
 const char *getBuiltinAsString(EBuiltInOps::Type builtin) {
-    const char *builtinString = getAdditionalBuiltinAsString(builtin);
-    if (builtinString) {
-        return builtinString;
-    }
     switch (builtin) {
     default:
         return "unknown";
