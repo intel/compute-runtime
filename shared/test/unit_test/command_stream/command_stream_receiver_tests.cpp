@@ -5699,6 +5699,60 @@ HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryCsrWhenGettingInte
     }
 }
 
+HWTEST_F(CommandStreamReceiverContextGroupTest, givenSecondaryRootCsrWhenGettingInternalAllocationsThenAllocationFromPrimnaryCsrAreReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    if (hwInfo.capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.ContextGroupSize.set(5);
+
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+    hwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
+
+    UltDeviceFactory deviceFactory{1, 2};
+    auto device = deviceFactory.rootDevices[0];
+    const auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+
+    const auto ccsIndex = 0;
+    auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
+    auto secondaryEnginesCount = secondaryEngines.engines.size();
+    ASSERT_EQ(5u, secondaryEnginesCount);
+
+    EXPECT_TRUE(secondaryEngines.engines[0].commandStreamReceiver->isInitialized());
+
+    auto primaryCsr = secondaryEngines.engines[0].commandStreamReceiver;
+    primaryCsr->createGlobalStatelessHeap();
+
+    for (uint32_t secondaryIndex = 1; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, false);
+    }
+
+    for (uint32_t i = 0; i < secondaryEngines.highPriorityEnginesTotal; i++) {
+        device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, false);
+    }
+
+    for (uint32_t secondaryIndex = 0; secondaryIndex < secondaryEnginesCount; secondaryIndex++) {
+
+        if (secondaryIndex > 0) {
+            EXPECT_NE(primaryCsr->getTagAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getTagAllocation());
+        }
+
+        if (gfxCoreHelper.isFenceAllocationRequired(hwInfo)) {
+            EXPECT_EQ(primaryCsr->getGlobalFenceAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalFenceAllocation());
+        }
+
+        EXPECT_EQ(primaryCsr->getPreemptionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPreemptionAllocation());
+        EXPECT_EQ(primaryCsr->getGlobalStatelessHeapAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeapAllocation());
+        EXPECT_EQ(primaryCsr->getGlobalStatelessHeap(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getGlobalStatelessHeap());
+        EXPECT_EQ(primaryCsr->getPrimaryScratchSpaceController(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getPrimaryScratchSpaceController());
+        EXPECT_EQ(primaryCsr->getWorkPartitionAllocation(), secondaryEngines.engines[secondaryIndex].commandStreamReceiver->getWorkPartitionAllocation());
+    }
+}
+
 HWTEST_F(CommandStreamReceiverContextGroupTest, givenContextGroupWhenCreatingEnginesThenSetCorrectMaxOsContextCount) {
 
     HardwareInfo hwInfo = *defaultHwInfo;

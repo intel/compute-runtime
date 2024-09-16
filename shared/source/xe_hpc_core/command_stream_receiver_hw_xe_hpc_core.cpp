@@ -39,8 +39,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 template <>
 void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
     if (!this->isEnginePrologueSent) {
-        if (globalFenceAllocation) {
-            EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, globalFenceAllocation);
+        if (getGlobalFenceAllocation()) {
+            EncodeMemoryFence<Family>::encodeSystemMemoryFence(csr, getGlobalFenceAllocation());
         }
         this->isEnginePrologueSent = true;
     }
@@ -49,7 +49,7 @@ void CommandStreamReceiverHw<Family>::programEnginePrologue(LinearStream &csr) {
 template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPrologue() const {
     if (!this->isEnginePrologueSent) {
-        if (globalFenceAllocation) {
+        if (getGlobalFenceAllocation()) {
             return EncodeMemoryFence<Family>::getSystemMemoryFenceSize();
         }
     }

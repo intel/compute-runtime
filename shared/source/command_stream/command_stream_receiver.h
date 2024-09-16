@@ -216,7 +216,13 @@ class CommandStreamReceiver {
 
         return globalFenceAllocation;
     }
-    GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
+    GraphicsAllocation *getWorkPartitionAllocation() const {
+        if (primaryCsr) {
+            return primaryCsr->getWorkPartitionAllocation();
+        }
+        return workPartitionAllocation;
+    }
+
     GraphicsAllocation *getGlobalStatelessHeapAllocation() const {
         if (primaryCsr) {
             return primaryCsr->getGlobalStatelessHeapAllocation();

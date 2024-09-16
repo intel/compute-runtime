@@ -530,12 +530,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->makeResident(*tagAllocation);
 
-    if (globalFenceAllocation) {
-        makeResident(*globalFenceAllocation);
+    if (getGlobalFenceAllocation()) {
+        makeResident(*getGlobalFenceAllocation());
     }
 
-    if (preemptionAllocation) {
-        makeResident(*preemptionAllocation);
+    if (getPreemptionAllocation()) {
+        makeResident(*getPreemptionAllocation());
     }
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
@@ -549,8 +549,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*debugSurface);
     }
 
-    if (workPartitionAllocation) {
-        makeResident(*workPartitionAllocation);
+    if (getWorkPartitionAllocation()) {
+        makeResident(*getWorkPartitionAllocation());
     }
 
     auto rtBuffer = device.getRTMemoryBackedBuffer();
@@ -846,7 +846,7 @@ inline WaitStatus CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNot
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
-    PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, preemptionAllocation);
+    PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, getPreemptionAllocation());
     this->lastPreemptionMode = dispatchFlags.preemptionMode;
 }
 
@@ -866,7 +866,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cm
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->preemptionAllocation, EngineHelpers::isBcs(osContext->getEngineType()));
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, getPreemptionAllocation(), EngineHelpers::isBcs(osContext->getEngineType()));
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
     }
@@ -2116,12 +2116,12 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
                                                                                   LinearStream &csrStream) {
     this->makeResident(*tagAllocation);
 
-    if (globalFenceAllocation) {
-        makeResident(*globalFenceAllocation);
+    if (getGlobalFenceAllocation()) {
+        makeResident(*getGlobalFenceAllocation());
     }
 
-    if (workPartitionAllocation) {
-        makeResident(*workPartitionAllocation);
+    if (getWorkPartitionAllocation()) {
+        makeResident(*getWorkPartitionAllocation());
     }
 
     if (device.getRTMemoryBackedBuffer()) {
@@ -2132,8 +2132,8 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushAllocationsResidenc
         makeResident(*csrStream.getGraphicsAllocation());
     }
 
-    if (preemptionAllocation) {
-        makeResident(*preemptionAllocation);
+    if (getPreemptionAllocation()) {
+        makeResident(*getPreemptionAllocation());
     }
 
     if (device.isStateSipRequired()) {
