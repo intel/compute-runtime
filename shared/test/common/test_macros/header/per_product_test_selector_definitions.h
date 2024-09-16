@@ -7,27 +7,6 @@
 
 #pragma once
 
-#ifdef TESTS_GEN8
-#define BDW_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
-#define BDW_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
-#else
-#define BDW_TYPED_TEST(method)
-#define BDW_SUPPORTED_TEST(cmdSetBase) false
-#endif
-#ifdef TESTS_GEN9
-#define SKL_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
-#define SKL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
-#else
-#define SKL_TYPED_TEST(method)
-#define SKL_SUPPORTED_TEST(cmdSetBase) false
-#endif
-#ifdef TESTS_GEN11
-#define ICL_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily>();
-#define ICL_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN11_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)
-#else
-#define ICL_TYPED_TEST(method)
-#define ICL_SUPPORTED_TEST(cmdSetBase) false
-#endif
 #ifdef TESTS_GEN12LP
 #define TGLLP_TYPED_TEST(method) method<typename NEO::GfxFamilyMapper<IGFX_GEN12LP_CORE>::GfxFamily>();
 #define TGLLP_SUPPORTED_TEST(cmdSetBase) NEO::GfxFamilyMapper<IGFX_GEN12LP_CORE>::GfxFamily::supportsCmdSet(cmdSetBase)

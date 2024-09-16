@@ -11,15 +11,6 @@
 
 #define FAMILY_SELECTOR(family, methodName)                \
     switch (family) {                                      \
-    case IGFX_GEN8_CORE:                                   \
-        BDW_TYPED_TEST(methodName)                         \
-        break;                                             \
-    case IGFX_GEN9_CORE:                                   \
-        SKL_TYPED_TEST(methodName)                         \
-        break;                                             \
-    case IGFX_GEN11_CORE:                                  \
-        ICL_TYPED_TEST(methodName)                         \
-        break;                                             \
     case IGFX_GEN12LP_CORE:                                \
         TGLLP_TYPED_TEST(methodName)                       \
         break;                                             \
@@ -41,15 +32,6 @@
     {                                                          \
         bool supported = false;                                \
         switch (::renderCoreFamily) {                          \
-        case IGFX_GEN8_CORE:                                   \
-            supported = BDW_SUPPORTED_TEST(cmdSetBase);        \
-            break;                                             \
-        case IGFX_GEN9_CORE:                                   \
-            supported = SKL_SUPPORTED_TEST(cmdSetBase);        \
-            break;                                             \
-        case IGFX_GEN11_CORE:                                  \
-            supported = ICL_SUPPORTED_TEST(cmdSetBase);        \
-            break;                                             \
         case IGFX_GEN12LP_CORE:                                \
             supported = TGLLP_SUPPORTED_TEST(cmdSetBase);      \
             break;                                             \
