@@ -16,6 +16,7 @@
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -370,7 +371,8 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
 
     auto grfCount = kernelDescriptor.kernelAttributes.numGrfRequired;
-    auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
+    auto neoDevice = module->getDevice()->getNEODevice();
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     this->numThreadsPerThreadGroup = gfxCoreHelper.calculateNumThreadsPerThreadGroup(
         simdSize, static_cast<uint32_t>(itemsInGroup), grfCount, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
@@ -413,6 +415,17 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     } else {
         this->perThreadDataSizeForWholeThreadGroup = 0;
         this->perThreadDataSize = 0;
+    }
+
+    if (this->heaplessEnabled && this->localDispatchSupport) {
+        auto isEngineIstanced = neoDevice->isEngineInstanced();
+        this->maxWgCountPerTileCcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::compute, isEngineIstanced, true);
+        if (this->rcsAvailable) {
+            this->maxWgCountPerTileRcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::renderCompute, isEngineIstanced, true);
+        }
+        if (this->cooperativeSupport) {
+            this->maxWgCountPerTileCooperative = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::cooperativeCompute, isEngineIstanced, true);
+        }
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -477,11 +490,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, bool isEngineInstanced, bool forceSingleTileQuery) {
-    UNRECOVERABLE_IF(0 == groupSize[0]);
-    UNRECOVERABLE_IF(0 == groupSize[1]);
-    UNRECOVERABLE_IF(0 == groupSize[2]);
-
+uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, uint32_t *groupSize, bool isEngineInstanced, bool forceSingleTileQuery) {
     auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &helper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     auto &descriptor = kernelImmData->getDescriptor();
@@ -492,10 +501,8 @@ uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineG
 
     uint32_t numSubDevicesForExecution = 1;
 
-    bool platformImplicitScaling = helper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     auto deviceBitfield = module->getDevice()->getNEODevice()->getDeviceBitfield();
-
-    if (!forceSingleTileQuery && NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling)) {
+    if (!forceSingleTileQuery && this->implicitScalingEnabled) {
         numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
     }
 
@@ -993,6 +1000,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     auto neoDevice = module->getDevice()->getNEODevice();
     const auto &productHelper = neoDevice->getProductHelper();
+    const auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelDescriptor = kernelImmData->getDescriptor();
     auto ret = NEO::KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, neoDevice);
     if (ret == NEO::KernelHelper::ErrorCode::invalidKernel) {
@@ -1006,7 +1014,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (isaAllocation->getAllocationType() == NEO::AllocationType::kernelIsaInternal && this->kernelImmData->getIsaParentAllocation() == nullptr) {
         isaAllocation->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
         isaAllocation->setAubWritable(true, std::numeric_limits<uint32_t>::max());
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(neoDevice->getRootDeviceEnvironment(), *isaAllocation),
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *isaAllocation),
                                                               *neoDevice,
                                                               isaAllocation,
                                                               this->kernelImmData->getIsaOffsetInParentAllocation(),
@@ -1153,7 +1161,22 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
         this->internalResidencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
     }
+
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    auto deviceBitfield = neoDevice->getDeviceBitfield();
+    const auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+
     this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
+
+    this->heaplessEnabled = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled();
+    this->localDispatchSupport = productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0;
+
+    bool platformImplicitScaling = gfxHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
+    this->implicitScalingEnabled = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling);
+
+    this->rcsAvailable = gfxHelper.isRcsAvailable(hwInfo);
+    this->cooperativeSupport = productHelper.isCooperativeEngineSupported(hwInfo);
+
     return ZE_RESULT_SUCCESS;
 }
 

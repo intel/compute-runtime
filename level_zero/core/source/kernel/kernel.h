@@ -187,8 +187,27 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
         return midThreadPreemptionDisallowedForRayTracingKernels;
     }
 
+    uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const {
+        auto value = maxWgCountPerTileCcs;
+        if (engineGroupType == NEO::EngineGroupType::renderCompute) {
+            value = maxWgCountPerTileRcs;
+        } else if (engineGroupType == NEO::EngineGroupType::cooperativeCompute) {
+            value = maxWgCountPerTileCooperative;
+        }
+        DEBUG_BREAK_IF(value == 0);
+        return value;
+    }
+
   protected:
+    uint32_t maxWgCountPerTileCcs = 0;
+    uint32_t maxWgCountPerTileRcs = 0;
+    uint32_t maxWgCountPerTileCooperative = 0;
     bool midThreadPreemptionDisallowedForRayTracingKernels = false;
+    bool heaplessEnabled = false;
+    bool implicitScalingEnabled = false;
+    bool localDispatchSupport = false;
+    bool rcsAvailable = false;
+    bool cooperativeSupport = false;
 };
 
 using KernelAllocatorFn = Kernel *(*)(Module *module);

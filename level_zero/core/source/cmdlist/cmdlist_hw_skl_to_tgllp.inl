@@ -186,7 +186,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
 
-    auto maxWgCountPerTile = kernel->suggestMaxCooperativeGroupCount(this->engineGroupType, device->getNEODevice()->isEngineInstanced(), true);
+    auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                                      // eventAddress

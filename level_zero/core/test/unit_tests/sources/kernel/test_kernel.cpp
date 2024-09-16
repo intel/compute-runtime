@@ -1103,7 +1103,7 @@ TEST_F(KernelImmutableDataTests, givenModuleWithPrivateMemoryBiggerThanGlobalMem
     EXPECT_EQ(nullptr, kernel->getPrivateMemoryGraphicsAllocation());
 }
 
-TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializedAndPatchedInImplicitArgsBuffer) {
+HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializedAndPatchedInImplicitArgsBuffer) {
     auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo.gtSystemInfo.IsDynamicallyPopulated = false;
     hwInfo.gtSystemInfo.SliceCount = 1;
