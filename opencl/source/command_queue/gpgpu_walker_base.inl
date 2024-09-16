@@ -23,103 +23,6 @@
 
 namespace NEO {
 
-// Performs ReadModifyWrite operation on value of a register: Register = Register Operation Mask
-template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
-    LinearStream *pCommandStream,
-    uint32_t aluRegister,
-    AluRegisters operation,
-    uint32_t mask) {
-    // Load "Register" value into CS_GPR_R0
-    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
-    using MI_MATH = typename GfxFamily::MI_MATH;
-    using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
-
-    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
-    MI_LOAD_REGISTER_REG cmdReg = GfxFamily::cmdInitLoadRegisterReg;
-    cmdReg.setSourceRegisterAddress(aluRegister);
-    cmdReg.setDestinationRegisterAddress(RegisterOffsets::csGprR0);
-    *pCmd = cmdReg;
-
-    // Load "Mask" into CS_GPR_R1
-    LriHelper<GfxFamily>::program(pCommandStream,
-                                  RegisterOffsets::csGprR1,
-                                  mask,
-                                  false,
-                                  false);
-
-    // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
-    auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + RegisterConstants::numAluInstForReadModifyWrite * sizeof(MI_MATH_ALU_INST_INLINE)));
-    MI_MATH mathCmd;
-    mathCmd.DW0.Value = 0x0;
-    mathCmd.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    mathCmd.DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
-    // 0x3 - 5 Dwords length cmd (-2): 1 for MI_MATH, 4 for MI_MATH_ALU_INST_INLINE
-    mathCmd.DW0.BitField.DwordLength = RegisterConstants::numAluInstForReadModifyWrite - 1;
-    *reinterpret_cast<MI_MATH *>(pCmd3) = mathCmd;
-
-    pCmd3++;
-    MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(pCmd3);
-    MI_MATH_ALU_INST_INLINE cmdAluParam;
-    cmdAluParam.DW0.Value = 0x0;
-
-    // Setup first operand of MI_MATH - load CS_GPR_R0 into register A
-    cmdAluParam.DW0.BitField.ALUOpcode =
-        static_cast<uint32_t>(AluRegisters::opcodeLoad);
-    cmdAluParam.DW0.BitField.Operand1 =
-        static_cast<uint32_t>(AluRegisters::srca);
-    cmdAluParam.DW0.BitField.Operand2 =
-        static_cast<uint32_t>(AluRegisters::gpr0);
-    *pAluParam = cmdAluParam;
-    pAluParam++;
-
-    cmdAluParam.DW0.Value = 0x0;
-    // Setup second operand of MI_MATH - load CS_GPR_R1 into register B
-    cmdAluParam.DW0.BitField.ALUOpcode =
-        static_cast<uint32_t>(AluRegisters::opcodeLoad);
-    cmdAluParam.DW0.BitField.Operand1 =
-        static_cast<uint32_t>(AluRegisters::srcb);
-    cmdAluParam.DW0.BitField.Operand2 =
-        static_cast<uint32_t>(AluRegisters::gpr1);
-    *pAluParam = cmdAluParam;
-    pAluParam++;
-
-    cmdAluParam.DW0.Value = 0x0;
-    // Setup third operand of MI_MATH - "Operation" on registers A and B
-    cmdAluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(operation);
-    cmdAluParam.DW0.BitField.Operand1 = 0;
-    cmdAluParam.DW0.BitField.Operand2 = 0;
-    *pAluParam = cmdAluParam;
-    pAluParam++;
-
-    cmdAluParam.DW0.Value = 0x0;
-    // Setup fourth operand of MI_MATH - store result into CS_GPR_R0
-    cmdAluParam.DW0.BitField.ALUOpcode =
-        static_cast<uint32_t>(AluRegisters::opcodeStore);
-    cmdAluParam.DW0.BitField.Operand1 =
-        static_cast<uint32_t>(AluRegisters::gpr0);
-    cmdAluParam.DW0.BitField.Operand2 =
-        static_cast<uint32_t>(AluRegisters::accu);
-    *pAluParam = cmdAluParam;
-
-    // LOAD value of CS_GPR_R0 into "Register"
-    auto pCmd4 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
-    cmdReg = GfxFamily::cmdInitLoadRegisterReg;
-    cmdReg.setSourceRegisterAddress(RegisterOffsets::csGprR0);
-    cmdReg.setDestinationRegisterAddress(aluRegister);
-    *pCmd4 = cmdReg;
-
-    // Add PIPE_CONTROL to flush caches
-    auto pCmd5 = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmdPipeControl = GfxFamily::cmdInitPipeControl;
-    cmdPipeControl.setCommandStreamerStallEnable(true);
-    cmdPipeControl.setDcFlushEnable(true);
-    cmdPipeControl.setTextureCacheInvalidationEnable(true);
-    cmdPipeControl.setPipeControlFlushEnable(true);
-    cmdPipeControl.setStateCacheInvalidationEnable(true);
-    *pCmd5 = cmdPipeControl;
-}
-
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     CommandQueue &commandQueue,
@@ -150,15 +53,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     void *pBuffer = commandStream->getSpace(size);
 
     pPerformanceCounters->getGpuCommands(commandBufferType, hwPerfCounter, false, size, pBuffer);
-}
-
-template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(NEO::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
-}
-
-template <typename GfxFamily>
-size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
-    return (size_t)0;
 }
 
 template <typename GfxFamily>

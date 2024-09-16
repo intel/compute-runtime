@@ -28,11 +28,6 @@ class GpgpuWalkerHelper {
     using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
 
   public:
-    static void applyWADisableLSQCROPERFforOCL(LinearStream *pCommandStream,
-                                               const Kernel &kernel,
-                                               bool disablePerfMode);
-
-    static size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
     static size_t getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel);
 
     template <typename WalkerType>
@@ -78,12 +73,6 @@ class GpgpuWalkerHelper {
 
   private:
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-
-    static void addAluReadModifyWriteRegister(
-        LinearStream *pCommandStream,
-        uint32_t aluRegister,
-        AluRegisters operation,
-        uint32_t mask);
 };
 
 template <typename GfxFamily>

@@ -26,11 +26,6 @@ void ProductHelperHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const 
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
-    return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerSubSlice);
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::obtainBlitterPreference(const HardwareInfo &hwInfo) const {
     return false;
 }

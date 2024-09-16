@@ -18,11 +18,6 @@ inline cl_command_queue_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getAddi
     return 0;
 }
 
-template <typename GfxFamily>
-cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return 0;
-}
-
 static const std::vector<cl_image_format> redescribeFormats = {
     {CL_R, CL_UNSIGNED_INT8},
     {CL_R, CL_UNSIGNED_INT16},

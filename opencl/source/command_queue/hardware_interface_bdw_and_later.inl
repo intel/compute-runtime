@@ -29,24 +29,6 @@ inline void HardwareInterface<GfxFamily>::getDefaultDshSpace(
 }
 
 template <typename GfxFamily>
-inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
-    LinearStream *commandStream,
-    CommandQueue &commandQueue,
-    Kernel &kernel,
-    const bool &enable) {
-
-    if (enable) {
-        PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(commandStream, commandQueue.getDevice());
-        // Implement enabling special WA DisableLSQCROPERFforOCL if needed
-        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, enable);
-    } else {
-        // Implement disabling special WA DisableLSQCROPERFforOCL if needed
-        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, enable);
-        PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(commandStream, commandQueue.getDevice());
-    }
-}
-
-template <typename GfxFamily>
 template <typename WalkerType>
 inline void HardwareInterface<GfxFamily>::programWalker(
     LinearStream &commandStream,
