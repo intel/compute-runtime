@@ -888,10 +888,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
     {
         const auto minimalRequiredDetectIndirectVersion = productHelper->getRequiredDetectIndirectVersion();
         EXPECT_GT(minimalRequiredDetectIndirectVersion, 0u);
-        EXPECT_LE(igcDetectIndirectVersion, minimalRequiredDetectIndirectVersion);
         const bool detectionEnabled = IndirectDetectionVersions::disabled != minimalRequiredDetectIndirectVersion;
         if (detectionEnabled) {
             const uint32_t notAcceptedIndirectDetectionVersion = minimalRequiredDetectIndirectVersion - 1;
+            const bool enabledForJit = igcDetectIndirectVersion >= minimalRequiredDetectIndirectVersion;
             {
                 kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
                 kernelDescriptor.kernelAttributes.simdSize = 8u;
@@ -903,9 +903,9 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
             {
                 kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
                 kernelDescriptor.kernelAttributes.simdSize = 8u;
-                EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersion));
+                EXPECT_EQ(enabledForJit, productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersion));
                 EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, notAcceptedIndirectDetectionVersion));
-                EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, minimalRequiredDetectIndirectVersion));
+                EXPECT_EQ(enabledForJit, productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, minimalRequiredDetectIndirectVersion));
                 EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, minimalRequiredDetectIndirectVersion));
             }
         } else { // detection disabled
@@ -927,10 +927,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
     {
         const auto minimalRequiredDetectIndirectVersionVC = productHelper->getRequiredDetectIndirectVersionVC();
         EXPECT_GT(minimalRequiredDetectIndirectVersionVC, 0u);
-        EXPECT_LE(igcDetectIndirectVersion, minimalRequiredDetectIndirectVersionVC);
         const bool detectionEnabledVC = IndirectDetectionVersions::disabled != minimalRequiredDetectIndirectVersionVC;
         if (detectionEnabledVC) {
             const uint32_t notAcceptedIndirectDetectionVersionVC = minimalRequiredDetectIndirectVersionVC - 1;
+            const bool enabledForJitVC = igcDetectIndirectVersion >= minimalRequiredDetectIndirectVersionVC;
             {
                 kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::patchtokens;
                 kernelDescriptor.kernelAttributes.simdSize = 1u;
@@ -942,9 +942,9 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenChecking
             {
                 kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::zebin;
                 kernelDescriptor.kernelAttributes.simdSize = 1u;
-                EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersionVC));
+                EXPECT_EQ(enabledForJitVC, productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, notAcceptedIndirectDetectionVersionVC));
                 EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, notAcceptedIndirectDetectionVersionVC));
-                EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, minimalRequiredDetectIndirectVersionVC));
+                EXPECT_EQ(enabledForJitVC, productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, false, minimalRequiredDetectIndirectVersionVC));
                 EXPECT_TRUE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor, true, minimalRequiredDetectIndirectVersionVC));
             }
         } else { // detection disabled for VC
