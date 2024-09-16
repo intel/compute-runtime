@@ -1309,8 +1309,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    bool isIntegratedGPU = (deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
-
     auto bindlessImages = LevelZeroBlackBoxTests::isParamEnabled(argc, argv, "", "--bindless-images");
     AddressingMode mode = bindlessImages ? AddressingMode::bindlessImages : AddressingMode::bindless;
 
@@ -1334,7 +1332,7 @@ int main(int argc, char *argv[]) {
         case 1:
             std::cout << "\ntest case: testBindlessImages\n"
                       << std::endl;
-            if (!isIntegratedGPU && is2dImageSupported) {
+            if (is2dImageSupported) {
                 int defaultImageCount = testCase == 1 ? 4 * 4096 + 8 : 4;
                 auto imageCount = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--image-count", defaultImageCount);
 
@@ -1352,7 +1350,7 @@ int main(int argc, char *argv[]) {
         case 2:
             std::cout << "\ntest case: testBindlessImageSampled\n"
                       << std::endl;
-            if (!isIntegratedGPU && is2dImageSupported) {
+            if (is2dImageSupported) {
                 if (bindlessImages) {
                     std::cout << "--bindless-images " << std::endl;
                 }
@@ -1364,7 +1362,7 @@ int main(int argc, char *argv[]) {
         case 3:
             std::cout << "\ntest case: testBindlessImageQuery\n"
                       << std::endl;
-            if (!isIntegratedGPU && (is1dImageSupported || is2dImageSupported || is3dImageSupported)) {
+            if (is1dImageSupported || is2dImageSupported || is3dImageSupported) {
                 if (bindlessImages) {
                     std::cout << "--bindless-images " << std::endl;
                 }
@@ -1378,7 +1376,7 @@ int main(int argc, char *argv[]) {
             std::cout << "\ntest case: testZeExperimentalBindlessImages\n"
                       << std::endl;
 
-            if (isIntegratedGPU || !is2dImageSupported) {
+            if (!is2dImageSupported) {
                 std::cout << "Skipped. testZeExperimentalBindlessImages not supported\n";
                 break;
             }
@@ -1424,7 +1422,7 @@ int main(int argc, char *argv[]) {
             std::cout << "\ntest case: testBindlessImageSampledBorderColor\n"
                       << std::endl;
 
-            if (!isIntegratedGPU && is2dImageSupported) {
+            if (is2dImageSupported) {
                 if (bindlessImages) {
                     std::cout << "--bindless-images " << std::endl;
                 }
@@ -1437,11 +1435,7 @@ int main(int argc, char *argv[]) {
             std::cout << "\ntest case: testBindlessBindfulKernel\n"
                       << std::endl;
 
-            if (!isIntegratedGPU) {
-                outputValidated &= testBindlessBindfulKernel(context, device, ss.str(), revisionId);
-            } else {
-                std::cout << "Skipped. testBindlessBindfulKernel not supported\n";
-            }
+            outputValidated &= testBindlessBindfulKernel(context, device, ss.str(), revisionId);
             break;
         }
 
