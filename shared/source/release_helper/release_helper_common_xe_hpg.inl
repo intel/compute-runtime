@@ -41,7 +41,7 @@ bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
 
 template <>
 bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
-    return false;
+    return true;
 }
 
 } // namespace NEO
