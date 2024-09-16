@@ -32,24 +32,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, whenProgramStateSipIsC
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaHasExpectedSize) {
-    size_t expectedSize = 0;
-    EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device));
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, WhenProgrammingThenWaNotApplied) {
-    size_t usedSize = 0;
-
-    auto requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
-    StackVec<char, 4096> buff(requiredSize);
-    LinearStream cmdStream(buff.begin(), buff.size());
-
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdStream, *device);
-    EXPECT_EQ(usedSize, cmdStream.getUsed());
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdStream, *device);
-    EXPECT_EQ(usedSize, cmdStream.getUsed());
-}
-
 struct ThreadPreemptionDisableBitMatcher {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {

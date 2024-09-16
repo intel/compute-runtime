@@ -293,12 +293,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
 
-    PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
-
     auto buffer = listCmdBufferStream->getSpaceForCmd<DefaultWalkerType>();
     *buffer = cmd;
 
-    PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
     {
         auto mediaStateFlush = listCmdBufferStream->getSpaceForCmd<MEDIA_STATE_FLUSH>();
         *mediaStateFlush = Family::cmdInitMediaStateFlush;

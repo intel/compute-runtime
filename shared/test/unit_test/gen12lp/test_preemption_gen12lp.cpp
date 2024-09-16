@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,22 +37,6 @@ GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmd
     EXPECT_NE(0U, requiredSize);
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_NE(0U, cmdStream.getUsed());
-}
-
-GEN12LPTEST_F(Gen12LpPreemptionTests, WhenGettingPreemptionWaCsSizeThenZeroIsReturned) {
-    size_t expectedSize = 0;
-    EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device));
-}
-
-GEN12LPTEST_F(Gen12LpPreemptionTests, WhenApplyingPreemptionWaCmdsThenNothingIsAdded) {
-    size_t usedSize = 0;
-    StackVec<char, 1024> streamStorage(1024);
-    LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
-
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdStream, *device);
-    EXPECT_EQ(usedSize, cmdStream.getUsed());
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdStream, *device);
-    EXPECT_EQ(usedSize, cmdStream.getUsed());
 }
 
 GEN12LPTEST_F(Gen12LpPreemptionTests, givenInterfaceDescriptorDataWhenMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToDisable) {

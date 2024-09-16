@@ -120,18 +120,6 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize(Device &device, bool isRcs) 
     return size;
 }
 
-template <typename GfxFamily>
-size_t PreemptionHelper::getPreemptionWaCsSize(const Device &device) {
-    return 0u;
-}
-template <typename GfxFamily>
-void PreemptionHelper::applyPreemptionWaCmdsBegin(LinearStream *pCommandStream, const Device &device) {
-}
-
-template <typename GfxFamily>
-void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, const Device &device) {
-}
-
 template <typename GfxFamily, typename InterfaceDescriptorType>
 void PreemptionHelper::programInterfaceDescriptorDataPreemption(InterfaceDescriptorType *idd, PreemptionMode preemptionMode) {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
