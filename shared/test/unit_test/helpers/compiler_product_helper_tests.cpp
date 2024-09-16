@@ -60,12 +60,6 @@ HWTEST2_F(CompilerProductHelperFixture, GivenGen11AndLaterThenSubgroupLocalBlock
     EXPECT_TRUE(compilerProductHelper.isSubgroupLocalBlockIoSupported());
 }
 
-HWTEST2_F(CompilerProductHelperFixture, GivenGen9OrBeforeThenSubgroupLocalBlockIoIsNotSupported, IsAtMostGen9) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isSubgroupLocalBlockIoSupported());
-}
-
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenDotAccumulateIsSupported, IsAtLeastXeHpCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 
@@ -355,12 +349,6 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersion30ThenReportsClKhrE
     hwInfo.capabilityTable.clVersionSupport = 30;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_external_memory")));
-}
-
-HWTEST2_F(CompilerProductHelperFixture, GivenAtMostGen11DeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenFalseReturned, IsAtMostGen11) {
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isDotIntegerProductExtensionSupported());
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenAtLeastGen12lpDeviceWhenCheckingIfIntegerDotExtensionIsSupportedThenTrueReturned, IsAtLeastGen12lp) {

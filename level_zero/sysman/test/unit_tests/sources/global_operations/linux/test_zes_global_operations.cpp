@@ -1167,19 +1167,6 @@ TEST_F(SysmanGlobalOperationsFixture,
     EXPECT_EQ(ZE_DEVICE_TYPE_GPU, properties.core.type);
 }
 
-HWTEST2_F(SysmanGlobalOperationsFixture,
-          GivenValidDeviceHandleWhenCallingGetPropertiesAndOnDemandPageFaultSupportedThenFlagIsSetCorrectlyInCoreProperties, IsAtMostGen11) {
-    auto mockHardwareInfo = device->getHardwareInfo();
-    mockHardwareInfo.capabilityTable.supportsOnDemandPageFaults = true;
-    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
-    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
-    EXPECT_TRUE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
-}
-
 TEST_F(SysmanGlobalOperationsFixture,
        GivenValidDeviceHandleWhenCallingGetPropertiesAndOnDemandPageFaultNotSupportedThenFlagIsNotSetInCoreProperties) {
     auto mockHardwareInfo = device->getHardwareInfo();
@@ -1228,21 +1215,6 @@ TEST_F(SysmanDevicePropertiesExtensionTest,
     EXPECT_EQ(ZES_DEVICE_TYPE_GPU, extProperties.type);
 }
 
-HWTEST2_F(SysmanDevicePropertiesExtensionTest,
-          GivenValidDeviceHandleWhenCallingGetPropertiesForExtensionAndOnDemandPageFaultSupportedThenFlagIsSetCorrectly, IsAtMostGen11) {
-    auto mockHardwareInfo = device->getHardwareInfo();
-    mockHardwareInfo.capabilityTable.supportsOnDemandPageFaults = true;
-    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
-    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_device_ext_properties_t extProperties = {ZES_STRUCTURE_TYPE_DEVICE_EXT_PROPERTIES};
-    properties.pNext = &extProperties;
-
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
-    EXPECT_TRUE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_INTEGRATED);
-}
-
 TEST_F(SysmanDevicePropertiesExtensionTest,
        GivenValidDeviceHandleWhenCallingGetPropertiesForExtensionAndOnDemandPageFaultNotSupportedThenFlagIsNotSet) {
     auto mockHardwareInfo = device->getHardwareInfo();
@@ -1258,20 +1230,6 @@ TEST_F(SysmanDevicePropertiesExtensionTest,
 }
 
 HWTEST2_F(SysmanDevicePropertiesExtensionTest,
-          GivenValidDeviceHandleWhenCallingGetPropertiesForExtensionAndIsIntegratedDeviceThenFlagIsSet, IsAtMostGen11) {
-    auto mockHardwareInfo = device->getHardwareInfo();
-    mockHardwareInfo.capabilityTable.isIntegratedDevice = true;
-    device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->setHwInfoAndInitHelpers(&mockHardwareInfo);
-    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_device_ext_properties_t extProperties = {ZES_STRUCTURE_TYPE_DEVICE_EXT_PROPERTIES};
-    properties.pNext = &extProperties;
-
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_INTEGRATED);
-}
-
-HWTEST2_F(SysmanDevicePropertiesExtensionTest,
           GivenValidDeviceHandleWhenCallingGetPropertiesForExtensionAndIsNotIntegratedDeviceThenFlagIsNotSet, IsXeHpgCore) {
     auto mockHardwareInfo = device->getHardwareInfo();
     mockHardwareInfo.capabilityTable.isIntegratedDevice = false;
@@ -1283,17 +1241,6 @@ HWTEST2_F(SysmanDevicePropertiesExtensionTest,
     ze_result_t result = zesDeviceGetProperties(device, &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_INTEGRATED);
-}
-
-HWTEST2_F(SysmanDevicePropertiesExtensionTest,
-          GivenValidDeviceHandleWhenCallingGetPropertiesForExtensionAndIsNotSubDeviceThenFlagIsNotSet, IsAtMostGen11) {
-    zes_device_properties_t properties = {ZES_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    zes_device_ext_properties_t extProperties = {ZES_STRUCTURE_TYPE_DEVICE_EXT_PROPERTIES};
-    properties.pNext = &extProperties;
-
-    ze_result_t result = zesDeviceGetProperties(device, &properties);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_TRUE(extProperties.flags & ZES_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
 TEST_F(SysmanDevicePropertiesExtensionTest,

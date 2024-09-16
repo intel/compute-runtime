@@ -78,15 +78,6 @@ HWTEST_F(CommandSetMMIOTest, WhenProgrammingThenLoadRegisterRegIsUsed) {
     }
 }
 
-using IsGen11OrBelow = IsAtMostGfxCore<IGFX_GEN11_CORE>;
-HWTEST2_F(CommandSetMMIOTest, whenIsRemapApplicableCalledThenReturnFalse, IsGen11OrBelow) {
-    EXPECT_FALSE(EncodeSetMMIO<FamilyType>::isRemapApplicable(0x1000));
-    EXPECT_FALSE(EncodeSetMMIO<FamilyType>::isRemapApplicable(0x2000));
-    EXPECT_FALSE(EncodeSetMMIO<FamilyType>::isRemapApplicable(0x2500));
-    EXPECT_FALSE(EncodeSetMMIO<FamilyType>::isRemapApplicable(0x2600));
-    EXPECT_FALSE(EncodeSetMMIO<FamilyType>::isRemapApplicable(0x4000));
-}
-
 using IsTgllpOrAbove = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
 HWTEST2_F(CommandSetMMIOTest, givenRegisterWithinRemapRangeWhenEncodingLoadingMMIOThenRemapIsEnabled, IsTgllpOrAbove) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;

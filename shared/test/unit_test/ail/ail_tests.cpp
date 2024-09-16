@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
-using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;
-using IsHostPtrTrackingDisabled = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN11LP_CORE>;
 
 using AILTests = ::testing::Test;
 
@@ -112,30 +110,6 @@ HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSource
     ail.modifyKernelIfRequired(kernelSources);
 
     EXPECT_STREQ(copyKernel.c_str(), kernelSources.c_str());
-}
-
-HWTEST2_F(AILTests, givenPreGen12AndProcessNameIsResolveWhenApplyWithDavinciResolveThenHostPtrTrackingIsDisabled, IsHostPtrTrackingDisabled) {
-    AILWhitebox<productFamily> ail;
-    ail.processName = "resolve";
-
-    NEO::RuntimeCapabilityTable rtTable = {};
-    rtTable.hostPtrTrackingEnabled = true;
-
-    ail.apply(rtTable);
-
-    EXPECT_FALSE(rtTable.hostPtrTrackingEnabled);
-}
-
-HWTEST2_F(AILTests, givenPreGen12AndAndProcessNameIsNotResolveWhenApplyWithDavinciResolveThenHostPtrTrackingIsEnabled, IsHostPtrTrackingDisabled) {
-    AILWhitebox<productFamily> ail;
-    ail.processName = "usualProcessName";
-
-    NEO::RuntimeCapabilityTable rtTable = {};
-    rtTable.hostPtrTrackingEnabled = true;
-
-    ail.apply(rtTable);
-
-    EXPECT_TRUE(rtTable.hostPtrTrackingEnabled);
 }
 
 HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, IsAtLeastGen9) {

@@ -409,13 +409,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsSkippingStatefulInformation
     EXPECT_FALSE(productHelper->isSkippingStatefulInformationRequired(kernelDescriptor));
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenSettingCapabilityCoherencyFlagThenFlagIsSet, IsAtMostGen11) {
-
-    bool coherency = false;
-    productHelper->setCapabilityCoherencyFlag(pInHwInfo, coherency);
-    EXPECT_TRUE(coherency);
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAdditionalMediaSamplerProgrammingIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isAdditionalMediaSamplerProgrammingRequired());
@@ -594,16 +587,6 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
     graphicsAllocation.overrideMemoryPool(MemoryPool::system64KBPages);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
-}
-
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {
-    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
-
-    MockGraphicsAllocation graphicsAllocation;
-    graphicsAllocation.overrideMemoryPool(MemoryPool::localMemory);
-    graphicsAllocation.setAllocationType(AllocationType::bufferHostMemory);
-
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
 }
 

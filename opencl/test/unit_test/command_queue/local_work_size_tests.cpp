@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -827,24 +827,6 @@ TEST_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCor
 
     WorkSizeInfo workSizeInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
     EXPECT_EQ(workSizeInfo.numThreadsPerSubSlice, threadsPerEu * euPerSubSlice);
-}
-
-HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenWorkgroupSizeIsCorrect, IsAtMostGen11) {
-    MockClDevice device{new MockDevice};
-    MockKernelWithInternals kernel(device);
-    kernel.kernelInfo.kernelDescriptor.kernelAttributes.barrierCount = 1;
-    DispatchInfo dispatchInfo;
-    dispatchInfo.setClDevice(&device);
-    dispatchInfo.setKernel(kernel.mockKernel);
-
-    const uint32_t maxBarriersPerHSlice = (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
-    const uint32_t nonFusedMinWorkGroupSize = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
-                                              device.getSharedDeviceInfo().numThreadsPerEU *
-                                              static_cast<uint32_t>(kernel.mockKernel->getKernelInfo().getMaxSimdSize()) /
-                                              maxBarriersPerHSlice;
-    WorkSizeInfo workSizeInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
-
-    EXPECT_EQ(nonFusedMinWorkGroupSize, workSizeInfo.minWorkGroupSize);
 }
 
 using IsCoreWithFusedEu = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;

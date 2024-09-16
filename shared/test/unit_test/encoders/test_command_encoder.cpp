@@ -55,12 +55,6 @@ HWTEST2_F(CommandEncoderTest, givenDg1NotUsingRcsWhenGettingRequiredSizeForState
     EXPECT_EQ(size, 88ul);
 }
 
-HWTEST2_F(CommandEncoderTest, givenEhlWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsEHL) {
-    auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
-    EXPECT_EQ(size, 88ul);
-}
-
 HWTEST2_F(CommandEncoderTest, givenRklUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsRKL) {
     auto container = CommandContainer();
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, true);
@@ -68,18 +62,6 @@ HWTEST2_F(CommandEncoderTest, givenRklUsingRcsWhenGettingRequiredSizeForStateBas
 }
 
 HWTEST2_F(CommandEncoderTest, givenRklNotUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsRKL) {
-    auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
-    EXPECT_EQ(size, 88ul);
-}
-
-HWTEST2_F(CommandEncoderTest, givenLkfWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsLKF) {
-    auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
-    EXPECT_EQ(size, 88ul);
-}
-
-HWTEST2_F(CommandEncoderTest, givenIclLpWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsICLLP) {
     auto container = CommandContainer();
     size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 88ul);

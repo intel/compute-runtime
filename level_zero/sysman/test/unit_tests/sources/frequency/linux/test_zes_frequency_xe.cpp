@@ -166,18 +166,6 @@ HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndZeroCountW
     }
 }
 
-HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds, IsGen8) {
-    step = 50 / 3;
-    numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
-    auto handles = getFreqHandles(handleComponentCount);
-    for (auto handle : handles) {
-        EXPECT_NE(handle, nullptr);
-        uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetAvailableClocks(handle, &count, nullptr));
-        EXPECT_EQ(numClocks, count);
-    }
-}
-
 HWTEST2_F(SysmanDeviceFrequencyFixtureXe, GivenValidFrequencyHandleAndZeroCountWhenCountIsMoreThanNumClocksThenCallSucceeds, IsPVC) {
     auto handles = getFreqHandles(handleComponentCount);
     for (auto handle : handles) {

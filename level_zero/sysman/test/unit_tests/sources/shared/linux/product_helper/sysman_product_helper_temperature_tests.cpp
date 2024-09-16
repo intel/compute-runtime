@@ -738,58 +738,6 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidHandleWhenQueryingMemory
     EXPECT_EQ(false, result);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndGuidToKeyOffsetMapIsNullptrWhenGettingGlobalMaxTemperatureThenErrorIsReturned, IsAtMostGen11) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::ostringstream oStream;
-        uint32_t intVal = 0;
-        if (fd == 4) {
-            memcpy(buf, &intVal, count);
-            return count;
-        } else if (fd == 5) {
-            oStream << "0xABCDEF";
-        } else {
-            oStream << "-1";
-        }
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
-    uint32_t subdeviceId = 0;
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGlobalMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-}
-
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndGuidToKeyOffsetMapIsNullptrWhenGettingGpuMaxTemperatureThenErrorIsReturned, IsAtMostGen11) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkMultiTelemetryNodesSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        std::ostringstream oStream;
-        uint32_t intVal = 0;
-        if (fd == 4) {
-            memcpy(buf, &intVal, count);
-            return count;
-        } else if (fd == 5) {
-            oStream << "0xABCDEF";
-        } else {
-            oStream << "-1";
-        }
-        std::string value = oStream.str();
-        memcpy(buf, value.data(), count);
-        return count;
-    });
-
-    uint32_t subdeviceId = 0;
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    double temperature = 0;
-    ze_result_t result = pSysmanProductHelper->getGpuMaxTemperature(pLinuxSysmanImp, &temperature, subdeviceId);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
-}
-
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBMG) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);

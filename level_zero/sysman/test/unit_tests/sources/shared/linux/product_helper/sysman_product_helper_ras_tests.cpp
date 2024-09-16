@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,12 +28,6 @@ HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenQueryi
 HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenQueryingRasInterfaceThenVerifyProperInterfacesAreReturned, IsDG2) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(RasInterfaceType::pmu, pSysmanProductHelper->getGtRasUtilInterface());
-    EXPECT_EQ(RasInterfaceType::none, pSysmanProductHelper->getHbmRasUtilInterface());
-}
-
-HWTEST2_F(SysmanProductHelperRasTest, GivenSysmanProductHelperInstanceWhenQueryingRasInterfaceThenVerifyProperInterfacesAreReturned, IsAtMostGen11) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(NEO::defaultHwInfo->platform.eProductFamily);
-    EXPECT_EQ(RasInterfaceType::none, pSysmanProductHelper->getGtRasUtilInterface());
     EXPECT_EQ(RasInterfaceType::none, pSysmanProductHelper->getHbmRasUtilInterface());
 }
 

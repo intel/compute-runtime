@@ -267,60 +267,6 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenFenceWhenExecutingCmdListThenFenc
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, whenUsingFenceThenExpectEndingPipeControlUpdatingTagAllocation, IsGen9) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
-    using Parse = typename FamilyType::Parse;
-
-    ze_command_queue_desc_t desc{};
-    ze_result_t returnValue;
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
-                                                          device,
-                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
-                                                          &desc,
-                                                          false,
-                                                          false,
-                                                          false,
-                                                          returnValue));
-    ASSERT_NE(nullptr, commandQueue);
-
-    ze_fence_desc_t fenceDesc{};
-    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
-    ASSERT_NE(nullptr, fence);
-
-    ze_fence_handle_t fenceHandle = fence->toHandle();
-
-    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
-
-    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, fenceHandle, true, nullptr);
-
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
-    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(Parse::parseCommandBuffer(cmdList,
-                                          ptrOffset(commandQueue->commandStream.getCpuBase(), 0),
-                                          usedSpaceAfter));
-
-    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    size_t pipeControlsPostSyncNumber = 0u;
-    for (size_t i = 0; i < pipeControls.size(); i++) {
-        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
-        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            EXPECT_EQ(commandQueue->getCsr()->getTagAllocation()->getGpuAddress(), NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
-            EXPECT_EQ(fence->taskCount, pipeControl->getImmediateData());
-            pipeControlsPostSyncNumber++;
-        }
-    }
-    EXPECT_EQ(1u, pipeControlsPostSyncNumber);
-
-    fence->destroy();
-    commandQueue->destroy();
-}
-
 HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPipeControlCommandIsExpected) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;

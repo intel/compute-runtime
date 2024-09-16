@@ -28,13 +28,6 @@ TEST(L0GfxCoreHelperTest, WhenL0GfxCoreHelperIsCalledWithUnknownGfxCoreThenNullp
     EXPECT_EQ(nullptr, L0GfxCoreHelper::create(IGFX_UNKNOWN_CORE));
 }
 
-HWTEST2_F(L0GfxCoreHelperTest, givenResumeWANotNeededThenFalseIsReturned, IsAtMostGen11) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
-
-    EXPECT_FALSE(l0GfxCoreHelper.isResumeWARequired());
-}
-
 using PlatformsWithWa = IsWithinGfxCore<IGFX_GEN12LP_CORE, IGFX_XE_HP_CORE>;
 
 HWTEST2_F(L0GfxCoreHelperTest, givenResumeWANeededThenTrueIsReturned, PlatformsWithWa) {

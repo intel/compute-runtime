@@ -50,21 +50,6 @@ TEST_F(MockProductHelperTestLinux, GivenDummyConfigWhenConfiguringHwInfoThenSucc
     EXPECT_EQ(0, ret);
 }
 
-HWTEST2_F(MockProductHelperTestLinux, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenIgnore, IsAtMostGen11) {
-    DebugManagerStateRestore restore{};
-    HardwareInfo hardwareInfo = *defaultHwInfo;
-
-    debugManager.flags.EnableBlitterOperationsSupport.set(1);
-    mockProductHelper->configureHardwareCustom(&hardwareInfo, nullptr);
-    EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
-}
-
-HWTEST2_F(MockProductHelperTestLinux, givenUnsupportedChipsetUniqueUUIDWhenGettingUuidThenReturnFalse, IsAtMostGen11) {
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    std::array<uint8_t, ProductHelper::uuidSize> id;
-    EXPECT_FALSE(productHelper.getUuid(nullptr, 0u, 0u, id));
-}
-
 TEST_F(MockProductHelperTestLinux, GivenDummyConfigThenEdramIsDetected) {
     mockProductHelper->use128MbEdram = true;
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());

@@ -23,13 +23,6 @@ HWTEST2_F(SysmanProductHelperFrequencyTest, GivenFrequencyModuleWhenGettingStepS
     EXPECT_EQ(50.0, stepSize);
 }
 
-HWTEST2_F(SysmanProductHelperFrequencyTest, GivenFrequencyModuleWhenGettingStepSizeThenValidStepSizeIsReturned, IsGen9) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    double stepSize = 0;
-    pSysmanProductHelper->getFrequencyStepSize(&stepSize);
-    EXPECT_EQ((50.0 / 3), stepSize);
-}
-
 HWTEST2_F(SysmanProductHelperFrequencyTest, GivenFrequencyModuleWhenQueryingFrequencySetRangeSupportedThenVerifySetRangeIsSupported, IsXeHpOrXeHpcOrXeHpgCore) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_EQ(true, pSysmanProductHelper->isFrequencySetRangeSupported());

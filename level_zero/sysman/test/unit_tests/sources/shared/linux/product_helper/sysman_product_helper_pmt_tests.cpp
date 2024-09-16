@@ -67,12 +67,6 @@ HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGui
     EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x5e2F8210").at("reg_PCIESS_tx_bytecount_msb"), (*pGuidToKeyOffsetMap).at("0x5e2F8210").at("reg_PCIESS_tx_bytecount_msb"));
 }
 
-HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGuidToKeyOffsetMapIsCalledForUnsupportedProductThenNullptrIsReturned, IsCFL) {
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    auto pGuidToKeyOffsetMap = pSysmanProductHelper->getGuidToKeyOffsetMap();
-    EXPECT_EQ(nullptr, pGuidToKeyOffsetMap);
-}
-
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

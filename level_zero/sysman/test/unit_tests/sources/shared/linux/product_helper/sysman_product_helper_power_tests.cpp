@@ -135,24 +135,6 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     EXPECT_TRUE(pSysmanProductHelper->isPowerSetLimitSupported());
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenSysfsReadFailsAndTelemDataNotAvailableWhenGettingPowerEnergyCounterThenFailureIsReturned, IsSKL) {
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
-    pLinuxPowerImp->isTelemetrySupportAvailable = true;
-    zes_power_energy_counter_t energyCounter = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenSysfsReadFailsAndGuidToKeyOffsetMapPtrIsNullWhenGettingPowerEnergyCounterThenFailureIsReturned, IsSKL) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
-
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
-    pLinuxPowerImp->isTelemetrySupportAvailable = true;
-    zes_power_energy_counter_t energyCounter = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-}
-
 HWTEST2_F(SysmanProductHelperPowerTest, GivenSysfsReadFailsAndKeyOffsetMapNotAvailableForGuidWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG1) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);

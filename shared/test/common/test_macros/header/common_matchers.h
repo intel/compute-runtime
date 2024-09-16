@@ -7,10 +7,6 @@
 
 #pragma once
 
-using IsGen8 = IsGfxCore<IGFX_GEN8_CORE>;
-using IsGen9 = IsGfxCore<IGFX_GEN9_CORE>;
-using IsGen11HP = IsGfxCore<IGFX_GEN11_CORE>;
-using IsGen11LP = IsGfxCore<IGFX_GEN11LP_CORE>;
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 using IsXeHpgCore = IsGfxCore<IGFX_XE_HPG_CORE>;
 using IsXeHpcCore = IsGfxCore<IGFX_XE_HPC_CORE>;
@@ -19,10 +15,8 @@ using IsNotXeHpgCore = IsNotGfxCore<IGFX_XE_HPG_CORE>;
 using IsXe2HpgCore = IsGfxCore<IGFX_XE2_HPG_CORE>;
 using IsNotXe2HpgCore = IsNotGfxCore<IGFX_XE2_HPG_CORE>;
 
-using IsAtMostGen9 = IsAtMostGfxCore<IGFX_GEN9_CORE>;
 using IsAtLeastGen9 = IsAtLeastGfxCore<IGFX_GEN9_CORE>;
 
-using IsAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
 using IsAtLeastGen11 = IsAtLeastGfxCore<IGFX_GEN11LP_CORE>;
 
 using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
@@ -55,17 +49,6 @@ using IsXeHpOrXeHpcOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE
 using IsNotXeHpOrXeHpgCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
 using IsNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 using IsNotXeHpgOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
-
-using IsSKL = IsProduct<IGFX_SKYLAKE>;
-using IsKBL = IsProduct<IGFX_KABYLAKE>;
-using IsCFL = IsProduct<IGFX_COFFEELAKE>;
-
-using IsBXT = IsProduct<IGFX_BROXTON>;
-using IsGLK = IsProduct<IGFX_GEMINILAKE>;
-
-using IsICLLP = IsProduct<IGFX_ICELAKE_LP>;
-using IsEHL = IsProduct<IGFX_ELKHARTLAKE>;
-using IsLKF = IsProduct<IGFX_LAKEFIELD>;
 
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsDG1 = IsProduct<IGFX_DG1>;
