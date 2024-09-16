@@ -225,7 +225,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForHeaplessPrologue(Device &device) const;
     void handleAllocationsResidencyForHeaplessProlog(LinearStream &linearStream, Device &device);
 
-    void setClearSlmWorkAroundParameter(PipeControlArgs &args);
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
     void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
     bool are4GbHeapsAvailable() const;

@@ -15,21 +15,6 @@ template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uint32_t &newL3Config, bool isBcs) {
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
-        // Add a PIPE_CONTROL w/ CS_stall
-        PipeControlArgs args = {};
-        args.dcFlushEnable = true;
-        setClearSlmWorkAroundParameter(args);
-        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(csr, args);
-
-        PreambleHelper<GfxFamily>::programL3(&csr, newL3Config, isBcs);
-        this->lastSentL3Config = newL3Config;
-    }
-}
-
-template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
 
@@ -40,16 +25,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     }
     size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     return size;
-}
-
-template <typename GfxFamily>
-inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const {
-    if (!this->isPreambleSent) {
-        return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
-    } else if (csrSizeRequestFlags.l3ConfigChanged) {
-        return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + sizeof(typename GfxFamily::PIPE_CONTROL);
-    }
-    return 0;
 }
 
 template <typename GfxFamily>

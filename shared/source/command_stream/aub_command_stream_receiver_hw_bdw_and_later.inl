@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,18 +12,6 @@ namespace NEO {
 template <typename GfxFamily>
 constexpr uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMaskAndValueForPollForCompletion() {
     return 0x100;
-}
-
-template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken(uint32_t dumpHandle) {
-    // Some simulator versions don't support adding the context token.
-    // This hook allows specialization for those that do.
-}
-
-template <typename GfxFamily>
-uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader() {
-    uint32_t gucWorkQueueItemHeader = 0x00030001;
-    return gucWorkQueueItemHeader;
 }
 
 template <typename GfxFamily>

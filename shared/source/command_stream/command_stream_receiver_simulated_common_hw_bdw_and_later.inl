@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,17 +14,6 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initGlobalMMIO() {
     for (auto &mmioPair : AUBFamilyMapper<GfxFamily>::globalMMIO) {
         stream->writeMMIO(mmioPair.first, mmioPair.second);
     }
-}
-
-template <typename GfxFamily>
-uint64_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
-    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::userSupervisorBit);
-}
-
-template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
-    data.present = true;
-    data.localMemory = false;
 }
 
 template <typename GfxFamily>
@@ -46,14 +35,4 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initEngineMMIO() {
         stream->writeMMIO(mmioPair.first, mmioPair.second);
     }
 }
-
-template <typename GfxFamily>
-void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::submitLRCA(const MiContextDescriptorReg &contextDescriptor) {
-    auto mmioBase = getCsTraits(osContext->getEngineType()).mmioBase;
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), 0);
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[1]);
-    stream->writeMMIO(AubMemDump::computeRegisterOffset(mmioBase, 0x2230), contextDescriptor.ulData[0]);
-}
-
 } // namespace NEO

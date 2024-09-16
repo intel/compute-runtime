@@ -946,10 +946,6 @@ void CommandStreamReceiverHw<GfxFamily>::resetKmdNotifyHelper(KmdNotifyHelper *n
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::setClearSlmWorkAroundParameter(PipeControlArgs &args) {
-}
-
-template <typename GfxFamily>
 uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
     return scratchSpaceController->getScratchPatchAddress();
 }

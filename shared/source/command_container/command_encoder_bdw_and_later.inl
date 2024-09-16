@@ -422,10 +422,6 @@ inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceIn
 }
 
 template <typename Family>
-inline void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
-}
-
-template <typename Family>
 void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
     sbaAddress.indirectObjectBaseAddress = sbaCmd.getIndirectObjectBaseAddress();
     sbaAddress.bindlessSurfaceStateBaseAddress = sbaCmd.getBindlessSurfaceStateBaseAddress();
@@ -498,24 +494,8 @@ size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device
     return sizeof(typename Family::STATE_BASE_ADDRESS) + 2 * EncodeWA<Family>::getAdditionalPipelineSelectSize(device, isRcs);
 }
 
-template <typename Family>
-void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {
-    auto offset = L3CNTLRegisterOffset<Family>::registerOffset;
-    auto data = PreambleHelper<Family>::getL3Config(container.getDevice()->getHardwareInfo(), enableSLM);
-    EncodeSetMMIO<Family>::encodeIMM(container, offset, data, false, false);
-}
-
 template <typename GfxFamily>
 void EncodeMiFlushDW<GfxFamily>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {}
-
-template <typename GfxFamily>
-inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
-                                                                const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {}
-
-template <typename GfxFamily>
-inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
-    return 0;
-}
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
@@ -524,28 +504,7 @@ inline void EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(L
 }
 
 template <typename GfxFamily>
-inline void EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream,
-                                                                      const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlushRequired) {
-    PipeControlArgs args;
-    args.dcFlushEnable = dcFlushRequired;
-    args.textureCacheInvalidationEnable = true;
-
-    NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, rootDeviceEnvironment, isRcs);
-}
-
-template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
-}
-
-template <typename GfxFamily>
-inline void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(EncodeSurfaceStateArgs &args) {
-    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(args.outMemory);
-    encodeExtraCacheSettings(surfaceState, args);
-}
-
-template <typename GfxFamily>
-bool EncodeSurfaceState<GfxFamily>::isBindingTablePrefetchPreferred() {
-    return true;
 }
 
 template <typename Family>
@@ -600,14 +559,6 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
     EncodeStoreMemory<Family>::encodeForceCompletionCheck(storeDataImmediate);
 
     *cmdBuffer = storeDataImmediate;
-}
-
-template <typename Family>
-inline void EncodeStoreMemory<Family>::encodeForceCompletionCheck(MI_STORE_DATA_IMM &storeDataImmCmd) {
-}
-
-template <typename Family>
-inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable) {
 }
 
 template <typename Family>

@@ -8,23 +8,8 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/preamble_base.inl"
-#include "shared/source/kernel/kernel_execution_type.h"
 
 namespace NEO {
-
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config, bool isBcs) {
-    LriHelper<GfxFamily>::program(pCommandStream,
-                                  L3CNTLRegisterOffset<GfxFamily>::registerOffset,
-                                  l3Config,
-                                  false,
-                                  isBcs);
-}
-
-template <typename GfxFamily>
-uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
-    return 0x782;
-}
 
 template <typename GfxFamily>
 void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStream,
@@ -72,15 +57,6 @@ template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
     return sizeof(MEDIA_VFE_STATE) + sizeof(PIPE_CONTROL);
-}
-
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {}
-
-template <typename GfxFamily>
-size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
-    return sizeof(PIPELINE_SELECT);
 }
 
 template <typename GfxFamily>

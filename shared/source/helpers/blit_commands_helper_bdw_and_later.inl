@@ -25,34 +25,6 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsBlockCopy(const BlitProper
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
-    appendTilingType(GMM_NOT_TILED, GMM_NOT_TILED, blitCmd);
-}
-
-template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename GfxFamily::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
-    if (blitCmd.getColorDepth() == XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR) {
-        blitCmd.set32BppByteMask(XY_COLOR_BLT::_32BPP_BYTE_MASK::_32BPP_BYTE_MASK_WRITE_RGBA_CHANNEL);
-    }
-    appendExtraMemoryProperties(blitCmd, rootDeviceEnvironment);
-}
-
-template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment) {
-    switch (patternSize) {
-    case 1:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<1>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
-        break;
-    case 2:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<2>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR1555);
-        break;
-    default:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<4>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
-    }
-}
-
-template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
 }
 template <typename GfxFamily>
@@ -63,14 +35,6 @@ void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_CO
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
-}
-template <typename GfxFamily>
-template <typename T>
-void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitProperites, T &blitCmd) {
-}
-
-template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
 }
 
 template <typename GfxFamily>

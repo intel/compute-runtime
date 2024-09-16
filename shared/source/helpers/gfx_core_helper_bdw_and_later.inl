@@ -17,20 +17,8 @@ void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo, 
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice *
-           hwInfo->gtSystemInfo.ThreadCount / hwInfo->gtSystemInfo.EUCount;
-}
-
-template <typename GfxFamily>
 inline uint32_t GfxCoreHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
     return 36;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
-    return false;
 }
 
 template <typename GfxFamily>
@@ -67,33 +55,6 @@ bool GfxCoreHelperHw<GfxFamily>::makeResidentBeforeLockNeeded(bool precondition)
 }
 
 template <typename GfxFamily>
-const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return {
-        {aub_stream::ENGINE_RCS, EngineUsage::regular},
-        {aub_stream::ENGINE_RCS, EngineUsage::lowPriority},
-        {aub_stream::ENGINE_RCS, EngineUsage::internal},
-    };
-}
-
-template <typename GfxFamily>
-EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
-    switch (engineType) {
-    case aub_stream::ENGINE_RCS:
-        return EngineGroupType::renderCompute;
-    default:
-        UNRECOVERABLE_IF(true);
-    }
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
-    if (l3enabled) {
-        return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    }
-    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
-}
-
-template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
     return hwInfo.gtSystemInfo.ThreadCount;
 }
@@ -118,17 +79,6 @@ aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const Hardware
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PipeControlArgs &args) {
 }
-
-template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(PipeControlArgs &args) {
-}
-
-template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
-}
-
-template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) { return false; }
 
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *barrierCmd) {
