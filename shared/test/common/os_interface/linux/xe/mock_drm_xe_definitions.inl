@@ -170,14 +170,11 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
             handleContextCreateExtensions(ext);
             extension = ext->next_extension;
         }
-        queueCreate->exec_queue_id = mockExecQueueId;
+        queueCreate->exec_queue_id = ++mockExecQueueId;
         ret = 0;
     } break;
     case DrmIoctl::gemContextDestroy: {
-        auto queueDestroy = static_cast<drm_xe_exec_queue_destroy *>(arg);
-        if (queueDestroy->exec_queue_id == mockExecQueueId) {
-            ret = 0;
-        }
+        ret = 0;
     } break;
     case DrmIoctl::perfOpen: {
         ret = 0;

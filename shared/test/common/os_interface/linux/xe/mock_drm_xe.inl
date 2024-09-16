@@ -32,7 +32,7 @@ struct DrmMockXe : public DrmMockCustom {
     const uint16_t devId = 0xabc;
 
     uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
-    static constexpr uint32_t mockExecQueueId = 1234;
+    uint32_t mockExecQueueId = 1234;
     static constexpr int32_t mockMaxExecQueuePriority = 3;
     static constexpr int32_t mockDefaultCxlType = 0;
     static constexpr uint32_t mockTimestampFrequency = 12500000;
