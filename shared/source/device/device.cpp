@@ -696,10 +696,6 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bo
             if (!commandStreamReceiver->initializeTagAllocation()) {
                 return nullptr;
             }
-
-            if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
-                return nullptr;
-            }
         }
     }
     return engineControl;
