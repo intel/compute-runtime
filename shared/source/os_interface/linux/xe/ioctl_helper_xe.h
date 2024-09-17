@@ -152,7 +152,7 @@ class IoctlHelperXe : public IoctlHelper {
     int debuggerOpenIoctl(DrmIoctl request, void *arg);
     int debuggerMetadataCreateIoctl(DrmIoctl request, void *arg);
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);
-    int getRunaloneExtProperty();
+    int getEudebugExtProperty();
     virtual bool isExtraEngineClassAllowed(uint16_t engineClass) const { return false; }
     virtual std::optional<uint32_t> getCxlType() { return {}; }
     virtual uint32_t getNumEngines(uint64_t *enginesData) const;

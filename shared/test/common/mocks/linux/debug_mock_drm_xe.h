@@ -29,7 +29,7 @@ using namespace NEO;
 
 struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
-    using IoctlHelperXe::getRunaloneExtProperty;
+    using IoctlHelperXe::getEudebugExtProperty;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::tileIdToGtId;
 };

@@ -57,7 +57,7 @@ int IoctlHelperXe::debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg) {
     return ret;
 }
 
-int IoctlHelperXe::getRunaloneExtProperty() {
+int IoctlHelperXe::getEudebugExtProperty() {
     return DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG;
 }
 

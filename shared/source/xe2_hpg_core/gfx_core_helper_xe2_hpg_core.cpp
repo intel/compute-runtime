@@ -299,11 +299,6 @@ uint32_t GfxCoreHelperHw<Family>::overrideMaxWorkGroupSize(uint32_t maxWG) const
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isRunaloneModeRequired(DebuggingMode debuggingMode) const {
-    return (debuggingMode == DebuggingMode::online);
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     uint32_t numThreadsPerThreadGroup = getThreadsPerWG(simd, totalWorkItems);
     if (debugManager.flags.RemoveRestrictionsOnNumberOfThreadsInGpgpuThreadGroup.get() == 1) {

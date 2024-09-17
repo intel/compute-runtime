@@ -1563,12 +1563,11 @@ void IoctlHelperXe::setOptionalContextProperties(Drm &drm, void *extProperties, 
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 
-    auto &gfxCoreHelper = drm.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     if ((contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_RENDER) || (contextParamEngine[0].engine_class == DRM_XE_ENGINE_CLASS_COMPUTE)) {
-        if (gfxCoreHelper.isRunaloneModeRequired(drm.getRootDeviceEnvironment().executionEnvironment.getDebuggingMode())) {
+        if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
             ext[extIndexInOut].base.next_extension = 0;
             ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
-            ext[extIndexInOut].property = getRunaloneExtProperty();
+            ext[extIndexInOut].property = getEudebugExtProperty();
             ext[extIndexInOut].value = 1;
             extIndexInOut++;
         }

@@ -29,7 +29,7 @@ int IoctlHelperXe::debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg) {
     return 0;
 }
 
-int IoctlHelperXe::getRunaloneExtProperty() {
+int IoctlHelperXe::getEudebugExtProperty() {
     UNRECOVERABLE_IF(true);
     return 0;
 }

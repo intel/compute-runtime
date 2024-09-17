@@ -582,11 +582,6 @@ template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bool isNotCompressed) const {}
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isRunaloneModeRequired(DebuggingMode debuggingMode) const {
-    return false;
-}
-
-template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {
     gmm.resourceParams.Flags.Info.RenderCompressed = isCompressed;
 }
