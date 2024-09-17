@@ -2462,40 +2462,6 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedBufferAddressWhenSettingSur
     EXPECT_EQ(mockKernel.surfaceStateHeapDataSize, mockKernel.getSurfaceStateHeapDataSize());
 }
 
-HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessImplicitArgAndNoBindlessHeapsHelperWhenGetSurfaceStateHeapDataSizeThenReturnSurfaceStateHeapDataSize, MatchAny) {
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
-
-    ze_kernel_desc_t desc = {};
-    desc.pKernelName = kernelName.c_str();
-
-    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
-    mockKernel.initialize(&desc);
-    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
-    EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
-
-    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x20;
-    ASSERT_EQ(nullptr, mockKernel.module->getDevice()->getNEODevice()->getBindlessHeapsHelper());
-    EXPECT_NE(0u, mockKernel.surfaceStateHeapDataSize);
-    EXPECT_EQ(mockKernel.surfaceStateHeapDataSize, mockKernel.getSurfaceStateHeapDataSize());
-}
-
-HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessImplicitArgAndBindlessHeapsHelperWhenGetSurfaceStateHeapDataSizeThenReturnZero, MatchAny) {
-    ze_kernel_desc_t desc = {};
-    desc.pKernelName = kernelName.c_str();
-
-    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
-    mockKernel.module = module.get();
-    mockKernel.initialize(&desc);
-    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
-    EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
-
-    const_cast<NEO::KernelDescriptor &>(mockKernel.kernelImmData->getDescriptor()).payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 0x20;
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
-                                                                                                                             neoDevice->getNumGenericSubDevices() > 1);
-    EXPECT_EQ(0u, mockKernel.getSurfaceStateHeapDataSize());
-}
-
 HWTEST2_F(KernelImpPatchBindlessTest, GivenMisalignedAndAlignedBufferAddressWhenSettingSurfaceStateThenKernelReportsNonZeroSurfaceStateHeapDataSize, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 

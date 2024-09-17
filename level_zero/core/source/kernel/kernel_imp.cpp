@@ -1244,24 +1244,7 @@ void KernelImp::patchRegionGroupBarrier(NEO::GraphicsAllocation *gfxAllocation, 
 
 uint32_t KernelImp::getSurfaceStateHeapDataSize() const {
     if (NEO::KernelDescriptor::isBindlessAddressingKernel(kernelImmData->getDescriptor())) {
-        const auto bindlessHeapsHelper = this->module && this->module->getDevice()->getNEODevice()->getBindlessHeapsHelper();
-
-        bool isBindlessImplicitArgPresent = false;
-        auto implicitArgsVec = kernelImmData->getDescriptor().getImplicitArgBindlessCandidatesVec();
-        for (const auto implicitArg : implicitArgsVec) {
-            if (NEO::isValidOffset(implicitArg->bindless)) {
-                isBindlessImplicitArgPresent = true;
-                break;
-            }
-        }
-
-        const bool noneOfExplicitArgsRequireLocalSsh = std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; });
-
-        if (isBindlessImplicitArgPresent && !bindlessHeapsHelper) {
-            return surfaceStateHeapDataSize;
-        }
-
-        if (noneOfExplicitArgsRequireLocalSsh) {
+        if (std::none_of(usingSurfaceStateHeap.cbegin(), usingSurfaceStateHeap.cend(), [](bool i) { return i; })) {
             return 0;
         }
     }
