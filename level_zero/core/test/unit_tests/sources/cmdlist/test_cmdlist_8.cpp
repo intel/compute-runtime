@@ -64,7 +64,7 @@ struct AppendMemoryLockedCopyFixture : public DeviceFixture {
 
 using AppendMemoryLockedCopyTest = Test<AppendMemoryLockedCopyFixture>;
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtrAsOperandThenItIsTreatedAsHostUsmPtr, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPtrAsOperandThenItIsTreatedAsHostUsmPtr, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
@@ -177,7 +177,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndImportedHostPt
     delete[] importedPtr;
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
@@ -193,7 +193,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HThenReturnTrue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HThenReturnTrue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -208,7 +208,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnTrue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -223,7 +223,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DWhenCopyCantBePerformedImmediatelyThenReturnFalse, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForH2DWhenCopyCantBePerformedImmediatelyThenReturnFalse, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -266,7 +266,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HWhenCopyCantBePerformedImmediatelyThenReturnFalse, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhenPreferCopyThroughLockedPtrCalledForD2HWhenCopyCantBePerformedImmediatelyThenReturnFalse, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -309,7 +309,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmHostPtrWhen
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 1, &event));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhenPreferCopyThroughLockedPtrCalledForD2HThenReturnFalse, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhenPreferCopyThroughLockedPtrCalledForD2HThenReturnFalse, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -337,7 +337,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWh
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->closeIpcMemHandle(ipcDevicePtr));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnFalse, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWhenPreferCopyThroughLockedPtrCalledForH2DThenReturnFalse, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -365,7 +365,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndIpcDevicePtrWh
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->closeIpcMemHandle(ipcDevicePtr));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocThenReturnCorrectValue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocThenReturnCorrectValue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -381,7 +381,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     EXPECT_TRUE(cmdList.isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMHostAllocThenReturnCorrectValue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMHostAllocThenReturnCorrectValue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -398,7 +398,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSM
     EXPECT_FALSE(cmdList.isSuitableUSMHostAlloc(dstAllocData));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMSharedAllocThenReturnCorrectValue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenIsSuitableUSMSharedAllocThenReturnCorrectValue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -430,7 +430,7 @@ struct LocalMemoryMultiSubDeviceFixture : public SingleRootMultiSubDeviceFixture
 
 using LocalMemoryMultiSubDeviceTest = Test<LocalMemoryMultiSubDeviceFixture>;
 
-HWTEST2_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocWithColouredBufferThenReturnFalse, IsAtLeastSkl) {
+HWTEST2_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitableUSMDeviceAllocWithColouredBufferThenReturnFalse, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -449,7 +449,7 @@ HWTEST2_F(LocalMemoryMultiSubDeviceTest, givenImmediateCommandListWhenIsSuitable
     context->freeMem(devicePtr);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCreatingThenCopyThroughLockedPtrEnabledIsSetCorrectly, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCreatingThenCopyThroughLockedPtrEnabledIsSetCorrectly, IsAtLeastGen12lp) {
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
@@ -464,7 +464,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCreatingThenC
     EXPECT_EQ(whiteBoxCmdList->copyThroughLockedPtrEnabled, device->getGfxCoreHelper().copyThroughLockedPtrEnabled(device->getHwInfo(), device->getProductHelper()));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrViaEnvVariableWhenPreferCopyThroughLockPointerCalledThenTrueIsReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtrViaEnvVariableWhenPreferCopyThroughLockPointerCalledThenTrueIsReturned, IsAtLeastGen12lp) {
     debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -480,7 +480,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndForcingLockPtr
     EXPECT_TRUE(cmdList.preferCopyThroughLockedPtr(cpuMemCopyInfo, 0, nullptr));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTypeThenReturnCorrectValue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTypeThenReturnCorrectValue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -660,7 +660,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     context->freeMem(hostPtr2);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -690,7 +690,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTh
     EXPECT_EQ(0u, cmdList.getTransferThreshold(TransferType::sharedUsmToHostNonUsm));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebugFlagSetWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebugFlagSetWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -707,7 +707,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebug
     EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getTransferThreshold(TransferType::deviceUsmToHostNonUsm));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
@@ -726,7 +726,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyD2HThenLockPtr, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyD2HThenLockPtr, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
@@ -746,7 +746,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllocationsAreLocked, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllocationsAreLocked, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
 
@@ -779,7 +779,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllo
     context->freeMem(devicePtr2);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmToDeviceUsmThenOnlyDeviceAllocationIsLocked, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmToDeviceUsmThenOnlyDeviceAllocationIsLocked, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ExperimentalForceCopyThroughLock.set(1);
 
@@ -812,7 +812,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmT
     context->freeMem(hostPtr);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DAndDstPtrLockedThenDontLockAgain, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DAndDstPtrLockedThenDontLockAgain, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -832,7 +832,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenUseMemcpyAndReturnSuccess, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenUseMemcpyAndReturnSuccess, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -854,7 +854,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     EXPECT_EQ(0, memcmp(lockedPtr, nonUsmHostPtr, 1024));
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndNonUsmHostPtrWhenCopyH2DThenSignalEvent, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndNonUsmHostPtrWhenCopyH2DThenSignalEvent, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -881,7 +881,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndCpuMemcpyWhenGpuHangThenDontSynchronizeEvent, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAndCpuMemcpyWhenGpuHangThenDontSynchronizeEvent, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
@@ -913,7 +913,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithoutBarrierThenDontWaitForTagUpdate, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithoutBarrierThenDontWaitForTagUpdate, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -929,7 +929,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     EXPECT_EQ(waitForFlushTagUpdateCalled, 0u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithBarrierThenWaitForTagUpdate, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWithBarrierThenWaitForTagUpdate, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
@@ -948,7 +948,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetDependenciesPresent, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrierThenSetDependenciesPresent, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
@@ -971,7 +971,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrier
     EXPECT_FALSE(cmdList.dependenciesPresent);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnEventsThenSetDependenciesPresent, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
@@ -1035,7 +1035,7 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
     uint32_t appendMemoryCopyKernelWithGACalled = 0;
 };
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWhenCopyH2DThenUseCpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWhenCopyH2DThenUseCpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1051,7 +1051,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrW
     context->freeMem(usmSrcPtr);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmDstHostPtrWhenCopyThenUseGpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmDstHostPtrWhenCopyThenUseGpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1067,7 +1067,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmDstHostPtrW
     context->freeMem(usmHostDstPtr);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWhenCopyThenUseGpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrWhenCopyThenUseGpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1083,7 +1083,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrW
     context->freeMem(usmHostSrcPtr);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmSrcHostPtrWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmSrcHostPtrWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1094,7 +1094,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmSrcHostP
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostPtrWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostPtrWhenSizeTooLargeThenUseGpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1105,7 +1105,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostP
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPtrThenUseGpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPtrThenUseGpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1129,7 +1129,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPt
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     debugManager.flags.ExperimentalD2HCpuCopyThreshold.set(2048);
@@ -1142,7 +1142,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSiz
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSizeTooLargeButFlagSetThenUseCpuMemcpy, IsAtLeastGen12lp) {
     debugManager.flags.ExperimentalH2DCpuCopyThreshold.set(3 * MemoryConstants::megaByte);
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
@@ -1154,7 +1154,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSiz
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyThenAppendBarrierCalled, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyThenAppendBarrierCalled, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
 
     auto mockCmdQ = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getInternalEngine().commandStreamReceiver, &desc);
@@ -1188,7 +1188,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
     EXPECT_EQ(cmdList.synchronizeEventListCalled, 0u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyWithinThresholdThenWaitOnHost, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyWithinThresholdThenWaitOnHost, IsAtLeastGen12lp) {
     DebugManagerStateRestore restore;
 
     ze_command_queue_desc_t desc = {};
@@ -1231,7 +1231,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
     EXPECT_EQ(cmdList.synchronizeEventListCalled, 1u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithoutDependencyThenAppendBarrierNotCalled, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithoutDependencyThenAppendBarrierNotCalled, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1242,7 +1242,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWitho
     EXPECT_EQ(cmdList.appendBarrierCalled, 0u);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagSetWhenCpuMemcpyThenSetCorrectGpuTimestamps, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagSetWhenCpuMemcpyThenSetCorrectGpuTimestamps, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
@@ -1275,7 +1275,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagS
     EXPECT_EQ(resultTimestamp.global.kernelEnd, NEO::MockDeviceTimeWithConstTimestamp::gpuTimestamp + 1);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagNotSetWhenCpuMemcpyThenDontSetGpuTimestamps, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagNotSetWhenCpuMemcpyThenDontSetGpuTimestamps, IsAtLeastGen12lp) {
     struct MockGpuTimestampEvent : public EventImp<uint32_t> {
         using EventImp<uint32_t>::gpuStartTimestamp;
         using EventImp<uint32_t>::gpuEndTimestamp;
@@ -1307,7 +1307,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagN
     EXPECT_EQ(0u, reinterpret_cast<MockGpuTimestampEvent *>(event.get())->gpuEndTimestamp);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenAllocationDataWhenFailingToObtainLockedPtrFromDeviceThenNullptrIsReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenAllocationDataWhenFailingToObtainLockedPtrFromDeviceThenNullptrIsReturned, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -1330,7 +1330,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenAllocationDataWhenFailingToObtainLock
     EXPECT_EQ(lockedPtr, nullptr);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenNullAllocationDataWhenObtainLockedPtrFromDeviceCalledThenNullptrIsReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenNullAllocationDataWhenObtainLockedPtrFromDeviceCalledThenNullptrIsReturned, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -1340,7 +1340,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenNullAllocationDataWhenObtainLockedPtr
     EXPECT_FALSE(lockingFailed);
 }
 
-HWTEST2_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingCpuMemoryCopyThenErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerformingCpuMemoryCopyThenErrorIsReturned, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
@@ -1363,7 +1363,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenFailedToObtainLockedPtrWhenPerforming
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, returnValue);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFill, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFill, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     createKernel();
     ze_command_queue_desc_t queueDesc = {};
@@ -1378,7 +1378,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenSettingFillPr
     EXPECT_EQ(outArguments.groups * outArguments.mainGroupSize, sizeToFill);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFillDevidedBySizeOfUint32, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenSettingFillPropertiesThenAllGroupsCountEqualSizeToFillDevidedBySizeOfUint32, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     createKernel();
     ze_command_queue_desc_t queueDesc = {};
@@ -1405,7 +1405,7 @@ class MockCommandListHwKernelSplit : public WhiteBox<::L0::CommandListCoreFamily
     ze_result_t status = ZE_RESULT_SUCCESS;
     ::L0::Kernel *passedKernel;
 };
-HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFillCalledThenRightLeftOverKernelIsDispatched, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFillCalledThenRightLeftOverKernelIsDispatched, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -1421,7 +1421,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryF
     EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
     context->freeMem(dstBuffer);
 }
-HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenKernelLaunchSplitForRighLeftoverKernelFailsThenFailedStatusIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenKernelLaunchSplitForRighLeftoverKernelFailsThenFailedStatusIsReturned, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -1437,7 +1437,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenKernelLaunchS
     EXPECT_EQ(commandList->passedKernel, builtinKernelByte);
     context->freeMem(dstBuffer);
 }
-HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFillCalledWithStatelessEnabledThenRightLeftOverStatelessKernelIsDispatched, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryFillCalledWithStatelessEnabledThenRightLeftOverStatelessKernelIsDispatched, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -1454,7 +1454,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenUnalignePtrToFillWhenAppendMemoryF
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenAppendMemoryFillCalledThenMiddleBufferKernelIsDispatched, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenAlignePtrToFillWhenAppendMemoryFillCalledThenMiddleBufferKernelIsDispatched, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto commandList = std::make_unique<MockCommandListHwKernelSplit<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -1489,7 +1489,7 @@ struct ImmediateCommandListHostSynchronize : public Test<DeviceFixture> {
     }
 };
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSynchronizeThenUnregister, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSynchronizeThenUnregister, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1518,7 +1518,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenCsrClientCountWhenCallingSyn
     EXPECT_EQ(clientCount, csr->getNumClients());
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskEnabledAndNotSyncModeThenWaitForCompletionIsCalled, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskEnabledAndNotSyncModeThenWaitForCompletionIsCalled, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1529,7 +1529,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskEnabledAndNotSyncMo
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletionIsCalled, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletionIsCalled, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1541,7 +1541,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenSyncModeThenWaitForCompletio
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabledThenWaitForCompletionIsCalled, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisabledThenWaitForCompletionIsCalled, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1554,7 +1554,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenFlushTaskSubmissionIsDisable
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLostIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLostIsReturned, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1568,7 +1568,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenGpuStatusIsHangThenDeviceLos
     EXPECT_EQ(waitForFlushTagUpdateCalled, 1u);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenTimeoutOtherThanMaxIsProvidedWaitParamsIsSetCorrectly, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenTimeoutOtherThanMaxIsProvidedWaitParamsIsSetCorrectly, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1583,7 +1583,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenTimeoutOtherThanMaxIsProvide
     EXPECT_EQ(waitParams.waitTimeout, 1);
 }
 
-HWTEST2_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParamsIsSetCorrectly, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitParamsIsSetCorrectly, IsAtLeastGen12lp) {
     auto csr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getInternalEngine().commandStreamReceiver);
 
     auto cmdList = createCmdList<gfxCoreFamily>(csr);
@@ -1600,7 +1600,7 @@ HWTEST2_F(ImmediateCommandListHostSynchronize, givenMaxTimeoutIsProvidedWaitPara
 
 using CommandListHostSynchronize = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListHostSynchronize, whenHostSychronizeIsCalledReturnInvalidArgument, IsAtLeastSkl) {
+HWTEST2_F(CommandListHostSynchronize, whenHostSychronizeIsCalledReturnInvalidArgument, IsAtLeastGen12lp) {
     ze_command_list_desc_t desc = {};
     ze_command_list_handle_t hCommandList = {};
 
@@ -1615,7 +1615,7 @@ HWTEST2_F(CommandListHostSynchronize, whenHostSychronizeIsCalledReturnInvalidArg
 
 using CommandListMappedTimestampTest = CommandListAppendLaunchKernel;
 
-HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenAppendApiIsCalledThenTheEventIsAddedToMappedSignalList, IsAtLeastSkl) {
+HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenAppendApiIsCalledThenTheEventIsAddedToMappedSignalList, IsAtLeastGen12lp) {
     createKernel();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1644,7 +1644,7 @@ HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenApp
     EXPECT_EQ(event.get(), commandList->peekMappedEventList()[0]);
 }
 
-HWTEST2_F(CommandListMappedTimestampTest, givenSignalEventWithoutMappedTimstampWhenAppendApiIsCalledThenTheEventIsNotAddedToMappedSignalList, IsAtLeastSkl) {
+HWTEST2_F(CommandListMappedTimestampTest, givenSignalEventWithoutMappedTimstampWhenAppendApiIsCalledThenTheEventIsNotAddedToMappedSignalList, IsAtLeastGen12lp) {
     createKernel();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1673,7 +1673,7 @@ HWTEST2_F(CommandListMappedTimestampTest, givenSignalEventWithoutMappedTimstampW
     EXPECT_EQ(0u, commandList->peekMappedEventList().size());
 }
 
-HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenAppendApiIsCalledMultipleTimesThenTheEventIsAddedOnceToMappedSignalList, IsAtLeastSkl) {
+HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenAppendApiIsCalledMultipleTimesThenTheEventIsAddedOnceToMappedSignalList, IsAtLeastGen12lp) {
     createKernel();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1706,7 +1706,7 @@ HWTEST2_F(CommandListMappedTimestampTest, givenMappedTimestampSignalEventWhenApp
     EXPECT_EQ(1u, commandList->peekMappedEventList().size());
 }
 
-HWTEST2_F(CommandListMappedTimestampTest, givenEventIsAddedToMappedEventListWhenStoringReferenceTimestampWithClearThenEventsAreCleared, IsAtLeastSkl) {
+HWTEST2_F(CommandListMappedTimestampTest, givenEventIsAddedToMappedEventListWhenStoringReferenceTimestampWithClearThenEventsAreCleared, IsAtLeastGen12lp) {
     createKernel();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -1741,7 +1741,7 @@ class MockCommandListCoreFamilyIfPrivateNeeded : public BaseMock {
     PrivateAllocsToReuseContainer *passedContainer;
 };
 
-HWTEST2_F(CommandListCreate, givenPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryThenAllocateIsNotCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryThenAllocateIsNotCalled, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListCoreFamily<gfxCoreFamily>>>();
     commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
     Mock<Module> mockModule(this->device, nullptr);
@@ -1752,7 +1752,7 @@ HWTEST2_F(CommandListCreate, givenPrivatePerDispatchDisabledWhenAllocatingPrivat
     EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 0u);
 }
 
-HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenAllocateIsCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenAllocateIsCalled, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListCoreFamily<gfxCoreFamily>>>();
     commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
     Mock<Module> mockModule(this->device, nullptr);
@@ -1763,7 +1763,7 @@ HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivate
     EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 1u);
 }
 
-HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenCmdListMaprIsPassed, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenCmdListMaprIsPassed, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListCoreFamily<gfxCoreFamily>>>();
     commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
     Mock<Module> mockModule(this->device, nullptr);
@@ -1774,7 +1774,7 @@ HWTEST2_F(CommandListCreate, givenPrivatePerDispatchEnabledWhenAllocatingPrivate
     EXPECT_EQ(commandList->passedContainer, &commandList->ownedPrivateAllocations);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryCalledThenAllocateIsNotCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchDisabledWhenAllocatingPrivateMemoryCalledThenAllocateIsNotCalled, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamilyIfPrivateNeeded<gfxCoreFamily, MockCommandListImmediateHw<gfxCoreFamily>>>();
     commandList->allocateOrReuseKernelPrivateMemoryIfNeededCallBase = true;
     Mock<Module> mockModule(this->device, nullptr);
@@ -1785,7 +1785,7 @@ HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchDisabledWhen
     EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 0u);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenAllocateIsCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenAllocateIsCalled, IsAtLeastGen12lp) {
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
 
     ze_command_queue_desc_t queueDesc = {};
@@ -1803,7 +1803,7 @@ HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenA
     EXPECT_EQ(commandList->allocateOrReuseKernelPrivateMemoryCalled, 1u);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenCsrMapIsPassed, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenAllocatingPrivateMemoryThenCsrMapIsPassed, IsAtLeastGen12lp) {
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
 
     ze_command_queue_desc_t queueDesc = {};
@@ -1821,7 +1821,7 @@ HWTEST2_F(CommandListCreate, givenImmediateListAndPrivatePerDispatchEnabledWhenA
     EXPECT_EQ(commandList->passedContainer, &mockCommandStreamReceiver.getOwnedPrivateAllocations());
 }
 
-HWTEST2_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsStoredInMapThenItsReused, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsStoredInMapThenItsReused, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
     commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
     commandList->device = this->device;
@@ -1839,7 +1839,7 @@ HWTEST2_F(CommandListCreate, givenCmdListWhenAllocateOrReuseCalledForSizeThatIsS
     EXPECT_EQ(sizeBefore, mapForReuse.size());
 }
 
-HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsCreated, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsCreated, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
     commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
     commandList->device = this->device;
@@ -1858,7 +1858,7 @@ HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPr
     neoDevice->getMemoryManager()->freeGraphicsMemory(commandList->commandContainer.getResidencyContainer()[0]);
 }
 
-HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsAddedToCommandContainerResidencyList, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenNewSizeDifferentThanSizesInMapWhenAllocatingPrivateMemoryThenNewAllocationIsAddedToCommandContainerResidencyList, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<MockCommandListCoreFamily<gfxCoreFamily>>();
     commandList->allocateOrReuseKernelPrivateMemoryCallBase = true;
     commandList->device = this->device;

@@ -15,10 +15,6 @@ using IsNotXeHpgCore = IsNotGfxCore<IGFX_XE_HPG_CORE>;
 using IsXe2HpgCore = IsGfxCore<IGFX_XE2_HPG_CORE>;
 using IsNotXe2HpgCore = IsNotGfxCore<IGFX_XE2_HPG_CORE>;
 
-using IsAtLeastGen9 = IsAtLeastGfxCore<IGFX_GEN9_CORE>;
-
-using IsAtLeastGen11 = IsAtLeastGfxCore<IGFX_GEN11LP_CORE>;
-
 using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
 
 using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
@@ -67,8 +63,6 @@ using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 
-using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
-
 using IsAtLeastMtl = IsAtLeastProduct<IGFX_METEORLAKE>;
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 
@@ -84,8 +78,7 @@ using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;
 
-using HasOclocZebinFormatEnforced = IsAnyProducts<IGFX_ICELAKE_LP,
-                                                  IGFX_TIGERLAKE_LP,
+using HasOclocZebinFormatEnforced = IsAnyProducts<IGFX_TIGERLAKE_LP,
                                                   IGFX_ROCKETLAKE,
                                                   IGFX_ALDERLAKE_S,
                                                   IGFX_ALDERLAKE_P,

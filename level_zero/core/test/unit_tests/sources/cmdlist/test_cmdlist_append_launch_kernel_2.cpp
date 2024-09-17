@@ -1199,7 +1199,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
 }
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnSuccess, IsAtLeastGen12lp) {
     Mock<::L0::KernelImp> kernel;
     std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
@@ -1227,7 +1227,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMemorySizeWhenAppendLaunchKernelWithParamsIsCalledThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMemorySizeWhenAppendLaunchKernelWithParamsIsCalledThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned, IsAtLeastGen12lp) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.PrintDebugMessages.set(true);
 
@@ -1268,7 +1268,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMem
     EXPECT_EQ(expectedOutput, output);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogetherExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledOnlyThenAllocationHappens, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogetherExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledOnlyThenAllocationHappens, IsAtLeastGen12lp) {
 
     auto devInfo = device->getNEODevice()->getDeviceInfo();
     auto kernelsNb = 2u;
@@ -1304,7 +1304,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledThenNoAllocationIsDone, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledThenNoAllocationIsDone, IsAtLeastGen12lp) {
 
     auto devInfo = device->getNEODevice()->getDeviceInfo();
     auto kernelsNb = 2u;
@@ -1339,7 +1339,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
     }
 }
-HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 

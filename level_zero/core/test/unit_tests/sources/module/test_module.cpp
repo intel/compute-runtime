@@ -4968,7 +4968,7 @@ TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateM
 };
 
 using MultiTileModuleTest = Test<MultiTileModuleFixture>;
-HWTEST2_F(MultiTileModuleTest, givenTwoKernelPrivateAllocsWhichExceedGlobalMemSizeOfSingleTileButNotEntireGlobalMemSizeThenPrivateMemoryShouldBeAllocatedPerDispatch, IsAtLeastSkl) {
+HWTEST2_F(MultiTileModuleTest, givenTwoKernelPrivateAllocsWhichExceedGlobalMemSizeOfSingleTileButNotEntireGlobalMemSizeThenPrivateMemoryShouldBeAllocatedPerDispatch, IsAtLeastGen12lp) {
     auto devInfo = device->getNEODevice()->getDeviceInfo();
     auto kernelsNb = 2u;
     uint32_t margin128KB = 131072u;

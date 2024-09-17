@@ -171,7 +171,7 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenIntern
     cmdQ->destroy();
 }
 
-HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTimesThenCsrBaseProgrammedOnlyTheFirstTime, IsAtLeastSkl) {
+HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTimesThenCsrBaseProgrammedOnlyTheFirstTime, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();

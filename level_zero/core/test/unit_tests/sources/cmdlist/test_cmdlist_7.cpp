@@ -29,7 +29,7 @@ namespace ult {
 
 using CommandListCreate = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResettingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResettingCommandListThenExpectAllFlagsSetToDefault, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
@@ -56,7 +56,7 @@ HWTEST2_F(CommandListCreate, givenIndirectAccessFlagsAreChangedWhenResettingComm
     EXPECT_FALSE(commandList->unifiedMemoryControls.indirectDeviceAllocationsAllowed);
 }
 
-HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, whenContainsCooperativeKernelsIsCalledThenCorrectValueIsReturned, IsAtLeastGen12lp) {
     for (auto testValue : ::testing::Bool()) {
         MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
         commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
@@ -293,7 +293,7 @@ HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTil
 }
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchCooperativeKernelIsCalledThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchCooperativeKernelIsCalledThenSuccessIsReturned, IsAtLeastGen12lp) {
     createKernel();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -322,7 +322,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchCoopera
     EXPECT_EQ(event.get(), commandList->appendKernelEventValue);
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipleIndirectKernelIsCalledThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipleIndirectKernelIsCalledThenSuccessIsReturned, IsAtLeastGen12lp) {
     createKernel();
 
     ze_event_pool_desc_t eventPoolDesc = {};
@@ -356,7 +356,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchMultipl
     context->freeMem(reinterpret_cast<void *>(numLaunchArgs));
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirectKernelIsCalledThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenSignalEventWhenAppendLaunchIndirectKernelIsCalledThenSuccessIsReturned, IsAtLeastGen12lp) {
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
 
     Mock<::L0::KernelImp> kernel;
@@ -491,7 +491,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertesNotChangedThenAllFieldsAreNotDirty, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     auto &productHelper = device->getProductHelper();
 
@@ -531,7 +531,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenComputeModePropertiesWhenPropertes
     EXPECT_FALSE(commandList->finalStreamState.stateComputeMode.largeGrfMode.isDirty);
 }
 
-HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenErrorIsReturned, IsAtLeastGen12lp) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = false;
 
@@ -561,7 +561,7 @@ HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenError
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsAtLeastGen12lp) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -585,7 +585,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyThe
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWithInvalidEventThenInvalidArgumentErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWithInvalidEventThenInvalidArgumentErrorIsReturned, IsAtLeastGen12lp) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -609,7 +609,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendingMemoryCopyWit
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, IsAtLeastGen12lp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -802,7 +802,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
 using FrontEndMultiReturnCommandListTest = Test<FrontEndCommandListFixture<0>>;
 
-HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastGen12lp) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -969,7 +969,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
     }
 }
 
-HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastGen12lp) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -1133,7 +1133,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPro
 }
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest,
-          givenFrontEndTrackingCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
+          givenFrontEndTrackingCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastGen12lp) {
     using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -1383,7 +1383,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
 }
 
 HWTEST2_F(FrontEndMultiReturnCommandListTest,
-          givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
+          givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastGen12lp) {
     using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
@@ -1634,7 +1634,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest,
     }
 }
 
-HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastGen12lp) {
     using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -1759,7 +1759,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     }
 }
 
-HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastGen12lp) {
     using FrontEndStateCommand = typename FamilyType::FrontEndStateCommand;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -1881,7 +1881,7 @@ HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUs
     EXPECT_EQ(0u, feStateCmds.size());
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;
@@ -1904,7 +1904,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     EXPECT_EQ(latestFlushedTaskCount + 1, whiteBoxCmdList->getCsr(false)->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForWaitOnEventsAndImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForWaitOnEventsAndImmediateCommandAndAllocationListNotEmptyThenReuseCommandBuffer, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     ze_result_t returnValue;

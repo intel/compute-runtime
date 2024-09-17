@@ -55,7 +55,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQue
 
 using AppendQueryKernelTimestamps = CommandListCreate;
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded, IsAtLeastSkl) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded, IsAtLeastGen12lp) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
@@ -118,7 +118,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded, IsAtLeastSkl) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded, IsAtLeastGen12lp) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
@@ -184,7 +184,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 }
 
 HWTEST2_F(AppendQueryKernelTimestamps,
-          givenCommandListWhenAppendQueryKernelTimestampsInUsmHostMemoryWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, IsAtLeastSkl) {
+          givenCommandListWhenAppendQueryKernelTimestampsInUsmHostMemoryWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, IsAtLeastGen12lp) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
@@ -242,7 +242,7 @@ HWTEST2_F(AppendQueryKernelTimestamps,
 }
 
 HWTEST2_F(AppendQueryKernelTimestamps,
-          givenCommandListWhenAppendQueryKernelTimestampsInExternalHostMemoryWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, IsAtLeastSkl) {
+          givenCommandListWhenAppendQueryKernelTimestampsInExternalHostMemoryWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, IsAtLeastGen12lp) {
     std::unique_ptr<MockDeviceForSpv<false, false>> testDevice = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
     testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
     testDevice->getBuiltinFunctionsLib()->initBuiltinKernel(L0::Builtin::queryKernelTimestamps);
@@ -294,7 +294,7 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     EXPECT_TRUE(commandList.cmdListHelper.isDstInSystem);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSuggestGroupSizeThenUnknownResultReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSuggestGroupSizeThenUnknownResultReturned, IsAtLeastGen12lp) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
         ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
@@ -372,7 +372,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSetGroupSizeThenUnknownResultReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSetGroupSizeThenUnknownResultReturned, IsAtLeastGen12lp) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
         ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
@@ -457,7 +457,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     context->freeMem(alloc);
 }
 
-HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAllEventData, IsAtLeastSkl) {
+HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetAllEventData, IsAtLeastGen12lp) {
     class MockQueryKernelTimestampsKernel : public L0::KernelImp {
       public:
         MockQueryKernelTimestampsKernel(MockModule *module) : KernelImp{module}, module{module} {
@@ -594,7 +594,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendSignalEventWithScopeThenPi
 
 using CommandListTimestampEvent = Test<DeviceFixture>;
 
-HWTEST2_F(CommandListTimestampEvent, WhenIsTimestampEventForMultiTileThenCorrectResultIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListTimestampEvent, WhenIsTimestampEventForMultiTileThenCorrectResultIsReturned, IsAtLeastGen12lp) {
 
     auto cmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
 
@@ -829,7 +829,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     EXPECT_GT(commandContainer.getCommandStream()->getUsed(), used);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWhenAddEventsToCmdListThenProgramSemaphoresOnlyForIncompletedEvents, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenImmediateCommandListAndAlreadyCompletedEventWhenAddEventsToCmdListThenProgramSemaphoresOnlyForIncompletedEvents, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.SignalAllEventPackets.set(0);
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -905,7 +905,7 @@ HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmiss
     EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
 }
 
-HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastGen12lp) {
     if (!device->getHwInfo().featureTable.flags.ftrLocalMemory || !device->getProductHelper().isFlatRingBufferSupported()) {
         GTEST_SKIP();
     }
@@ -938,7 +938,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
 }
 
-HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenNotSwapCommandStreams, IsAtLeastSkl) {
+HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenNotSwapCommandStreams, IsAtLeastGen12lp) {
     if (!device->getHwInfo().featureTable.flags.ftrLocalMemory || !device->getProductHelper().isFlatRingBufferSupported()) {
         GTEST_SKIP();
     }
@@ -1095,7 +1095,7 @@ using CommandListStateBaseAddressPrivateHeapTest = Test<CommandListPrivateHeapsF
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelAndExecuteThenBaseAddressStateIsStoredInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     checkAndPrepareBindlessKernel();
@@ -1271,7 +1271,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     checkAndPrepareBindlessKernel();
@@ -1495,7 +1495,7 @@ using CommandListBindlessSshPrivateHeapTest = Test<CommandListPrivateHeapsBindle
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenStateBaseAddressTrackingAndGlobalBindlessEnabledWhenRegularCmdListAppendKernelChangesHeapsAndExecuteThenBindlessSurfaceStateBaseIsProgrammedToGlobalBase,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1619,7 +1619,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenStateBaseAddressTrackingAndGlobalBindlessSshAndDshEnabledWhenRegularCmdListExecutedThenBindlessSurfaceStateAndDynamicStateBaseIsProgrammedToGlobalBase,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1673,7 +1673,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenBindlessKernelStateBaseAddressTrackingAndGlobalBindlessEnabledWhenRegularCmdListAppendsKernelThenReservedSshSizeIsZeroAndSbaIsNotAdded,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1744,7 +1744,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenBindlessKernelStateBaseAddressTrackingAndGlobalBindlessEnabledWhenOneArgUsesKernelsSshThenReservedSshSizeIsNonZero,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1828,7 +1828,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelChangesHeapsAndNextKernelIsAppendedThenFinalBaseAddressStateIsDispatchedInCommandListOnce,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     checkAndPrepareBindlessKernel();
@@ -1961,7 +1961,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2134,7 +2134,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelAndExecuteAndImmediateCmdListAppendKernelSharingCsrThenBaseAddressStateIsUpdatedInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2359,7 +2359,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelAndRegularCmdListAppendKernelAndExecuteSharingCsrThenBaseAddressStateIsUpdatedInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2571,7 +2571,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendUncachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2670,7 +2670,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendCachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
@@ -2744,7 +2744,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendUncachedKerneAndRegularCmdListAppendCachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
@@ -2818,7 +2818,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendCachedKerneAndRegularCmdListAppendUncachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
@@ -2944,7 +2944,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetThenBaseAddressPropertiesAreResetToo,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -2979,7 +2979,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetThenStateHeapsRetainPosition,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -3007,7 +3007,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetAndHeapsExhaustedBeforeFirstKernelThenStateIsReloadedInCmdQueuePreamble,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -3077,7 +3077,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetAndHeapsExhaustedBeforeSecondKernelThenStateIsReloadedInCmdList,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -3162,7 +3162,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDispatchesStateCacheFlush,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
@@ -3188,7 +3188,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenOsContextNotInitializedAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     EngineControl &engine = neoDevice->getDefaultEngine();
     static_cast<NEO::MockOsContext *>(engine.osContext)->contextInitialized = false;
@@ -3212,7 +3212,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenTaskCountZeroAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 

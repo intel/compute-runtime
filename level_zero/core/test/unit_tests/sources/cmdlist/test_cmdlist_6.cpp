@@ -99,7 +99,7 @@ HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCo
 }
 
 using CommandListExecuteImmediate = Test<DeviceFixture>;
-HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastSkl) {
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenRequiredStreamStateIsCorrectlyReported, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseImmediateFlushTask.set(0);
     UnitTestSetter::disableHeaplessStateInit(restorer);
@@ -173,7 +173,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_EQ(expectedThreadArbitrationPolicy, currentCsrStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset, IsAtLeastSkl) {
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenContainsAnyKernelFlagIsReset, IsAtLeastGen12lp) {
     std::unique_ptr<L0::CommandList> commandList;
     DebugManagerStateRestore restorer;
     const ze_command_queue_desc_t desc = {};
@@ -198,7 +198,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     }
 }
 
-HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskThenSuccessIsReturned, IsAtLeastGen12lp) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -208,7 +208,7 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false, false, false));
 }
 
-HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastGen12lp) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -220,7 +220,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecu
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false, false, false));
 }
 
-HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, IsAtLeastGen12lp) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -232,7 +232,7 @@ HWTEST2_F(CommandListExecuteImmediate, givenOutOfDeviceMemoryErrorOnFlushWhenExe
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false, false, false));
 }
 
-HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIsCreatedThenCsrStateIsNotSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListIsCreatedThenCsrStateIsNotSet, IsAtLeastGen12lp) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
@@ -271,7 +271,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExp
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
-HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThenDoNotTrackDependencies, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
@@ -302,7 +302,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyWithDependenciesThe
     cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
-HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenciesThenDoNotTrackDependencies, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
@@ -334,7 +334,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendCopyRegionWithDependenc
     cmdList.getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());
 }
 
-HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThenDoNotTrackDependencies, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThenDoNotTrackDependencies, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
@@ -472,7 +472,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndS
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
-HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastGen12lp) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t rangeSizes = 1;
@@ -497,7 +497,7 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierNotUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrierNotUsingFlushTaskThenExpectCorrectExecuteCall, IsAtLeastGen12lp) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t rangeSizes = 1;
@@ -522,7 +522,7 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenAppendMemoryRangesBarrie
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverrideEventCsr, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverrideEventCsr, IsAtLeastGen12lp) {
     ze_command_queue_desc_t queueDesc = {};
     auto queue = std::make_unique<Mock<CommandQueue>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
     queue->isCopyOnlyCommandQueue = true;
@@ -551,7 +551,7 @@ HWTEST2_F(CommandListTest, givenImmediateCommandListWhenFlushImmediateThenOverri
     EXPECT_EQ(event->csrs[0], cmdList.getCsr(false));
 }
 
-HWTEST2_F(CommandListTest, givenRegularCmdListWhenAskingForRelaxedOrderingThenReturnFalse, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenRegularCmdListWhenAskingForRelaxedOrderingThenReturnFalse, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -559,7 +559,7 @@ HWTEST2_F(CommandListTest, givenRegularCmdListWhenAskingForRelaxedOrderingThenRe
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -573,7 +573,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -594,7 +594,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmDeviceAllocationCalledThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+          givenComputeCommandListAnd2dRegionWhenMemoryCopyRegionInUsmDeviceAllocationCalledThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -619,7 +619,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAndRegionMemoryCopyFrom2dSourceImageto3dDestImageThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+          givenComputeCommandListAndRegionMemoryCopyFrom2dSourceImageto3dDestImageThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -644,7 +644,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAndRegionMemoryCopyFrom3dSourceImageto2dDestImageThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+          givenComputeCommandListAndRegionMemoryCopyFrom3dSourceImageto2dDestImageThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -669,7 +669,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastSkl) {
+          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInExternalHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -683,7 +683,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastSkl) {
+          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInUsmHostAllocationCalledThenBuiltinAndDestinationAllocSystemFlagIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -704,7 +704,7 @@ HWTEST2_F(CommandListTest,
 }
 
 HWTEST2_F(CommandListTest,
-          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInUsmDeviceAllocationCalledThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastSkl) {
+          givenComputeCommandListAnd3dRegionWhenMemoryCopyRegionInUsmDeviceAllocationCalledThenBuiltinFlagIsSetAndDestinationAllocSystemFlagNotSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -853,7 +853,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBui
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -866,7 +866,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAl
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isDestinationAllocationInSystemMemory);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -886,7 +886,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmHostAllocat
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAllocationThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAllocationThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -910,7 +910,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInUsmDeviceAlloc
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenResidencyContainerHasImplicitMappedAllocations, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDeviceAllocationThenResidencyContainerHasImplicitMappedAllocations, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -961,7 +961,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithReservedDevi
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedDeviceAllocationMappedToFullReservationThenExtendedBufferSizeIsZero, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedDeviceAllocationMappedToFullReservationThenExtendedBufferSizeIsZero, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -994,7 +994,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedD
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBuiltinFlagAndDestinationAllocSystemIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -1020,7 +1020,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBui
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenBuiltinFlagIsSetAndDestinationAllocSystemNotSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -1050,7 +1050,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmDeviceThenB
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillRequiresMultiKernelsThenSplitFlagIsSet, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillRequiresMultiKernelsThenSplitFlagIsSet, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -1219,7 +1219,7 @@ class MockCommandQueueIndirectAccess : public Mock<CommandQueue> {
     uint32_t handleIndirectAllocationResidencyCalledTimes = 0;
 };
 
-HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -1238,7 +1238,7 @@ HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandLis
     commandListImmediate.cmdQImmediate = oldCommandQueue;
 }
 
-HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -1258,7 +1258,7 @@ HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandL
 }
 
 using ImmediateCmdListSharedHeapsTest = Test<ImmediateCmdListSharedHeapsFixture>;
-HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedHeapsWhenDispatchingKernelThenExpectSingleSbaCommandAndHeapsReused, IsAtLeastSkl) {
+HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedHeapsWhenDispatchingKernelThenExpectSingleSbaCommandAndHeapsReused, IsAtLeastGen12lp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

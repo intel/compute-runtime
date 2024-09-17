@@ -964,7 +964,7 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToAlwaysWhenEncodingWalk
 
 using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastGen12lp) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
@@ -996,7 +996,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastGen12lp) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
@@ -1028,7 +1028,7 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThen
     EXPECT_NE(usedAfter, usedBefore);
 }
 
-HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisalignedBufferAddressWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastSkl) {
+HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWithRequiringSshForMisalignedBufferAddressWhenDispatchingKernelThenSshFromContainerIsUsed, IsAtLeastGen12lp) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 0;

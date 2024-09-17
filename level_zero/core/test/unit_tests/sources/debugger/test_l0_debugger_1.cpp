@@ -602,7 +602,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledForRegularC
     commandQueue->destroy();
 }
 
-HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -625,7 +625,7 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledCommandList
     commandList->destroy();
 }
 
-HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandListAndAppendPageFaultCopyThenSuccessIsReturned, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 

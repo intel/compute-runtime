@@ -107,7 +107,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenPipeControlForTimestampAndSignalEncoded, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenPipeControlForTimestampAndSignalEncoded, IsAtLeastGen12lp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
@@ -348,7 +348,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
     EXPECT_EQ(heaplessStateInit ? 2u : 1u, commandStreamReceiver.makeSurfacePackNonResidentCalled);
 }
 
-HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeControlAppendedCorrectly, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeControlAppendedCorrectly, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

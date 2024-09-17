@@ -25,7 +25,7 @@ namespace ult {
 
 using CommandQueueExecuteCommandListsSimpleTest = Test<DeviceFixture>;
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExecutingCommandListThenSynchronizeIsCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExecutingCommandListThenSynchronizeIsCalled, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     auto mockCmdQ = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
@@ -40,7 +40,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeWhenExe
     mockCmdQ->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDeviceLostSynchronizeWhenExecutingCommandListThenSynchronizeIsCalledAndDeviceLostIsReturned, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDeviceLostSynchronizeWhenExecutingCommandListThenSynchronizeIsCalledAndDeviceLostIsReturned, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc;
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -60,7 +60,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenSynchronousModeAndDevi
     mockCmdQ->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenExecutingCommandListThenSynchronizeIsNotCalled, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenExecutingCommandListThenSynchronizeIsNotCalled, IsAtLeastGen12lp) {
     ze_command_queue_desc_t desc;
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     auto mockCmdQ = new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc);
@@ -75,7 +75,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, GivenAsynchronousModeWhenEx
     mockCmdQ->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeControlUpdatesFenceAllocation, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, whenUsingFenceThenLastPipeControlUpdatesFenceAllocation, IsAtLeastGen12lp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 

@@ -439,7 +439,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAr
     }
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedTwoTimesThenStateSipIsAddedOnlyTheFirstTime, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandLists, givenMidThreadPreemptionWhenCommandsAreExecutedTwoTimesThenStateSipIsAddedOnlyTheFirstTime, IsAtLeastGen12lp) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using Parse = typename FamilyType::Parse;
 
@@ -857,14 +857,14 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
     commandQueue->destroy();
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenExecutingThenQueuePreemptionIsSwitchedAndStateSipProgrammedOnce, IsAtLeastGen12lp) {
     if (heaplessStateInit) {
         GTEST_SKIP();
     }
     twoCommandListCommandPreemptionTest<FamilyType>(false);
 }
 
-HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce, IsAtLeastSkl) {
+HWTEST2_F(CommandQueueExecuteCommandLists, GivenCmdListsWithDifferentPreemptionModesWhenNoCmdStreamPreemptionRequiredThenNoCmdStreamProgrammingAndStateSipProgrammedOnce, IsAtLeastGen12lp) {
     if (heaplessStateInit) {
         GTEST_SKIP();
     }

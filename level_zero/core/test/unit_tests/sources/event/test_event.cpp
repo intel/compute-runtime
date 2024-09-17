@@ -4277,11 +4277,11 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 };
 
 using EventDynamicPacketUseTest = Test<EventDynamicPacketUseFixture<0, 0>>;
-HWTEST2_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastSkl) {
+HWTEST2_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromAllDevicesThenMaxPossibleSelected, IsAtLeastGen12lp) {
     testAllDevices();
 }
 
-HWTEST2_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleDeviceThenMaxFromThisDeviceSelected, IsAtLeastSkl) {
+HWTEST2_F(EventDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleDeviceThenMaxFromThisDeviceSelected, IsAtLeastGen12lp) {
     testSingleDevice();
 }
 

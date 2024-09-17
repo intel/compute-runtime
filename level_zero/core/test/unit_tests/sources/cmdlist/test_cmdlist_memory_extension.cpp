@@ -286,7 +286,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithValidAddressAndData
     ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, false));
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenReturnErrorIfNotSupported, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenReturnErrorIfNotSupported, IsAtLeastGen12lp) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
@@ -303,7 +303,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenR
     }
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, givenInvalidCmdListWhenWaitOnMemory64CalledThenReturnError, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, givenInvalidCmdListWhenWaitOnMemory64CalledThenReturnError, IsAtLeastGen12lp) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
     waitMemData = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 123;
@@ -316,7 +316,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenInvalidCmdListWhenWaitOnMemory64Calle
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenProgramLri, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenProgramLri, IsAtLeastGen12lp) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
@@ -340,7 +340,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueWhenWaitOnMemory64CalledThenP
     ASSERT_TRUE(validateProgramming<FamilyType>(cmdList, waitMemData, castToUint64(ptr), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, true));
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64CalledThenHandleEvent, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64CalledThenHandleEvent, IsAtLeastGen12lp) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -389,7 +389,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, given64bValueAndOutEventWhenWaitOnMemory64
     ASSERT_NE(0u, itorPC.size());
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, givenCommandListWaitOnMemoryCalledWithNullPtrThenAppendWaitOnMemoryReturnsError, IsAtLeastGen12lp) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     MockCommandListExtensionHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -690,7 +690,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemOnBcsWithSignalEventAnd
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMemoryPtrThenAlignedPtrUsed, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithNoScopeAndSystemMemoryPtrThenAlignedPtrUsed, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
@@ -823,7 +823,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithNoScopeThenPipeCo
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendWriteToMem, givenCommandListWriteToMemCalledWithNullPtrThenAppendWriteToMemoryReturnsError, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWriteToMem, givenCommandListWriteToMemCalledWithNullPtrThenAppendWriteToMemoryReturnsError, IsAtLeastGen12lp) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     MockCommandListExtensionHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -894,7 +894,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeControlEncodedCorrectlyAlignedPtrUsed, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeControlEncodedCorrectlyAlignedPtrUsed, IsAtLeastGen12lp) {
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 

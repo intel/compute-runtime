@@ -536,7 +536,7 @@ struct CompressionMemoryTest : public MemoryTest {
     void *ptr = nullptr;
 };
 
-HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible, IsAtLeastSkl) {
+HWTEST2_F(CompressionMemoryTest, givenDeviceUsmWhenAllocatingThenEnableCompressionIfPossible, IsAtLeastGen12lp) {
     device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.ftrRenderCompressedBuffers = true;
     auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getL0GfxCoreHelper();
@@ -3642,7 +3642,7 @@ TEST_F(MemoryExportImportWinHandleTest,
 }
 
 HWTEST2_F(MemoryTest,
-          givenCallToGetImageAllocPropertiesWithNoBackingAllocationErrorIsReturned, IsAtLeastSkl) {
+          givenCallToGetImageAllocPropertiesWithNoBackingAllocationErrorIsReturned, IsAtLeastGen12lp) {
 
     ze_image_allocation_ext_properties_t imageProperties = {};
     imageProperties.stype = ZE_STRUCTURE_TYPE_IMAGE_ALLOCATION_EXT_PROPERTIES;
@@ -3962,7 +3962,7 @@ struct MultipleDevicePeerAllocationTest : public ::testing::Test {
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenCallToMPrepareIndirectAllocationForDestructionThenOnlyValidAllocationCountsAreUpdated,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4004,7 +4004,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           whenisRemoteResourceNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4054,7 +4054,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenCallToMakeIndirectAllocationsResidentThenOnlyValidAllocationsAreMadeResident,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4095,7 +4095,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenCallToMakeInternalAllocationsResidentThenOnlyValidAllocationsAreMadeResident,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4136,7 +4136,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           whenFreeingNotKnownPointerThenInvalidArgumentIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     void *ptr = malloc(1u);
     ze_result_t result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
@@ -4145,7 +4145,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillAndImportFdHandleFailingThenInvalidArgumentIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4174,7 +4174,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingSameDeviceThenSuccessIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
 
     size_t size = 1024;
@@ -4200,7 +4200,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4227,7 +4227,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenSubDeviceAllocationPassedToAppendBlitFillUsingDevice1ThenSuccessIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
 
     L0::Device *device0 = driverHandle->devices[0];
@@ -4258,7 +4258,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToAppendBlitFillUsingDevice0ThenSuccessIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4285,7 +4285,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenHostPointerAllocationPassedToAppendBlitFillUsingDevice0ThenInvalidArgumentIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
 
     size_t size = 1024;
@@ -4303,7 +4303,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationAndImportFdHandleFailingThenPeerAllocNotFoundReturnsTrue,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     MemoryManagerOpenIpcMock *fixtureMemoryManager = static_cast<MemoryManagerOpenIpcMock *>(currMemoryManager);
     fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
     L0::Device *device0 = driverHandle->devices[0];
@@ -4331,7 +4331,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4357,7 +4357,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenSharedAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4385,7 +4385,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -4411,7 +4411,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenSharedAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 

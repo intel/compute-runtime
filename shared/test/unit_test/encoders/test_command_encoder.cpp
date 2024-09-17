@@ -204,7 +204,7 @@ HWTEST2_F(CommandEncoderTest, whenAdjustCompressionFormatForPlanarImageThenNothi
     }
 }
 
-HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetCorrectBit, IsAtLeastGen9) {
+HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetCorrectBit, IsAtLeastGen12lp) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     MI_BATCH_BUFFER_START cmd = {};

@@ -63,7 +63,7 @@ class MockDriverHandle : public L0::DriverHandleImp {
 
 using AppendMemoryCopy = Test<DeviceFixture>;
 
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled, IsAtLeastGen12lp) {
     MockCommandListForMemFill<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint64_t pattern[4] = {1, 2, 3, 4};
@@ -72,7 +72,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithL
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillToNotDeviceMemThenInvalidArgumentReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillToNotDeviceMemThenInvalidArgumentReturned, IsAtLeastGen12lp) {
     MockCommandListForMemFill<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::copy, 0u);
     uint8_t pattern = 1;
@@ -106,7 +106,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
 
 HWTEST2_F(AppendMemoryCopy,
           givenExternalHostPointerAllocationWhenPassedToAppendBlitFillThenProgramDestinationAddressCorrectly,
-          IsAtLeastSkl) {
+          IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
 
@@ -142,7 +142,7 @@ HWTEST2_F(AppendMemoryCopy,
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IsAtLeastGen12lp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
@@ -165,7 +165,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCop
     EXPECT_EQ(genCmdList.end(), itor);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, IsAtLeastGen12lp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
@@ -190,7 +190,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCop
     EXPECT_EQ(genCmdList.end(), itor);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListThenDcFlushIsNotAddedAfterBlitCopy, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListThenDcFlushIsNotAddedAfterBlitCopy, IsAtLeastGen12lp) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
@@ -340,7 +340,7 @@ HWTEST2_F(AppendMemoryCopy, givenCopyCommandListWhenCopyFromImagBlitThenCommandA
 
 using AppendMemoryCopyFromContext = AppendMemoryCopy;
 
-HWTEST2_F(AppendMemoryCopyFromContext, givenCommandListThenUpOnPerformingAppendMemoryCopyFromContextSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(AppendMemoryCopyFromContext, givenCommandListThenUpOnPerformingAppendMemoryCopyFromContextSuccessIsReturned, IsAtLeastGen12lp) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();

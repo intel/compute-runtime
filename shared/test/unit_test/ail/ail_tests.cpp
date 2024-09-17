@@ -33,7 +33,7 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
 
-HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, IsAtLeastGen9) {
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, IsAtLeastGen12lp) {
     AILWhitebox<productFamily> ail;
     ail.processName = "Adobe Premiere Pro";
 
@@ -112,7 +112,7 @@ HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSource
     EXPECT_STREQ(copyKernel.c_str(), kernelSources.c_str());
 }
 
-HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, IsAtLeastGen9) {
+HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, IsAtLeastGen12lp) {
     AILWhitebox<productFamily> ail;
     ail.processName = "other";
     EXPECT_FALSE(ail.isContextSyncFlagRequired());
