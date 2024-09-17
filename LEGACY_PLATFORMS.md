@@ -19,12 +19,12 @@ Support for Gen8, Gen9 and Gen11 devices will be delivered via packages with _le
 |Platform|OpenCL|Level Zero|WSL
 |--------|:----:|:--------:|:----:|
 [Broadwell](https://ark.intel.com/content/www/us/en/ark/products/codename/38530/broadwell.html) | 3.0 | -- | --
-[Skylake](https://ark.intel.com/content/www/us/en/ark/products/codename/37572/skylake.html) | 3.0 | 1.3 | --
-[Kaby Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/82879/kaby-lake.html) |  3.0 | 1.3 | --
-[Coffee Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/97787/coffee-lake.html) |  3.0 | 1.3 | Yes
+[Skylake](https://ark.intel.com/content/www/us/en/ark/products/codename/37572/skylake.html) | 3.0 | 1.5 | --
+[Kaby Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/82879/kaby-lake.html) |  3.0 | 1.5 | --
+[Coffee Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/97787/coffee-lake.html) |  3.0 | 1.5 | Yes
 [Apollo Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/80644/apollo-lake.html) | 3.0 | -- | --
 [Gemini Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/83915/gemini-lake.html) | 3.0 | -- | --
-[Ice Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/74979/ice-lake.html) |  3.0 | 1.3 | Yes
+[Ice Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/74979/ice-lake.html) |  3.0 | 1.5 | Yes
 [Elkhart Lake](https://ark.intel.com/content/www/us/en/ark/products/codename/128825/elkhart-lake.html) | 3.0 | -- | Yes
 
 ## Maintanance expectations
