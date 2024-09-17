@@ -115,7 +115,6 @@ lint:
         - fix
         - build
         - performance
-        - test
         _default:
         - build
     strict:
