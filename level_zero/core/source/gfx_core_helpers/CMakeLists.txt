@@ -12,14 +12,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper.h
 )
 
-if(SUPPORT_GEN9 OR SUPPORT_GEN11)
-  target_sources(${L0_STATIC_LIB_NAME}
-                 PRIVATE
-                 ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_skl_to_icllp.inl
-  )
-endif()
-
-if(SUPPORT_GEN9 OR SUPPORT_GEN11 OR SUPPORT_GEN12LP)
+if(SUPPORT_GEN12LP)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_skl_to_tgllp.inl
@@ -54,7 +47,7 @@ if(SUPPORT_PVC_AND_LATER)
   )
 endif()
 
-if(SUPPORT_GEN9 OR SUPPORT_GEN11 OR SUPPORT_GEN12LP OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
+if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_skl_to_pvc.inl
