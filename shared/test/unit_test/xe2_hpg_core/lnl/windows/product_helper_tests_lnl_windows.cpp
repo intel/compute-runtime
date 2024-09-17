@@ -63,6 +63,6 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabled
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }
 
-LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsFalse) {
-    EXPECT_FALSE(productHelper->isCopyBufferRectSplitSupported());
+LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
+    EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }

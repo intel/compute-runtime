@@ -45,11 +45,6 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isCopyBufferRectSplitSupported() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::mitigateDcFlush() const {
     return true;
 }
