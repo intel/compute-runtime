@@ -51,7 +51,7 @@ class WddmMemoryManager : public MemoryManager {
     uint64_t getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t deviceBitfield) override;
     double getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) override;
 
-    bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex);
+    bool tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex, AllocationType type);
 
     bool isMemoryBudgetExhausted() const override;
 

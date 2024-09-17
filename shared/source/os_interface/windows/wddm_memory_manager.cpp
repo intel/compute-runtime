@@ -761,11 +761,11 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
         if (input->getResourceHandle() != 0) {
-            [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->getResourceHandle(), gfxAllocation->getRootDeviceIndex());
+            [[maybe_unused]] auto status = tryDeferDeletions(nullptr, 0, input->getResourceHandle(), gfxAllocation->getRootDeviceIndex(), gfxAllocation->getAllocationType());
             DEBUG_BREAK_IF(!status);
         } else {
             for (auto handle : input->getHandles()) {
-                [[maybe_unused]] auto status = tryDeferDeletions(&handle, 1, 0, gfxAllocation->getRootDeviceIndex());
+                [[maybe_unused]] auto status = tryDeferDeletions(&handle, 1, 0, gfxAllocation->getRootDeviceIndex(), gfxAllocation->getAllocationType());
                 DEBUG_BREAK_IF(!status);
             }
         }
@@ -809,9 +809,9 @@ void WddmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
     }
 }
 
-bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex) {
+bool WddmMemoryManager::tryDeferDeletions(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, uint32_t rootDeviceIndex, AllocationType type) {
     bool status = true;
-    if (deferredDeleter) {
+    if (deferredDeleter && type != AllocationType::externalHostPtr) {
         deferredDeleter->deferDeletion(DeferrableDeletion::create(&getWddm(rootDeviceIndex), handles, allocationCount, resourceHandle));
     } else {
         status = getWddm(rootDeviceIndex).destroyAllocations(handles, allocationCount, resourceHandle);
@@ -893,7 +893,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t 
         }
     }
 
-    bool success = tryDeferDeletions(handles, allocationCount, 0, rootDeviceIndex);
+    bool success = tryDeferDeletions(handles, allocationCount, 0, rootDeviceIndex, AllocationType::unknown);
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
