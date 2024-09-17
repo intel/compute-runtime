@@ -1131,9 +1131,6 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, WhenGettingCsThenReturnCsWithEno
 
     auto expectedSize = MemoryConstants::pageSize64k - sizeCQReserves;
 
-    if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        expectedSize -= sizeof(typename FamilyType::PIPE_CONTROL);
-    }
     expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
 
     auto currentUsed = commandStream.getUsed();

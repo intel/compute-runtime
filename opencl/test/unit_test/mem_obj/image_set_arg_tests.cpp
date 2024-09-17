@@ -163,10 +163,6 @@ HWTEST_F(ImageSetArgTest, GivenNormalImageWhenSettingImageArgThenCorrectValueIsS
 HWTEST_F(ImageSetArgTest, givenImageWhenSettingMipTailStartLodThenProgramValueFromGmmResourceinfo) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
-    if (pDevice->getHardwareInfo().platform.eRenderCoreFamily == IGFX_GEN8_CORE) {
-        GTEST_SKIP();
-    }
-
     RENDER_SURFACE_STATE surfaceState = {};
     const uint32_t mipTailStartLod = 4;
 

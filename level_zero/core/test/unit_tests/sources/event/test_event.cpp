@@ -2445,7 +2445,7 @@ HWTEST_F(HostMappedEventTests, givenEventTimestampRefreshIntervalInMilliSecIsSet
     EXPECT_EQ(resetReferenceTs->gpuTimeStamp, 1u);
 }
 
-HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     typename MockTimestampPackets32::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;

@@ -2005,8 +2005,7 @@ void Kernel::resolveArgs() {
 }
 
 bool Kernel::canTransformImages() const {
-    auto renderCoreFamily = clDevice.getHardwareInfo().platform.eRenderCoreFamily;
-    return renderCoreFamily >= IGFX_GEN9_CORE && renderCoreFamily <= IGFX_GEN11LP_CORE && !isBuiltIn;
+    return false;
 }
 
 std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTranslation() {

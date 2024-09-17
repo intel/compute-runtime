@@ -1997,8 +1997,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCal
     PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
     ASSERT_NE(nullptr, pipeControl);
 
-    const bool expectedDcFlush = ::renderCoreFamily == IGFX_GEN8_CORE;
-    EXPECT_EQ(expectedDcFlush, pipeControl->getDcFlushEnable());
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
 }
 

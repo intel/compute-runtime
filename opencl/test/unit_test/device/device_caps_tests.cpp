@@ -299,7 +299,7 @@ TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAre
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
 
-    if (device->getHardwareInfo().platform.eRenderCoreFamily > IGFX_GEN8_CORE && device->getHardwareInfo().platform.eRenderCoreFamily != IGFX_GEN12LP_CORE) {
+    if (device->getHardwareInfo().platform.eRenderCoreFamily > IGFX_GEN12LP_CORE) {
         EXPECT_EQ(16384u, caps.image3DMaxWidth);
         EXPECT_EQ(16384u, caps.image3DMaxHeight);
     } else {

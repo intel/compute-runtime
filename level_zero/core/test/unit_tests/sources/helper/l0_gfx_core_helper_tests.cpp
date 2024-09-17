@@ -19,6 +19,8 @@
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
+#include "multitile_matchers.h"
+
 namespace L0 {
 namespace ult {
 
@@ -695,8 +697,6 @@ HWTEST2_F(L0GfxCoreHelperFusedEuTest, givenBitmaskWithAttentionBitsForHalfOfThre
     }
 }
 
-using NonMultiTilePlatforms = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
-
 HWTEST2_F(L0GfxCoreHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse, IsNotXeHpcCore) {
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
@@ -722,7 +722,7 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForDynami
     EXPECT_TRUE(defaultValue);
 }
 
-HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectBothReturnOne, NonMultiTilePlatforms) {
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPacketThenExpectBothReturnOne, MultiTileNotSupported) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();

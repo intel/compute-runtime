@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
 void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool disableEUFusion) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
-        uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
+        uint32_t maxBarriersPerHSlice = 32;
         minWorkGroupSize = numThreadsPerSubSlice * simdSize / maxBarriersPerHSlice;
     }
     if (slmTotalSize > 0) {

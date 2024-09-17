@@ -159,7 +159,7 @@ HWTEST2_F(SbaForBindlessTests,
     EXPECT_EQ(surfaceStateBaseAddress, cmd->getSurfaceStateBaseAddress());
 }
 
-using IohSupported = IsWithinGfxCore<GFXCORE_FAMILY::IGFX_GEN9_CORE, GFXCORE_FAMILY::IGFX_GEN12LP_CORE>;
+using IohSupported = IsGen12LP;
 
 HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirectBaseAddressThenIndirectBaseAddressIsSet, IohSupported) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

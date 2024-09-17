@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -288,7 +288,7 @@ TEST_F(IgaWrapperTest, GivenIgcWrapperWhenCallingSetGfxCoreMultipleTimesThenFirs
     testedIgaWrapper.setGfxCore(invalidGfxCoreFamily);
     EXPECT_FALSE(testedIgaWrapper.isKnownPlatform());
 
-    testedIgaWrapper.setGfxCore(IGFX_GEN11LP_CORE);
+    testedIgaWrapper.setGfxCore(IGFX_GEN12LP_CORE);
     EXPECT_TRUE(testedIgaWrapper.isKnownPlatform());
 
     // Expect that a valid family is preserved.
@@ -303,7 +303,7 @@ TEST_F(IgaWrapperTest, GivenIgcWrapperWhenCallingSetProductFamilyMultipleTimesTh
     testedIgaWrapper.setProductFamily(invalidProductFamily);
     EXPECT_FALSE(testedIgaWrapper.isKnownPlatform());
 
-    testedIgaWrapper.setProductFamily(IGFX_SKYLAKE);
+    testedIgaWrapper.setProductFamily(IGFX_TIGERLAKE_LP);
     EXPECT_TRUE(testedIgaWrapper.isKnownPlatform());
 
     // Expect that a valid family is preserved.

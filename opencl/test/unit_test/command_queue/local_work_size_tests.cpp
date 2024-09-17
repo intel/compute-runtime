@@ -46,7 +46,7 @@ TEST_F(LocalWorkSizeTest, givenDisableEUFusionWhenCreatingWorkSizeInfoThenCorrec
     bool fusedDispatchEnabled = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, true);
     auto wgsMultiple = fusedDispatchEnabled ? 2 : 1;
 
-    uint32_t maxBarriersPerHSlice = (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
+    uint32_t maxBarriersPerHSlice = 32;
     uint32_t expectedMinWGS = wgsMultiple * simdSize * numThreadsPerSubS / maxBarriersPerHSlice;
     EXPECT_EQ(expectedMinWGS, wsInfo.minWorkGroupSize);
 }
@@ -839,7 +839,7 @@ HWTEST2_F(LocalWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenTestE
     dispatchInfo.setClDevice(&device);
     dispatchInfo.setKernel(kernel.mockKernel);
 
-    const uint32_t maxBarriersPerHSlice = (defaultHwInfo->platform.eRenderCoreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
+    const uint32_t maxBarriersPerHSlice = 32;
     const uint32_t nonFusedMinWorkGroupSize = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                               device.getSharedDeviceInfo().numThreadsPerEU *
                                               static_cast<uint32_t>(kernel.mockKernel->getKernelInfo().getMaxSimdSize()) /

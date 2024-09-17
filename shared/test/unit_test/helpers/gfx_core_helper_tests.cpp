@@ -1173,85 +1173,41 @@ HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperation
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(1));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(1024));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(1025));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2048));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096));
-        EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097));
-        EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192));
-        EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193));
-        EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(12288));
-        EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384));
-        EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385));
-        EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(24576));
-        EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
-        EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
-        EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(49152));
-        EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65535));
-        EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
-    } else {
-        EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0));
-        EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1));
-        EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1024));
-        EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(1025));
-        EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(2048));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049));
-        EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096));
-        EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097));
-        EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192));
-        EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193));
-        EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384));
-        EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385));
-        EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
-        EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
-        EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
-    }
+    EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1));
+    EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1024));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(1025));
+    EXPECT_EQ(2048u, gfxCoreHelper.alignSlmSize(2048));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(2049));
+    EXPECT_EQ(4096u, gfxCoreHelper.alignSlmSize(4096));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(4097));
+    EXPECT_EQ(8192u, gfxCoreHelper.alignSlmSize(8192));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(8193));
+    EXPECT_EQ(16384u, gfxCoreHelper.alignSlmSize(16384));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(16385));
+    EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
+    EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1025));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 2048));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 2049));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 4096));
-        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 4097));
-        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 8192));
-        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8193));
-        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 12288));
-        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 16384));
-        EXPECT_EQ(8u, gfxCoreHelper.computeSlmValues(hwInfo, 16385));
-        EXPECT_EQ(8u, gfxCoreHelper.computeSlmValues(hwInfo, 24576));
-        EXPECT_EQ(8u, gfxCoreHelper.computeSlmValues(hwInfo, 32768));
-        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 32769));
-        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 49152));
-        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 65535));
-        EXPECT_EQ(16u, gfxCoreHelper.computeSlmValues(hwInfo, 65536));
-    } else {
-        EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1));
-        EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024));
-        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 1025));
-        EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 2048));
-        EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 2049));
-        EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 4096));
-        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 4097));
-        EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8192));
-        EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 8193));
-        EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 16384));
-        EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 16385));
-        EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 32768));
-        EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 32769));
-        EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536));
-    }
+    EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
+    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1));
+    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024));
+    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 1025));
+    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 2048));
+    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 2049));
+    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 4096));
+    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 4097));
+    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8192));
+    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 8193));
+    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 16384));
+    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 16385));
+    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 32768));
+    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 32769));
+    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536));
 }
 
 HWTEST_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {

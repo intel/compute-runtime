@@ -254,7 +254,7 @@ HWTEST2_F(CommandListExecuteImmediate, GivenImmediateCommandListWhenCommandListI
 }
 
 using CommandListTest = Test<DeviceFixture>;
-using IsDcFlushSupportedPlatform = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HP_CORE>;
+using IsDcFlushSupportedPlatform = IsGen12LP;
 
 HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExpectNoPipeControl, IsDcFlushSupportedPlatform) {
     EXPECT_TRUE(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()));
@@ -728,7 +728,7 @@ HWTEST2_F(CommandListTest,
     context->freeMem(dstBuffer);
 }
 
-using ImageSupport = IsNotAnyGfxCores<IGFX_GEN8_CORE, IGFX_XE_HPC_CORE>;
+using ImageSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenCopyFromImageToImageTheBuiltinFlagIsSet, ImageSupport) {
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);

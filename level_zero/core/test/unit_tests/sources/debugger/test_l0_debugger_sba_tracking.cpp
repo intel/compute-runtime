@@ -118,10 +118,9 @@ HWTEST_P(L0DebuggerParameterizedTests, givenL0DebuggerWhenCreatedThenPerContextS
     }
 }
 
-using NotGen8Or11 = AreNotGfxCores<IGFX_GEN8_CORE, IGFX_GEN11_CORE>;
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 
-HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, NotGen8Or11) {
+HWTEST2_F(L0DebuggerPerContextAddressSpaceTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, MatchAny) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 

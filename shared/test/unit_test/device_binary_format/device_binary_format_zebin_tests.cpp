@@ -76,7 +76,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenUnhandledElfTypeThenUnpackingFails) {
 TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTargetDeviceThenReturnSelf) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_SKYLAKE);
+    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_BMG);
     NEO::TargetDevice targetDevice;
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine);
     targetDevice.stepping = 0U;
@@ -98,7 +98,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTarget
     EXPECT_TRUE(unpackWarnings.empty());
     EXPECT_TRUE(unpackErrors.empty());
 
-    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_GEN9_CORE);
+    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_XE2_HPG_CORE);
     NEO::Zebin::Elf::ZebinTargetFlags targetFlags;
     targetDevice.productFamily = IGFX_UNKNOWN;
     targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine);
@@ -125,7 +125,7 @@ TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinar
 
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_SKYLAKE);
+    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_BMG);
     NEO::TargetDevice targetDevice;
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine);
     targetDevice.stepping = 0U;
@@ -150,7 +150,7 @@ TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinar
 TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpackingFails) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_SKYLAKE);
+    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_BMG);
     NEO::TargetDevice targetDevice;
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine + 1);
     targetDevice.stepping = 0U;
@@ -172,7 +172,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpacki
     EXPECT_STREQ("Unhandled target device\n", unpackErrors.c_str());
     unpackErrors.clear();
 
-    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_GEN9_CORE);
+    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_XE2_HPG_CORE);
     NEO::Zebin::Elf::ZebinTargetFlags targetFlags;
     targetDevice.productFamily = IGFX_UNKNOWN;
     targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine + 1);
@@ -195,7 +195,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpacki
 TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryWithUnsupportedPointerSizeThenUnpackingFails) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.machine = IGFX_SKYLAKE;
+    zebin.machine = IGFX_BMG;
     NEO::TargetDevice targetDevice;
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine);
     targetDevice.stepping = 0U;
@@ -220,7 +220,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryWithUnsupportedPointerSizeThe
 TEST(UnpackSingleDeviceBinaryZebin, WhenNotRequestedThenDontValidateDeviceRevision) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.machine = IGFX_SKYLAKE;
+    zebin.machine = IGFX_BMG;
     NEO::TargetDevice targetDevice;
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine);
     targetDevice.stepping = 0U;
@@ -266,7 +266,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenNotRequestedThenDontValidateDeviceRevisi
 TEST(UnpackSingleDeviceBinaryZebin, WhenRequestedThenValidateRevision) {
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
     zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.machine = IGFX_SKYLAKE;
+    zebin.machine = IGFX_BMG;
     NEO::TargetDevice targetDevice;
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine);
     targetDevice.stepping = 0U;
@@ -444,7 +444,7 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinWithSpirvAndBuildOptionsThenUnpack
     ASSERT_EQ(NEO::Zebin::Elf::SHT_ZEBIN_MISC, buildOptionsHdr.type);
 
     zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.elfHeader->machine = IGFX_SKYLAKE;
+    zebin.elfHeader->machine = IGFX_BMG;
     NEO::TargetDevice targetDevice = {};
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
     targetDevice.maxPointerSizeInBytes = 8;
@@ -477,7 +477,7 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenZebinForDifferentTargetDeviceWithInterm
     zebin.elfHeader->machine = IGFX_UNKNOWN;
 
     NEO::TargetDevice targetDevice;
-    targetDevice.productFamily = IGFX_SKYLAKE;
+    targetDevice.productFamily = IGFX_BMG;
     targetDevice.maxPointerSizeInBytes = 8;
 
     std::string unpackErrors;
@@ -500,7 +500,7 @@ TEST(UnpackSingleDeviceBinaryZebin, GivenMiscZebinSectionWithNameDifferentThanBu
     zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, "not_build_options", ArrayRef<uint8_t>{&secData, 1U});
 
     zebin.elfHeader->type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
-    zebin.elfHeader->machine = IGFX_SKYLAKE;
+    zebin.elfHeader->machine = IGFX_BMG;
     NEO::TargetDevice targetDevice = {};
     targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.elfHeader->machine);
     targetDevice.maxPointerSizeInBytes = 8;

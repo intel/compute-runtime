@@ -2559,9 +2559,7 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
     EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 }
 
-using NonPostSyncWalkerMatcher = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
-
-HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonPostSyncWalkerMatcher) {
+HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, IsGen12LP) {
     InOrderPatchCommandHelpers::PatchCmd<FamilyType> incorrectCmd(nullptr, nullptr, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::none, false, false);
 
     EXPECT_ANY_THROW(incorrectCmd.patch(1));
@@ -2571,7 +2569,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, NonP
     EXPECT_ANY_THROW(walkerCmd.patch(1));
 }
 
-HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenAskingForNonWalkerSignalingRequiredThenReturnFalse, NonPostSyncWalkerMatcher) {
+HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenAskingForNonWalkerSignalingRequiredThenReturnFalse, IsGen12LP) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool1 = createEvents<FamilyType>(1, true);
@@ -2613,7 +2611,7 @@ HWTEST2_F(InOrderCmdListTests, givenMultipleAllocationsForWriteWhenAskingForNonW
     EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(nullptr));
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, NonPostSyncWalkerMatcher) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, IsGen12LP) {
     using WALKER = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -2652,7 +2650,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
     EXPECT_EQ(immCmdList->inOrderExecInfo->getCounterValue(), sdiCmd->getDataDword0());
 }
 
-HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenProgramPcAndSignalAlloc, NonPostSyncWalkerMatcher) {
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenProgramPcAndSignalAlloc, IsGen12LP) {
     using WALKER = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
@@ -2996,7 +2994,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateEventWhenWaitingFromRegularCmdListT
 
     ASSERT_EQ(1u, regularCmdList->inOrderPatchCmds.size());
 
-    if (NonPostSyncWalkerMatcher::isMatched<productFamily>()) {
+    if (IsGen12LP::isMatched<productFamily>()) {
         EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::sdi, regularCmdList->inOrderPatchCmds[0].patchCmdType);
     } else {
         EXPECT_EQ(NEO::InOrderPatchCommandHelpers::PatchCmdType::walker, regularCmdList->inOrderPatchCmds[0].patchCmdType);

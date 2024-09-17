@@ -278,10 +278,8 @@ HWTEST2_F(AppendFillTest,
     delete[] nonMultipleDstPtr;
 }
 
-using IsBetweenGen9AndGen12lp = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
-
 HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsBetweenGen9AndGen12lp) {
+          givenCallToAppendMemoryFillWithImmediateValueWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsGen12LP) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
 
@@ -337,7 +335,7 @@ HWTEST2_F(AppendFillTest,
 }
 
 HWTEST2_F(AppendFillTest,
-          givenCallToAppendMemoryFillWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsBetweenGen9AndGen12lp) {
+          givenCallToAppendMemoryFillWhenTimestampEventUsesRegistersThenSinglePacketUsesRegisterProfiling, IsGen12LP) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
 

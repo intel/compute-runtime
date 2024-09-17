@@ -194,9 +194,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
     commandQueue2->destroy();
 }
 
-using IsMmioPreemptionUsed = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HPC_CORE>;
-
-HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsMmioPreemptionUsed) {
+HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingSingleCsrWhenExecutingFirstTimeOnBothQueuesThenPreemptionModeIsProgrammedOnce, IsAtMostXeHpcCore) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     ze_result_t returnValue;

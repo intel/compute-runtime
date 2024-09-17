@@ -300,9 +300,6 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
 }
 
 uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
-    if (gmmHelper->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
-        return 0;
-    }
     return gmmResourceInfo->getQPitch();
 }
 

@@ -272,8 +272,7 @@ TEST_F(CommandListCreate, givenRootDeviceAndImplicitScalingDisabledWhenCreatingC
     L0::CommandList::fromHandle(commandList)->destroy();
 }
 
-using SingleTileOnlyPlatforms = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
-HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTileBarrierThenNoProgrammingIsExpected, SingleTileOnlyPlatforms) {
+HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTileBarrierThenNoProgrammingIsExpected, IsGen12LP) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto neoDevice = device->getNEODevice();
@@ -638,9 +637,8 @@ HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyCalled
 
 using CmdlistAppendLaunchKernelTests = Test<ModuleImmutableDataFixture>;
 
-using IsBetweenGen9AndGen12lp = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 HWTEST2_F(CmdlistAppendLaunchKernelTests,
-          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillScratchSpaceThenExpectCsrHasCorrectValuesSet, IsBetweenGen9AndGen12lp) {
+          givenImmediateCommandListUsesFlushTaskWhenDispatchingKernelWithSpillScratchSpaceThenExpectCsrHasCorrectValuesSet, IsGen12LP) {
     constexpr uint32_t scratchPerThreadSize = 0x200;
 
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);

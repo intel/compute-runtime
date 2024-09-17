@@ -8,3 +8,4 @@
 #pragma once
 
 using SupportsMultiTile = IsPVC;
+using MultiTileNotSupported = IsNotPVC;

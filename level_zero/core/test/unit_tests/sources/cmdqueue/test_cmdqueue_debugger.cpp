@@ -133,8 +133,7 @@ HWTEST_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledWhenCmdListRequiringSbaPro
     }
 }
 
-using IsBetweenGen9AndGen12lp = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
-HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenInternalCommandQueueThenProgramGsbaDoesNotWritesToSbaTrackingBuffer, IsBetweenGen9AndGen12lp) {
+HWTEST2_F(L0CmdQueueDebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenInternalCommandQueueThenProgramGsbaDoesNotWritesToSbaTrackingBuffer, IsGen12LP) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

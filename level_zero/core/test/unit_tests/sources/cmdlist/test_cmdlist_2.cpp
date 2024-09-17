@@ -291,8 +291,7 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemor
     EXPECT_EQ(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
 }
 
-using PrePvcCore = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemoryCopyWithoutStatelessKernelIsCalled, PrePvcCore) {
+HWTEST2_F(CommandListAppend, givenCommandListWhenMemoryCopyCalledThenAppendMemoryCopyWithoutStatelessKernelIsCalled, IsAtMostXeHpgCore) {
     MockCommandListHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
@@ -693,9 +692,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventsThenS
     EXPECT_NE(cmdList.end(), itor);
 }
 
-using platformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
-
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToDeviceThenSinglePipeControlIsAddedWithDcFlush, platformSupport) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToDeviceThenSinglePipeControlIsAddedWithDcFlush, IsTGLLP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
@@ -737,7 +734,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeS
     EXPECT_EQ(1u, postSyncFound);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, platformSupport) {
+HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyWithSignalEventScopeSetToSubDeviceThenB2BPipeControlIsAddedWithDcFlushForLastPC, IsTGLLP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 

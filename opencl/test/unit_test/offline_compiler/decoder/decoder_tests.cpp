@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -780,10 +780,6 @@ TEST(DecoderHelperTest, GivenPathEndedByBackSlashWhenCallingAddSlashThenNothingI
 
 TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpectedIgaGenBaseIsReturned) {
     constexpr static std::array translations = {
-        std::pair{IGFX_GEN8_CORE, IGA_GEN8},
-        std::pair{IGFX_GEN9_CORE, IGA_GEN9},
-        std::pair{IGFX_GEN11_CORE, IGA_GEN11},
-        std::pair{IGFX_GEN11LP_CORE, IGA_GEN11},
         std::pair{IGFX_GEN12LP_CORE, IGA_XE},
         std::pair{IGFX_XE_HP_CORE, IGA_XE_HP},
         std::pair{IGFX_XE_HPG_CORE, IGA_XE_HPG},
@@ -797,16 +793,6 @@ TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpecte
 
 TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpectedIgaGenBaseIsReturned) {
     constexpr static std::array translations = {
-        std::pair{IGFX_BROADWELL, IGA_GEN8},
-        std::pair{IGFX_CHERRYVIEW, IGA_GEN8lp},
-        std::pair{IGFX_SKYLAKE, IGA_GEN9},
-        std::pair{IGFX_BROXTON, IGA_GEN9lp},
-        std::pair{IGFX_KABYLAKE, IGA_GEN9p5},
-        std::pair{IGFX_COFFEELAKE, IGA_GEN9p5},
-        std::pair{IGFX_ICELAKE, IGA_GEN11},
-        std::pair{IGFX_ICELAKE_LP, IGA_GEN11},
-        std::pair{IGFX_LAKEFIELD, IGA_GEN11},
-        std::pair{IGFX_ELKHARTLAKE, IGA_GEN11},
         std::pair{IGFX_TIGERLAKE_LP, IGA_XE},
         std::pair{IGFX_ROCKETLAKE, IGA_XE},
         std::pair{IGFX_ALDERLAKE_N, IGA_XE},

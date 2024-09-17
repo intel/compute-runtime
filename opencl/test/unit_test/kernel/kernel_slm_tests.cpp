@@ -99,35 +99,21 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
 
     uint32_t expectedSlmSize = 0;
 
-    if (::renderCoreFamily == IGFX_GEN8_CORE) {
-        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
-            expectedSlmSize = 1;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
-            expectedSlmSize = 2;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
-            expectedSlmSize = 4;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
-            expectedSlmSize = 8;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
-            expectedSlmSize = 16;
-        }
-    } else {
-        if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
-        {
-            expectedSlmSize = 1;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * 1024)) {
-            expectedSlmSize = 2;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
-            expectedSlmSize = 3;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
-            expectedSlmSize = 4;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
-            expectedSlmSize = 5;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
-            expectedSlmSize = 6;
-        } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
-            expectedSlmSize = 7;
-        }
+    if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (1 * 1024)) // its a power of "2" +1 for example 1 is 2^0 ( 0+1); 2 is 2^1 is (1+1) etc.
+    {
+        expectedSlmSize = 1;
+    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (2 * 1024)) {
+        expectedSlmSize = 2;
+    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (4 * 1024)) {
+        expectedSlmSize = 3;
+    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (8 * 1024)) {
+        expectedSlmSize = 4;
+    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (16 * 1024)) {
+        expectedSlmSize = 5;
+    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (32 * 1024)) {
+        expectedSlmSize = 6;
+    } else if (kernelInfo.kernelDescriptor.kernelAttributes.slmInlineSize <= (64 * 1024)) {
+        expectedSlmSize = 7;
     }
     ASSERT_GT(expectedSlmSize, 0u);
     EXPECT_EQ(expectedSlmSize, pSrcIDData->getSharedLocalMemorySize());

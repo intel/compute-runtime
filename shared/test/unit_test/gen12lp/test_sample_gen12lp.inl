@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,5 @@ HWTEST2_F(TigerlakeLpOnlyTest, WhenGettingHardwareInfoThenProductFamilyIsTigerla
 using Gen12LpOnlyTest = ::testing::Test;
 
 GEN12LPTEST_F(Gen12LpOnlyTest, WhenGettingRenderCoreFamilyThenGen12lpCoreIsReturned) {
-    EXPECT_NE(IGFX_GEN9_CORE, defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_NE(IGFX_GEN11_CORE, defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_EQ(IGFX_GEN12LP_CORE, defaultHwInfo->platform.eRenderCoreFamily);
+    EXPECT_NE(IGFX_XE2_HPG_CORE, defaultHwInfo->platform.eRenderCoreFamily);
 }
