@@ -93,32 +93,6 @@ INSTANTIATE_TEST_SUITE_P(Sampler,
                              ::testing::ValuesIn(addressingModes),
                              ::testing::ValuesIn(filterModes)));
 
-typedef ::testing::TestWithParam<std::tuple<uint32_t /*normalizedCoords*/, uint32_t /*addressingMode*/, uint32_t /*filterMode*/>> TransformableSamplerTest;
-
-TEST_P(TransformableSamplerTest, givenSamplerWhenHasProperParametersThenIsTransformable) {
-    bool expectedRetVal;
-    bool retVal;
-    cl_bool normalizedCoords;
-    cl_addressing_mode addressingMode;
-    cl_filter_mode filterMode;
-    std::tie(normalizedCoords, addressingMode, filterMode) = GetParam();
-
-    expectedRetVal = addressingMode == CL_ADDRESS_CLAMP_TO_EDGE &&
-                     filterMode == CL_FILTER_NEAREST &&
-                     normalizedCoords == CL_FALSE;
-
-    MockSampler sampler(nullptr, normalizedCoords, addressingMode, filterMode);
-
-    retVal = sampler.isTransformable();
-    EXPECT_EQ(expectedRetVal, retVal);
-}
-INSTANTIATE_TEST_SUITE_P(Sampler,
-                         TransformableSamplerTest,
-                         ::testing::Combine(
-                             ::testing::ValuesIn(normalizedCoordModes),
-                             ::testing::ValuesIn(addressingModes),
-                             ::testing::ValuesIn(filterModes)));
-
 TEST(castToSamplerTest, GivenGenericPointerWhichHoldsSamplerObjectWhenCastToSamplerIsCalledThenCastWithSuccess) {
     cl_int retVal;
     auto context = std::make_unique<MockContext>();

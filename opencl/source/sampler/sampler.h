@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,8 +52,6 @@ class Sampler : public BaseObject<_cl_sampler> {
                    void *paramValue, size_t *paramValueSizeRet);
 
     virtual void setArg(void *memory, const RootDeviceEnvironment &rootDeviceEnvironment) = 0;
-
-    bool isTransformable() const;
 
     Sampler(Context *context,
             cl_bool normalizedCoordinates,

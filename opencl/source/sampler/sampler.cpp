@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -215,12 +215,6 @@ cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
     GetInfo::setParamValueReturnSize(paramValueSizeRet, valueSize, getInfoStatus);
 
     return retVal;
-}
-
-bool Sampler::isTransformable() const {
-    return addressingMode == CL_ADDRESS_CLAMP_TO_EDGE &&
-           filterMode == CL_FILTER_NEAREST &&
-           normalizedCoordinates == CL_FALSE;
 }
 
 void Sampler::storeProperties(const cl_sampler_properties *properties) {

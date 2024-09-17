@@ -183,8 +183,6 @@ class MockKernel : public Kernel {
 
     bool isPatched() const override;
 
-    bool canTransformImages() const override;
-
     ////////////////////////////////////////////////////////////////////////////////
     void setCrossThreadData(const void *crossThreadDataPattern, uint32_t newCrossThreadDataSize) {
         if ((crossThreadData != nullptr) && (crossThreadData != mockCrossThreadData.data())) {

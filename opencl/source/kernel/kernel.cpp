@@ -56,7 +56,6 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/sampler_helpers.h"
-#include "opencl/source/kernel/image_transformer.h"
 #include "opencl/source/kernel/kernel_info_cl.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
@@ -85,7 +84,6 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
       kernelInfo(kernelInfoArg) {
     program->retain();
     program->retainForKernel();
-    imageTransformer.reset(new ImageTransformer);
     auto &deviceInfo = getDevice().getDevice().getDeviceInfo();
     if (isSimd1(kernelInfoArg.kernelDescriptor.kernelAttributes.simdSize)) {
         auto &productHelper = getDevice().getProductHelper();
@@ -894,8 +892,6 @@ void Kernel::markArgPatchedAndResolveArgs(uint32_t argIndex) {
             migratableArgsMap.erase(argIndex);
         }
     }
-
-    resolveArgs();
 }
 
 cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
@@ -1725,10 +1721,6 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         auto &imageFormat = pImage->getImageFormat();
         auto graphicsAllocation = pImage->getGraphicsAllocation(rootDeviceIndex);
 
-        if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
-            imageTransformer->registerImage3d(argIndex);
-        }
-
         patch<uint32_t, cl_uint>(imageDesc.num_samples, crossThreadData, argAsImg.metadataPayload.numSamples);
         patch<uint32_t, cl_uint>(imageDesc.num_mip_levels, crossThreadData, argAsImg.metadataPayload.numMipLevels);
         patch<uint32_t, uint64_t>(imageDesc.image_width, crossThreadData, argAsImg.metadataPayload.imgWidth);
@@ -1978,34 +1970,6 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
         }
     }
     return CL_SUCCESS;
-}
-
-void Kernel::resolveArgs() {
-    if (!Kernel::isPatched() || !imageTransformer->hasRegisteredImages3d() || !canTransformImages())
-        return;
-    bool canTransformImageTo2dArray = true;
-    const auto &args = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs;
-    for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
-        if (args[i].is<ArgDescriptor::argTSampler>()) {
-            auto sampler = castToObject<Sampler>(kernelArguments.at(i).object);
-            if (sampler->isTransformable()) {
-                canTransformImageTo2dArray = true;
-            } else {
-                canTransformImageTo2dArray = false;
-                break;
-            }
-        }
-    }
-
-    if (canTransformImageTo2dArray) {
-        imageTransformer->transformImagesTo2dArray(kernelInfo, kernelArguments, getSurfaceStateHeap());
-    } else if (imageTransformer->didTransform()) {
-        imageTransformer->transformImagesTo3d(kernelInfo, kernelArguments, getSurfaceStateHeap());
-    }
-}
-
-bool Kernel::canTransformImages() const {
-    return false;
 }
 
 std::unique_ptr<KernelObjsForAuxTranslation> Kernel::fillWithKernelObjsForAuxTranslation() {

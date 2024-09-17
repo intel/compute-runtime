@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,6 @@
 using namespace NEO;
 
 using Gen12LpKernelTest = Test<ClDeviceFixture>;
-GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsFalse) {
-    MockKernelWithInternals mockKernel(*pClDevice);
-    auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
-    EXPECT_FALSE(retVal);
-}
 
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotUsingSharedObjArgsThenWaDisableRccRhwoOptimizationIsNotRequired) {
     MockKernelWithInternals kernel(*pClDevice);

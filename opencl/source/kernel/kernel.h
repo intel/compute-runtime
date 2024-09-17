@@ -37,7 +37,6 @@ class Buffer;
 class CommandQueue;
 class CommandStreamReceiver;
 class GraphicsAllocation;
-class ImageTransformer;
 class Surface;
 class PrintfHandler;
 class MultiDeviceKernel;
@@ -142,7 +141,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     MOCKABLE_VIRTUAL cl_int cloneKernel(Kernel *pSourceKernel);
 
-    MOCKABLE_VIRTUAL bool canTransformImages() const;
     MOCKABLE_VIRTUAL bool isPatched() const;
 
     // API entry points
@@ -453,7 +451,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     void provideInitializationHints();
 
     void markArgPatchedAndResolveArgs(uint32_t argIndex);
-    void resolveArgs();
 
     void reconfigureKernel();
     bool hasDirectStatelessAccessToSharedBuffer() const;
@@ -484,7 +481,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     std::vector<PatchInfoData> patchInfoDataList;
     std::vector<size_t> slmSizes;
 
-    std::unique_ptr<ImageTransformer> imageTransformer;
     std::unique_ptr<char[]> pSshLocal;
     std::unique_ptr<ImplicitArgs> pImplicitArgs = nullptr;
 

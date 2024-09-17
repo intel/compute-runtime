@@ -26,10 +26,6 @@ bool MockKernel::isPatched() const {
     return isPatchedOverride;
 }
 
-bool MockKernel::canTransformImages() const {
-    return canKernelTransformImages;
-}
-
 void MockKernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     makeResidentCalls++;
     Kernel::makeResident(commandStreamReceiver);

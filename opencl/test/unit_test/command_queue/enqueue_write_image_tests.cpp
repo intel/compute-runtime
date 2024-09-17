@@ -552,7 +552,6 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageThenBuiltinKernelIsResolved
 
     auto pEvent = castToObject<Event>(outputEvent);
     auto pCommand = static_cast<CommandComputeKernel *>(pEvent->peekCommand());
-    EXPECT_FALSE(pCommand->peekKernel()->Kernel::canTransformImages());
     EXPECT_TRUE(pCommand->peekKernel()->isPatched());
     userEvent.setStatus(CL_COMPLETE);
     pEvent->release();
@@ -586,7 +585,6 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageTh
     auto pEvent = castToObject<Event>(outputEvent);
     auto pCommand = static_cast<CommandComputeKernel *>(pEvent->peekCommand());
     auto pKernel = pCommand->peekKernel();
-    EXPECT_FALSE(pKernel->Kernel::canTransformImages());
     EXPECT_TRUE(pKernel->isPatched());
     EXPECT_TRUE(pKernel->requiresMemoryMigration());
 
@@ -640,7 +638,6 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIs
     auto pEvent0 = castToObject<Event>(outputEvent0);
     auto pCommand0 = static_cast<CommandComputeKernel *>(pEvent0->peekCommand());
     auto pKernel0 = pCommand0->peekKernel();
-    EXPECT_FALSE(pKernel0->Kernel::canTransformImages());
     EXPECT_TRUE(pKernel0->isPatched());
     EXPECT_TRUE(pKernel0->requiresMemoryMigration());
 
@@ -668,7 +665,6 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenEnqueueWriteImageIs
     auto pEvent1 = castToObject<Event>(outputEvent1);
     auto pCommand1 = static_cast<CommandComputeKernel *>(pEvent1->peekCommand());
     auto pKernel1 = pCommand1->peekKernel();
-    EXPECT_FALSE(pKernel1->Kernel::canTransformImages());
     EXPECT_TRUE(pKernel1->isPatched());
     EXPECT_TRUE(pKernel1->requiresMemoryMigration());
 
