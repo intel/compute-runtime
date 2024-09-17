@@ -1405,14 +1405,26 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         std::cout << "properties.brandName = " << properties.brandName << std::endl;
         std::cout << "properties.modelName = " << properties.modelName << std::endl;
         std::cout << "properties.vendorName = " << properties.vendorName << std::endl;
-        std::cout << "properties.driverVersion= " << properties.driverVersion << std::endl;
-        std::cout << "properties.core.vendorId= " << properties.core.vendorId << std::endl;
-        std::cout << "properties.core.deviceId= " << properties.core.deviceId << std::endl;
-        std::cout << "properties.core.uuid= " << std::endl;
+        std::cout << "properties.driverVersion = " << properties.driverVersion << std::endl;
+        std::cout << "properties.core.type = " << properties.core.type << std::endl;
+        std::cout << "properties.core.vendorId = " << properties.core.vendorId << std::endl;
+        std::cout << "properties.core.deviceId = " << properties.core.deviceId << std::endl;
+        std::cout << "properties.core.flags = " << properties.core.flags << std::endl;
+        std::cout << "properties.core.coreClockRate = " << properties.core.coreClockRate << std::endl;
+        std::cout << "properties.core.maxHardwareContexts = " << properties.core.maxHardwareContexts << std::endl;
+        std::cout << "properties.core.maxCommandQueuePriority = " << properties.core.maxCommandQueuePriority << std::endl;
+        std::cout << "properties.core.numThreadsPerEU = " << properties.core.numThreadsPerEU << std::endl;
+        std::cout << "properties.core.numEUsPerSubslice = " << properties.core.numEUsPerSubslice << std::endl;
+        std::cout << "properties.core.numSubslicesPerSlice = " << properties.core.numSubslicesPerSlice << std::endl;
+        std::cout << "properties.core.numSlices = " << properties.core.numSlices << std::endl;
+        std::cout << "properties.core.timestampValidBits = " << properties.core.timestampValidBits << std::endl;
+        std::cout << "properties.core.kernelTimestampValidBits = " << properties.core.kernelTimestampValidBits << std::endl;
+        std::cout << "properties.core.uuid = " << std::endl;
         for (uint32_t i = 0; i < ZE_MAX_UUID_SIZE; i++) {
             std::cout << +properties.core.uuid.id[i] << " ";
         }
         std::cout << std::endl;
+        std::cout << "properties.core.name = " << properties.core.name << std::endl;
     }
 
     uint32_t count = 0;

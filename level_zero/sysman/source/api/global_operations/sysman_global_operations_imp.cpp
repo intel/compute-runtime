@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/sysman_const.h"
 
 #include <algorithm>
+#include <iomanip>
 
 namespace L0 {
 namespace Sysman {
@@ -46,22 +47,46 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
     initGlobalOperations();
     pProperties->numSubdevices = pOsSysman->getSubDeviceCount();
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
-    bool uuidValid = pOsGlobalOperations->getUuid(deviceUuid);
-    if (uuidValid) {
-        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pProperties->core.uuid.id));
-    }
-
     auto &hardwareInfo = pOsSysman->getHardwareInfo();
     pProperties->core.type = ZE_DEVICE_TYPE_GPU;
+    pProperties->core.vendorId = vendorIdIntel;
+    pProperties->core.deviceId = hardwareInfo.platform.usDeviceID;
+
     if (hardwareInfo.capabilityTable.isIntegratedDevice) {
         pProperties->core.flags |= ZE_DEVICE_PROPERTY_FLAG_INTEGRATED;
     }
     if (hardwareInfo.capabilityTable.supportsOnDemandPageFaults) {
         pProperties->core.flags |= ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING;
     }
-    pProperties->core.deviceId = hardwareInfo.platform.usDeviceID;
-    pProperties->core.vendorId = vendorIdIntel;
+    pProperties->core.coreClockRate = hardwareInfo.capabilityTable.maxRenderFrequency;
+    pProperties->core.maxHardwareContexts = 1024 * 64;
+    pProperties->core.maxCommandQueuePriority = 0;
+    pProperties->core.numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
+    pProperties->core.numEUsPerSubslice = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice;
+    if (NEO::debugManager.flags.DebugApiUsed.get() == 1) {
+        pProperties->core.numSubslicesPerSlice = hardwareInfo.gtSystemInfo.MaxSubSlicesSupported / hardwareInfo.gtSystemInfo.MaxSlicesSupported;
+    } else {
+        pProperties->core.numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
+    }
+    pProperties->core.numSlices = hardwareInfo.gtSystemInfo.SliceCount;
+    pProperties->core.timestampValidBits = hardwareInfo.capabilityTable.timestampValidBits;
+    pProperties->core.kernelTimestampValidBits = hardwareInfo.capabilityTable.kernelTimestampValidBits;
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    bool uuidValid = pOsGlobalOperations->getUuid(deviceUuid);
+    if (uuidValid) {
+        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(pProperties->core.uuid.id));
+    }
+
+    memset(pProperties->core.name, 0, ZE_MAX_DEVICE_NAME);
+    std::string name = hardwareInfo.capabilityTable.deviceName;
+    if (name.empty()) {
+        std::stringstream deviceNameDefault;
+        deviceNameDefault << "Intel(R) Graphics";
+        deviceNameDefault << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hardwareInfo.platform.usDeviceID << "]";
+        name = deviceNameDefault.str();
+    }
+    memcpy_s(pProperties->core.name, ZE_MAX_DEVICE_NAME, name.c_str(), name.length() + 1);
 
     zes_base_properties_t *pNext = static_cast<zes_base_properties_t *>(pProperties->pNext);
     while (pNext) {

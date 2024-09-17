@@ -1191,15 +1191,65 @@ HWTEST2_F(SysmanGlobalOperationsFixture,
     EXPECT_FALSE(properties.core.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
-TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetPropertiesThenCorrectDeviceAndVendorIdsAreReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetPropertiesThenCorrectCorePropertiesAreReturned) {
     auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
     pHwInfo->platform.usDeviceID = 0x1234;
+    const std::string deviceName = "IntelTestDevice";
+    pHwInfo->capabilityTable.deviceName = &deviceName[0];
 
     zes_device_properties_t properties = {};
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(properties.core.type, ZE_DEVICE_TYPE_GPU);
     EXPECT_EQ(properties.core.vendorId, static_cast<uint32_t>(0x8086));
     EXPECT_EQ(properties.core.deviceId, static_cast<uint32_t>(pHwInfo->platform.usDeviceID));
+    EXPECT_EQ(properties.core.coreClockRate, static_cast<uint32_t>(pHwInfo->capabilityTable.maxRenderFrequency));
+    EXPECT_EQ(properties.core.maxHardwareContexts, static_cast<uint32_t>(1024 * 64));
+    EXPECT_EQ(properties.core.maxCommandQueuePriority, 0u);
+    EXPECT_EQ(properties.core.numThreadsPerEU, static_cast<uint32_t>(pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount));
+    EXPECT_EQ(properties.core.numEUsPerSubslice, static_cast<uint32_t>(pHwInfo->gtSystemInfo.MaxEuPerSubSlice));
+    EXPECT_EQ(properties.core.numSlices, static_cast<uint32_t>(pHwInfo->gtSystemInfo.SliceCount));
+    EXPECT_EQ(properties.core.timestampValidBits, static_cast<uint32_t>(pHwInfo->capabilityTable.timestampValidBits));
+    EXPECT_EQ(properties.core.kernelTimestampValidBits, static_cast<uint32_t>(pHwInfo->capabilityTable.kernelTimestampValidBits));
+    EXPECT_TRUE(0 == deviceName.compare(properties.core.name));
+
+    // Check if default device name is proper when HwInfo deviceName is null
+    std::stringstream expectedDeviceName;
+    expectedDeviceName << "Intel(R) Graphics";
+    expectedDeviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << pSysmanDevice->getHardwareInfo().platform.usDeviceID << "]";
+
+    pHwInfo->capabilityTable.deviceName = "";
+    result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_TRUE(0 == expectedDeviceName.str().compare(properties.core.name));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, WhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnSubslicesSupported) {
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    pHwInfo->gtSystemInfo.MaxSubSlicesSupported = 48;
+    pHwInfo->gtSystemInfo.MaxSlicesSupported = 3;
+    pHwInfo->gtSystemInfo.SubSliceCount = 8;
+    pHwInfo->gtSystemInfo.SliceCount = 1;
+
+    zes_device_properties_t properties = {};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(8u, properties.core.numSubslicesPerSlice);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnMaxSubslicesSupported) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.DebugApiUsed.set(1);
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    pHwInfo->gtSystemInfo.MaxSubSlicesSupported = 48;
+    pHwInfo->gtSystemInfo.MaxSlicesSupported = 3;
+    pHwInfo->gtSystemInfo.SubSliceCount = 8;
+    pHwInfo->gtSystemInfo.SliceCount = 1;
+
+    zes_device_properties_t properties = {};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(16u, properties.core.numSubslicesPerSlice);
 }
 
 using SysmanDevicePropertiesExtensionTest = SysmanGlobalOperationsFixture;
