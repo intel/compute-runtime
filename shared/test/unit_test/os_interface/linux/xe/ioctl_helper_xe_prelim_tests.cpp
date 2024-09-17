@@ -22,14 +22,3 @@ TEST(IoctlHelperXePrelimTest, givenSimd16EuPerDssTypeWhenCheckingIfTopologyIsEuP
     EXPECT_FALSE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
     EXPECT_FALSE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
 }
-
-TEST(IoctlHelperXePrelimTest, givenL3BankTypeWhenCheckingIfTopologyIsL3BankTypeThenSuccessIsReturned) {
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-    IoctlHelperXePrelim ioctlHelper{*drm};
-    EXPECT_TRUE(ioctlHelper.isL3BankTopologyType(DRM_XE_TOPO_L3_BANK));
-    EXPECT_FALSE(ioctlHelper.isL3BankTopologyType(DRM_XE_TOPO_EU_PER_DSS));
-    EXPECT_FALSE(ioctlHelper.isL3BankTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
-    EXPECT_FALSE(ioctlHelper.isL3BankTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
-    EXPECT_FALSE(ioctlHelper.isL3BankTopologyType(DRM_XE_TOPO_SIMD16_EU_PER_DSS));
-}

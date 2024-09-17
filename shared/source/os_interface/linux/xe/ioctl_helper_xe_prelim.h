@@ -14,7 +14,6 @@ class IoctlHelperXePrelim : public IoctlHelperXe {
   public:
     using IoctlHelperXe::IoctlHelperXe;
     bool isEuPerDssTopologyType(uint16_t topologyType) const override;
-    bool isL3BankTopologyType(uint16_t topologyType) const override;
 };
 
 } // namespace NEO

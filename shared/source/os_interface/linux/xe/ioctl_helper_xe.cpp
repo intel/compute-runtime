@@ -552,11 +552,12 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
                 fillMask(computeDss[tileId], topo);
                 receivedDssInfo = true;
                 break;
+            case DRM_XE_TOPO_L3_BANK:
+                fillMask(l3Banks[tileId], topo);
+                break;
             default:
                 if (isEuPerDssTopologyType(topo->type)) {
                     fillMask(euDss[tileId], topo);
-                } else if (isL3BankTopologyType(topo->type)) {
-                    fillMask(l3Banks[tileId], topo);
                 } else {
                     xeLog("Unhandle GT Topo type: %d\n", topo->type);
                 }
@@ -1737,8 +1738,5 @@ void IoctlHelperXe::querySupportedFeatures() {
 };
 bool IoctlHelperXe::isEuPerDssTopologyType(uint16_t topologyType) const {
     return topologyType == DRM_XE_TOPO_EU_PER_DSS;
-}
-bool IoctlHelperXe::isL3BankTopologyType(uint16_t topologyType) const {
-    return false;
 }
 } // namespace NEO
