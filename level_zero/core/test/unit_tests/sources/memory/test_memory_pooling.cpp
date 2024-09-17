@@ -291,5 +291,32 @@ TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenAllocatingAndF
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(AllocUsmDeviceEnabledMemoryNewVersionTest, givenContextWhenNormalAllocFailsThenPoolsAreTrimmed) {
+    auto usmMemAllocPoolsManager = driverHandle->devices[0]->getNEODevice()->getUsmMemAllocPoolsManager();
+    ASSERT_NE(nullptr, usmMemAllocPoolsManager);
+    auto mockUsmMemAllocPoolsManager = reinterpret_cast<MockUsmMemAllocPoolsManager *>(usmMemAllocPoolsManager);
+    auto deviceHandle = driverHandle->devices[0]->toHandle();
+    ze_device_mem_alloc_desc_t deviceAllocDesc{};
+    void *allocation = nullptr;
+    const auto startingPoolSize = 20 * MemoryConstants::megaByte;
+    ze_result_t result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte + 1, 0u, &allocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_TRUE(usmMemAllocPoolsManager->isInitialized());
+    result = context->freeMem(allocation);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(2 * MemoryConstants::megaByte + 1 + startingPoolSize, mockUsmMemAllocPoolsManager->totalSize);
+
+    auto mockMemoryManager = reinterpret_cast<MockMemoryManager *>(driverHandle->getMemoryManager());
+    mockMemoryManager->failInDevicePoolWithError = true;
+
+    void *failAllocation = nullptr;
+    result = context->allocDeviceMem(deviceHandle, &deviceAllocDesc, 2 * MemoryConstants::megaByte + 1, 0u, &failAllocation);
+    EXPECT_EQ(nullptr, failAllocation);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+    EXPECT_EQ(startingPoolSize, mockUsmMemAllocPoolsManager->totalSize);
+}
+
 } // namespace ult
 } // namespace L0

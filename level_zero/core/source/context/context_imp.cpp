@@ -281,6 +281,9 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     void *usmPtr =
         this->driverHandle->svmAllocsManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     if (usmPtr == nullptr) {
+        if (neoDevice->getUsmMemAllocPoolsManager()) {
+            neoDevice->getUsmMemAllocPoolsManager()->trim();
+        }
         if (driverHandle->svmAllocsManager->getNumDeferFreeAllocs() > 0) {
             this->driverHandle->svmAllocsManager->freeSVMAllocDeferImpl();
             usmPtr =
