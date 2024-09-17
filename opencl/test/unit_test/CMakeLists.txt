@@ -290,50 +290,9 @@ set(TEST_KERNEL_options
     "-x spir -spir-std=1.2"
 )
 
-set(TEST_KERNEL_2_0_options
-    "-cl-std=CL2.0"
-)
-
-set(TEST_KERNEL_2_0
-    test_files/simple_nonuniform.cl
-)
-
-set(TEST_KERNEL_STATELESS_internal_options
-    "-cl-intel-greater-than-4GB-buffer-required"
-)
-
-set(TEST_KERNEL_STATELESS_internal_options_gen9lp
-    "-cl-intel-greater-than-4GB-buffer-required -m32"
-)
-
-set(TEST_KERNEL_STATELESS
-    test_files/stateless_kernel.cl
-)
-
-set(TEST_KERNEL_BINDLESS_internal_options
-    "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode"
-)
-
-set(TEST_KERNEL_BINDLESS
-    test_files/stateful_copy_buffer.cl
-)
-
-set(TEST_KERNEL_PRINTF
-    test_files/printf.cl
-)
-
-set(TEST_KERNEL_PRINTF_internal_options_gen9lp
-    "-m32"
-)
-
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
-list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_nonuniform.cl")
-list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/stateless_kernel.cl")
-list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_KERNEL_PRINTF}")
 
 macro(macro_for_each_platform)
-  set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${CORE_TYPE}_${PLATFORM_IT}_PLATFORM})
-
   set(PLATFORM_TEST_KERNELS ${TEST_KERNELS})
   set(IMAGE_SUPPORT FALSE)
   CORE_CONTAINS_PLATFORM("SUPPORTED_IMAGES" ${CORE_TYPE} ${PLATFORM_IT} IMAGE_SUPPORT)
@@ -368,27 +327,6 @@ macro(macro_for_each_platform)
       endforeach()
     endif()
 
-    # Gen9lp needs extra -m32 flag
-    if(("${CORE_TYPE_LOWER}" STREQUAL "gen9") AND (("${PLATFORM_IT_LOWER}" STREQUAL "bxt") OR ("${PLATFORM_IT_LOWER}" STREQUAL "glk")))
-      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_PRINTF} "" ${TEST_KERNEL_PRINTF_internal_options_gen9lp})
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
-      endforeach()
-    else()
-      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_PRINTF} "" " ")
-        neo_gen_kernels_with_internal_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options})
-      endforeach()
-    endif()
-
-    if(PLATFORM_2_0_LOWER)
-      foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
-        parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-        neo_gen_kernels_with_options(${PLATFORM_IT_LOWER} ${DEVICE_ID} ${REVISION_ID} "${TEST_KERNEL_2_0}" ${TEST_KERNEL_2_0_options})
-      endforeach()
-    endif()
   endif()
 
   set(PREVIOUS_TARGET)
