@@ -268,7 +268,7 @@ HWTEST_F(MemoryManagerTests, givenDefaultHwInfoWhenAllocatingDebugAreaThenHeapIn
     osAgnosticMemoryManager.freeGraphicsMemory(moduleDebugArea);
 }
 
-HWTEST2_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed, IsAtLeastGen12lp) {
+HWTEST2_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenHeapInternalDeviceFrontWindowIsUsed, MatchAny) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrLocalMemory = true;
 

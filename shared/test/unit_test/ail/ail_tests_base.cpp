@@ -12,13 +12,13 @@ namespace NEO {
 
 using AILBaseTests = ::testing::Test;
 
-HWTEST2_F(AILBaseTests, whenKernelSourceIsANGenDummyKernelThenDoEnforcePatchtokensFormat, IsAtLeastGen12lp) {
+HWTEST2_F(AILBaseTests, whenKernelSourceIsANGenDummyKernelThenDoEnforcePatchtokensFormat, MatchAny) {
     std::string dummyKernelSource{"kernel void _(){}"};
     AILConfigurationHw<productFamily> ail;
     EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(dummyKernelSource));
 }
 
-HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePatchtokensFormat, IsAtLeastGen12lp) {
+HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePatchtokensFormat, MatchAny) {
     std::string dummyKernelSource{"kernel void copybuffer(__global int* a, __global int* b){ //some code }"};
     AILConfigurationHw<productFamily> ail;
     EXPECT_FALSE(ail.isFallbackToPatchtokensRequired(dummyKernelSource));

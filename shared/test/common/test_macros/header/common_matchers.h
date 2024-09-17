@@ -15,10 +15,6 @@ using IsNotXeHpgCore = IsNotGfxCore<IGFX_XE_HPG_CORE>;
 using IsXe2HpgCore = IsGfxCore<IGFX_XE2_HPG_CORE>;
 using IsNotXe2HpgCore = IsNotGfxCore<IGFX_XE2_HPG_CORE>;
 
-using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
-
-using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
-
 using IsWithinXeGfxFamily = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 using IsNotWithinXeGfxFamily = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
 

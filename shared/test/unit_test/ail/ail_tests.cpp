@@ -21,7 +21,7 @@ TEST(AILTests, whenAILConfigurationCreateFunctionIsCalledWithUnknownGfxCoreThenN
     EXPECT_EQ(nullptr, AILConfiguration::create(IGFX_UNKNOWN));
 }
 
-HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64SupportIsEnabled, IsAtLeastGen12lp) {
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64SupportIsEnabled, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "blender";
 
@@ -33,7 +33,7 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
 
-HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, IsAtLeastGen12lp) {
+HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalledThenPreferredPlatformNameIsSet, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "Adobe Premiere Pro";
 
@@ -46,7 +46,7 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalled
     EXPECT_STREQ("Intel(R) OpenCL", rtTable.preferredPlatformName);
 }
 
-HWTEST2_F(AILTests, whenCheckingIfSourcesContainKernelThenCorrectResultIsReturned, IsAtLeastGen12lp) {
+HWTEST2_F(AILTests, whenCheckingIfSourcesContainKernelThenCorrectResultIsReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     std::string kernelSources = R"( 
@@ -76,7 +76,7 @@ __kernel void CopyBufferToBufferMiddle(
     EXPECT_FALSE(ail.sourcesContain(kernelSources, "CopyBufferToBufferMiddleStateless"));
 }
 
-HWTEST2_F(AILTests, whenCheckingIsKernelHashCorrectThenCorrectResultIsReturned, IsAtLeastGen12lp) {
+HWTEST2_F(AILTests, whenCheckingIsKernelHashCorrectThenCorrectResultIsReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     std::string kernelSources = R"( 
@@ -101,7 +101,7 @@ __kernel void CopyBufferToBufferLeftLeftover(
     EXPECT_FALSE(ail.isKernelHashCorrect(kernelSources, expectedHash));
 }
 
-HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSources, IsAtLeastGen12lp) {
+HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSources, MatchAny) {
     AILWhitebox<productFamily> ail;
 
     std::string kernelSources = "example_kernel(){}";
@@ -112,7 +112,7 @@ HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSource
     EXPECT_STREQ(copyKernel.c_str(), kernelSources.c_str());
 }
 
-HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, IsAtLeastGen12lp) {
+HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, MatchAny) {
     AILWhitebox<productFamily> ail;
     ail.processName = "other";
     EXPECT_FALSE(ail.isContextSyncFlagRequired());

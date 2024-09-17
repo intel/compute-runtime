@@ -475,7 +475,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
     EXPECT_EQ(nullptr, mockDevice.get());
 }
 
-HWTEST2_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect, IsAtMostGen12lp) {
+HWTEST2_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect, IsGen12LP) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.workaroundTable.flags.waCSRUncachable = true;
 

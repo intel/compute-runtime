@@ -192,7 +192,7 @@ HWTEST_F(CommandEncoderTest, givenPlatformSupportingMiMemFenceWhenEncodingThenPr
     }
 }
 
-HWTEST2_F(CommandEncoderTest, whenAdjustCompressionFormatForPlanarImageThenNothingHappens, IsAtMostGen12lp) {
+HWTEST2_F(CommandEncoderTest, whenAdjustCompressionFormatForPlanarImageThenNothingHappens, IsGen12LP) {
     for (auto plane : {GMM_NO_PLANE, GMM_PLANE_Y, GMM_PLANE_U, GMM_PLANE_V}) {
         uint32_t compressionFormat = 0u;
         EncodeWA<FamilyType>::adjustCompressionFormatForPlanarImage(compressionFormat, plane);
@@ -204,7 +204,7 @@ HWTEST2_F(CommandEncoderTest, whenAdjustCompressionFormatForPlanarImageThenNothi
     }
 }
 
-HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetCorrectBit, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTest, givenPredicateBitSetWhenProgrammingBbStartThenSetCorrectBit, MatchAny) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     MI_BATCH_BUFFER_START cmd = {};

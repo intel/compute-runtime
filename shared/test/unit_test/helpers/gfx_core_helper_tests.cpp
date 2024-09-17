@@ -1119,7 +1119,7 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingInstructionCacheFlushThenExpectI
 
 using ProductHelperCommonTest = Test<DeviceFixture>;
 
-HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference, MatchAny) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
     productHelper.configureHardwareCustom(&hardwareInfo, nullptr);
@@ -1157,7 +1157,7 @@ TEST_F(GfxCoreHelperTest, givenInvalidEngineTypeWhenGettingEngineGroupTypeThenTh
     EXPECT_ANY_THROW(gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_VECS, EngineUsage::regular, hardwareInfo));
 }
 
-HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag, MatchAny) {
     DebugManagerStateRestore restore{};
     HardwareInfo hardwareInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
@@ -1284,7 +1284,7 @@ HWTEST2_F(GfxCoreHelperTest, givenXeHPAndBelowPlatformPlatformWhenCheckingIfEngi
     EXPECT_FALSE(gfxCoreHelper.isEngineTypeRemappingToHwSpecificRequired());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformiWhenCheckingIfScratchSpaceSurfaceStateAccessibleThenFalseIsReturned, IsAtMostGen12lp) {
+HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformiWhenCheckingIfScratchSpaceSurfaceStateAccessibleThenFalseIsReturned, IsGen12LP) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_FALSE(gfxCoreHelper.isScratchSpaceSurfaceStateAccessible());
 }
@@ -1433,7 +1433,7 @@ HWTEST2_F(GfxCoreHelperTest, GivenModifiedGtSystemInfoAndXeHpOrXeHpgCoreWhenCall
     }
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformWhenGettingMinimalScratchSpaceSizeThen1024IsReturned, IsAtMostGen12lp) {
+HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformWhenGettingMinimalScratchSpaceSizeThen1024IsReturned, IsGen12LP) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(1024U, gfxCoreHelper.getMinimalScratchSpaceSize());
 }
@@ -1551,7 +1551,7 @@ TEST_F(GfxCoreHelperTest, givenNoMaxDualSubSlicesSupportedAndNoSubSliceInfoThenM
     EXPECT_EQ(maxSubSliceEnabled, GfxCoreHelper::getHighestEnabledDualSubSlice(hwInfo));
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault, IsAtMostGen12lp) {
+HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault, IsGen12LP) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto defaultMaxGroupSize = 42u;
 

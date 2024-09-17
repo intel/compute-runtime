@@ -666,7 +666,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGettin
     EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
 }
 
-HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, MatchAny) {
     EXPECT_FALSE(debugManager.flags.ForceSamplerLowFilteringPrecision.get());
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
@@ -680,7 +680,7 @@ HWTEST2_F(CommandEncoderTests, whenUsingDefaultFilteringAndAppendSamplerStatePar
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
-HWTEST2_F(CommandEncoderTests, givenMiStoreRegisterMemWhenEncodeAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTests, givenMiStoreRegisterMemWhenEncodeAndIsBcsThenRegisterOffsetsBcs0Base, MatchAny) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     uint64_t baseAddr = 0x10;
@@ -704,7 +704,7 @@ HWTEST2_F(CommandEncoderTests, givenMiStoreRegisterMemWhenEncodeAndIsBcsThenRegi
     EXPECT_EQ(storeRegMem->getRegisterAddress(), offset);
 }
 
-HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterMemWhenEncodememAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterMemWhenEncodememAndIsBcsThenRegisterOffsetsBcs0Base, MatchAny) {
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
     uint64_t baseAddr = 0x10;
@@ -729,7 +729,7 @@ HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterMemWhenEncodememAndIsBcsThenRe
     EXPECT_EQ(loadRegMem->getRegisterAddress(), offset);
 }
 
-HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterRegwhenencoderegAndIsBcsThenRegisterOffsetsBcs0Base, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterRegwhenencoderegAndIsBcsThenRegisterOffsetsBcs0Base, MatchAny) {
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
 
     uint32_t srcOffset = 0x2000;
@@ -755,7 +755,7 @@ HWTEST2_F(CommandEncoderTests, givenMiLoadRegisterRegwhenencoderegAndIsBcsThenRe
     EXPECT_EQ(storeRegReg->getDestinationRegisterAddress(), dstOffset);
 }
 
-HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, MatchAny) {
 
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
@@ -772,7 +772,7 @@ HWTEST2_F(CommandEncoderTests, whenForcingLowQualityFilteringAndAppendSamplerSta
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
 
-HWTEST2_F(CommandEncoderTests, givenSdiCommandWhenProgrammingThenForceWriteCompletionCheck, IsAtLeastGen12lp) {
+HWTEST2_F(CommandEncoderTests, givenSdiCommandWhenProgrammingThenForceWriteCompletionCheck, MatchAny) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     constexpr size_t bufferSize = sizeof(MI_STORE_DATA_IMM);
@@ -786,7 +786,7 @@ HWTEST2_F(CommandEncoderTests, givenSdiCommandWhenProgrammingThenForceWriteCompl
     EXPECT_TRUE(storeDataImm->getForceWriteCompletionCheck());
 }
 
-HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysReturnStubs, IsAtMostGen12lp) {
+HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysReturnStubs, IsGen12LP) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     MockExecutionEnvironment executionEnvironment{};

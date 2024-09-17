@@ -3598,7 +3598,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenPlatformNotSupportingRayTracingWhenDispatchingCommandThenNothingDispatched,
-          IsAtMostGen12lp) {
+          IsGen12LP) {
     pDevice->initializeRayTracing(8);
 
     constexpr size_t size = 64;

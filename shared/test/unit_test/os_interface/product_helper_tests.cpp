@@ -394,7 +394,7 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfPipeControlPriorToNonP
     EXPECT_FALSE(isBasicWARequired);
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfHeapInLocalMemThenFalseIsReturned, IsAtMostGen12lp) {
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfHeapInLocalMemThenFalseIsReturned, IsGen12LP) {
 
     EXPECT_FALSE(productHelper->heapInLocalMem(pInHwInfo));
 }
@@ -608,7 +608,7 @@ HWTEST2_F(ProductHelperTest, whenGettingNumberOfCacheRegionsThenReturnNonZero, I
     EXPECT_NE(0u, productHelper->getNumCacheRegions());
 }
 
-HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters, IsAtLeastGen12lp) {
+HWTEST2_F(ProductHelperTest, WhenFillingScmPropertiesSupportThenExpectUseCorrectGetters, MatchAny) {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
 
     productHelper->fillScmPropertiesSupportStructure(scmPropertiesSupport);

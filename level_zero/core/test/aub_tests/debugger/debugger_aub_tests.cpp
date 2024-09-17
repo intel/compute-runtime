@@ -60,7 +60,7 @@ struct DebuggerSingleAddressSpaceAubFixture : public DebuggerAubFixture {
 };
 using DebuggerSingleAddressSpaceAub = Test<DebuggerSingleAddressSpaceAubFixture>;
 
-using PlatformsSupportingSingleAddressSpace = IsAtLeastGen12lp;
+using PlatformsSupportingSingleAddressSpace = MatchAny;
 
 HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, PlatformsSupportingSingleAddressSpace) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
