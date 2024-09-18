@@ -116,7 +116,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else if (this->heaplessStateInitEnabled) {
-        ctx.globalInit = false;
         ret = this->executeCommandListsRegularHeapless(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else {
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
@@ -175,6 +174,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
 
     this->makeCsrTagAllocationResident();
+
+    this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, *streamForDispatch);
 
     if (instructionCacheFlushRequired) {
         NEO::MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(*streamForDispatch);
@@ -253,6 +254,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(commandListHandles[i]);
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
+        linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit);
         ctx.spaceForResidency += estimateCommandListResidencySize(cmdList);
     }
 
@@ -266,6 +268,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
 
     if (stateCacheFlushRequired) {
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
+    }
+
+    auto csrHw = reinterpret_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+    if (ctx.isProgramActivePartitionConfigRequired) {
+        linearStreamSizeEstimate += csrHw->getCmdSizeForActivePartitionConfig();
     }
 
     return linearStreamSizeEstimate;
