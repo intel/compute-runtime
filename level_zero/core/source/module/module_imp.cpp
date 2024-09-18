@@ -983,18 +983,6 @@ ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
         driverHandle->clearErrorDescription();
     }
 
-    auto localMemSize = static_cast<uint32_t>(this->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
-    for (const auto &kernelImmutableData : this->getKernelImmutableDataVector()) {
-        auto slmInlineSize = kernelImmutableData->getDescriptor().kernelAttributes.slmInlineSize;
-        if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
-            CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
-            driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
-            res = ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
-            break;
-        }
-    }
-
     return res;
 }
 

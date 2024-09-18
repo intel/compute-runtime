@@ -995,10 +995,19 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (this->kernelImmData == nullptr) {
         return ZE_RESULT_ERROR_INVALID_KERNEL_NAME;
     }
+    auto neoDevice = module->getDevice()->getNEODevice();
+
+    auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
+    auto slmInlineSize = this->kernelImmData->getDescriptor().kernelAttributes.slmInlineSize;
+    if (slmInlineSize > 0 && localMemSize < slmInlineSize) {
+        CREATE_DEBUG_STRING(str, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+        module->getDevice()->getDriverHandle()->setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmInlineSize, localMemSize);
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     auto isaAllocation = this->kernelImmData->getIsaGraphicsAllocation();
 
-    auto neoDevice = module->getDevice()->getNEODevice();
     const auto &productHelper = neoDevice->getProductHelper();
     const auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelDescriptor = kernelImmData->getDescriptor();
@@ -1010,6 +1019,21 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
     UNRECOVERABLE_IF(!this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap);
+
+    const auto &hwInfo = neoDevice->getHardwareInfo();
+    auto deviceBitfield = neoDevice->getDeviceBitfield();
+    const auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+
+    this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
+
+    this->heaplessEnabled = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled();
+    this->localDispatchSupport = productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0;
+
+    bool platformImplicitScaling = gfxHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
+    this->implicitScalingEnabled = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling);
+
+    this->rcsAvailable = gfxHelper.isRcsAvailable(hwInfo);
+    this->cooperativeSupport = productHelper.isCooperativeEngineSupported(hwInfo);
 
     if (isaAllocation->getAllocationType() == NEO::AllocationType::kernelIsaInternal && this->kernelImmData->getIsaParentAllocation() == nullptr) {
         isaAllocation->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
@@ -1161,21 +1185,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
         this->internalResidencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
     }
-
-    const auto &hwInfo = neoDevice->getHardwareInfo();
-    auto deviceBitfield = neoDevice->getDeviceBitfield();
-    const auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-
-    this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
-
-    this->heaplessEnabled = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled();
-    this->localDispatchSupport = productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0;
-
-    bool platformImplicitScaling = gfxHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
-    this->implicitScalingEnabled = NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling);
-
-    this->rcsAvailable = gfxHelper.isRcsAvailable(hwInfo);
-    this->cooperativeSupport = productHelper.isCooperativeEngineSupported(hwInfo);
 
     return ZE_RESULT_SUCCESS;
 }

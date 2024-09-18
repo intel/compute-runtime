@@ -4612,9 +4612,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
 
     std::string output = testing::internal::GetCapturedStderr();
     const std::string expectedPart = "Size of SLM (" + std::to_string(slmInlineSizeCopy) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
-    EXPECT_TRUE(output.find(expectedPart));
-
-    Kernel::fromHandle(kernelHandle)->destroy();
+    EXPECT_NE(std::string::npos, output.find(expectedPart));
 }
 
 TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivateAndScratchUsageIsPrinted) {
