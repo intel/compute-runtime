@@ -590,7 +590,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedFor
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
-    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps) {
+    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps()) {
         EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
     } else {
         EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation());
@@ -669,7 +669,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAll
 
     auto &commandStreamReceiver = pClDevice->getUltCommandStreamReceiver<FamilyType>();
     auto allocationType = AllocationType::linearStream;
-    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps) {
+    if (this->GetParam() == IndirectHeap::Type::indirectObject && commandStreamReceiver.canUse4GbHeaps()) {
         allocationType = AllocationType::internalHeap;
     }
     allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType, pDevice->getDeviceBitfield()});
@@ -817,7 +817,7 @@ HWTEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCal
 
     auto heapType = this->GetParam();
 
-    bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType && commandStreamReceiver.canUse4GbHeaps;
+    bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType && commandStreamReceiver.canUse4GbHeaps();
     const auto &indirectHeap = cmdQ.getIndirectHeap(heapType, 100);
     auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
     ASSERT_NE(nullptr, indirectHeapAllocation);

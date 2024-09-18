@@ -716,7 +716,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
     if (IndirectHeap::Type::surfaceState == heapType) {
         finalHeapSize = defaultSshSize;
     }
-    bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType ? canUse4GbHeaps : false;
+    bool requireInternalHeap = IndirectHeap::Type::indirectObject == heapType ? canUse4GbHeaps() : false;
 
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         requireInternalHeap = false;

@@ -99,7 +99,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::activePartitionsConfig;
     using BaseClass::CommandStreamReceiver::baseWaitFunction;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
-    using BaseClass::CommandStreamReceiver::canUse4GbHeaps;
     using BaseClass::CommandStreamReceiver::checkForNewResources;
     using BaseClass::CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using BaseClass::CommandStreamReceiver::cleanupResources;
@@ -165,6 +164,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::timestampPacketAllocator;
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
     using BaseClass::CommandStreamReceiver::timeStampPostSyncWriteOffset;
+    using BaseClass::CommandStreamReceiver::use4GbHeaps;
     using BaseClass::CommandStreamReceiver::useGpuIdleImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNewResourceImplicitFlush;
     using BaseClass::CommandStreamReceiver::useNotifyEnableForPostSync;

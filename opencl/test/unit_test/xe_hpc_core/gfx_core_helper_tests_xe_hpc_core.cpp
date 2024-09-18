@@ -75,7 +75,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenSingleTileBdA0CsrWhenAllocat
     auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::indirectObject, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
-    if (commandStreamReceiver->canUse4GbHeaps) {
+    if (commandStreamReceiver->canUse4GbHeaps()) {
         EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());

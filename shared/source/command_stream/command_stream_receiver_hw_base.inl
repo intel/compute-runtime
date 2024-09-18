@@ -75,7 +75,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
         flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(executionEnvironment));
     }
     defaultSshSize = HeapSize::getDefaultHeapSize(EncodeStates<GfxFamily>::getSshHeapSize());
-    canUse4GbHeaps = are4GbHeapsAvailable();
+    this->use4GbHeaps = are4GbHeapsAvailable();
 
     timestampPacketWriteEnabled = gfxCoreHelper.timestampPacketWriteSupported();
     if (debugManager.flags.EnableTimestampPacket.get() != -1) {

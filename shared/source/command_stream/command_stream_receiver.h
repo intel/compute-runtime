@@ -271,7 +271,6 @@ class CommandStreamReceiver {
     }
 
     size_t defaultSshSize = 0u;
-    bool canUse4GbHeaps = true;
 
     AllocationsList &getTemporaryAllocations();
     AllocationsList &getAllocationsForReuse();
@@ -549,6 +548,10 @@ class CommandStreamReceiver {
         return !testTaskCountReady(getTagAddress(), this->taskCount);
     }
 
+    bool canUse4GbHeaps() const {
+        return this->use4GbHeaps;
+    }
+
     void ensurePrimaryCsrInitialized(Device &device);
 
     bool enqueueWaitForPagingFence(uint64_t pagingFenceValue);
@@ -638,7 +641,6 @@ class CommandStreamReceiver {
     DispatchMode dispatchMode = DispatchMode::immediateDispatch;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
-    bool csrSurfaceProgrammingDone = false;
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     uint32_t lastSentL3Config = 0;
@@ -695,6 +697,8 @@ class CommandStreamReceiver {
     bool dshSupported = false;
     bool heaplessModeEnabled = false;
     bool requiresBlockingResidencyHandling = true;
+    bool use4GbHeaps = true;
+    bool csrSurfaceProgrammingDone = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

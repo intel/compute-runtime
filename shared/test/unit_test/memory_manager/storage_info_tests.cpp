@@ -245,7 +245,7 @@ HWTEST_F(MultiDeviceStorageInfoTest, givenSingleTileCsrWhenAllocatingCsrSpecific
     auto commandStreamReceiver = static_cast<UltCommandStreamReceiver<FamilyType> *>(factory.rootDevices[0]->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver);
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::indirectObject, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
-    if (commandStreamReceiver->canUse4GbHeaps) {
+    if (commandStreamReceiver->canUse4GbHeaps()) {
         EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());

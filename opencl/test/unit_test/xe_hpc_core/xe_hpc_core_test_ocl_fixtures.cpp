@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpeci
     auto commandStreamReceiver = clDevice->getSubDevice(tileIndex)->getDefaultEngine().commandStreamReceiver;
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::indirectObject, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
-    if (commandStreamReceiver->canUse4GbHeaps) {
+    if (commandStreamReceiver->canUse4GbHeaps()) {
         EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());
@@ -68,7 +68,7 @@ void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecif
     auto commandStreamReceiver = clDevice->getDefaultEngine().commandStreamReceiver;
     auto &heap = commandStreamReceiver->getIndirectHeap(IndirectHeap::Type::indirectObject, MemoryConstants::pageSize64k);
     auto heapAllocation = heap.getGraphicsAllocation();
-    if (commandStreamReceiver->canUse4GbHeaps) {
+    if (commandStreamReceiver->canUse4GbHeaps()) {
         EXPECT_EQ(AllocationType::internalHeap, heapAllocation->getAllocationType());
     } else {
         EXPECT_EQ(AllocationType::linearStream, heapAllocation->getAllocationType());
