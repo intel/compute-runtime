@@ -30,7 +30,7 @@ struct ClearQueueTest : public ::testing::Test,
     static void threadMethod(MockDeferredDeleter *deleter) {
         while (!startClear)
             ;
-        deleter->clearQueue(false);
+        deleter->clearQueue();
         threadStopped++;
     }
     MockDeferrableDeletion *createDeletion() {

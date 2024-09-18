@@ -198,7 +198,7 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     if (deferredDeleter) {
-        deferredDeleter->drain(true, false);
+        deferredDeleter->drain(true);
     }
     GraphicsAllocation *graphicsAllocation = nullptr;
     auto osStorage = hostPtrManager->prepareOsStorageForAllocation(*this, allocationData.size, allocationData.hostPtr, allocationData.rootDeviceIndex);
@@ -315,7 +315,7 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
     if (gfxAllocation->isUsed()) {
         if (gfxAllocation->isUsedByManyOsContexts()) {
             multiContextResourceDestructor->deferDeletion(new DeferrableAllocationDeletion{*this, *gfxAllocation});
-            multiContextResourceDestructor->drain(false, false);
+            multiContextResourceDestructor->drain(false);
             return;
         }
         for (auto &engine : getRegisteredEngines(gfxAllocation->getRootDeviceIndex())) {
@@ -345,7 +345,7 @@ bool MemoryManager::isLimitedRange(uint32_t rootDeviceIndex) {
 
 void MemoryManager::waitForDeletions() {
     if (deferredDeleter) {
-        deferredDeleter->drain(false, false);
+        deferredDeleter->drain(false);
     }
     deferredDeleter.reset(nullptr);
 }
@@ -737,12 +737,6 @@ bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {
-    if (allocationData.type == AllocationType::externalHostPtr &&
-        allocationData.hostPtr &&
-        this->getDeferredDeleter()) {
-        this->getDeferredDeleter()->drain(true, true);
-    }
-
     if (allocationData.type == AllocationType::image || allocationData.type == AllocationType::sharedResourceCopy) {
         UNRECOVERABLE_IF(allocationData.imgInfo == nullptr);
         return allocateGraphicsMemoryForImage(allocationData);

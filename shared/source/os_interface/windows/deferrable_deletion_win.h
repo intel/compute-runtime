@@ -15,11 +15,10 @@ namespace NEO {
 
 class OsContextWin;
 class Wddm;
-enum class AllocationType;
 
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
-    DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle, AllocationType type);
+    DeferrableDeletionImpl(Wddm *wddm, const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     bool apply() override;
     ~DeferrableDeletionImpl() override;
 

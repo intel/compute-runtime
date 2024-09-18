@@ -23,23 +23,14 @@ TEST(DeferredDeleter, WhenDeferredDeleterIsCreatedThenItIsNotAssignable) {
 
 TEST(DeferredDeleter, givenDeferredDeleterWhenBlockingDrainIsCalledThenArElementsReleasedIsCalled) {
     auto deleter = std::make_unique<MockDeferredDeleter>();
-    deleter->drain(true, false);
+    deleter->drain(true);
     EXPECT_NE(0, deleter->areElementsReleasedCalled);
-    EXPECT_FALSE(deleter->areElementsReleasedCalledForHostptrs);
-    EXPECT_EQ(1, deleter->drainCalled);
-}
-
-TEST(DeferredDeleter, givenDeferredDeleterWhenBlockingDrainOnlyForHostptrsIsCalledThenArElementsReleasedIsCalledWithHostptrsOnly) {
-    auto deleter = std::make_unique<MockDeferredDeleter>();
-    deleter->drain(true, true);
-    EXPECT_NE(0, deleter->areElementsReleasedCalled);
-    EXPECT_TRUE(deleter->areElementsReleasedCalledForHostptrs);
     EXPECT_EQ(1, deleter->drainCalled);
 }
 
 TEST(DeferredDeleter, givenDeferredDeleterWhenNonBlockingDrainIsCalledThenArElementsReleasedIsNotCalled) {
     auto deleter = std::make_unique<MockDeferredDeleter>();
-    deleter->drain(false, false);
+    deleter->drain(false);
     EXPECT_EQ(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
 }
