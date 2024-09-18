@@ -74,5 +74,22 @@ int main(int argc, char *argv[], char **envp) {
 
     execve(argv2[0], argv2, const_cast<char **>(allEnv.data()));
 
+    allEnv.clear();
+    for (auto env = envp; *env != nullptr; env++) {
+        allEnv.push_back(*env);
+    }
+    allEnv.push_back("UseExternalAllocatorForSshAndDsh=0");
+    allEnv.push_back("PrintDebugSettings=1");
+    allEnv.push_back(nullptr);
+
+    path = getRunPath(argv[0]);
+    path += fSeparator;
+    path += "zello_bindless_kernel";
+    argv2[0] = const_cast<char *>(path.c_str());
+
+    std::cout << "\nRunning " << argv2[0] << " with UseExternalAllocatorForSshAndDsh=0..." << std::endl;
+
+    execve(argv2[0], argv2, const_cast<char **>(allEnv.data()));
+
     return -1;
 }
