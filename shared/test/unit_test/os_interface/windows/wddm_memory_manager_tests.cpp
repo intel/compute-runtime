@@ -4037,13 +4037,6 @@ struct WddmMemoryManagerWithAsyncDeleterTest : public ::testing::Test {
     WddmMock *wddm;
 };
 
-TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenDoNotDeferExternalHostptrDeletions) {
-    EXPECT_EQ(0, deleter->deferDeletionCalled);
-    memoryManager->tryDeferDeletions(nullptr, 0, 0, 0, AllocationType::externalHostPtr);
-    EXPECT_EQ(0, deleter->deferDeletionCalled);
-    EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
-}
-
 TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
     EXPECT_EQ(0, deleter->deferDeletionCalled);
     memoryManager->tryDeferDeletions(nullptr, 0, 0, 0, AllocationType::unknown);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,18 +51,21 @@ class DeferrableDeletionTest : public ::testing::Test {
 };
 
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenIsCreatedThenObjectMembersAreSetProperly) {
-    MockDeferrableDeletion deletion(wddm.get(), &handle, allocationCount, resourceHandle);
+    MockDeferrableDeletion deletion(wddm.get(), &handle, allocationCount, resourceHandle, AllocationType::buffer);
     EXPECT_EQ(wddm.get(), deletion.wddm);
     EXPECT_NE(nullptr, deletion.handles);
     EXPECT_EQ(handle, *deletion.handles);
     EXPECT_NE(&handle, deletion.handles);
     EXPECT_EQ(allocationCount, deletion.allocationCount);
     EXPECT_EQ(resourceHandle, deletion.resourceHandle);
+    EXPECT_FALSE(deletion.isExternalHostptr());
+    MockDeferrableDeletion deletion2(wddm.get(), &handle, allocationCount, resourceHandle, AllocationType::externalHostPtr);
+    EXPECT_TRUE(deletion2.isExternalHostptr());
 }
 
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenApplyIsCalledThenDeletionIsApplied) {
     wddm->callBaseDestroyAllocations = false;
-    std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)wddm.get(), &handle, allocationCount, resourceHandle));
+    std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)wddm.get(), &handle, allocationCount, resourceHandle, AllocationType::buffer));
     EXPECT_EQ(0u, wddm->destroyAllocationResult.called);
     deletion->apply();
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);

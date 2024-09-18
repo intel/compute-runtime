@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,5 +14,8 @@ class DeferrableDeletion : public IDNode<DeferrableDeletion> {
     template <typename... Args>
     static DeferrableDeletion *create(Args... args);
     virtual bool apply() = 0;
+
+    bool isExternalHostptr() const { return externalHostptr; }
+    bool externalHostptr = false;
 };
 } // namespace NEO

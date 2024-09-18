@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -213,13 +213,13 @@ TEST_F(DeferredDeleterTest, WhenSettingDoWorkInBackgroundThenThreadShouldStopIsS
 }
 
 TEST_F(DeferredDeleterTest, givenDeferredDeleterWhenBlockingDrainIsCalledThenArElementsReleasedIsCalled) {
-    deleter->drain(true);
+    deleter->drain(true, false);
     EXPECT_NE(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
 }
 
 TEST_F(DeferredDeleterTest, givenDeferredDeleterWhenNonBlockingDrainIsCalledThenArElementsReleasedIsNotCalled) {
-    deleter->drain(false);
+    deleter->drain(false, false);
     EXPECT_EQ(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
 }

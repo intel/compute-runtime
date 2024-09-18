@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,20 +29,21 @@ class DeferredDeleter {
 
     MOCKABLE_VIRTUAL void removeClient();
 
-    MOCKABLE_VIRTUAL void drain(bool blocking);
+    MOCKABLE_VIRTUAL void drain(bool blocking, bool hostptrsOnly);
 
   protected:
     void stop();
     void safeStop();
     void ensureThread();
-    MOCKABLE_VIRTUAL void clearQueue();
-    MOCKABLE_VIRTUAL bool areElementsReleased();
+    MOCKABLE_VIRTUAL void clearQueue(bool hostptrsOnly);
+    MOCKABLE_VIRTUAL bool areElementsReleased(bool hostptrsOnly);
     MOCKABLE_VIRTUAL bool shouldStop();
 
     static void *run(void *);
 
-    std::atomic<bool> doWorkInBackground;
-    std::atomic<int> elementsToRelease;
+    std::atomic<bool> doWorkInBackground = false;
+    std::atomic<int> elementsToRelease = 0;
+    std::atomic<int> hostptrsToRelease = 0;
     std::unique_ptr<Thread> worker;
     int32_t numClients = 0;
     IDList<DeferrableDeletion, true> queue;

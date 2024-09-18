@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,9 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     void removeClient() override;
 
-    void drain(bool blocking) override;
+    void drain(bool blocking, bool hostptrsOnly) override;
 
-    bool areElementsReleased() override;
+    bool areElementsReleased(bool hostptrsOnly) override;
 
     bool shouldStop() override;
 
@@ -56,6 +56,8 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     int areElementsReleasedCalled = 0;
 
+    bool areElementsReleasedCalledForHostptrs = false;
+
     std::atomic<int> shouldStopCalled;
 
     std::atomic<int> clearCalled;
@@ -73,6 +75,6 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     bool expectDrainCalled = false;
 
-    void clearQueue() override;
+    void clearQueue(bool hostptrsOnly) override;
 };
 } // namespace NEO
