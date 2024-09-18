@@ -689,8 +689,8 @@ class CommandStreamReceiver {
     bool useNotifyEnableForPostSync = false;
     bool dcFlushSupport = false;
     bool forceSkipResourceCleanupRequired = false;
-    volatile bool resourcesInitialized = false;
-    volatile bool heaplessStateInitialized = false;
+    bool resourcesInitialized = false;
+    bool heaplessStateInitialized = false;
     bool doubleSbaWa = false;
     bool dshSupported = false;
     bool heaplessModeEnabled = false;
