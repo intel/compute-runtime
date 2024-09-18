@@ -45,6 +45,14 @@ class MockAILConfiguration : public AILConfiguration {
     }
     bool handleDivergentBarriersValue = false;
 
+    bool disableBindlessAddressing() override {
+        return disableBindlessAddressingValue;
+    }
+    void setDisableBindlessAddressing(bool val) override {
+        disableBindlessAddressingValue = val;
+    }
+    bool disableBindlessAddressingValue = false;
+
   protected:
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
 };

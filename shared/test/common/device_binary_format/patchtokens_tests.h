@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -236,7 +236,7 @@ struct ValidEmptyKernel {
         auto execEnvTokInl = initToken<iOpenCL::SPatchExecutionEnvironment>(iOpenCL::PATCH_TOKEN_EXECUTION_ENVIRONMENT);
         execEnvTokInl.LargestCompiledSIMDSize = 32U;
         execEnvTokInl.CompiledSIMD32 = 1U;
-        execEnvTokInl.UseBindlessMode = NEO::ApiSpecificConfig::getBindlessMode(nullptr);
+        execEnvTokInl.UseBindlessMode = NEO::debugManager.flags.UseBindlessMode.get() == 1;
         headerTokInl.PatchListSize = sizeof(execEnvTokInl);
         ret.decodeStatus = NEO::DecodeError::success;
         ret.name = "test_kernel";

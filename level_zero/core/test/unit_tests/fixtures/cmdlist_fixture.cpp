@@ -224,7 +224,7 @@ void CommandListPrivateHeapsFixture::setUp() {
 }
 
 void CommandListPrivateHeapsFixture::checkAndPrepareBindlessKernel() {
-    if (NEO::ApiSpecificConfig::getBindlessMode(device->getNEODevice()->getReleaseHelper())) {
+    if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
         isBindlessKernel = true;
     }

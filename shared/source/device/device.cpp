@@ -1139,6 +1139,10 @@ ReleaseHelper *Device::getReleaseHelper() const {
     return getRootDeviceEnvironment().getReleaseHelper();
 }
 
+AILConfiguration *Device::getAilConfigurationHelper() const {
+    return getRootDeviceEnvironment().getAILConfigurationHelper();
+}
+
 void Device::stopDirectSubmissionAndWaitForCompletion() {
     for (auto &engine : allEngines) {
         auto csr = engine.commandStreamReceiver;

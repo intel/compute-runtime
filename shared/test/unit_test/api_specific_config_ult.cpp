@@ -35,7 +35,7 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *
     }
     return false;
 }
-bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *) {
+bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
     } else {

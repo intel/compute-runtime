@@ -21,24 +21,25 @@
 #include <mutex>
 
 namespace NEO {
+class AILConfiguration;
 class BindlessHeapsHelper;
 class BuiltIns;
 class CompilerInterface;
-class ExecutionEnvironment;
+class CompilerProductHelper;
 class Debugger;
+class DebuggerL0;
+class ExecutionEnvironment;
+class GfxCoreHelper;
 class GmmClientContext;
 class GmmHelper;
-class SyncBufferHandler;
-enum class EngineGroupType : uint32_t;
-class DebuggerL0;
 class OSTime;
-class SubDevice;
-struct PhysicalDevicePciBusInfo;
-class GfxCoreHelper;
 class ProductHelper;
-class CompilerProductHelper;
 class ReleaseHelper;
+class SubDevice;
+class SyncBufferHandler;
 class UsmMemAllocPoolsManager;
+enum class EngineGroupType : uint32_t;
+struct PhysicalDevicePciBusInfo;
 
 struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<bool> isMainUsed = false;
@@ -191,7 +192,8 @@ class Device : public ReferenceTrackedObject<Device> {
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
-    ReleaseHelper *getReleaseHelper() const;
+    MOCKABLE_VIRTUAL ReleaseHelper *getReleaseHelper() const;
+    MOCKABLE_VIRTUAL AILConfiguration *getAilConfigurationHelper() const;
     ISAPoolAllocator &getIsaPoolAllocator() {
         return isaPoolAllocator;
     }

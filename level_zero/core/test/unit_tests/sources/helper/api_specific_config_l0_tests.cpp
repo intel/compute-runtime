@@ -8,6 +8,9 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
 
@@ -91,6 +94,22 @@ TEST(ApiSpecificConfigL0Tests, WhenGettingCompilerCacheFileExtensionThenReturnPr
 
 TEST(ApiSpecificConfigL0Tests, WhenCheckingIfCompilerCacheIsEnabledByDefaultThenReturnTrue) {
     EXPECT_EQ(1l, ApiSpecificConfig::compilerCacheDefaultEnabled());
+}
+
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBindlessAddressingIsEnabledThenReturnProperValue) {
+    MockAILConfiguration mockAilConfigurationHelper;
+    MockReleaseHelper mockReleaseHelper;
+    MockDevice mockDevice;
+
+    mockReleaseHelper.isBindlessAddressingDisabledResult = false;
+    mockDevice.mockReleaseHelper = &mockReleaseHelper;
+    EXPECT_TRUE(ApiSpecificConfig::getBindlessMode(mockDevice));
+
+    mockDevice.mockAilConfigurationHelper = &mockAilConfigurationHelper;
+    EXPECT_TRUE(ApiSpecificConfig::getBindlessMode(mockDevice));
+
+    mockAilConfigurationHelper.setDisableBindlessAddressing(true);
+    EXPECT_FALSE(ApiSpecificConfig::getBindlessMode(mockDevice));
 }
 
 } // namespace NEO

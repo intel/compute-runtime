@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,8 +49,8 @@ void KernelImageArgTest::SetUp() {
 
     pKernelInfo->addArgImage(4, 0x20);
 
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessMode(nullptr) ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
-    pKernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = ApiSpecificConfig::getBindlessMode(nullptr) ? KernelDescriptor::AddressingMode::Bindless : KernelDescriptor::AddressingMode::Bindful;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = debugManager.flags.UseBindlessMode.get() == 1 ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
+    pKernelInfo->kernelDescriptor.kernelAttributes.imageAddressingMode = debugManager.flags.UseBindlessMode.get() == 1 ? KernelDescriptor::AddressingMode::Bindless : KernelDescriptor::AddressingMode::Bindful;
 
     ClDeviceFixture::setUp();
     context.reset(new MockContext(pClDevice));

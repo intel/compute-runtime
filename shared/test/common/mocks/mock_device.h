@@ -164,6 +164,9 @@ class MockDevice : public RootDevice {
 
     void finalizeRayTracing();
 
+    ReleaseHelper *getReleaseHelper() const override;
+    AILConfiguration *getAilConfigurationHelper() const override;
+
     void setRTDispatchGlobalsForceAllocation() {
         rtDispatchGlobalsForceAllocation = true;
     }
@@ -181,6 +184,8 @@ class MockDevice : public RootDevice {
     size_t maxParameterSizeFromIGC = 0u;
     bool rtDispatchGlobalsForceAllocation = true;
     bool stopDirectSubmissionCalled = false;
+    ReleaseHelper *mockReleaseHelper = nullptr;
+    AILConfiguration *mockAilConfigurationHelper = nullptr;
 };
 
 template <>

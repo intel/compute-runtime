@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace NEO {
+class Device;
 class ReleaseHelper;
 struct RootDeviceEnvironment;
 
@@ -22,7 +23,7 @@ struct ApiSpecificConfig {
                    L0 };
     static bool isStatelessCompressionSupported();
     static bool getGlobalBindlessHeapConfiguration(const ReleaseHelper *releaseHelper);
-    static bool getBindlessMode(const ReleaseHelper *);
+    static bool getBindlessMode(const Device &device);
     static bool isDeviceAllocationCacheEnabled();
     static bool isHostAllocationCacheEnabled();
     static bool isDeviceUsmPoolingEnabled();

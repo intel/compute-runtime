@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/release_helper/release_helper.h"
@@ -30,9 +32,15 @@ bool ApiSpecificConfig::getGlobalBindlessHeapConfiguration(const ReleaseHelper *
     return releaseHelper ? releaseHelper->isGlobalBindlessAllocatorEnabled() : false;
 }
 
-bool ApiSpecificConfig::getBindlessMode(const ReleaseHelper *releaseHelper) {
+bool ApiSpecificConfig::getBindlessMode(const Device &device) {
     if (debugManager.flags.UseBindlessMode.get() != -1) {
         return debugManager.flags.UseBindlessMode.get();
+    }
+
+    auto ailHelper = device.getAilConfigurationHelper();
+    auto releaseHelper = device.getReleaseHelper();
+    if (ailHelper && ailHelper->disableBindlessAddressing()) {
+        return false;
     } else {
         return releaseHelper ? !releaseHelper->isBindlessAddressingDisabled() : false;
     }

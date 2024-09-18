@@ -50,7 +50,7 @@ Device *RootDevice::getRootDevice() const {
 
 void RootDevice::createBindlessHeapsHelper() {
 
-    if (ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getReleaseHelper()) && ApiSpecificConfig::getBindlessMode(this->getReleaseHelper())) {
+    if (ApiSpecificConfig::getGlobalBindlessHeapConfiguration(this->getReleaseHelper()) && ApiSpecificConfig::getBindlessMode(*this)) {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->createBindlessHeapsHelper(this, getNumGenericSubDevices() > 1);
     }
 }

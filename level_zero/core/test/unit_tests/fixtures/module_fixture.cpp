@@ -164,7 +164,7 @@ void ModuleFixture::createKernel() {
     kernel = std::make_unique<WhiteBox<::L0::KernelImp>>();
     kernel->module = module.get();
     kernel->initialize(&desc);
-    if (NEO::ApiSpecificConfig::getBindlessMode(device->getNEODevice()->getReleaseHelper())) {
+    if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
     }
 }

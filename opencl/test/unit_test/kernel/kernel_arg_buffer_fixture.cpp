@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ void KernelArgBufferFixture::setUp() {
 
     pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *), 0x0);
 
-    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = ApiSpecificConfig::getBindlessMode(nullptr) ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
+    pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = debugManager.flags.UseBindlessMode.get() == 1 ? KernelDescriptor::AddressingMode::BindlessAndStateless : KernelDescriptor::AddressingMode::BindfulAndStateless;
 
     pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 

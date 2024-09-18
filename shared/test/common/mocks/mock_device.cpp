@@ -167,6 +167,20 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     return executionEnvironment;
 }
 
+ReleaseHelper *MockDevice::getReleaseHelper() const {
+    if (mockReleaseHelper) {
+        return mockReleaseHelper;
+    }
+    return Device::getReleaseHelper();
+}
+
+AILConfiguration *MockDevice::getAilConfigurationHelper() const {
+    if (mockAilConfigurationHelper) {
+        return mockAilConfigurationHelper;
+    }
+    return Device::getAilConfigurationHelper();
+}
+
 bool MockSubDevice::createEngine(EngineTypeUsage engineTypeUsage) {
     if (failOnCreateEngine) {
         return false;
