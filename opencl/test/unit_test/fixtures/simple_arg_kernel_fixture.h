@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
             context,
             context->getDevices(),
             "simple_nonuniform",
-            "-cl-std=CL2.0");
+            "");
         ASSERT_NE(nullptr, pProgram);
 
         retVal = pProgram->build(

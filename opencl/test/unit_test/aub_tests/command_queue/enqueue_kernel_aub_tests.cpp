@@ -429,7 +429,6 @@ INSTANTIATE_TEST_SUITE_P(
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
     void setUp() {
-        REQUIRE_OCL_21_OR_SKIP(NEO::defaultHwInfo);
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::setUp();
 
         sizeUserMemory = alignUp(typeItems * typeSize, 64);
@@ -487,9 +486,6 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     }
 
     void tearDown() {
-        if (NEO::defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
-            return;
-        }
         if (destMemory) {
             alignedFree(destMemory);
             destMemory = nullptr;
