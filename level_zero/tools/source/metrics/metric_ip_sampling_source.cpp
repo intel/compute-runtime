@@ -12,11 +12,11 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/api/driver_experimental/public/zex_metric.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/include/zet_intel_gpu_metric.h"
+#include "level_zero/include/zet_intel_gpu_metric_export.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_streamer.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
@@ -179,8 +179,8 @@ ze_result_t IpSamplingMetricGroupBase::getExportData(const uint8_t *pRawData, si
 
     zet_intel_metric_df_gpu_export_data_format_t *exportData = reinterpret_cast<zet_intel_metric_df_gpu_export_data_format_t *>(pExportData);
     exportData->header.type = ZET_INTEL_METRIC_DF_SOURCE_TYPE_IPSAMPLING;
-    exportData->header.version.major = ZET_INTEL_GPU_METRIC_VERSION_MAJOR;
-    exportData->header.version.minor = ZET_INTEL_GPU_METRIC_VERSION_MINOR;
+    exportData->header.version.major = ZET_INTEL_GPU_METRIC_EXPORT_VERSION_MAJOR;
+    exportData->header.version.minor = ZET_INTEL_GPU_METRIC_EXPORT_VERSION_MINOR;
     exportData->header.rawDataOffset = sizeof(zet_intel_metric_df_gpu_export_data_format_t);
     exportData->header.rawDataSize = rawDataSize;
 

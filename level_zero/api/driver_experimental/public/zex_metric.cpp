@@ -5,15 +5,14 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_metric.h"
-
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
 
 ze_result_t ZE_APICALL
-zexDeviceGetConcurrentMetricGroups(
+zetIntelDeviceGetConcurrentMetricGroupsExp(
     zet_device_handle_t hDevice,
     uint32_t metricGroupCount,
     zet_metric_group_handle_t *phMetricGroups,
@@ -28,14 +27,14 @@ zexDeviceGetConcurrentMetricGroups(
 
 extern "C" {
 
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zexDeviceGetConcurrentMetricGroups(
+ze_result_t ZE_APICALL
+zetIntelDeviceGetConcurrentMetricGroupsExp(
     zet_device_handle_t hDevice,
     uint32_t metricGroupCount,
     zet_metric_group_handle_t *phMetricGroups,
     uint32_t *pConcurrentGroupCount,
     uint32_t *pCountPerConcurrentGroup) {
-    return L0::zexDeviceGetConcurrentMetricGroups(
+    return L0::zetIntelDeviceGetConcurrentMetricGroupsExp(
         hDevice, metricGroupCount, phMetricGroups,
         pConcurrentGroupCount, pCountPerConcurrentGroup);
 }

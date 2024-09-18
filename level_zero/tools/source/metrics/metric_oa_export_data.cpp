@@ -769,8 +769,8 @@ ze_result_t OaMetricGroupImp::getExportData(const uint8_t *pRawData,
 
     // Update header after updating the export data
     exportData->header.type = ZET_INTEL_METRIC_DF_SOURCE_TYPE_OA;
-    exportData->header.version.major = ZET_INTEL_GPU_METRIC_VERSION_MAJOR;
-    exportData->header.version.minor = ZET_INTEL_GPU_METRIC_VERSION_MINOR;
+    exportData->header.version.major = ZET_INTEL_GPU_METRIC_EXPORT_VERSION_MAJOR;
+    exportData->header.version.minor = ZET_INTEL_GPU_METRIC_EXPORT_VERSION_MINOR;
     exportData->header.rawDataOffset = sizeof(zet_intel_metric_df_gpu_export_data_format_t) + memoryTracker.getUsedBytes();
     exportData->header.rawDataSize = rawDataSize;
 

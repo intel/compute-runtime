@@ -9,10 +9,10 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
-#include "level_zero/api/driver_experimental/public/zex_metric.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/include/zet_intel_gpu_metric.h"
+#include "level_zero/include/zet_intel_gpu_metric_export.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
