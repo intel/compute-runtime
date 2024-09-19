@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -534,7 +534,6 @@ TEST(KernelDumper, givenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     auto allocateStatelessConstantMemorySurfaceWithInitialization = initToken<SPatchAllocateStatelessConstantMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION);
     auto allocateStatelessGlobalMemorySurfaceWithInitialization = initToken<SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION);
     auto allocateStatelessPrintfSurface = initToken<SPatchAllocateStatelessPrintfSurface>(PATCH_TOKEN_ALLOCATE_PRINTF_SURFACE);
-    auto allocateStatelessEventPoolSurface = initToken<SPatchAllocateStatelessEventPoolSurface>(PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE);
     auto allocateStatelessDefaultDeviceQueueSurface = initToken<SPatchAllocateStatelessDefaultDeviceQueueSurface>(PATCH_TOKEN_STATELESS_DEVICE_QUEUE_KERNEL_ARGUMENT);
     auto inlineVmeSamplerInfo = initToken<SPatchItemHeader>(PATCH_TOKEN_INLINE_VME_SAMPLER_INFO);
     auto gtpinFreeGrfInfo = initToken<SPatchGtpinFreeGRFInfo>(PATCH_TOKEN_GTPIN_FREE_GRF_INFO);
@@ -560,7 +559,6 @@ TEST(KernelDumper, givenKernelWithNonCrossthreadDataPatchtokensThenProperlyCreat
     kernel.tokens.allocateStatelessConstantMemorySurfaceWithInitialization = &allocateStatelessConstantMemorySurfaceWithInitialization;
     kernel.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization = &allocateStatelessGlobalMemorySurfaceWithInitialization;
     kernel.tokens.allocateStatelessPrintfSurface = &allocateStatelessPrintfSurface;
-    kernel.tokens.allocateStatelessEventPoolSurface = &allocateStatelessEventPoolSurface;
     kernel.tokens.allocateStatelessDefaultDeviceQueueSurface = &allocateStatelessDefaultDeviceQueueSurface;
     kernel.tokens.inlineVmeSamplerInfo = &inlineVmeSamplerInfo;
     kernel.tokens.gtpinFreeGrfInfo = &gtpinFreeGrfInfo;
@@ -732,15 +730,6 @@ Kernel-scope tokens section size : )==="
              << sizeof(SPatchAllocateStatelessPrintfSurface) << R"===()
   {
       uint32_t   PrintfSurfaceIndex;// = 0
-      uint32_t   SurfaceStateHeapOffset;// = 0
-      uint32_t   DataParamOffset;// = 0
-      uint32_t   DataParamSize;// = 0
-  }
-  struct SPatchAllocateStatelessEventPoolSurface :
-         SPatchItemHeader (Token=36(PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE), Size=)==="
-             << sizeof(SPatchAllocateStatelessEventPoolSurface) << R"===()
-  {
-      uint32_t   EventPoolSurfaceIndex;// = 0
       uint32_t   SurfaceStateHeapOffset;// = 0
       uint32_t   DataParamOffset;// = 0
       uint32_t   DataParamSize;// = 0

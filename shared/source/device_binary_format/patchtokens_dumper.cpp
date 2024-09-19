@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -569,19 +569,6 @@ void dump(const SPatchMediaVFEState &value, std::stringstream &out, const std::s
     out << indent << "}\n";
 }
 
-void dump(const SPatchAllocateStatelessEventPoolSurface &value, std::stringstream &out, const std::string &indent) {
-    out << indent << "struct SPatchAllocateStatelessEventPoolSurface :\n";
-    out << indent << "       SPatchItemHeader (";
-    dumpPatchItemHeaderInline(value, out, "");
-    out << ")\n"
-        << indent << "{\n";
-    out << indent << "    uint32_t   EventPoolSurfaceIndex;// = " << value.EventPoolSurfaceIndex << "\n";
-    out << indent << "    uint32_t   SurfaceStateHeapOffset;// = " << value.SurfaceStateHeapOffset << "\n";
-    out << indent << "    uint32_t   DataParamOffset;// = " << value.DataParamOffset << "\n";
-    out << indent << "    uint32_t   DataParamSize;// = " << value.DataParamSize << "\n";
-    out << indent << "}\n";
-}
-
 void dump(const SPatchAllocateStatelessDefaultDeviceQueueSurface &value, std::stringstream &out, const std::string &indent) {
     out << indent << "struct SPatchAllocateStatelessDefaultDeviceQueueSurface :\n";
     out << indent << "       SPatchItemHeader (";
@@ -740,7 +727,6 @@ std::string asString(const KernelFromPatchtokens &kern) {
     dumpOrNull(kern.tokens.allocateStatelessConstantMemorySurfaceWithInitialization, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.allocateStatelessPrintfSurface, "", stream, indentLevel1);
-    dumpOrNull(kern.tokens.allocateStatelessEventPoolSurface, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.allocateStatelessDefaultDeviceQueueSurface, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.inlineVmeSamplerInfo, "", stream, indentLevel1);
     dumpOrNull(kern.tokens.gtpinFreeGrfInfo, "", stream, indentLevel1);

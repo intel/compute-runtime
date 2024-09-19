@@ -184,10 +184,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatele
     populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.printfSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 
-void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessEventPoolSurface &token) {
-    populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
-}
-
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessDefaultDeviceQueueSurface &token) {
     populatePointerKernelArg(dst, dst.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
@@ -478,7 +474,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::Ker
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessConstantMemorySurfaceWithInitialization);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessPrintfSurface);
-    populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessEventPoolSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateStatelessDefaultDeviceQueueSurface);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateSyncBuffer);
     populateKernelDescriptorIfNotNull(dst, src.tokens.allocateRTGlobalBuffer);

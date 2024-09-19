@@ -674,7 +674,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, HardwareCommandsTest, WhenGettingBindingTableStat
     pKernelInfo->setGlobalVariablesSurface(8, 0, 0);
     pKernelInfo->setGlobalConstantsSurface(8, 8, 64);
     pKernelInfo->setPrivateMemory(32, false, 8, 16, 128);
-    pKernelInfo->setDeviceSideEnqueueEventPoolSurface(8, 24, 192);
     pKernelInfo->setDeviceSideEnqueueDefaultQueueSurface(8, 32, 256);
 
     // create program with valid context

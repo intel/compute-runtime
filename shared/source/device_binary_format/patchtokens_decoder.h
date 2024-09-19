@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,6 @@ struct KernelFromPatchtokens {
         const SPatchAllocateStatelessConstantMemorySurfaceWithInitialization *allocateStatelessConstantMemorySurfaceWithInitialization = nullptr;
         const SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization *allocateStatelessGlobalMemorySurfaceWithInitialization = nullptr;
         const SPatchAllocateStatelessPrintfSurface *allocateStatelessPrintfSurface = nullptr;
-        const SPatchAllocateStatelessEventPoolSurface *allocateStatelessEventPoolSurface = nullptr;
         const SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateStatelessDefaultDeviceQueueSurface = nullptr;
         const SPatchAllocateSyncBuffer *allocateSyncBuffer = nullptr;
         const SPatchAllocateRTGlobalBuffer *allocateRTGlobalBuffer = nullptr;

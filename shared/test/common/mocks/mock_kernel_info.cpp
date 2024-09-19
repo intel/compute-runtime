@@ -144,10 +144,6 @@ void MockKernelInfo::setGlobalVariablesSurface(uint8_t pointerSize, CrossThreadD
     populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress, pointerSize, stateless, bindful);
 }
 
-void MockKernelInfo::setDeviceSideEnqueueEventPoolSurface(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
-    populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress, pointerSize, stateless, bindful);
-}
-
 void MockKernelInfo::setDeviceSideEnqueueDefaultQueueSurface(uint8_t pointerSize, CrossThreadDataOffset stateless, SurfaceStateHeapOffset bindful) {
     populatePointerArg(kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress, pointerSize, stateless, bindful);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -355,7 +355,6 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
         assignToken(out.tokens.allocateStatelessPrintfSurface, token);
         break;
     case PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE:
-        assignToken(out.tokens.allocateStatelessEventPoolSurface, token);
         break;
     case PATCH_TOKEN_ALLOCATE_STATELESS_DEFAULT_DEVICE_QUEUE_SURFACE:
         assignToken(out.tokens.allocateStatelessDefaultDeviceQueueSurface, token);

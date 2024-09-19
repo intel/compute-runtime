@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,6 @@ bool hasEmptyTokensInfo(const NEO::PatchTokenBinary::KernelFromPatchtokens &kern
     empty &= nullptr == toks.allocateStatelessConstantMemorySurfaceWithInitialization;
     empty &= nullptr == toks.allocateStatelessGlobalMemorySurfaceWithInitialization;
     empty &= nullptr == toks.allocateStatelessPrintfSurface;
-    empty &= nullptr == toks.allocateStatelessEventPoolSurface;
     empty &= nullptr == toks.allocateStatelessDefaultDeviceQueueSurface;
     empty &= nullptr == toks.inlineVmeSamplerInfo;
     empty &= nullptr == toks.gtpinFreeGrfInfo;
@@ -327,7 +326,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     auto allocateStatelessConstantMemorySurfaceWithInitializationOff = pushBackToken<SPatchAllocateStatelessConstantMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_STATELESS_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION, storage);
     auto allocateStatelessGlobalMemorySurfaceWithInitializationOff = pushBackToken<SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization>(PATCH_TOKEN_ALLOCATE_STATELESS_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION, storage);
     auto allocateStatelessPrintfSurfaceOff = pushBackToken<SPatchAllocateStatelessPrintfSurface>(PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE, storage);
-    auto allocateStatelessEventPoolSurfaceOff = pushBackToken<SPatchAllocateStatelessEventPoolSurface>(PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE, storage);
     auto allocateStatelessDefaultDeviceQueueSurfaceOff = pushBackToken<SPatchAllocateStatelessDefaultDeviceQueueSurface>(PATCH_TOKEN_ALLOCATE_STATELESS_DEFAULT_DEVICE_QUEUE_SURFACE, storage);
     auto inlineVmeSamplerInfoOff = pushBackToken<SPatchInlineVMESamplerInfo>(PATCH_TOKEN_INLINE_VME_SAMPLER_INFO, storage);
     auto gtpinFreeGrfInfoOff = pushBackToken<SPatchGtpinFreeGRFInfo>(PATCH_TOKEN_GTPIN_FREE_GRF_INFO, storage);
@@ -363,7 +361,6 @@ TEST(KernelDecoder, GivenKernelWithValidKernelPatchtokensThenDecodingSucceedsAnd
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessConstantMemorySurfaceWithInitializationOff, decodedKernel.tokens.allocateStatelessConstantMemorySurfaceWithInitialization));
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessGlobalMemorySurfaceWithInitializationOff, decodedKernel.tokens.allocateStatelessGlobalMemorySurfaceWithInitialization));
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessPrintfSurfaceOff, decodedKernel.tokens.allocateStatelessPrintfSurface));
-    EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessEventPoolSurfaceOff, decodedKernel.tokens.allocateStatelessEventPoolSurface));
     EXPECT_TRUE(tokenOffsetMatched(base, allocateStatelessDefaultDeviceQueueSurfaceOff, decodedKernel.tokens.allocateStatelessDefaultDeviceQueueSurface));
     EXPECT_TRUE(tokenOffsetMatched(base, inlineVmeSamplerInfoOff, decodedKernel.tokens.inlineVmeSamplerInfo));
     EXPECT_TRUE(tokenOffsetMatched(base, gtpinFreeGrfInfoOff, decodedKernel.tokens.gtpinFreeGrfInfo));

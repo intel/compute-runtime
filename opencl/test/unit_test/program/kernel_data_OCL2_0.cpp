@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,26 +10,6 @@
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 
 #include "patch_g7.h"
-
-TEST_F(KernelDataTest, givenPatchTokenAllocateStatelessEventPoolSurfaceWhenDecodeTokensThenTokenLocatedInPatchInfo) {
-    iOpenCL::SPatchAllocateStatelessEventPoolSurface allocateStatelessEventPoolSurface;
-    allocateStatelessEventPoolSurface.Token = PATCH_TOKEN_ALLOCATE_STATELESS_EVENT_POOL_SURFACE;
-    allocateStatelessEventPoolSurface.Size = sizeof(SPatchAllocateStatelessEventPoolSurface);
-
-    allocateStatelessEventPoolSurface.DataParamSize = 7;
-    allocateStatelessEventPoolSurface.DataParamOffset = 0xABC;
-    allocateStatelessEventPoolSurface.SurfaceStateHeapOffset = 0xDEF;
-
-    pPatchList = &allocateStatelessEventPoolSurface;
-    patchListSize = allocateStatelessEventPoolSurface.Size;
-
-    buildAndDecode();
-
-    const auto &eventPoolArg = pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress;
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamOffset, eventPoolArg.stateless);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.DataParamSize, eventPoolArg.pointerSize);
-    EXPECT_EQ_VAL(allocateStatelessEventPoolSurface.SurfaceStateHeapOffset, eventPoolArg.bindful);
-}
 
 TEST_F(KernelDataTest, givenDataParameterPreferredWorkgroupMultipleTokenWhenBinaryIsdecodedThenCorrectOffsetIsAssigned) {
     const uint32_t offset = 0x100;

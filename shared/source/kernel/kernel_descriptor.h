@@ -179,7 +179,6 @@ struct KernelDescriptor {
             ArgDescPointer globalVariablesSurfaceAddress;
             ArgDescPointer globalConstantsSurfaceAddress;
             ArgDescPointer privateMemoryAddress;
-            ArgDescPointer deviceSideEnqueueEventPoolSurfaceAddress;
             ArgDescPointer deviceSideEnqueueDefaultQueueSurfaceAddress;
             ArgDescPointer systemThreadSurfaceAddress;
             ArgDescPointer syncBufferAddress;

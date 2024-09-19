@@ -42,7 +42,6 @@ void KernelDescriptor::updateCrossThreadDataSize() {
                                                    &payloadMappings.implicitArgs.globalVariablesSurfaceAddress,
                                                    &payloadMappings.implicitArgs.globalConstantsSurfaceAddress,
                                                    &payloadMappings.implicitArgs.privateMemoryAddress,
-                                                   &payloadMappings.implicitArgs.deviceSideEnqueueEventPoolSurfaceAddress,
                                                    &payloadMappings.implicitArgs.deviceSideEnqueueDefaultQueueSurfaceAddress,
                                                    &payloadMappings.implicitArgs.systemThreadSurfaceAddress,
                                                    &payloadMappings.implicitArgs.syncBufferAddress});
