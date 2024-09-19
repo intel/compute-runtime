@@ -277,13 +277,11 @@ void EventImp<TagSizeT>::downloadAllTbxAllocations() {
         csr->downloadAllocations(true, taskCount);
     }
 
-    for (auto &subDevice : this->device->getNEODevice()->getRootDevice()->getSubDevices()) {
-        for (auto const &engine : subDevice->getAllEngines()) {
-            auto taskCount = getTaskCount(*engine.commandStreamReceiver);
+    for (auto &engine : this->device->getNEODevice()->getMemoryManager()->getRegisteredEngines()[this->device->getRootDeviceIndex()]) {
+        auto taskCount = getTaskCount(*engine.commandStreamReceiver);
 
-            if (taskCount != NEO::GraphicsAllocation::objectNotUsed) {
-                engine.commandStreamReceiver->downloadAllocations(false, taskCount);
-            }
+        if (taskCount != NEO::GraphicsAllocation::objectNotUsed) {
+            engine.commandStreamReceiver->downloadAllocations(false, taskCount);
         }
     }
 }

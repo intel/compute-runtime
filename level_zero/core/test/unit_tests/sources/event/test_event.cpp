@@ -3295,7 +3295,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
 
     downloadedAllocations = downloadAllocationTrack[eventAllocation];
     EXPECT_EQ(iterations + 1u, downloadedAllocations);
-    EXPECT_EQ(1u, ultCsr->downloadAllocationsCalledCount);
+    EXPECT_EQ(2u, ultCsr->downloadAllocationsCalledCount);
 
     event->destroy();
 }
@@ -4302,9 +4302,11 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     auto subDevice0 = rootDevice->subDevices[0];
     auto subDevice1 = rootDevice->subDevices[1];
 
+    auto rootCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice0->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
+    rootCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
@@ -4324,9 +4326,13 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     TagAddressType *eventAddress = static_cast<TagAddressType *>(ptrOffset(event->getHostAddress(), eventCompletionOffset));
     *eventAddress = Event::STATE_INITIAL;
 
+    uint32_t rootDownloadCounter = 0;
     uint32_t downloadCounter0 = 0;
     uint32_t downloadCounter1 = 0;
 
+    rootCsr->downloadAllocationImpl = [&rootDownloadCounter](GraphicsAllocation &gfxAllocation) {
+        rootDownloadCounter++;
+    };
     ultCsr0->downloadAllocationImpl = [&downloadCounter0](GraphicsAllocation &gfxAllocation) {
         downloadCounter0++;
     };
@@ -4336,11 +4342,16 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
 
     auto eventAllocation = event->getPoolAllocation(device);
     ultCsr0->makeResident(*eventAllocation);
+    rootCsr->makeResident(*eventAllocation);
 
     auto hostAddress = static_cast<uint64_t *>(event->getCompletionFieldHostAddress());
     *hostAddress = Event::STATE_SIGNALED;
 
     event->hostSynchronize(1);
+
+    EXPECT_EQ(1u, rootCsr->downloadAllocationsCalledCount);
+    EXPECT_FALSE(rootCsr->latestDownloadAllocationsBlocking);
+    EXPECT_EQ(0u, rootDownloadCounter);
 
     EXPECT_EQ(1u, ultCsr0->downloadAllocationsCalledCount);
     EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
