@@ -182,17 +182,15 @@ PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAd
                 bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute ||
                                          (engineGroupType == EngineGroupType::compute && isRcsEnabled)) &&
                                         productHelper.isCooperativeEngineSupported(hwInfo);
-                for (auto isEngineInstanced : ::testing::Bool()) {
-                    if (disallowDispatch) {
-                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                    } else {
-                        for (uint32_t ccsCount : {1, 2, 4}) {
-                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = ccsCount;
-                            tilePartsForConcurrentKernels = ccsCount == 1   ? 1
-                                                            : ccsCount == 2 ? 4
-                                                                            : 8;
-                            EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        }
+                if (disallowDispatch) {
+                    EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, false));
+                } else {
+                    for (uint32_t ccsCount : {1, 2, 4}) {
+                        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = ccsCount;
+                        tilePartsForConcurrentKernels = ccsCount == 1   ? 1
+                                                        : ccsCount == 2 ? 4
+                                                                        : 8;
+                        EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, false));
                     }
                 }
             }

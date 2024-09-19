@@ -82,31 +82,29 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     productHelper.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
     properties.initSupport(rootDeviceEnvironment);
 
-    for (auto isEngineInstanced : ::testing::Bool()) {
-        for (auto isCooperativeKernel : ::testing::Bool()) {
-            for (auto disableOverdispatch : ::testing::Bool()) {
-                for (auto disableEUFusion : ::testing::Bool()) {
-                    properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced);
-                    if (frontEndPropertiesSupport.computeDispatchAllWalker) {
-                        EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.frontEndState.computeDispatchAllWalkerEnable.value);
-                    }
-                    if (frontEndPropertiesSupport.disableEuFusion) {
-                        EXPECT_EQ(disableEUFusion, properties.frontEndState.disableEUFusion.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.frontEndState.disableEUFusion.value);
-                    }
-                    if (frontEndPropertiesSupport.disableOverdispatch) {
-                        EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.frontEndState.disableOverdispatch.value);
-                    }
-                    if (frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
-                        EXPECT_EQ(isEngineInstanced, properties.frontEndState.singleSliceDispatchCcsMode.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.frontEndState.singleSliceDispatchCcsMode.value);
-                    }
+    for (auto isCooperativeKernel : ::testing::Bool()) {
+        for (auto disableOverdispatch : ::testing::Bool()) {
+            for (auto disableEUFusion : ::testing::Bool()) {
+                properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, false);
+                if (frontEndPropertiesSupport.computeDispatchAllWalker) {
+                    EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
+                } else {
+                    EXPECT_EQ(-1, properties.frontEndState.computeDispatchAllWalkerEnable.value);
+                }
+                if (frontEndPropertiesSupport.disableEuFusion) {
+                    EXPECT_EQ(disableEUFusion, properties.frontEndState.disableEUFusion.value);
+                } else {
+                    EXPECT_EQ(-1, properties.frontEndState.disableEUFusion.value);
+                }
+                if (frontEndPropertiesSupport.disableOverdispatch) {
+                    EXPECT_EQ(disableOverdispatch, properties.frontEndState.disableOverdispatch.value);
+                } else {
+                    EXPECT_EQ(-1, properties.frontEndState.disableOverdispatch.value);
+                }
+                if (frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
+                    EXPECT_EQ(false, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                } else {
+                    EXPECT_EQ(-1, properties.frontEndState.singleSliceDispatchCcsMode.value);
                 }
             }
         }

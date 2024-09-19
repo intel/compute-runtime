@@ -1638,33 +1638,30 @@ HWTEST_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustM
         }
         hwInfo.platform.usRevId = hwRevId;
 
-        for (auto isEngineInstanced : ::testing::Bool()) {
-            for (auto isRcsEnabled : ::testing::Bool()) {
-                hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
-                for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute, EngineGroupType::cooperativeCompute}) {
-                    if (productHelper.isCooperativeEngineSupported(hwInfo)) {
-                        bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute) ||
-                                                ((engineGroupType == EngineGroupType::compute) && isRcsEnabled);
-                        bool applyLimitation = !isEngineInstanced &&
-                                               (engineGroupType != EngineGroupType::cooperativeCompute);
-                        if (disallowDispatch) {
-                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        } else if (applyLimitation) {
-                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
-                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                            EXPECT_EQ(256u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
-                            EXPECT_EQ(2u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                            EXPECT_EQ(512u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        } else {
-                            EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                            EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        }
+        for (auto isRcsEnabled : ::testing::Bool()) {
+            hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
+            for (auto engineGroupType : {EngineGroupType::renderCompute, EngineGroupType::compute, EngineGroupType::cooperativeCompute}) {
+                if (productHelper.isCooperativeEngineSupported(hwInfo)) {
+                    bool disallowDispatch = (engineGroupType == EngineGroupType::renderCompute) ||
+                                            ((engineGroupType == EngineGroupType::compute) && isRcsEnabled);
+                    bool applyLimitation = engineGroupType != EngineGroupType::cooperativeCompute;
+                    if (disallowDispatch) {
+                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, false));
+                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, false));
+                    } else if (applyLimitation) {
+                        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+                        EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, false));
+                        EXPECT_EQ(256u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, false));
+                        hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+                        EXPECT_EQ(2u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, false));
+                        EXPECT_EQ(512u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, false));
                     } else {
-                        EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
-                        EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                        EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, false));
+                        EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, false));
                     }
+                } else {
+                    EXPECT_EQ(4u, gfxCoreHelper.adjustMaxWorkGroupCount(4u, engineGroupType, rootDeviceEnvironment, false));
+                    EXPECT_EQ(1024u, gfxCoreHelper.adjustMaxWorkGroupCount(1024u, engineGroupType, rootDeviceEnvironment, false));
                 }
             }
         }

@@ -104,7 +104,6 @@ HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCor
     drm->engineInfo = std::move(engineInfo);
 
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_CCS, EngineUsage::regular});
-    engineDescriptor.isEngineInstanced = true;
     OsContextLinux osContext(*drm, 0, 0u, engineDescriptor);
 
     uint16_t tileId = 1u;
@@ -112,8 +111,8 @@ HWTEST_F(IoctlHelperXeTestFixture, givenDeviceIndexWhenCreatingContextThenSetCor
 
     xeIoctlHelper->createDrmContext(*drm, osContext, 0, tileId, false);
 
-    EXPECT_EQ(1u, drm->execQueueCreateParams.num_placements);
-    ASSERT_EQ(1u, drm->execQueueEngineInstances.size());
+    EXPECT_EQ(4u, drm->execQueueCreateParams.num_placements);
+    ASSERT_EQ(4u, drm->execQueueEngineInstances.size());
 
     EXPECT_EQ(expectedGtId, drm->execQueueEngineInstances[0].gt_id);
 }
