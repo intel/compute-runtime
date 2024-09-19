@@ -194,7 +194,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
         } else if (engineGroupType == NEO::EngineGroupType::cooperativeCompute) {
             value = maxWgCountPerTileCooperative;
         }
-        DEBUG_BREAK_IF(value == 0);
         return value;
     }
 
