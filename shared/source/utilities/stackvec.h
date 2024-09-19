@@ -359,9 +359,10 @@ class StackVec { // NOLINT(clang-analyzer-optin.performance.Padding)
             return;
         }
 
-        if (newSize <= onStackSize) {
+        auto currentSize = std::min(onStackSize, onStackCaps);
+        if (newSize <= currentSize) {
             // trim elements
-            clearStackObjects(newSize, onStackSize - newSize);
+            clearStackObjects(newSize, currentSize - newSize);
             onStackSize = static_cast<SizeT>(newSize);
             return;
         }
