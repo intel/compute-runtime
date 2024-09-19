@@ -994,6 +994,35 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyWithOneReservedD
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+HWTEST2_F(CommandListTest, givenStatelessWhenAppendMemoryFillIsCalledThenCorrectBuiltinIsUsed, IsAtLeastXeHpcCore) {
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    ASSERT_TRUE(compilerProductHelper.isForceToStatelessRequired());
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+
+    constexpr size_t allocSize = 4096;
+    constexpr size_t patternSize = 8;
+    uint8_t pattern[patternSize] = {1, 2, 3, 4};
+
+    void *dstBuffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &dstBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->appendMemoryFill(dstBuffer, pattern, patternSize, allocSize, nullptr, 0, nullptr, false);
+
+    bool isStateless = true;
+    bool isHeapless = commandList->isHeaplessModeEnabled();
+    auto builtin = BuiltinTypeHelper::adjustBuiltinType<Builtin::fillBufferMiddle>(isStateless, isHeapless);
+
+    Kernel *expectedBuiltinKernel = device->getBuiltinFunctionsLib()->getFunction(builtin);
+
+    EXPECT_EQ(expectedBuiltinKernel, commandList->kernelUsed);
+
+    context->freeMem(dstBuffer);
+}
+
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryFillInUsmHostThenBuiltinFlagAndDestinationAllocSystemIsSet, MatchAny) {
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
