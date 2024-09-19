@@ -1456,7 +1456,7 @@ class BufferTests : public ::testing::Test {
 
 typedef BufferTests BufferSetSurfaceTests;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlignedToCachelineThenL3CacheShouldBeOn) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlignedToCachelineThenL3CacheShouldBeOn) {
 
     auto size = MemoryConstants::pageSize;
     auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
@@ -1763,7 +1763,7 @@ HWTEST_F(BufferSetSurfaceTests, givenAlignedCacheableReadOnlyBufferThenChoseOclB
     alignedFree(ptr);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, BufferSetSurfaceTests, givenAlignedCacheableNonReadOnlyBufferThenChooseOclBufferPolicy) {
     MockContext context;
     const auto size = MemoryConstants::pageSize;
     const auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);

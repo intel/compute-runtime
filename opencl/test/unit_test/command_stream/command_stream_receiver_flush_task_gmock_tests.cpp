@@ -272,7 +272,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCsrWhenCollectState
     EXPECT_EQ(expectedCallsCount, mockHelper->setPatchInfoDataCalled);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenScratchSpaceIsProgrammedThenPatchInfoIsCollected) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenScratchSpaceIsProgrammedThenPatchInfoIsCollected) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
@@ -296,7 +296,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     EXPECT_EQ(mockCsr->getScratchSpaceController()->getScratchPatchAddress(), mockCsr->getFlatBatchBufferHelper().getPatchInfoCollection().at(0).sourceAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionDisabledWhenScratchSpaceIsProgrammedThenPatchInfoIsNotCollected) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionDisabledWhenScratchSpaceIsProgrammedThenPatchInfoIsNotCollected) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -316,7 +316,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatch
     EXPECT_EQ(0u, mockCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenMediaVfeStateIsProgrammedWithEmptyScratchThenPatchInfoIsNotCollected) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskGmockTests, givenPatchInfoCollectionEnabledWhenMediaVfeStateIsProgrammedWithEmptyScratchThenPatchInfoIsNotCollected) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 

@@ -1037,7 +1037,7 @@ struct EnqueueMapImageTypeTest : public CommandEnqueueFixture,
     Image *image = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueMapImageTypeTest, GiveRequirementForPipeControlWorkaroundWhenMappingImageThenAdditionalPipeControlIsProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueMapImageTypeTest, GiveRequirementForPipeControlWorkaroundWhenMappingImageThenAdditionalPipeControlIsProgrammed) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     // Set taskCount to 1 to call finish on map operation

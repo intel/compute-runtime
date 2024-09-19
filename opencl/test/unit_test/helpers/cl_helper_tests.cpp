@@ -143,7 +143,7 @@ HWTEST_F(ClGfxCoreHelperTest, WhenCheckingIsLimitationForPreemptionNeededThenRet
     EXPECT_FALSE(clGfxCoreHelper.isLimitationForPreemptionNeeded());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, ClGfxCoreHelperTest, givenCLImageFormatsWhenCallingIsFormatRedescribableThenCorrectValueReturned) {
     static const cl_image_format redescribeFormats[] = {
         {CL_R, CL_UNSIGNED_INT8},
         {CL_R, CL_UNSIGNED_INT16},

@@ -55,7 +55,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
 
 static uint32_t slmSizeInKb[] = {1, 4, 8, 16, 32, 64};
 
-HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgrammingIsCorrect) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgrammingSlmThenProgrammingIsCorrect) {
     ASSERT_NE(nullptr, pClDevice);
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;

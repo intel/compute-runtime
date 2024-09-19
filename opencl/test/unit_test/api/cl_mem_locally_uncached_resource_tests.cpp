@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ const size_t n = 512;
 
 using clMemLocallyUncachedResourceFixture = Test<HelloWorldFixture<HelloWorldFixtureFactory>>;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOneLocallyUncacheableResourceWhenSettingKernelArgumentsThenKernelIsUncacheable) {
     cl_int retVal = CL_SUCCESS;
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
 
@@ -134,7 +134,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOne
     EXPECT_FALSE(kernel->hasUncacheableStatelessArgs());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedThenItIsCached) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedInSurfaceStateWhenStatelessIsProgrammedThenItIsCached) {
     cl_int retVal = CL_SUCCESS;
 
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
@@ -208,7 +208,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     EXPECT_EQ(mocsCacheable, cmdQueueMocs<FamilyType>(pCmdQ));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessesThenSurfacesAreNotRecordedAsUncacheable) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, givenBuffersThatAreUncachedButKernelDoesntHaveAnyStatelessAccessesThenSurfacesAreNotRecordedAsUncacheable) {
     cl_int retVal = CL_SUCCESS;
 
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
@@ -285,7 +285,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
     EXPECT_FALSE(kernel->hasUncacheableStatelessArgs());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThenKernelContinuesToCorrectlySetMocs) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUncacheableResourceFromKernelThenKernelContinuesToCorrectlySetMocs) {
     cl_int retVal = CL_SUCCESS;
     MockKernelWithInternals mockKernel(*this->pClDevice, context, true);
     auto pMultiDeviceKernel = mockKernel.mockMultiDeviceKernel;

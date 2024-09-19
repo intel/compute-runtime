@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ HWTEST2_F(OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipe
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, OOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
     enqueueTwoKernels<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();

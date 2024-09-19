@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ struct ExcludeTest : ::testing::Test {
 };
 
 using ExcludeTestBdw = ExcludeTest<IGFX_BROADWELL>;
-HWCMDTEST_F(IGFX_GEN8_CORE, ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedThenDontRunOnBdw) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, ExcludeTestBdw, givenHwCmdTestWhenBdwExcludedThenDontRunOnBdw) {
     EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 }
 HWTEST_F(ExcludeTestBdw, givenHwTestWhenBdwExcludedThenDontRunOnBdw) {
@@ -29,7 +29,7 @@ HWTEST_F(ExcludeTestBdw, givenHwTestWhenBdwExcludedThenDontRunOnBdw) {
 }
 
 using ExcludeTestSkl = ExcludeTest<IGFX_SKYLAKE>;
-HWCMDTEST_F(IGFX_GEN8_CORE, ExcludeTestSkl, givenHwCmdTestWhenSklExcludedThenDontRunOnSkl) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, ExcludeTestSkl, givenHwCmdTestWhenSklExcludedThenDontRunOnSkl) {
     EXPECT_NE(IGFX_SKYLAKE, ::productFamily);
 }
 HWTEST_F(ExcludeTestSkl, givenHwTestWhenSklExcludedThenDontRunOnSkl) {

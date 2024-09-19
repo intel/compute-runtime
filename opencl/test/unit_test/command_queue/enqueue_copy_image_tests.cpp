@@ -25,7 +25,7 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenGpgpuWalkerIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenGpgpuWalkerIsCorrect) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueCopyImage<FamilyType>();
 
@@ -113,7 +113,7 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenL3ProgrammingIsCorrect) {
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueCopyImage<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -124,7 +124,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenEnqueueIsDoneThenStateBase
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaInterfaceDescriptorLoadIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -150,7 +150,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaInter
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenInterfaceDescriptorDataIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -216,7 +216,7 @@ HWTEST2_F(EnqueueCopyImageTest, WhenCopyingImageThenNumberOfPipelineSelectsIsOne
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaVfeStateIsSetCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaVfeStateIsSetCorrectly) {
     enqueueCopyImage<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }

@@ -671,7 +671,7 @@ TEST_F(EnqueueKernelTest, GivenKernelWithBuiltinDispatchInfoBuilderWhenBeingDisp
     EXPECT_EQ(dim, mockNuiltinDispatchBuilder.receivedWorkDim);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScratchRequirementWhenPreemptionIsEnabledThenDontProgramMVSAgain) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScratchRequirementWhenPreemptionIsEnabledThenDontProgramMVSAgain) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();

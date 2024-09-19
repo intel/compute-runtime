@@ -53,7 +53,7 @@ TEST(GetDeviceInfo, GivenInvalidParametersWhenGettingDeviceInfoThenValueSizeRetI
     EXPECT_EQ(0x1234u, valueSizeRet);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForBdwAndLaterThenClSuccessIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForBdwAndLaterThenClSuccessIsReturned) {
 
     std::vector<TestParams> params = {
         {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL,

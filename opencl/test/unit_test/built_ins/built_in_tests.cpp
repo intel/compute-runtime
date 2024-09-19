@@ -655,7 +655,7 @@ HWTEST2_P(AuxBuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalle
     EXPECT_EQ(1u, pMultiDeviceKernel->releaseOwnershipCalls);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, AuxBuiltInTests, givenAuxTranslationKernelWhenSettingKernelArgsThenSetValidMocs) {
     if (this->pDevice->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
     }
@@ -1501,7 +1501,7 @@ TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourc
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::source, *pDevice).size());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
 
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::binary, *pDevice).size());

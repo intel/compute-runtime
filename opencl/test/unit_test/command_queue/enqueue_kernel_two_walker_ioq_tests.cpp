@@ -28,7 +28,7 @@ HWTEST2_F(IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipe
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenThereIsOneVfeState) {
     enqueueTwoKernels<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();

@@ -930,7 +930,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
     EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenPreXeHpPlatformWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenPreXeHpPlatformWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto implicitArgsInIndirectData = indirectHeapAllocation->getUnderlyingBuffer();

@@ -140,7 +140,7 @@ HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenTaskCountIsAligne
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenGpgpuWalkerIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenGpgpuWalkerIsCorrect) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueCopyBufferRect2D<FamilyType>();
 
@@ -187,7 +187,7 @@ HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenCommandsAreAdded)
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenIndirectDataGetsAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenIndirectDataGetsAdded) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -297,7 +297,7 @@ HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenL3ProgrammingIsCo
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueCopyBufferRect2D<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -308,7 +308,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, When2DEnqueueIsDoneThenSt
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenMediaInterfaceDescriptorLoadIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -333,7 +333,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DTh
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenInterfaceDescriptorDataIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -358,12 +358,12 @@ HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenNumberOfPipeline
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenMediaVfeStateIsSetCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect2DThenMediaVfeStateIsSetCorrectly) {
     enqueueCopyBufferRect2D<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenGpgpuWalkerIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenGpgpuWalkerIsCorrect) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueCopyBufferRect3D<FamilyType>();
 
@@ -410,7 +410,7 @@ HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenCommandsAreAdded)
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenIndirectDataIsAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenIndirectDataIsAdded) {
     auto usedIndirectHeapBefore = pDSH->getUsed();
 
     enqueueCopyBufferRect3D<FamilyType>();
@@ -422,7 +422,7 @@ HWTEST_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenL3ProgrammingIsCo
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, When3DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, When3DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueCopyBufferRect3D<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -433,7 +433,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, When3DEnqueueIsDoneThenSt
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenMediaInterfaceDescriptorLoadIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -458,7 +458,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DTh
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenInterfaceDescriptorDataIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -483,7 +483,7 @@ HWTEST2_F(EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenNumberOfPipeline
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenMediaVfeStateIsSetCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferRectTest, WhenCopyingBufferRect3DThenMediaVfeStateIsSetCorrectly) {
     enqueueCopyBufferRect3D<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }

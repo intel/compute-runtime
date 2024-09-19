@@ -2521,7 +2521,7 @@ TEST_F(CommandListCreate, givenInvalidProductFamilyThenReturnsNullPointer) {
     EXPECT_EQ(nullptr, commandList);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandListCreate, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListCreate, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(0);
     debugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);

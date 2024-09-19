@@ -496,7 +496,7 @@ HWTEST2_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCo
     EXPECT_EQ(0u, expectedMask & addressValue);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStateBaseAddressIsProgrammedThenStateSipIsAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStateBaseAddressIsProgrammedThenStateSipIsAdded) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
@@ -547,7 +547,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStat
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionThenPreemptionProgrammedAfterVfeStateInCmdBuffer) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, MidThreadPreemptionTests, WhenProgrammingPreemptionThenPreemptionProgrammedAfterVfeStateInCmdBuffer) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

@@ -1162,7 +1162,7 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_EQ(2u, NEO::IoFunctions::mockFcloseCalled);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DirectSubmissionTest,
+HWCMDTEST_F(IGFX_GEN12LP_CORE, DirectSubmissionTest,
             givenLegacyPlatformsWhenProgrammingPartitionRegisterThenExpectNoAction) {
     using Dispatcher = RenderDispatcher<FamilyType>;
 

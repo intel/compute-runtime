@@ -113,7 +113,7 @@ struct AUBHelloWorldFixture
 
 using AUBHelloWorld = Test<AUBHelloWorldFixture<AUBHelloWorldFixtureFactory>>;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAddressesAreAligned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBHelloWorld, WhenEnqueuingKernelThenAddressesAreAligned) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -276,7 +276,7 @@ struct AUBSimpleArg
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, WhenEnqueingKernelThenAddressesAreAligned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, AUBSimpleArg, WhenEnqueingKernelThenAddressesAreAligned) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;

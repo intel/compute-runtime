@@ -149,7 +149,7 @@ void EnqueueKernelTypeTest<TestParam>::fillValues() {
 typedef EnqueueKernelTypeTest<TestParam> EnqueueWorkItemTests;
 typedef EnqueueKernelTypeTest<TestParam> EnqueueWorkItemTestsWithLimitedParamSet;
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, WhenEnqueingKernelThenGpgpuWalkerIsProgrammedCorrectly) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTests, WhenEnqueingKernelThenGpgpuWalkerIsProgrammedCorrectly) {
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::GPGPU_WALKER GPGPU_WALKER;
 
@@ -186,12 +186,12 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, WhenEnqueingKernelThenGpgpuWal
     EXPECT_EQ(expectedWorkItems, numWorkItems);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenLoadRegisterImmediateL3CntrlregIsCorrect) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenLoadRegisterImmediateL3CntrlregIsCorrect) {
     enqueueKernel<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueKernel<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
@@ -202,7 +202,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueue
                                          context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->getExternalHeapBaseAddress(ultCsr.rootDeviceIndex, false) : 0llu);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaInterfaceDescriptorLoadIsCorrect) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename Parse::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -230,7 +230,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
     Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenInterfaceDescriptorDataIsCorrect) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
@@ -267,7 +267,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnquein
     EXPECT_NE(0u, idd.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugVariableToOverrideMOCSWhenStateBaseAddressIsBeingProgrammedThenItContainsDesiredIndex) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugVariableToOverrideMOCSWhenStateBaseAddressIsBeingProgrammedThenItContainsDesiredIndex) {
     DebugManagerStateRestore restore;
     debugManager.flags.OverrideStatelessMocsIndex.set(1);
     typedef typename FamilyType::Parse Parse;
@@ -282,13 +282,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, givenDebugV
     EXPECT_EQ(1u, mocsProgrammed);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenOnePipelineSelectIsProgrammed) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenOnePipelineSelectIsProgrammed) {
     enqueueKernel<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaVfeStateIsCorrect) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueingKernelThenMediaVfeStateIsCorrect) {
     enqueueKernel<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
@@ -303,7 +303,7 @@ INSTANTIATE_TEST_SUITE_P(EnqueueKernel,
 
 typedef EnqueueKernelTypeTest<TestParam2> EnqueueScratchSpaceTests;
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratchWhenItIsEnqueuedWithDifferentScratchSizesThenMediaVFEStateAndStateBaseAddressAreProperlyProgrammed) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratchWhenItIsEnqueuedWithDifferentScratchSizesThenMediaVFEStateAndStateBaseAddressAreProperlyProgrammed) {
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename Parse::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
@@ -475,7 +475,7 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     EXPECT_TRUE(mockCsr->isMadeNonResident(graphicsAllocation));
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAllocationsWhenKernelWithScratchIsEnqueuedThenGeneralStateHeapBaseAddressIsCorrectlyProgrammedAndMediaVFEStateContainsProgramming) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueKernelWithScratch, givenDeviceForcing32bitAllocationsWhenKernelWithScratchIsEnqueuedThenGeneralStateHeapBaseAddressIsCorrectlyProgrammedAndMediaVFEStateContainsProgramming) {
 
     typedef typename FamilyType::Parse Parse;
     typedef typename Parse::MEDIA_VFE_STATE MEDIA_VFE_STATE;
@@ -589,7 +589,7 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
     EXPECT_EQ(mockCmdQueue.latestTaskCountWaited, newLatestSentTaskCount);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenL3CacheIsFlushed) {
+HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenL3CacheIsFlushed) {
     typedef typename FamilyType::Parse Parse;
 
     UserEvent userEvent(context);

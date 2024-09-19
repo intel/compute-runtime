@@ -355,7 +355,7 @@ HWTEST_F(ProductHelperTest, whenCallingGetDeviceMemoryNameThenDdrIsReturned) {
     EXPECT_TRUE(hasSubstr(deviceMemoryName, std::string("DDR")));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ProductHelperTest, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, ProductHelperTest, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
 
     EXPECT_FALSE(productHelper->isDisableOverdispatchAvailable(pInHwInfo));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, WhenProgrammingThenMediaInterfaceDescriptorLoadIsUsed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, WhenProgrammingThenMediaInterfaceDescriptorLoadIsUsed) {
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
 

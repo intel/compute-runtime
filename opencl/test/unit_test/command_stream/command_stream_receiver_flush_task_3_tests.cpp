@@ -407,7 +407,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     EXPECT_GT(cmdBuffer2->batchBuffer.startOffset, cmdBuffer1->batchBuffer.startOffset);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecordedBatchBufferIsBeingSubmittedThenFlushIsCalledWithRecordedCommandBuffer) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecordedBatchBufferIsBeingSubmittedThenFlushIsCalledWithRecordedCommandBuffer) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -529,7 +529,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenBufferToFlushWhenFlushTaskCal
     EXPECT_EQ(1u, mockCsr->flushCalledCount);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenNothingToFlushWhenFlushTaskCalledThenDontFlushStamp) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenNothingToFlushWhenFlushTaskCalledThenDontFlushStamp) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
@@ -1787,7 +1787,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, givenEpilogueRequiredFlagWhenTaskIsSubmittedDirectlyThenItPointsBackToCsr) {
     configureCSRtoNonDirtyState<FamilyType>(false);
     auto &commandStreamReceiver = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 

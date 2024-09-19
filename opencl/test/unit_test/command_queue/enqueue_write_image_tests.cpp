@@ -29,7 +29,7 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenCommandsAreProgrammedCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenCommandsAreProgrammedCorrectly) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueWriteImage<FamilyType>();
 
@@ -127,7 +127,7 @@ HWTEST_F(EnqueueWriteImageTest, WhenWritingImageThenL3ProgrammingIsCorrect) {
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueWriteImage<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
@@ -137,7 +137,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenEnqueueIsDoneThenStateBas
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaInterfaceDescriptorIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaInterfaceDescriptorIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -163,7 +163,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaInte
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenInterfaceDescriptorDataIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -219,7 +219,7 @@ HWTEST2_F(EnqueueWriteImageTest, WhenWritingImageThenOnePipelineSelectIsProgramm
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaVfeStateIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueWriteImageTest, WhenWritingImageThenMediaVfeStateIsCorrect) {
     enqueueWriteImage<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }

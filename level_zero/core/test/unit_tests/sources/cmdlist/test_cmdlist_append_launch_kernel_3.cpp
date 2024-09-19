@@ -34,7 +34,7 @@ namespace ult {
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBindingTablePrefetchAllowedThenProgramBindingTableEntryCount) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBindingTablePrefetchAllowedThenProgramBindingTableEntryCount) {
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
@@ -73,7 +73,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppendingKernelThenPostSyncToEventIsGenerated) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppendingKernelThenPostSyncToEventIsGenerated) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -137,7 +137,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsIndirectThenEnablesPredicate) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsIndirectThenEnablesPredicate) {
     createKernel();
 
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
@@ -165,7 +165,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     context->freeMem(reinterpret_cast<void *>(numLaunchArgs));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsThenUsesMathAndWalker) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsThenUsesMathAndWalker) {
     createKernel();
 
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;

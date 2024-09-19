@@ -513,7 +513,7 @@ HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
     EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(2, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, WhenAnyParameterIsProvidedThenRuntimeGenerationLocalIdsIsRequired) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, WhenAnyParameterIsProvidedThenRuntimeGenerationLocalIdsIsRequired) {
     uint32_t workDim = 1;
     uint32_t simd = 8;
     size_t lws[3] = {16, 1, 1};
@@ -559,7 +559,7 @@ HWTEST_F(CommandEncoderTests, givenNotify) {
     EXPECT_EQ(1u, static_cast<uint32_t>(miFlushDwCmd->getNotifyEnable()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, whenAppendParamsForImageFromBufferThenNothingChanges) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, whenAppendParamsForImageFromBufferThenNothingChanges) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto expectedState = surfaceState;
 
@@ -593,7 +593,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPostSyncMocsThenNothingHappen) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPostSyncMocsThenNothingHappen) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DefaultWalkerType walkerCmd{};
@@ -661,7 +661,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenXeHpPlatformsWhenGettingD
     EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGettingDefaultSshSizeThenExpectSixtyFourKilobytes) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGettingDefaultSshSizeThenExpectSixtyFourKilobytes) {
     constexpr size_t expectedSize = 64 * MemoryConstants::kiloByte;
     EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
 }

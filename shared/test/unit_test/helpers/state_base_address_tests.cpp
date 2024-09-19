@@ -424,7 +424,7 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePol
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, whenGeneralStateBaseAddressIsProgrammedThenDecanonizedAddressIsWritten) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, SbaTest, whenGeneralStateBaseAddressIsProgrammedThenDecanonizedAddressIsWritten) {
     constexpr uint64_t generalStateBaseAddress = 0xffff800400010000ull;
 
     auto gmmHelper = pDevice->getGmmHelper();
@@ -477,7 +477,7 @@ HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledTh
     EXPECT_EQ(0u, sbaCmd.getInstructionMemoryObjectControlState());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
     auto gmmHelper = pDevice->getGmmHelper();
 
     constexpr uint64_t internalHeapBase = 0x10000;

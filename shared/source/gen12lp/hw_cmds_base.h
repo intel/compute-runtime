@@ -139,7 +139,7 @@ struct Gen12LpFamily : public Gen12Lp {
     static constexpr size_t indirectDataAlignment = GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
-        return cmdSetBaseFamily == IGFX_GEN8_CORE;
+        return cmdSetBaseFamily == IGFX_GEN12LP_CORE;
     }
 
     template <typename WalkerType>

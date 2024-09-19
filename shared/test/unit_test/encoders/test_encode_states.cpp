@@ -442,7 +442,7 @@ HWTEST_F(CommandEncodeStatesTest, givenAnUnalignedDstPtrThenCorrectAlignedPtrAnd
     EXPECT_NE(0u, offset);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelectIsCalledThenNothingHappens) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelectIsCalledThenNothingHappens) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     auto initialUsed = cmdContainer->getCommandStream()->getUsed();
     NEO::EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer, descriptor);

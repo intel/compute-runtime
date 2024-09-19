@@ -37,14 +37,14 @@
 
 using namespace NEO;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
     auto expectedCmdSize = sizeof(typename FamilyType::PIPE_CONTROL) + sizeof(typename FamilyType::MEDIA_VFE_STATE);
     EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWhenFirstTaskIsFlushedThenStateSipCmdIsAddedAndIsStateSipSentSetToTrue) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, givenNotSentStateSipWhenFirstTaskIsFlushedThenStateSipCmdIsAddedAndIsStateSipSentSetToTrue) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
 
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -148,7 +148,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPoli
     EXPECT_EQ(expectedDifference, actualDifferenceForFlush);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateDirtyEstimatingPreambleCmdSizeThenResultDependsVfeStateProgrammingCmdSize) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateDirtyEstimatingPreambleCmdSizeThenResultDependsVfeStateProgrammingCmdSize) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
@@ -474,7 +474,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsRetu
     EXPECT_EQ(CommandStreamReceiverType::hardware, csr->getType());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiverHwIsCreatedThenDefaultSshSizeIs64KB) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiverHwIsCreatedThenDefaultSshSizeIs64KB) {
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_EQ(64 * MemoryConstants::kiloByte, commandStreamReceiver.defaultSshSize);
 }
@@ -1689,7 +1689,7 @@ INSTANTIATE_TEST_SUITE_P(BcsDetaliedTest,
                              ::testing::ValuesIn(blitterProperties),
                              ::testing::Values(BlitterConstants::BlitDirection::hostPtrToBuffer, BlitterConstants::BlitDirection::bufferToHostPtr)));
 
-HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, WhenProgrammingActivePartitionsThenExpectNoAction) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t expectedCmdSize = 0;
     EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getCmdSizeForActivePartitionConfig());
@@ -1699,7 +1699,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, WhenProgrammingActiveP
     EXPECT_EQ(usedBefore, usedAfter);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhenProgrammingBarrierCommandThenExpectPostSyncPipeControl) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhenProgrammingBarrierCommandThenExpectPostSyncPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();

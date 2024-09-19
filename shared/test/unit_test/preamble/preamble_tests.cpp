@@ -40,7 +40,7 @@ HWTEST_F(PreambleTest, givenDisabledPreemptioWhenPreambleAdditionalCommandsSizeI
     EXPECT_EQ(0u, cmdSize);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidthreadPreemptionWhenPreambleAdditionalCommandsSizeIsQueriedThenSizeForPreemptionPreambleIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, givenMidthreadPreemptionWhenPreambleAdditionalCommandsSizeIsQueriedThenSizeForPreemptionPreambleIsReturned) {
     using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
@@ -53,7 +53,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidthreadPreemptionWhenPreambleAd
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIsProgrammedThenStateSipAndCsrBaseAddressCmdsAreAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, givenMidThreadPreemptionWhenPreambleIsProgrammedThenStateSipAndCsrBaseAddressCmdsAreAdded) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
 
@@ -158,7 +158,7 @@ HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMax
     EXPECT_EQ(expected, value);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrectVfeStateAddressIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrectVfeStateAddressIsReturned) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     char buffer[64];
@@ -181,7 +181,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenProgramVFEStateIsCalledThenCorrect
     EXPECT_EQ(0u, vfeCmd.getScratchSpaceBasePointerHigh());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfeStateIsCalledThenCorrectOffsetIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfeStateIsCalledThenCorrectOffsetIsReturned) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
     char buffer[64];
@@ -201,7 +201,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfe
               offset + reinterpret_cast<uintptr_t>(preambleStream.getCpuBase()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenIsSystolicModeConfigurableThenReturnFalse) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, PreambleTest, WhenIsSystolicModeConfigurableThenReturnFalse) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto result = PreambleHelper<FamilyType>::isSystolicModeConfigurable(rootDeviceEnvironment);

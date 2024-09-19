@@ -135,7 +135,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenTaskCountIsAlignedWithCsr) 
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenGpgpuWalkerIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenGpgpuWalkerIsCorrect) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueCopyBufferAndParse<FamilyType>();
 
@@ -321,7 +321,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenL3ProgrammingIsCorrect) {
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueCopyBufferAndParse<FamilyType>();
     auto &ultCsr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -332,7 +332,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenEnqueueIsDoneThenStateBas
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenMediaInterfaceDescriptorLoadIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenMediaInterfaceDescriptorLoadIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -357,7 +357,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenMediaInt
     FamilyType::Parse::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenInterfaceDescriptorDataIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenInterfaceDescriptorDataIsCorrect) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -382,7 +382,7 @@ HWTEST2_F(EnqueueCopyBufferTest, WhenCopyingBufferThenNumberOfPipelineSelectsIsO
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenMediaVfeStateIsSetCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyBufferTest, WhenCopyingBufferThenMediaVfeStateIsSetCorrectly) {
     enqueueCopyBufferAndParse<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }

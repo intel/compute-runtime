@@ -901,7 +901,7 @@ TEST(GfxCoreHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSetting
     EXPECT_TRUE(GfxCoreHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingGlobalTimeStampBitsThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingGlobalTimeStampBitsThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(gfxCoreHelper.getGlobalTimeStampBits(), 36U);
 }
@@ -935,7 +935,7 @@ TEST_F(GfxCoreHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGe
     EXPECT_TRUE(gfxCoreHelper.getEnableLocalMemory(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenVariousCachesRequestThenCorrectMocsIndexesAreReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenVariousCachesRequestThenCorrectMocsIndexesAreReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmmHelper = this->pDevice->getGmmHelper();
     auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
@@ -1007,19 +1007,19 @@ HWTEST_F(GfxCoreHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturne
     EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hardwareInfo, productHelper));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenBarrierEncodingWhenCallingGetBarriersCountFromHasBarrierThenNumberOfBarriersIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(0u, gfxCoreHelper.getBarriersCountFromHasBarriers(0u));
     EXPECT_EQ(1u, gfxCoreHelper.getBarriersCountFromHasBarriers(1u));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, 0);
     EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hwInfo = hardwareInfo;
     for (auto threadCount : {1u, 5u, 9u}) {
@@ -1045,7 +1045,7 @@ HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIsForceDefaultRCSEngi
     EXPECT_FALSE(GfxCoreHelperHw<FamilyType>::isForceDefaultRCSEngineWARequired(hardwareInfo));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIsWorkaroundRequiredCalledThenFalseIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIsWorkaroundRequiredCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
     }
@@ -1063,7 +1063,7 @@ HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalGrfSizeIsQueri
     EXPECT_EQ(128u, gfxCoreHelper.getMinimalGrfSize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
     }
@@ -1171,7 +1171,7 @@ HWTEST2_F(ProductHelperCommonTest, givenDebugFlagSetWhenEnablingBlitterOperation
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(0u, gfxCoreHelper.alignSlmSize(0));
     EXPECT_EQ(1024u, gfxCoreHelper.alignSlmSize(1));
@@ -1190,7 +1190,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlmSiz
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
@@ -1218,7 +1218,7 @@ HWTEST_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrec
     EXPECT_EQ(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K, receivedSlmSize);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, givenGfxCoreHelperWhenGettingPlanarYuvHeightThenHelperReturnsCorrectValue) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(gfxCoreHelper.getPlanarYuvMaxHeight(), 16352u);
 }

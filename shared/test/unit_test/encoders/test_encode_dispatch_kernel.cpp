@@ -246,7 +246,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithUsedAvailableSizeWhen
     EXPECT_GT(cmdBuffersCountAfter, cmdBuffersCountBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThanZeroWhenDispatchingKernelThenSharedMemorySizeSetCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThanZeroWhenDispatchingKernelThenSharedMemorySizeSetCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
@@ -268,7 +268,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterThan
     EXPECT_EQ(expectedValue, interfaceDescriptorData->getSharedLocalMemorySize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, whenDispatchingKernelThenSetDenormMode) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenDispatchingKernelThenSetDenormMode) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
@@ -283,7 +283,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, whenDispatchingKernelThenSe
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_FTZ, interfaceDescriptorData->getDenormMode());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDebuggingEnabledAndAssertInKernelWhenDispatchingKernelThenSwExceptionsAreEnabled) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenDebuggingEnabledAndAssertInKernelWhenDispatchingKernelThenSwExceptionsAreEnabled) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
@@ -301,7 +301,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDebuggingEnabledAndAss
     EXPECT_TRUE(interfaceDescriptorData->getSoftwareExceptionEnable());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroWhenDispatchingKernelThenSharedMemorySizeSetCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroWhenDispatchingKernelThenSharedMemorySizeSetCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t dims[] = {2, 1, 1};
@@ -322,7 +322,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroW
     EXPECT_EQ(expectedValue, interfaceDescriptorData->getSharedLocalMemorySize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -355,7 +355,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWh
     EXPECT_EQ(interfaceDescriptorData->getBindingTablePointer(), expectedOffset);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBindingTableOffsetIsZero) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBindingTableOffsetIsZero) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -386,7 +386,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhen
     EXPECT_EQ(interfaceDescriptorData->getBindingTablePointer(), 0u);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchingKernelThensamplerStateWasCopied) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchingKernelThensamplerStateWasCopied) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -424,7 +424,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispa
     EXPECT_EQ(memcmp(pSmplr, &samplerState, sizeof(SAMPLER_STATE)), 0);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenDispatchingKernelThensamplerStateWasNotCopied) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenDispatchingKernelThensamplerStateWasNotCopied) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -513,7 +513,7 @@ HWTEST_F(CommandEncodeStatesTest, givenIndirectOffsetsSizeWhenDispatchingKernelT
     ASSERT_NE(itor, commands.end());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenValuesAreSetUpCorrectly) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenValuesAreSetUpCorrectly) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -628,7 +628,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedWhenDispatchKernelThenFlushNotAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedWhenDispatchKernelThenFlushNotAdded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     uint32_t dims[] = {2, 1, 1};
@@ -649,7 +649,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
     ASSERT_EQ(itorPC, commands.end());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedAndUncachedMocsRequestedThenSBAIsProgrammedAndMocsAreSet) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedAndUncachedMocsRequestedThenSBAIsProgrammedAndMocsAreSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -675,7 +675,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
               (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED)));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsAndSlmNotChangedWhenDispatchKernelThenHeapsAreCleanAndFlushAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenDirtyHeapsAndSlmNotChangedWhenDispatchKernelThenHeapsAreCleanAndFlushAdded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -698,7 +698,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsAndSlmNotCha
     EXPECT_FALSE(cmdContainer->isAnyHeapDirty());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsWhenDispatchKernelThenPCIsAddedBeforeSBA) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenDirtyHeapsWhenDispatchKernelThenPCIsAddedBeforeSBA) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -740,7 +740,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsWhenDispatch
     EXPECT_TRUE(foundPcWithDCFlush);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmChangedWhenDispatchKernelThenFlushAdded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmChangedWhenDispatchKernelThenFlushAdded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     uint32_t dims[] = {2, 1, 1};
@@ -764,7 +764,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmChange
     EXPECT_EQ(slmSizeBefore + 1, cmdContainer->slmSizeRef());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelThenMediaInterfaceDescriptorEncoded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelThenMediaInterfaceDescriptorEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -791,7 +791,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenD
     ASSERT_NE(itorPC, commands.end());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelAndDynamicStateHeapDirtyThenStateBaseAddressEncodedAndMediaInterfaceDescriptorEncoded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelAndDynamicStateHeapDirtyThenStateBaseAddressEncodedAndMediaInterfaceDescriptorEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -822,7 +822,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenD
     ASSERT_NE(itorPC, commands.end());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -872,7 +872,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHeapI
     EXPECT_EQ(memcmp(pSmplr, &samplerState, sizeof(SAMPLER_STATE)), 0);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextIDDInBlockWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextIDDInBlockWhenHeapIsDirtyThenSamplerStateWasCopiedAndStateBaseAddressEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -1216,7 +1216,7 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
     EXPECT_TRUE(memoryZeroed(ptrOffset(ioh->getCpuBase(), iohOffset), ioh->getMaxAvailableSpace() - iohOffset));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
@@ -1243,7 +1243,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsF
     EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -1270,7 +1270,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenNoStartWorkGroupWhenIndirectI
     EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndRightExecutionMaskNotFull) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndRightExecutionMaskNotFull) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -1298,7 +1298,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenWorkGroupSm
     EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, WhenThreadPerThreadGroupNotZeroThenExpectOverrideThreadGroupCalculation) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, WhenThreadPerThreadGroupNotZeroThenExpectOverrideThreadGroupCalculation) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -1324,7 +1324,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, WhenThreadPerThreadGroupNotZeroThe
     EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, WalkerThreadTest, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     DefaultWalkerType walkerCmd = FamilyType::cmdInitGpgpuWalker;
@@ -1398,7 +1398,7 @@ using namespace NEO;
 
 using InterfaceDescriptorDataTests = ::testing::Test;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhenCallingSetBarrierEnableThenCorrectValueIsSet) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhenCallingSetBarrierEnableThenCorrectValueIsSet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     MockDevice device;
@@ -1625,7 +1625,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWhenIsKernelDispatchedFro
     EXPECT_NE(0u, cmdContainer->getHeapWithRequiredSizeAndAlignmentCalled);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnZero) {
+HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingInlineDataOffsetThenReturnZero) {
     EncodeDispatchKernelArgs dispatchArgs = {};
 
     EXPECT_EQ(0u, EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchArgs));
