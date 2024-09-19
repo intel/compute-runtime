@@ -1567,7 +1567,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                         bool stateBaseAddressDirty) {
 
     const auto bindlessHeapsHelper = device.getBindlessHeapsHelper();
-    const bool isBindlessKernel = !dispatchFlags.disableGlobalSSH;
 
     auto &hwInfo = this->peekHwInfo();
 
@@ -1582,8 +1581,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
     int64_t surfaceStateBaseAddress = 0;
     size_t surfaceStateSize = 0;
     if (ssh != nullptr) {
-        surfaceStateBaseAddress = NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isBindlessKernel);
-        surfaceStateSize = NEO::getStateSize(*ssh, bindlessHeapsHelper, isBindlessKernel);
+        surfaceStateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper);
+        surfaceStateSize = NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper);
     }
 
     bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh, dynamicStateBaseAddress, dynamicStateSize) : false;

@@ -390,14 +390,6 @@ struct CommandList : _ze_command_list_handle_t {
         return statelessBuiltinsEnabled;
     }
 
-    bool isLastAppendedKernelBindlessMode() const {
-        return lastAppendedKernelBindlessMode;
-    }
-
-    void setIsLastAppendedKernelBindlessMode(bool isBindlessKernel) {
-        lastAppendedKernelBindlessMode = isBindlessKernel;
-    }
-
     void registerCsrDcFlushForDcMitigation(NEO::CommandStreamReceiver &csr);
 
     NEO::EngineGroupType getEngineGroupType() const {
@@ -498,7 +490,6 @@ struct CommandList : _ze_command_list_handle_t {
     bool taskCountUpdateFenceRequired = false;
     bool requiresDcFlushForDcMitigation = false;
     bool statelessBuiltinsEnabled = false;
-    bool lastAppendedKernelBindlessMode = false;
     bool localDispatchSupport = false;
 };
 

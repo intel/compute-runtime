@@ -27,20 +27,12 @@ inline size_t getStateSize(const IndirectHeap &heap, const bool useGlobalHeaps) 
     }
 }
 
-inline uint64_t getStateBaseAddress(const IndirectHeap &heap, const bool useGlobalHeaps, const bool isBindlessKernel) {
-    if (useGlobalHeaps && isBindlessKernel) {
-        return heap.getGraphicsAllocation()->getGpuBaseAddress();
-    } else {
-        return heap.getHeapGpuBase();
-    }
+inline uint64_t getStateBaseAddressForSsh(const IndirectHeap &heap, const bool useGlobalHeaps) {
+    return heap.getHeapGpuBase();
 }
 
-inline size_t getStateSize(const IndirectHeap &heap, const bool useGlobalHeaps, const bool isBindlessKernel) {
-    if (useGlobalHeaps && isBindlessKernel) {
-        return MemoryConstants::sizeOf4GBinPageEntities;
-    } else {
-        return heap.getHeapSizeInPages();
-    }
+inline size_t getStateSizeForSsh(const IndirectHeap &heap, const bool useGlobalHeaps) {
+    return heap.getHeapSizeInPages();
 }
 
 } // namespace NEO

@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -227,10 +228,6 @@ void CommandListPrivateHeapsFixture::checkAndPrepareBindlessKernel() {
     if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
         const_cast<KernelDescriptor &>(kernel->getKernelDescriptor()).kernelAttributes.bufferAddressingMode = KernelDescriptor::Bindless;
         isBindlessKernel = true;
-    }
-
-    if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState) == nullptr) {
-        commandList->commandContainer.prepareBindfulSsh();
     }
 }
 
@@ -636,10 +633,15 @@ uint64_t CommandListScratchPatchFixtureInit::getSurfStateGpuBase(bool useImmedia
     if (fixtureGlobalStatelessMode == 1) {
         return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getGlobalStatelessHeapAllocation()->getGpuAddress();
     } else {
-        if (useImmediate) {
-            return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getIndirectHeap(NEO::surfaceState, 0).getGpuBase();
+        auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
+        if (bindlessHeapsHelper) {
+            return device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGpuBase();
         } else {
-            return commandList->commandContainer.getIndirectHeap(NEO::surfaceState)->getGpuBase();
+            if (useImmediate) {
+                return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getIndirectHeap(NEO::surfaceState, 0).getGpuBase();
+            } else {
+                return commandList->commandContainer.getIndirectHeap(NEO::surfaceState)->getGpuBase();
+            }
         }
     }
 }

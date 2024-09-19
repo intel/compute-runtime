@@ -1662,7 +1662,6 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     auto &streamProperties = this->csr->getStreamProperties();
 
     const auto bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
-    const bool isLastAppendedKernelBindlessMode = lastCommandList->isLastAppendedKernelBindlessMode();
 
     auto &commandContainer = lastCommandList->getCmdContainer();
 
@@ -1682,8 +1681,8 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
-            auto stateBaseAddress = NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode);
-            auto stateSize = NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode);
+            auto stateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper);
+            auto stateSize = NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper);
 
             csrHw->getSshState().updateAndCheck(ssh, stateBaseAddress, stateSize);
             streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(stateBaseAddress,

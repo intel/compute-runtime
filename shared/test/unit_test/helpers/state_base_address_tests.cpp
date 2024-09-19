@@ -748,7 +748,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 }
 
-TEST(SbaHelperTest, givenIndirectHeapWhenGetStateBaseAddressAndGetStateSizeThenReturnValuesBasedOnGlobalHeapsAndBindlessKernelPresence) {
+TEST(SbaHelperTest, givenIndirectHeapWhenGetStateBaseAddressAndGetStateSizeThenReturnValuesBasedOnGlobalHeapsPresence) {
     auto cpuBaseAddress = reinterpret_cast<void *>(0x3000);
     MockGraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
     graphicsAllocation.setGpuBaseAddress(4096u);
@@ -772,24 +772,14 @@ TEST(SbaHelperTest, givenIndirectHeapWhenGetStateBaseAddressAndGetStateSizeThenR
         EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, NEO::getStateSize(heap, useGlobalHeaps));
     }
 
-    bool isBindlessKernel = false;
-
+    {
+        useGlobalHeaps = true;
+        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddressForSsh(heap, useGlobalHeaps));
+        EXPECT_EQ(heapSize, NEO::getStateSizeForSsh(heap, useGlobalHeaps));
+    }
     {
         useGlobalHeaps = false;
-        isBindlessKernel = false;
-        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps, isBindlessKernel));
-        EXPECT_EQ(heapSize, NEO::getStateSize(heap, useGlobalHeaps, isBindlessKernel));
-    }
-    {
-        useGlobalHeaps = true;
-        isBindlessKernel = false;
-        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps, isBindlessKernel));
-        EXPECT_EQ(heapSize, NEO::getStateSize(heap, useGlobalHeaps, isBindlessKernel));
-    }
-    {
-        useGlobalHeaps = true;
-        isBindlessKernel = true;
-        EXPECT_EQ(gpuBaseAddress, NEO::getStateBaseAddress(heap, useGlobalHeaps, isBindlessKernel));
-        EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, NEO::getStateSize(heap, useGlobalHeaps, isBindlessKernel));
+        EXPECT_EQ(gpuAddress, NEO::getStateBaseAddressForSsh(heap, useGlobalHeaps));
+        EXPECT_EQ(heapSize, NEO::getStateSizeForSsh(heap, useGlobalHeaps));
     }
 }

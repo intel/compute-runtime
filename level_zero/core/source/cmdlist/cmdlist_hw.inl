@@ -153,7 +153,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 
     latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     taskCountUpdateFenceRequired = false;
-    lastAppendedKernelBindlessMode = false;
 
     this->inOrderPatchCmds.clear();
 
@@ -3113,9 +3112,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t &threadGroupDimensions, bool isIndirect) {
-    const bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernel.getKernelDescriptor());
-    setIsLastAppendedKernelBindlessMode(isBindlessKernel);
-
     if (this->isFlushTaskSubmissionEnabled) {
         updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative, threadGroupDimensions, isIndirect);
     } else {
@@ -3185,8 +3181,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::surfaceState)) {
             auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
             if (ssh) {
-                currentSurfaceStateBaseAddress = NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode());
-                currentSurfaceStateSize = NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode());
+                currentSurfaceStateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper);
+                currentSurfaceStateSize = NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper);
 
                 currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
                 currentBindingTablePoolSize = currentSurfaceStateSize;

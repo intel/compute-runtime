@@ -146,9 +146,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         }
     }
-
-    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && needScratchSpace) {
-        commandContainer.prepareBindfulSsh();
+    auto requiredSshSize = kernel->getSurfaceStateHeapDataSize();
+    if ((this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) && (requiredSshSize > 0 || needScratchSpace)) {
+        if (!this->immediateCmdListHeapSharing && neoDevice->getBindlessHeapsHelper()) {
+            commandContainer.prepareBindfulSsh();
+            commandContainer.getHeapWithRequiredSizeAndAlignment(NEO::HeapType::surfaceState, requiredSshSize, NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment());
+        }
     }
 
     if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&

@@ -154,8 +154,6 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     NEO::IndirectHeap *ssh = nullptr;
 
     const auto bindlessHeapsHelper = this->device->getNEODevice()->getBindlessHeapsHelper();
-    const bool isLastAppendedKernelBindlessMode = this->isLastAppendedKernelBindlessMode();
-
     auto csr = getCsr(false);
 
     csr->makeResident(*ioh->getGraphicsAllocation());
@@ -172,8 +170,8 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
 
         if constexpr (streamStatesSupported) {
             if (this->requiredStreamState.stateBaseAddress.surfaceStateBaseAddress.value == NEO::StreamProperty64::initValue) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                     NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode));
+                this->requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
+                                                                                     NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper));
             }
         }
     } else if (this->immediateCmdListHeapSharing) {
@@ -182,10 +180,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
             csr->makeResident(*ssh->getGraphicsAllocation());
 
             if constexpr (streamStatesSupported) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                                 NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                                 NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                                 NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode));
+                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper),
+                                                                                                 NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper));
             }
         }
         if (this->dynamicHeapRequired) {
@@ -211,10 +209,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
         if (ssh) {
             csr->makeResident(*ssh->getGraphicsAllocation());
             if constexpr (streamStatesSupported) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                                 NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                                 NEO::getStateBaseAddress(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode),
-                                                                                                 NEO::getStateSize(*ssh, bindlessHeapsHelper, isLastAppendedKernelBindlessMode));
+                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper),
+                                                                                                 NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper));
             }
         }
     }
@@ -322,8 +320,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         hasRelaxedOrderingDependencies,                                   // hasRelaxedOrderingDependencies
         false,                                                            // stateCacheInvalidation
         false,                                                            // isStallingCommandsOnNextFlushRequired
-        false,                                                            // isDcFlushRequiredOnStallingCommandsOnNextFlush
-        !this->isLastAppendedKernelBindlessMode()                         // disableGlobalSSH
+        false                                                             // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));

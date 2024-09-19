@@ -82,8 +82,7 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         false,                                                                       // hasRelaxedOrderingDependencies
         false,                                                                       // stateCacheInvalidation
         commandQueue.isStallingCommandsOnNextFlushRequired(),                        // isStallingCommandsOnNextFlushRequired
-        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush(),               // isDcFlushRequiredOnStallingCommandsOnNextFlush
-        true                                                                         // disableGlobalSSH
+        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()                // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
@@ -226,8 +225,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                       // hasRelaxedOrderingDependencies
         false,                                                                       // stateCacheInvalidation
         commandQueue.isStallingCommandsOnNextFlushRequired(),                        // isStallingCommandsOnNextFlushRequired
-        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush(),               // isDcFlushRequiredOnStallingCommandsOnNextFlush
-        true                                                                         // disableGlobalSSH
+        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()                // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -417,8 +415,7 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                 // hasRelaxedOrderingDependencies
         false,                                                                 // stateCacheInvalidation
         commandQueue.isStallingCommandsOnNextFlushRequired(),                  // isStallingCommandsOnNextFlushRequired
-        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush(),         // isDcFlushRequiredOnStallingCommandsOnNextFlush
-        true                                                                   // disableGlobalSSH
+        commandQueue.isDcFlushRequiredOnStallingCommandsOnNextFlush()          // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
