@@ -60,6 +60,7 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
                     return threads;
                 }
 
+                UNRECOVERABLE_IF(!bitmask);
                 for (uint32_t byte = 0; byte < bytesPerEu; byte++) {
                     std::bitset<8> bits(bitmask[offset + byte]);
                     for (uint32_t i = 0; i < 8; i++) {
