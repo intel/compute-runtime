@@ -73,6 +73,9 @@ class GpgpuWalkerHelper {
 
   private:
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    template <typename WalkerType>
+    static void setSystolicModeEnable(WalkerType *walkerCmd);
 };
 
 template <typename GfxFamily>

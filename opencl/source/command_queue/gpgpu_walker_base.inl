@@ -24,6 +24,11 @@
 namespace NEO {
 
 template <typename GfxFamily>
+template <typename WalkerType>
+void GpgpuWalkerHelper<GfxFamily>::setSystolicModeEnable(WalkerType *walkerCmd) {
+}
+
+template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     CommandQueue &commandQueue,
     TagNodeBase &hwPerfCounter,

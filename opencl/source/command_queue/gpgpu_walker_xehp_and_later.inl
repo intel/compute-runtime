@@ -126,11 +126,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
         postSyncData.setDestinationAddress(contextStartAddress);
     }
 
-    if constexpr (std::is_same_v<WalkerType, typename GfxFamily::COMPUTE_WALKER>) {
-        if (debugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
-            walkerCmd->setSystolicModeEnable((debugManager.flags.OverrideSystolicInComputeWalker.get()));
-        }
-    }
+    setSystolicModeEnable(walkerCmd);
 }
 
 template <typename GfxFamily>

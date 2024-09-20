@@ -5509,7 +5509,7 @@ typedef struct tagCOMPUTE_WALKER {
             uint32_t IndirectParameterEnable : BITFIELD_RANGE(10, 10);
             uint32_t Reserved_11 : BITFIELD_RANGE(11, 12);
             uint32_t DispatchComplete : BITFIELD_RANGE(13, 13);
-            uint32_t SystolicModeEnable : BITFIELD_RANGE(14, 14);
+            uint32_t Reserved_14 : BITFIELD_RANGE(14, 14); // patched
             uint32_t CfeSubopcodeVariant : BITFIELD_RANGE(15, 17);
             uint32_t CfeSubopcode : BITFIELD_RANGE(18, 23);
             uint32_t ComputeCommandOpcode : BITFIELD_RANGE(24, 26);
@@ -5661,12 +5661,6 @@ typedef struct tagCOMPUTE_WALKER {
     }
     inline bool getDispatchComplete() const {
         return TheStructure.Common.DispatchComplete;
-    }
-    inline void setSystolicModeEnable(const bool value) {
-        TheStructure.Common.SystolicModeEnable = value;
-    }
-    inline bool getSystolicModeEnable() const {
-        return TheStructure.Common.SystolicModeEnable;
     }
     inline void setCfeSubopcodeVariant(const CFE_SUBOPCODE_VARIANT value) {
         TheStructure.Common.CfeSubopcodeVariant = value;

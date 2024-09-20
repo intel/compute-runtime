@@ -14,6 +14,14 @@ namespace NEO {
 
 using Family = XeHpcCoreFamily;
 
+template <>
+template <>
+void GpgpuWalkerHelper<Family>::setSystolicModeEnable(Family::COMPUTE_WALKER *walkerCmd) {
+    if (debugManager.flags.OverrideSystolicInComputeWalker.get() != -1) {
+        walkerCmd->setSystolicModeEnable((debugManager.flags.OverrideSystolicInComputeWalker.get()));
+    }
+}
+
 template class GpgpuWalkerHelper<Family>;
 template void GpgpuWalkerHelper<Family>::setupTimestampPacket<Family::DefaultWalkerType>(LinearStream *cmdStream, Family::DefaultWalkerType *walkerCmd, TagNodeBase *timestampPacketNode, const RootDeviceEnvironment &rootDeviceEnvironment);
 template size_t GpgpuWalkerHelper<Family>::setGpgpuWalkerThreadData<Family::DefaultWalkerType>(Family::DefaultWalkerType *walkerCmd, const KernelDescriptor &kernelDescriptor, const size_t startWorkGroups[3],
