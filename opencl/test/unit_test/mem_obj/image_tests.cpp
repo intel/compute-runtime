@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/image/image_surface_state.h"
@@ -13,9 +14,11 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -32,6 +35,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mem_obj/image_compression_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -1458,6 +1462,46 @@ TEST(ImageTest, givenClMemCopyHostPointerPassedToImageCreateWhenAllocationIsNotI
 
     auto taskCountSent = device->getGpgpuCommandStreamReceiver().peekLatestFlushedTaskCount();
     EXPECT_LT(taskCount, taskCountSent);
+}
+
+using ImageDirectSubmissionTest = testing::Test;
+
+HWTEST_F(ImageDirectSubmissionTest, givenImageCreatedWhenDestrucedThenVerifyTaskCountTick) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableDirectSubmission.set(1);
+
+    MockClDevice mockClDevice(new MockDevice());
+    MockContext ctx(&mockClDevice);
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{&ctx, &mockClDevice, nullptr};
+    constexpr static TaskCountType taskCountReady = 3u;
+    auto &ultCsr = mockCmdQueueHw.getUltCommandStreamReceiver();
+    ultCsr.heapStorageRequiresRecyclingTag = false;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+    ultCsr.directSubmissionAvailable = true;
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 1;
+    imageDesc.image_height = 1;
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&ctx, &imageDesc));
+    EXPECT_NE(nullptr, image);
+    image->getGraphicsAllocation(0u)->setAllocationType(AllocationType::image);
+    image->getGraphicsAllocation(mockClDevice.getRootDeviceIndex())->updateTaskCount(taskCountReady, mockClDevice.getDefaultEngine().osContext->getContextId());
+
+    ultCsr.initializeTagAllocation();
+    ultCsr.taskCount.store(9u);
+
+    const auto taskCountBefore = mockClDevice.getGpgpuCommandStreamReceiver().peekTaskCount();
+
+    image.reset();
+
+    auto taskCountSent = mockClDevice.getGpgpuCommandStreamReceiver().peekTaskCount();
+
+    EXPECT_LT(taskCountBefore, taskCountSent);
 }
 
 struct ImageConvertTypeTest
