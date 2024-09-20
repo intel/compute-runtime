@@ -76,6 +76,7 @@ struct MetricEnumeration {
     getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
     void getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric);
     void getL0MetricPropertiesFromMdapiInformation(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IInformation_1_0 *mdapiInformation);
+    MetricsDiscovery::IInformationLatest *getOaBufferOverflowInformation() const { return pOaBufferOverflowInformation; }
 
   protected:
     ze_result_t initialize();
@@ -115,6 +116,7 @@ struct MetricEnumeration {
     MetricsDiscovery::IAdapter_1_9 *pAdapter = nullptr;
     MetricsDiscovery::IMetricsDevice_1_5 *pMetricsDevice = nullptr;
     uint32_t maximumOaBufferSize = 0u;
+    MetricsDiscovery::IInformationLatest *pOaBufferOverflowInformation = nullptr;
 
   public:
     // Metrics Discovery version should be at least 1.5.
