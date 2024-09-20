@@ -326,6 +326,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     GraphicsAllocation *getPreemptionAllocation() const { return this->preemptionAllocation; }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
+        makeResidentCalledTimes++;
         if (storeMakeResidentAllocations) {
             std::map<GraphicsAllocation *, uint32_t>::iterator it = makeResidentAllocations.find(&gfxAllocation);
             if (it == makeResidentAllocations.end()) {
@@ -554,6 +555,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<uint32_t> recursiveLockCounter;
     std::atomic<uint32_t> waitForCompletionWithTimeoutTaskCountCalled{0};
     std::atomic<uint64_t> pagingFenceValueToUnblock{0u};
+    uint32_t makeResidentCalledTimes = 0;
     uint32_t makeSurfacePackNonResidentCalled = false;
     uint32_t blitBufferCalled = 0;
     uint32_t createPerDssBackedBufferCalled = 0;

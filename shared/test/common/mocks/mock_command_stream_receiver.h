@@ -50,6 +50,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::ownershipMutex;
     using CommandStreamReceiver::preemptionAllocation;
+    using CommandStreamReceiver::primaryCsr;
     using CommandStreamReceiver::requiresInstructionCacheFlush;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::tagsMultiAllocation;
