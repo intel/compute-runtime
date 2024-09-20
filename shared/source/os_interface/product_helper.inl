@@ -453,8 +453,8 @@ bool ProductHelperHw<gfxProduct>::overridePatToUCAndTwoWayCohForDcFlushMitigatio
     return this->isDcFlushMitigated() &&
            (this->overrideCacheableForDcFlushMitigation(allocationType) ||
             allocationType == AllocationType::timestampPacketTagBuffer ||
-            allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::gpuTimestampDeviceBuffer);
+            allocationType == AllocationType::gpuTimestampDeviceBuffer ||
+            allocationType == AllocationType::tagBuffer);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -473,7 +473,8 @@ bool ProductHelperHw<gfxProduct>::overrideCacheableForDcFlushMitigation(Allocati
             allocationType == AllocationType::svmCpu ||
             allocationType == AllocationType::svmZeroCopy ||
             allocationType == AllocationType::internalHostMemory ||
-            allocationType == AllocationType::printfSurface);
+            allocationType == AllocationType::printfSurface ||
+            allocationType == AllocationType::timestampPacketTagBuffer);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
