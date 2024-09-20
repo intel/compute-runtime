@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ class OclocIgcFacade {
     CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createTranslationContext(IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType);
 
   protected:
-    MOCKABLE_VIRTUAL std::unique_ptr<OsLibrary> loadIgcLibrary() const;
+    MOCKABLE_VIRTUAL std::unique_ptr<OsLibrary> loadIgcLibrary(const char *libName) const;
     MOCKABLE_VIRTUAL CIF::CreateCIFMainFunc_t loadCreateIgcMainFunction() const;
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<CIF::CIFMain> createIgcMain(CIF::CreateCIFMainFunc_t createMainFunction) const;
     MOCKABLE_VIRTUAL bool isIgcInterfaceCompatible(const std::vector<CIF::InterfaceId_t> &interfacesToIgnore) const;

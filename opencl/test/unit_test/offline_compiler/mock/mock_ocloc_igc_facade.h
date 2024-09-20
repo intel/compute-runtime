@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class MockOclocIgcFacade : public OclocIgcFacade {
     MockOclocIgcFacade(OclocArgHelper *argHelper);
     ~MockOclocIgcFacade() override;
 
-    std::unique_ptr<OsLibrary> loadIgcLibrary() const override;
+    std::unique_ptr<OsLibrary> loadIgcLibrary(const char *libName) const override;
 
     CIF::CreateCIFMainFunc_t loadCreateIgcMainFunction() const override;
 

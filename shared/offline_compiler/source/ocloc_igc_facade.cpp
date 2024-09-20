@@ -37,7 +37,9 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_SUCCESS;
     }
 
-    igcLib = loadIgcLibrary();
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+
+    igcLib = loadIgcLibrary(compilerProductHelper ? compilerProductHelper->getCustomIgcLibraryName() : nullptr);
     if (!igcLib) {
         argHelper->printf("Error! Loading of IGC library has failed! Filename: %s\n", Os::igcDllName);
         return OCLOC_OUT_OF_HOST_MEMORY;
@@ -100,7 +102,6 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         argHelper->printf("Error! IGC device context has not been properly created!\n");
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
-    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
 
     populateIgcPlatform(*igcPlatform, hwInfo);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
@@ -111,8 +112,9 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     return OCLOC_SUCCESS;
 }
 
-std::unique_ptr<OsLibrary> OclocIgcFacade::loadIgcLibrary() const {
-    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc(Os::igcDllName)};
+std::unique_ptr<OsLibrary> OclocIgcFacade::loadIgcLibrary(const char *libName) const {
+    auto effectiveLibName = libName ? libName : Os::igcDllName;
+    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc(effectiveLibName)};
 }
 
 CIF::CreateCIFMainFunc_t OclocIgcFacade::loadCreateIgcMainFunction() const {
