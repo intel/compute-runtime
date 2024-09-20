@@ -52,8 +52,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
     static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue);
 
-    InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::MemoryManager &memoryManager, uint32_t partitionCount, uint32_t rootDeviceIndex,
-                    bool regularCmdList, bool atomicDeviceSignalling);
+    InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
 
     NEO::GraphicsAllocation *getDeviceCounterAllocation() const;
     NEO::GraphicsAllocation *getHostCounterAllocation() const;
@@ -95,7 +94,9 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
 
   protected:
-    NEO::MemoryManager &memoryManager;
+    void uploadToTbx(TagNodeBase &node, size_t size);
+
+    NEO::Device &device;
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
     NEO::GraphicsAllocation *externalHostAllocation = nullptr;
@@ -116,6 +117,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     bool regularCmdList = false;
     bool duplicatedHostStorage = false;
     bool atomicDeviceSignalling = false;
+    bool isTbx = false;
 };
 
 namespace InOrderPatchCommandHelpers {
