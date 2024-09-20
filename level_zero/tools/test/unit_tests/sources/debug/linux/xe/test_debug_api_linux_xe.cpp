@@ -1787,13 +1787,23 @@ TEST_F(DebugApiLinuxTestXe, GivenErrorFromIoctlWhenCallingThreadControlThenThrea
 
     EXPECT_EQ(4, handler->ioctlCalled);
 
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
     result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::resume, bitmaskOut, bitmaskSizeOut);
     EXPECT_NE(0, result);
-    EXPECT_EQ(5, handler->ioctlCalled);
+    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
+        EXPECT_EQ(6, handler->ioctlCalled);
+    } else {
+        EXPECT_EQ(5, handler->ioctlCalled);
+    }
 
     result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::stopped, bitmaskOut, bitmaskSizeOut);
     EXPECT_NE(0, result);
-    EXPECT_EQ(9, handler->ioctlCalled);
+    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
+        EXPECT_EQ(10, handler->ioctlCalled);
+    } else {
+        EXPECT_EQ(9, handler->ioctlCalled);
+    }
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenSuccessFromIoctlWhenCallingThreadControlForInterruptAllThenSequenceNumbersProperlyUpdates) {
@@ -1863,8 +1873,15 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForResumeThenProperIoctlsIsC
     auto result = sessionMock->threadControl(threads, 0, MockDebugSessionLinuxXe::ThreadControlCmd::resume, bitmaskOut, bitmaskSizeOut);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    if (l0GfxCoreHelper.threadResumeRequiresUnlock()) {
+        EXPECT_EQ(2, handler->ioctlCalled);
+        EXPECT_EQ(uint32_t(sessionMock->getEuControlCmdUnlock()), handler->euControlArgs[0].euControl.cmd);
+        EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME), handler->euControlArgs[1].euControl.cmd);
+    } else {
+        EXPECT_EQ(1, handler->ioctlCalled);
+        EXPECT_EQ(uint32_t(DRM_XE_EUDEBUG_EU_CONTROL_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+    }
     EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
     auto bitMaskPtrToCheck = handler->euControlArgs[0].euControl.bitmask_ptr;
     EXPECT_NE(0u, bitMaskPtrToCheck);

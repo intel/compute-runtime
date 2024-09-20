@@ -122,6 +122,11 @@ XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenGettingCmdlistUpdat
     EXPECT_EQ(63u, l0GfxCoreHelper.getPlatformCmdListUpdateCapabilities());
 }
 
+XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCallingThreadResumeRequiresUnlockThenReturnFalse) {
+    const auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_FALSE(l0GfxCoreHelper.threadResumeRequiresUnlock());
+}
+
 XE2_HPG_CORETEST_F(L0GfxCoreHelperTestXe2Hpg, GivenXe2HpgWhenCheckingL0HelperForDeletingIpSamplingEntryWithNullValuesThenMapRemainstheSameSize) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     std::map<uint64_t, void *> stallSumIpDataMap;

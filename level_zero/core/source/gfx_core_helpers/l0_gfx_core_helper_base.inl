@@ -79,4 +79,9 @@ std::unique_ptr<NEO::TagAllocatorBase> L0GfxCoreHelperHw<Family>::getInOrderTime
     return std::make_unique<NEO::TagAllocator<TimestampPacketsT>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, size, false, false, deviceBitfield);
 }
 
+template <typename Family>
+bool L0GfxCoreHelperHw<Family>::threadResumeRequiresUnlock() const {
+    return false;
+}
+
 } // namespace L0

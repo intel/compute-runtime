@@ -19,4 +19,8 @@ bool DebugSessionLinuxXe::eventTypeIsAttention(uint16_t eventType) {
     return (eventType == DRM_XE_EUDEBUG_EVENT_EU_ATTENTION);
 }
 
+int DebugSessionLinuxXe::getEuControlCmdUnlock() const {
+    return -1;
+}
+
 } // namespace L0
