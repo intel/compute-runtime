@@ -475,8 +475,8 @@ bool testBindlessBindfulKernel(ze_context_handle_t context, ze_device_handle_t d
 
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
-    createModule(source2, AddressingMode::bindless, context, device, deviceId, revisionId, module, "", false);
-    createModule(source2, AddressingMode::bindful, context, device, deviceId, revisionId, module2, "", false);
+    createModule(source2, AddressingMode::bindless, context, device, deviceId, revisionId, module, "", true);
+    createModule(source2, AddressingMode::bindful, context, device, deviceId, revisionId, module2, "", true);
 
     ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
     ze_kernel_handle_t bindlessKernel = nullptr;
