@@ -2459,3 +2459,16 @@ TEST(IoctlHelperXeTest, givenL3BankWhenGetTopologyDataAndMapThenResultsAreCorrec
     // verify topology data
     EXPECT_EQ(12, topologyData.numL3Banks);
 }
+
+TEST(IoctlHelperXeTest, givenIoctlHelperWhenGettingFenceAddressThenReturnCorrectValue) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+    IoctlHelperXe ioctlHelper{*drm};
+
+    auto fenceAddr = ioctlHelper.getPagingFenceAddress(0, nullptr);
+    EXPECT_EQ(drm->getFenceAddr(0), fenceAddr);
+
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
+    fenceAddr = ioctlHelper.getPagingFenceAddress(0, &osContext);
+    EXPECT_EQ(osContext.getFenceAddr(0), fenceAddr);
+}

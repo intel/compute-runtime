@@ -221,6 +221,8 @@ class IoctlHelper {
     virtual bool allocateInterrupt(uint32_t &outHandle) { return false; }
     virtual bool releaseInterrupt(uint32_t handle) { return false; }
 
+    virtual uint64_t *getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux *osContext);
+
   protected:
     Drm &drm;
     ExternalCtx *externalCtx = nullptr;

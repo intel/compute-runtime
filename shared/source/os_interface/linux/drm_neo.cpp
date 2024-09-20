@@ -1272,11 +1272,11 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
 }
 
 void Drm::waitForBind(uint32_t vmHandleId) {
-    if (pagingFence[vmHandleId] >= fenceVal[vmHandleId]) {
+    if (*ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr) >= fenceVal[vmHandleId]) {
         return;
     }
     auto lock = this->lockBindFenceMutex();
-    auto fenceAddress = castToUint64(&this->pagingFence[vmHandleId]);
+    auto fenceAddress = castToUint64(ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr));
     auto fenceValue = this->fenceVal[vmHandleId];
     lock.unlock();
 
@@ -1401,10 +1401,10 @@ void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindEx
 
     if (drm->isPerContextVMRequired()) {
         auto osContextLinux = static_cast<OsContextLinux *>(osContext);
-        address = castToUint64(osContextLinux->getFenceAddr(vmHandleId));
+        address = castToUint64(ioctlHelper->getPagingFenceAddress(vmHandleId, osContextLinux));
         value = osContextLinux->getNextFenceVal(vmHandleId);
     } else {
-        address = castToUint64(drm->getFenceAddr(vmHandleId));
+        address = castToUint64(ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr));
         value = drm->getNextFenceVal(vmHandleId);
     }
 

@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "drm.h"
@@ -79,4 +80,13 @@ std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
 bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
     return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
 }
+
+uint64_t *IoctlHelper::getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux *osContext) {
+    if (osContext) {
+        return osContext->getFenceAddr(vmHandleId);
+    } else {
+        return drm.getFenceAddr(vmHandleId);
+    }
+}
+
 } // namespace NEO
