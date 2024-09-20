@@ -132,7 +132,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandListAppendLaunchKernel, givenEventsWhenApp
     {
         auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
                                    std::end(commandList->getCmdContainer().getResidencyContainer()),
-                                   event->getPoolAllocation(device));
+                                   event->getAllocation(device));
         EXPECT_NE(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
     }
 }

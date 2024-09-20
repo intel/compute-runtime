@@ -122,7 +122,7 @@ struct Event : _ze_event_handle_t {
 
     inline ze_event_handle_t toHandle() { return this; }
 
-    MOCKABLE_VIRTUAL NEO::GraphicsAllocation *getPoolAllocation(Device *device) const;
+    MOCKABLE_VIRTUAL NEO::GraphicsAllocation *getAllocation(Device *device) const;
 
     void setEventPool(EventPool *eventPool) { this->eventPool = eventPool; }
     EventPool *peekEventPool() { return this->eventPool; }

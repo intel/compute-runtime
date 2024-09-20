@@ -254,7 +254,7 @@ template <typename TagSizeT>
 TaskCountType EventImp<TagSizeT>::getTaskCount(const NEO::CommandStreamReceiver &csr) const {
     auto contextId = csr.getOsContext().getContextId();
 
-    TaskCountType taskCount = getPoolAllocation(this->device) ? getPoolAllocation(this->device)->getTaskCount(contextId) : 0;
+    TaskCountType taskCount = getAllocation(this->device) ? getAllocation(this->device)->getTaskCount(contextId) : 0;
 
     if (inOrderExecInfo) {
         if (inOrderExecInfo->getDeviceCounterAllocation()) {
@@ -355,7 +355,7 @@ ze_result_t EventImp<TagSizeT>::queryStatusEventPackets() {
 template <typename TagSizeT>
 bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &downloadedAllocation, bool &downloadedInOrdedAllocation) {
     if (!downloadedAllocation) {
-        if (auto &alloc = *this->getPoolAllocation(this->device); alloc.isUsedByOsContext(csr.getOsContext().getContextId())) {
+        if (auto &alloc = *this->getAllocation(this->device); alloc.isUsedByOsContext(csr.getOsContext().getContextId())) {
             csr.downloadAllocation(alloc);
             downloadedAllocation = true;
         }
@@ -488,7 +488,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::copyTbxData(uint64_t dstGpuVa, size_t copySize) {
-    auto alloc = getPoolAllocation(device);
+    auto alloc = getAllocation(device);
     if (!alloc) {
         DEBUG_BREAK_IF(true);
         return;

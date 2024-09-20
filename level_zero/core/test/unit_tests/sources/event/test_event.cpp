@@ -3273,7 +3273,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
     constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
     auto result = event->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3357,7 +3357,7 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
         downloadCounter++;
     };
 
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
     ultCsr->makeResident(*eventAllocation);
 
     event->hostSynchronize(1);
@@ -3397,7 +3397,7 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
         downloadAllocationTrack[&gfxAllocation]++;
     };
 
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
     constexpr uint64_t timeout = 0;
     auto result = event->hostSynchronize(timeout);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -3653,7 +3653,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_EQ(0u, ultCsr.writeMemoryParams.chunkWriteCallCount);
 
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
 
     EXPECT_TRUE(eventAllocation->getAubInfo().writeMemoryOnly);
 
@@ -4340,7 +4340,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
         downloadCounter1++;
     };
 
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
     ultCsr0->makeResident(*eventAllocation);
     rootCsr->makeResident(*eventAllocation);
 

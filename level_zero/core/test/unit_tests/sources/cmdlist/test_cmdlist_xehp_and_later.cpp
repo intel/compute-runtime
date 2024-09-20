@@ -2564,7 +2564,7 @@ HWTEST2_F(CommandListCreate, givenAppendSignalEventWhenSkipAddToResidencyTrueThe
     ASSERT_NE(nullptr, event.get());
 
     auto &residencyContainer = commandContainer.getResidencyContainer();
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
 
     void *pipeControlBuffer = nullptr;
 
@@ -2645,7 +2645,7 @@ HWTEST2_F(CommandListCreate,
     ASSERT_NE(nullptr, event.get());
 
     auto &residencyContainer = commandContainer.getResidencyContainer();
-    auto eventAllocation = event->getPoolAllocation(device);
+    auto eventAllocation = event->getAllocation(device);
     auto eventBaseAddress = event->getGpuAddress(device);
 
     CommandToPatchContainer outStoreRegMemCmdList;
@@ -3115,7 +3115,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_NE(nullptr, event.get());
 
     auto eventBaseAddress = event->getGpuAddress(device);
-    auto eventAlloaction = event->getPoolAllocation(device);
+    auto eventAlloaction = event->getAllocation(device);
 
     uint8_t computeWalkerHostBuffer[512];
     uint8_t payloadHostBuffer[256];

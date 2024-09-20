@@ -1001,7 +1001,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     {
         auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
                                    std::end(commandList->getCmdContainer().getResidencyContainer()),
-                                   event->getPoolAllocation(device));
+                                   event->getAllocation(device));
         EXPECT_NE(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
     }
 }
@@ -1663,7 +1663,7 @@ HWTEST2_F(CommandListAppendLaunchKernelMockModule,
     ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
     std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
 
-    auto eventAllocation = eventObject->getPoolAllocation(device);
+    auto eventAllocation = eventObject->getAllocation(device);
     ASSERT_NE(nullptr, eventAllocation);
 
     ze_group_count_t groupCount{1, 1, 1};

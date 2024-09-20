@@ -565,7 +565,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
 
     event->resetPackets(false);
     event->disableHostCaching(!isImmediateType());
-    commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+    commandContainer.addToResidencyContainer(event->getAllocation(this->device));
 
     // default state of event is single packet, handle case when reset is used 1st, launchkernel 2nd - just reset all packets then, use max
     bool useMaxPackets = event->isEventTimestampFlagSet() || (event->getPacketsInUse() < this->partitionCount);
@@ -2260,7 +2260,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation) {
-    if (event == nullptr || !event->getPoolAllocation(this->device)) {
+    if (event == nullptr || !event->getAllocation(this->device)) {
         return;
     }
     if (event->isEventTimestampFlagSet()) {
@@ -2268,7 +2268,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(Event *ev
     } else {
         event->resetKernelCountAndPacketUsedCount();
         if (!skipAddingEventToResidency) {
-            commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+            commandContainer.addToResidencyContainer(event->getAllocation(this->device));
         }
 
         event->setPacketsInUse(copyOperation ? 1 : this->partitionCount);
@@ -2281,7 +2281,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
     if (!event->isEventTimestampFlagSet()) {
         return;
     }
-    commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+    commandContainer.addToResidencyContainer(event->getAllocation(this->device));
 
     if (beforeWalker) {
         event->resetKernelCountAndPacketUsedCount();
@@ -2468,7 +2468,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+    commandContainer.addToResidencyContainer(event->getAllocation(this->device));
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t callId = 0;
     if (NEO::debugManager.flags.EnableSWTags.get()) {
@@ -2669,7 +2669,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
 
         if (!skipAddingWaitEventsToResidency) {
-            commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+            commandContainer.addToResidencyContainer(event->getAllocation(this->device));
         }
 
         appendWaitOnSingleEvent(event, outWaitCmds, relaxedOrderingAllowed, CommandToPatch::WaitEventSemaphoreWait);
@@ -2854,7 +2854,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
         }
 
         if (!skipAddingEventToResidency) {
-            commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+            commandContainer.addToResidencyContainer(event->getAllocation(this->device));
         }
         bool workloadPartition = isTimestampEventForMultiTile(event);
 
@@ -2971,7 +2971,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
 
     for (uint32_t i = 0u; i < numEvents; ++i) {
         auto event = Event::fromHandle(phEvents[i]);
-        commandContainer.addToResidencyContainer(event->getPoolAllocation(this->device));
+        commandContainer.addToResidencyContainer(event->getAllocation(this->device));
         timestampsData[i].address = event->getGpuAddress(this->device);
         timestampsData[i].packetsInUse = event->getPacketsInUse();
         timestampsData[i].timestampSizeInDw = event->getTimestampSizeInDw();

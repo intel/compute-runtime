@@ -218,7 +218,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             compactEvent = event;
             event = nullptr;
         } else {
-            NEO::GraphicsAllocation *eventPoolAlloc = event->getPoolAllocation(this->device);
+            NEO::GraphicsAllocation *eventPoolAlloc = event->getAllocation(this->device);
 
             if (eventPoolAlloc) {
                 if (!launchParams.omitAddingEventResidency) {

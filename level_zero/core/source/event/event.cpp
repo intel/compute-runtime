@@ -407,11 +407,19 @@ void Event::disableImplicitCounterBasedMode() {
 }
 
 uint64_t Event::getGpuAddress(Device *device) const {
-    return getPoolAllocation(device)->getGpuAddress() + this->eventPoolOffset;
+    return getAllocation(device)->getGpuAddress() + this->eventPoolOffset;
 }
 
-NEO::GraphicsAllocation *Event::getPoolAllocation(Device *device) const {
-    return this->eventPoolAllocation ? this->eventPoolAllocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex()) : nullptr;
+NEO::GraphicsAllocation *Event::getAllocation(Device *device) const {
+    auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
+
+    if (inOrderTimestampNode) {
+        return inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
+    } else if (eventPoolAllocation) {
+        return eventPoolAllocation->getGraphicsAllocation(rootDeviceIndex);
+    }
+
+    return nullptr;
 }
 
 void Event::setGpuStartTimestamp() {

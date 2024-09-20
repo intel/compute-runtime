@@ -134,7 +134,7 @@ class MockEvent : public ::L0::Event {
         this->maxKernelCount = EventPacketsCount::maxKernelSplit;
         this->maxPacketCount = EventPacketsCount::eventPackets;
     }
-    NEO::GraphicsAllocation *getPoolAllocation(L0::Device *device) const override {
+    NEO::GraphicsAllocation *getAllocation(L0::Device *device) const override {
         return mockAllocation.get();
     }
 

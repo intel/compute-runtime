@@ -6545,6 +6545,22 @@ struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListTests {
     }
 };
 
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAskingForAllocationOrGpuAddressThenReturnNodeAllocation, MatchAny) {
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_NE(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation(), events[0]->eventPoolAllocation);
+    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode->getBaseGraphicsAllocation());
+    EXPECT_NE(nullptr, events[0]->eventPoolAllocation);
+
+    EXPECT_EQ(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), events[0]->getAllocation(device));
+    EXPECT_EQ(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0)->getGpuAddress(), events[0]->getGpuAddress(device));
+    EXPECT_EQ(events[0]->getGpuAddress(device) + events[0]->getCompletionFieldOffset(), events[0]->getCompletionFieldGpuAddress(device));
+}
+
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispatchingThenAssignNewNode, MatchAny) {
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();

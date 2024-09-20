@@ -25,6 +25,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     struct FixtureMockEvent : public EventImp<uint32_t> {
         using EventImp<uint32_t>::Event::counterBasedMode;
         using EventImp<uint32_t>::Event::counterBasedFlags;
+        using EventImp<uint32_t>::eventPoolAllocation;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
         using EventImp<uint32_t>::inOrderExecSignalValue;
