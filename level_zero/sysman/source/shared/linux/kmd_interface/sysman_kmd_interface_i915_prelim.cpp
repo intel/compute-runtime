@@ -166,7 +166,7 @@ void SysmanKmdInterfaceI915Prelim::getDriverVersion(char (&driverVersion)[ZES_ST
     ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read driver version from %s and returning error:0x%x \n", __FUNCTION__, agamaVersionFile.c_str(), result);
-        std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(driverVersion, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
         std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
     }

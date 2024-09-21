@@ -1157,15 +1157,15 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     zes_mem_bandwidth_t memBandwidth;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getMemoryBandwidth(&memBandwidth, pLinuxSysmanImp, subdeviceId));
 
-    uint64_t outputReadCounter = PACK_INTO_64BIT(readCounterUpper, readCounterLower);
+    uint64_t outputReadCounter = packInto64Bit(readCounterUpper, readCounterLower);
     outputReadCounter = (outputReadCounter * transactionSize) / microFactor;
     EXPECT_EQ(outputReadCounter, memBandwidth.readCounter);
 
-    uint64_t outputWriteCounter = PACK_INTO_64BIT(writeCounterUpper, writeCounterLower);
+    uint64_t outputWriteCounter = packInto64Bit(writeCounterUpper, writeCounterLower);
     outputWriteCounter = (outputWriteCounter * transactionSize) / microFactor;
     EXPECT_EQ(outputWriteCounter, memBandwidth.writeCounter);
 
-    uint64_t outputTimestamp = PACK_INTO_64BIT(timeStampUpper, timeStampLower);
+    uint64_t outputTimestamp = packInto64Bit(timeStampUpper, timeStampLower);
     EXPECT_EQ(outputTimestamp, memBandwidth.timestamp);
 
     uint64_t outputMaxBandwidth = vramBandwidth;

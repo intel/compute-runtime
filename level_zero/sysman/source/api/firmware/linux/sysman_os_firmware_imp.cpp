@@ -56,7 +56,7 @@ void OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedFwTypes,
 
 void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {
     if (ZE_RESULT_SUCCESS != getFirmwareVersion(osFwType, pProperties)) {
-        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE - 1);
+        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.data(), ZES_STRING_PROPERTY_SIZE - 1);
     }
     pProperties->canControl = true; // Assuming that user has permission to flash the firmware
 }

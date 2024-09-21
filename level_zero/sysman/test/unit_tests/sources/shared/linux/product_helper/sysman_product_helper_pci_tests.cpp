@@ -227,14 +227,14 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     zes_pci_stats_t stats;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 
-    uint64_t mockRxCounter = PACK_INTO_64BIT(mockRxCounterMsb, mockRxCounterLsb);
+    uint64_t mockRxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
     EXPECT_EQ(mockRxCounter, stats.rxCounter);
 
-    uint64_t mockTxCounter = PACK_INTO_64BIT(mockTxCounterMsb, mockTxCounterLsb);
+    uint64_t mockTxCounter = packInto64Bit(mockTxCounterMsb, mockTxCounterLsb);
     EXPECT_EQ(mockTxCounter, stats.txCounter);
 
-    uint64_t mockRxPacketCounter = PACK_INTO_64BIT(mockRxPacketCounterMsb, mockRxPacketCounterLsb);
-    uint64_t mockTxPacketCounter = PACK_INTO_64BIT(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
+    uint64_t mockRxPacketCounter = packInto64Bit(mockRxPacketCounterMsb, mockRxPacketCounterLsb);
+    uint64_t mockTxPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
     EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
 }
 

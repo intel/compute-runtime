@@ -305,7 +305,7 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    uint64_t rxCounter = PACK_INTO_64BIT(rxCounterMsb, rxCounterLsb);
+    uint64_t rxCounter = packInto64Bit(rxCounterMsb, rxCounterLsb);
 
     uint32_t txCounterLsb = 0;
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "reg_PCIESS_tx_bytecount_lsb", telemOffset, txCounterLsb)) {
@@ -317,7 +317,7 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    uint64_t txCounter = PACK_INTO_64BIT(txCounterMsb, txCounterLsb);
+    uint64_t txCounter = packInto64Bit(txCounterMsb, txCounterLsb);
 
     uint32_t rxPacketCounterLsb = 0;
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "reg_PCIESS_rx_pktcount_lsb", telemOffset, rxPacketCounterLsb)) {
@@ -329,7 +329,7 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    uint64_t rxPacketCounter = PACK_INTO_64BIT(rxPacketCounterMsb, rxPacketCounterLsb);
+    uint64_t rxPacketCounter = packInto64Bit(rxPacketCounterMsb, rxPacketCounterLsb);
 
     uint32_t txPacketCounterLsb = 0;
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "reg_PCIESS_tx_pktcount_lsb", telemOffset, txPacketCounterLsb)) {
@@ -341,7 +341,7 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    uint64_t txPacketCounter = PACK_INTO_64BIT(txPacketCounterMsb, txPacketCounterLsb);
+    uint64_t txPacketCounter = packInto64Bit(txPacketCounterMsb, txPacketCounterLsb);
 
     pStats->speed.gen = -1;
     pStats->speed.width = -1;
@@ -493,7 +493,7 @@ static ze_result_t getMemoryBandwidthTimestamp(const std::map<std::string, uint6
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    pBandwidth->timestamp = PACK_INTO_64BIT(timeStampH, timeStampL);
+    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -514,7 +514,7 @@ static ze_result_t getCounterValues(const std::vector<std::pair<const std::strin
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
 
-        totalCounter += PACK_INTO_64BIT(regH, regL);
+        totalCounter += packInto64Bit(regH, regL);
     }
 
     return ZE_RESULT_SUCCESS;

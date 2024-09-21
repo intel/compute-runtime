@@ -118,11 +118,11 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
     pOsGlobalOperations->getBrandName(pProperties->brandName);
     memset(pProperties->boardNumber, 0, ZES_STRING_PROPERTY_SIZE);
     if (!pOsGlobalOperations->getBoardNumber(pProperties->boardNumber)) {
-        memcpy_s(pProperties->boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+        memcpy_s(pProperties->boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.data(), unknown.length() + 1);
     }
     memset(pProperties->serialNumber, 0, ZES_STRING_PROPERTY_SIZE);
     if (!pOsGlobalOperations->getSerialNumber(pProperties->serialNumber)) {
-        memcpy_s(pProperties->serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+        memcpy_s(pProperties->serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.data(), unknown.length() + 1);
     }
 
     return ZE_RESULT_SUCCESS;

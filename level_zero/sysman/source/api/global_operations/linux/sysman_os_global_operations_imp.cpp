@@ -119,13 +119,13 @@ void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERT
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(brandName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
-        std::strncpy(brandName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(brandName, vendorIntel.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
-        std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(brandName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     }
 }
 
@@ -147,13 +147,13 @@ void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPE
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(vendorName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
-        std::strncpy(vendorName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(vendorName, vendorIntel.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
-        std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(vendorName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     }
 }
 

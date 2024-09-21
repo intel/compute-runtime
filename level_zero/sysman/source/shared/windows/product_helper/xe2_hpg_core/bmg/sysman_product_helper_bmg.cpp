@@ -18,8 +18,6 @@
 namespace L0 {
 namespace Sysman {
 
-#define PACK_INTO_64BIT(valueH, valueL) ((static_cast<uint64_t>(valueH) << 32) | static_cast<uint64_t>(valueL))
-
 constexpr static auto gfxProduct = IGFX_BMG;
 
 static std::map<unsigned long, std::map<std::string, uint32_t>> guidToKeyOffsetMap = {
@@ -396,7 +394,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
                               "readValue call failed for register key rx_byte_count_msb\n");
         return status;
     }
-    pStats->rxCounter = PACK_INTO_64BIT(rxCounterH, rxCounterL);
+    pStats->rxCounter = packInto64Bit(rxCounterH, rxCounterL);
 
     // tx counter calculation
     uint32_t txCounterL = 0;
@@ -414,7 +412,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
                               "readValue call failed for register key tx_byte_count_msb\n");
         return status;
     }
-    pStats->txCounter = PACK_INTO_64BIT(txCounterH, txCounterL);
+    pStats->txCounter = packInto64Bit(txCounterH, txCounterL);
 
     // packet counter calculation
     uint32_t rxPacketCounterL = 0;
@@ -449,7 +447,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
         return status;
     }
 
-    pStats->packetCounter = PACK_INTO_64BIT(txPacketCounterH, txPacketCounterL) + PACK_INTO_64BIT(rxPacketCounterH, rxPacketCounterL);
+    pStats->packetCounter = packInto64Bit(txPacketCounterH, txPacketCounterL) + packInto64Bit(rxPacketCounterH, rxPacketCounterL);
     pStats->timestamp = SysmanDevice::getSysmanTimestamp();
 
     return status;
@@ -524,7 +522,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
                     return status;
                 }
 
-                uint64_t readCounter = PACK_INTO_64BIT(readRegisterH, readRegisterL);
+                uint64_t readCounter = packInto64Bit(readRegisterH, readRegisterL);
 
                 pBandwidth->readCounter += readCounter;
             }
@@ -546,7 +544,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
                     return status;
                 }
 
-                uint64_t writeCounter = PACK_INTO_64BIT(writeRegisterH, writeRegisterL);
+                uint64_t writeCounter = packInto64Bit(writeRegisterH, writeRegisterL);
 
                 pBandwidth->writeCounter += writeCounter;
             }
@@ -581,7 +579,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
         return status;
     }
 
-    pBandwidth->timestamp = PACK_INTO_64BIT(timeStampH, timeStampL);
+    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL);
 
     return status;
 }
