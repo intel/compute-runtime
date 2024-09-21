@@ -146,8 +146,7 @@ LNLTEST_F(LnlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
             allocationType == AllocationType::svmZeroCopy ||
             allocationType == AllocationType::internalHostMemory ||
             allocationType == AllocationType::commandBuffer ||
-            allocationType == AllocationType::printfSurface ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
+            allocationType == AllocationType::printfSurface) {
             EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
         } else {
             EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
