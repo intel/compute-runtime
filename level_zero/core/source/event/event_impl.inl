@@ -278,6 +278,9 @@ void EventImp<TagSizeT>::downloadAllTbxAllocations() {
     }
 
     for (auto &engine : this->device->getNEODevice()->getMemoryManager()->getRegisteredEngines()[this->device->getRootDeviceIndex()]) {
+        if (!engine.commandStreamReceiver->isInitialized()) {
+            continue;
+        }
         auto taskCount = getTaskCount(*engine.commandStreamReceiver);
 
         if (taskCount != NEO::GraphicsAllocation::objectNotUsed) {
@@ -380,12 +383,18 @@ bool EventImp<TagSizeT>::tbxDownload(NEO::CommandStreamReceiver &csr, bool &down
 template <typename TagSizeT>
 void EventImp<TagSizeT>::tbxDownload(NEO::Device &device, bool &downloadedAllocation, bool &downloadedInOrdedAllocation) {
     for (auto const &engine : device.getAllEngines()) {
+        if (!engine.commandStreamReceiver->isInitialized()) {
+            continue;
+        }
         if (!tbxDownload(*engine.commandStreamReceiver, downloadedAllocation, downloadedInOrdedAllocation)) {
             break;
         }
     }
 
     for (auto &csr : device.getSecondaryCsrs()) {
+        if (!csr->isInitialized()) {
+            continue;
+        }
         if (!tbxDownload(*csr, downloadedAllocation, downloadedInOrdedAllocation)) {
             break;
         }

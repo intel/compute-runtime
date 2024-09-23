@@ -3268,6 +3268,7 @@ HWTEST_F(EventTests, GivenEventWhenHostSynchronizeCalledThenExpectDownloadEventA
     };
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
+    ultCsr->initializeResources(false);
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
         downloadAllocationTrack[&gfxAllocation]++;
@@ -3344,13 +3345,13 @@ HWTEST_F(EventContextGroupTests, givenSecondaryCsrWhenDownloadingAllocationThenU
     *eventAddress = Event::STATE_INITIAL;
 
     auto ultCsr = new UltCommandStreamReceiver<FamilyType>(*neoDevice->getExecutionEnvironment(), 0, 1);
-
     neoDevice->secondaryCsrs.clear();
     neoDevice->secondaryCsrs.push_back(std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(ultCsr));
 
     OsContext osContext(0, static_cast<uint32_t>(neoDevice->getAllEngines().size()), EngineDescriptorHelper::getDefaultDescriptor());
 
     ultCsr->setupContext(osContext);
+    ultCsr->initializeResources(false);
 
     uint32_t downloadCounter = 0;
     ultCsr->downloadAllocationImpl = [&downloadCounter](GraphicsAllocation &gfxAllocation) {
@@ -3390,6 +3391,7 @@ HWTEST_F(EventTests, GivenEventUsedOnNonDefaultCsrWhenHostSynchronizeCalledThenA
     EXPECT_LT(1u, neoDevice->getAllEngines().size());
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(neoDevice->getAllEngines()[1].commandStreamReceiver);
+    ultCsr->initializeResources(false);
     EXPECT_NE(event->csrs[0], ultCsr);
 
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
@@ -3437,6 +3439,8 @@ HWTEST_F(EventTests, givenInOrderEventWhenHostSynchronizeIsCalledThenAllocationI
     *eventAddress = Event::STATE_SIGNALED;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
+    ultCsr->initializeResources(false);
+
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
         downloadAllocationTrack[&gfxAllocation]++;
@@ -3537,6 +3541,7 @@ HWTEST_F(EventTests, givenInOrderEventWithHostAllocWhenHostSynchronizeIsCalledTh
     *eventAddress = Event::STATE_SIGNALED;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(event->csrs[0]);
+    ultCsr->initializeResources(false);
     VariableBackup<std::function<void(GraphicsAllocation & gfxAllocation)>> backupCsrDownloadImpl(&ultCsr->downloadAllocationImpl);
     ultCsr->downloadAllocationImpl = [&downloadAllocationTrack](GraphicsAllocation &gfxAllocation) {
         downloadAllocationTrack[&gfxAllocation]++;
@@ -4305,10 +4310,18 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     auto rootCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(rootDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice0->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    auto ultCsr2 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getInternalEngine().commandStreamReceiver);
+
+    rootCsr->initializeResources(false);
+    ultCsr0->initializeResources(false);
+    ultCsr1->initializeResources(false);
 
     rootCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+    ultCsr2->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    ultCsr2->resourcesInitialized = false;
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = 1;
@@ -4329,6 +4342,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     uint32_t rootDownloadCounter = 0;
     uint32_t downloadCounter0 = 0;
     uint32_t downloadCounter1 = 0;
+    uint32_t downloadCounter2 = 0;
 
     rootCsr->downloadAllocationImpl = [&rootDownloadCounter](GraphicsAllocation &gfxAllocation) {
         rootDownloadCounter++;
@@ -4339,9 +4353,13 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     ultCsr1->downloadAllocationImpl = [&downloadCounter1](GraphicsAllocation &gfxAllocation) {
         downloadCounter1++;
     };
+    ultCsr2->downloadAllocationImpl = [&downloadCounter2](GraphicsAllocation &gfxAllocation) {
+        downloadCounter2++;
+    };
 
     auto eventAllocation = event->getAllocation(device);
     ultCsr0->makeResident(*eventAllocation);
+    ultCsr2->makeResident(*eventAllocation);
     rootCsr->makeResident(*eventAllocation);
 
     auto hostAddress = static_cast<uint64_t *>(event->getCompletionFieldHostAddress());
@@ -4361,6 +4379,9 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventUsedCreatedOnSubDeviceBu
     EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
     EXPECT_EQ(0u, downloadCounter1);
 
+    EXPECT_EQ(0u, ultCsr2->downloadAllocationsCalledCount);
+    EXPECT_EQ(0u, downloadCounter2);
+
     event->destroy();
 }
 
@@ -4378,6 +4399,9 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
 
     auto ultCsr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice0->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(subDevice1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr0->initializeResources(false);
+    ultCsr1->initializeResources(false);
 
     ultCsr0->commandStreamReceiverType = CommandStreamReceiverType::tbx;
     ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;
