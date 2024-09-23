@@ -79,6 +79,8 @@ void selectQueueMode(ze_command_queue_desc_t &desc, bool useSync);
 
 uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength);
 
+void getErrorMax(int argc, char *argv[]);
+
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName, const std::string &currentTest);
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName);
@@ -224,6 +226,8 @@ inline bool validate(const void *expected, const void *tested, size_t len) {
     return resultsAreOk;
 }
 
+extern uint32_t overrideErrorMax;
+
 template <typename T>
 inline bool validateToValue(const T expected, const void *tested, size_t len) {
     bool resultsAreOk = true;
@@ -232,7 +236,7 @@ inline bool validateToValue(const T expected, const void *tested, size_t len) {
     const T *testedT = reinterpret_cast<const T *>(tested);
     uint32_t errorsCount = 0;
     uint32_t errorsMax = verbose ? 20 : 1;
-
+    errorsMax = overrideErrorMax > 0 ? overrideErrorMax : errorsMax;
     while (offset < len) {
         if (expected != testedT[offset]) {
             resultsAreOk = false;

@@ -27,6 +27,7 @@ struct LoadedDriverExtensions {
 static LoadedDriverExtensions driverExtensions;
 
 bool verbose;
+uint32_t overrideErrorMax = 0;
 
 bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName) {
     char **arg = &argv[1];
@@ -212,6 +213,10 @@ uint32_t getBufferLength(int argc, char *argv[], uint32_t defaultLength) {
     }
 
     return length;
+}
+
+void getErrorMax(int argc, char *argv[]) {
+    overrideErrorMax = getParamValue(argc, argv, "-em", "--errorMax", 0);
 }
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName, const std::string &currentTest) {
