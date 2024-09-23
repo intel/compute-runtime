@@ -86,3 +86,18 @@ struct IsXeLpg {
         return IsXeHpgCore::isMatched<productFamily>() && !IsDG2::isMatched<productFamily>();
     }
 };
+
+struct IsStatefulBufferPreferredForProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsGen12LP::isMatched<productFamily>() ||
+               IsXeHpgCore::isMatched<productFamily>();
+    }
+};
+
+struct IsStatelessBufferPreferredForProduct {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return !IsStatefulBufferPreferredForProduct::isMatched<productFamily>();
+    }
+};
