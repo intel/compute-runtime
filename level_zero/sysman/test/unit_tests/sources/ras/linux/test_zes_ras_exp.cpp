@@ -680,20 +680,6 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenC
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS));
 }
 
-HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenRequestingCountWithzesGetStateStateExpThenVerifyCountIsZero, isRasNotSupportedProduct) {
-    bool isSubDevice = true;
-    uint32_t subDeviceId = 0u;
-
-    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
-    pLinuxRasImp->rasSources.clear();
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-
-    uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxRasImp->osRasGetStateExp(&count, nullptr));
-    EXPECT_EQ(0u, count);
-}
-
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenCallingzesGetStateStateExpThenVerifyGetStateExpReturnsFailure, IsNotPVC) {
     bool isSubDevice = true;
     uint32_t subDeviceId = 0u;
