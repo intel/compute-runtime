@@ -26,7 +26,7 @@ DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(const RootDeviceE
 
 DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) {
     auto &engines = device->getAllEngines();
     MemoryOperationsStatus result = MemoryOperationsStatus::success;
     for (const auto &engine : engines) {
@@ -43,7 +43,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::lock(Device *device, Arra
     for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
         (*gfxAllocation)->setLockedMemory(true);
     }
-    return makeResident(device, gfxAllocations);
+    return makeResident(device, gfxAllocations, false);
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {

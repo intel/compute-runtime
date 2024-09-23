@@ -36,9 +36,9 @@ class WddmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
 
     ~WddmMemoryOperationsHandlerWithAubDump() override = default;
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
-        aubMemoryOperationsHandler->makeResident(device, gfxAllocations);
-        return BaseOperationsHandler::makeResident(device, gfxAllocations);
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
+        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, isDummyExecNeeded);
+        return BaseOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded);
     }
 
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {

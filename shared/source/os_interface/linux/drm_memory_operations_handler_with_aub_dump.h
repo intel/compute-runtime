@@ -36,13 +36,13 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
 
     ~DrmMemoryOperationsHandlerWithAubDump() override = default;
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
-        aubMemoryOperationsHandler->makeResident(device, gfxAllocations);
-        return BaseOperationsHandler::makeResident(device, gfxAllocations);
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
+        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, isDummyExecNeeded);
+        return BaseOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded);
     }
 
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
-        aubMemoryOperationsHandler->makeResident(device, gfxAllocations);
+        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, false);
         return BaseOperationsHandler::lock(device, gfxAllocations);
     }
 

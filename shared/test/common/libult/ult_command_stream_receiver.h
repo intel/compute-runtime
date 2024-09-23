@@ -534,6 +534,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         drainPagingFenceQueueCalled++;
         BaseClass::drainPagingFenceQueue();
     }
+    SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        flushHandlerCalled++;
+        return BaseClass::flushHandler(batchBuffer, allocationsForResidency);
+    }
 
     std::vector<std::string> aubCommentMessages;
 
@@ -564,6 +568,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t pollForCompletionCalled = 0;
     uint32_t initializeDeviceWithFirstSubmissionCalled = 0;
     uint32_t drainPagingFenceQueueCalled = 0;
+    uint32_t flushHandlerCalled = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;

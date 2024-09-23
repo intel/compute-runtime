@@ -23,7 +23,7 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
 
     static std::unique_ptr<WddmMemoryOperationsHandler> create(Wddm *wddm, RootDeviceEnvironment *rootDeviceEnvironment, bool withAubDump);
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 
@@ -31,7 +31,7 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
         return MemoryOperationsStatus::unsupported;
     }
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
-        return makeResident(nullptr, gfxAllocations);
+        return makeResident(nullptr, gfxAllocations, false);
     }
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
         return evict(nullptr, gfxAllocation);
