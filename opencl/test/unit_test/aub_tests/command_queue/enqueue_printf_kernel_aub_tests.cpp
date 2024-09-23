@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class AUBPrintfKernelFixture : public AUBFixture,
         HelloWorldKernelFixture::tearDown();
         AUBFixture::tearDown();
     }
-    const char *programFile = "printf";
+    const char *programFile = "simple_kernels";
     const char *kernelName = "test_printf_number";
 };
 

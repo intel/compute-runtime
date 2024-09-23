@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,7 +178,7 @@ class ProgramNonUniformTest : public ContextFixture,
 TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
@@ -219,7 +219,7 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
 TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
@@ -258,7 +258,7 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
 }
 
 TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInvalidWorkGroupSizeIsReturned) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 

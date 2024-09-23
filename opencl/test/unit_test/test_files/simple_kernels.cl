@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ __kernel void simple_kernel_4() {
 }
 
 __kernel void simple_kernel_5(__global uint *dst) {
-    //first uint holds the total work item count
+    // first uint holds the total work item count
     atomic_inc(dst);
     uint groupIdX = get_group_id(0);
     uint groupIdY = get_group_id(1);
@@ -57,7 +57,7 @@ __kernel void simple_kernel_5(__global uint *dst) {
     uint groupCountZ = get_num_groups(2);
 
     __global uint *groupCounters = dst + 1;
-    //store current group position in 3D array
+    // store current group position in 3D array
     uint destination = groupIdZ * groupCountY * groupCountX + groupIdY * groupCountX + groupIdX;
     atomic_inc(&groupCounters[destination]);
 }
@@ -89,7 +89,7 @@ __kernel void simple_kernel_6(__global uint *dst, __constant uint2 *src, uint sc
 
 typedef long16 TYPE;
 __attribute__((reqd_work_group_size(32, 1, 1))) // force LWS to 32
-__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
+__attribute__((intel_reqd_sub_group_size(16)))  // force SIMD to 16
 __kernel void
 simple_kernel_7(__global int *resIdx, global TYPE *src, global TYPE *dst) {
     size_t lid = get_local_id(0);
@@ -127,4 +127,38 @@ __kernel void simple_kernel_8(__global uint *dst, uint incrementationsCount) {
 __kernel void simple_kernel_9(__global uint *dst) {
     uint offset = get_max_sub_group_size() * get_sub_group_id();
     dst[get_sub_group_local_id() + offset] = get_local_id(0);
+}
+
+__kernel void constant_kernel(__global float *out, __constant float *tmpF, __constant int *tmpI) {
+    int tid = get_global_id(0);
+
+    float ftmp = tmpF[tid];
+    float Itmp = tmpI[tid];
+    out[tid] = ftmp * Itmp;
+}
+
+__kernel void test_get_global_size(__global int *dst) {
+    int tid = get_global_id(0);
+    int n = get_global_size(0);
+
+    dst[tid] = n;
+};
+
+__kernel void test_get_local_size(__global int *dst) {
+    int tid = get_global_id(0);
+    int n = get_local_size(0);
+
+    dst[tid] = n;
+};
+
+__kernel void test_printf() {
+    printf("OpenCL\n");
+}
+
+__kernel void test_printf_number(__global uint *in) {
+    printf("in[0] = %d\n", in[0]);
+}
+__kernel void simple_arg_int(int src, __global int *dst) {
+    int id = (int)get_global_id(0);
+    dst[id] = src;
 }

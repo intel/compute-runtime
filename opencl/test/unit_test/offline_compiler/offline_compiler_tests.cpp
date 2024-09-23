@@ -3255,16 +3255,20 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
-    std::vector<std::string> argvLlvm = {"ocloc", "-llvm_input", "-file", clFiles + "binary_with_zeroes", "-qq",
+    std::vector<std::string> argvLlvm = {"ocloc", "-llvm_input", "-file", "binary_with_zeroes", "-qq",
                                          "-device", gEnvironment->devicePrefix.c_str()};
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+    uint8_t binaryWithZeros[64]{};
+    Source source{binaryWithZeros, sizeof(binaryWithZeros), "binary_with_zeroes"};
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
     mockOfflineCompiler->initialize(argvLlvm.size(), argvLlvm);
     mockOfflineCompiler->build();
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 
-    std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", clFiles + "binary_with_zeroes", "-qq",
+    std::vector<std::string> argvSpirV = {"ocloc", "-spirv_input", "-file", "binary_with_zeroes", "-qq",
                                           "-device", gEnvironment->devicePrefix.c_str()};
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+    static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(source);
     mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV);
     mockOfflineCompiler->build();
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
@@ -3906,27 +3910,6 @@ __kernel void shouldfail(global ushort *dst) {
     }
 }
 
-TEST(OfflineCompilerTest, givenInputOptionsFileWithSpecialCharsWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSet) {
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-
-    ASSERT_TRUE(fileExists(clFiles + "simple_kernels_opts_options.txt"));
-
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-q",
-        "-file",
-        clFiles + "simple_kernels_opts.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str()};
-
-    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto &options = mockOfflineCompiler->options;
-    EXPECT_STREQ(options.c_str(), "-cl-opt-disable -DDEF_WAS_SPECIFIED=1 -DARGS=\", const __global int *arg1, float arg2, const __global int *arg3, float arg4\"");
-}
-
 TEST(OfflineCompilerTest, givenInputOptionsAndOclockOptionsFileWithForceStosOptWhenOfflineCompilerIsInitializedThenCompilerOptionGreaterThan4gbBuffersRequiredIsNotApplied) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
@@ -4198,7 +4181,7 @@ TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitialized
  *
  */
 
--cl-opt-disable
+-cl-opt-disable -DDEF_WAS_SPECIFIED=1 -DARGS=", const __global int *arg1, float arg2, const __global int *arg3, float arg4"
 )===";
     Source optionsSource{reinterpret_cast<const uint8_t *>(options), sizeof(options), "emptykernel_options.txt"};
     static_cast<MockOclocArgHelper *>(mockOfflineCompiler->argHelper)->inputs.push_back(optionsSource);
@@ -4213,7 +4196,7 @@ TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitialized
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(OCLOC_SUCCESS, retVal);
-    EXPECT_STREQ("-cl-opt-disable", mockOfflineCompiler->options.c_str());
+    EXPECT_STREQ("-cl-opt-disable -DDEF_WAS_SPECIFIED=1 -DARGS=\", const __global int *arg1, float arg2, const __global int *arg3, float arg4\"", mockOfflineCompiler->options.c_str());
 }
 
 TEST(OfflineCompilerTest, givenHexadecimalRevisionIdWhenCompilerIsInitializedThenPassItToHwInfo) {
@@ -4496,11 +4479,13 @@ TEST(OclocCompile, givenPackedDeviceBinaryFormatWhenGeneratingElfBinaryThenItIsR
 TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
     MockOfflineCompiler ocloc;
 
+    Source source{reinterpret_cast<const uint8_t *>(spirvMagic.data()), spirvMagic.size(), "some_file.spv"};
+    static_cast<MockOclocArgHelper *>(ocloc.argHelper)->inputs.push_back(source);
     std::vector<std::string> argv = {
         "ocloc",
         "-q",
         "-file",
-        clFiles + "binary_with_zeroes",
+        "some_file.spv",
         "-out_dir",
         "offline_compiler_test",
         "-device",
@@ -4511,9 +4496,9 @@ TEST(OclocCompile, givenSpirvInputThenDontGenerateSpirvFile) {
     ASSERT_EQ(0, retVal);
     retVal = ocloc.build();
     EXPECT_EQ(0, retVal);
-    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "gen"));
-    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "bin"));
-    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/binary_with_zeroes", "spv"));
+    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/some_file", "gen"));
+    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/some_file", "bin"));
+    EXPECT_FALSE(compilerOutputExists("offline_compiler_test/some_file", "spv"));
 }
 
 TEST(OclocCompile, givenFormatFlagWithKnownFormatPassedThenEnforceSpecifiedFormatAccordingly) {

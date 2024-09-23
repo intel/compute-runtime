@@ -1427,7 +1427,7 @@ class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
 using PatchTokenTests = Test<PatchTokenFromBinaryTest>;
 
 TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
-    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1436,7 +1436,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto pKernelInfo = pProgram->getKernelInfo("test", rootDeviceIndex);
+    auto pKernelInfo = pProgram->getKernelInfo("test_get_global_size", rootDeviceIndex);
 
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[0]);
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[1]);
@@ -1446,7 +1446,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
 TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     // PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT
 
-    createProgramFromBinary(pContext, pContext->getDevices(), "test_basic_constant");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -3059,7 +3059,7 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
     debugManager.flags.PrintProgramBinaryProcessingTime.set(true);
     testing::internal::CaptureStdout();
 
-    createProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    createProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     auto retVal = pProgram->build(
         pProgram->getDevices(),

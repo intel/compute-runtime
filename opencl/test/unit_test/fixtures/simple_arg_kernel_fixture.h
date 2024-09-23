@@ -29,46 +29,6 @@ namespace NEO {
 class Kernel;
 class Program;
 
-template <typename T>
-inline const char *typeName(T &) {
-    return "unknown";
-}
-
-template <>
-inline const char *typeName(char &) {
-    return "char";
-}
-
-template <>
-inline const char *typeName(int &) {
-    return "int";
-}
-
-template <>
-inline const char *typeName(float &) {
-    return "float";
-}
-
-template <>
-inline const char *typeName(short &) {
-    return "short";
-}
-
-template <>
-inline const char *typeName(unsigned char &) {
-    return "unsigned char";
-}
-
-template <>
-inline const char *typeName(unsigned int &) {
-    return "unsigned int";
-}
-
-template <>
-inline const char *typeName(unsigned short &) {
-    return "unsigned short";
-}
-
 class SimpleArgKernelFixture : public ProgramFixture {
 
   public:
@@ -78,17 +38,6 @@ class SimpleArgKernelFixture : public ProgramFixture {
     void setUp(ClDevice *pDevice) {
         ProgramFixture::setUp();
 
-        std::string testFile;
-        int forTheName = 0;
-
-        testFile.append("simple_arg_");
-        testFile.append(typeName(forTheName));
-
-        auto pos = testFile.find(" ");
-        if (pos != (size_t)-1) {
-            testFile.replace(pos, 1, "_");
-        }
-
         auto deviceVector = toClDeviceVector(*pDevice);
         pContext = Context::create<MockContext>(nullptr, deviceVector, nullptr, nullptr, retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -97,7 +46,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         createProgramFromBinary(
             pContext,
             deviceVector,
-            testFile);
+            "simple_kernels");
         ASSERT_NE(nullptr, pProgram);
 
         retVal = pProgram->build(
@@ -108,7 +57,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
         // create a kernel
         pKernel = Kernel::create<MockKernel>(
             pProgram,
-            pProgram->getKernelInfoForKernel("SimpleArg"),
+            pProgram->getKernelInfoForKernel("simple_arg_int"),
             *pDevice,
             retVal);
 
