@@ -448,7 +448,14 @@ void DebugSessionLinuxi915::handleEvent(prelim_drm_i915_debug_event *event) {
                                 (int)pf->base.flags, (uint64_t)pf->page_fault_address, (uint64_t)pf->base.seqno, (uint64_t)pf->base.size,
                                 (uint64_t)pf->client_handle, (uint64_t)pf->flags, (uint32_t)pf->ci.engine_class,
                                 (uint32_t)pf->ci.engine_instance, (uint32_t)pf->bitmask_size, uint64_t(pf->ctx_handle));
-        handlePageFaultEvent(pf);
+        NEO::EngineClassInstance engineClassInstance = {pf->ci.engine_class, pf->ci.engine_instance};
+        auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
+        auto vmHandle = getVmHandleFromClientAndlrcHandle(pf->client_handle, pf->lrc_handle);
+        if (vmHandle == invalidHandle) {
+            return;
+        }
+        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->page_fault_address, pf->bitmask_size, pf->bitmask};
+        handlePageFaultEvent(pfEvent);
     } break;
 
     default:
@@ -1011,87 +1018,6 @@ void DebugSessionLinuxi915::addThreadToNewlyStoppedFromRaisedAttentionForTileSes
     static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveAreaMemory.data());
 }
 
-void DebugSessionLinuxi915::handlePageFaultEvent(prelim_drm_i915_debug_event_page_fault *pf) {
-    NEO::EngineClassInstance engineClassInstance = {pf->ci.engine_class, pf->ci.engine_instance};
-    auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
-
-    DEBUG_BREAK_IF(pf->bitmask_size % 3u != 0u);
-    size_t size = pf->bitmask_size / 3;
-    uint8_t *bitmaskBefore = &pf->bitmask[0];
-    uint8_t *bitmaskAfter = &pf->bitmask[size];
-    uint8_t *bitmaskResolved = &pf->bitmask[size * 2];
-    PRINT_DEBUGGER_INFO_LOG("PageFault event BEFORE", 0);
-    printBitmask(bitmaskBefore, size);
-    PRINT_DEBUGGER_INFO_LOG("PageFault event AFTER", 0);
-    printBitmask(bitmaskAfter, size);
-    PRINT_DEBUGGER_INFO_LOG("PageFault event RESOLVED", 0);
-    printBitmask(bitmaskResolved, size);
-
-    auto vmHandle = getVmHandleFromClientAndlrcHandle(pf->client_handle, pf->lrc_handle);
-    if (vmHandle == invalidHandle) {
-        return;
-    }
-
-    if (!connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex)) {
-        return;
-    }
-
-    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique<uint8_t[]>(size);
-    std::transform(bitmaskAfter, bitmaskAfter + size, bitmaskResolved, bitmaskPF.get(), std::bit_xor<uint8_t>());
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-    auto threadsWithPF = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmaskPF.get(), size);
-    auto stoppedThreads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmaskResolved, size);
-
-    if (threadsWithPF.size() == 0) {
-        zet_debug_event_t debugEvent = {};
-        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PAGE_FAULT;
-        debugEvent.info.page_fault.address = pf->page_fault_address;
-        PRINT_DEBUGGER_INFO_LOG("PageFault event for unknown thread", 0);
-        if (tileSessionsEnabled) {
-            static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent);
-        } else {
-            enqueueApiEvent(debugEvent);
-        }
-    }
-
-    auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
-    auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
-    allocateStateSaveAreaMemory(stateSaveAreaSize);
-    auto stateSaveReadResult = readGpuMemory(vmHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
-    if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
-
-        std::unique_lock<std::mutex> lock;
-        if (tileSessionsEnabled) {
-            lock = std::unique_lock<std::mutex>(static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->threadStateMutex);
-        } else {
-            lock = std::unique_lock<std::mutex>(threadStateMutex);
-        }
-        for (auto &threadId : threadsWithPF) {
-            PRINT_DEBUGGER_INFO_LOG("PageFault event for thread %s", EuThread::toString(threadId).c_str());
-            if (tileSessionsEnabled) {
-                static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->allThreads[threadId]->setPageFault(true);
-            } else {
-                allThreads[threadId]->setPageFault(true);
-            }
-        }
-        for (auto &threadId : stoppedThreads) {
-            if (tileSessionsEnabled) {
-                static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
-            } else {
-                addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveAreaMemory.data());
-            }
-        }
-    }
-
-    if (tileSessionsEnabled) {
-        static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->checkTriggerEventsForAttention();
-    } else {
-        checkTriggerEventsForAttention();
-    }
-    return;
-}
-
 void DebugSessionLinuxi915::handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines) {
     PRINT_DEBUGGER_INFO_LOG("ENGINES event: client_handle = %llu, ctx_handle = %llu, num_engines = %llu %s\n",
                             (uint64_t)engines->client_handle,
@@ -1119,6 +1045,14 @@ void DebugSessionLinuxi915::handleEnginesEvent(prelim_drm_i915_debug_event_engin
             clientHandleToConnection[engines->client_handle]->lrcToContextHandle.erase(lrc);
         }
     }
+}
+
+void DebugSessionLinuxi915::pushApiEventForTileSession(uint32_t tileIndex, zet_debug_event_t &debugEvent) {
+    static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent);
+}
+
+void DebugSessionLinuxi915::setPageFaultForTileSession(uint32_t tileIndex, EuThread::ThreadId threadId, bool hasPageFault) {
+    static_cast<TileDebugSessionLinuxi915 *>(tileSessions[tileIndex].first)->allThreads[threadId]->setPageFault(true);
 }
 
 void DebugSessionLinuxi915::extractUuidData(uint64_t client, const UuidData &uuidData) {

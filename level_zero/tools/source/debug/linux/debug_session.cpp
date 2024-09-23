@@ -1037,4 +1037,78 @@ void DebugSessionLinux::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
     }
 }
 
+void DebugSessionLinux::handlePageFaultEvent(PageFaultEvent &pfEvent) {
+
+    DEBUG_BREAK_IF(pfEvent.bitmaskSize % 3u != 0u);
+    size_t size = pfEvent.bitmaskSize / 3;
+    uint8_t *bitmaskBefore = &pfEvent.bitmask[0];
+    uint8_t *bitmaskAfter = &pfEvent.bitmask[size];
+    uint8_t *bitmaskResolved = &pfEvent.bitmask[size * 2];
+    PRINT_DEBUGGER_INFO_LOG("PageFault event BEFORE", 0);
+    printBitmask(bitmaskBefore, size);
+    PRINT_DEBUGGER_INFO_LOG("PageFault event AFTER", 0);
+    printBitmask(bitmaskAfter, size);
+    PRINT_DEBUGGER_INFO_LOG("PageFault event RESOLVED", 0);
+    printBitmask(bitmaskResolved, size);
+
+    if (!connectedDevice->getNEODevice()->getDeviceBitfield().test(pfEvent.tileIndex)) {
+        return;
+    }
+
+    std::unique_ptr<uint8_t[]> bitmaskPF = std::make_unique<uint8_t[]>(size);
+    std::transform(bitmaskAfter, bitmaskAfter + size, bitmaskResolved, bitmaskPF.get(), std::bit_xor<uint8_t>());
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+    auto threadsWithPF = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, pfEvent.tileIndex, bitmaskPF.get(), size);
+    auto stoppedThreads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, pfEvent.tileIndex, bitmaskResolved, size);
+
+    if (threadsWithPF.size() == 0) {
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_PAGE_FAULT;
+        debugEvent.info.page_fault.address = pfEvent.pageFaultAddress;
+        PRINT_DEBUGGER_INFO_LOG("PageFault event for unknown thread", 0);
+        if (tileSessionsEnabled) {
+            pushApiEventForTileSession(pfEvent.tileIndex, debugEvent);
+        } else {
+            enqueueApiEvent(debugEvent);
+        }
+    }
+
+    auto gpuVa = getContextStateSaveAreaGpuVa(pfEvent.vmHandle);
+    auto stateSaveAreaSize = getContextStateSaveAreaSize(pfEvent.vmHandle);
+    allocateStateSaveAreaMemory(stateSaveAreaSize);
+    auto stateSaveReadResult = readGpuMemory(pfEvent.vmHandle, stateSaveAreaMemory.data(), stateSaveAreaSize, gpuVa);
+    if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+
+        std::unique_lock<std::mutex> lock;
+        if (tileSessionsEnabled) {
+            lock = getThreadStateMutexForTileSession(pfEvent.tileIndex);
+        } else {
+            lock = std::unique_lock<std::mutex>(threadStateMutex);
+        }
+        for (auto &threadId : threadsWithPF) {
+            PRINT_DEBUGGER_INFO_LOG("PageFault event for thread %s", EuThread::toString(threadId).c_str());
+            if (tileSessionsEnabled) {
+                setPageFaultForTileSession(pfEvent.tileIndex, threadId, true);
+            } else {
+                allThreads[threadId]->setPageFault(true);
+            }
+        }
+        for (auto &threadId : stoppedThreads) {
+            if (tileSessionsEnabled) {
+                addThreadToNewlyStoppedFromRaisedAttentionForTileSession(threadId, pfEvent.vmHandle, stateSaveAreaMemory.data(), pfEvent.tileIndex);
+            } else {
+                addThreadToNewlyStoppedFromRaisedAttention(threadId, pfEvent.vmHandle, stateSaveAreaMemory.data());
+            }
+        }
+    }
+
+    if (tileSessionsEnabled) {
+        checkTriggerEventsForAttentionForTileSession(pfEvent.tileIndex);
+    } else {
+        checkTriggerEventsForAttention();
+    }
+    return;
+}
+
 } // namespace L0

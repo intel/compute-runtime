@@ -214,6 +214,8 @@ struct DebugSessionLinux : DebugSessionImp {
                                                                           uint64_t memoryHandle,
                                                                           const void *stateSaveArea,
                                                                           uint32_t tileIndex) = 0;
+    virtual void pushApiEventForTileSession(uint32_t tileIndex, zet_debug_event_t &debugEvent) = 0;
+    virtual void setPageFaultForTileSession(uint32_t tileIndex, EuThread::ThreadId threadId, bool hasPageFault) = 0;
 
     virtual int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) = 0;
     void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
@@ -247,6 +249,14 @@ struct DebugSessionLinux : DebugSessionImp {
     void createTileSessionsIfEnabled();
     virtual DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) = 0;
     bool checkAllEventsCollected();
+    struct PageFaultEvent {
+        uint64_t vmHandle;
+        uint32_t tileIndex;
+        uint64_t pageFaultAddress;
+        uint32_t bitmaskSize;
+        uint8_t *bitmask;
+    };
+    void handlePageFaultEvent(PageFaultEvent &pfEvent);
 
     std::unique_ptr<IoctlHandler> ioctlHandler;
 };

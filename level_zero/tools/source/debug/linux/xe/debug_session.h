@@ -155,6 +155,9 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
                                                                   const void *stateSaveArea,
                                                                   uint32_t tileIndex) override {}
 
+    void pushApiEventForTileSession(uint32_t tileIndex, zet_debug_event_t &debugEvent) override { UNRECOVERABLE_IF(true) }
+    void setPageFaultForTileSession(uint32_t tileIndex, EuThread::ThreadId threadId, bool hasPageFault) override{UNRECOVERABLE_IF(true)}
+
     uint64_t euControlInterruptSeqno = 0;
 
     ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
