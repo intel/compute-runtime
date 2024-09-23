@@ -192,19 +192,21 @@ TEST(Event, givenCommandQueueWhenEventIsCreatedWithoutCommandQueueThenCommandQue
     EXPECT_EQ(intitialRefCount, finalRefCount);
 }
 
+class MockCommandQueueWithFlushCheck : public MockCommandQueue {
+  public:
+    MockCommandQueueWithFlushCheck() = delete;
+    MockCommandQueueWithFlushCheck(MockCommandQueueWithFlushCheck &) = delete;
+    MockCommandQueueWithFlushCheck(Context &context, ClDevice *device) : MockCommandQueue(&context, device, nullptr, false) {
+    }
+    cl_int flush() override {
+        flushCounter++;
+        return flushReturnStatus;
+    }
+    cl_int flushReturnStatus = CL_SUCCESS;
+    uint32_t flushCounter = 0;
+};
+
 TEST(Event, WhenWaitingForEventsThenAllQueuesAreFlushed) {
-    class MockCommandQueueWithFlushCheck : public MockCommandQueue {
-      public:
-        MockCommandQueueWithFlushCheck() = delete;
-        MockCommandQueueWithFlushCheck(MockCommandQueueWithFlushCheck &) = delete;
-        MockCommandQueueWithFlushCheck(Context &context, ClDevice *device) : MockCommandQueue(&context, device, nullptr, false) {
-        }
-        cl_int flush() override {
-            flushCounter++;
-            return CL_SUCCESS;
-        }
-        uint32_t flushCounter = 0;
-    };
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
@@ -224,19 +226,6 @@ TEST(Event, WhenWaitingForEventsThenAllQueuesAreFlushed) {
 }
 
 TEST(Event, GivenNotReadyEventWhenWaitingForEventsThenQueueIsNotFlushed) {
-    class MockCommandQueueWithFlushCheck : public MockCommandQueue {
-      public:
-        MockCommandQueueWithFlushCheck() = delete;
-        MockCommandQueueWithFlushCheck(MockCommandQueueWithFlushCheck &) = delete;
-        MockCommandQueueWithFlushCheck(Context &context, ClDevice *device) : MockCommandQueue(&context, device, nullptr, false) {
-        }
-        cl_int flush() override {
-            flushCounter++;
-            return CL_SUCCESS;
-        }
-        uint32_t flushCounter = 0;
-    };
-
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
 
@@ -247,6 +236,34 @@ TEST(Event, GivenNotReadyEventWhenWaitingForEventsThenQueueIsNotFlushed) {
     Event::waitForEvents(1, eventWaitlist);
 
     EXPECT_EQ(0u, cmdQ1->flushCounter);
+}
+
+TEST(Event, GivenEventWhenFlushReturnSuccessThenSuccessReturnedFromWaitForEvents) {
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context;
+
+    std::unique_ptr<MockCommandQueueWithFlushCheck> cmdQ1(new MockCommandQueueWithFlushCheck(context, device.get()));
+    cmdQ1->flushReturnStatus = CL_SUCCESS;
+    std::unique_ptr<Event> event1(new Event(cmdQ1.get(), CL_COMMAND_NDRANGE_KERNEL, 4, 10));
+
+    cl_event eventWaitlist[] = {event1.get()};
+
+    EXPECT_EQ(Event::waitForEvents(1, eventWaitlist), CL_SUCCESS);
+}
+
+TEST(Event, GivenEventWhenFlushReturnErrorThenErrorReturnedFromWaitForEvents) {
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context;
+
+    std::unique_ptr<MockCommandQueueWithFlushCheck> cmdQ1(new MockCommandQueueWithFlushCheck(context, device.get()));
+    cmdQ1->flushReturnStatus = CL_OUT_OF_RESOURCES;
+    std::unique_ptr<Event> event1(new Event(cmdQ1.get(), CL_COMMAND_NDRANGE_KERNEL, 4, 10));
+
+    cl_event eventWaitlist[] = {event1.get()};
+
+    EXPECT_EQ(Event::waitForEvents(1, eventWaitlist), CL_OUT_OF_RESOURCES);
 }
 
 TEST(Event, givenNotReadyEventOnWaitlistWhenCheckingUserEventDependeciesThenTrueIsReturned) {
