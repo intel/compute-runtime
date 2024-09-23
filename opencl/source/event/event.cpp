@@ -715,7 +715,10 @@ cl_int Event::waitForEvents(cl_uint numEvents,
         Event *event = castToObjectOrAbort<Event>(*it);
         if (event->cmdQueue) {
             if (event->taskLevel != CompletionStamp::notReady) {
-                event->cmdQueue->flush();
+                auto ret = event->cmdQueue->flush();
+                if (ret != CL_SUCCESS) {
+                    return ret;
+                }
             }
         }
     }
