@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -34,9 +35,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), region};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
-    const bool useStateless = forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()));
+    bool isStateless = device->getCompilerProductHelper().isForceToStatelessRequired();
+    if (std::max(srcBuffer->getSize(), dstBuffer->getSize()) >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
+
     const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(useStateless, useHeapless);
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, useHeapless);
 
     MemObjSurface srcBufferSurf(srcBuffer);
     MemObjSurface dstBufferSurf(dstBuffer);

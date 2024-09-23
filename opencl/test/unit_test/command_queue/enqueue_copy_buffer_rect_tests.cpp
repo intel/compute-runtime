@@ -537,7 +537,7 @@ struct EnqueueCopyBufferRectHw : public ::testing::Test {
 
 using EnqueueCopyBufferRectStateless = EnqueueCopyBufferRectHw;
 
-HWTEST_F(EnqueueCopyBufferRectStateless, GivenValidParametersWhenCopyingBufferRectStatelessThenSuccessIsReturned) {
+HWTEST2_F(EnqueueCopyBufferRectStateless, GivenValidParametersWhenCopyingBufferRectStatelessThenSuccessIsReturned, IsStatelessBufferPreferredForProduct) {
 
     std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateless<FamilyType>(context.get(), device.get()));
     srcBuffer.size = static_cast<size_t>(bigSize);
@@ -547,7 +547,7 @@ HWTEST_F(EnqueueCopyBufferRectStateless, GivenValidParametersWhenCopyingBufferRe
 
 using EnqueueCopyBufferRectStateful = EnqueueCopyBufferRectHw;
 
-HWTEST_F(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned) {
+HWTEST2_F(EnqueueCopyBufferRectStateful, GivenValidParametersWhenCopyingBufferRectStatefulThenSuccessIsReturned, IsStatefulBufferPreferredForProduct) {
 
     std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueStateful<FamilyType>(context.get(), device.get()));
     if (cmdQ->getHeaplessModeEnabled()) {
