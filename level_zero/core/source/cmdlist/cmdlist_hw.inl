@@ -1393,7 +1393,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
     bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
-
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
@@ -1480,6 +1479,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     uintptr_t rightSize = 0;
     uintptr_t middleSizeBytes = 0;
     bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
+    if (size >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
 
     const bool isHeapless = this->isHeaplessModeEnabled();
 
@@ -1504,10 +1506,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         }
 
         DEBUG_BREAK_IF(size != leftSize + middleSizeBytes + rightSize);
-
-        if (size >= 4ull * MemoryConstants::gigaByte) {
-            isStateless = true;
-        }
 
         kernelCounter = leftSize > 0 ? 1 : 0;
         kernelCounter += middleSizeBytes > 0 ? 1 : 0;
@@ -1943,6 +1941,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
+    if (size >= 4ull * MemoryConstants::gigaByte) {
+        isStateless = true;
+    }
+
     const bool isHeapless = this->isHeaplessModeEnabled();
 
     NEO::Device *neoDevice = device->getNEODevice();
@@ -2004,9 +2006,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     if (dstAllocation.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
-    if (size >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
+
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     auto builtin = (patternSize == 1)
