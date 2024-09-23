@@ -433,7 +433,7 @@ void TbxImmediateCommandListFixture::setEvent() {
     auto mockEvent = static_cast<Event *>(event.get());
 
     size_t offset = event->getCompletionFieldOffset();
-    void *completionAddress = ptrOffset(mockEvent->hostAddress, offset);
+    void *completionAddress = ptrOffset(mockEvent->hostAddressFromPool, offset);
     size_t packets = event->getPacketsInUse();
     EventFieldType signaledValue = Event::STATE_SIGNALED;
     for (size_t i = 0; i < packets; i++) {

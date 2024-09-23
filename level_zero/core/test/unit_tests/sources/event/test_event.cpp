@@ -2121,14 +2121,14 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
     packetData[1].globalStart = 7u;
     packetData[1].globalEnd = 8u;
 
-    eventRoot->hostAddress = packetData;
+    eventRoot->hostAddressFromPool = packetData;
 
     ze_kernel_timestamp_result_t results[2];
     uint32_t numPackets = 2;
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
-        eventRoot->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventRoot->hostAddress);
-        eventRoot->hostAddress = ptrOffset(eventRoot->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
+        eventRoot->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventRoot->hostAddressFromPool);
+        eventRoot->hostAddressFromPool = ptrOffset(eventRoot->hostAddressFromPool, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     uint32_t pCount = 0;
@@ -2150,11 +2150,11 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
 
     numPackets = 1;
     eventSub0->setPacketsInUse(1u);
-    eventSub0->hostAddress = packetData;
+    eventSub0->hostAddressFromPool = packetData;
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
-        eventSub0->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub0->hostAddress);
-        eventSub0->hostAddress = ptrOffset(eventSub0->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
+        eventSub0->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub0->hostAddressFromPool);
+        eventSub0->hostAddressFromPool = ptrOffset(eventSub0->hostAddressFromPool, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     pCount = 0;
@@ -2177,11 +2177,11 @@ TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytim
 
     numPackets = 1;
     eventSub1->setPacketsInUse(1u);
-    eventSub1->hostAddress = packetData;
+    eventSub1->hostAddressFromPool = packetData;
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
-        eventSub1->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub1->hostAddress);
-        eventSub1->hostAddress = ptrOffset(eventSub1->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
+        eventSub1->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub1->hostAddressFromPool);
+        eventSub1->hostAddressFromPool = ptrOffset(eventSub1->hostAddressFromPool, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     pCount = 0;
@@ -2288,7 +2288,7 @@ TEST_F(EventqueryKernelTimestampsExt, givenEventWithMappedTimestampCapabilityWhe
     packetData[2].globalStart = timeToTimeStamp(5000u);
     packetData[2].globalEnd = timeToTimeStamp(500u);
 
-    event->hostAddress = packetData;
+    event->hostAddressFromPool = packetData;
     uint32_t count = 0;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryKernelTimestampsExt(device, &count, nullptr));
@@ -2452,7 +2452,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampEventCreate, givenEventTimestampsWhenQue
     data.globalStart = 3u;
     data.globalEnd = 4u;
 
-    event->hostAddress = &data;
+    event->hostAddressFromPool = &data;
     ze_kernel_timestamp_result_t result = {};
 
     event->queryKernelTimestamp(&result);
@@ -2476,14 +2476,14 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpT
     packetData[1].globalStart = 7u;
     packetData[1].globalEnd = 8u;
 
-    event->hostAddress = packetData;
+    event->hostAddressFromPool = packetData;
 
     ze_kernel_timestamp_result_t results[2];
     uint32_t pCount = 2;
 
     for (uint32_t packetId = 0; packetId < pCount; packetId++) {
-        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
-        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
+        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddressFromPool);
+        event->hostAddressFromPool = ptrOffset(event->hostAddressFromPool, NEO::TimestampPackets<uint32_t, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
 
     auto result = event->queryTimestampsExp(device, &pCount, results);
@@ -2500,7 +2500,7 @@ TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpT
 HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnFirstKernelThenDoNotUseSecondPacketOfFirstKernel, IsAtLeastXeHpCore) {
     typename MockTimestampPackets32::Packet packetData[4];
 
-    event->hostAddress = packetData;
+    event->hostAddressFromPool = packetData;
 
     constexpr uint32_t kernelStartValue = 5u;
     constexpr uint32_t kernelEndValue = 10u;
@@ -2544,7 +2544,7 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWh
 HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWhenL3FlushSetOnSecondKernelThenDoNotUseSecondPacketOfSecondKernel, IsAtLeastXeHpCore) {
     typename MockTimestampPackets32::Packet packetData[4];
 
-    event->hostAddress = packetData;
+    event->hostAddressFromPool = packetData;
 
     constexpr uint32_t kernelStartValue = 5u;
     constexpr uint32_t kernelEndValue = 10u;
@@ -2587,7 +2587,7 @@ HWTEST2_F(TimestampEventCreateMultiKernel, givenTimeStampEventUsedOnTwoKernelsWh
 
 HWTEST2_F(TimestampEventCreateMultiKernel, givenOverflowingTimeStampDataOnTwoKernelsWhenQueryKernelTimestampIsCalledOverflowIsObserved, IsAtLeastXeHpCore) {
     typename MockTimestampPackets32::Packet packetData[4] = {};
-    event->hostAddress = packetData;
+    event->hostAddressFromPool = packetData;
 
     uint32_t maxTimeStampValue = std::numeric_limits<uint32_t>::max();
 
@@ -2960,7 +2960,7 @@ TEST_F(EventTests, givenTwoEventsCreatedThenTheyHaveDifferentAddresses) {
     auto event1 = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc1, device));
     ASSERT_NE(event1, nullptr);
 
-    EXPECT_NE(event0->hostAddress, event1->hostAddress);
+    EXPECT_NE(event0->hostAddressFromPool, event1->hostAddressFromPool);
     EXPECT_NE(event0->getGpuAddress(device), event1->getGpuAddress(device));
 
     event0->destroy();
@@ -3590,7 +3590,7 @@ HWTEST_F(EventTests, GivenEventIsReadyToDownloadAllAlocationsWhenDownloadAllocat
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
 
     size_t offset = event->getCompletionFieldOffset();
-    void *completionAddress = ptrOffset(event->hostAddress, offset);
+    void *completionAddress = ptrOffset(event->hostAddressFromPool, offset);
     size_t packets = event->getPacketsInUse();
     uint64_t signaledValue = Event::STATE_SIGNALED;
     for (size_t i = 0; i < packets; i++) {
@@ -3620,7 +3620,7 @@ HWTEST_F(EventTests, GivenNotReadyEventBecomesReadyWhenDownloadAllocationRequire
         EXPECT_EQ(0u, ultCsr.downloadAllocationsCalledCount);
 
         size_t offset = event->getCompletionFieldOffset();
-        void *completionAddress = ptrOffset(event->hostAddress, offset);
+        void *completionAddress = ptrOffset(event->hostAddressFromPool, offset);
         size_t packets = event->getPacketsInUse();
         uint64_t signaledValue = Event::STATE_SIGNALED;
         for (size_t i = 0; i < packets; i++) {
@@ -3710,7 +3710,7 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     EXPECT_FALSE(eventAllocation->isTbxWritable(expectedBanks));
 
     size_t offset = event->getCompletionFieldOffset();
-    void *completionAddress = ptrOffset(event->hostAddress, offset);
+    void *completionAddress = ptrOffset(event->hostAddressFromPool, offset);
     size_t packets = event->getPacketsInUse();
     uint64_t signaledValue = Event::STATE_SIGNALED;
     for (size_t i = 0; i < packets; i++) {
@@ -3730,7 +3730,7 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
     using BaseClass = L0::EventImp<TagSizeT>;
     using BaseClass::gpuEndTimestamp;
     using BaseClass::gpuStartTimestamp;
-    using BaseClass::hostAddress;
+    using BaseClass::hostAddressFromPool;
 
     MockEventCompletion(MultiGraphicsAllocation *alloc, uint32_t eventSize, uint32_t maxKernelCount, uint32_t maxPacketsCount, int index, L0::Device *device) : BaseClass::EventImp(index, device, false) {
         auto neoDevice = device->getNEODevice();
@@ -3742,7 +3742,7 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
         uint64_t baseHostAddr = reinterpret_cast<uint64_t>(alloc->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->getUnderlyingBuffer());
         this->totalEventSize = eventSize;
         this->eventPoolOffset = index * this->totalEventSize;
-        hostAddress = reinterpret_cast<void *>(baseHostAddr + this->eventPoolOffset);
+        hostAddressFromPool = reinterpret_cast<void *>(baseHostAddr + this->eventPoolOffset);
         this->csrs[0] = neoDevice->getDefaultEngine().commandStreamReceiver;
 
         this->maxKernelCount = maxKernelCount;
@@ -3796,7 +3796,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenSynchronizeBeforeReset) 
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
     event->failOnNextQueryStatus = true;
 
-    *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
+    *reinterpret_cast<uint32_t *>(event->hostAddressFromPool) = Event::STATE_SIGNALED;
 
     testing::internal::CaptureStdout();
 
@@ -3815,7 +3815,7 @@ TEST_F(EventTests, givenDebugFlagSetWhenCallingResetThenPrintLogAndSynchronizeBe
     debugManager.flags.SynchronizeEventBeforeReset.set(2);
 
     auto event = std::make_unique<MockEventCompletion<uint32_t>>(&eventPool->getAllocation(), eventPool->getEventSize(), eventPool->getMaxKernelCount(), eventPool->getEventMaxPackets(), 1u, device);
-    *reinterpret_cast<uint32_t *>(event->hostAddress) = Event::STATE_SIGNALED;
+    *reinterpret_cast<uint32_t *>(event->hostAddressFromPool) = Event::STATE_SIGNALED;
 
     {
         event->failOnNextQueryStatus = false;

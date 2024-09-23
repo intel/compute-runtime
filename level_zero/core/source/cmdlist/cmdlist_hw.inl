@@ -1631,7 +1631,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         bool emitPipeControl = !isCopyOnlyEnabled && launchParams.pipeControlSignalling;
 
         if (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl) {
-            if (!signalEvent && !isCopyOnlyEnabled) {
+            if ((!signalEvent || !signalEvent->getAllocation(this->device)) && !isCopyOnlyEnabled) {
                 NEO::PipeControlArgs args;
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
@@ -2175,7 +2175,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     bool nonWalkerInOrderCmdChaining = false;
     if (this->isInOrderExecutionEnabled()) {
         if (launchParams.isKernelSplitOperation) {
-            if (!signalEvent) {
+            if (!signalEvent || !signalEvent->getAllocation(this->device)) {
                 NEO::PipeControlArgs args;
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
@@ -3988,7 +3988,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
             }
         }
 
-        if (signalEvent->isUsingContextEndOffset() && NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.get() == 1) {
+        if (signalEvent->isUsingContextEndOffset() && Event::standaloneInOrderTimestampAllocationEnabled()) {
             signalEvent->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
         }
     }

@@ -334,6 +334,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
         if (inOrderExecSignalRequired) {
             if (inOrderNonWalkerSignalling) {
+                if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
+                    eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
+                }
                 dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
             } else {
                 inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();

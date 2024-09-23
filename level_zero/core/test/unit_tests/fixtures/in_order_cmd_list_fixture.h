@@ -37,16 +37,24 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::latestUsedCmdQueue;
         using EventImp<uint32_t>::inOrderTimestampNode;
 
-        void makeCounterBasedInitiallyDisabled() {
+        void makeCounterBasedInitiallyDisabled(MultiGraphicsAllocation &poolAllocation) {
+            resetInOrderTimestampNode(nullptr);
             counterBasedMode = CounterBasedMode::initiallyDisabled;
             resetCompletionStatus();
             counterBasedFlags = 0;
+            this->eventPoolAllocation = &poolAllocation;
+            this->hostAddressFromPool = ptrOffset(eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer(), eventPoolOffset);
+            reset();
         }
 
-        void makeCounterBasedImplicitlyDisabled() {
+        void makeCounterBasedImplicitlyDisabled(MultiGraphicsAllocation &poolAllocation) {
+            resetInOrderTimestampNode(nullptr);
             counterBasedMode = CounterBasedMode::implicitlyDisabled;
             resetCompletionStatus();
             counterBasedFlags = 0;
+            this->eventPoolAllocation = &poolAllocation;
+            this->hostAddressFromPool = ptrOffset(eventPoolAllocation->getGraphicsAllocation(0)->getUnderlyingBuffer(), eventPoolOffset);
+            reset();
         }
     };
 

@@ -24,7 +24,7 @@ struct WhiteBox<::L0::Event> : public ::L0::Event {
     using BaseClass::Event;
     using BaseClass::eventPoolAllocation;
     using BaseClass::gpuHangCheckPeriod;
-    using BaseClass::hostAddress;
+    using BaseClass::hostAddressFromPool;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
     using BaseClass::maxKernelCount;
@@ -41,7 +41,7 @@ struct WhiteBox<::L0::EventImp<TagSizeT>> : public L0::EventImp<TagSizeT> {
     using BaseClass = ::L0::EventImp<TagSizeT>;
     using BaseClass::csrs;
     using BaseClass::gpuHangCheckPeriod;
-    using BaseClass::hostAddress;
+    using BaseClass::hostAddressFromPool;
     using BaseClass::hostEventSetValueTimestamps;
     using BaseClass::isFromIpcPool;
     using BaseClass::l3FlushAppliedOnKernel;
