@@ -94,11 +94,11 @@ void DebuggerL0::initialize() {
 
         NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
         if (memoryOperationsIface) {
-            memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
+            memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1), false);
             auto numSubDevices = device->getNumSubDevices();
             for (uint32_t i = 0; i < numSubDevices; i++) {
                 auto subDevice = device->getSubDevice(i);
-                memoryOperationsIface->makeResident(subDevice, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
+                memoryOperationsIface->makeResident(subDevice, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1), false);
             }
         }
 
@@ -142,7 +142,7 @@ void DebuggerL0::notifyModuleLoadAllocations(Device *device, const StackVec<NEO:
     NEO::MemoryOperationsHandler *memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
     if (memoryOperationsIface) {
         for (auto gfxAlloc : allocs) {
-            memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&gfxAlloc, 1));
+            memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&gfxAlloc, 1), false);
         }
     }
 }

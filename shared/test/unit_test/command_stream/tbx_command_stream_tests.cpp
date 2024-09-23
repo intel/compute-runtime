@@ -376,7 +376,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrAndResidentAllocationWhenProcessR
 
     MockGraphicsAllocation allocation2(reinterpret_cast<void *>(0x5000), 0x5000, 0x1000);
     GraphicsAllocation *allocPtr = &allocation2;
-    memoryOperationsHandler->makeResident(pDevice, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    memoryOperationsHandler->makeResident(pDevice, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false);
     EXPECT_TRUE(mockManager->writeMemory2Called);
 
     mockManager->storeAllocationParams = true;

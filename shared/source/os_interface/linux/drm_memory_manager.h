@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
@@ -115,6 +116,7 @@ class DrmMemoryManager : public MemoryManager {
 
     bool isCompressionSupportedForShareable(bool isShareable) override;
     bool usmCompressionSupported(Device *device) override;
+    MOCKABLE_VIRTUAL SubmissionStatus emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const;
 
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);

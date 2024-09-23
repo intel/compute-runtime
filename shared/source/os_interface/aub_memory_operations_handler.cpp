@@ -26,7 +26,7 @@ AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *a
     this->aubManager = aubManager;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) {
     if (!aubManager) {
         return MemoryOperationsStatus::deviceUninitialized;
     }
@@ -75,7 +75,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
-    return makeResident(device, gfxAllocations);
+    return makeResident(device, gfxAllocations, false);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
@@ -98,7 +98,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::free(Device *device, Graphics
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
-    return makeResident(nullptr, gfxAllocations);
+    return makeResident(nullptr, gfxAllocations, false);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {

@@ -64,7 +64,7 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
 
     GraphicsAllocation *allocation = memManager->allocateGraphicsMemoryWithProperties(properties);
     MemoryOperationsHandler *memoryOperationsIface = rootDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.get();
-    auto result = memoryOperationsIface->makeResident(rootDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));
+    auto result = memoryOperationsIface->makeResident(rootDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false);
     if (result != NEO::MemoryOperationsStatus::success) {
         memManager->freeGraphicsMemory(allocation);
         return nullptr;
