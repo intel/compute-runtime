@@ -11,13 +11,6 @@
 namespace aub_stream {
 
 enum class ProductFamily : uint32_t {
-    Bdw = 0u,
-    Skl = 1u,
-    Kbl = 2u,
-    Cfl = 3u,
-    Bxt = 4u,
-    Glk = 5u,
-    Icllp = 6u,
     Tgllp = 7u,
     Adls = 8u,
     Adlp = 9u,
