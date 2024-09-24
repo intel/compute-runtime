@@ -31,7 +31,6 @@ using MetricsDiscovery::IAdapterGroup_1_8;
 using MetricsDiscovery::IAdapterGroup_1_9;
 using MetricsDiscovery::IAdapterGroupLatest;
 using MetricsDiscovery::IConcurrentGroup_1_5;
-using MetricsDiscovery::IEquation_1_0;
 using MetricsDiscovery::IInformation_1_0;
 using MetricsDiscovery::IMetric_1_0;
 using MetricsDiscovery::IMetricsDevice_1_5;
@@ -46,7 +45,6 @@ using MetricsDiscovery::TAdapterParams_1_9;
 using MetricsDiscovery::TCompletionCode;
 using MetricsDiscovery::TConcurrentGroupParams_1_0;
 using MetricsDiscovery::TEngineParams_1_9;
-using MetricsDiscovery::TEquationElement_1_0;
 using MetricsDiscovery::TGlobalSymbol_1_0;
 using MetricsDiscovery::TMetricParams_1_0;
 using MetricsDiscovery::TMetricsDeviceParams_1_2;
@@ -204,26 +202,6 @@ class Mock<IConcurrentGroup_1_5> : public IConcurrentGroup_1_5 {
     TCompletionCode openIoStreamResult = TCompletionCode::CC_OK;
     TCompletionCode readIoStreamResult = TCompletionCode::CC_OK;
     std::vector<TCompletionCode> openIoStreamResults{};
-};
-
-template <>
-class Mock<IEquation_1_0> : public IEquation_1_0 {
-  public:
-    ~Mock() override = default;
-
-    uint32_t GetEquationElementsCount() override {
-        return getEquationElementsCount;
-    }
-
-    TEquationElement_1_0 *GetEquationElement(uint32_t index) override {
-        if (!getEquationElement.empty()) {
-            return getEquationElement[index];
-        }
-        return nullptr;
-    }
-
-    std::vector<TEquationElement_1_0 *> getEquationElement;
-    uint32_t getEquationElementsCount = 1u;
 };
 
 template <>

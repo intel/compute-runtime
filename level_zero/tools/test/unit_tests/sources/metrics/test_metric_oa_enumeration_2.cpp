@@ -33,6 +33,36 @@ TEST_F(MetricEnumerationTest, givenTimeAndBufferSizeWhenOpenIoStreamReturnsError
     EXPECT_EQ(metricGroup.openIoStream(timerPeriodNs, oaBufferSize), ZE_RESULT_ERROR_UNKNOWN);
 }
 
+TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsOkTheMetricGroupReadIoStreamReturnsSuccess) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+
+    uint32_t reportCount = 1;
+    uint8_t reportData = 0;
+
+    EXPECT_EQ(metricGroup.readIoStream(reportCount, reportData), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsPendingTheMetricGroupReadIoStreamReturnsSuccess) {
+
+    Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
+
+    MockMetricSource mockSource{};
+    MetricGroupImpTest metricGroup(mockSource);
+
+    metricGroup.pReferenceConcurrentGroup = &concurrentGroup;
+    concurrentGroup.readIoStreamResult = TCompletionCode::CC_READ_PENDING;
+
+    uint32_t reportCount = 1;
+    uint8_t reportData = 0;
+
+    EXPECT_EQ(metricGroup.readIoStream(reportCount, reportData), ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MetricEnumerationTest, givenReportCountAndReportDataWhenReadIoStreamReturnsErrorThenMetrigGroupReadIoStreamReturnsError) {
 
     Mock<MetricsDiscovery::IConcurrentGroup_1_5> concurrentGroup;
@@ -250,19 +280,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetProp
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
     metricsConcurrentGroupParams.Description = "OA description";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
 
     // Metrics Discovery:: metric set.
     Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
@@ -295,8 +312,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenValidArgumentsWhenZetMetricGetProp
 
     metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
@@ -349,19 +364,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceIsEnumeratedAfterSubDevi
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
     metricsConcurrentGroupParams.Description = "OA description";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
 
     Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -387,8 +389,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceIsEnumeratedAfterSubDevi
 
     metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
@@ -416,19 +416,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -451,8 +438,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
 
     metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;
@@ -511,21 +496,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenInvalidDataCountAndTotalMetricCoun
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -604,21 +574,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenInvalidQueryReportSizeWhenZetMetri
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -689,21 +644,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenErrorGeneralOnCalculateMetricsWhen
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -782,21 +722,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -865,21 +790,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenFirstSubDe
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -961,21 +871,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenSecondSubD
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -1057,21 +952,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -1143,21 +1023,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -1238,21 +1103,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenBothSubDev
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -1333,19 +1183,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenOaMetricSourceWhenGetConcurrentMet
     TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.SymbolName = "OA";
-    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
-
-    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
-    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
-    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
-    ioEquationElement.ImmediateUInt64 = 0;
-
-    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
-
-    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
-    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
-    oaInformation.SymbolName = "BufferOverflow";
-    oaInformation.IoReadEquation = &ioReadEquation;
 
     Mock<IMetricSet_1_5> metricsSet;
     MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
@@ -1368,8 +1205,6 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenOaMetricSourceWhenGetConcurrentMet
 
     metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
     metricsConcurrentGroup.getMetricSetResult = &metricsSet;
-    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
-    ioMeasurement.GetParamsResult = &oaInformation;
 
     metricsSet.GetParamsResult = &metricsSetParams;
     metricsSet.GetMetricResult = &metric;

@@ -105,12 +105,11 @@ void SingleMetricStreamerCollector::showResults() {
 
     // Read raw data.
     rawData.resize(rawDataSize, 0);
-    ze_result_t status = zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data());
+    VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data()));
     LOG(zmu::LogLevel::DEBUG) << "Streamer read raw bytes: " << rawDataSize << std::endl;
 
-    if (status == ZE_RESULT_WARNING_DROPPED_DATA) {
+    if (rawDataSize == 0) {
         rawDataSize = (uint32_t)rawData.size();
-        zmu::sleep(5);
         VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data()));
         LOG(zmu::LogLevel::DEBUG) << "Streamer read raw bytes: " << rawDataSize << std::endl;
     }

@@ -86,7 +86,7 @@ ze_result_t OaMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawD
 
         // Read streamer data.
         result = metricGroup->readIoStream(reportCount, *pRawData);
-        if (result == ZE_RESULT_SUCCESS || result == ZE_RESULT_WARNING_DROPPED_DATA) {
+        if (result == ZE_RESULT_SUCCESS) {
             *pRawDataSize = reportCount * rawReportSize;
         }
     }
