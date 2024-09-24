@@ -1942,6 +1942,14 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringFif
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
 }
 
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadGpuMemoryFailsDuringUpdateOfLastHeadThenErrorReturned) {
+
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->forcereadGpuMemoryFailOnCount = 4;
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->readFifo(0, threadsWithAttention));
+}
+
 TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringFifoReadThenFifoIsNotReadAndSuccessIsReturned) {
     auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 

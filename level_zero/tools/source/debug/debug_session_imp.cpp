@@ -1739,7 +1739,11 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
                 fifoTailIndex = 0;
             }
         }
-        lastHead = stateSaveAreaHeader->regHeaderV3.fifo_head;
+        retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&lastHead), sizeof(uint32_t), gpuVa + offsetHead);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("Reading fifo_head failed, error = %d\n", retVal);
+            return retVal;
+        }
         NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
     }
     return ZE_RESULT_SUCCESS;
