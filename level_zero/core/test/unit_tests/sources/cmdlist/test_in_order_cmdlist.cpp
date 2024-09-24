@@ -2050,7 +2050,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenAddingRelaxedOrderingEventsTh
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->addEventsToCmdList(0, nullptr, nullptr, true, true, true, false);
+    immCmdList->addEventsToCmdList(0, nullptr, nullptr, true, true, true, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -4989,7 +4989,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenSignalli
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false);
+    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false, false);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
 
@@ -5036,7 +5036,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndAtomicSi
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false);
+    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false, false);
 
     EXPECT_EQ(partitionCount * 2, immCmdList->inOrderExecInfo->getCounterValue());
 
@@ -5091,7 +5091,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenDuplicatedCounterStorageAndWithoutA
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false);
+    immCmdList->appendWaitOnEvents(1, &handle, nullptr, false, false, true, false, false, false);
 
     expectedCounter += counterIncrement;
     EXPECT_EQ(expectedCounter, immCmdList->inOrderExecInfo->getCounterValue());
@@ -7624,7 +7624,8 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 
     auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
-    EXPECT_FALSE(immCmdList->isCopyOnly());
+    EXPECT_FALSE(immCmdList->isCopyOnly(false));
+    EXPECT_TRUE(immCmdList->isCopyOnly(true));
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
@@ -7659,9 +7660,13 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCommands, IsAtLeastXeHpCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
     auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
 
-    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventPool = createEvents<FamilyType>(1, true);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
@@ -7681,6 +7686,86 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCom
 
     auto miFlushCmds = findAll<typename FamilyType::MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(0u, miFlushCmds.size());
+
+    auto lrrCmds = findAll<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+    auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    auto lrmCmds = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+
+    for (auto &lrr : lrrCmds) {
+        auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrr);
+        EXPECT_TRUE(lrrCmd->getSourceRegisterAddress() > RegisterOffsets::bcs0Base);
+        EXPECT_TRUE(lrrCmd->getDestinationRegisterAddress() > RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lri : lriCmds) {
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lri);
+        EXPECT_TRUE(lriCmd->getRegisterOffset() > RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lrm : lrmCmds) {
+        auto lrmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*lrm);
+        EXPECT_TRUE(lrmCmd->getRegisterAddress() > RegisterOffsets::bcs0Base);
+    }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWithRelaxedOrderingWhenAppendingThenUseBcsCommands, IsAtLeastXeHpCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto mainQueueDirectSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*mainQueueCsr);
+    auto offloadDirectSubmission = new MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>(*copyQueueCsr);
+
+    mainQueueCsr->directSubmission.reset(mainQueueDirectSubmission);
+    copyQueueCsr->blitterDirectSubmission.reset(offloadDirectSubmission);
+
+    int client1, client2;
+
+    mainQueueCsr->registerClient(&client1);
+    mainQueueCsr->registerClient(&client2);
+    copyQueueCsr->registerClient(&client1);
+    copyQueueCsr->registerClient(&client2);
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    auto eventHandle = events[0]->toHandle();
+
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, false, false);
+
+    ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+    auto lrrCmds = findAll<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
+    auto lriCmds = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    auto lrmCmds = findAll<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+
+    for (auto &lrr : lrrCmds) {
+        auto lrrCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(*lrr);
+        EXPECT_TRUE(lrrCmd->getSourceRegisterAddress() > RegisterOffsets::bcs0Base);
+        EXPECT_TRUE(lrrCmd->getDestinationRegisterAddress() > RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lri : lriCmds) {
+        auto lriCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*lri);
+        EXPECT_TRUE(lriCmd->getRegisterOffset() > RegisterOffsets::bcs0Base);
+    }
+
+    for (auto &lrm : lrmCmds) {
+        auto lrmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*lrm);
+        EXPECT_TRUE(lrmCmd->getRegisterAddress() > RegisterOffsets::bcs0Base);
+    }
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterThenUseCorrectHwCommands, IsAtLeastXeHpCore) {

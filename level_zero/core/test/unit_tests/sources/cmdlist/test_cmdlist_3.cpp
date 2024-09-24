@@ -1389,7 +1389,7 @@ HWTEST2_F(CommandListCreateWithBcs,
     auto internalCopyEngine = neoDevice->getInternalCopyEngine();
     EXPECT_NE(nullptr, internalCopyEngine);
     EXPECT_EQ(cmdQueue->getCsr(), internalCopyEngine->commandStreamReceiver);
-    EXPECT_TRUE(commandList->isCopyOnly());
+    EXPECT_TRUE(commandList->isCopyOnly(false));
 }
 
 HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingCommandListUsingLinkedCopyThenFlushTaskModeUsed, IsAtLeastXeHpCore) {
@@ -1408,7 +1408,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenForceFlushTaskEnabledWhenCreatingComman
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
 
-    EXPECT_TRUE(commandList->isCopyOnly());
+    EXPECT_TRUE(commandList->isCopyOnly(false));
     EXPECT_TRUE(commandList->flushTaskSubmissionEnabled());
 }
 

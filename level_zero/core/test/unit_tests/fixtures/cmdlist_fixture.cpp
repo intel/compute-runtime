@@ -348,7 +348,7 @@ void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::appendNonKernelOperation(L
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WaitOnEvents) {
         auto eventHandle = event->toHandle();
-        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, nullptr, false, false, false, false, false);
+        result = currentCmdList->appendWaitOnEvents(1, &eventHandle, nullptr, false, false, false, false, false, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     } else if (operation == NonKernelOperation::WriteGlobalTimestamp) {
         uint64_t timestampAddress = 0xfffffffffff0L;

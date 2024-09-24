@@ -437,7 +437,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+                appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
                 appendSignalInOrderDependencyCounter(eventForInOrderExec, false);
             }
         } else {
@@ -525,14 +525,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionPrologue(uint32_t partitionDataSize) {
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
                                                                     partitionDataSize,
-                                                                    isCopyOnly());
+                                                                    isCopyOnly(false));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(),
                                                                     NEO::ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset(),
-                                                                    isCopyOnly());
+                                                                    isCopyOnly(false));
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -621,7 +621,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendDispatchOffsetRegister(bool wor
     if (workloadPartitionEvent && !device->getL0GfxCoreHelper().hasUnifiedPostSyncAllocationLayout()) {
         auto offset = beforeProfilingCmds ? NEO::ImplicitScalingDispatch<GfxFamily>::getTimeStampPostSyncOffset() : NEO::ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset();
 
-        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(), offset, isCopyOnly());
+        NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(), offset, isCopyOnly(false));
     }
 }
 

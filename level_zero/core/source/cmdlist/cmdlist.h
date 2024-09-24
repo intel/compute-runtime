@@ -135,7 +135,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) = 0;
     virtual ze_result_t appendSignalEvent(ze_event_handle_t hEvent) = 0;
     virtual ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                           bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush) = 0;
+                                           bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) = 0;
     virtual ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc,
@@ -254,9 +254,11 @@ struct CommandList : _ze_command_list_handle_t {
     void removeMemoryPrefetchAllocations();
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
-    bool isCopyOnly() const {
-        return NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType);
+    bool isCopyOnly(bool copyOffloadOperation) const {
+        return NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) || (copyOffloadOperation && this->isCopyOffloadEnabled());
     }
+    bool isCopyOffloadEnabled() const { return copyOperationOffloadEnabled; }
+
     bool isInternal() const {
         return internalUsage;
     }
@@ -267,7 +269,7 @@ struct CommandList : _ze_command_list_handle_t {
         return performMemoryPrefetch;
     }
     bool storeExternalPtrAsTemporary() const {
-        return isImmediateType() && (this->isFlushTaskSubmissionEnabled || isCopyOnly());
+        return isImmediateType() && (this->isFlushTaskSubmissionEnabled || isCopyOnly(false));
     }
     bool isWaitForEventsFromHostEnabled();
 
@@ -491,6 +493,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool requiresDcFlushForDcMitigation = false;
     bool statelessBuiltinsEnabled = false;
     bool localDispatchSupport = false;
+    bool copyOperationOffloadEnabled = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

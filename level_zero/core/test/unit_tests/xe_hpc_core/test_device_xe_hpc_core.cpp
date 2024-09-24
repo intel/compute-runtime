@@ -160,7 +160,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *computeCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hComputeCommandList));
-    EXPECT_FALSE(computeCommandList->isCopyOnly());
+    EXPECT_FALSE(computeCommandList->isCopyOnly(false));
 
     ze_command_queue_handle_t hCommandQueue{};
     ze_command_queue_desc_t computeCommandQueueDesc{};
@@ -178,7 +178,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *copyCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hCopyCommandList));
-    EXPECT_TRUE(copyCommandList->isCopyOnly());
+    EXPECT_TRUE(copyCommandList->isCopyOnly(false));
 
     computeCommandQueue->destroy();
     computeCommandList->destroy();
@@ -342,7 +342,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *computeCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hComputeCommandList));
-    EXPECT_FALSE(computeCommandList->isCopyOnly());
+    EXPECT_FALSE(computeCommandList->isCopyOnly(false));
 
     ze_command_list_handle_t hCopyCommandList{};
     ze_command_queue_desc_t copyDesc{};
@@ -351,7 +351,7 @@ HWTEST2_F(MultiDeviceCommandQueueGroupWithNineCopyEnginesTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     CommandListImp *copyCommandList = static_cast<CommandListImp *>(CommandList::fromHandle(hCopyCommandList));
-    EXPECT_TRUE(copyCommandList->isCopyOnly());
+    EXPECT_TRUE(copyCommandList->isCopyOnly(false));
 
     computeCommandList->destroy();
     copyCommandList->destroy();

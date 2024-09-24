@@ -55,7 +55,7 @@ ze_result_t CommandListImp::destroy() {
     }
 
     if (!isImmediateType() &&
-        !isCopyOnly() &&
+        !isCopyOnly(false) &&
         this->stateBaseAddressTracking &&
         this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
 
@@ -257,7 +257,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
 
-        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && !commandList->isCopyOnly() && commandList->isInOrderExecutionEnabled()) {
+        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && !commandList->isCopyOnly(false) && commandList->isInOrderExecutionEnabled()) {
             commandList->enableCopyOperationOffload(productFamily, device, desc);
         }
 

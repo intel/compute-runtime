@@ -181,10 +181,10 @@ struct CommandListCoreFamily : public CommandListImp {
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush) override;
+                                   bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override;
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,
-                                       uint64_t waitValue, uint32_t offset,
-                                       bool relaxedOrderingAllowed, bool implicitDependency, bool skipAddingWaitEventsToResidency, bool noopDispatch);
+                                       uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency,
+                                       bool skipAddingWaitEventsToResidency, bool noopDispatch, bool copyOffloadOperation);
     void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation);
 
@@ -197,7 +197,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendMultiPartitionEpilogue() override;
     void appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation);
     ze_result_t addEventsToCmdList(uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CommandToPatchContainer *outWaitCmds,
-                                   bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency, bool skipAddingWaitEventsToResidency);
+                                   bool relaxedOrderingAllowed, bool trackDependencies, bool waitForImplicitInOrderDependency, bool skipAddingWaitEventsToResidency, bool copyOffloadOperation);
 
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchInitializationSection();
     MOCKABLE_VIRTUAL void appendSynchronizedDispatchCleanupSection();
@@ -286,7 +286,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                           Event *signalEvent,
                                           CmdListKernelLaunchParams &launchParams);
 
-    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, CommandToPatch::CommandType storedSemaphore);
+    void appendWaitOnSingleEvent(Event *event, CommandToPatchContainer *outWaitCmds, bool relaxedOrderingAllowed, bool copyOffloadOperation, CommandToPatch::CommandType storedSemaphore);
 
     void appendSdiInOrderCounterSignalling(uint64_t baseGpuVa, uint64_t signalValue, bool copyOffloadOperation);
 
@@ -357,7 +357,7 @@ struct CommandListCoreFamily : public CommandListImp {
     virtual bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) const { return false; }
     virtual void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {}
     bool canSkipInOrderEventWait(Event &event, bool ignorCbEventBoundToCmdList) const;
-    bool handleInOrderImplicitDependencies(bool relaxedOrderingAllowed);
+    bool handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool copyOffloadOperation);
     bool isQwordInOrderCounter() const { return GfxFamily::isQwordInOrderCounter; }
     bool isInOrderNonWalkerSignalingRequired(const Event *event) const;
     bool hasInOrderDependencies() const;

@@ -639,7 +639,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThen
     ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
-    EXPECT_TRUE(commandList->isCopyOnly());
+    EXPECT_TRUE(commandList->isCopyOnly(false));
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->getCsr(false)->getInternalAllocationStorage()->getTemporaryAllocations().freeAllGraphicsAllocations(device->getNEODevice());

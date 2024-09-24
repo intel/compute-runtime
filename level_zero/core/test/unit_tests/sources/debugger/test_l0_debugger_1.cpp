@@ -377,7 +377,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false);
+    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
@@ -441,7 +441,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false);
+    returnValue = commandList->appendWaitOnEvents(1, &event, nullptr, false, true, false, false, false, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
