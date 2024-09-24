@@ -26,11 +26,6 @@ bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(c
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isMidThreadPreemptionDisallowedForRayTracingKernels() const {
     return true;
 }

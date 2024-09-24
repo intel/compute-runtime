@@ -973,4 +973,9 @@ uint64_t ProductHelperHw<gfxProduct>::getPatIndex(CacheRegion cacheRegion, Cache
     return -1;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
+    return true;
+}
+
 } // namespace NEO

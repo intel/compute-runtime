@@ -103,11 +103,6 @@ uint32_t ProductHelperHw<gfxProduct>::getCommandBuffersPreallocatedPerCommandQue
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::useLocalPreferredForCacheableBuffers() const {
     return false;
 }
