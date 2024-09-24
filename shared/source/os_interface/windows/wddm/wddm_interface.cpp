@@ -156,8 +156,18 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     submitCommand.CommandBuffer = commandBuffer;
     submitCommand.CommandLength = static_cast<UINT>(size);
 
-    submitCommand.pPrivateDriverData = commandHeader;
-    submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
+    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
+    UmKmDataTempStorage<COMMAND_BUFFER_HEADER> internalRepresentation;
+    if (wddm.getHwDeviceId()->getUmKmDataTranslator()->enabled()) {
+        internalRepresentation.resize(wddm.getHwDeviceId()->getUmKmDataTranslator()->getSizeForCommandBufferHeaderDataInternalRepresentation());
+        bool translated = wddm.getHwDeviceId()->getUmKmDataTranslator()->translateCommandBufferHeaderDataToInternalRepresentation(internalRepresentation.data(), internalRepresentation.size(), *pHeader);
+        UNRECOVERABLE_IF(false == translated);
+        submitCommand.pPrivateDriverData = internalRepresentation.data();
+        submitCommand.PrivateDriverDataSize = static_cast<uint32_t>(internalRepresentation.size());
+    } else {
+        submitCommand.pPrivateDriverData = pHeader;
+        submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
+    }
 
     if (!debugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.get()) {
         submitCommand.PrivateDriverDataSize = MemoryConstants::pageSize;
