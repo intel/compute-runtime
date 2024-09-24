@@ -36,10 +36,7 @@ namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    return 16      /* max ptss steps */
-           * 2 * 2 /* two slots and two steps */
-           * sizeof(RENDER_SURFACE_STATE);
+    return 4 * MemoryConstants::pageSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

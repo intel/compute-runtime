@@ -142,8 +142,13 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
                                                        csr->getOsContext(), gsbaState, frontEndState);
         }
 
+        NEO::Device *neoDevice = device->getNEODevice();
+        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+        auto &productHelper = neoDevice->getProductHelper();
+
         if (sshHeaps.size() > 0) {
-            scratchController->programHeaps(sshHeaps, 0u, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size,
+            uint32_t offsetIndex = gfxCoreHelper.getMaxPtssIndex(productHelper) * csr->getOsContext().getEngineType() + 1u;
+            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size,
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
 
