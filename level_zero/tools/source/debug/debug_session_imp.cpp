@@ -1495,7 +1495,14 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
 
 ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
-    auto *regdesc = &stateSaveAreaHeader->regHeader.cmd;
+    const SIP::regset_desc *regdesc = nullptr;
+    if (stateSaveAreaHeader->versionHeader.version.major == 3) {
+        regdesc = &stateSaveAreaHeader->regHeaderV3.cmd;
+    } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
+        regdesc = &stateSaveAreaHeader->regHeader.cmd;
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
 
     PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.command, EuThread::toString(threadId).c_str());
 

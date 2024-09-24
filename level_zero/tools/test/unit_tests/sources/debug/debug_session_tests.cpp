@@ -2500,6 +2500,32 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
 
 using DebugSessionRegistersAccessTestV3 = Test<DebugSessionRegistersAccessV3>;
 
+TEST_F(DebugSessionRegistersAccessTestV3, GivenSipVersion3WhenCallingResumeThenResumeInCmdRegisterIsWritten) {
+    session->debugArea.reserved1 = 1u;
+
+    {
+        auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeaderV3.state_area_offset +
+                    pStateSaveAreaHeader->regHeaderV3.state_save_size * 16;
+        session->stateSaveAreaHeader.resize(size);
+    }
+    session->skipWriteResumeCommand = false;
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+    session->allThreads[threadId]->stopThread(1u);
+
+    dumpRegisterState();
+
+    auto result = session->resume(thread);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(0u, session->readRegistersCallCount);
+    EXPECT_EQ(0u, session->writeRegistersCallCount);
+    EXPECT_EQ(1u, session->writeResumeCommandCalled);
+}
+
 TEST_F(DebugSessionRegistersAccessTestV3, givenV3StateSaveHeaderWhenCalculatingSrMagicOffsetResultIsCorrect) {
 
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
