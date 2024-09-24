@@ -725,7 +725,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenLocalIdsUsedThenDoNotExpectCrossThreadDataInWalkerEmitLocalFieldSet) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     debugManager.flags.EnablePassInlineData.set(true);
     debugManager.flags.EnableHwGenerationLocalIds.set(0);
@@ -733,11 +732,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto &commandStream = cmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
+    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
 
-    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
+    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, inlineDataSize);
 
     auto memoryManager = device->getUltCommandStreamReceiver<FamilyType>().getMemoryManager();
     kernel->kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -761,7 +761,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
-    std::visit([this, lws = lws](auto &&walker) {
+    std::visit([this, lws = lws, inlineDataSize = inlineDataSize](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
 
         EXPECT_EQ(1u, walker->getEmitInlineParameter());
@@ -769,7 +769,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
         EXPECT_EQ(0u, walker->getGenerateLocalId());
         constexpr uint32_t expectedEmit = 0u;
         EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
-        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, inlineDataSize));
 
         uint32_t simd = this->kernel->mockKernel->getKernelInfo().getMaxSimdSize();
         // only X is present
@@ -918,7 +918,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithoutLocalIdsAndPassInlineDataEnabledWhenNoHWGenerationOfLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     debugManager.flags.EnablePassInlineData.set(true);
     debugManager.flags.EnableHwGenerationLocalIds.set(false);
@@ -926,10 +925,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
+    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
     kd.kernelAttributes.flags.passInlineData = true;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
-    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
+    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, inlineDataSize);
 
     auto memoryManager = device->getUltCommandStreamReceiver<FamilyType>().getMemoryManager();
     kernel->kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -944,7 +944,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
-    std::visit([this](auto &&walker) {
+    std::visit([this, inlineDataSize = inlineDataSize](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
 
         EXPECT_EQ(1u, walker->getEmitInlineParameter());
@@ -952,7 +952,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
         EXPECT_EQ(0u, walker->getGenerateLocalId());
         EXPECT_EQ(0u, walker->getEmitLocalId());
 
-        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, inlineDataSize));
 
         if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
             size_t perThreadTotalDataSize = 0U;
@@ -969,7 +969,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedAndCrossThreadIsTwoGrfsThenExpectFirstCrossThreadDataInWalkerSecondInPayload) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     debugManager.flags.EnablePassInlineData.set(true);
     debugManager.flags.EnableHwGenerationLocalIds.set(false);
@@ -1064,13 +1063,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAllChanne
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsUsedThenExpectCrossThreadDataInWalkerAndEmitFields) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     debugManager.flags.EnablePassInlineData.set(true);
     debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-
+    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.entryPoints.skipPerThreadDataLoad = 128;
     kd.kernelAttributes.flags.passInlineData = true;
@@ -1079,7 +1077,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     kd.kernelAttributes.localId[2] = 0;
     kd.kernelAttributes.numLocalIdChannels = 1;
 
-    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
+    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, inlineDataSize);
 
     auto memoryManager = device->getUltCommandStreamReceiver<FamilyType>().getMemoryManager();
     kernel->kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1094,7 +1092,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
-    std::visit([this](auto &&walker) {
+    std::visit([this, inlineDataSize = inlineDataSize](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
 
         EXPECT_EQ(1u, walker->getEmitInlineParameter());
@@ -1103,7 +1101,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
         constexpr uint32_t expectedEmit = (1 << 0);
         EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
 
-        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, inlineDataSize));
 
         if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
             constexpr uint32_t expectedIndirectDataLength = 0;
@@ -1130,7 +1128,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataAndHwLocalIdsGenerationEnabledWhenLocalIdsNotUsedThenExpectCrossThreadDataInWalkerAndNoHwLocalIdGeneration) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     debugManager.flags.EnablePassInlineData.set(true);
     debugManager.flags.EnableHwGenerationLocalIds.set(1);
@@ -1138,6 +1135,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
+    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
     kd.entryPoints.skipPerThreadDataLoad = 128;
     kd.kernelAttributes.flags.passInlineData = true;
     kd.kernelAttributes.localId[0] = 0;
@@ -1145,7 +1143,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     kd.kernelAttributes.localId[2] = 0;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
-    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
+    kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, inlineDataSize);
 
     auto memoryManager = device->getUltCommandStreamReceiver<FamilyType>().getMemoryManager();
     kernel->kernelInfo.kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -1160,7 +1158,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_NE(hwParser.itorWalker, hwParser.cmdList.end());
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
-    std::visit([this](auto &&walker) {
+    std::visit([this, inlineDataSize = inlineDataSize](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
 
         EXPECT_EQ(1u, walker->getEmitInlineParameter());
@@ -1169,7 +1167,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
         constexpr uint32_t expectedEmit = 0;
         EXPECT_EQ(expectedEmit, walker->getEmitLocalId());
 
-        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, sizeof(INLINE_DATA)));
+        EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), this->crossThreadDataGrf, inlineDataSize));
 
         if constexpr (std::is_same_v<WalkerType, COMPUTE_WALKER>) {
             constexpr uint32_t expectedIndirectDataLength = 0;

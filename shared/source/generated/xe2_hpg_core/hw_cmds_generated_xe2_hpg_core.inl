@@ -5494,11 +5494,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
 } INTERFACE_DESCRIPTOR_DATA;
 STATIC_ASSERT(32 == sizeof(INTERFACE_DESCRIPTOR_DATA));
 
-typedef struct tagINLINE_DATA {
-    uint32_t RawData[8];
-} INLINE_DATA;
-STATIC_ASSERT(32 == sizeof(INLINE_DATA));
-
 typedef struct tagCOMPUTE_WALKER {
     union tagTheStructure {
         struct tagCommon {

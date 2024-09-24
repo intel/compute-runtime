@@ -5427,11 +5427,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
 } INTERFACE_DESCRIPTOR_DATA;
 STATIC_ASSERT(32 == sizeof(INTERFACE_DESCRIPTOR_DATA));
 
-typedef struct tagINLINE_DATA {
-    uint32_t RawData[8];
-} INLINE_DATA;
-STATIC_ASSERT(32 == sizeof(INLINE_DATA));
-
 typedef struct tagCOMPUTE_WALKER {
     union tagTheStructure {
         struct tagCommon {
@@ -5505,7 +5500,7 @@ typedef struct tagCOMPUTE_WALKER {
             // DWORD 26
             POSTSYNC_DATA PostSync;
             // DWORD 31
-            INLINE_DATA InlineData;
+            uint32_t InlineData[8];
         } Common;
         uint32_t RawData[39];
     } TheStructure;

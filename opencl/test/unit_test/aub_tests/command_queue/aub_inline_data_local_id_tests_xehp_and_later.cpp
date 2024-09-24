@@ -135,7 +135,6 @@ using XeHPAndLaterAubInlineDataTest = Test<InlineDataFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitIntoSingleGrfWhenInlineDataAllowedThenCopyAllCrossThreadIntoInline) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
-    using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
     auto *kernel = kernels[4].get();
 

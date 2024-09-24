@@ -573,7 +573,6 @@ HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNot
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhenEncodingWalkerThenEmitInlineParameterIsSet) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using InlineData = typename FamilyType::INLINE_DATA;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
@@ -591,7 +590,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhe
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     EXPECT_EQ(1u, cmd->getEmitInlineParameter());
 
-    const uint32_t inlineDataSize = sizeof(InlineData);
+    constexpr auto inlineDataSize = DefaultWalkerType::getInlineDataSize();
     size_t expectedSizeIOH = alignUp(dispatchInterface->getCrossThreadDataSize() +
                                          dispatchInterface->getPerThreadDataSizeForWholeThreadGroup() -
                                          inlineDataSize,
