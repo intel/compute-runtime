@@ -2202,9 +2202,6 @@ TEST(IoctlHelperXeVmBindTest, givenImmediateAndReadOnlyBindFlagsSupportedWhenGet
     for (const auto &bindImmediateSupport : ::testing::Bool()) {
         for (const auto &bindReadOnlySupport : ::testing::Bool()) {
             for (const auto &bindMakeResidentSupport : ::testing::Bool()) {
-                xeIoctlHelper->supportedFeatures.flags.vmBindImmediate = bindImmediateSupport;
-                xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly = bindReadOnlySupport;
-
                 uint64_t expectedFlags = DRM_XE_VM_BIND_FLAG_DUMPABLE;
 
                 if (bindImmediateSupport) {
@@ -2235,17 +2232,6 @@ struct DrmMockXeVmBind : public DrmMockXe {
 
     int ioctl(DrmIoctl request, void *arg) override {
         switch (request) {
-        case DrmIoctl::gemVmBind: {
-            auto vmBindInput = static_cast<drm_xe_vm_bind *>(arg);
-
-            if ((vmBindInput->bind.flags & DRM_XE_VM_BIND_FLAG_IMMEDIATE) == DRM_XE_VM_BIND_FLAG_IMMEDIATE && !supportsBindImmediate) {
-                return -EINVAL;
-            }
-            if ((vmBindInput->bind.flags & DRM_XE_VM_BIND_FLAG_READONLY) == DRM_XE_VM_BIND_FLAG_READONLY && !supportsBindReadOnly) {
-                return -EINVAL;
-            }
-            return 0;
-        } break;
         case DrmIoctl::gemVmCreate: {
             auto vmCreate = static_cast<drm_xe_vm_create *>(arg);
             if (deviceIsInFaultMode &&
@@ -2266,8 +2252,6 @@ struct DrmMockXeVmBind : public DrmMockXe {
             return DrmMockXe::ioctl(request, arg);
         }
     };
-    bool supportsBindImmediate = true;
-    bool supportsBindReadOnly = true;
     bool supportsRecoverablePageFault = true;
 
     bool deviceIsInFaultMode = false;
@@ -2277,24 +2261,16 @@ struct DrmMockXeVmBind : public DrmMockXe {
     DrmMockXeVmBind(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockXe(rootDeviceEnvironment) {}
 };
 
-TEST(IoctlHelperXeVmBindTest, whenInitializeIoctlHelperThenQueryBindFlagsSupport) {
+TEST(IoctlHelperXeVmBindTest, whenInitializeIoctlHelperThenQueryPageFaultFlagsSupport) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeVmBind::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    for (const auto &bindImmediateSupport : ::testing::Bool()) {
-        for (const auto &bindReadOnlySupport : ::testing::Bool()) {
-            for (const auto &recoverablePageFault : ::testing::Bool()) {
-                drm->supportsBindImmediate = bindImmediateSupport;
-                drm->supportsBindReadOnly = bindReadOnlySupport;
-                drm->supportsRecoverablePageFault = recoverablePageFault;
-                auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-                xeIoctlHelper->initialize();
-                EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.vmBindImmediate, bindImmediateSupport);
-                EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly, bindReadOnlySupport);
-                EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.pageFault, recoverablePageFault);
-            }
-        }
+    for (const auto &recoverablePageFault : ::testing::Bool()) {
+        drm->supportsRecoverablePageFault = recoverablePageFault;
+        auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+        xeIoctlHelper->initialize();
+        EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.pageFault, recoverablePageFault);
     }
 }
 
@@ -2303,19 +2279,11 @@ TEST(IoctlHelperXeVmBindTest, givenDeviceInFaultModeWhenInitializeIoctlHelperThe
     auto drm = DrmMockXeVmBind::create(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->deviceIsInFaultMode = true;
 
-    for (const auto &bindImmediateSupport : ::testing::Bool()) {
-        for (const auto &bindReadOnlySupport : ::testing::Bool()) {
-            for (const auto &recoverablePageFault : ::testing::Bool()) {
-                drm->supportsBindImmediate = bindImmediateSupport;
-                drm->supportsBindReadOnly = bindReadOnlySupport;
-                drm->supportsRecoverablePageFault = recoverablePageFault;
-                auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
-                xeIoctlHelper->initialize();
-                EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.vmBindImmediate, bindImmediateSupport);
-                EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.vmBindReadOnly, bindReadOnlySupport);
-                EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.pageFault, recoverablePageFault);
-            }
-        }
+    for (const auto &recoverablePageFault : ::testing::Bool()) {
+        drm->supportsRecoverablePageFault = recoverablePageFault;
+        auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(*drm);
+        xeIoctlHelper->initialize();
+        EXPECT_EQ(xeIoctlHelper->supportedFeatures.flags.pageFault, recoverablePageFault);
     }
 }
 

@@ -869,11 +869,11 @@ uint64_t IoctlHelperXe::getFlagsForVmBind(bool bindCapture, bool bindImmediate, 
     if (bindCapture) {
         flags |= DRM_XE_VM_BIND_FLAG_DUMPABLE;
     }
-    if (bindImmediate && supportedFeatures.flags.vmBindImmediate) {
+    if (bindImmediate) {
         flags |= DRM_XE_VM_BIND_FLAG_IMMEDIATE;
     }
 
-    if (readOnlyResource && supportedFeatures.flags.vmBindReadOnly) {
+    if (readOnlyResource) {
         flags |= DRM_XE_VM_BIND_FLAG_READONLY;
     }
     if (bindMakeResident) {
@@ -1680,50 +1680,11 @@ std::string IoctlHelperXe::getIoctlString(DrmIoctl ioctlRequest) const {
 }
 
 void IoctlHelperXe::querySupportedFeatures() {
-
-    struct drm_xe_vm_create vmCreate = {};
-    auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
-    if (ret != 0) {
-        // if device is already in fault mode it may fail, need to retry with proper flags
-        vmCreate.flags = DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
-        ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
-    }
-    DEBUG_BREAK_IF(ret != 0);
-
-    auto checkVmBindFlagSupport = [&](uint32_t flag) -> bool {
-        uint8_t dummyData[2 * MemoryConstants::pageSize]{};
-        drm_xe_vm_bind bind = {};
-        bind.num_binds = 1;
-        bind.vm_id = vmCreate.vm_id;
-        bind.bind.range = MemoryConstants::pageSize;
-        bind.bind.userptr = alignUp(castToUint64(dummyData), MemoryConstants::pageSize);
-        bind.bind.addr = alignUp(castToUint64(dummyData), MemoryConstants::pageSize);
-        bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
-        bind.bind.flags = flag;
-        bind.bind.pat_index = 1;
-
-        ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
-        if (ret == 0) {
-            bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
-            ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
-            DEBUG_BREAK_IF(ret != 0);
-            return true;
-        }
-        return false;
-    };
-    supportedFeatures.flags.vmBindImmediate = checkVmBindFlagSupport(DRM_XE_VM_BIND_FLAG_IMMEDIATE);
-    supportedFeatures.flags.vmBindReadOnly = checkVmBindFlagSupport(DRM_XE_VM_BIND_FLAG_READONLY);
-
-    struct drm_xe_vm_destroy vmDestroy = {};
-    vmDestroy.vm_id = vmCreate.vm_id;
-    ret = IoctlHelper::ioctl(DrmIoctl::gemVmDestroy, &vmDestroy);
-    DEBUG_BREAK_IF(ret != 0);
-
     auto checkVmCreateFlagsSupport = [&](uint32_t flags) -> bool {
         struct drm_xe_vm_create vmCreate = {};
         vmCreate.flags = flags;
 
-        ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
+        auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
         if (ret == 0) {
             struct drm_xe_vm_destroy vmDestroy = {};
             vmDestroy.vm_id = vmCreate.vm_id;

@@ -214,10 +214,8 @@ class IoctlHelperXe : public IoctlHelper {
     struct SupportedFeatures {
         union {
             struct {
-                uint32_t vmBindReadOnly : 1;
-                uint32_t vmBindImmediate : 1;
                 uint32_t pageFault : 1;
-                uint32_t reserved : 29;
+                uint32_t reserved : 31;
             } flags;
             uint32_t allFlags = 0;
         };
