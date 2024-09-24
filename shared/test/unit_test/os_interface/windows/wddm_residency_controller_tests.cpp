@@ -421,9 +421,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallb
 HWTEST_F(WddmResidencyControllerWithGdiTest, GivenZeroWhenTrimmingToBudgetThenTrueIsReturnedAndDrainPagingFenceQueueCalled) {
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(csr.get());
     EXPECT_EQ(0u, ultCsr->drainPagingFenceQueueCalled);
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    bool status = residencyController->trimResidencyToBudget(0, lock);
+    bool status = residencyController->trimResidencyToBudget(0);
     EXPECT_TRUE(status);
     EXPECT_EQ(1u, ultCsr->drainPagingFenceQueueCalled);
 }
@@ -455,9 +453,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAlloca
     csr->getEvictionAllocations().push_back(&allocation2);
     csr->getEvictionAllocations().push_back(&allocation3);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    residencyController->trimResidencyToBudget(3 * 4096, lock);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
@@ -482,9 +478,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
 
     csr->getEvictionAllocations().push_back(&allocation1);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    bool status = residencyController->trimResidencyToBudget(3 * 4096, lock);
+    bool status = residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_TRUE(csr->getEvictionAllocations().empty());
@@ -519,9 +513,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimming
     csr->getEvictionAllocations().push_back(&allocation2);
     csr->getEvictionAllocations().push_back(&allocation3);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    bool status = residencyController->trimResidencyToBudget(3 * 4096, lock);
+    bool status = residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_TRUE(status);
     EXPECT_EQ(1u, wddm->evictResult.called);
@@ -556,9 +548,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAlloca
     csr->getEvictionAllocations().push_back(&allocation2);
     csr->getEvictionAllocations().push_back(&allocation3);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    residencyController->trimResidencyToBudget(3 * 4096, lock);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
     EXPECT_FALSE(allocation2.getResidencyData().resident[osContextId]);
@@ -582,9 +572,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenAlwaysResidentAllocationWhenTrim
     csr->getEvictionAllocations().push_back(&allocation);
     allocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContextId);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    residencyController->trimResidencyToBudget(3 * 4096, lock);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_TRUE(allocation.getResidencyData().resident[osContextId]);
 }
@@ -632,9 +620,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
     csr->getEvictionAllocations().push_back(&allocation1);
 
     gdi->getWaitFromCpuArg().hDevice = 0;
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    residencyController->trimResidencyToBudget(3 * 4096, lock);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
@@ -686,9 +672,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetT
     wddm->evictResult.called = 0;
     wddm->callBaseEvict = true;
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    residencyController->trimResidencyToBudget(3 * 4096, lock);
+    residencyController->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->evictResult.called);
     EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
@@ -736,9 +720,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     csr->getEvictionAllocations().push_back(&allocation2);
     csr->getEvictionAllocations().push_back(&allocation3);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
-    bool status = residencyController->trimResidencyToBudget(budget, lock);
+    bool status = residencyController->trimResidencyToBudget(budget);
     EXPECT_TRUE(status);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident[osContextId]);
@@ -1124,10 +1106,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenResidencyLoggingEnabledWhenTrimm
     csr->getEvictionAllocations().push_back(&allocation2);
     csr->getEvictionAllocations().push_back(&allocation3);
 
-    std::mutex mtx;
-    std::unique_lock<std::mutex> lock(mtx);
     constexpr uint64_t trimBudgetSize = 3 * 4096;
-    residencyController->trimResidencyToBudget(trimBudgetSize, lock);
+    residencyController->trimResidencyToBudget(trimBudgetSize);
 
     EXPECT_EQ(trimBudgetSize, logger->numBytesToTrimSave);
     EXPECT_EQ(residencyController, logger->controllerObjectSave);

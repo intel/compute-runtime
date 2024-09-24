@@ -45,7 +45,7 @@ class WddmResidencyController {
     void registerCallback();
 
     void trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes);
-    bool trimResidencyToBudget(uint64_t bytes, std::unique_lock<std::mutex> &lock);
+    bool trimResidencyToBudget(uint64_t bytes);
 
     bool isMemoryBudgetExhausted() const { return memoryBudgetExhausted; }
     void setMemoryBudgetExhausted() { memoryBudgetExhausted = true; }

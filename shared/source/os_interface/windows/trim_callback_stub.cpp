@@ -24,7 +24,7 @@ void APIENTRY WddmResidencyController::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICAT
 void WddmResidencyController::trimResidency(const D3DDDI_TRIMRESIDENCYSET_FLAGS &flags, uint64_t bytes) {
 }
 
-bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes, std::unique_lock<std::mutex> &lock) {
+bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
     return false;
 }
 
