@@ -633,15 +633,11 @@ uint64_t CommandListScratchPatchFixtureInit::getSurfStateGpuBase(bool useImmedia
     if (fixtureGlobalStatelessMode == 1) {
         return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getGlobalStatelessHeapAllocation()->getGpuAddress();
     } else {
-        auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
-        if (bindlessHeapsHelper) {
-            return device->getNEODevice()->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::specialSsh)->getGpuBase();
+
+        if (useImmediate) {
+            return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getIndirectHeap(NEO::surfaceState, 0).getGpuBase();
         } else {
-            if (useImmediate) {
-                return device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getIndirectHeap(NEO::surfaceState, 0).getGpuBase();
-            } else {
-                return commandList->commandContainer.getIndirectHeap(NEO::surfaceState)->getGpuBase();
-            }
+            return commandList->commandContainer.getIndirectHeap(NEO::surfaceState)->getGpuBase();
         }
     }
 }

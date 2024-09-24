@@ -3152,8 +3152,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
     EXPECT_EQ(firstHeapSurfaceBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
 
-    ssh->getSpace(ssh->getAvailableSpace() - (2 * FamilyType::cacheLineSize));
-
     result = commandList->reset();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -3162,6 +3160,9 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     size_t usedBefore = cmdListStream.getUsed();
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sizeEnoughForSingleKernel = kernel->getSurfaceStateHeapDataSize();
+    ssh->getSpace(ssh->getAvailableSpace() - sizeEnoughForSingleKernel / 2);
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

@@ -1421,8 +1421,6 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(useImmediate);
-
     auto scratchCmdList = static_cast<L0::CommandList *>(commandList.get());
     auto cmdListStream = commandList->commandContainer.getCommandStream();
     if (useImmediate) {
@@ -1438,6 +1436,8 @@ void CommandListScratchPatchFixtureInit::testScratchInline(bool useImmediate) {
     result = scratchCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(useImmediate);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1503,8 +1503,6 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
-
     auto cmdListStream = commandList->commandContainer.getCommandStream();
 
     const ze_group_count_t groupCount{1, 1, 1};
@@ -1515,6 +1513,8 @@ void CommandListScratchPatchFixtureInit::testScratchGrowingPatching() {
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1606,8 +1606,6 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
-
     auto cmdListStream = commandList->commandContainer.getCommandStream();
 
     const ze_group_count_t groupCount{1, 1, 1};
@@ -1618,6 +1616,8 @@ void CommandListScratchPatchFixtureInit::testScratchSameNotPatching() {
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1664,8 +1664,6 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(true);
-
     auto cmdListStream = commandListImmediate->commandContainer.getCommandStream();
     commandListImmediate->commandContainer.setImmediateCmdListCsr(csr);
 
@@ -1677,6 +1675,8 @@ void CommandListScratchPatchFixtureInit::testScratchImmediatePatching() {
     result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(true);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1715,8 +1715,6 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
-
     auto cmdListStream = commandList->commandContainer.getCommandStream();
 
     const ze_group_count_t groupCount{1, 1, 1};
@@ -1727,6 +1725,8 @@ void CommandListScratchPatchFixtureInit::testScratchChangedControllerPatching() 
     result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     size_t usedAfter = cmdListStream->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
@@ -1832,8 +1832,6 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
 
     size_t inlineOffset = NEO::EncodeDispatchKernel<FamilyType>::getInlineDataOffset(dispatchKernelArgs);
 
-    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
-
     auto cmdListStream = commandList->commandContainer.getCommandStream();
 
     mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x0;
@@ -1852,6 +1850,8 @@ void CommandListScratchPatchFixtureInit::testExternalScratchPatching() {
 
     EXPECT_EQ(0x80u, commandList->getCommandListPerThreadScratchSize(0));
     EXPECT_EQ(0x40u, commandList->getCommandListPerThreadScratchSize(1));
+
+    uint64_t surfaceHeapGpuBase = getSurfStateGpuBase(false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

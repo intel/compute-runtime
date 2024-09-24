@@ -148,12 +148,11 @@ TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensio
         additionalExtensions.emplace_back(ZE_SYNCHRONIZED_DISPATCH_EXP_NAME, ZE_SYNCHRONIZED_DISPATCH_EXP_VERSION_CURRENT);
     }
 
-    if (!device->getProductHelper().isDcFlushAllowed()) {
-        additionalExtensions.emplace_back(ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME, ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT);
-    }
-
     if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
         additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
+    }
+    if (!device->getProductHelper().isDcFlushAllowed()) {
+        additionalExtensions.emplace_back(ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_NAME, ZEX_INTEL_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_VERSION_CURRENT);
     }
 
     uint32_t count = 0;
