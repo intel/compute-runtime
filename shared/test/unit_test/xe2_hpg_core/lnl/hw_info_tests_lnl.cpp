@@ -17,8 +17,6 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "wmtp_setup_lnl.inl"
-
 using namespace NEO;
 
 using LnlHwInfoTest = ::testing::Test;
@@ -67,7 +65,7 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2PlusTiling);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPml5Support);
         EXPECT_EQ(false, featureTable.flags.ftrTileY);
-        EXPECT_EQ(wmtpSupported && setParamBool, featureTable.flags.ftrWalkerMTP);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
         EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
         EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
     }
