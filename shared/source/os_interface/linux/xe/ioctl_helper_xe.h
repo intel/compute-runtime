@@ -113,8 +113,6 @@ class IoctlHelperXe : public IoctlHelper {
     std::unique_ptr<MemoryInfo> createMemoryInfo() override;
     size_t getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, uint32_t subDevicesCount, uint32_t deviceBitfield) const override;
     void setupIpVersion() override;
-    void getTopologyData(size_t nTiles, std::vector<std::bitset<8>> *geomDss, std::vector<std::bitset<8>> *computeDss, std::vector<std::bitset<8>> *euDss, std::vector<std::bitset<8>> *l3BanksMask, DrmQueryTopologyData &topologyData, bool &isComputeDssEmpty);
-    void getTopologyMap(size_t nTiles, std::vector<std::bitset<8>> *dssInfo, TopologyMap &topologyMap);
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;

@@ -695,7 +695,7 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
     xeIoctlHelper->initialize();
 
@@ -708,6 +708,7 @@ TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorre
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -744,7 +745,7 @@ TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNot
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     constexpr int16_t unknownTopology = -1;
@@ -759,6 +760,7 @@ TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNot
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -795,7 +797,7 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     uint16_t tileId = 0;
@@ -808,6 +810,7 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 32u;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -815,10 +818,10 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     EXPECT_EQ(1, topologyData.sliceCount);
     EXPECT_EQ(1, topologyData.maxSlices);
 
-    EXPECT_EQ(64, topologyData.subSliceCount);
-    EXPECT_EQ(64, topologyData.maxSubSlicesPerSlice);
+    EXPECT_EQ(32, topologyData.subSliceCount);
+    EXPECT_EQ(32, topologyData.maxSubSlicesPerSlice);
 
-    EXPECT_EQ(512, topologyData.euCount);
+    EXPECT_EQ(256, topologyData.euCount);
     EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
 
     // verify topology map
@@ -832,7 +835,7 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
 
     std::vector<int> expectedSubSliceIndices;
     expectedSubSliceIndices.reserve(64u);
-    for (auto i = 0u; i < 64; i++) {
+    for (auto i = 0u; i < hwInfo.gtSystemInfo.MaxSubSlicesSupported; i++) {
         expectedSubSliceIndices.emplace_back(i);
     }
 
@@ -877,8 +880,8 @@ TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceI
     EXPECT_FALSE(result);
 
     // verify topology data
-    EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSlices);
+    EXPECT_EQ(0, topologyData.sliceCount);
+    EXPECT_EQ(0, topologyData.maxSlices);
 
     EXPECT_EQ(0, topologyData.subSliceCount);
     EXPECT_EQ(0, topologyData.maxSubSlicesPerSlice);
@@ -936,7 +939,7 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
         0x100,                      // slow mem regions
     };
 
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
     xeIoctlHelper->initialize();
     for (auto tileId = 0; tileId < 4; tileId++) {
@@ -947,6 +950,8 @@ TEST(IoctlHelperXeTest, givenMainAndMediaTypesWhenGetTopologyDataAndMapThenResul
 
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
+
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
 
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
@@ -973,7 +978,7 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     for (auto gtId = 0u; gtId < 4u; gtId++) {
@@ -985,6 +990,7 @@ TEST(IoctlHelperXeTest, given2TileAndComputeDssWhenGetTopologyDataAndMapThenResu
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -1028,7 +1034,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     for (auto gtId = 0u; gtId < 4u; gtId++) {
@@ -1045,6 +1051,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledDssOn1TileAndComputeDssWhenGetTopo
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -1095,7 +1102,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     // even dss disabled
@@ -1110,6 +1117,7 @@ TEST(IoctlHelperXeTest, given2TileWithDisabledEvenDssAndComputeDssWhenGetTopolog
     DrmQueryTopologyData topologyData{};
     TopologyMap topologyMap{};
 
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     ASSERT_TRUE(result);
 
@@ -1182,7 +1190,7 @@ TEST(IoctlHelperXeTest, givenMissingEuPerDssInTopologyWhenGetTopologyDataAndMapT
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
     const auto &tileIdToGtId = xeIoctlHelper->tileIdToGtId;
@@ -1199,6 +1207,7 @@ TEST(IoctlHelperXeTest, givenMissingEuPerDssInTopologyWhenGetTopologyDataAndMapT
         drm->addMockedQueryTopologyData(tileIdToGtId[tileId], DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
         drm->addMockedQueryTopologyData(tileIdToGtId[tileId], DRM_XE_TOPO_DSS_COMPUTE, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
     }
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 64;
     auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
     EXPECT_TRUE(result);
 
