@@ -1392,7 +1392,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
 
     size_t middleElSize = sizeof(uint32_t) * 4;
     uintptr_t rightSize = size % middleElSize;
-    bool isStateless = this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless;
+    bool isStateless = (this->cmdListHeapAddressModel == NEO::HeapAddressModel::globalStateless) || this->isStatelessBuiltinsEnabled();
     if (size >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
