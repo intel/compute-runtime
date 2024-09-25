@@ -1090,6 +1090,14 @@ bool CommandStreamReceiver::createPerDssBackedBuffer(Device &device) {
 }
 
 void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait, int64_t waitTimeout, bool start) {
+    if (getType() == NEO::CommandStreamReceiverType::aub) {
+        if (start) {
+            PRINT_DEBUG_STRING(true, stdout, "\nAub dump wait for task count %llu", taskCountToWait);
+        } else {
+            PRINT_DEBUG_STRING(true, stdout, "\nAub dump wait completed.");
+        }
+        return;
+    }
     auto postSyncAddress = getTagAddress();
     if (start) {
         PRINT_DEBUG_STRING(true, stdout,
@@ -1099,6 +1107,7 @@ void CommandStreamReceiver::printTagAddressContent(TaskCountType taskCountToWait
         PRINT_DEBUG_STRING(true, stdout,
                            "%s", "\nWaiting completed. Current value:");
     }
+
     for (uint32_t i = 0; i < activePartitions; i++) {
         PRINT_DEBUG_STRING(true, stdout, " %u", *postSyncAddress);
         postSyncAddress = ptrOffset(postSyncAddress, this->immWritePostSyncWriteOffset);

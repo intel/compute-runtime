@@ -2519,6 +2519,32 @@ HWTEST_F(CommandStreamReceiverTest, givenMultipleActivePartitionsWhenWaitLogIsEn
     EXPECT_STREQ(expectedOutput.str().c_str(), output.c_str());
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenAubCsrWhenLogWaitingForCompletionEnabledThenSkipFullPrint) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.LogWaitingForCompletion.set(true);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.commandStreamReceiverType = NEO::CommandStreamReceiverType::aub;
+
+    WaitParams waitParams;
+    waitParams.waitTimeout = std::numeric_limits<int64_t>::max();
+
+    testing::internal::CaptureStdout();
+
+    WaitStatus status = csr.waitForCompletionWithTimeout(waitParams, 0);
+    EXPECT_EQ(WaitStatus::ready, status);
+
+    std::string output = testing::internal::GetCapturedStdout();
+
+    std::string expectedOutput1 = "Aub dump wait for task count";
+    std::string expectedOutput2 = "Aub dump wait completed";
+    std::string notExpectedOutput = "Waiting for task count";
+
+    EXPECT_NE(std::string::npos, output.find(expectedOutput1));
+    EXPECT_NE(std::string::npos, output.find(expectedOutput2));
+    EXPECT_EQ(std::string::npos, output.find(notExpectedOutput));
+}
+
 TEST_F(CommandStreamReceiverTest, givenPreambleFlagIsSetWhenGettingFlagStateThenExpectCorrectState) {
     EXPECT_FALSE(commandStreamReceiver->getPreambleSetFlag());
     commandStreamReceiver->setPreambleSetFlag(true);
