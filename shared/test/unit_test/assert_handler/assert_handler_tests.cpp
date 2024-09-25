@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,11 +70,12 @@ TEST(AssertHandlerTests, GivenFlagSetWhenPrintAssertAndAbortCalledThenMessageIsP
     reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->flags = 1;
 
     char const *message = "assert!";
-    auto stringAddress = ptrOffset(reinterpret_cast<uint64_t *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer()), offsetof(AssertBufferHeader, begin) + sizeof(AssertBufferHeader::begin));
+    auto stringAddress = ptrOffset(reinterpret_cast<uint32_t *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer()), offsetof(AssertBufferHeader, begin) + sizeof(AssertBufferHeader::begin));
+    static_assert(((offsetof(AssertBufferHeader, begin) + sizeof(AssertBufferHeader::begin)) & 0b11) == 0, "requirement for uint32_t * alignment not met");
     auto formatStringAddress = reinterpret_cast<uint64_t>(message);
     memcpy(stringAddress, &formatStringAddress, 8);
 
-    auto garbageData = ptrOffset(reinterpret_cast<uint64_t *>(stringAddress), sizeof(stringAddress));
+    auto garbageData = ptrOffset(reinterpret_cast<uint32_t *>(stringAddress), sizeof(stringAddress));
     memset(garbageData, 1, sizeof(uint64_t));
 
     reinterpret_cast<AssertBufferHeader *>(assertHandler.getAssertBuffer()->getUnderlyingBuffer())->begin += sizeof(uint64_t);

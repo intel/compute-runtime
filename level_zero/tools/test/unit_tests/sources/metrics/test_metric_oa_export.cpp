@@ -44,7 +44,7 @@ class MetricExportDataOaTest : public Test<MetricMultiDeviceFixture> {
     template <typename T>
     T readUnaligned(T *unaligned) {
         T returnVal{};
-        memcpy(&returnVal, unaligned, sizeof(T));
+        memcpy(reinterpret_cast<uint8_t *>(&returnVal), reinterpret_cast<uint8_t *>(unaligned), sizeof(T));
         return returnVal;
     }
 
