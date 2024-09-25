@@ -19,6 +19,8 @@ constexpr static auto gfxProduct = IGFX_BMG;
 #include "shared/source/xe2_hpg_core/bmg/os_agnostic_product_helper_bmg.inl"
 #include "shared/source/xe2_hpg_core/os_agnostic_product_helper_xe2_hpg_core.inl"
 
+#include "wmtp_setup_bmg.inl"
+
 namespace NEO {
 #include "shared/source/os_interface/linux/product_helper_xe_hpc_and_later.inl"
 
@@ -27,6 +29,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     enableCompression(hwInfo);
 
     hwInfo->featureTable.flags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
+    hwInfo->featureTable.flags.ftrWalkerMTP &= wmtpSupported;
 
     enableBlitterOperationsSupport(hwInfo);
 

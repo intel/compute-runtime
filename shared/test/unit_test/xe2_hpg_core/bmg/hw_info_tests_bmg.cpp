@@ -17,8 +17,6 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "wmtp_setup_bmg.inl"
-
 using namespace NEO;
 
 using BmgHwInfoTest = ::testing::Test;
@@ -65,7 +63,7 @@ BMGTEST_F(BmgHwInfoTest, givenBoolWhenCallBmgHardwareInfoSetupThenFeatureTableAn
         EXPECT_FALSE(featureTable.flags.ftrTileY);
         EXPECT_FALSE(featureTable.flags.ftrMultiTileArch);
         EXPECT_EQ(1u, featureTable.ftrBcsInfo.to_ulong());
-        EXPECT_EQ(wmtpSupported && setParamBool, featureTable.flags.ftrWalkerMTP);
+        EXPECT_EQ(setParamBool, featureTable.flags.ftrWalkerMTP);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2Compression);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2PlusTiling);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3TransientDataFlush);

@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 #include "per_product_test_definitions.h"
+#include "wmtp_setup_bmg.inl"
 
 using namespace NEO;
 
@@ -30,6 +31,20 @@ BMGTEST_F(BmgProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
 
     int ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(0, ret);
+}
+
+BMGTEST_F(BmgProductHelperLinux, whenConfiguringHwInfoThenWmtpFlagIsAdjusted) {
+
+    outHwInfo.featureTable.flags.ftrWalkerMTP = false;
+    int ret = productHelper->configureHardwareCustom(&outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrWalkerMTP);
+
+    outHwInfo.featureTable.flags.ftrWalkerMTP = true;
+    ret = productHelper->configureHardwareCustom(&outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(wmtpSupported, outHwInfo.featureTable.flags.ftrWalkerMTP);
 }
 
 BMGTEST_F(BmgProductHelperLinux, given57bAddressSpaceWhenConfiguringHwInfoThenSetFtrFlag) {
