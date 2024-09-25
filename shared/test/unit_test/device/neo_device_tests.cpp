@@ -1701,7 +1701,13 @@ HWTEST_F(DeviceTests, givenCopyEnginesWhenCreatingSecondaryContextsThenUseCopyTy
         if (supportedRegular || supportedHp) {
             auto usage = supportedRegular ? EngineUsage::regular : EngineUsage::highPriority;
             EXPECT_NE(device->secondaryEngines.end(), device->secondaryEngines.find(engineType));
-            EXPECT_EQ(5u, device->secondaryEngines[engineType].engines.size());
+
+            auto expectedEngineCount = 5u;
+            if (supportedRegular) {
+                gfxCoreHelper.adjustCopyEngineRegularContextCount(device->secondaryEngines[engineType].engines.size(), expectedEngineCount);
+            }
+
+            EXPECT_EQ(expectedEngineCount, device->secondaryEngines[engineType].engines.size());
 
             auto engine = device->getSecondaryEngineCsr({engineType, usage}, false);
             ASSERT_NE(nullptr, engine);

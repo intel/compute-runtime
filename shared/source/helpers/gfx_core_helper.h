@@ -179,6 +179,7 @@ class GfxCoreHelper {
     virtual bool areSecondaryContextsSupported() const = 0;
     virtual uint32_t getContextGroupContextsCount() const = 0;
     virtual uint32_t getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const = 0;
+    virtual void adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const = 0;
     virtual aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const = 0;
     virtual void initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) = 0;
 
@@ -412,6 +413,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool areSecondaryContextsSupported() const override;
     uint32_t getContextGroupContextsCount() const override;
     uint32_t getContextGroupHpContextsCount(EngineGroupType type, bool hpEngineAvailable) const override;
+    void adjustCopyEngineRegularContextCount(const size_t enginesCount, uint32_t &contextCount) const override;
     aub_stream::EngineType getDefaultHpCopyEngine(const HardwareInfo &hwInfo) const override;
     void initializeDefaultHpCopyEngine(const HardwareInfo &hwInfo) override;
 
