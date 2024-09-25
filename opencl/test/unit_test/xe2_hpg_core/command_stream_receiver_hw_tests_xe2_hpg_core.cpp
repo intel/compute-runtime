@@ -396,11 +396,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
@@ -432,11 +434,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
@@ -468,11 +472,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
@@ -508,11 +514,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
@@ -549,11 +557,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();

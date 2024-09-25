@@ -166,27 +166,28 @@ aub_stream::MMIOList GfxCoreHelperHw<Family>::getExtraMmioList(const HardwareInf
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = true;
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
-        programGlobalFenceAsMiMemFenceCommandInCommandStream = !!debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
+        programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
 
-    if (programGlobalFenceAsMiMemFenceCommandInCommandStream) {
+    if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::fence) {
         return sizeof(Family::MI_MEM_FENCE);
-    } else {
+    } else if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::semaphore) {
         return EncodeSemaphore<Family>::getSizeMiSemaphoreWait();
     }
+    return 0;
 }
 
 template <>
 void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = true;
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = rootDeviceEnvironment.getHardwareInfo()->capabilityTable.isIntegratedDevice ? AdditionalSynchronizationType::none : AdditionalSynchronizationType::fence;
     if (debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
-        programGlobalFenceAsMiMemFenceCommandInCommandStream = !!debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
+        programGlobalFenceAsMiMemFenceCommandInCommandStream = static_cast<AdditionalSynchronizationType>(debugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get());
     }
-    if (programGlobalFenceAsMiMemFenceCommandInCommandStream) {
+    if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::fence) {
         MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
         if (acquire) {
             miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE);
@@ -195,7 +196,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
         }
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));
-    } else {
+    } else if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::semaphore) {
         EncodeSemaphore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
                                                         gpuAddress,
                                                         EncodeSemaphore<Family>::invalidHardwareTag,

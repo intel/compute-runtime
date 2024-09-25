@@ -3033,7 +3033,10 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
         auto miMemFence = genCmdCast<typename FamilyType::MI_MEM_FENCE *>(*++cmdIterator);
 
         fenceExpected &= getHelper<ProductHelper>().isDeviceToHostCopySignalingFenceRequired();
-        size_t expectedFenceCount = fenceExpected ? 3 : 2;
+        size_t expectedFenceCount = fenceExpected ? 1 : 0;
+        if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+            expectedFenceCount += 2;
+        }
 
         auto fences = findAll<typename FamilyType::MI_MEM_FENCE *>(cmdIterator, cmdList.end());
         EXPECT_EQ(expectedFenceCount, fences.size());

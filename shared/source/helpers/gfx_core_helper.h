@@ -483,6 +483,11 @@ struct MemorySynchronizationCommands {
 
     static void setBarrierWaFlags(void *barrierCmd);
 
+    enum class AdditionalSynchronizationType : uint32_t {
+        semaphore = 0,
+        fence,
+        none
+    };
     static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);

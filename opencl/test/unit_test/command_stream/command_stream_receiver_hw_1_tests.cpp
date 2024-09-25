@@ -1255,7 +1255,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
             auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miSemaphoreWaitCmd);
             EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
-        } else {
+        } else if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(pDevice->getRootDeviceEnvironment()) > 0) {
             cmdIterator++;
         }
     }
@@ -1286,7 +1286,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
             auto miSemaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(cmdIterator++));
             EXPECT_NE(nullptr, miSemaphoreWaitCmd);
             EXPECT_TRUE(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWait(*miSemaphoreWaitCmd));
-        } else {
+        } else if (MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(pDevice->getRootDeviceEnvironment()) > 0) {
             cmdIterator++;
         }
     }
