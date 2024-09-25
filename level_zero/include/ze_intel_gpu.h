@@ -235,37 +235,6 @@ zeIntelGetDriverVersionString(
     size_t *pVersionSize);      ///< [in,out] pointer to the size of the driver version string.
                                 ///< if size is zero, then the size of the version string is returned.
 
-/// @brief Get Kernel Program Binary
-///
-/// @details
-///     - A valid kernel handle must be created with zeKernelCreate.
-///     - Returns Intel Graphics Assembly (GEN ISA) format binary program data for kernel handle.
-///     - The application may call this function from simultaneous threads.
-///     - The implementation of this function should be lock-free.
-/// @returns
-///     - ::ZE_RESULT_SUCCESS
-
-#ifndef ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME
-/// @brief Get Kernel Program Binary experimental name
-#define ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME "ZE_intel_experimental_kernel_get_program_binary"
-#endif // ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME
-
-///////////////////////////////////////////////////////////////////////////////
-/// @brief Intel Kernel Get Binary Extension Version(s)
-typedef enum _ze_intel_kernel_get_binary_exp_version_t {
-    ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
-    ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
-    ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
-
-} ze_intel_kernel_get_binary_exp_version_t;
-
-ze_result_t ZE_APICALL
-zeIntelKernelGetBinaryExp(
-    ze_kernel_handle_t hKernel, ///< [in] Kernel handle
-    size_t *pSize,              ///< [in, out] pointer to variable with size of GEN ISA binary
-    char *pKernelBinary         ///< [in,out] pointer to storage area for GEN ISA binary function
-);
-
 #if defined(__cplusplus)
 } // extern "C"
 #endif

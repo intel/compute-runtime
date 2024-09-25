@@ -49,7 +49,6 @@ struct KernelImp : Kernel {
     }
 
     ze_result_t getBaseAddress(uint64_t *baseAddress) override;
-    ze_result_t getKernelProgramBinary(size_t *kernelSize, char *pKernelBinary) override;
     ze_result_t setIndirectAccess(ze_kernel_indirect_access_flags_t flags) override;
     ze_result_t getIndirectAccess(ze_kernel_indirect_access_flags_t *flags) override;
     ze_result_t getSourceAttributes(uint32_t *pSize, char **pString) override;

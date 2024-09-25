@@ -276,18 +276,6 @@ KernelImp::~KernelImp() {
     dynamicStateHeapData.reset();
 }
 
-ze_result_t KernelImp::getKernelProgramBinary(size_t *kernelSize, char *pKernelBinary) {
-    size_t kSize = static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.kernelHeapSize);
-    if (nullptr == pKernelBinary) {
-        *kernelSize = kSize;
-        return ZE_RESULT_SUCCESS;
-    }
-    *kernelSize = std::min(*kernelSize, kSize);
-    memcpy_s(pKernelBinary, *kernelSize, this->kernelImmData->getKernelInfo()->heapInfo.pKernelHeap, *kernelSize);
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t KernelImp::setArgumentValue(uint32_t argIndex, size_t argSize,
                                         const void *pArgValue) {
     if (argIndex >= kernelArgHandlers.size()) {

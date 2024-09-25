@@ -18,12 +18,6 @@ zexKernelGetBaseAddress(
     return L0::Kernel::fromHandle(toInternalType(hKernel))->getBaseAddress(baseAddress);
 }
 
-ze_result_t ZE_APICALL
-zeIntelKernelGetBinaryExp(
-    ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary) {
-    return L0::Kernel::fromHandle(toInternalType(hKernel))->getKernelProgramBinary(pSize, pKernelBinary);
-}
-
 } // namespace L0
 
 extern "C" {
@@ -33,11 +27,5 @@ zexKernelGetBaseAddress(
     ze_kernel_handle_t hKernel,
     uint64_t *baseAddress) {
     return L0::zexKernelGetBaseAddress(hKernel, baseAddress);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeIntelKernelGetBinaryExp(
-    ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary) {
-    return L0::zeIntelKernelGetBinaryExp(hKernel, pSize, pKernelBinary);
 }
 }
