@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
@@ -707,8 +708,8 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFla
     auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
     auto ccsInfo = hwInfo->gtSystemInfo.CCSInfo;
     EXPECT_TRUE(ccsInfo.IsValid);
-    EXPECT_EQ(1u, ccsInfo.NumberOfCCSEnabled);
-    EXPECT_EQ(1u, ccsInfo.Instances.CCSEnableMask);
+    EXPECT_EQ_VAL(1u, ccsInfo.NumberOfCCSEnabled);
+    EXPECT_EQ_VAL(1u, ccsInfo.Instances.CCSEnableMask);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed) {

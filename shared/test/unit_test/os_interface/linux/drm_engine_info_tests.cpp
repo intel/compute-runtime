@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
@@ -74,8 +75,8 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithRcsThenCorrectHwInfoSet) {
 
     auto ccsInfo = hwInfo.gtSystemInfo.CCSInfo;
     EXPECT_FALSE(ccsInfo.IsValid);
-    EXPECT_EQ(0u, ccsInfo.NumberOfCCSEnabled);
-    EXPECT_EQ(0u, ccsInfo.Instances.CCSEnableMask);
+    EXPECT_EQ_VAL(0u, ccsInfo.NumberOfCCSEnabled);
+    EXPECT_EQ_VAL(0u, ccsInfo.Instances.CCSEnableMask);
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
     auto defaultCopyEngine = productHelper.getDefaultCopyEngine();
@@ -120,8 +121,8 @@ TEST(EngineInfoTest, whenCreateEngineInfoWithCcsThenCorrectHwInfoSet) {
 
     auto ccsInfo = hwInfo.gtSystemInfo.CCSInfo;
     EXPECT_TRUE(ccsInfo.IsValid);
-    EXPECT_EQ(1u, ccsInfo.NumberOfCCSEnabled);
-    EXPECT_EQ(1u, ccsInfo.Instances.CCSEnableMask);
+    EXPECT_EQ_VAL(1u, ccsInfo.NumberOfCCSEnabled);
+    EXPECT_EQ_VAL(1u, ccsInfo.Instances.CCSEnableMask);
 
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
     auto defaultCopyEngine = productHelper.getDefaultCopyEngine();

@@ -3329,8 +3329,8 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventWithPayloadWhenHandlingEventThenReadEven
 
     session->handleEvent(&uuidElf.base);
 
-    EXPECT_EQ(uuidElf.handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].handle);
-    EXPECT_EQ(uuidElf.class_handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].classHandle);
+    EXPECT_EQ_VAL(uuidElf.handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].handle);
+    EXPECT_EQ_VAL(uuidElf.class_handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].classHandle);
     EXPECT_NE(nullptr, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].data);
     EXPECT_EQ(elf.size(), session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].dataSize);
     EXPECT_EQ(0x55742d6ea000u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuidElf.handle].ptr);
@@ -3413,8 +3413,8 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
 
     EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidToModule[l0ModuleUuid.handle].segmentCount);
 
-    EXPECT_EQ(l0ModuleUuid.handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[l0ModuleUuid.handle].handle);
-    EXPECT_EQ(l0ModuleUuid.class_handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[l0ModuleUuid.handle].classHandle);
+    EXPECT_EQ_VAL(l0ModuleUuid.handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[l0ModuleUuid.handle].handle);
+    EXPECT_EQ_VAL(l0ModuleUuid.class_handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[l0ModuleUuid.handle].classHandle);
     EXPECT_NE(nullptr, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[l0ModuleUuid.handle].data);
     EXPECT_EQ(sizeof(kernelCount), session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[l0ModuleUuid.handle].dataSize);
 
