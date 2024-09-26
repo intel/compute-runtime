@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,5 +63,17 @@ TEST_F(ClRetainReleaseCommandQueueTests, GivenValidCommandQueueWhenRetainingAndR
 
     this->retVal = clReleaseCommandQueue(queue);
     EXPECT_EQ(CL_SUCCESS, this->retVal);
+}
+
+TEST_F(ClRetainReleaseCommandQueueTests, GivenInvalidCommandQueueWhenReleasingThenErrorCodeReturn) {
+    auto retVal = clReleaseCommandQueue(nullptr);
+    EXPECT_NE(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClRetainReleaseCommandQueueTests, GivenInvalidCommandQueueWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseCommandQueue(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
 }
 } // namespace ULT

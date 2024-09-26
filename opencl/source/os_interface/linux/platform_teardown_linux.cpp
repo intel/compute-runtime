@@ -1,18 +1,17 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/platform/platform.h"
+#include "opencl/source/global_teardown/global_platform_teardown.h"
 
 namespace NEO {
 void __attribute__((constructor)) platformsConstructor() {
-    platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+    globalPlatformSetup();
 }
 void __attribute__((destructor)) platformsDestructor() {
-    delete platformsImpl;
-    platformsImpl = nullptr;
+    globalPlatformTeardown();
 }
 } // namespace NEO

@@ -124,6 +124,13 @@ TEST_F(clEventTests, GivenValidEventWhenSettingStatusMultipleTimesThenClInvalidO
     clReleaseEvent(event);
 }
 
+TEST_F(clEventTests, GivenInvalidEventWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseEvent(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
+}
+
 typedef EventFixture<::testing::TestWithParam<std::tuple<int32_t, int32_t>>> clEventStatusTests;
 
 TEST_P(clEventStatusTests, GivenExecutionStatusWhenSettingUserEventStatusThenSuccessOrCorrectErrorIsReturned) {

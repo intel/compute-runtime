@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/global_teardown/global_platform_teardown.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
@@ -84,6 +85,13 @@ TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenReleasingAcceleratorThenClI
 TEST_F(IntelAcceleratorTest, GivenNullAcceleratorWhenRetainingAcceleratorThenClInvalidAcceleratorIntelErrorIsReturned) {
     result = clRetainAcceleratorINTEL(nullptr);
     EXPECT_EQ(CL_INVALID_ACCELERATOR_INTEL, result);
+}
+
+TEST_F(IntelAcceleratorTest, GivenInvalidAcceleratorWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseAcceleratorINTEL(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
 }
 
 struct IntelAcceleratorGetInfoTest : IntelAcceleratorTestWithValidDescriptor {

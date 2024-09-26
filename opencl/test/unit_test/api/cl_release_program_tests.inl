@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,4 +45,11 @@ TEST_F(ClReleaseProgramTests, GivenRetainedProgramWhenReleasingProgramThenProgra
 
     retVal = clReleaseProgram(prog);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClReleaseProgramTests, GivenInvalidProgramWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseProgram(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
 }

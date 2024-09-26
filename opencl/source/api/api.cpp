@@ -31,6 +31,7 @@
 #include "opencl/source/context/driver_diagnostics.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/execution_environment/cl_execution_environment.h"
+#include "opencl/source/global_teardown/global_platform_teardown.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/cl_validators.h"
@@ -383,6 +384,9 @@ cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
 
 cl_int CL_API_CALL clReleaseDevice(cl_device_id device) {
     TRACING_ENTER(ClReleaseDevice, &device);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("device", device);
@@ -519,6 +523,9 @@ cl_int CL_API_CALL clRetainContext(cl_context context) {
 
 cl_int CL_API_CALL clReleaseContext(cl_context context) {
     TRACING_ENTER(ClReleaseContext, &context);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("context", context);
@@ -636,6 +643,9 @@ cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
 
 cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
     TRACING_ENTER(ClReleaseCommandQueue, &commandQueue);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue);
@@ -1115,6 +1125,9 @@ cl_int CL_API_CALL clRetainMemObject(cl_mem memobj) {
 
 cl_int CL_API_CALL clReleaseMemObject(cl_mem memobj) {
     TRACING_ENTER(ClReleaseMemObject, &memobj);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_INVALID_MEM_OBJECT;
     API_ENTER(&retVal);
 
@@ -1339,6 +1352,9 @@ cl_int CL_API_CALL clRetainSampler(cl_sampler sampler) {
 
 cl_int CL_API_CALL clReleaseSampler(cl_sampler sampler) {
     TRACING_ENTER(ClReleaseSampler, &sampler);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("sampler", sampler);
@@ -1537,6 +1553,9 @@ cl_int CL_API_CALL clRetainProgram(cl_program program) {
 
 cl_int CL_API_CALL clReleaseProgram(cl_program program) {
     TRACING_ENTER(ClReleaseProgram, &program);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("program", program);
@@ -1878,6 +1897,9 @@ cl_int CL_API_CALL clRetainKernel(cl_kernel kernel) {
 
 cl_int CL_API_CALL clReleaseKernel(cl_kernel kernel) {
     TRACING_ENTER(ClReleaseKernel, &kernel);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("kernel", kernel);
@@ -2172,6 +2194,9 @@ cl_int CL_API_CALL clRetainEvent(cl_event event) {
 
 cl_int CL_API_CALL clReleaseEvent(cl_event event) {
     TRACING_ENTER(ClReleaseEvent, &event);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     auto retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     auto pEvent = castToObject<Event>(event);
@@ -4509,6 +4534,9 @@ cl_int CL_API_CALL clReleaseAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
 
     TRACING_ENTER(ClReleaseAcceleratorINTEL, &accelerator);
+    if (wasPlatformTeardownCalled) {
+        return CL_SUCCESS;
+    }
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("accelerator", accelerator);

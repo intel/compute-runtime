@@ -1,20 +1,22 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/source/platform/platform.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
+
+#include "opencl/source/global_teardown/global_platform_teardown.h"
 
 using namespace NEO;
 
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) { // NOLINT(readability-identifier-naming)
     if (fdwReason == DLL_PROCESS_DETACH) {
-        delete platformsImpl;
+        globalPlatformTeardown();
     }
     if (fdwReason == DLL_PROCESS_ATTACH) {
-        platformsImpl = new std::vector<std::unique_ptr<Platform>>;
+        globalPlatformSetup();
     }
     return TRUE;
 }

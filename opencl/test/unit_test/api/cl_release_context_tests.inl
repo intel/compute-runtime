@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "opencl/source/global_teardown/global_platform_teardown.h"
 
 #include "cl_api_tests.h"
 
@@ -32,5 +34,12 @@ TEST_F(ClReleaseContextTests, GivenValidContextWhenReleasingContextThenSuccessIs
 TEST_F(ClReleaseContextTests, GivenNullContextWhenReleasingContextThenClInvalidContextIsReturned) {
     auto retVal = clReleaseContext(nullptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST_F(ClReleaseContextTests, GivenInvalidContextWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseContext(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
 }
 } // namespace ULT

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,4 +36,17 @@ TEST_F(ClReleaseMemObjectTests, GivenValidBufferWhenReleasingMemObjectThenSucces
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(ClReleaseMemObjectTests, GivenInvalidMemObjWhenReleasingThenErrorCodeReturn) {
+    auto retVal = clReleaseMemObject(nullptr);
+    EXPECT_NE(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClReleaseMemObjectTests, GivenInvalidMemObjWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseMemObject(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
+}
+
 } // namespace ULT

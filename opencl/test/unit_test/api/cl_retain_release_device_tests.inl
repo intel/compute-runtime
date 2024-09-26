@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/global_teardown/global_platform_teardown.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
 using namespace NEO;
@@ -63,5 +64,17 @@ TEST_F(ClRetainReleaseDeviceTests, GivenRootDeviceWhenReleasingThenReferenceCoun
                              sizeof(cl_uint), &theRef, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, theRef);
+}
+
+TEST_F(ClRetainReleaseDeviceTests, GivenInvaliddeviceWhenCallingReleaseThenErrorCodeReturn) {
+    auto retVal = clReleaseDevice(nullptr);
+    EXPECT_NE(CL_SUCCESS, retVal);
+}
+
+TEST_F(ClRetainReleaseDeviceTests, GivenInvalidDeviceWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseDevice(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
 }
 } // namespace ULT

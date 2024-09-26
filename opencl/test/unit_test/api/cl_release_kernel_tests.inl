@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,4 +82,12 @@ TEST_F(ClReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsC
     retVal = clReleaseProgram(program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(ClReleaseKernelTests, GivenInvalidKernelWhenTerdownWasCalledThenSuccessReturned) {
+    wasPlatformTeardownCalled = true;
+    auto retVal = clReleaseKernel(nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    wasPlatformTeardownCalled = false;
+}
+
 } // namespace ULT
