@@ -13,6 +13,7 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -92,7 +93,11 @@ struct CommandQueueImp : public CommandQueue {
     }
 
     bool isSynchronousMode() const {
-        return getCommandQueueMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        bool syncMode = getCommandQueueMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        if (NEO::debugManager.flags.MakeEachEnqueueBlocking.get()) {
+            syncMode |= true;
+        }
+        return syncMode;
     }
 
     virtual bool getPreemptionCmdProgramming() = 0;
