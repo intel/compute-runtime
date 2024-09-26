@@ -17,6 +17,7 @@
 
 #include "aubstream/product_family.h"
 #include "platforms.h"
+#include "wmtp_setup_bmg.inl"
 
 using namespace NEO;
 
@@ -90,6 +91,14 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
 
 BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet) {
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_B0);
+}
+
+BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrWalkerMTP = false;
+    EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
+    hwInfo.featureTable.flags.ftrWalkerMTP = true;
+    EXPECT_EQ(wmtpSupported, compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
