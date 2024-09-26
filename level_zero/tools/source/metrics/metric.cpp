@@ -288,6 +288,21 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t MultiDeviceMetricImp::getProperties(zet_metric_properties_t *pProperties) {
+    return subDeviceMetrics[0]->getProperties(pProperties);
+}
+
+MultiDeviceMetricImp *MultiDeviceMetricImp::create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics) {
+    return new (std::nothrow) MultiDeviceMetricImp(metricSource, subDeviceMetrics);
+}
+
+MetricImp *MultiDeviceMetricImp::getMetricAtSubDeviceIndex(uint32_t index) {
+    if (index < subDeviceMetrics.size()) {
+        return subDeviceMetrics.at(index);
+    }
+    return nullptr;
+}
+
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) {
     auto device = Device::fromHandle(hDevice);
     return device->getMetricDeviceContext().metricGroupGet(pCount, phMetricGroups);

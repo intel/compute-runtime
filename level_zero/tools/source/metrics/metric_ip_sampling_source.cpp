@@ -294,8 +294,8 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValues(const zet_metric_gro
     const bool calculateCountOnly = *pMetricValueCount == 0;
 
     if (isMultiDeviceCaptureData(rawDataSize, pRawData)) {
-        METRICS_LOG_INFO("The call is not supported for multiple devices");
-        METRICS_LOG_INFO("Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
+        METRICS_LOG_INFO("%s", "The call is not supported for multiple devices");
+        METRICS_LOG_INFO("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

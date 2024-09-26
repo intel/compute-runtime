@@ -712,8 +712,8 @@ ze_result_t OaMetricGroupImp::calculateMetricValues(const zet_metric_group_calcu
 
     const MetricGroupCalculateHeader *pRawHeader = reinterpret_cast<const MetricGroupCalculateHeader *>(pRawData);
     if (pRawHeader->magic == MetricGroupCalculateHeader::magicValue) {
-        METRICS_LOG_INFO("The call is not supported for multiple devices");
-        METRICS_LOG_INFO("Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
+        METRICS_LOG_INFO("%s", "The call is not supported for multiple devices");
+        METRICS_LOG_INFO("%s", "Please use zetMetricGroupCalculateMultipleMetricValuesExp instead");
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

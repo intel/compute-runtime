@@ -29,14 +29,14 @@ namespace L0 {
         NEO::printDebugString(true, out, __VA_ARGS__);     \
     }
 
-#define METRICS_LOG_INFO(...) \
-    METRICS_LOG(stdout, "\nL0Metrics[I]: " __VA_ARGS__)
+#define METRICS_LOG_INFO(str, ...) \
+    METRICS_LOG(stdout, "L0Metrics[I]: " str "\n", __VA_ARGS__)
 
 #define METRICS_LOG_DBG(str, ...) \
-    METRICS_LOG(stdout, "\nL0Metrics[D][@fn:%s,ln:%d]: " str, __FUNCTION__, __LINE__, __VA_ARGS__)
+    METRICS_LOG(stdout, "L0Metrics[D][@fn:%s,ln:%d]: " str "\n", __FUNCTION__, __LINE__, __VA_ARGS__)
 
 #define METRICS_LOG_ERR(str, ...) \
-    METRICS_LOG(stderr, "\nL0Metrics[E][@fn:%s,ln:%d]: " str, __FUNCTION__, __LINE__, __VA_ARGS__)
+    METRICS_LOG(stderr, "\n\nL0Metrics[E][@fn:%s,ln:%d]: " str "\n\n", __FUNCTION__, __LINE__, __VA_ARGS__)
 
 struct CommandList;
 struct MetricStreamer;
@@ -139,6 +139,8 @@ struct Metric : _zet_metric_handle_t {
     inline zet_metric_handle_t toHandle() { return this; }
 };
 
+struct MultiDeviceMetricImp;
+
 struct MetricImp : public Metric {
 
     MetricSource &getMetricSource() {
@@ -149,10 +151,37 @@ struct MetricImp : public Metric {
     bool isImmutable() { return isPredefined; }
     bool isRootDevice() { return isMultiDevice; }
 
+    MultiDeviceMetricImp *getRootDevMetric() { return rootDeviceMetricImp; };
+    void setRootDevMetric(MultiDeviceMetricImp *inputRootDevMetricImp) {
+        rootDeviceMetricImp = inputRootDevMetricImp;
+    };
+
   protected:
     MetricSource &metricSource;
     bool isPredefined = true;
     bool isMultiDevice = false;
+    MultiDeviceMetricImp *rootDeviceMetricImp = nullptr;
+};
+
+struct MultiDeviceMetricImp : public MetricImp {
+    ~MultiDeviceMetricImp() override = default;
+    MultiDeviceMetricImp(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics) : MetricImp(metricSource), subDeviceMetrics(subDeviceMetrics) {
+        isPredefined = true;
+        isMultiDevice = true;
+        rootDeviceMetricImp = nullptr;
+
+        for (auto &subDeviceMetric : subDeviceMetrics) {
+            static_cast<MetricImp *>(subDeviceMetric)->setRootDevMetric(this);
+        }
+    }
+
+    ze_result_t destroy() override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
+    ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
+    static MultiDeviceMetricImp *create(MetricSource &metricSource, std::vector<MetricImp *> &subDeviceMetrics);
+    MetricImp *getMetricAtSubDeviceIndex(uint32_t index);
+
+  protected:
+    std::vector<MetricImp *> subDeviceMetrics{};
 };
 
 struct MetricGroup : _zet_metric_group_handle_t {
