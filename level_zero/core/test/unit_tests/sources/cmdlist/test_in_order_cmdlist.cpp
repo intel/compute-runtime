@@ -6628,11 +6628,18 @@ struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListTests {
 };
 
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAskingForAllocationOrGpuAddressThenReturnNodeAllocation, MatchAny) {
-    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventPool = createEvents<FamilyType>(2, true);
 
     auto cmdList = createImmCmdList<gfxCoreFamily>();
 
+    EXPECT_FALSE(events[0]->hasInOrderTimestampNode());
+    EXPECT_FALSE(events[1]->hasInOrderTimestampNode());
+
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_TRUE(events[0]->hasInOrderTimestampNode());
+    EXPECT_TRUE(events[1]->hasInOrderTimestampNode());
 
     EXPECT_NE(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation(), events[0]->eventPoolAllocation);
     EXPECT_NE(nullptr, events[0]->inOrderTimestampNode->getBaseGraphicsAllocation());
@@ -6641,6 +6648,10 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAski
     EXPECT_EQ(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), events[0]->getAllocation(device));
     EXPECT_EQ(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0)->getGpuAddress(), events[0]->getGpuAddress(device));
     EXPECT_EQ(events[0]->getGpuAddress(device) + events[0]->getCompletionFieldOffset(), events[0]->getCompletionFieldGpuAddress(device));
+
+    EXPECT_EQ(events[0]->getGpuAddress(device), events[0]->inOrderTimestampNode->getGpuAddress());
+    EXPECT_EQ(events[1]->getGpuAddress(device), events[1]->inOrderTimestampNode->getGpuAddress());
+    EXPECT_NE(events[0]->getGpuAddress(device), events[1]->getGpuAddress(device));
 }
 
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenAssignAllocation, IsAtLeastXeHpCore) {

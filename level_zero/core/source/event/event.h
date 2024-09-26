@@ -300,6 +300,8 @@ struct Event : _ze_event_handle_t {
 
     void resetInOrderTimestampNode(NEO::TagNodeBase *newNode);
 
+    bool hasInOrderTimestampNode() const { return inOrderTimestampNode != nullptr; }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 

@@ -411,6 +411,9 @@ void Event::disableImplicitCounterBasedMode() {
 }
 
 uint64_t Event::getGpuAddress(Device *device) const {
+    if (inOrderTimestampNode) {
+        return inOrderTimestampNode->getGpuAddress();
+    }
     return getAllocation(device)->getGpuAddress() + this->eventPoolOffset;
 }
 
