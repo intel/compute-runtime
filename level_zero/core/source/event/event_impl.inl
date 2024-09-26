@@ -560,10 +560,12 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
 
     size_t totalSizeToCopy = 0;
 
+    auto hostAddresss = getHostAddress();
+
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++, packets++) {
-            if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(getHostAddress(), totalEventSize))) {
+            if (castToUint64(packetHostAddr) >= castToUint64(ptrOffset(hostAddresss, totalEventSize))) {
                 break;
             }
 
