@@ -89,6 +89,10 @@ lint:
         - ci
         '.lint-revision':
         - ci
+        '.clang-tidy':
+        - ci
+        '*/.clang-tidy':
+        - ci
         '*.md':
         - documentation
       directory_0:
