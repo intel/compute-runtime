@@ -1,6 +1,6 @@
 components:
   i915_kmd:
-    version: 'dev-5819'
+    version: rel-24.6-6
   xe_kmd:
-    version: 'dev-636'
+    version: dev-636
 version: '1'
