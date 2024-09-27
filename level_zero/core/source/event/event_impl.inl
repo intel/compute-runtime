@@ -467,11 +467,13 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
         }
     }
 
+    auto hostAddresss = getHostAddress();
+
     uint32_t packets = 0;
     for (uint32_t i = 0; i < this->kernelCount; i++) {
         uint32_t packetsToSet = kernelEventCompletionData[i].getPacketsUsed();
         for (uint32_t j = 0; j < packetsToSet; j++, packets++) {
-            if (castToUint64(baseHostAddr) >= castToUint64(ptrOffset(getHostAddress(), totalEventSize))) {
+            if (castToUint64(baseHostAddr) >= castToUint64(ptrOffset(hostAddresss, totalEventSize))) {
                 break;
             }
             copyDataToEventAlloc(ptrOffset(baseHostAddr, contextStartOffset), baseGpuAddr + contextStartOffset, sizeof(TagSizeT), timestampStart);
