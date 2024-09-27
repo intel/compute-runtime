@@ -107,7 +107,7 @@ __kernel void image_read_sampler_oob(__global float4 *dst, image2d_t img, sample
     int2 coord = {get_global_id(0) + 1, get_global_id(1) + 1};
     size_t dstOffset = get_global_id(1) * get_image_width(img) + get_global_id(0);
     dst[dstOffset] = read_imagef(img, sampler, coord);
-    printf(" gid[ %d, %d]  %.2f , %.2f , %.2f , %.2f \n", get_global_id(0), get_global_id(1), dst[dstOffset].x, dst[dstOffset].y, dst[dstOffset].z, dst[dstOffset].w );
+    printf(" gid[ %zu, %zu]  %.2f , %.2f , %.2f , %.2f \n", get_global_id(0), get_global_id(1), dst[dstOffset].x, dst[dstOffset].y, dst[dstOffset].z, dst[dstOffset].w );
 }
 )===";
 
