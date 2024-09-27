@@ -5034,8 +5034,8 @@ TEST_F(DebugApiLinuxTest, GivenNonClassUuidEventWithoutPayloadWhenHandlingEventT
     session->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(&uuid));
 
     EXPECT_EQ(50u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].classHandle);
-    EXPECT_EQ(uuid.handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].handle);
-    EXPECT_EQ(uuid.class_handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].classHandle);
+    EXPECT_EQ_VAL(uuid.handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].handle);
+    EXPECT_EQ_VAL(uuid.class_handle, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].classHandle);
     EXPECT_EQ(nullptr, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].data);
     EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinuxi915::mockClientHandle]->uuidMap[uuid.handle].dataSize);
 
