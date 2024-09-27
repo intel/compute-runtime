@@ -6622,10 +6622,22 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
 
 struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListTests {
     void SetUp() override {
-        NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.set(1);
         InOrderCmdListTests::SetUp();
     }
 };
+
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenCreatingEventThenDontCreateTimestampNode, MatchAny) {
+    NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.set(0);
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_NE(nullptr, events[0]->eventPoolAllocation);
+}
 
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAskingForAllocationOrGpuAddressThenReturnNodeAllocation, MatchAny) {
     auto eventPool = createEvents<FamilyType>(2, true);
