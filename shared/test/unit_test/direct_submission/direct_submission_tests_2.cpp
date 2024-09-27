@@ -199,7 +199,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
 
-    if (heaplessStateInit || pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
+    if (heaplessStateInit) {
         GTEST_SKIP();
     }
 
