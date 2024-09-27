@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
         hwInfo.ipVersion = compilerProductHelper.getHwIpVersion(hwInfo);
         rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
 
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, &walkerCmd.getInterfaceDescriptor(), walkerArgs);
 
         if (DG2::isG10(hwInfo) && revisionID < revIdB0) {
             EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());

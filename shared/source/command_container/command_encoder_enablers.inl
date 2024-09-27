@@ -10,7 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 
 template struct NEO::EncodeDispatchKernel<Family>;
-template void NEO::EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::DefaultWalkerType>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::DefaultWalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+template void NEO::EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields<Family::DefaultWalkerType, Family::INTERFACE_DESCRIPTOR_DATA>(const RootDeviceEnvironment &rootDeviceEnvironment, Family::DefaultWalkerType &walkerCmd, const Family::INTERFACE_DESCRIPTOR_DATA *idd, const EncodeWalkerArgs &walkerArgs);
 template void NEO::EncodeDispatchKernel<Family>::adjustTimestampPacket<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
 template void NEO::EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
 template void NEO::EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);

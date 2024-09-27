@@ -17,7 +17,6 @@ if(TESTS_XE2_HPG_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests_xe2_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xe2_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe2_hpg_core.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xe2_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_tests_xe2_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe2_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_xe2_hpg_core.cpp

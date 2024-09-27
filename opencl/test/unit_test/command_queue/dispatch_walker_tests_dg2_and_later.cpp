@@ -88,7 +88,7 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramCompute
     EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, 0};
     for (auto forceL3PrefetchForComputeWalker : {false, true}) {
         debugManager.flags.ForceL3PrefetchForComputeWalker.set(forceL3PrefetchForComputeWalker);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, &walkerCmd.getInterfaceDescriptor(), walkerArgs);
         EXPECT_EQ(!forceL3PrefetchForComputeWalker, walkerCmd.getL3PrefetchDisable());
     }
 }

@@ -116,8 +116,8 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+template <typename WalkerType, typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const EncodeWalkerArgs &walkerArgs) {
     auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     bool l3PrefetchDisable = releaseHelper->isPrefetchDisablingRequired();
     int32_t overrideL3PrefetchDisable = debugManager.flags.ForceL3PrefetchForComputeWalker.get();

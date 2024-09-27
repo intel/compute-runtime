@@ -230,8 +230,8 @@ void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfac
 }
 
 template <>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+template <typename WalkerType, typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const EncodeWalkerArgs &walkerArgs) {
     auto programGlobalFenceAsPostSyncOperationInComputeWalker = walkerArgs.requiredSystemFence;
     int32_t overrideProgramSystemMemoryFence = debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();
     if (overrideProgramSystemMemoryFence != -1) {
@@ -245,7 +245,11 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
         walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
     }
 
-    bool computeDispatchAllWalkerEnable = walkerArgs.kernelExecutionType == KernelExecutionType::concurrent;
+    bool computeDispatchAllWalkerEnable = walkerArgs.kernelExecutionType == KernelExecutionType::concurrent || (rootDeviceEnvironment.getNonLimitedNumberOfCcs() > 1 &&
+                                                                                                                idd &&
+                                                                                                                idd->getThreadGroupDispatchSize() == InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 &&
+                                                                                                                walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension() * idd->getNumberOfThreadsInGpgpuThreadGroup() < walkerArgs.maxFrontEndThreads);
+
     int32_t overrideComputeDispatchAllWalkerEnable = debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
     if (overrideComputeDispatchAllWalkerEnable != -1) {
         computeDispatchAllWalkerEnable = !!overrideComputeDispatchAllWalkerEnable;

@@ -359,6 +359,7 @@ void ExecutionEnvironment::setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper
 void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const {
     auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
     auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    rootDeviceEnvironment->setNonLimitedNumberOfCcs(hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
     productHelper.adjustNumberOfCcs(*hwInfo);
 }
 

@@ -13,6 +13,7 @@ if(TESTS_XE2_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_2_tests_xe2_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_xe2_hpg_core.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_xe2_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_xe2_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds_xe2_hpg_core_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_xe2_hpg_core.cpp
