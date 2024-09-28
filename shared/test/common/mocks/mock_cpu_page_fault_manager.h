@@ -123,7 +123,6 @@ template <class T>
 class MockPageFaultManagerHandlerInvoke : public T {
   public:
     using T::allowCPUMemoryAccess;
-    using T::allowCPUMemoryEvictionImpl;
     using T::checkFaultHandlerFromPageFaultManager;
     using T::evictMemoryAfterImplCopy;
     using T::protectCPUMemoryAccess;

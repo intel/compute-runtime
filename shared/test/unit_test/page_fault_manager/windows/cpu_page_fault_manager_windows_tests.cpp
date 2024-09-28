@@ -5,15 +5,9 @@
  *
  */
 
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
@@ -122,35 +116,4 @@ TEST_F(PageFaultManagerWindowsTest,
     EXPECT_TRUE(mockPageFaultManager.checkFaultHandlerFromPageFaultManager());
 
     RemoveVectoredExceptionHandler(previousHandler);
-}
-
-TEST_F(PageFaultManagerTest,
-       givenDefaultSaHandlerWhenCPUMemoryEvictionIsCalledThenAllocAddedToEvictionListOnlyOnce) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
-    executionEnvironment.memoryManager.reset(memoryManager.release());
-    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    auto wddm = std::unique_ptr<Wddm>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
-    auto osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
-    csr->setupContext(*osContext);
-    auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(executionEnvironment.memoryManager.get(), false);
-    auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
-
-    OSInterface osInterface;
-    RootDeviceIndicesContainer rootDeviceIndices = {0};
-    std::map<uint32_t, DeviceBitfield> deviceBitfields{{0, 0b1}};
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    auto ptr = unifiedMemoryManager->createUnifiedAllocationWithDeviceStorage(4096u, {}, unifiedMemoryProperties);
-    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
-    pageFaultManager->insertAllocation(ptr, 10, unifiedMemoryManager.get(), cmdQ, {});
-
-    EXPECT_EQ(0u, csr->getEvictionAllocations().size());
-    pageFaultManager->allowCPUMemoryEvictionImpl(ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
-
-    pageFaultManager->allowCPUMemoryEvictionImpl(ptr, *csr, &osInterface);
-    EXPECT_EQ(1u, csr->getEvictionAllocations().size());
-
-    unifiedMemoryManager->freeSVMAlloc(ptr);
 }
