@@ -11,7 +11,6 @@
 
 #include <csignal>
 #include <functional>
-#include <vector>
 
 namespace NEO {
 class PageFaultManagerLinux : public PageFaultManager {
@@ -36,9 +35,8 @@ class PageFaultManagerLinux : public PageFaultManager {
 
     static std::function<void(int signal, siginfo_t *info, void *context)> pageFaultHandler;
 
-    std::vector<struct sigaction> previousPageFaultHandlers;
+    struct sigaction previousPageFaultHandler = {};
 
     bool evictMemoryAfterCopy = false;
-    int handlerIndex = 0;
 };
 } // namespace NEO

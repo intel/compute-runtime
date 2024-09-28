@@ -76,7 +76,7 @@ class MockFailPageFaultManager : public PageFaultManagerWindows {
     using PageFaultManagerWindows::checkFaultHandlerFromPageFaultManager;
     using PageFaultManagerWindows::PageFaultManagerWindows;
 
-    bool verifyAndHandlePageFault(void *ptr, bool handlePageFault) override {
+    bool verifyPageFault(void *ptr) override {
         verifyCalled = true;
         return false;
     }

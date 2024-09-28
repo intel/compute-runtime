@@ -442,7 +442,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, WaitForPagingFenceInController, -1, "Instead of 
 
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, false, "Evict USM allocation after implicit migration to GPU")
-DECLARE_DEBUG_VARIABLE(bool, RegisterPageFaultHandlerOnMigration, false, "Register handler on migration to GPU when current is not from pagefault manager")
+DECLARE_DEBUG_VARIABLE(bool, RegisterPageFaultHandlerOnMigration, true, "Register handler on migration to GPU when current is not from pagefault manager")
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")
 DECLARE_DEBUG_VARIABLE(bool, EnableDeferredDeleter, true, "Enables async deleter")

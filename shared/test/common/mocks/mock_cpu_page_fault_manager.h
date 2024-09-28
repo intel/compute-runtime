@@ -23,11 +23,11 @@ class MockPageFaultManager : public PageFaultManager {
     using PageFaultManager::selectGpuDomainHandler;
     using PageFaultManager::transferAndUnprotectMemory;
     using PageFaultManager::unprotectAndTransferMemory;
-    using PageFaultManager::verifyAndHandlePageFault;
+    using PageFaultManager::verifyPageFault;
 
     bool checkFaultHandlerFromPageFaultManager() override {
         checkFaultHandlerCalled++;
-        return isFaultHandlerFromPageFaultManager;
+        return (registerFaultHandlerCalled != 0);
     }
     void registerFaultHandler() override {
         registerFaultHandlerCalled++;
@@ -115,7 +115,6 @@ class MockPageFaultManager : public PageFaultManager {
     size_t protectedSize = 0;
     bool isAubWritable = true;
     bool isCpuAllocEvictable = true;
-    bool isFaultHandlerFromPageFaultManager = false;
     aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
     EngineUsage engineUsage = EngineUsage::engineUsageCount;
 };
@@ -131,8 +130,8 @@ class MockPageFaultManagerHandlerInvoke : public T {
     using T::registerFaultHandler;
     using T::T;
 
-    bool verifyAndHandlePageFault(void *ptr, bool handlePageFault) override {
-        handlerInvoked = handlePageFault;
+    bool verifyPageFault(void *ptr) override {
+        handlerInvoked = true;
         if (allowCPUMemoryAccessOnPageFault) {
             this->allowCPUMemoryAccess(ptr, size);
         }
