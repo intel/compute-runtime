@@ -20,6 +20,7 @@
 
 #include "aubstream/product_family.h"
 #include "platforms.h"
+#include "wmtp_setup_lnl.inl"
 
 using namespace NEO;
 
@@ -92,7 +93,7 @@ LNLTEST_F(LnlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
     hwInfo.featureTable.flags.ftrWalkerMTP = false;
     EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
+    EXPECT_EQ(wmtpSupported, compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
 
 LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer) {
