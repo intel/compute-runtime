@@ -42,7 +42,7 @@ template Event *Event::create<uint64_t>(const EventDescriptor &, const ze_event_
 template Event *Event::create<uint32_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
 
 bool Event::standaloneInOrderTimestampAllocationEnabled() {
-    return (NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.get() != 0);
+    return (NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.get() == 1);
 }
 
 ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
