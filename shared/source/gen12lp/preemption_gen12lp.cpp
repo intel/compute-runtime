@@ -13,6 +13,14 @@ namespace NEO {
 
 using GfxFamily = Gen12LpFamily;
 
+template <>
+void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr) {}
+
+template <>
+size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device) {
+    return 0;
+}
+
 template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, PreemptionMode newPreemptionMode,
                                                             PreemptionMode oldPreemptionMode, GraphicsAllocation *preemptionCsr);
 template size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device);

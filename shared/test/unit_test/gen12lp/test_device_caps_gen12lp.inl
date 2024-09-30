@@ -15,7 +15,7 @@ using namespace NEO;
 using Gen12LpDeviceCaps = Test<DeviceFixture>;
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReported) {
-    EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
+    EXPECT_EQ(PreemptionMode::ThreadGroup, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenKmdNotifyMechanismIsCorrectlyReported) {

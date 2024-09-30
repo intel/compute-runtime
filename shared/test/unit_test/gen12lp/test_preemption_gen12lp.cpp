@@ -29,28 +29,6 @@ PreemptionTestHwDetails getPreemptionTestHwDetails<Gen12LpFamily>() {
 
 using Gen12LpPreemptionTests = DevicePreemptionTests;
 
-GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsAddedToStream) {
-    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
-    StackVec<char, 1024> streamStorage(1024);
-    LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
-
-    EXPECT_NE(0U, requiredSize);
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
-    EXPECT_NE(0U, cmdStream.getUsed());
-}
-
-GEN12LPTEST_F(Gen12LpPreemptionTests, givenInterfaceDescriptorDataWhenMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToDisable) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    INTERFACE_DESCRIPTOR_DATA iddArg;
-    iddArg = FamilyType::cmdInitInterfaceDescriptorData;
-
-    iddArg.setThreadPreemptionDisable(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_ENABLE);
-
-    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidThread);
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_DISABLE, iddArg.getThreadPreemptionDisable());
-}
-
 GEN12LPTEST_F(Gen12LpPreemptionTests, givenInterfaceDescriptorDataWhenNoMidThreadPreemptionModeThenSetDisableThreadPreemptionBitToEnable) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
