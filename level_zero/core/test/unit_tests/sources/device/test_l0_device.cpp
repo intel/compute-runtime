@@ -446,6 +446,31 @@ TEST(L0DeviceTest, givenFilledTopologyWhenGettingApiSliceThenCorrectSliceIdIsRet
     EXPECT_TRUE(ret);
 }
 
+TEST(L0DeviceTest, whenCallingGetDeviceMemoryNameThenCorrectTypeIsReturned) {
+    std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
+
+    auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, nullptr));
+    ASSERT_NE(nullptr, device);
+
+    uint32_t count = 1;
+    ze_device_memory_properties_t memProperties = {};
+
+    auto &sysInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo;
+
+    for (uint32_t i = 0; i < 11; i++) {
+        sysInfo.MemoryType = i;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMemoryProperties(&count, &memProperties));
+
+        if (i == 2 || i == 3 || i == 5 || i == 8) {
+            EXPECT_STREQ("HBM", memProperties.name);
+        } else {
+            EXPECT_STREQ("DDR", memProperties.name);
+        }
+    }
+}
+
 TEST(L0DeviceTest, givenFilledTopologyForZeroSubDeviceWhenGettingApiSliceForHigherSubDevicesThenFalseIsReturned) {
 
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);

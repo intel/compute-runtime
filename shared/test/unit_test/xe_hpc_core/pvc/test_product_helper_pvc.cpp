@@ -145,12 +145,6 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }
 
-PVCTEST_F(PvcProductHelper, givenPvcWhenCallingGetDeviceMemoryNameThenHbmIsReturned) {
-
-    auto deviceMemoryName = productHelper->getDeviceMemoryName();
-    EXPECT_TRUE(hasSubstr(deviceMemoryName, std::string("HBM")));
-}
-
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
 

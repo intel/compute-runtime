@@ -64,6 +64,7 @@
 #include "encode_surface_state_args.h"
 
 #include <algorithm>
+#include <array>
 
 namespace NEO {
 bool releaseFP64Override();
@@ -691,6 +692,12 @@ ze_result_t DeviceImp::getPciProperties(ze_pci_ext_properties_t *pPciProperties)
     return ZE_RESULT_SUCCESS;
 }
 
+const char *DeviceImp::getDeviceMemoryName() {
+    constexpr std::array<uint32_t, 4> hbmTypeIds = {2, 3, 5, 8};
+
+    return std::find(hbmTypeIds.begin(), hbmTypeIds.end(), getHwInfo().gtSystemInfo.MemoryType) != hbmTypeIds.end() ? "HBM" : "DDR";
+}
+
 ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) {
     if (*pCount == 0) {
         *pCount = 1;
@@ -708,7 +715,7 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     auto &hwInfo = this->getHwInfo();
     auto &productHelper = this->getProductHelper();
-    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, productHelper.getDeviceMemoryName().c_str());
+    strcpy_s(pMemProperties->name, ZE_MAX_DEVICE_NAME, getDeviceMemoryName());
     auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
     pMemProperties->maxClockRate = productHelper.getDeviceMemoryMaxClkRate(hwInfo, osInterface, 0);
     pMemProperties->maxBusWidth = deviceInfo.addressBits;

@@ -142,10 +142,6 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getAubStreamSteppingFromHwRevId(const Ha
         return AubMemDump::SteppingValues::K;
     }
 }
-template <>
-std::string ProductHelperHw<IGFX_UNKNOWN>::getDeviceMemoryName() const {
-    return "";
-}
 
 template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {

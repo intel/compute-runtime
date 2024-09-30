@@ -268,11 +268,6 @@ bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const Ha
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::string ProductHelperHw<gfxProduct>::getDeviceMemoryName() const {
-    return "DDR";
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyDisableOverDispatchSupport();
 }

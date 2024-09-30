@@ -178,6 +178,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     uint32_t getCopyEngineOrdinal() const;
 
   protected:
+    const char *getDeviceMemoryName();
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
     void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
