@@ -73,7 +73,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
             sipBuiltIn.first->parseBinaryForContextId();
         }
 
-        if (debugManager.flags.ForceSipClass.get() == static_cast<uint32_t>(SipClassType::builtins) && type == SipKernelType::csr) {
+        if (type == SipKernelType::csr) {
             rootDeviceEnvironment.getMutableHardwareInfo()->capabilityTable.requiredPreemptionSurfaceSize = sipBuiltIn.first->getStateSaveAreaSize(&device);
         }
     };

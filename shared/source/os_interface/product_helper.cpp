@@ -26,9 +26,6 @@ void ProductHelper::setupPreemptionSurfaceSize(HardwareInfo &hwInfo, const RootD
         hwInfo.gtSystemInfo.CsrSizeInMb = static_cast<uint32_t>(debugManager.flags.OverridePreemptionSurfaceSizeInMb.get());
     }
 
-    if (debugManager.flags.ForceSipClass.get() == static_cast<uint32_t>(SipClassType::builtins)) {
-        return;
-    }
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     hwInfo.capabilityTable.requiredPreemptionSurfaceSize = hwInfo.gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;

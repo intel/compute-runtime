@@ -1011,18 +1011,6 @@ HWTEST2_F(ProductHelperTest, givenPatIndexWhenCheckIsCoherentAllocationThenRetur
     }
 }
 
-TEST(ProductHelperPreemptionSettingTest, whenSipClassIsForcedToBuiltinThenRequiredPreemptionSizeIsNotAdjusted) {
-    MockExecutionEnvironment executionEnvironment{};
-    DebugManagerStateRestore restorer;
-    debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::builtins));
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.gtSystemInfo.CsrSizeInMb = 1;
-    constexpr uint32_t initialPreemptionSurfaceSize = 0xdeadbeef;
-    hwInfo.capabilityTable.requiredPreemptionSurfaceSize = initialPreemptionSurfaceSize;
-    MockProductHelper::setupPreemptionSurfaceSize(hwInfo, *executionEnvironment.rootDeviceEnvironments[0]);
-    EXPECT_EQ(initialPreemptionSurfaceSize, hwInfo.capabilityTable.requiredPreemptionSurfaceSize);
-}
-
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenItsPreXe2ThenCacheLineSizeIs64Bytes, IsAtMostPVC) {
     EXPECT_EQ(productHelper->getCacheLineSize(), 64u);
 }

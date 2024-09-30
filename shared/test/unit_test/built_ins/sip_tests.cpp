@@ -409,12 +409,30 @@ TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveArea
     auto stateSaveSize = 0x1800u * numSlices * 8 * 7 + sizeof(NEO::StateSaveAreaHeader);
     EXPECT_EQ(alignUp(fifoSize + stateSaveSize, MemoryConstants::pageSize), SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
 }
+
 TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetStateSaveAreaSizeCalledThenTotalWmtpDataSizeIsReturned) {
     VariableBackup<bool> backupSipInitType(&MockSipData::useMockSip, true);
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(4);
     auto header = reinterpret_cast<SIP::StateSaveAreaHeader *>(MockSipData::mockSipKernel->mockStateSaveAreaHeader.data());
     header->versionHeader.version.major = 4u;
     EXPECT_EQ(MockSipData::totalWmtpDataSize, SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaSize(pDevice));
+}
+
+TEST_F(StateSaveAreaSipTest, givenStateSaveAreaHeaderVersion4WhenGetSipKernelIsCalledForCsrSipThenPreemptionSurfaceSizeIsUpdated) {
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(4);
+    MockCompilerDebugVars debugVars = {};
+    debugVars.stateSaveAreaHeaderToReturn = stateSaveAreaHeader.data();
+    debugVars.stateSaveAreaHeaderToReturnSize = stateSaveAreaHeader.size();
+    gEnvironment->igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) -> void { gEnvironment->igcPopDebugVars(); }};
+
+    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.requiredPreemptionSurfaceSize = static_cast<size_t>(MockSipData::totalWmtpDataSize * 4);
+    EXPECT_NE(hwInfo->capabilityTable.requiredPreemptionSurfaceSize, MockSipData::totalWmtpDataSize);
+
+    auto builtins = pDevice->getBuiltIns();
+    EXPECT_EQ(MockSipData::totalWmtpDataSize, builtins->getSipKernel(SipKernelType::csr, *pDevice).getStateSaveAreaSize(pDevice));
+    EXPECT_EQ(hwInfo->capabilityTable.requiredPreemptionSurfaceSize, MockSipData::totalWmtpDataSize);
 }
 
 TEST_F(StateSaveAreaSipTest, givenNotsupportedStateSaveAreaHeaderVersionWhenGetStateSaveAreaSizeCalledThenNoSizeIsReturned) {

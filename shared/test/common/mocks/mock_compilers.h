@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,8 @@ struct MockCompilerDebugVars {
     size_t debugDataToReturnSize = 0;
     void *binaryToReturn = nullptr;
     size_t binaryToReturnSize = 0;
+    void *stateSaveAreaHeaderToReturn = nullptr;
+    size_t stateSaveAreaHeaderToReturnSize = 0;
     bool failCreatePlatformInterface = false;
     bool failCreateGtSystemInfoInterface = false;
     bool failCreateIgcFeWaInterface = false;
