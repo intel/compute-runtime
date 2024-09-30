@@ -2621,6 +2621,23 @@ HWTEST2_F(InOrderCmdListTests, givenMultipleAllocationsForWriteWhenAskingForNonW
     EXPECT_FALSE(immCmdList2->isInOrderNonWalkerSignalingRequired(nullptr));
 }
 
+HWTEST2_F(InOrderCmdListTests, givenSignalAllPacketsSetWhenProgrammingRemainingPacketsThenSkip, MatchAny) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->signalAllEventPackets = true;
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->maxPacketCount = 2;
+    events[0]->setPacketsInUse(1);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    immCmdList->dispatchEventRemainingPacketsPostSyncOperation(events[0].get(), false);
+    immCmdList->dispatchEventRemainingPacketsPostSyncOperation(events[0].get(), true);
+
+    EXPECT_EQ(offset, cmdStream->getUsed());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, IsGen12LP) {
     using WALKER = typename FamilyType::DefaultWalkerType;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -2645,6 +2662,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
 
     auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItor);
     ASSERT_NE(nullptr, pcCmd);
+
+    EXPECT_EQ(immCmdList->getDcFlushRequired(true), pcCmd->getDcFlushEnable());
 
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pcCmd->getPostSyncOperation());
 

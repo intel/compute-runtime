@@ -199,6 +199,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::dcFlushSupport;
     using BaseClass::device;
     using BaseClass::disablePatching;
+    using BaseClass::dispatchEventRemainingPacketsPostSyncOperation;
     using BaseClass::doubleSbaWa;
     using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
