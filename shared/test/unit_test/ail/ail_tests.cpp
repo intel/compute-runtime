@@ -118,4 +118,10 @@ HWTEST2_F(AILTests, GivenAilWhenCheckingContextSyncFlagRequiredThenExpectFalse, 
     EXPECT_FALSE(ail.isContextSyncFlagRequired());
 }
 
+HWTEST2_F(AILTests, GivenAilWhenCheckingOverfetchDisableRequiredThenExpectFalse, MatchAny) {
+    AILWhitebox<productFamily> ail;
+    ail.processName = "other";
+    EXPECT_FALSE(ail.is256BPrefetchDisableRequired());
+}
+
 } // namespace NEO

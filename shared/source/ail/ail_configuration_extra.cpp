@@ -34,6 +34,8 @@ const std::set<std::string_view> applicationsContextSyncFlag = {};
 
 const std::set<std::string_view> applicationsBufferPoolDisabled = {};
 
+const std::set<std::string_view> applicationsOverfetchDisabled = {};
+
 AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
 
 void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {

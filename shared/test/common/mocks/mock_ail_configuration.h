@@ -23,6 +23,11 @@ class MockAILConfiguration : public AILConfiguration {
         return contextSyncFlagReturn;
     }
 
+    bool prefetchDisableRequiredReturn = false;
+    bool is256BPrefetchDisableRequired() override {
+        return prefetchDisableRequiredReturn;
+    }
+
     bool isBufferPoolEnabledReturn = true;
     bool isBufferPoolEnabled() override {
         return isBufferPoolEnabledReturn;

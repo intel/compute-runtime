@@ -18,5 +18,11 @@ bool AILConfigurationHw<IGFX_LUNARLAKE>::isBufferPoolEnabled() {
     return iterator == applicationsBufferPoolDisabled.end();
 }
 
+template <>
+bool AILConfigurationHw<IGFX_LUNARLAKE>::is256BPrefetchDisableRequired() {
+    auto iterator = applicationsOverfetchDisabled.find(processName);
+    return iterator != applicationsOverfetchDisabled.end();
+}
+
 template class AILConfigurationHw<IGFX_LUNARLAKE>;
 } // namespace NEO
