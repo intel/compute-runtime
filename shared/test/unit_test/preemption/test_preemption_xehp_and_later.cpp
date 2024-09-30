@@ -117,6 +117,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebuggerWhenProgrammingStateSipWithContextThenStateSipIsAdded) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
+    VariableBackup<bool> mockSipBackup{&MockSipData::useMockSip, false};
     auto executionEnvironment = device->getExecutionEnvironment();
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;

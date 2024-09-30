@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include <memory>
@@ -46,6 +47,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     void tearDown();
 
   protected:
+    VariableBackup<bool> mockSipBackup{&MockSipData::useMockSip, false};
     ExecutionEnvironment *executionEnvironment = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};

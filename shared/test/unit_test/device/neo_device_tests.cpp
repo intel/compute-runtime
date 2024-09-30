@@ -430,10 +430,11 @@ TEST_F(DeviceGetCapsTest, givenForcePreemptionModeDebugVariableWhenCreateDeviceT
 }
 
 TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSipKernelIsNotCreated) {
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     DebugManagerStateRestore dbgRestorer;
     {
         auto builtIns = new MockBuiltins();
-        ASSERT_FALSE(MockSipData::called); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        MockSipData::called = false;
 
         debugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
 

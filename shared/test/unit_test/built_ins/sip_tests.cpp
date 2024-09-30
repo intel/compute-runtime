@@ -549,6 +549,7 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
 TEST(DebugBindlessSip, givenOfflineDebuggingModeWhenGettingSipForContextThenCorrectSipKernelIsReturned) {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->setDebuggingMode(DebuggingMode::offline);
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     auto builtIns = new NEO::MockBuiltins();
     builtIns->callBaseGetSipKernel = true;
     MockRootDeviceEnvironment::resetBuiltins(executionEnvironment->rootDeviceEnvironments[0].get(), builtIns);
@@ -798,6 +799,7 @@ class SipKernelMock : public SipKernel {
 using DebugBuiltinSipTest = Test<DeviceFixture>;
 
 TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFromBuiltin) {
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->initDebuggerL0(pDevice);
     auto sipKernelType = SipKernel::getSipKernelType(*pDevice);
     EXPECT_TRUE(SipKernel::initSipKernel(sipKernelType, *pDevice));
@@ -809,6 +811,7 @@ TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFrom
 }
 
 TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenProperSipClassIsSet) {
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     VariableBackup sipClassBackup(&SipKernelMock::classType);
     DebugManagerStateRestore restorer;
 

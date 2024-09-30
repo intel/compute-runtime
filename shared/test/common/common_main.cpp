@@ -431,6 +431,8 @@ int main(int argc, char **argv) {
             MockSipData::mockSipKernel.reset(new MockSipKernel());
             if (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx) {
                 MockSipData::useMockSip = false;
+            } else {
+                MockSipData::useMockSip = true;
             }
             sipInitialized = true;
         }

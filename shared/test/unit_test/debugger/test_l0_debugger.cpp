@@ -46,6 +46,7 @@ TEST(Debugger, givenL0DebuggerWhenGettingL0DebuggerThenCorrectObjectIsReturned) 
 }
 
 TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeIsReturned) {
+    VariableBackup<bool> mockSipBackup(&MockSipData::useMockSip, false);
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto hwInfo = *NEO::defaultHwInfo.get();

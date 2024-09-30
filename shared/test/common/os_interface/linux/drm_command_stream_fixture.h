@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
 
 #include "gtest/gtest.h"
@@ -108,6 +109,7 @@ class DrmCommandStreamTest : public ::testing::Test {
 template <typename DrmType>
 class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
   public:
+    VariableBackup<bool> mockSipBackup{&MockSipData::useMockSip, false};
     std::unique_ptr<DebugManagerStateRestore> dbgState;
     MockExecutionEnvironment *executionEnvironment;
     DrmType *mock;
