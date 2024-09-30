@@ -1653,24 +1653,19 @@ void DebugSessionImp::getNotStoppedThreads(const std::vector<EuThread::ThreadId>
     }
 }
 
-bool DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node) {
+ze_result_t DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node) {
     constexpr uint32_t failsafeTimeoutMax = 100, failsafeTimeoutWait = 50;
     uint32_t timeCount = 0;
     while (!node.valid && (timeCount < failsafeTimeoutMax)) {
         auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&node), sizeof(SIP::fifo_node), gpuVa);
         if (retVal != ZE_RESULT_SUCCESS) {
             PRINT_DEBUGGER_ERROR_LOG("Reading FIFO failed, error = %d\n", retVal);
-            return false;
+            return retVal;
         }
         NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
         timeCount += failsafeTimeoutWait;
     }
-    if (!node.valid) {
-        PRINT_DEBUGGER_ERROR_LOG("%S", "Invalid entry  in SW FIFO\n");
-        return false;
-    }
-
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) {
@@ -1683,29 +1678,33 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
 
     // Drain the fifo
     uint32_t drainRetries = 2, lastHead = ~0u;
-    uint64_t offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
-    uint64_t offsetHead = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_head);
+    const uint64_t offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
+    const uint64_t offsetHead = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_head);
+    const uint64_t offsetFifoSize = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_size);
     const uint64_t offsetFifo = gpuVa + (stateSaveAreaHeader->versionHeader.size * 8) + stateSaveAreaHeader->regHeaderV3.fifo_offset;
 
     while (drainRetries--) {
         constexpr uint32_t failsafeTimeoutWait = 50;
-        std::vector<uint32_t> fifoIndices(2);
-        uint32_t fifoHeadIndex = 0, fifoTailIndex = 0;
+        std::vector<uint32_t> fifoIndices(3);
+        uint32_t fifoHeadIndex = 0, fifoTailIndex = 0, fifoSize = 0;
 
-        auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(fifoIndices.data()), fifoIndices.size() * sizeof(uint32_t), gpuVa + offsetHead);
+        auto retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(fifoIndices.data()), fifoIndices.size() * sizeof(uint32_t), gpuVa + offsetFifoSize);
         if (retVal != ZE_RESULT_SUCCESS) {
             PRINT_DEBUGGER_ERROR_LOG("Reading FIFO indices failed, error = %d\n", retVal);
             return retVal;
         }
-        fifoHeadIndex = fifoIndices[0];
-        fifoTailIndex = fifoIndices[1];
+        fifoSize = fifoIndices[0];
+        fifoHeadIndex = fifoIndices[1];
+        fifoTailIndex = fifoIndices[2];
 
         if (lastHead != fifoHeadIndex) {
             drainRetries++;
         }
+        PRINT_DEBUGGER_FIFO_LOG("fifoHeadIndex: %u fifoTailIndex: %u fifoSize: %u lastHead: %u drainRetries: %u\n",
+                                fifoHeadIndex, fifoTailIndex, fifoSize, lastHead, drainRetries);
 
         while (fifoTailIndex != fifoHeadIndex) {
-            uint32_t readSize = fifoTailIndex < fifoHeadIndex ? fifoHeadIndex - fifoTailIndex : stateSaveAreaHeader->regHeaderV3.fifo_size - fifoTailIndex;
+            uint32_t readSize = fifoTailIndex < fifoHeadIndex ? fifoHeadIndex - fifoTailIndex : fifoSize - fifoTailIndex;
             std::vector<SIP::fifo_node> nodes(readSize);
             uint64_t currentFifoOffset = offsetFifo + (sizeof(SIP::fifo_node) * fifoTailIndex);
 
@@ -1715,8 +1714,21 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
                 return retVal;
             }
             for (uint32_t i = 0; i < readSize; i++) {
-                PRINT_DEBUGGER_INFO_LOG("Validate entry at index %u in SW Fifo\n", (i + fifoTailIndex));
-                UNRECOVERABLE_IF(!isValidNode(vmHandle, currentFifoOffset + (i * sizeof(SIP::fifo_node)), nodes[i]));
+                const uint64_t gpuVa = currentFifoOffset + (i * sizeof(SIP::fifo_node));
+                PRINT_DEBUGGER_FIFO_LOG("Validate entry at index %u in SW Fifo:: vmHandle: %" SCNx64
+                                        " gpuVa: %" SCNx64
+                                        " valid: %" SCNx8
+                                        " thread_id: %" SCNx8
+                                        " eu_id: %" SCNx8
+                                        " subslice_id: %" SCNx8
+                                        " slice_id: %" SCNx8
+                                        "\n",
+                                        (i + fifoTailIndex), vmHandle, gpuVa, nodes[i].valid, nodes[i].thread_id, nodes[i].eu_id, nodes[i].subslice_id, nodes[i].slice_id);
+                retVal = isValidNode(vmHandle, gpuVa, nodes[i]);
+                if (retVal != ZE_RESULT_SUCCESS) {
+                    return retVal;
+                }
+                UNRECOVERABLE_IF(!nodes[i].valid);
                 threadsWithAttention.emplace_back(0, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
                 nodes[i].valid = 0;
             }
@@ -1729,16 +1741,18 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
             if (fifoTailIndex < fifoHeadIndex) {
                 // then we read to the head and are done
                 fifoTailIndex = fifoHeadIndex;
-                retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
-                if (retVal != ZE_RESULT_SUCCESS) {
-                    PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
-                    return retVal;
-                }
             } else {
                 // wrap around
                 fifoTailIndex = 0;
             }
         }
+
+        retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
+        if (retVal != ZE_RESULT_SUCCESS) {
+            PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
+            return retVal;
+        }
+
         retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&lastHead), sizeof(uint32_t), gpuVa + offsetHead);
         if (retVal != ZE_RESULT_SUCCESS) {
             PRINT_DEBUGGER_ERROR_LOG("Reading fifo_head failed, error = %d\n", retVal);

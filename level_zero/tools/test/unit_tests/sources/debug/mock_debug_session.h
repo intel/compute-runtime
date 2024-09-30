@@ -250,6 +250,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP::fifo_node &node) override {
+        if (isValidNodeResult != ZE_RESULT_SUCCESS) {
+            return isValidNodeResult;
+        } else {
+            return DebugSessionImp::isValidNode(vmHandle, gpuVa, node);
+        }
+    }
+
     ze_result_t readRegistersImp(EuThread::ThreadId thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
         readRegistersCallCount++;
         readRegistersReg = type;
@@ -535,6 +543,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t writeMemoryResult = ZE_RESULT_SUCCESS;
     ze_result_t writeRegistersResult = ZE_RESULT_FORCE_UINT32;
     ze_result_t readThreadScratchRegistersResult = ZE_RESULT_FORCE_UINT32;
+    ze_result_t isValidNodeResult = ZE_RESULT_SUCCESS;
 
     uint32_t readStateSaveAreaHeaderCalled = 0;
     uint32_t readRegistersCallCount = 0;

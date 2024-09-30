@@ -1911,6 +1911,32 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoThenFifoIsCorr
     }
 }
 
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWithHeadIndexAtZeroWhenReadingSwFifoThenFifoIsCorrectlyReadAndDrained) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = 0;
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    session->readFifo(0, threadsWithAttention);
+
+    std::vector<SIP::fifo_node> readFifoForValidation(stateSaveAreaHeaderPtr->regHeaderV3.fifo_size);
+    session->readGpuMemory(0, reinterpret_cast<char *>(readFifoForValidation.data()), readFifoForValidation.size() * sizeof(SIP::fifo_node),
+                           reinterpret_cast<uint64_t>(session->stateSaveAreaHeader.data()) + offsetFifo);
+    for (size_t i = fifoTail; i < readFifoForValidation.size(); i++) {
+        EXPECT_EQ(readFifoForValidation[i].valid, 0);
+    }
+    EXPECT_EQ(stateSaveAreaHeaderPtr->regHeaderV3.fifo_head, stateSaveAreaHeaderPtr->regHeaderV3.fifo_tail);
+
+    EXPECT_EQ(threadsWithAttention.size(), fifoVecFromTail.size());
+    size_t index = 0;
+    for (; index < fifoVecFromTail.size(); index++) {
+        EXPECT_EQ(threadsWithAttention[index].slice, fifoVecFromTail[index].slice_id);
+        EXPECT_EQ(threadsWithAttention[index].subslice, fifoVecFromTail[index].subslice_id);
+        EXPECT_EQ(threadsWithAttention[index].eu, fifoVecFromTail[index].eu_id);
+        EXPECT_EQ(threadsWithAttention[index].thread, fifoVecFromTail[index].thread_id);
+    }
+}
+
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenWriteGpuMemoryFailsWhileInValidatingNodeDuringFifoReadThenErrorReturned) {
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
     session->writeMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
@@ -1968,22 +1994,14 @@ TEST(DebugSessionTest, GivenSwFifoWhenStateSaveAreaVersionIsLessThanThreeDuringF
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readFifo(0, threadsWithAttention));
 }
 
-TEST_F(DebugSessionTest, GivenSwFifoNodeWhenCheckingIsValidNodeThenAfterCheckingValidityOfNodeTrueOrFalseReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-    MockDeviceImp deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
-    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
-
-    SIP::fifo_node node1 = {0, 1, 1, 0, 0};
-    EXPECT_FALSE(session->isValidNode(0, 0, node1));
-
-    SIP::fifo_node node2 = {1, 1, 1, 0, 0};
-    EXPECT_TRUE(session->isValidNode(0, 0, node2));
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenReadingSwFifoAndIsValidNodeFailsThenFifoReadReturnsError) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    session->isValidNodeResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, session->readFifo(0, threadsWithAttention));
 }
 
-TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadingMemoryAgainNodeTurnsValidThenTrueReturned) {
+TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadingMemoryAgainNodeTurnsValidThenSuccessReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -1993,16 +2011,18 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
 
     // Declare node whose valid field is 0
     SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
-    EXPECT_FALSE(session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+    EXPECT_FALSE(invalidNode.valid);
 
     SIP::fifo_node correctedNode = {1, 1, 1, 0, 0};
     session->readMemoryBuffer.resize(sizeof(SIP::fifo_node));
     memcpy_s(session->readMemoryBuffer.data(), session->readMemoryBuffer.size(), reinterpret_cast<void *>(&correctedNode), sizeof(SIP::fifo_node));
 
-    EXPECT_TRUE(session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+    EXPECT_TRUE(invalidNode.valid);
 }
 
-TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadingMemoryAgainReadMemoryFailsThenFalseReturned) {
+TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadingMemoryAgainReadMemoryFailsThenErrorReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -2013,7 +2033,7 @@ TEST_F(DebugSessionTest, GivenInvalidSwFifoNodeWhenCheckingIsValidNodeAndOnReadi
     // Declare node whose valid field is 0
     SIP::fifo_node invalidNode = {0, 1, 1, 0, 0};
     session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
-    EXPECT_FALSE(session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, session->isValidNode(0, reinterpret_cast<uint64_t>(session->readMemoryBuffer.data()), invalidNode));
 }
 
 TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderIsNotSet) {

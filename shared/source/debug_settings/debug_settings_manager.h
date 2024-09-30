@@ -105,6 +105,7 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
         constexpr static int32_t LOG_ERROR{1 << 1};     // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_THREADS{1 << 2};   // NOLINT(readability-identifier-naming)
         constexpr static int32_t LOG_MEM{1 << 3};       // NOLINT(readability-identifier-naming)
+        constexpr static int32_t LOG_FIFO{1 << 4};      // NOLINT(readability-identifier-naming)
         constexpr static int32_t DUMP_ELF{1 << 10};     // NOLINT(readability-identifier-naming)
         constexpr static int32_t DUMP_TO_FILE{1 << 16}; // NOLINT(readability-identifier-naming)
     };
@@ -218,6 +219,11 @@ class DurationLog {
 #define PRINT_DEBUGGER_MEM_ACCESS_LOG(STR, ...)                                                                  \
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) { \
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                  \
+    }
+
+#define PRINT_DEBUGGER_FIFO_LOG(STR, ...)                                                                         \
+    if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_FIFO) { \
+        PRINT_DEBUGGER_LOG(stdout, "\nFIFO ACCESS: " STR, __VA_ARGS__)                                            \
     }
 
 template <DebugFunctionalityLevel debugLevel>
