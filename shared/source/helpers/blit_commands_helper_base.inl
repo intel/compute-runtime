@@ -400,7 +400,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProper
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitCommandsMemCopy(const BlitProperties &blitProperites, typename GfxFamily::XY_COPY_BLT &blitCmd,
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsMemCopy(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd,
                                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 

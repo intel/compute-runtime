@@ -686,7 +686,7 @@ HWTEST_F(BcsTests, whenAskingForCmdSizeForMiFlushDwWithMemoryWriteThenReturnCorr
     EXPECT_EQ(miFlushDwSize + additionalSize, totalSize);
 }
 
-HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCalculateForAllAttachedProperites) {
+HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCalculateForAllAttachedProperties) {
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
     const size_t bltSize = (3 * max2DBlitSize);
@@ -729,7 +729,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
 
-HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstimatingCommandsSizeThenCalculateForAllAttachedProperites) {
+HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstimatingCommandsSizeThenCalculateForAllAttachedProperties) {
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const uint32_t numberOfBlts = 3;
     const size_t bltSize = (3 * max2DBlitSize);
@@ -771,7 +771,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
 
-HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWriteReadBufferRectThenCalculateForAllAttachedProperites) {
+HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWriteReadBufferRectThenCalculateForAllAttachedProperties) {
     constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const Vec3<size_t> bltSize = {(3 * max2DBlitSize), 4, 2};
     const size_t numberOfBlts = 3 * bltSize.y * bltSize.z;
@@ -812,7 +812,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
 
-HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstimatingCommandsSizeForWriteReadBufferRectThenCalculateForAllAttachedProperites) {
+HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstimatingCommandsSizeForWriteReadBufferRectThenCalculateForAllAttachedProperties) {
     constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const Vec3<size_t> bltSize = {(3 * max2DBlitSize), 4, 2};
     const size_t numberOfBlts = 3 * bltSize.y * bltSize.z;

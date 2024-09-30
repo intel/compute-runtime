@@ -144,13 +144,13 @@ uint32_t BlitCommandsHelper<Family>::getAvailableBytesPerPixel(size_t copySize, 
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd,
+void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd,
                                                            const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_COPY = typename Family::MEM_COPY;
     using COMPRESSION_FORMAT30 = typename MEM_COPY::COMPRESSION_FORMAT30;
 
-    auto dstAllocation = blitProperites.dstAllocation;
-    auto srcAllocation = blitProperites.srcAllocation;
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcAllocation = blitProperties.srcAllocation;
 
     if (blitCmd.getDestinationY2CoordinateBottom() > 1) {
         blitCmd.setCopyType(MEM_COPY::COPY_TYPE::COPY_TYPE_MATRIX_COPY);
@@ -183,7 +183,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     blitCmd.setCompressionFormat(static_cast<COMPRESSION_FORMAT30>(compressionFormat));
 
-    DEBUG_BREAK_IF(AuxTranslationDirection::none != blitProperites.auxTranslationDirection);
+    DEBUG_BREAK_IF(AuxTranslationDirection::none != blitProperties.auxTranslationDirection);
 }
 
 template <>

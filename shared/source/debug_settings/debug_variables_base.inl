@@ -67,7 +67,7 @@ DECLARE_DEBUG_VARIABLE(bool, CleanStateInPreamble, false, "Ensures clean state i
 DECLARE_DEBUG_VARIABLE(bool, EnableStatelessCompressionWithUnifiedMemory, false, "Enable stateless compression with unified memory")
 DECLARE_DEBUG_VARIABLE(bool, UseClearColorAllocationForBlitter, false, "Create clear color allocation for blitter operations")
 DECLARE_DEBUG_VARIABLE(bool, DisableCachingForHeaps, false, "Do not cache heaps in L3/L1")
-DECLARE_DEBUG_VARIABLE(bool, GlobalSequencerFlushOnCopyEngine, false, "Add global sequencer flash for blitter")
+DECLARE_DEBUG_VARIABLE(bool, GlobalSequencerFlushOnCopyEngine, false, "Add global sequencer flush for blitter")
 DECLARE_DEBUG_VARIABLE(bool, UseImmDataWriteModeOnPostSyncOperation, false, "Use IMM data write mode as post sync operation in Compute Walker")
 DECLARE_DEBUG_VARIABLE(bool, EnableResourceTags, false, "Enable resource tagging in GmmLib")
 DECLARE_DEBUG_VARIABLE(bool, DoNotFreeResources, false, "Do not free resources")

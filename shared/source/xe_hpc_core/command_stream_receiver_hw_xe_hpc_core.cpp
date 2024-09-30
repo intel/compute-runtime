@@ -72,12 +72,12 @@ uint32_t BlitCommandsHelper<Family>::getAvailableBytesPerPixel(size_t copySize, 
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd,
+void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd,
                                                            const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_COPY = typename Family::MEM_COPY;
 
-    auto dstAllocation = blitProperites.dstAllocation;
-    auto srcAllocation = blitProperites.srcAllocation;
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcAllocation = blitProperties.srcAllocation;
 
     if (blitCmd.getDestinationY2CoordinateBottom() > 1) {
         blitCmd.setCopyType(MEM_COPY::COPY_TYPE::COPY_TYPE_MATRIX_COPY);
@@ -87,7 +87,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
     auto cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER;
     // if transfer size bigger then L3 size, copy with L3 disabled
-    if (blitProperites.copySize.x * blitProperites.copySize.y * blitProperites.copySize.z * blitProperites.bytesPerPixel >= (rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte / 2)) {
+    if (blitProperties.copySize.x * blitProperties.copySize.y * blitProperties.copySize.z * blitProperties.bytesPerPixel >= (rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte / 2)) {
         cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
 
@@ -125,13 +125,13 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     }
 
     if (blitCmd.getDestinationCompressible() == MEM_COPY::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE &&
-        AuxTranslationDirection::auxToNonAux != blitProperites.auxTranslationDirection) {
+        AuxTranslationDirection::auxToNonAux != blitProperties.auxTranslationDirection) {
         blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
     } else {
         blitCmd.setDestinationCompressionEnable(MEM_COPY::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
     }
 
-    DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperites.auxTranslationDirection) &&
+    DEBUG_BREAK_IF((AuxTranslationDirection::none != blitProperties.auxTranslationDirection) &&
                    (dstAllocation != srcAllocation || !dstAllocation->isCompressionEnabled()));
 }
 
@@ -212,11 +212,11 @@ void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitPro
 
 template <>
 template <>
-void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {}
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {}
 
 template <>
 template <>
-void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {}
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {}
 
 template <>
 void BlitCommandsHelper<Family>::encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue) {

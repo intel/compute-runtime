@@ -37,9 +37,9 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 
 template <>
 template <>
-void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
-    switch (blitProperites.bytesPerPixel) {
+    switch (blitProperties.bytesPerPixel) {
     default:
         UNRECOVERABLE_IF(true);
         break;

@@ -626,9 +626,9 @@ bool OaMetricQueryPoolImp::allocateGpuMemory() {
 
 bool OaMetricQueryPoolImp::createMetricQueryPool() {
     // Validate metric group query - only event based is supported.
-    zet_metric_group_properties_t metricGroupProperites = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    OaMetricGroupImp::getProperties(hMetricGroup, &metricGroupProperites);
-    const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
+    OaMetricGroupImp::getProperties(hMetricGroup, &metricGroupProperties);
+    const bool validMetricGroup = metricGroupProperties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     if (!validMetricGroup) {
         return false;
