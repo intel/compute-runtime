@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
@@ -157,8 +158,11 @@ class SVMAllocsManager {
 
     struct SvmAllocationCache {
         bool insert(size_t size, void *);
+        static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager);
         void trim(SVMAllocsManager *svmAllocsManager);
+        static constexpr size_t minimalSizeToCheckUtilization = 4 * MemoryConstants::pageSize64k;
+        static constexpr double minimalAllocUtilization = 0.5;
         std::vector<SvmCacheAllocationInfo> allocations;
         std::mutex mtx;
         size_t maxSize = 0;

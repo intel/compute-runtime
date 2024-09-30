@@ -53,11 +53,22 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
     return true;
 }
 
+bool SVMAllocsManager::SvmAllocationCache::allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize) {
+    if (reuseCandidateSize >= SvmAllocationCache::minimalSizeToCheckUtilization) {
+        const auto allocUtilization = static_cast<double>(requestedSize) / reuseCandidateSize;
+        return allocUtilization >= SvmAllocationCache::minimalAllocUtilization;
+    }
+    return true;
+}
+
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager) {
     std::lock_guard<std::mutex> lock(this->mtx);
     for (auto allocationIter = std::lower_bound(allocations.begin(), allocations.end(), size);
          allocationIter != allocations.end();
          ++allocationIter) {
+        if (false == allocUtilizationAllows(size, allocationIter->allocationSize)) {
+            break;
+        }
         void *allocationPtr = allocationIter->allocation;
         SvmAllocationData *svmAllocData = svmAllocsManager->getSVMAlloc(allocationPtr);
         UNRECOVERABLE_IF(!svmAllocData);
