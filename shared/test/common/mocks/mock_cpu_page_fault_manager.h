@@ -58,7 +58,7 @@ class MockPageFaultManager : public PageFaultManager {
         setCpuAllocEvictableCalled++;
         isCpuAllocEvictable = evictable;
     }
-    void allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) override {
+    void allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) override {
         allowCPUMemoryEvictionCalled++;
     }
     void baseAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
@@ -73,12 +73,12 @@ class MockPageFaultManager : public PageFaultManager {
     void baseCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
         PageFaultManager::setCpuAllocEvictable(evictable, ptr, unifiedMemoryManager);
     }
-    void baseAllowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) {
-        PageFaultManager::allowCPUMemoryEviction(ptr, pageFaultData);
+    void baseAllowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
+        PageFaultManager::allowCPUMemoryEviction(evict, ptr, pageFaultData);
     }
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
 
-    void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override {
+    void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override {
         allowCPUMemoryEvictionImplCalled++;
         engineType = csr.getOsContext().getEngineType();
         engineUsage = csr.getOsContext().getEngineUsage();
@@ -123,6 +123,7 @@ template <class T>
 class MockPageFaultManagerHandlerInvoke : public T {
   public:
     using T::allowCPUMemoryAccess;
+    using T::allowCPUMemoryEvictionImpl;
     using T::checkFaultHandlerFromPageFaultManager;
     using T::evictMemoryAfterImplCopy;
     using T::protectCPUMemoryAccess;

@@ -42,7 +42,7 @@ void PageFaultManager::transferToGpu(void *ptr, void *device) {
 
     this->evictMemoryAfterImplCopy(allocData->cpuAllocation, deviceImp->getNEODevice());
 }
-void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) {
+void PageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
 
     CommandStreamReceiver *csr = nullptr;
@@ -54,7 +54,7 @@ void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaul
     UNRECOVERABLE_IF(csr == nullptr);
     auto osInterface = deviceImp->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
 
-    allowCPUMemoryEvictionImpl(ptr, *csr, osInterface);
+    allowCPUMemoryEvictionImpl(evict, ptr, *csr, osInterface);
 }
 } // namespace NEO
 

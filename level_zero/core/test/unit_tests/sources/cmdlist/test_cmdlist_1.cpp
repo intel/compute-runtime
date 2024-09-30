@@ -841,7 +841,7 @@ TEST_F(CommandListMemAdvisePageFault, givenUnifiedMemoryAllocWhenAllowCPUMemoryE
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
 
-    mockPageFaultManager->baseAllowCPUMemoryEviction(ptr, pageData);
+    mockPageFaultManager->baseAllowCPUMemoryEviction(true, ptr, pageData);
     EXPECT_EQ(mockPageFaultManager->allowCPUMemoryEvictionImplCalled, 1);
 
     CommandStreamReceiver *csr = nullptr;

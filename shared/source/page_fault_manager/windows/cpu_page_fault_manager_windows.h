@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class PageFaultManagerWindows : public PageFaultManager {
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
 
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
-    void allowCPUMemoryEvictionImpl(void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
+    void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
 
     bool checkFaultHandlerFromPageFaultManager() override;
     void registerFaultHandler() override;

@@ -719,7 +719,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMigratedBetweenCpuAndGpu
     pageFaultManager->moveAllocationToGpuDomain(ptr);
     EXPECT_EQ(pageFaultManager->moveAllocationToGpuDomainCalled, 1);
     EXPECT_EQ(pageFaultManager->setCpuAllocEvictableCalled, 1);
-    EXPECT_EQ(pageFaultManager->allowCPUMemoryEvictionCalled, 0);
+    EXPECT_EQ(pageFaultManager->allowCPUMemoryEvictionCalled, 1);
     EXPECT_EQ(pageFaultManager->transferToGpuCalled, 1);
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 1);
     EXPECT_EQ(pageFaultManager->isCpuAllocEvictable, 0);
@@ -731,7 +731,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMigratedBetweenCpuAndGpu
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 1);
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
     EXPECT_EQ(pageFaultManager->setCpuAllocEvictableCalled, 2);
-    EXPECT_EQ(pageFaultManager->allowCPUMemoryEvictionCalled, 1);
+    EXPECT_EQ(pageFaultManager->allowCPUMemoryEvictionCalled, 2);
     EXPECT_EQ(pageFaultManager->allowedMemoryAccessAddress, ptr);
     EXPECT_EQ(pageFaultManager->accessAllowedSize, 10u);
     EXPECT_EQ(pageFaultManager->isCpuAllocEvictable, 1);

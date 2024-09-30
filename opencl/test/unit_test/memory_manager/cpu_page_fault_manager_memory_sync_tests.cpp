@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenAllowCPUMemoryEvictionIs
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = cmdQ.get();
 
-    pageFaultManager->baseAllowCPUMemoryEviction(alloc, pageData);
+    pageFaultManager->baseAllowCPUMemoryEviction(true, alloc, pageData);
     EXPECT_EQ(pageFaultManager->allowCPUMemoryEvictionImplCalled, 1);
 
     auto allocData = svmAllocsManager->getSVMAlloc(alloc);

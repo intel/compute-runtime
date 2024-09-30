@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
     UNRECOVERABLE_IF(allocData == nullptr);
     this->evictMemoryAfterImplCopy(allocData->cpuAllocation, &commandQueue->getDevice());
 }
-void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaultData) {
+void PageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
     auto commandQueue = static_cast<CommandQueue *>(pageFaultData.cmdQ);
 
     auto allocData = memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
@@ -42,7 +42,7 @@ void PageFaultManager::allowCPUMemoryEviction(void *ptr, PageFaultData &pageFaul
     auto &csr = commandQueue->selectCsrForBuiltinOperation(csrSelectionArgs);
     auto osInterface = commandQueue->getDevice().getRootDeviceEnvironment().osInterface.get();
 
-    allowCPUMemoryEvictionImpl(ptr, csr, osInterface);
+    allowCPUMemoryEvictionImpl(evict, ptr, csr, osInterface);
 }
 
 } // namespace NEO

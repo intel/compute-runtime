@@ -73,6 +73,7 @@ void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocs
 inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData) {
     if (pageFaultData.domain == AllocationDomain::cpu) {
         this->setCpuAllocEvictable(false, ptr, pageFaultData.unifiedMemoryManager);
+        this->allowCPUMemoryEviction(false, ptr, pageFaultData);
 
         std::chrono::steady_clock::time_point start;
         std::chrono::steady_clock::time_point end;
@@ -117,7 +118,7 @@ void PageFaultManager::transferAndUnprotectMemory(PageFaultManager *pageFaultHan
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
     pageFaultHandler->setCpuAllocEvictable(true, allocPtr, pageFaultData.unifiedMemoryManager);
-    pageFaultHandler->allowCPUMemoryEviction(allocPtr, pageFaultData);
+    pageFaultHandler->allowCPUMemoryEviction(true, allocPtr, pageFaultData);
 }
 
 void PageFaultManager::unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
