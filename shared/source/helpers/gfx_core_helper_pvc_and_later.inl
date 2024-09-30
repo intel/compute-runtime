@@ -17,7 +17,7 @@ bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwIn
         (debugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
         return false;
     }
-    return true;
+    return !hwInfo.capabilityTable.isIntegratedDevice;
 }
 
 template <typename Family>
