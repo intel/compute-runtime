@@ -2484,6 +2484,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     bool appendPipeControlWithPostSync = (!isCopyOnly(false)) && (event->isSignalScope() || event->isEventTimestampFlagSet());
     dispatchEventPostSyncOperation(event, nullptr, nullptr, Event::STATE_SIGNALED, false, false, appendPipeControlWithPostSync, false, isCopyOnly(false));
 
+    if (!event->getAllocation(this->device) && appendPipeControlWithPostSync && getDcFlushRequired(true)) {
+        NEO::PipeControlArgs pipeControlArgs;
+        pipeControlArgs.dcFlushEnable = true;
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), pipeControlArgs);
+    }
+
     if (this->isInOrderExecutionEnabled()) {
         appendSignalInOrderDependencyCounter(event, false);
     }
@@ -3850,6 +3857,10 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax,
                                                                           bool useLastPipeControl, bool skipPartitionOffsetProgramming, bool copyOeration) {
+    if (!event->getAllocation(this->device)) {
+        return;
+    }
+
     uint32_t packets = event->getPacketsInUse();
     if (this->signalAllEventPackets || useMax) {
         packets = event->getMaxPacketsCount();

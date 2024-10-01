@@ -6646,6 +6646,59 @@ struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListTests {
     }
 };
 
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenCreatingEventThenDontCreateTimestampNode, MatchAny) {
+    NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.set(0);
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_NE(nullptr, events[0]->eventPoolAllocation);
+}
+
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSignalEventIsCalledThenProgramPipeControl, MatchAny) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto eventPool = createEvents<FamilyType>(2, false);
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    events[0]->signalScope = true;
+    events[1]->signalScope = false;
+
+    auto cmdStream = cmdList->getCmdContainer().getCommandStream();
+    size_t offset = cmdStream->getUsed();
+
+    {
+        cmdList->appendSignalEvent(events[1]->toHandle());
+
+        GenCmdList hwCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto itor = find<PIPE_CONTROL *>(hwCmdList.begin(), hwCmdList.end());
+        EXPECT_EQ(hwCmdList.end(), itor);
+    }
+
+    offset = cmdStream->getUsed();
+
+    {
+        cmdList->appendSignalEvent(events[0]->toHandle());
+
+        GenCmdList hwCmdList;
+        EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
+
+        auto itor = find<PIPE_CONTROL *>(hwCmdList.begin(), hwCmdList.end());
+
+        if (cmdList->getDcFlushRequired(true)) {
+            ASSERT_NE(hwCmdList.end(), itor);
+            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itor);
+            ASSERT_NE(nullptr, pipeControl);
+            EXPECT_TRUE(pipeControl->getDcFlushEnable());
+            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControl->getPostSyncOperation());
+        } else {
+            EXPECT_EQ(hwCmdList.end(), itor);
+        }
+    }
+}
+
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAskingForAllocationOrGpuAddressThenReturnNodeAllocation, MatchAny) {
     auto eventPool = createEvents<FamilyType>(2, true);
 
