@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@ template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
-    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;

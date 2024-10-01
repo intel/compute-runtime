@@ -28,17 +28,6 @@ struct Dg1ProductHelperLinux : ProductHelperTestLinux {
     }
 };
 
-DG1TEST_F(Dg1ProductHelperLinux, GivenDG1WhenConfigureHardwareCustomThenMTPIsNotSet) {
-    HardwareInfo hardwareInfo = *defaultHwInfo;
-
-    OSInterface osIface;
-    hardwareInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
-    PreemptionHelper::adjustDefaultPreemptionMode(hardwareInfo.capabilityTable, true, true, true);
-
-    productHelper->configureHardwareCustom(&hardwareInfo, &osIface);
-    EXPECT_FALSE(hardwareInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
-}
-
 DG1TEST_F(Dg1ProductHelperLinux, GivenDG1WhenConfigureHardwareCustomThenKmdNotifyIsEnabled) {
     HardwareInfo hardwareInfo = *defaultHwInfo;
 

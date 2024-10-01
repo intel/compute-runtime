@@ -24,7 +24,6 @@ class SkuInfoReceiver {
 #define RECEIVE_FTR(VAL_NAME) ftrTable->flags.ftr##VAL_NAME = adapterInfo->SkuTable.Ftr##VAL_NAME
         RECEIVE_FTR(GpGpuMidBatchPreempt);
         RECEIVE_FTR(GpGpuThreadGroupLevelPreempt);
-        RECEIVE_FTR(GpGpuMidThreadLevelPreempt);
 
         RECEIVE_FTR(Wddm2Svm);
         RECEIVE_FTR(PooledEuEnabled);

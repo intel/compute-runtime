@@ -564,11 +564,6 @@ bool MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaR
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     return true;
 }

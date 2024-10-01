@@ -25,7 +25,6 @@ struct FeatureTableBase {
         // DW0
         uint32_t ftrGpGpuMidBatchPreempt : 1;
         uint32_t ftrGpGpuThreadGroupLevelPreempt : 1;
-        uint32_t ftrGpGpuMidThreadLevelPreempt : 1;
         uint32_t ftrWddm2Svm : 1;
         uint32_t ftrPooledEuEnabled : 1;
         uint32_t ftrPPGTT : 1;
@@ -55,8 +54,8 @@ struct FeatureTableBase {
         uint32_t ftrE2ECompression : 1;
         uint32_t ftrLinearCCS : 1;
         uint32_t ftrCCSRing : 1;
-        // DW1
         uint32_t ftrCCSNode : 1;
+        // DW1
         uint32_t ftrRcsNode : 1;
         uint32_t ftrLocalMemory : 1;
         uint32_t ftrLocalMemoryAllows4KB : 1;
@@ -71,7 +70,7 @@ struct FeatureTableBase {
         uint32_t ftrXe2PlusTiling : 1;
         uint32_t ftrL3TransientDataFlush : 1;
         uint32_t ftrPml5Support : 1;
-        uint32_t reserved : 17;
+        uint32_t reserved : 18;
     };
 
     BcsInfoMask ftrBcsInfo = 1;

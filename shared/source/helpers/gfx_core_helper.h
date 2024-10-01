@@ -108,7 +108,6 @@ class GfxCoreHelper {
     virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const = 0;
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
-    virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
     virtual uint32_t getMinimalSIMDSize() const = 0;
     virtual uint32_t getMinimalGrfSize() const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
@@ -322,8 +321,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     static bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
 
     bool isWaDisableRccRhwoOptimizationRequired() const override;
-
-    bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const override;
 
     uint32_t getMinimalSIMDSize() const override;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,6 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
     enableBlitterOperationsSupport(hwInfo);
 
-    hwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 300;

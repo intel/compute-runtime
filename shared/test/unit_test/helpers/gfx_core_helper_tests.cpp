@@ -1229,14 +1229,6 @@ TEST_F(GfxCoreHelperTest, WhenGettingIsCpuImageTransferPreferredThenFalseIsRetur
     EXPECT_FALSE(gfxCoreHelper.isCpuImageTransferPreferred(*defaultHwInfo));
 }
 
-TEST_F(GfxCoreHelperTest, whenFtrGpGpuMidThreadLevelPreemptFeatureDisabledThenFalseIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    FeatureTable featureTable = {};
-    featureTable.flags.ftrGpGpuMidThreadLevelPreempt = false;
-    bool result = gfxCoreHelper.isAdditionalFeatureFlagRequired(&featureTable);
-    EXPECT_FALSE(result);
-}
-
 HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());

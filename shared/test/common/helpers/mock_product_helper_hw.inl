@@ -32,7 +32,6 @@ uint32_t MockProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareI
 template <>
 int MockProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     FeatureTable *featureTable = &hwInfo->featureTable;
-    featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 0;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 0;
     featureTable->flags.ftrGpGpuMidBatchPreempt = 0;
 
@@ -41,7 +40,7 @@ int MockProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInf
         gtSystemInfo->EdramSizeInKb = 128 * 1000;
     }
     if (enableMidThreadPreemption) {
-        featureTable->flags.ftrGpGpuMidThreadLevelPreempt = 1;
+        featureTable->flags.ftrWalkerMTP = 1;
     }
     if (enableThreadGroupPreemption) {
         featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = 1;

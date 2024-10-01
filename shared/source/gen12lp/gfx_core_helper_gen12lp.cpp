@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,11 +46,6 @@ bool GfxCoreHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareIn
 template <>
 bool GfxCoreHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
     return true;
-}
-
-template <>
-bool GfxCoreHelperHw<Family>::isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const {
-    return featureTable->flags.ftrGpGpuMidThreadLevelPreempt;
 }
 
 template <>
@@ -102,7 +97,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
 
     EngineInstancesContainer engines;
 
-    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.flags.ftrCCSNode && !hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt) {
+    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.flags.ftrCCSNode) {
         engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::regular});
     }
 

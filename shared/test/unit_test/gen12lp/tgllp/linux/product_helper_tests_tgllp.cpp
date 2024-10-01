@@ -28,16 +28,6 @@ struct TgllpProductHelperLinux : ProductHelperTestLinux {
     }
 };
 
-TGLLPTEST_F(TgllpProductHelperLinux, GivenTGLLPWhenConfigureHardwareCustomThenMTPIsNotSet) {
-
-    pInHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
-    PreemptionHelper::adjustDefaultPreemptionMode(pInHwInfo.capabilityTable, true, true, true);
-
-    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
-    EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
-}
-
 template <typename T>
 class TgllpHwInfoLinux : public ::testing::Test {};
 typedef ::testing::Types<TgllpHw1x6x16> tgllpTestTypes;

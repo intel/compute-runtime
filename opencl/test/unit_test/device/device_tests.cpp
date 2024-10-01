@@ -491,22 +491,19 @@ TEST(DeviceCreation, whenCheckingEngineGroupsThenGroupsAreUnique) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
 
-    for (auto ftrGpGpuMidThreadLevelPreempt : ::testing::Bool()) {
-        defaultHwInfo->featureTable.flags.ftrGpGpuMidThreadLevelPreempt = ftrGpGpuMidThreadLevelPreempt;
-        for (auto blitterOperationsSupported : ::testing::Bool()) {
-            defaultHwInfo->capabilityTable.blitterOperationsSupported = blitterOperationsSupported;
-            for (auto ftrRcsNode : ::testing::Bool()) {
-                defaultHwInfo->featureTable.flags.ftrRcsNode = ftrRcsNode;
-                for (auto ftrCCSNode : ::testing::Bool()) {
-                    defaultHwInfo->featureTable.flags.ftrCCSNode = ftrCCSNode;
+    for (auto blitterOperationsSupported : ::testing::Bool()) {
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = blitterOperationsSupported;
+        for (auto ftrRcsNode : ::testing::Bool()) {
+            defaultHwInfo->featureTable.flags.ftrRcsNode = ftrRcsNode;
+            for (auto ftrCCSNode : ::testing::Bool()) {
+                defaultHwInfo->featureTable.flags.ftrCCSNode = ftrCCSNode;
 
-                    UltDeviceFactory deviceFactory{1, 0};
-                    std::set<EngineGroupType> uniqueEngineGroupTypes;
-                    for (auto &engineGroup : deviceFactory.rootDevices[0]->getRegularEngineGroups()) {
-                        uniqueEngineGroupTypes.insert(engineGroup.engineGroupType);
-                    }
-                    EXPECT_EQ(uniqueEngineGroupTypes.size(), deviceFactory.rootDevices[0]->getRegularEngineGroups().size());
+                UltDeviceFactory deviceFactory{1, 0};
+                std::set<EngineGroupType> uniqueEngineGroupTypes;
+                for (auto &engineGroup : deviceFactory.rootDevices[0]->getRegularEngineGroups()) {
+                    uniqueEngineGroupTypes.insert(engineGroup.engineGroupType);
                 }
+                EXPECT_EQ(uniqueEngineGroupTypes.size(), deviceFactory.rootDevices[0]->getRegularEngineGroups().size());
             }
         }
     }

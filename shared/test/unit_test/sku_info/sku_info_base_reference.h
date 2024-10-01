@@ -69,7 +69,6 @@ struct SkuInfoBaseReference {
 
         refFtrTable.flags.ftrGpGpuMidBatchPreempt = true;
         refFtrTable.flags.ftrGpGpuThreadGroupLevelPreempt = true;
-        refFtrTable.flags.ftrGpGpuMidThreadLevelPreempt = true;
         refFtrTable.flags.ftrWddm2Svm = true;
         refFtrTable.flags.ftrPooledEuEnabled = true;
 
