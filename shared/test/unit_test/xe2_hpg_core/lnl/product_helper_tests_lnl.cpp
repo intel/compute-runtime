@@ -14,6 +14,7 @@
 #include "shared/source/xe2_hpg_core/hw_info_xe2_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
@@ -36,7 +37,7 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSup
 
 LNLTEST_F(LnlProductHelper, whenGettingMidThreadPreemptionSupportForRtKernelsThenExpectNoSupport) {
 
-    EXPECT_TRUE(productHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
+    EXPECT_TRUE(releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
 }
 
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {

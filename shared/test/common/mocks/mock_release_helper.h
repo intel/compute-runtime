@@ -42,5 +42,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getAdditionalFp16Caps, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(getAdditionalExtraCaps, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
+    ADDMETHOD_CONST_NOBASE(isMidThreadPreemptionDisallowedForRayTracingKernels, bool, false, ());
 };
 } // namespace NEO

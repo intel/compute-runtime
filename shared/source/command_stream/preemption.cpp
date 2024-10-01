@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -83,13 +84,15 @@ PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hw
 
 PreemptionFlags PreemptionHelper::createPreemptionLevelFlags(Device &device, const KernelDescriptor *kernelDescriptor) {
     PreemptionFlags flags = {};
-    auto &productHelper = device.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    NEO::ReleaseHelper *releaseHelper = device.getRootDeviceEnvironment().getReleaseHelper();
     if (kernelDescriptor) {
         flags.flags.disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption;
         flags.flags.vmeKernel = kernelDescriptor->kernelAttributes.flags.usesVme;
         flags.flags.usesFencesForReadWriteImages = kernelDescriptor->kernelAttributes.flags.usesFencesForReadWriteImages;
 
-        flags.flags.disabledMidThreadPreemptionKernel |= kernelDescriptor->kernelAttributes.flags.hasRTCalls && productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
+        if (releaseHelper) {
+            flags.flags.disabledMidThreadPreemptionKernel |= kernelDescriptor->kernelAttributes.flags.hasRTCalls && releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels();
+        }
     }
     flags.flags.deviceSupportsVmePreemption = device.getDeviceInfo().vmeAvcSupportsPreemption;
     flags.flags.disablePerCtxtPreemptionGranularityControl = device.getHardwareInfo().workaroundTable.flags.waDisablePerCtxtPreemptionGranularityControl;

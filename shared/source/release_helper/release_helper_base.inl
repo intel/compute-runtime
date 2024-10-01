@@ -156,4 +156,10 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isLocalOnlyAllowed() const {
     return true;
 }
+
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isMidThreadPreemptionDisallowedForRayTracingKernels() const {
+    return false;
+}
+
 } // namespace NEO

@@ -41,6 +41,7 @@ TEST_F(ReleaseHelper1270Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
+        EXPECT_FALSE(releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
     }
 }
 

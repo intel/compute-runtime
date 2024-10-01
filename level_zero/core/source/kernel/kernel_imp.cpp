@@ -36,6 +36,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/work_size_info.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include "level_zero/api/driver_experimental/public/zex_module.h"
@@ -1036,7 +1037,10 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto deviceBitfield = neoDevice->getDeviceBitfield();
     const auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
-    this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
+    auto releaseHelper = neoDevice->getRootDeviceEnvironment().getReleaseHelper();
+    if (releaseHelper) {
+        this->midThreadPreemptionDisallowedForRayTracingKernels = releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels();
+    }
 
     this->heaplessEnabled = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled();
     this->localDispatchSupport = productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0;
