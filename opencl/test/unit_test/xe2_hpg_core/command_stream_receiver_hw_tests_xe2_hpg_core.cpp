@@ -246,15 +246,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaMiMemFenceTestXe2HpgCore, givenSystemMemo
     commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    if (!pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(cmdStream);
-        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-    }
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
 }
 
 struct SystemMemoryFenceViaComputeWalkerTest : public UltCommandStreamReceiverTest {
@@ -284,15 +282,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemM
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    if (!pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(cmdStream);
-        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-    }
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceViaComputeWalkerTestXe2HpgCore, givenSystemMemoryFenceGeneratedAsPostSyncOperationInComputeWalkerWhenDispatchWalkerIsCalledThenSystemMemoryFenceRequestInPostSyncDataIsProgrammed) {
@@ -350,15 +346,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaKernelInstructionTestXe2HpgCore, givenSys
     commandStreamReceiver.programEnginePrologue(cmdStream);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
-    if (!pDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        HardwareParse hwParser;
-        hwParser.parseCommands<FamilyType>(cmdStream);
-        auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-        ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream);
+    auto itorSystemMemFenceAddress = find<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    ASSERT_NE(hwParser.cmdList.end(), itorSystemMemFenceAddress);
 
-        auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
-        EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
-    }
+    auto systemMemFenceAddressCmd = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(*itorSystemMemFenceAddress);
+    EXPECT_EQ(commandStreamReceiver.globalFenceAllocation->getGpuAddress(), systemMemFenceAddressCmd->getSystemMemoryFenceAddress());
 }
 
 struct SystemMemoryFenceInDefaultConfigurationTest : public UltCommandStreamReceiverTest {
@@ -379,9 +373,6 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -405,11 +396,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
@@ -417,9 +410,6 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -444,11 +434,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 }
 
 XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
@@ -456,9 +448,6 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -483,11 +472,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
@@ -498,9 +489,6 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -526,11 +514,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
@@ -541,10 +531,6 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    if (pClDevice->getHardwareInfo().capabilityTable.isIntegratedDevice) {
-        GTEST_SKIP();
-    }
 
     MockKernelWithInternals kernel(*pClDevice);
     MockContext context(pClDevice);
@@ -571,11 +557,13 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTestXe2HpgCore,
     auto &postSyncData = walkerCmd->getPostSync();
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 
-    auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
-    ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
-    auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
-    ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    if (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pClDevice->getRootDeviceEnvironment()) > 0) {
+        auto itorMiMemFence = find<MI_MEM_FENCE *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+        ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
+        auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
+        ASSERT_NE(nullptr, fenceCmd);
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    }
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
