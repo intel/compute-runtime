@@ -46,6 +46,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/source/utilities/wait_util.h"
 
+#include <array>
 #include <iostream>
 
 namespace AubMemDump {
@@ -864,15 +865,16 @@ bool CommandStreamReceiver::createWorkPartitionAllocation(const Device &device) 
     }
 
     uint32_t logicalId = 0;
+    auto copySrc = std::make_unique<std::array<uint32_t, 2>>();
     for (uint32_t deviceIndex = 0; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (!deviceBitfield.test(deviceIndex)) {
             continue;
         }
 
-        const uint32_t copySrc[2] = {logicalId++, deviceIndex};
+        *copySrc = {logicalId++, deviceIndex};
         DeviceBitfield copyBitfield{};
         copyBitfield.set(deviceIndex);
-        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, workPartitionAllocation, 0, copySrc, sizeof(copySrc), copyBitfield);
+        auto copySuccess = MemoryTransferHelper::transferMemoryToAllocationBanks(device, workPartitionAllocation, 0, copySrc.get(), 2 * sizeof(uint32_t), copyBitfield);
 
         if (!copySuccess) {
             return false;
