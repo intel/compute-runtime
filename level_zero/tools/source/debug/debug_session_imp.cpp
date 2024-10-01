@@ -1109,7 +1109,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         case ZET_DEBUG_REGSET_TYPE_MSG_INTEL_GPU:
             return &pStateSaveAreaHeader->regHeaderV3.msg;
         case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU: {
-            auto &stateSaveAreaHeader = NEO::SipKernel::getBindlessDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
+            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
             auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
             return DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea);
         }
@@ -1143,7 +1143,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
             return &pStateSaveAreaHeader->regHeader.fc;
         case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU: {
-            auto &stateSaveAreaHeader = NEO::SipKernel::getBindlessDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
+            auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
             auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
             return DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea);
         }
@@ -1207,7 +1207,7 @@ ze_result_t DebugSessionImp::readModeFlags(uint32_t start, uint32_t count, void 
     if (start != 0 || count != 1) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    auto &stateSaveAreaHeader = NEO::SipKernel::getBindlessDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
     auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
     const size_t size = 4;
     memcpy_s(pRegisterValues, size, &pStateSaveArea->regHeaderV3.sip_flags, size);
@@ -1239,7 +1239,7 @@ ze_result_t DebugSessionImp::readDebugScratchRegisters(uint32_t start, uint32_t 
 
 ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint32_t start, uint32_t count, void *pRegisterValues) {
 
-    auto &stateSaveAreaHeader = NEO::SipKernel::getBindlessDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*connectedDevice->getNEODevice()).getStateSaveAreaHeader();
     auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
     auto sbaRegDesc = DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea);
 
@@ -1391,7 +1391,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
 
-    auto &stateSaveAreaHeader = NEO::SipKernel::getBindlessDebugSipKernel(*device->getNEODevice()).getStateSaveAreaHeader();
+    auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*device->getNEODevice()).getStateSaveAreaHeader();
 
     if (stateSaveAreaHeader.size() == 0) {
         *pCount = 0;

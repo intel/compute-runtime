@@ -55,8 +55,8 @@ class SipKernel {
     static void freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager);
 
     static const SipKernel &getSipKernel(Device &device, OsContext *context);
-    static const SipKernel &getBindlessDebugSipKernel(Device &device);
-    static const SipKernel &getBindlessDebugSipKernel(Device &device, OsContext *context);
+    static const SipKernel &getDebugSipKernel(Device &device);
+    static const SipKernel &getDebugSipKernel(Device &device, OsContext *context);
     static SipKernelType getSipKernelType(Device &device);
     static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);
     static SipClassType classType;

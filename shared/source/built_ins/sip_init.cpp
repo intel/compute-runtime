@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
 
 const SipKernel &SipKernel::getSipKernel(Device &device, OsContext *context) {
     if (context && device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::offline) {
-        return SipKernel::getBindlessDebugSipKernel(device, context);
+        return SipKernel::getDebugSipKernel(device, context);
     } else {
         return SipKernel::getSipKernelImpl(device);
     }
