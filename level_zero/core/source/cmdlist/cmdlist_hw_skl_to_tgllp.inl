@@ -294,10 +294,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (this->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation) {
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = getDcFlushRequired(true);
+        if (!event || !event->getAllocation(this->device)) {
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = getDcFlushRequired(true);
 
-        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+        }
         appendSignalInOrderDependencyCounter(event, false);
     }
 

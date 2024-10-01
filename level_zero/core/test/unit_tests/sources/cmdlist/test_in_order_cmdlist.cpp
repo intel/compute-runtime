@@ -2677,6 +2677,45 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramP
     EXPECT_EQ(expectedAddress, sdiCmd->getAddress());
     EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
     EXPECT_EQ(immCmdList->inOrderExecInfo->getCounterValue(), sdiCmd->getDataDword0());
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(walkerItor, sdiItor);
+    EXPECT_EQ(1u, pipeControls.size());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerWithEventThenDontProgramPipeControl, IsGen12LP) {
+    using WALKER = typename FamilyType::DefaultWalkerType;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto walkerItor = find<WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    uint64_t expectedAddress = immCmdList->inOrderExecInfo->getBaseDeviceAddress() + immCmdList->inOrderExecInfo->getAllocationOffset();
+
+    while (expectedAddress != sdiCmd->getAddress()) {
+        sdiItor = find<MI_STORE_DATA_IMM *>(++sdiItor, cmdList.end());
+        if (sdiItor == cmdList.end()) {
+            ASSERT_TRUE(false);
+        }
+        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    }
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(walkerItor, sdiItor);
+    EXPECT_EQ(1u, pipeControls.size());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenProgramPcAndSignalAlloc, IsGen12LP) {
