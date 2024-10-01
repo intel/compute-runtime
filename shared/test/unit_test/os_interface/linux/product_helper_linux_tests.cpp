@@ -146,7 +146,7 @@ HWTEST_F(MockProductHelperTestLinux, GivenPreemptionDrmEnabledMidThreadOnWhenCon
 
     mockProductHelper->enableMidThreadPreemption = true;
 
-    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(pInHwInfo, true);
+    pInHwInfo.featureTable.flags.ftrWalkerMTP = true;
 
     int ret = mockProductHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, *executionEnvironment->rootDeviceEnvironments[0].get());
     EXPECT_EQ(0, ret);

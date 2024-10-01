@@ -70,8 +70,6 @@ struct UnitTestHelper {
 
     static bool requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo);
 
-    static void setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value);
-
     static uint32_t getDebugModeRegisterOffset();
     static uint32_t getDebugModeRegisterValue();
     static uint32_t getTdCtlRegisterOffset();

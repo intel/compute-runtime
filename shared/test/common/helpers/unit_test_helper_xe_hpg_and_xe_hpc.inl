@@ -29,11 +29,6 @@ bool UnitTestHelper<GfxFamily>::timestampRegisterHighAddress() {
 }
 
 template <typename GfxFamily>
-void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value) {
-    hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt = value;
-}
-
-template <typename GfxFamily>
 inline void UnitTestHelper<GfxFamily>::setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush) {
     pipeControl.setHdcPipelineFlush(hdcPipelineFlush);
 }

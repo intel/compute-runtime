@@ -22,10 +22,10 @@ using CompilerProductHelperFixture = Test<DeviceFixture>;
 
 HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned) {
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(hwInfo, false);
+    hwInfo.featureTable.flags.ftrWalkerMTP = false;
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_FALSE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
-    UnitTestHelper<FamilyType>::setExtraMidThreadPreemptionFlag(hwInfo, true);
+    hwInfo.featureTable.flags.ftrWalkerMTP = true;
     EXPECT_TRUE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
 }
 

@@ -50,11 +50,6 @@ bool UnitTestHelper<GfxFamily>::timestampRegisterHighAddress() {
 }
 
 template <typename GfxFamily>
-void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value) {
-    hwInfo.featureTable.flags.ftrWalkerMTP = value;
-}
-
-template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl) {
     return pipeControl.getDataportFlush();
 }

@@ -18,6 +18,11 @@
 namespace NEO {
 
 template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const {
+    return hwInfo.featureTable.flags.ftrWalkerMTP;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool CompilerProductHelperHw<gfxProduct>::isForceEmuInt32DivRemSPRequired() const {
     return false;
 }

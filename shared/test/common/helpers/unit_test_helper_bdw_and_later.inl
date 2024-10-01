@@ -26,11 +26,6 @@ uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(int32_
 }
 
 template <typename GfxFamily>
-void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value) {
-    hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt = value;
-}
-
-template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
