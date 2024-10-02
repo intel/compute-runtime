@@ -55,3 +55,7 @@ TEST_F(ReleaseHelper1261Tests, whenGettingAdditionalExtraKernelCapabilitiesThenR
 TEST_F(ReleaseHelper1261Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }
+
+TEST_F(ReleaseHelper1261Tests, whenGettingPreferredSlmSizeThenAllEntriesEmpty) {
+    whenGettingPreferredSlmSizeThenAllEntriesEmpty();
+}

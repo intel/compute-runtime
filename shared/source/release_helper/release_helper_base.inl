@@ -162,4 +162,10 @@ bool ReleaseHelperHw<releaseType>::isMidThreadPreemptionDisallowedForRayTracingK
     return false;
 }
 
+template <ReleaseType releaseType>
+const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue(bool isHeapless) const {
+    static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
+    return sizeToPreferredSlmValue;
+}
+
 } // namespace NEO

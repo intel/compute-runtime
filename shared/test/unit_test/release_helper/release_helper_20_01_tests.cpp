@@ -74,3 +74,7 @@ TEST_F(ReleaseHelper2001Tests, whenGettingAdditionalExtraKernelCapabilitiesThenR
 TEST_F(ReleaseHelper2001Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
+
+TEST_F(ReleaseHelper2001Tests, whenGettingPreferredSlmSizeThenAllEntriesEmpty) {
+    whenGettingPreferredSlmSizeThenAllEntriesEmpty();
+}

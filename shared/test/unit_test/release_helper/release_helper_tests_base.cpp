@@ -121,3 +121,17 @@ void ReleaseHelperTestsBase::whenIsLocalOnlyAllowedCalledThenFalseReturned() {
         EXPECT_FALSE(releaseHelper->isLocalOnlyAllowed());
     }
 }
+
+void ReleaseHelperTestsBase::whenGettingPreferredSlmSizeThenAllEntriesEmpty() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(false);
+        for (const auto &elem : preferredSlmValueArray) {
+            EXPECT_EQ(0u, elem.upperLimit);
+            EXPECT_EQ(0u, elem.valueToProgram);
+        }
+    }
+}

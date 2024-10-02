@@ -31,7 +31,7 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenGettingAdditionalExtraKernelCapabilitiesThenReturnNoCapabilities();
     void whenIsLocalOnlyAllowedCalledThenTrueReturned();
     void whenIsLocalOnlyAllowedCalledThenFalseReturned();
-
+    void whenGettingPreferredSlmSizeThenAllEntriesEmpty();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;
