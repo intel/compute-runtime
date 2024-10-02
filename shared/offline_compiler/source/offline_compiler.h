@@ -228,8 +228,8 @@ All supported acronyms: %s.
     size_t irBinarySize = 0;
     char *debugDataBinary = nullptr;
     size_t debugDataBinarySize = 0;
-    struct buildInfo;
-    std::unique_ptr<buildInfo> pBuildInfo;
+    struct BuildInfo;
+    std::unique_ptr<BuildInfo> pBuildInfo;
     int revisionId = -1;
     uint64_t hwInfoConfig = 0u;
 

@@ -482,7 +482,7 @@ int OfflineCompiler::querySupportedDevices(Ocloc::SupportedDevicesMode mode, Ocl
     return 0;
 }
 
-struct OfflineCompiler::buildInfo {
+struct OfflineCompiler::BuildInfo {
     std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclOptions;
     std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclInternalOptions;
     std::unique_ptr<IGC::OclTranslationOutputTagOCL, CIF::RAII::ReleaseHelper<IGC::OclTranslationOutputTagOCL>> fclOutput;
@@ -877,7 +877,7 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
 int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles) {
     this->dumpFiles = dumpFiles;
     int retVal = OCLOC_SUCCESS;
-    this->pBuildInfo = std::make_unique<buildInfo>();
+    this->pBuildInfo = std::make_unique<BuildInfo>();
     retVal = parseCommandLine(numArgs, allArgs);
     if (showHelp) {
         printUsage();

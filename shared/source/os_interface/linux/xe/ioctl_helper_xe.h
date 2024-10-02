@@ -18,9 +18,9 @@
 namespace NEO {
 
 namespace XeDrm {
-struct drm_xe_engine_class_instance;
-struct drm_xe_query_gt_list;
-struct drm_xe_query_config;
+struct drm_xe_engine_class_instance; // NOLINT(readability-identifier-naming)
+struct drm_xe_query_gt_list;         // NOLINT(readability-identifier-naming)
+struct drm_xe_query_config;          // NOLINT(readability-identifier-naming)
 } // namespace XeDrm
 
 enum class EngineClass : uint16_t;
