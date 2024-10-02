@@ -437,6 +437,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingQueueSizeLimit, -
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingMinNumberOfClients, -1, "-1: default, >0: Enables RelaxedOrdering mode only if specified number of clients is assigned to given CSR.")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionMonitorFenceInputPolicy, -1, "-1: default, 0: stalling command flag, 1: explicit monitor fence flag. Selects policy to dispatch monitor fence upon input flag, either for every stalling command or explicit motor fence dispatch")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionPrintSemaphoreUsage, -1, "-1: default, 0: disabled, 1: enabled. If set, print DirectSubmission semaphore programming and unlocking")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSwitchSemaphoreMode, -1, "-1: default, 1: enable switch on unsuccessful, 0: disable switch on unsuccessful")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 DECLARE_DEBUG_VARIABLE(int32_t, WaitForPagingFenceInController, -1, "Instead of waiting for paging fence on user thread, program additional semaphore which will be signaled by direct submission controller when paging fence reaches required value -1: default, 0 - disable, 1 - enable.")
 
