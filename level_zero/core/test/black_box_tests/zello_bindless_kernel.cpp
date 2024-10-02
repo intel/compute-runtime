@@ -513,7 +513,7 @@ bool testBindlessBindfulKernel(ze_context_handle_t context, ze_device_handle_t d
 }
 
 bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId,
-                        int imageCount, AddressingMode mode) {
+                        int imageCount, AddressingMode mode, ExecutionMode execMode) {
     bool outputValidated = false;
 
     ze_module_handle_t module = nullptr;
@@ -523,7 +523,7 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
     createKernel(module, copyKernel, kernelName3.c_str());
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
-    bool isImmediateCmdList = false;
+    bool isImmediateCmdList = execMode == ExecutionMode::immSyncCmdList ? true : false;
 
     SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
 
@@ -629,6 +629,33 @@ bool testBindlessImages(ze_context_handle_t context, ze_device_handle_t device, 
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
     return outputValidated;
+}
+
+bool testBindlessBindfulImageKernel(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId, const std::string &revisionId) {
+
+    ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
+
+    std::tuple<AddressingMode, AddressingMode, std::string> kernelOrder[2] = {{AddressingMode::bindless, AddressingMode::bindful, "First Bindless Then Bindful"},
+                                                                              {AddressingMode::bindful, AddressingMode::bindless, "First Bindful Then Bindless"}};
+
+    for (auto kernelMode : kernelOrder) {
+
+        for (auto mode : executionModes) {
+
+            bool result1 = testBindlessImages(context, device, deviceId, revisionId, 0, std::get<0>(kernelMode), mode);
+            bool result2 = testBindlessImages(context, device, deviceId, revisionId, 0, std::get<1>(kernelMode), mode);
+
+            if (!result1 || !result2) {
+                std::cout << "testBindlessBindfulImageKernel with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernelMode) << " FAILED.\n"
+                          << std::endl;
+                return false;
+            } else {
+                std::cout << "testBindlessBindfulKernel with mode " << static_cast<uint32_t>(mode) << " " << std::get<2>(kernelMode) << " PASSED.\n"
+                          << std::endl;
+            }
+        }
+    }
+    return true;
 }
 
 bool testBindlessImageSampled(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId,
@@ -1301,7 +1328,7 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
-    int numTests = 7;
+    int numTests = 8;
     int testCase = -1;
     testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     if (testCase < -1 || testCase >= numTests) {
@@ -1342,7 +1369,7 @@ int main(int argc, char *argv[]) {
                     std::cout << "--bindless-images " << std::endl;
                 }
 
-                outputValidated &= testBindlessImages(context, device, ss.str(), revisionId, imageCount, mode);
+                outputValidated &= testBindlessImages(context, device, ss.str(), revisionId, imageCount, mode, ExecutionMode::commandQueue);
             } else {
                 std::cout << "Skipped. testBindlessImages case not supported\n";
             }
@@ -1436,6 +1463,18 @@ int main(int argc, char *argv[]) {
                       << std::endl;
 
             outputValidated &= testBindlessBindfulKernel(context, device, ss.str(), revisionId);
+            break;
+        case 7:
+
+            if (is2dImageSupported) {
+                std::cout << "\ntest case: testBindlessBindfulImageKernel\n"
+                          << std::endl;
+
+                outputValidated &= testBindlessBindfulImageKernel(context, device, ss.str(), revisionId);
+            } else {
+                std::cout << "Skipped. testBindlessBindfulImageKernel case not supported\n";
+            }
+
             break;
         }
 
