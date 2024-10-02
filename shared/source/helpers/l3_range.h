@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,10 +61,6 @@ struct L3Range {
 
         static_assert(maxMaskValue < std::numeric_limits<uint32_t>::max(), "");
         return static_cast<uint32_t>(ret);
-    }
-
-    uint64_t getSizeInBytes() const {
-        return (1ULL << (minAlignmentBitOffset + getMask())); // NOLINT(clang-analyzer-core.UndefinedBinaryOperatorResult)
     }
 
     uint64_t getMaskedAddress() const {

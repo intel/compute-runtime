@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,17 +49,17 @@ TEST(L3Range, whenTooBigSizeThenMaskCalculationIsAborted) {
     EXPECT_THROW(L3Range::getMaskFromSize(l3RangeMax * 2), std::exception);
 }
 
-TEST(L3Range, WhenGettingMaskFromSizeThenCorrectSizeIsReturned) {
+TEST(L3Range, WhenGettingMaskFromSizeThenCorrectMaskIsSet) {
     L3Range range;
 
     range.setMask(L3Range::getMaskFromSize(l3RangeMinimumAlignment));
-    EXPECT_EQ(l3RangeMinimumAlignment, range.getSizeInBytes());
+    EXPECT_EQ(0u, range.getMask());
 
     range.setMask(L3Range::getMaskFromSize(l3RangeMinimumAlignment * 4));
-    EXPECT_EQ(l3RangeMinimumAlignment * 4, range.getSizeInBytes());
+    EXPECT_EQ(2u, range.getMask());
 
     range.setMask(L3Range::getMaskFromSize(l3RangeMax));
-    EXPECT_EQ(l3RangeMax, range.getSizeInBytes());
+    EXPECT_EQ(32u - L3Range::minAlignmentBitOffset, range.getMask());
 }
 
 TEST(L3Range, whenMaskGetsChangedThenReturnsProperlyMaskedAddress) {
@@ -154,7 +154,7 @@ TEST(CoverRange, whenNonAlignedThenAbort) {
 
 L3Range fromAdjacentRange(const L3Range &lhs, uint64_t size) {
     L3Range ret;
-    ret.setAddress(lhs.getMaskedAddress() + lhs.getSizeInBytes());
+    ret.setAddress(lhs.getMaskedAddress() + maxNBitValue(L3Range::minAlignmentBitOffset + lhs.getMask()) + 1);
     ret.setMask(L3Range::getMaskFromSize(size));
     return ret;
 }
