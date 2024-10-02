@@ -1310,6 +1310,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataCreateEventAndUfenceForProgramM
     client1.base.type = DRM_XE_EUDEBUG_EVENT_OPEN;
     client1.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
     client1.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    session->pushApiEventValidateAckEvents = true;
     session->handleEvent(reinterpret_cast<drm_xe_eudebug_event *>(&client1));
 
     auto &connection = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle];
@@ -1380,6 +1381,8 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataCreateEventAndUfenceForProgramM
 
     EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
     EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 2ull);
+
+    EXPECT_TRUE(session->pushApiEventAckEventsFound);
 
     EXPECT_EQ(connection->metaDataToModule[10].ackEvents->size(), 1ull);
     EXPECT_EQ(connection->metaDataToModule[10].ackEvents[0][0].seqno, vmBindUfence.base.seqno);

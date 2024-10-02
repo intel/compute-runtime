@@ -192,7 +192,7 @@ struct DebugSessionLinux : DebugSessionImp {
         return pushApiEvent(debugEvent, invalidHandle);
     }
 
-    void pushApiEvent(zet_debug_event_t &debugEvent, uint64_t moduleHandle) {
+    MOCKABLE_VIRTUAL void pushApiEvent(zet_debug_event_t &debugEvent, uint64_t moduleHandle) {
         std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
         if (moduleHandle != invalidHandle && (debugEvent.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK)) {

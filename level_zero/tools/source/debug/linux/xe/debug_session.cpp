@@ -484,7 +484,6 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
         debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfMetadata.data.get()) + elfMetadata.metadata.len;
         debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
 
-        pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
         {
             std::lock_guard<std::mutex> lock(asyncThreadMutex);
             if (vmBindData.vmBind.flags & DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE) {
@@ -495,6 +494,7 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                 }
             }
         }
+        pushApiEvent(debugEvent, metaDataEntry.metadata.metadata_handle);
     }
 
     if (shouldAckEvent && (vmBindData.vmBindUfence.base.flags & DRM_XE_EUDEBUG_EVENT_NEED_ACK)) {
