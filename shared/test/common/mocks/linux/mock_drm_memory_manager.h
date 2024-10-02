@@ -175,10 +175,28 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         return MemoryManager::computeStorageInfoMemoryBanks(properties, preferredBank, allBanks);
     }
 
+    AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation) override {
+        ++registerSysMemAllocCalled;
+        return DrmMemoryManager::registerSysMemAlloc(allocation);
+    }
+
+    AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override {
+        ++registerLocalMemAllocCalled;
+        return DrmMemoryManager::registerLocalMemAlloc(allocation, rootDeviceIndex);
+    }
+
+    void unregisterAllocation(GraphicsAllocation *allocation) override {
+        ++unregisterAllocationCalled;
+        DrmMemoryManager::unregisterAllocation(allocation);
+    }
+
     uint32_t acquireGpuRangeCalledTimes = 0u;
     uint32_t acquireGpuRangeWithCustomAlignmenCalledTimes = 0u;
     size_t acquireGpuRangeWithCustomAlignmenPassedAlignment = 0u;
     size_t computeStorageInfoMemoryBanksCalled = 0u;
+    size_t registerSysMemAllocCalled = 0u;
+    size_t registerLocalMemAllocCalled = 0u;
+    size_t unregisterAllocationCalled = 0u;
     ExecutionEnvironment *executionEnvironment = nullptr;
 
   protected:
