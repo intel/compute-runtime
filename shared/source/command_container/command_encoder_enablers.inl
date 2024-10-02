@@ -31,6 +31,7 @@ template void NEO::EncodeDispatchKernel<Family>::patchScratchAddressInImplicitAr
 template void NEO::EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd);
 template void NEO::EncodeDispatchKernel<Family>::setWalkerRegionSettings<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const HardwareInfo &hwInfo, uint32_t partitionCount,
                                                                                                     uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder);
+template void NEO::EncodeDispatchKernel<Family>::overrideDefaultValues<Family::DefaultWalkerType, Family::INTERFACE_DESCRIPTOR_DATA>(Family::DefaultWalkerType &walkerCmd, Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor);
 
 template struct NEO::EncodeStates<Family>;
 template struct NEO::EncodeMath<Family>;

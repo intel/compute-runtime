@@ -412,6 +412,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.device->getDeviceInfo().maxFrontEndThreads};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
+    EncodeDispatchKernel<Family>::overrideDefaultValues(walkerCmd, idd);
+
     uint32_t workgroupSize = args.dispatchInterface->getGroupSize()[0] * args.dispatchInterface->getGroupSize()[1] * args.dispatchInterface->getGroupSize()[2];
     bool isRequiredWorkGroupOrder = args.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none;
     if (args.partitionCount > 1 && !args.isInternal) {
@@ -1076,7 +1078,7 @@ void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType
         break;
     case SlmPolicy::slmPolicyLargeSlm:
     default:
-        slmSize = slmTotalSize * workGroupCountPerDss;
+        slmSize = std::min(slmTotalSize * workGroupCountPerDss, static_cast<uint32_t>(hwInfo.capabilityTable.slmSize * MemoryConstants::kiloByte));
         break;
     }
 
@@ -1111,4 +1113,10 @@ void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t a
     auto &postSync = walkerCmd->getPostSync();
     postSync.setImmediateData(baseCounterValue + appendCounterValue);
 }
+
+template <typename Family>
+template <typename WalkerType, typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor) {
+}
+
 } // namespace NEO

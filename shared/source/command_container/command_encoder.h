@@ -226,6 +226,9 @@ struct EncodeDispatchKernel {
     static uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize);
 
     static bool singleTileExecImplicitScalingRequired(bool cooperativeKernel);
+
+    template <typename WalkerType, typename InterfaceDescriptorType>
+    static void overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor);
 };
 
 template <typename GfxFamily>
