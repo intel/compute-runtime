@@ -732,7 +732,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto &commandStream = cmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
-    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(cmdQ->heaplessModeEnabled);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
@@ -925,7 +925,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWit
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
-    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(cmdQ->heaplessModeEnabled);
     kd.kernelAttributes.flags.passInlineData = true;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
@@ -1068,7 +1068,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     debugManager.flags.EnableHwGenerationLocalIds.set(1);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(cmdQ->heaplessModeEnabled);
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.entryPoints.skipPerThreadDataLoad = 128;
     kd.kernelAttributes.flags.passInlineData = true;
@@ -1135,7 +1135,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
-    constexpr auto inlineDataSize = COMPUTE_WALKER::getInlineDataSize();
+    auto inlineDataSize = UnitTestHelper<FamilyType>::getInlineDataSize(cmdQ->heaplessModeEnabled);
     kd.entryPoints.skipPerThreadDataLoad = 128;
     kd.kernelAttributes.flags.passInlineData = true;
     kd.kernelAttributes.localId[0] = 0;
