@@ -255,64 +255,6 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
 
 template <>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
-
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount /
-                                  hwInfo.gtSystemInfo.SubSliceCount;
-    uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
-
-    uint32_t slmSize = 0u;
-
-    switch (slmPolicy) {
-    case SlmPolicy::slmPolicyLargeData:
-        slmSize = slmTotalSize;
-        break;
-    case SlmPolicy::slmPolicyLargeSlm:
-    default:
-        slmSize = slmTotalSize * workGroupCountPerDss;
-        break;
-    }
-
-    struct SizeToPreferredSlmValue {
-        uint32_t upperLimit;
-        PREFERRED_SLM_ALLOCATION_SIZE valueToProgram;
-    };
-    const std::array<SizeToPreferredSlmValue, 10> ranges = {{
-        // upper limit, retVal
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K},
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
-        {96 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K},
-        {128 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-    }};
-
-    auto programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_160K;
-
-    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    programmableIdPreferredSlmSize = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(
-        releaseHelper->getProductMaxPreferredSlmSize(programmableIdPreferredSlmSize));
-
-    for (auto &range : ranges) {
-        if (slmSize <= range.upperLimit) {
-            programmableIdPreferredSlmSize = range.valueToProgram;
-            break;
-        }
-    }
-
-    pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);
-
-    if (debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
-        auto toProgram =
-            static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
-        pInterfaceDescriptor->setPreferredSlmAllocationSize(toProgram);
-    }
-}
-
-template <>
-template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {}
