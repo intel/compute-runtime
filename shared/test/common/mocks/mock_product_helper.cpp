@@ -184,11 +184,6 @@ std::vector<int32_t> ProductHelperHw<IGFX_UNKNOWN>::getKernelSupportedThreadArbi
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isNewResidencyModelSupported() const {
     return false;
 }

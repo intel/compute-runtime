@@ -107,7 +107,6 @@ class ProductHelper {
     virtual bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool allowCompression(const HardwareInfo &hwInfo) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const = 0;
     virtual bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const = 0;

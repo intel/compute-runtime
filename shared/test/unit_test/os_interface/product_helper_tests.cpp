@@ -370,11 +370,6 @@ HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAcce
     EXPECT_EQ(LocalMemoryAccessMode::cpuAccessDisallowed, productHelper->getLocalMemoryAccessMode(pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAllocationSizeAdjustmentIsRequiredThenFalseIsReturned) {
-
-    EXPECT_FALSE(productHelper->isAllocationSizeAdjustmentRequired(pInHwInfo));
-}
-
 HWTEST_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isAssignEngineRoundRobinSupported());
 }

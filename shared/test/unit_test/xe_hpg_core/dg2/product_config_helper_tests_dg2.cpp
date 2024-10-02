@@ -287,7 +287,6 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequire
         refreshReleaseHelper(&hwInfo);
 
         EXPECT_EQ(expectedValue, productHelper->isDefaultEngineTypeAdjustmentRequired(hwInfo));
-        EXPECT_EQ(expectedValue, productHelper->isAllocationSizeAdjustmentRequired(hwInfo));
         EXPECT_EQ(expectedValue, releaseHelper->isPrefetchDisablingRequired());
     }
 }

@@ -294,11 +294,6 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getLocalMemoryAccessMode(cons
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
     return false;
 }

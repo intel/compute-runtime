@@ -22,7 +22,7 @@ using namespace NEO;
 
 using CommandEncodeStatesDg2Test = ::testing::Test;
 
-DG2TEST_F(CommandEncodeStatesDg2Test, givenNoWorkaroundNeededWhenSelectingPreferredSlmSizePerDssThenUseDssCount) {
+DG2TEST_F(CommandEncodeStatesDg2Test, whenSelectingPreferredSlmSizePerDssThenUseDssCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
@@ -63,11 +63,11 @@ DG2TEST_F(CommandEncodeStatesDg2Test, givenNoWorkaroundNeededWhenSelectingPrefer
         const uint32_t slmSizePerThreadGroup = 16 * MemoryConstants::kiloByte;
         INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
         EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup, slmSizePerThreadGroup, SlmPolicy::slmPolicyLargeSlm);
-        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K, idd.getPreferredSlmAllocationSize());
+        EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K, idd.getPreferredSlmAllocationSize());
     }
 }
 
-DG2TEST_F(CommandEncodeStatesDg2Test, GivenVariousSlmTotalSizesAndSettingRevIDToDifferentValuesWhenSetAdditionalInfoIsCalledThenCorrectValuesAreSet) {
+DG2TEST_F(CommandEncodeStatesDg2Test, GivenVariousSlmTotalSizesWhenSetPreferredSlmIsCalledThenCorrectValuesAreSet) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
@@ -78,28 +78,7 @@ DG2TEST_F(CommandEncodeStatesDg2Test, GivenVariousSlmTotalSizesAndSettingRevIDTo
         {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
     };
 
-    const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTestForDg2G10AStep = {
-        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-        {16 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-        {32 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-        {64 * MemoryConstants::kiloByte, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
-    };
-
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
-        for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
-            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
-            hwInfo.platform.usDeviceID = deviceId;
-            setHwInfoValuesFromConfig(0x200040005, hwInfo);
-            if (DG2::isG10(hwInfo) && (revision < REVISION_B)) {
-                verifyPreferredSlmValues<FamilyType>(valuesToTestForDg2G10AStep, rootDeviceEnvironment);
-            } else {
-                verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
-            }
-        }
-    }
+    verifyPreferredSlmValues<FamilyType>(valuesToTest, rootDeviceEnvironment);
 }

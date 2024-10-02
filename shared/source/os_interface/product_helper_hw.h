@@ -49,7 +49,6 @@ class ProductHelperHw : public ProductHelper {
     bool isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const override;
     bool allowCompression(const HardwareInfo &hwInfo) const override;
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
-    bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const override;
     bool isNewResidencyModelSupported() const override;
     bool isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const override;
     bool isDirectSubmissionConstantCacheInvalidationNeeded(const HardwareInfo &hwInfo) const override;

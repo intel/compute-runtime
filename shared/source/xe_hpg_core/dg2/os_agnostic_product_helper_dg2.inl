@@ -129,11 +129,6 @@ LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMo
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
-}
-
-template <>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs, const ReleaseHelper *releaseHelper) const {
     auto isAcm = DG2::isG10(hwInfo) || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
     auto isBasicWARequired = isAcm;
