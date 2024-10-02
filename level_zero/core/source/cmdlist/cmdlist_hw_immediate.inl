@@ -1008,7 +1008,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     if (status != ZE_RESULT_NOT_READY) {
         if (isInOrderExecutionEnabled()) {
-            this->latestHostWaitedInOrderSyncValue = inOrderSyncValue;
+            inOrderExecInfo->setLastWaitedCounterValue(inOrderSyncValue);
         }
 
         if (this->isTbxMode && (status == ZE_RESULT_SUCCESS)) {
@@ -1032,6 +1032,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
                     if (copyOffloadStorageCleanupNeeded) {
                         copyOffloadInternalAllocStorage->cleanAllocationList(copyOffloadTaskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
                     }
+                }
+
+                if (inOrderExecInfo) {
+                    inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
                 }
             }
 

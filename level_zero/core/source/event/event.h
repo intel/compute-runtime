@@ -306,6 +306,7 @@ struct Event : _ze_event_handle_t {
     Event(int index, Device *device) : device(device), index(index) {}
 
     void unsetCmdQueue();
+    void releaseTempInOrderTimestampNodes();
 
     EventPool *eventPool = nullptr;
 

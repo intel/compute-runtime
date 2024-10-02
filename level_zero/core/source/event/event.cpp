@@ -387,8 +387,16 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     return ZE_RESULT_SUCCESS;
 }
 
+void Event::releaseTempInOrderTimestampNodes() {
+    if (inOrderExecInfo) {
+        inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
+    }
+}
+
 ze_result_t Event::destroy() {
-    this->resetInOrderTimestampNode(nullptr);
+    resetInOrderTimestampNode(nullptr);
+    releaseTempInOrderTimestampNodes();
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }

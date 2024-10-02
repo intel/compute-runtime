@@ -6781,6 +6781,37 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignal
     EXPECT_EQ(isCompactEvent, cmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
 }
 
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTempNodeWhenCallingSyncPointsThenReleaseNotUsedNodes, MatchAny) {
+    auto eventPool = createEvents<FamilyType>(1, true);
+    auto eventHandle = events[0]->toHandle();
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto inOrderExecInfo = static_cast<WhiteboxInOrderExecInfo *>(cmdList->inOrderExecInfo.get());
+    auto hostAddress = inOrderExecInfo->getBaseHostAddress();
+    *hostAddress = 3;
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(1u, inOrderExecInfo->tempTimestampNodes.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->hostSynchronize(1, false));
+    EXPECT_EQ(1u, inOrderExecInfo->tempTimestampNodes.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->hostSynchronize(1, true));
+    EXPECT_EQ(0u, inOrderExecInfo->tempTimestampNodes.size());
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, inOrderExecInfo->tempTimestampNodes.size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->hostSynchronize(1, false));
+    EXPECT_EQ(1u, inOrderExecInfo->tempTimestampNodes.size());
+
+    events[0].reset();
+    EXPECT_EQ(0u, inOrderExecInfo->tempTimestampNodes.size());
+}
+
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDispatchingThenAssignNewNode, MatchAny) {
     auto eventPool = createEvents<FamilyType>(1, true);
     auto eventHandle = events[0]->toHandle();

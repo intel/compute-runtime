@@ -2411,7 +2411,7 @@ inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMe
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::handleInOrderImplicitDependencies(bool relaxedOrderingAllowed, bool copyOffloadOperation) {
     if (hasInOrderDependencies()) {
-        if (this->latestHostWaitedInOrderSyncValue >= inOrderExecInfo->getCounterValue()) {
+        if (inOrderExecInfo->isCounterAlreadyDone(inOrderExecInfo->getCounterValue())) {
             return false;
         }
 

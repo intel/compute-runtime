@@ -310,9 +310,7 @@ void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
         csr->getInternalAllocationStorage()->cleanAllocationList(csr->peekTaskCount(), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     }
 
-    if (inOrderExecInfo) {
-        inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
-    }
+    releaseTempInOrderTimestampNodes();
 }
 
 template <typename TagSizeT>

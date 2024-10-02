@@ -378,7 +378,6 @@ struct CommandListCoreFamily : public CommandListImp {
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
-    uint64_t latestHostWaitedInOrderSyncValue = 0;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;

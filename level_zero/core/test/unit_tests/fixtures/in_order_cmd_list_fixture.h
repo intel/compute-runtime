@@ -22,6 +22,11 @@ namespace L0 {
 namespace ult {
 
 struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
+    class WhiteboxInOrderExecInfo : public InOrderExecInfo {
+      public:
+        using InOrderExecInfo::tempTimestampNodes;
+    };
+
     struct FixtureMockEvent : public EventImp<uint32_t> {
         using EventImp<uint32_t>::Event::counterBasedMode;
         using EventImp<uint32_t>::Event::counterBasedFlags;
