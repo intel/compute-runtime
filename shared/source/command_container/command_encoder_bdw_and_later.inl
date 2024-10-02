@@ -406,8 +406,8 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType 
 }
 
 template <typename Family>
-template <typename WalkerType, typename InterfaceDescriptorType>
-inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const EncodeWalkerArgs &walkerArgs) {}
+template <typename WalkerType>
+inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
 template <typename InterfaceDescriptorType>

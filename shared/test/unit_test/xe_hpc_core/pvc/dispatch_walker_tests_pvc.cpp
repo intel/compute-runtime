@@ -53,7 +53,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
                 testInput.programGlobalFenceAsPostSyncOperationInComputeWalker);
 
             postSyncData.setSystemMemoryFenceRequest(false);
-            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, &walkerCmd.getInterfaceDescriptor(), walkerArgs);
+            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
             EXPECT_EQ(testInput.expectSystemMemoryFenceRequest, postSyncData.getSystemMemoryFenceRequest());
         }
     }
@@ -75,7 +75,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemF
         hwInfo.platform.usDeviceID = deviceId;
 
         postSyncData.setSystemMemoryFenceRequest(true);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, &walkerCmd.getInterfaceDescriptor(), walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
     }
 }

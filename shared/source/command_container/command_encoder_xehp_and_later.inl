@@ -408,7 +408,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.requiredDispatchWalkOrder,
         args.additionalSizeParam,
         args.device->getDeviceInfo().maxFrontEndThreads};
-    EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, &idd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
     uint32_t workgroupSize = args.dispatchInterface->getGroupSize()[0] * args.dispatchInterface->getGroupSize()[1] * args.dispatchInterface->getGroupSize()[2];
     bool isRequiredWorkGroupOrder = args.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none;

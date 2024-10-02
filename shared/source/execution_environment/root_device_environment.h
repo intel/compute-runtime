@@ -88,8 +88,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     void initCompilerProductHelper();
     void initReleaseHelper();
     void initAilConfigurationHelper();
-    void setNonLimitedNumberOfCcs(uint32_t numberOfCss) { this->nonLimitedNumberOfCcs = numberOfCss; };
-    uint32_t getNonLimitedNumberOfCcs() const { return this->nonLimitedNumberOfCcs; };
     ReleaseHelper *getReleaseHelper() const;
     AILConfiguration *getAILConfigurationHelper() const;
     template <typename HelperType>
@@ -126,7 +124,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
   protected:
     using GraphicsAllocationUniquePtrType = std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>>;
     GraphicsAllocationUniquePtrType dummyAllocation = nullptr;
-    uint32_t nonLimitedNumberOfCcs = 0u;
 
     bool limitedNumberOfCcs = false;
     bool isWddmOnLinuxEnable = false;

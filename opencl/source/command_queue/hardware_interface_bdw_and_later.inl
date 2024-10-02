@@ -84,7 +84,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         commandQueue.getDevice());
 
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, 0};
-    EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType, INTERFACE_DESCRIPTOR_DATA>(rootDeviceEnvironment, walkerCmd, nullptr, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }
 } // namespace NEO

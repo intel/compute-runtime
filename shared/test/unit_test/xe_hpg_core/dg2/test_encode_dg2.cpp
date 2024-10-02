@@ -86,7 +86,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
         hwInfo.ipVersion = compilerProductHelper.getHwIpVersion(hwInfo);
         rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
 
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, &walkerCmd.getInterfaceDescriptor(), walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
         if (DG2::isG10(hwInfo) && revisionID < revIdB0) {
             EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());

@@ -125,8 +125,8 @@ struct EncodeDispatchKernel {
     template <typename WalkerType>
     static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args);
 
-    template <typename WalkerType, typename InterfaceDescriptorType>
-    static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const EncodeWalkerArgs &walkerArgs);
+    template <typename WalkerType>
+    static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
     template <typename InterfaceDescriptorType>
     static void appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,

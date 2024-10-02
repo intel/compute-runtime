@@ -143,7 +143,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
     auto maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads;
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, maxFrontEndThreads};
-    EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, interfaceDescriptor, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
