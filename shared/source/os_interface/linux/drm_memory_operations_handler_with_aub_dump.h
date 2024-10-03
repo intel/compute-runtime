@@ -51,6 +51,11 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
         return BaseOperationsHandler::evict(device, gfxAllocation);
     }
 
+    MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) override {
+        aubMemoryOperationsHandler->free(device, gfxAllocation);
+        return BaseOperationsHandler::free(device, gfxAllocation);
+    }
+
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override {
         aubMemoryOperationsHandler->isResident(device, gfxAllocation);
         return BaseOperationsHandler::isResident(device, gfxAllocation);

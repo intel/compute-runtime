@@ -9,6 +9,7 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
+#include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_aub_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_wddm.h"
@@ -95,6 +96,26 @@ TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, givenRegularAllocationWhenEvi
     EXPECT_EQ(wddmMemoryOperationsHandlerWithAubDumpMock->isResident(nullptr, *wddmAllocation), MemoryOperationsStatus::memoryNotFound);
     EXPECT_TRUE(mockAubMemoryOperationsHandler->makeResidentCalled);
     EXPECT_TRUE(mockAubMemoryOperationsHandler->isResidentCalled);
+}
+
+TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, givenRegularAllocationWhenFreeResidentAllocationThenFreeCalledAndAllocationIsRemovedFromResidencyInAubOperationsHandler) {
+    MockAubManager aubManager;
+    mockAubMemoryOperationsHandler->setAubManager(&aubManager);
+
+    std::unique_ptr<NEO::MockDevice> device;
+    device.reset(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(defaultHwInfo.get(), 0));
+    device->executionEnvironment->prepareRootDeviceEnvironments(1);
+    device->executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+
+    allocationPtr->setAubWritable(true, 0xff);
+    EXPECT_EQ(wddmMemoryOperationsHandlerWithAubDumpMock->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false), MemoryOperationsStatus::success);
+    EXPECT_EQ(1u, mockAubMemoryOperationsHandler->residentAllocations.size());
+
+    EXPECT_EQ(wddmMemoryOperationsHandlerWithAubDumpMock->free(device.get(), *wddmAllocation), MemoryOperationsStatus::success);
+    EXPECT_TRUE(mockAubMemoryOperationsHandler->makeResidentCalled);
+    EXPECT_TRUE(mockAubMemoryOperationsHandler->freeCalled);
+
+    EXPECT_EQ(0u, mockAubMemoryOperationsHandler->residentAllocations.size());
 }
 
 TEST_F(WddmMemoryOperationsHandlerWithAubDumpTest, givenFragmentedAllocationWhenEvictingResidentAllocationThenEvictCalled) {
