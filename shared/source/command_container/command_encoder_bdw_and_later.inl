@@ -411,7 +411,7 @@ inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const Roo
 
 template <typename Family>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
 
 template <typename Family>
 inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceInfo) {

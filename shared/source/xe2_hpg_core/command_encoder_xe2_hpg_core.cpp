@@ -255,7 +255,7 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
 
 template <>
 template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
 
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();

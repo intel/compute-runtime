@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,11 +44,11 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
                                         ? valueToTest.preferredSlmAllocationSizePerDss
                                         : valueToTest.preferredSlmAllocationSizePerDss / localWorkGroupsPerDssCount;
 
-                NEO::EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd,
-                                                                                 rootDeviceEnvironment,
-                                                                                 threadsPerThreadGroup,
-                                                                                 slmTotalSize,
-                                                                                 slmPolicy);
+                NEO::EncodeDispatchKernel<FamilyType>::setupPreferredSlmSize(&idd,
+                                                                             rootDeviceEnvironment,
+                                                                             threadsPerThreadGroup,
+                                                                             slmTotalSize,
+                                                                             slmPolicy);
 
                 EXPECT_EQ(valueToTest.expectedValueInIdd, idd.getPreferredSlmAllocationSize());
             }

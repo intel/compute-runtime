@@ -397,9 +397,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 idd.getThreadGroupDispatchSize());
     }
 
-    EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
-                                                            args.dispatchInterface->getSlmTotalSize(),
-                                                            args.dispatchInterface->getSlmPolicy());
+    EncodeDispatchKernel<Family>::setupPreferredSlmSize(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
+                                                        args.dispatchInterface->getSlmTotalSize(),
+                                                        args.dispatchInterface->getSlmPolicy());
 
     EncodeWalkerArgs walkerArgs{
         args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType,
