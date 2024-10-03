@@ -135,10 +135,11 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurr
     enqueueNDCount();
 
     auto syncBufferHandler = getSyncBufferHandler();
-    EXPECT_EQ(CommonConstants::maximalSizeOfAtomicType, syncBufferHandler->usedBufferSize);
+    auto minimalSyncBufferSize = alignUp(CommonConstants::minimalSyncBufferSize, CommonConstants::maximalSizeOfAtomicType);
+    EXPECT_EQ(minimalSyncBufferSize, syncBufferHandler->usedBufferSize);
 
     enqueueNDCount();
-    EXPECT_EQ(2u * CommonConstants::maximalSizeOfAtomicType, syncBufferHandler->usedBufferSize);
+    EXPECT_EQ(2u * minimalSyncBufferSize, syncBufferHandler->usedBufferSize);
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithoutAllocateSyncBufferPatchWhenEnqueuingConcurrentKernelThenSyncBufferIsNotCreated) {
