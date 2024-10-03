@@ -2551,7 +2551,7 @@ TEST_F(MemoryRelaxedSizeTests,
     hostDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
-    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    relaxedSizeDesc.flags = {};
     hostDesc.pNext = &relaxedSizeDesc;
     ze_result_t result = context->allocHostMem(&hostDesc,
                                                size, alignment, &ptr);
@@ -2569,7 +2569,7 @@ TEST_F(MemoryRelaxedSizeTests,
     hostDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
-    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    relaxedSizeDesc.flags = {};
     hostDesc.pNext = &relaxedSizeDesc;
     ze_result_t result = context->allocHostMem(&hostDesc,
                                                size, alignment, &ptr);
@@ -2795,7 +2795,7 @@ TEST_F(MemoryRelaxedSizeTests,
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
-    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    relaxedSizeDesc.flags = {};
     deviceDesc.pNext = &relaxedSizeDesc;
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
                                                  &deviceDesc,
@@ -2814,7 +2814,7 @@ TEST_F(MemoryRelaxedSizeTests,
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
-    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    relaxedSizeDesc.flags = {};
     deviceDesc.pNext = &relaxedSizeDesc;
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
                                                  &deviceDesc,
@@ -2954,7 +2954,7 @@ TEST_F(MemoryRelaxedSizeTests,
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
-    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    relaxedSizeDesc.flags = {};
     deviceDesc.pNext = &relaxedSizeDesc;
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocSharedMem(device->toHandle(),
@@ -2975,7 +2975,7 @@ TEST_F(MemoryRelaxedSizeTests,
     deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
-    relaxedSizeDesc.flags = static_cast<ze_relaxed_allocation_limits_exp_flag_t>(ZE_BIT(1));
+    relaxedSizeDesc.flags = {};
     deviceDesc.pNext = &relaxedSizeDesc;
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocSharedMem(device->toHandle(),

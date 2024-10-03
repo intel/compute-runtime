@@ -241,6 +241,13 @@ TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenC
     EXPECT_EQ(&pLinuxSysmanImp->getFsAccess(), pLinuxSysmanImp->pFsAccess);
 }
 
+std::string getcwd(char buf[], size_t size) {
+    auto cwd = ::getcwd(buf, size);
+    if (cwd)
+        return cwd;
+    return "";
+}
+
 TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingDirectoryExistsWithValidAndInvalidPathThenSuccessAndFailureAreReturnedRespectively) {
     PublicFsAccess *tempFsAccess = new PublicFsAccess();
     tempFsAccess->accessSyscall = mockAccessSuccess;

@@ -96,8 +96,10 @@ std::string getRunPath(char *argv0) {
 #else
         cwd = _getcwd(nullptr, 0);
 #endif
-        res = cwd;
-        free(cwd);
+        if (cwd) {
+            res = cwd;
+            free(cwd);
+        }
     }
 
     return res;

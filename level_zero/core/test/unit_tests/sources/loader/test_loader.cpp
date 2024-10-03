@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace ult {
 TEST(zeGetDriverProcAddrTableTest,
      whenCallingZeGetDriverProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_driver_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetDriverProcAddrTable(version, &pDdiTable);
@@ -27,7 +27,7 @@ TEST(zeGetDriverProcAddrTableTest,
 TEST(zeGetMemProcAddrTableTest,
      whenCallingZeGetMemProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_mem_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetMemProcAddrTable(version, &pDdiTable);
@@ -37,7 +37,7 @@ TEST(zeGetMemProcAddrTableTest,
 TEST(zeGetContextProcAddrTableTest,
      whenCallingZeGetContextProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_context_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetContextProcAddrTable(version, &pDdiTable);
@@ -47,7 +47,7 @@ TEST(zeGetContextProcAddrTableTest,
 TEST(zeGetPhysicalMemProcAddrTableTest,
      whenCallingZeGetPhysicalMemProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_physical_mem_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetPhysicalMemProcAddrTable(version, &pDdiTable);
@@ -57,7 +57,7 @@ TEST(zeGetPhysicalMemProcAddrTableTest,
 TEST(zeGetVirtualMemProcAddrTableTest,
      whenCallingZeGetVirtualMemProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_virtual_mem_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetVirtualMemProcAddrTable(version, &pDdiTable);
@@ -67,7 +67,7 @@ TEST(zeGetVirtualMemProcAddrTableTest,
 TEST(zeGetGlobalProcAddrTableTest,
      whenCallingZeGetGlobalProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_global_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetGlobalProcAddrTable(version, &pDdiTable);
@@ -77,7 +77,7 @@ TEST(zeGetGlobalProcAddrTableTest,
 TEST(zeGetDeviceProcAddrTableTest,
      whenCallingZeGetDeviceProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_device_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetDeviceProcAddrTable(version, &pDdiTable);
@@ -87,7 +87,7 @@ TEST(zeGetDeviceProcAddrTableTest,
 TEST(zeGetCommandQueueProcAddrTableTest,
      whenCallingZeGetCommandQueueProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_command_queue_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetCommandQueueProcAddrTable(version, &pDdiTable);
@@ -97,7 +97,7 @@ TEST(zeGetCommandQueueProcAddrTableTest,
 TEST(zeGetCommandListProcAddrTableTest,
      whenCallingZeGetCommandListProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_command_list_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
@@ -107,7 +107,7 @@ TEST(zeGetCommandListProcAddrTableTest,
 TEST(zeGetFenceProcAddrTableTest,
      whenCallingZeGetFenceProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_fence_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetFenceProcAddrTable(version, &pDdiTable);
@@ -117,7 +117,7 @@ TEST(zeGetFenceProcAddrTableTest,
 TEST(zeGetEventPoolProcAddrTableTest,
      whenCallingZeGetEventPoolProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_event_pool_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetEventPoolProcAddrTable(version, &pDdiTable);
@@ -127,7 +127,7 @@ TEST(zeGetEventPoolProcAddrTableTest,
 TEST(zeGetEventProcAddrTableTest,
      whenCallingZeGetEventProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_event_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetEventProcAddrTable(version, &pDdiTable);
@@ -137,7 +137,7 @@ TEST(zeGetEventProcAddrTableTest,
 TEST(zeGetImageProcAddrTableTest,
      whenCallingZeGetImageProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_image_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetImageProcAddrTable(version, &pDdiTable);
@@ -147,7 +147,7 @@ TEST(zeGetImageProcAddrTableTest,
 TEST(zeGetModuleProcAddrTableTest,
      whenCallingZeGetModuleProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_module_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetModuleProcAddrTable(version, &pDdiTable);
@@ -157,7 +157,7 @@ TEST(zeGetModuleProcAddrTableTest,
 TEST(zeGetModuleBuildLogProcAddrTableTest,
      whenCallingZeGetModuleBuildLogProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_module_build_log_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetModuleBuildLogProcAddrTable(version, &pDdiTable);
@@ -167,7 +167,7 @@ TEST(zeGetModuleBuildLogProcAddrTableTest,
 TEST(zeGetKernelProcAddrTableTest,
      whenCallingZeGetKernelProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_kernel_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetKernelProcAddrTable(version, &pDdiTable);
@@ -177,7 +177,7 @@ TEST(zeGetKernelProcAddrTableTest,
 TEST(zeGetSamplerProcAddrTableTest,
      whenCallingZeGetSamplerProcAddrTableWithCorrectMajorVersionThenSuccessIsReturnedAndMinorVersionIsIgnored) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(1u, 64u));
+    ze_api_version_t version = ZE_API_VERSION_1_0;
     ze_sampler_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetSamplerProcAddrTable(version, &pDdiTable);
@@ -187,7 +187,7 @@ TEST(zeGetSamplerProcAddrTableTest,
 TEST(zeGetDriverProcAddrTableTest,
      whenCallingZeGetDriverProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_driver_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetDriverProcAddrTable(version, &pDdiTable);
@@ -197,7 +197,7 @@ TEST(zeGetDriverProcAddrTableTest,
 TEST(zeGetMemProcAddrTableTest,
      whenCallingZeGetMemProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_mem_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetMemProcAddrTable(version, &pDdiTable);
@@ -207,7 +207,7 @@ TEST(zeGetMemProcAddrTableTest,
 TEST(zeGetContextProcAddrTableTest,
      whenCallingZeGetContextProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_context_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetContextProcAddrTable(version, &pDdiTable);
@@ -217,7 +217,7 @@ TEST(zeGetContextProcAddrTableTest,
 TEST(zeGetPhysicalMemProcAddrTableTest,
      whenCallingZeGetPhysicalMemProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_physical_mem_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetPhysicalMemProcAddrTable(version, &pDdiTable);
@@ -227,7 +227,7 @@ TEST(zeGetPhysicalMemProcAddrTableTest,
 TEST(zeGetVirtualMemProcAddrTableTest,
      whenCallingZeGetVirtualMemProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_virtual_mem_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetVirtualMemProcAddrTable(version, &pDdiTable);
@@ -237,7 +237,7 @@ TEST(zeGetVirtualMemProcAddrTableTest,
 TEST(zeGetGlobalProcAddrTableTest,
      whenCallingZeGetGlobalProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_global_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetGlobalProcAddrTable(version, &pDdiTable);
@@ -247,7 +247,7 @@ TEST(zeGetGlobalProcAddrTableTest,
 TEST(zeGetDeviceProcAddrTableTest,
      whenCallingZeGetDeviceProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_device_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetDeviceProcAddrTable(version, &pDdiTable);
@@ -257,7 +257,7 @@ TEST(zeGetDeviceProcAddrTableTest,
 TEST(zeGetCommandQueueProcAddrTableTest,
      whenCallingZeGetCommandQueueProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_command_queue_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetCommandQueueProcAddrTable(version, &pDdiTable);
@@ -267,7 +267,7 @@ TEST(zeGetCommandQueueProcAddrTableTest,
 TEST(zeGetCommandListProcAddrTableTest,
      whenCallingZeGetCommandListProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_command_list_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetCommandListProcAddrTable(version, &pDdiTable);
@@ -277,7 +277,7 @@ TEST(zeGetCommandListProcAddrTableTest,
 TEST(zeGetFenceProcAddrTableTest,
      whenCallingZeGetFenceProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_fence_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetFenceProcAddrTable(version, &pDdiTable);
@@ -287,7 +287,7 @@ TEST(zeGetFenceProcAddrTableTest,
 TEST(zeGetEventPoolProcAddrTableTest,
      whenCallingZeGetEventPoolProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_event_pool_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetEventPoolProcAddrTable(version, &pDdiTable);
@@ -297,7 +297,7 @@ TEST(zeGetEventPoolProcAddrTableTest,
 TEST(zeGetEventProcAddrTableTest,
      whenCallingZeGetEventProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_event_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetEventProcAddrTable(version, &pDdiTable);
@@ -307,7 +307,7 @@ TEST(zeGetEventProcAddrTableTest,
 TEST(zeGetImageProcAddrTableTest,
      whenCallingZeGetImageProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_image_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetImageProcAddrTable(version, &pDdiTable);
@@ -317,7 +317,7 @@ TEST(zeGetImageProcAddrTableTest,
 TEST(zeGetModuleProcAddrTableTest,
      whenCallingZeGetModuleProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_module_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetModuleProcAddrTable(version, &pDdiTable);
@@ -327,7 +327,7 @@ TEST(zeGetModuleProcAddrTableTest,
 TEST(zeGetModuleBuildLogProcAddrTableTest,
      whenCallingZeGetModuleBuildLogProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_module_build_log_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetModuleBuildLogProcAddrTable(version, &pDdiTable);
@@ -337,7 +337,7 @@ TEST(zeGetModuleBuildLogProcAddrTableTest,
 TEST(zeGetKernelProcAddrTableTest,
      whenCallingZeGetKernelProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_kernel_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetKernelProcAddrTable(version, &pDdiTable);
@@ -347,7 +347,7 @@ TEST(zeGetKernelProcAddrTableTest,
 TEST(zeGetSamplerProcAddrTableTest,
      whenCallingZeGetSamplerProcAddrTableWithGreaterThanAllowedMajorVersionThenUnitializedIsReturned) {
 
-    ze_api_version_t version = static_cast<ze_api_version_t>(ZE_MAKE_VERSION(64u, 0u));
+    ze_api_version_t version = ZE_API_VERSION_FORCE_UINT32;
     ze_sampler_dditable_t pDdiTable = {};
 
     ze_result_t result = zeGetSamplerProcAddrTable(version, &pDdiTable);
