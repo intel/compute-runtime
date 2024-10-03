@@ -153,7 +153,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, MaximumNumberOfThreads, -1, "Set Maximum Number 
 DECLARE_DEBUG_VARIABLE(int32_t, OverDispatchControl, -1, "Set Over Dispatch Control, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, CFELargeGRFThreadAdjustDisable, -1, "Set Large GRF thread adjust Disable field in CFE_STATE, -1 - do not set")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideNumComputeUnitsForScratch, -1, "Override number of compute units used for scratch size calculation")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSize, -1, "Set ThreadGroupDispatchSize in INTERFACE_DESCRIPTOR_DATA, -1 - default, 0 - TG size 8, 1 - TG size 4, 2 - TG size 2, 3 - TG size 1")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceThreadGroupDispatchSize, -1, "Set ThreadGroupDispatchSize in INTERFACE_DESCRIPTOR_DATA, -1 - default, >=0 Thread Group Dispatch Size Bspec setting for given generation")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceStatelessL1CachingPolicy, -1, "-1: default, >=0 : program value for stateless L1 caching")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceMemoryBankIndexOverride, -1, "-1: default, 0: disable, 1:enable, Force index=1 of memory bank for XEHP")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePrivateScratchSlot1, -1, "-1: default, 0: disable, 1: enable Allows using private scratch space")
