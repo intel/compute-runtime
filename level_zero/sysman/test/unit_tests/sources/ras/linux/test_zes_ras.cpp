@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/libult/linux/drm_mock.h"
 
+#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
@@ -540,19 +541,6 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleAndHandleCountZeroWhenCallingReIn
     EXPECT_EQ(count, mockHandleCount);
 }
 
-HWTEST2_F(SysmanRasFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenRequestingCountWithzesGetStateStateThenVerifyGetStateReturnsFailure, isRasNotSupportedProduct) {
-    bool isSubDevice = true;
-    uint32_t subDeviceId = 0u;
-
-    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
-    pLinuxRasImp->rasSources.clear();
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-
-    zes_ras_state_t state = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasGetState(state, 0));
-}
-
 HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesGetRasStateAndFirmwareInterfaceIsAbsentOtherInterfacesAreAlsoAbsentThenCallFails, IsPVC) {
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2e);
     pFsAccess->mockReadVal = true;
@@ -571,6 +559,13 @@ HWTEST2_F(SysmanRasFixture, GivenValidRasHandleWhenCallingZesGetRasStateAndFirmw
         zes_ras_state_t state = {};
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 1, &state));
     }
+}
+
+TEST_F(SysmanRasFixture, GivenRasUtilAsNoneWhenCallingRasGetStateAndRasGetCategoryCountThenErrorAndNoCategoryCountIsReturned) {
+    auto pRasUtil = std::make_unique<RasUtilNone>();
+    zes_ras_state_t state = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetState(state, false));
+    EXPECT_EQ(0u, pRasUtil->rasGetCategoryCount());
 }
 
 struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {

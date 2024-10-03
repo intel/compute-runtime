@@ -7,6 +7,7 @@
 
 #include "shared/test/common/libult/linux/drm_mock.h"
 
+#include "level_zero/sysman/source/api/ras/linux/ras_util/sysman_ras_util.h"
 #include "level_zero/sysman/source/sysman_const.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/ras/linux/mock_sysman_ras.h"
@@ -680,20 +681,6 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenC
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxRasImp->osRasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_DRIVER_ERRORS));
 }
 
-HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleAndRasUtilInterfaceIsNullWhenCallingzesGetStateStateExpThenVerifyGetStateExpReturnsFailure, IsNotPVC) {
-    bool isSubDevice = true;
-    uint32_t subDeviceId = 0u;
-
-    auto pLinuxRasImp = std::make_unique<PublicLinuxRasImp>(pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId);
-    pLinuxRasImp->rasSources.clear();
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceGt>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-    pLinuxRasImp->rasSources.push_back(std::make_unique<L0::Sysman::LinuxRasSourceHbm>(pLinuxSysmanImp, ZES_RAS_ERROR_TYPE_CORRECTABLE, isSubDevice, subDeviceId));
-
-    uint32_t count = 2;
-    std::vector<zes_ras_state_exp_t> rasStates(count);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pLinuxRasImp->osRasGetStateExp(&count, rasStates.data()));
-}
-
 HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExpAndGetStateExpForHbmThenVerifyErrorCountersAreCleared, IsPVC) {
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm2);
     pPmuInterface->mockPmuReadResult = true;
@@ -763,6 +750,13 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExp
             }
         }
     }
+}
+
+TEST_F(SysmanRasExpFixture, GivenRasUtilAsNoneWhenCallingRasGetStateExpAndRasClearStateExpThenErrorAreReturned) {
+    auto pRasUtil = std::make_unique<RasUtilNone>();
+    std::vector<zes_ras_state_exp_t> rasStates(maxRasErrorCategoryExpCount);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasGetStateExp(maxRasErrorCategoryExpCount, rasStates.data()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pRasUtil->rasClearStateExp(ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS));
 }
 
 struct SysmanRasExpMultiDeviceFixture : public SysmanMultiDeviceFixture {
