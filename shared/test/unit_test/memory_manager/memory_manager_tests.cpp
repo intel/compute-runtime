@@ -1909,6 +1909,16 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWithFlagEnable64kbpage
     EXPECT_FALSE(memoryManager.is64kbPagesEnabled(&hwInfo));
 }
 
+TEST(OsAgnosticMemoryManager, givenStartAddressAndSizeWhenReservingCpuAddressThenPageAlignedAddressRangeIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto addressRange = memoryManager.reserveCpuAddress(0, 1234);
+    EXPECT_NE(0u, addressRange.address);
+    EXPECT_EQ(1234u, addressRange.size);
+    EXPECT_EQ(0u, addressRange.address & (MemoryConstants::pageSize - 1));
+    memoryManager.freeCpuAddress(addressRange);
+}
+
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
     MockExecutionEnvironment executionEnvironment{};
     MockMemoryManager memoryManager(false, true, executionEnvironment);
@@ -2748,6 +2758,83 @@ TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfac
     allocation = allocateGlobalsSurface(svmAllocsManager.get(), device, 1024, 0u, false, &linkerInput, nullptr);
     EXPECT_EQ(nullptr, allocation);
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
+}
+
+class FailFirstCpuReserveMemoryManager : public MockMemoryManager {
+  public:
+    using MockMemoryManager::MockMemoryManager;
+    AddressRange reserveCpuAddress(const uint64_t requiredStartAddress, size_t size) override {
+        cpuReservationCallCount++;
+        if (isFirstCpuReservationCall || alwaysFail) {
+            isFirstCpuReservationCall = false;
+            return {};
+        }
+        return AddressRange{0xDEADBEEF, size};
+    }
+    void freeCpuAddress(AddressRange addressRange) override{};
+
+    bool alwaysFail = false;
+    bool isFirstCpuReservationCall = true;
+    int8_t cpuReservationCallCount = 0;
+};
+
+TEST(MemoryManagerTest, givenFirstCpuReservationFailsAndRequiredStartAddressIsZeroThenReservationIsNotTriedAgain) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto failFirstMemoryManager = std::make_unique<FailFirstCpuReserveMemoryManager>(executionEnvironment);
+
+    EXPECT_EQ(0, failFirstMemoryManager->cpuReservationCallCount);
+    auto addressRange = failFirstMemoryManager->reserveCpuAddressWithZeroBaseRetry(0, 1234);
+    EXPECT_EQ(0u, addressRange.address);
+    EXPECT_EQ(0u, addressRange.size);
+    EXPECT_EQ(1, failFirstMemoryManager->cpuReservationCallCount);
+}
+
+TEST(MemoryManagerTest, givenFirstCpuReservationFailsAndRequiredStartAddressIsNotZeroThenReservationIsTriedAgain) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto failFirstMemoryManager = std::make_unique<FailFirstCpuReserveMemoryManager>(executionEnvironment);
+
+    EXPECT_EQ(0, failFirstMemoryManager->cpuReservationCallCount);
+    auto addressRange = failFirstMemoryManager->reserveCpuAddressWithZeroBaseRetry(42, 1234);
+    EXPECT_EQ(0xDEADBEEF, addressRange.address);
+    EXPECT_EQ(1234u, addressRange.size);
+    EXPECT_EQ(2, failFirstMemoryManager->cpuReservationCallCount);
+    failFirstMemoryManager->freeCpuAddress(addressRange);
+}
+
+TEST(MemoryManagerTest, givenCpuReservationFailsThenReservationIsTriedAgain) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto failFirstMemoryManager = std::make_unique<FailFirstCpuReserveMemoryManager>(executionEnvironment);
+
+    failFirstMemoryManager->alwaysFail = true;
+
+    EXPECT_EQ(0, failFirstMemoryManager->cpuReservationCallCount);
+    auto addressRangeZeroStart = failFirstMemoryManager->reserveCpuAddressWithZeroBaseRetry(0, 1234);
+    EXPECT_EQ(0u, addressRangeZeroStart.address);
+    EXPECT_EQ(0u, addressRangeZeroStart.size);
+    EXPECT_EQ(1, failFirstMemoryManager->cpuReservationCallCount);
+    auto addressRangeNonZeroStart = failFirstMemoryManager->reserveCpuAddressWithZeroBaseRetry(42, 1234);
+    EXPECT_EQ(0u, addressRangeNonZeroStart.address);
+    EXPECT_EQ(0u, addressRangeNonZeroStart.size);
+    EXPECT_EQ(3, failFirstMemoryManager->cpuReservationCallCount);
+}
+
+TEST(MemoryManagerTest, givenCpuReservationPassesThenReservationIsNotTriedAgain) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto failFirstMemoryManager = std::make_unique<FailFirstCpuReserveMemoryManager>(executionEnvironment);
+
+    failFirstMemoryManager->isFirstCpuReservationCall = false;
+
+    EXPECT_EQ(0, failFirstMemoryManager->cpuReservationCallCount);
+    auto addressRangeZeroStart = failFirstMemoryManager->reserveCpuAddressWithZeroBaseRetry(0, 1234);
+    EXPECT_EQ(0xDEADBEEF, addressRangeZeroStart.address);
+    EXPECT_EQ(1234u, addressRangeZeroStart.size);
+    EXPECT_EQ(1, failFirstMemoryManager->cpuReservationCallCount);
+    failFirstMemoryManager->freeCpuAddress(addressRangeZeroStart);
+    auto addressRangeNonZeroStart = failFirstMemoryManager->reserveCpuAddressWithZeroBaseRetry(42, 1234);
+    EXPECT_EQ(0xDEADBEEF, addressRangeNonZeroStart.address);
+    EXPECT_EQ(1234u, addressRangeNonZeroStart.size);
+    EXPECT_EQ(2, failFirstMemoryManager->cpuReservationCallCount);
+    failFirstMemoryManager->freeCpuAddress(addressRangeNonZeroStart);
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsSetTo0ThenHostPointerTrackingIsDisabled) {
