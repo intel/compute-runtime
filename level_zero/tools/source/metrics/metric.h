@@ -24,19 +24,29 @@ struct _zet_metric_programmable_exp_handle_t {};
 
 namespace L0 {
 
-#define METRICS_LOG(out, ...)                              \
-    if (NEO::debugManager.flags.PrintL0MetricLogs.get()) { \
-        NEO::printDebugString(true, out, __VA_ARGS__);     \
+struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier-naming)
+    constexpr static int32_t LOG_ERROR{1};      // NOLINT(readability-identifier-naming)
+    constexpr static int32_t LOG_INFO{1 << 1};  // NOLINT(readability-identifier-naming)
+    constexpr static int32_t LOG_DEBUG{1 << 2}; // NOLINT(readability-identifier-naming)
+};
+
+#define METRICS_LOG(out, ...) \
+    NEO::printDebugString(true, out, __VA_ARGS__);
+
+#define METRICS_LOG_ERR(str, ...)                                                                               \
+    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_ERROR) {                     \
+        METRICS_LOG(stderr, "\n\nL0Metrics[E][@fn:%s,ln:%d]: " str "\n\n", __FUNCTION__, __LINE__, __VA_ARGS__) \
     }
 
-#define METRICS_LOG_INFO(str, ...) \
-    METRICS_LOG(stdout, "L0Metrics[I]: " str "\n", __VA_ARGS__)
+#define METRICS_LOG_INFO(str, ...)                                                         \
+    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_INFO) { \
+        METRICS_LOG(stdout, "L0Metrics[I]: " str "\n", __VA_ARGS__)                        \
+    }
 
-#define METRICS_LOG_DBG(str, ...) \
-    METRICS_LOG(stdout, "L0Metrics[D][@fn:%s,ln:%d]: " str "\n", __FUNCTION__, __LINE__, __VA_ARGS__)
-
-#define METRICS_LOG_ERR(str, ...) \
-    METRICS_LOG(stderr, "\n\nL0Metrics[E][@fn:%s,ln:%d]: " str "\n\n", __FUNCTION__, __LINE__, __VA_ARGS__)
+#define METRICS_LOG_DBG(str, ...)                                                                         \
+    if (NEO::debugManager.flags.PrintL0MetricLogs.get() & METRICS_LOG_BITMASK::LOG_DEBUG) {               \
+        METRICS_LOG(stdout, "L0Metrics[D][@fn:%s,ln:%d]: " str "\n", __FUNCTION__, __LINE__, __VA_ARGS__) \
+    }
 
 struct CommandList;
 struct MetricStreamer;
