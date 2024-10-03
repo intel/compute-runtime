@@ -305,6 +305,27 @@ TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryAndNonLocalMemoryAllocat
     device->getDefaultEngine().commandStreamReceiver = oldCsr;
 }
 
+TEST_F(AubMemoryOperationsHandlerTests, givenNonLocalMemoryAllocationWithStorageInfoNonZeroWhenMakeResidentCalledThenSystemMemoryBankIsPassedToWriteMemory) {
+    auto executionEnvironment = device->getExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
+    executionEnvironment->initializeMemoryManager();
+
+    MemoryAllocation allocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
+                                MemoryConstants::pageSize, 0, MemoryPool::system64KBPages, false, false, MemoryManager::maxOsContextCount);
+    allocation.storageInfo.memoryBanks = 0x3u;
+    MockAubManager aubManager;
+    aubManager.storeAllocationParams = true;
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+
+    allocPtr = &allocation;
+    memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false);
+
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+    EXPECT_EQ(0u, aubManager.storedAllocationParams[0].memoryBanks);
+}
+
 TEST_F(AubMemoryOperationsHandlerTests, givenLocalMemoryNoncloneableAllocationWithManyBanksWhenGetMemoryBanksBitfieldThenSingleMemoryBankIsReturned) {
     auto executionEnvironment = device->getExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);

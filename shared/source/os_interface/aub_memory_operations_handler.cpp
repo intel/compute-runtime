@@ -42,11 +42,12 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
             continue;
         }
 
+        auto memoryBanks = static_cast<uint32_t>(getMemoryBanksBitfield(allocation, device).to_ulong());
         uint64_t gpuAddress = device ? device->getGmmHelper()->decanonize(allocation->getGpuAddress()) : allocation->getGpuAddress();
         aub_stream::AllocationParams params(gpuAddress,
                                             allocation->getUnderlyingBuffer(),
                                             allocation->getUnderlyingBufferSize(),
-                                            allocation->storageInfo.getMemoryBanks(),
+                                            memoryBanks,
                                             hint,
                                             allocation->getUsedPageSize());
 
