@@ -170,7 +170,6 @@ struct ModuleImp : public Module {
     ze_result_t allocateKernelImmutableDatas(size_t kernelsCount);
     ze_result_t initializeKernelImmutableDatas();
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
-    void verifyDebugCapabilities();
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;
     NEO::Zebin::Debug::Segments getZebinSegments();
     void createDebugZebin();

@@ -545,7 +545,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    this->verifyDebugCapabilities();
+
     if (this->shouldBuildBeFailed(neoDevice)) {
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }
@@ -1277,20 +1277,6 @@ ze_result_t ModuleImp::getKernelNames(uint32_t *pCount, const char **pNames) {
     }
 
     return ZE_RESULT_SUCCESS;
-}
-
-void ModuleImp::verifyDebugCapabilities() {
-    bool debugCapabilities = device->getNEODevice()->getDebugger() != nullptr;
-
-    if (debugCapabilities) {
-        // verify all kernels are debuggable
-        for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
-            bool systemThreadSurfaceAvailable = NEO::isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful) ||
-                                                NEO::isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindless);
-
-            debugCapabilities &= systemThreadSurfaceAvailable;
-        }
-    }
 }
 
 void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
