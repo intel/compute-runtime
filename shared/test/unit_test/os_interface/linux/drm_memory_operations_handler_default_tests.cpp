@@ -195,6 +195,27 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenCallingMake
     drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
     EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 1u);
 }
+
+TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenFlushReturnedOOMThenEvictCalled) {
+    drmMemoryOperationsHandler->flushDummyExecCallBase = false;
+    drmMemoryOperationsHandler->flushDummyExecResult = MemoryOperationsStatus::outOfMemory;
+    drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
+
+    initializeAllocation(1);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
+    EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 1u);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenFlushReturnedSuccessThenEvictNotcalled) {
+    drmMemoryOperationsHandler->flushDummyExecCallBase = false;
+    drmMemoryOperationsHandler->flushDummyExecResult = MemoryOperationsStatus::success;
+    drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
+
+    initializeAllocation(1);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
+    EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 0u);
+}
+
 struct DrmMemoryOperationsHandlerBaseTestFlushDummyExec : public DrmMemoryOperationsHandlerBaseTest {
     using BaseClass = DrmMemoryOperationsHandlerBaseTest;
     void SetUp() override {
@@ -236,19 +257,14 @@ TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerW
     EXPECT_EQ(ret, MemoryOperationsStatus::outOfMemory);
 }
 
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnFailThenEvictWithinOsContextCalled) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
-    drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 1u);
-}
-
 TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnSuccessThenSuccessReturned) {
     pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::success;
     auto ret = drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
     EXPECT_EQ(ret, MemoryOperationsStatus::success);
 }
-TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnSuccessThenEvictWithinOsContextNotCalled) {
-    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::success;
-    drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
-    EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 0u);
+
+TEST_F(DrmMemoryOperationsHandlerBaseTestFlushDummyExec, givenOperationsHandlerWhenEmitPiningRequestReturnOOMThenOOMReturned) {
+    pMemManager->emitPinningRequestForBoContainerResult = SubmissionStatus::outOfMemory;
+    auto ret = drmMemoryOperationsHandler->flushDummyExec(device.get(), ArrayRef<GraphicsAllocation *>(&allocationPtr, 1));
+    EXPECT_EQ(ret, MemoryOperationsStatus::outOfMemory);
 }
