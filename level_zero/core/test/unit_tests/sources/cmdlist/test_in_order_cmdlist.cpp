@@ -6680,7 +6680,6 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
 
 struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListTests {
     void SetUp() override {
-        NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.set(1);
         InOrderCmdListTests::SetUp();
     }
 };
