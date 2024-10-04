@@ -126,7 +126,6 @@ class ProductHelper {
     virtual bool is3DPipelineSelectWARequired() const = 0;
     virtual bool isStorageInfoAdjustmentRequired() const = 0;
     virtual bool isBlitterForImagesSupported() const = 0;
-    virtual bool isFlatRingBufferSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
     virtual bool isKmdMigrationSupported() const = 0;
     virtual bool isDisableScratchPagesSupported() const = 0;

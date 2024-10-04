@@ -881,7 +881,7 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionComm
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
-    auto flatRingSupported = device->getHwInfo().featureTable.flags.ftrLocalMemory && device->getProductHelper().isFlatRingBufferSupported();
+    auto flatRingSupported = device->getHwInfo().featureTable.flags.ftrLocalMemory;
     EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get() != nullptr, flatRingSupported);
     if (flatRingSupported) {
         EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
@@ -906,7 +906,7 @@ HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmiss
 }
 
 HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenSwapCommandStreams, MatchAny) {
-    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory || !device->getProductHelper().isFlatRingBufferSupported()) {
+    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;
@@ -939,7 +939,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
 }
 
 HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenNotSwapCommandStreams, MatchAny) {
-    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory || !device->getProductHelper().isFlatRingBufferSupported()) {
+    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;

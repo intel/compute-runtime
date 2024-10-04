@@ -447,10 +447,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallUseGemCreateExtInAllocate
     EXPECT_FALSE(productHelper->useGemCreateExtInAllocateMemoryByKMD());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallIsFlatRingBufferSupportedThenTrueIsReturned, IsAtMostXeHpgCore) {
-    EXPECT_TRUE(productHelper->isFlatRingBufferSupported());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfBlitterForImagesIsSupportedThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isBlitterForImagesSupported());

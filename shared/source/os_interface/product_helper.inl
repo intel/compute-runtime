@@ -553,11 +553,6 @@ bool ProductHelperHw<gfxProduct>::isThreadArbitrationPolicyReportedWithScm() con
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isFlatRingBufferSupported() const {
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
