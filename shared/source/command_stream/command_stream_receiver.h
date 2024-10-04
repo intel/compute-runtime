@@ -696,7 +696,6 @@ class CommandStreamReceiver {
     bool doubleSbaWa = false;
     bool dshSupported = false;
     bool heaplessModeEnabled = false;
-    bool requiresBlockingResidencyHandling = true;
     bool use4GbHeaps = true;
     bool csrSurfaceProgrammingDone = false;
 };

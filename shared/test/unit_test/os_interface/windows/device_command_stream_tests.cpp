@@ -1416,23 +1416,27 @@ struct SemaphorWaitForResidencyTest : public WddmCommandStreamTest {
     MockWddmDirectSubmissionCsr *mockCsr;
 };
 
-TEST_F(SemaphorWaitForResidencyTest, givenNoAllocationsToMakeResidentThenSignalFlag) {
+TEST_F(SemaphorWaitForResidencyTest, givenCommandBufferToMakeResidentThenSignalFlag) {
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    // no allocations to make resident, no need to wait
+    // command buffer to be resident, requires blocking
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
     EXPECT_TRUE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
 }
 
-TEST_F(SemaphorWaitForResidencyTest, givenPagingFenceNotUpdatedThenSignalFlag) {
+TEST_F(SemaphorWaitForResidencyTest, givenPagingFenceNotUpdatedThenDontSignalFlag) {
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
 
+    auto controller = mockCsr->peekExecutionEnvironment().initializeDirectSubmissionController();
+    controller->stopThread();
+    mockCsr->directSubmissionAvailable = true;
+
     mockCsr->getResidencyAllocations().push_back(buffer);
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
-    EXPECT_TRUE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
+    EXPECT_FALSE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
 }
 
 TEST_F(SemaphorWaitForResidencyTest, givenUllsControllerNotEnabledThenSignalFlag) {
@@ -1479,6 +1483,30 @@ TEST_F(SemaphorWaitForResidencyTest, givenBufferHostMemoryAllocationThenSignalFl
     mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
     EXPECT_FALSE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
     EXPECT_EQ(100u, batchBuffer.pagingFenceSemInfo.pagingFenceValue);
+}
+
+TEST_F(SemaphorWaitForResidencyTest, givenAnotherFlushWithSamePagingFenceValueThenDontProgramPagingFenceSemWaitAndDontBlock) {
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+    mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
+
+    mockCsr->getResidencyAllocations().push_back(bufferHostMemory);
+    *wddm->pagingFenceAddress = 0u;
+    wddm->currentPagingFenceValue = 100u;
+    auto controller = mockCsr->peekExecutionEnvironment().initializeDirectSubmissionController();
+    controller->stopThread();
+    mockCsr->directSubmissionAvailable = true;
+
+    mockCsr->flush(batchBuffer, mockCsr->getResidencyAllocations());
+    EXPECT_FALSE(batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling);
+    EXPECT_EQ(100u, batchBuffer.pagingFenceSemInfo.pagingFenceValue);
+    EXPECT_TRUE(batchBuffer.pagingFenceSemInfo.requiresProgrammingSemaphore());
+
+    BatchBuffer batchBuffer2 = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
+    mockCsr->flush(batchBuffer2, mockCsr->getResidencyAllocations());
+    EXPECT_FALSE(batchBuffer2.pagingFenceSemInfo.requiresBlockingResidencyHandling);
+    EXPECT_EQ(0u, batchBuffer2.pagingFenceSemInfo.pagingFenceValue);
+    EXPECT_FALSE(batchBuffer2.pagingFenceSemInfo.requiresProgrammingSemaphore());
 }
 
 TEST_F(SemaphorWaitForResidencyTest, givenDebugFlagDisabledThenDontSignalFlag) {

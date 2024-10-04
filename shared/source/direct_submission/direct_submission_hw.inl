@@ -714,7 +714,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
                copyCmdBuffer);
     }
 
-    if (!batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling) {
+    if (batchBuffer.pagingFenceSemInfo.requiresProgrammingSemaphore()) {
         dispatchSemaphoreForPagingFence(batchBuffer.pagingFenceSemInfo.pagingFenceValue);
     }
 
@@ -979,14 +979,13 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         inputRequiredMonitorFence = batchBuffer.hasStallingCmds;
     }
     bool dispatchMonitorFence = this->dispatchMonitorFenceRequired(inputRequiredMonitorFence);
-    auto requiresBlockingResidencyHandling = batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling;
 
     size_t dispatchSize = this->getUllsStateSize() + getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies, dispatchMonitorFence);
 
     if (this->copyCommandBufferIntoRing(batchBuffer)) {
         dispatchSize += (batchBuffer.stream->getUsed() - batchBuffer.startOffset) - 2 * getSizeStartSection();
     }
-    if (!requiresBlockingResidencyHandling) {
+    if (batchBuffer.pagingFenceSemInfo.requiresProgrammingSemaphore()) {
         dispatchSize += getSizeSemaphoreForPagingFence();
     }
 
@@ -1023,6 +1022,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     cpuCachelineFlush(currentPosition, dispatchSize);
 
+    auto requiresBlockingResidencyHandling = batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling;
     if (!this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, requiresBlockingResidencyHandling)) {
         return false;
     }

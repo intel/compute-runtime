@@ -44,8 +44,12 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
   protected:
     void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
     void addToEvictionContainer(GraphicsAllocation &gfxAllocation) override;
+    bool validForEnqueuePagingFence(uint64_t pagingFenceValue) const;
 
     Wddm *wddm;
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;
+
+    bool requiresBlockingResidencyHandling = true;
+    uint64_t lastEnqueuedPagingFenceValue = 0;
 };
 } // namespace NEO

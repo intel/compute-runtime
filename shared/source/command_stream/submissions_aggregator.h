@@ -22,6 +22,10 @@ class GraphicsAllocation;
 struct PagingFenceSemaphoreInfo {
     bool requiresBlockingResidencyHandling = true;
     uint64_t pagingFenceValue = 0u;
+
+    bool requiresProgrammingSemaphore() {
+        return !requiresBlockingResidencyHandling && pagingFenceValue > 0u;
+    }
 };
 
 struct BatchBuffer {
