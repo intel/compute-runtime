@@ -35,7 +35,13 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *d
     if (!isDummyExecNeeded || ret != MemoryOperationsStatus::success) {
         return ret;
     }
-    return flushDummyExec(device, gfxAllocations);
+    ret = flushDummyExec(device, gfxAllocations);
+    if (ret != MemoryOperationsStatus::success) {
+        for (auto &alloc : gfxAllocations) {
+            evictWithinOsContext(osContext, *alloc);
+        }
+    }
+    return ret;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
@@ -104,7 +110,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictUnusedAllocations
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::flushDummyExec(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     std::lock_guard<std::mutex> lock(mutex);
-    OsContext *osContext = nullptr;
     auto memoryManager = reinterpret_cast<DrmMemoryManager *>(device->getMemoryManager());
 
     std::vector<BufferObject *> boArray;
@@ -120,9 +125,6 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::flushDummyExec(Device 
 
     auto submissionStatus = memoryManager->emitPinningRequestForBoContainer(boArray.data(), boCount, rootDeviceIndex);
     if (submissionStatus != SubmissionStatus::success) {
-        for (auto &alloc : gfxAllocations) {
-            evictWithinOsContext(osContext, *alloc);
-        }
         return MemoryOperationsStatus::outOfMemory;
     }
     return MemoryOperationsStatus::success;
