@@ -153,6 +153,11 @@ uint32_t ReleaseHelperHw<releaseType>::getAdditionalExtraCaps() const {
 }
 
 template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
+    return 0u;
+}
+
+template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isLocalOnlyAllowed() const {
     return true;
 }

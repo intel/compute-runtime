@@ -29,6 +29,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/program/sync_buffer_handler.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -1223,7 +1224,8 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
 
         dispatchGlobals.rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize;
         dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
-        dispatchGlobals.stackSizePerRay = 0;
+        auto releaseHelper = getReleaseHelper();
+        dispatchGlobals.stackSizePerRay = releaseHelper ? releaseHelper->getStackSizePerRay() : 0;
         dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
         dispatchGlobals.maxBVHLevels = maxBvhLevels;
 

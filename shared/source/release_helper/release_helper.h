@@ -61,6 +61,7 @@ class ReleaseHelper {
     virtual uint64_t getL3CacheBankSizeInKb() const = 0;
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
+    virtual uint32_t getStackSizePerRay() const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;
     virtual bool isDisablingMsaaRequired() const = 0;
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
@@ -104,6 +105,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint64_t getL3CacheBankSizeInKb() const override;
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
+    uint32_t getStackSizePerRay() const override;
     bool isLocalOnlyAllowed() const override;
     bool isDisablingMsaaRequired() const override;
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;

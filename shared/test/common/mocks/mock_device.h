@@ -72,6 +72,7 @@ class MockDevice : public RootDevice {
     using Device::preemptionMode;
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
+    using Device::rtDispatchGlobalsInfos;
     using Device::rtMemoryBackedBuffer;
     using Device::secondaryCsrs;
     using Device::secondaryEngines;
