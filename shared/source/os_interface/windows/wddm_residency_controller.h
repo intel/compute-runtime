@@ -59,7 +59,7 @@ class WddmResidencyController {
     void removeAllocation(ResidencyContainer &container, GraphicsAllocation *gfxAllocation);
 
   protected:
-    size_t fillHandlesContainer(const ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
+    size_t fillHandlesContainer(ResidencyContainer &allocationsForResidency, bool &requiresBlockingResidencyHandling);
 
     MonitoredFence monitoredFence = {};
 
@@ -77,7 +77,7 @@ class WddmResidencyController {
 
     CommandStreamReceiver *csr = nullptr;
 
-    ResidencyContainer filteredResidencyContainer;  // Stores allocations which are not yet resident
+    ResidencyContainer backupResidencyContainer;    // Stores allocations which should be resident
     std::vector<D3DKMT_HANDLE> handlesForResidency; // Stores D3DKMT handles of allocations which are not yet resident
 };
 } // namespace NEO
