@@ -133,9 +133,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.cloningOfPageTables = false;
             storageInfo.tileInstanced = true;
         }
-        if (!releaseHelper ||
-            releaseHelper->isLocalOnlyAllowed() ||
-            properties.flags.isUSMDeviceAllocation) {
+        if (!releaseHelper || releaseHelper->isLocalOnlyAllowed()) {
             storageInfo.localOnlyRequired = true;
         }
 

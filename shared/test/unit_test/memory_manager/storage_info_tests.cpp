@@ -392,16 +392,6 @@ TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForSvmGpuThenLocalOnly
     EXPECT_TRUE(storageInfo.localOnlyRequired);
 }
 
-TEST_F(MultiDeviceStorageInfoTest, whenCreatingStorageInfoForDeviceUSMAllocationThenLocalOnlyRequiredIsSet) {
-    AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::buffer, false, singleTileMask};
-    properties.flags.isUSMDeviceAllocation = true;
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isLocalOnlyAllowedResult = false;
-    memoryManager->executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->releaseHelper.reset(releaseHelper.release());
-    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-    EXPECT_TRUE(storageInfo.localOnlyRequired);
-}
-
 TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCreatingStorageInfoForSvmGpuThenLocalOnlyFlagIsNotRequired) {
     AllocationProperties properties{mockRootDeviceIndex, false, numDevices * MemoryConstants::pageSize64k, AllocationType::svmGpu, false, singleTileMask};
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
