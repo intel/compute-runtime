@@ -38,6 +38,7 @@ TEST_F(ReleaseHelper1260Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(8u, releaseHelper->getNumThreadsPerEu());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_FALSE(releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
+        EXPECT_FALSE(releaseHelper->isDisablingMsaaRequired());
     }
 }
 
