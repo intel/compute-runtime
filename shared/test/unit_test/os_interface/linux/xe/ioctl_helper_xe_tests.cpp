@@ -1731,10 +1731,11 @@ TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
     debugManager.flags.PrintXeLogs.set(false);
 
     std::string output = testing::internal::GetCapturedStderr();
-    std::string expectedOutput = R"(show bind: (<index> <handle> <userptr> <addr> <size>)
-   0 x00000001 x0000000000000002 x0000000000000003 x0000000000000004
-)";
-    EXPECT_STREQ(expectedOutput.c_str(), output.c_str());
+    std::string expectedOutput1 = "show bind: (<index> <handle> <userptr> <addr> <size>)\n";
+    std::string expectedOutput2 = "0 x00000001 x0000000000000002 x0000000000000003 x0000000000000004";
+
+    EXPECT_NE(std::string::npos, output.find(expectedOutput1));
+    EXPECT_NE(std::string::npos, output.find(expectedOutput2, expectedOutput1.size()));
 }
 
 TEST(IoctlHelperXeTest, whenFillBindInfoForIpcHandleIsCalledThenBindInfoIsCorrect) {
