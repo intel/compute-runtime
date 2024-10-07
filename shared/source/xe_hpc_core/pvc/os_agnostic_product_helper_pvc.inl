@@ -90,11 +90,6 @@ bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const Har
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
-    return PVC::isXlA0(hwInfo);
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }

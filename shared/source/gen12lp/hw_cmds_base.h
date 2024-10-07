@@ -157,6 +157,11 @@ struct Gen12LpFamily : public Gen12Lp {
         return false;
     }
 
+    template <typename InterfaceDescriptorType>
+    static constexpr bool isInterfaceDescriptorHeaplessMode() {
+        return false;
+    }
+
     template <typename WalkerType = DefaultWalkerType>
     static WalkerType getInitGpuWalker() {
         return cmdInitGpgpuWalker;

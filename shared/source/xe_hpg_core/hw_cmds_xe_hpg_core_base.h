@@ -173,6 +173,11 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static constexpr bool isHeaplessMode() {
         return false;
     }
+
+    template <typename InterfaceDescriptorType>
+    static constexpr bool isInterfaceDescriptorHeaplessMode() {
+        return false;
+    }
     using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 

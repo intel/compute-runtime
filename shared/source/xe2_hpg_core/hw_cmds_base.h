@@ -175,6 +175,10 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
         return false;
     }
 
+    template <typename InterfaceDescriptorType>
+    static constexpr bool isInterfaceDescriptorHeaplessMode() {
+        return false;
+    }
     using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 

@@ -32,6 +32,7 @@
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <algorithm>
 #include <type_traits>
@@ -356,7 +357,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    args.dispatchInterface->getGroupSize(),
                                                    kernelDescriptor.kernelAttributes.simdSize,
                                                    kernelDescriptor.kernelAttributes.numLocalIdChannels,
-                                                   args.dispatchInterface->getNumThreadsPerThreadGroup(),
+                                                   threadsPerThreadGroup,
                                                    args.dispatchInterface->getThreadExecutionMask(),
                                                    localIdsGenerationByRuntime,
                                                    inlineDataProgramming,
@@ -1057,6 +1058,46 @@ uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwIn
 template <typename Family>
 bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) {
     return cooperativeKernel;
+}
+
+template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename InterfaceDescriptorType::PREFERRED_SLM_ALLOCATION_SIZE;
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const uint32_t threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
+    const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
+
+    uint32_t slmSize = 0u;
+
+    switch (slmPolicy) {
+    case SlmPolicy::slmPolicyLargeData:
+        slmSize = slmTotalSize;
+        break;
+    case SlmPolicy::slmPolicyLargeSlm:
+    default:
+        slmSize = slmTotalSize * workGroupCountPerDss;
+        break;
+    }
+
+    constexpr bool isHeapless = Family::template isInterfaceDescriptorHeaplessMode<InterfaceDescriptorType>();
+
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    const auto &sizeToPreferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(isHeapless);
+
+    uint32_t programmableIdPreferredSlmSize = 0;
+    for (auto &range : sizeToPreferredSlmValueArray) {
+        if (slmSize <= range.upperLimit) {
+            programmableIdPreferredSlmSize = range.valueToProgram;
+            break;
+        }
+    }
+
+    if (debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
+        programmableIdPreferredSlmSize = static_cast<uint32_t>(debugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
+    }
+
+    pInterfaceDescriptor->setPreferredSlmAllocationSize(static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(programmableIdPreferredSlmSize));
 }
 
 template <typename Family>
