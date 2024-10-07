@@ -40,42 +40,6 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void programEventL3Flush(Event *event,
-                         Device *device,
-                         uint32_t partitionCount,
-                         NEO::CommandContainer &commandContainer) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-
-    auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
-                                                     : event->getSinglePacketSize();
-    uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
-    if (event->isUsingContextEndOffset()) {
-        eventAddress += event->getContextEndOffset();
-    }
-
-    if (partitionCount > 1) {
-        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + partitionCount);
-    } else {
-        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + 1);
-    }
-
-    event->setL3FlushForCurrentKernel();
-
-    auto &cmdListStream = *commandContainer.getCommandStream();
-    NEO::PipeControlArgs args;
-    args.dcFlushEnable = true;
-    args.workloadPartitionOffset = partitionCount > 1;
-
-    NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-        cmdListStream,
-        NEO::PostSyncMode::immediateData,
-        eventAddress,
-        Event::STATE_SIGNALED,
-        commandContainer.getDevice()->getRootDeviceEnvironment(),
-        args);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
     if (event && compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
         return true;
@@ -426,7 +390,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         } else if (event) {
             event->setPacketsInUse(partitionCount);
             if (l3FlushEnable) {
-                programEventL3Flush<gfxCoreFamily>(event, this->device, partitionCount, commandContainer);
+                programEventL3Flush(event);
             }
             if (!launchParams.isKernelSplitOperation) {
                 dispatchEventRemainingPacketsPostSyncOperation(event, false);
@@ -592,37 +556,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation) {
-    if (copyOperation || singlePacketEvent) {
-        if (beforeWalker) {
-            appendEventForProfiling(event, outTimeStampSyncCmds, true, false, skipAddingEventToResidency, copyOperation);
-        } else {
-            appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency, copyOperation);
-        }
-    } else {
-        if (event) {
-            if (beforeWalker) {
-                event->resetKernelCountAndPacketUsedCount();
-                event->zeroKernelCount();
-            } else {
-                if (event->getKernelCount() > 1) {
-                    if (getDcFlushRequired(event->isSignalScope())) {
-                        programEventL3Flush<gfxCoreFamily>(event, this->device, this->partitionCount, this->commandContainer);
-                    }
-                    dispatchEventRemainingPacketsPostSyncOperation(event, copyOperation);
-                }
-            }
-        }
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendDispatchOffsetRegister(bool workloadPartitionEvent, bool beforeProfilingCmds) {
     if (workloadPartitionEvent && !device->getL0GfxCoreHelper().hasUnifiedPostSyncAllocationLayout()) {
         auto offset = beforeProfilingCmds ? NEO::ImplicitScalingDispatch<GfxFamily>::getTimeStampPostSyncOffset() : NEO::ImplicitScalingDispatch<GfxFamily>::getImmediateWritePostSyncOffset();
 
         NEO::ImplicitScalingDispatch<GfxFamily>::dispatchOffsetRegister(*commandContainer.getCommandStream(), offset, isCopyOnly(false));
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamily<gfxCoreFamily>::singleEventPacketRequired(bool inputSinglePacketEventRequest) const {
+    return inputSinglePacketEventRequest;
 }
 
 } // namespace L0

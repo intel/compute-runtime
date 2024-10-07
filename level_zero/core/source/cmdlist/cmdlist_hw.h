@@ -375,6 +375,8 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendCopyOperationFence(Event *signalEvent, NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyOffloadOperation);
     bool isDeviceToHostCopyEventFenceRequired(Event *signalEvent) const;
     bool isDeviceToHostBcsCopy(NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyOffloadOperation) const;
+    bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
+    void programEventL3Flush(Event *event);
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 

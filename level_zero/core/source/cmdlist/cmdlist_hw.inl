@@ -4183,4 +4183,60 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCommandLists(uint32_t nu
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool singlePacketEvent, bool skipAddingEventToResidency, bool copyOperation) {
+    if (copyOperation || singleEventPacketRequired(singlePacketEvent)) {
+        if (beforeWalker) {
+            appendEventForProfiling(event, outTimeStampSyncCmds, true, false, skipAddingEventToResidency, copyOperation);
+        } else {
+            appendSignalEventPostWalker(event, syncCmdBuffer, outTimeStampSyncCmds, false, skipAddingEventToResidency, copyOperation);
+        }
+    } else {
+        if (event) {
+            if (beforeWalker) {
+                event->resetKernelCountAndPacketUsedCount();
+                event->zeroKernelCount();
+            } else {
+                if (event->getKernelCount() > 1) {
+                    if (getDcFlushRequired(event->isSignalScope())) {
+                        programEventL3Flush(event);
+                    }
+                    dispatchEventRemainingPacketsPostSyncOperation(event, copyOperation);
+                }
+            }
+        }
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(Event *event) {
+    auto eventPartitionOffset = (partitionCount > 1) ? (partitionCount * event->getSinglePacketSize())
+                                                     : event->getSinglePacketSize();
+    uint64_t eventAddress = event->getPacketAddress(device) + eventPartitionOffset;
+    if (event->isUsingContextEndOffset()) {
+        eventAddress += event->getContextEndOffset();
+    }
+
+    if (partitionCount > 1) {
+        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + partitionCount);
+    } else {
+        event->setPacketsInUse(event->getPacketsUsedInLastKernel() + 1);
+    }
+
+    event->setL3FlushForCurrentKernel();
+
+    auto &cmdListStream = *commandContainer.getCommandStream();
+    NEO::PipeControlArgs args;
+    args.dcFlushEnable = true;
+    args.workloadPartitionOffset = partitionCount > 1;
+
+    NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+        cmdListStream,
+        NEO::PostSyncMode::immediateData,
+        eventAddress,
+        Event::STATE_SIGNALED,
+        device->getNEODevice()->getRootDeviceEnvironment(),
+        args);
+}
+
 } // namespace L0
