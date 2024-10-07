@@ -475,7 +475,6 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
         return status;
     }
 
-    constexpr uint64_t transactionSize = 32;
     constexpr uint64_t maxSupportedMsu = 8;
     memset(pBandwidth, 0, sizeof(zes_mem_bandwidth_t));
 
@@ -524,6 +523,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
 
                 uint64_t readCounter = packInto64Bit(readRegisterH, readRegisterL);
 
+                readCounterKey.find("_32B_") != std::string::npos ? readCounter *= 32 : readCounter *= 64;
                 pBandwidth->readCounter += readCounter;
             }
 
@@ -546,13 +546,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
 
                 uint64_t writeCounter = packInto64Bit(writeRegisterH, writeRegisterL);
 
+                readCounterKey.find("_32B_") != std::string::npos ? writeCounter *= 32 : writeCounter *= 64;
                 pBandwidth->writeCounter += writeCounter;
             }
         }
     }
-
-    pBandwidth->readCounter = (pBandwidth->readCounter * transactionSize) / microFactor;
-    pBandwidth->writeCounter = (pBandwidth->writeCounter * transactionSize) / microFactor;
 
     // Max BW
     uint32_t maxBandwidth = 0;

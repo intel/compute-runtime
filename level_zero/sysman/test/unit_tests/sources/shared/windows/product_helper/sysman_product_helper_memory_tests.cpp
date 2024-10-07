@@ -103,6 +103,7 @@ class SysmanDeviceMemoryHelperFixture : public SysmanDeviceFixture {
 };
 
 HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBandwidthThenCallSucceeds, IsBMG) {
+    static constexpr uint32_t mockPmtBandWidthVariableBackupValue = 100;
     VariableBackup<decltype(NEO::SysCalls::sysCallsCreateFile)> psysCallsCreateFile(&NEO::SysCalls::sysCallsCreateFile, [](LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) -> HANDLE {
         return reinterpret_cast<HANDLE>(static_cast<uintptr_t>(0x7));
     });
@@ -130,7 +131,7 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
             if (readRequest->offset % 2 == 0) {
                 *static_cast<uint32_t *>(lpOutBuffer) = 0;
             } else {
-                *static_cast<uint32_t *>(lpOutBuffer) = 10000000;
+                *static_cast<uint32_t *>(lpOutBuffer) = mockPmtBandWidthVariableBackupValue;
             }
             return true;
         }
@@ -144,8 +145,8 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(mockMemoryMaxBandwidth * megaBytesToBytes * 100));
-        EXPECT_EQ(bandwidth.readCounter, mockMemoryCurrentBandwidthRead);
-        EXPECT_EQ(bandwidth.writeCounter, mockMemoryCurrentBandwidthWrite);
+        EXPECT_EQ(bandwidth.readCounter, (6 * mockPmtBandWidthVariableBackupValue * 32) + (6 * mockPmtBandWidthVariableBackupValue * 64));
+        EXPECT_EQ(bandwidth.writeCounter, (4 * mockPmtBandWidthVariableBackupValue * 32) + (4 * mockPmtBandWidthVariableBackupValue * 64));
         EXPECT_EQ(bandwidth.timestamp, mockMemoryBandwidthTimestamp);
     }
 }
