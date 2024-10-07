@@ -796,6 +796,15 @@ bool GfxCoreHelperHw<GfxFamily>::usmCompressionSupported(const NEO::HardwareInfo
     return false;
 }
 
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
+    auto maxThreadsPerEuCount = 8u;
+    if (grfCount == GrfConfig::largeGrfNumber) {
+        maxThreadsPerEuCount = 4;
+    }
+    return std::min(hwInfo.gtSystemInfo.ThreadCount, maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount);
+}
+
 template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo &hwInfo) const {
     if (debugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {

@@ -1398,33 +1398,6 @@ HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllo
     EXPECT_EQ(gfxCoreHelper.getAmountOfAllocationsToFill(), 1u);
 }
 
-HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesAndXeHpOrXeHpgCoreWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsXeHpOrXeHpgCore) {
-    std::array<std::pair<uint32_t, uint32_t>, 3> grfTestInputs = {{{64, 8},
-                                                                   {128, 8},
-                                                                   {256, 4}}};
-
-    const auto &hwInfo = *defaultHwInfo;
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
-        auto expected = expectedThreadCountPerEu * hwInfo.gtSystemInfo.EUCount;
-        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount);
-        EXPECT_EQ(expected, result);
-    }
-}
-
-HWTEST2_F(GfxCoreHelperTest, GivenModifiedGtSystemInfoAndXeHpOrXeHpgCoreWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsXeHpOrXeHpgCore) {
-    std::array<std::tuple<uint32_t, uint32_t, uint32_t>, 3> testInputs = {{{1, 64, 1},
-                                                                           {5, 128, 5},
-                                                                           {8, 256, 4}}};
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hwInfo = hardwareInfo;
-    for (const auto &[threadCount, grfCount, expectedThreadCount] : testInputs) {
-        hwInfo.gtSystemInfo.ThreadCount = threadCount;
-        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount);
-        EXPECT_EQ(expectedThreadCount, result);
-    }
-}
-
 HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpPlatformWhenGettingMinimalScratchSpaceSizeThen1024IsReturned, IsGen12LP) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(1024U, gfxCoreHelper.getMinimalScratchSpaceSize());
@@ -1847,4 +1820,46 @@ HWTEST_F(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncod
     hwParser.parseCommands<FamilyType>(stream, 0);
     GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
     EXPECT_EQ(0u, storeRegMemList.size());
+}
+
+HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsBiggerThenCorrectValueIsReturned, IsAtMostXe2HpgCore) {
+    std::array<std::pair<uint32_t, uint32_t>, 2> grfTestInputs = {{{128, 8},
+                                                                   {256, 4}}};
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        auto expected = expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
+        // force allways bigger Thread Count available
+        hardwareInfo.gtSystemInfo.ThreadCount = 2 * expected;
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount);
+        EXPECT_EQ(expected, result);
+    }
+}
+
+HWTEST2_F(GfxCoreHelperTest, GivenVariousValuesWhenCallingCalculateAvailableThreadCountAndThreadCountAvailableIsSmallerThenThreadCountIsReturned, IsAtMostXe2HpgCore) {
+    std::array<std::pair<uint32_t, uint32_t>, 2> grfTestInputs = {{
+        {128, 8},
+        {256, 4},
+    }};
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    for (const auto &[grfCount, expectedThreadCountPerEu] : grfTestInputs) {
+        auto calculatedThreadCount = expectedThreadCountPerEu * hardwareInfo.gtSystemInfo.EUCount;
+        // force thread count smaller than calculation
+        hardwareInfo.gtSystemInfo.ThreadCount = calculatedThreadCount / 2;
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hardwareInfo, grfCount);
+        EXPECT_EQ(hardwareInfo.gtSystemInfo.ThreadCount, result);
+    }
+}
+
+HWTEST2_F(GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvailableThreadCountThenCorrectValueIsReturned, IsAtMostXe2HpgCore) {
+    std::array<std::pair<uint32_t, uint32_t>, 2> testInputs = {{{64, 256},
+                                                                {128, 512}}};
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto hwInfo = hardwareInfo;
+    for (const auto &[euCount, expectedThreadCount] : testInputs) {
+        // force thread count bigger than expected
+        hwInfo.gtSystemInfo.ThreadCount = 1024;
+        hwInfo.gtSystemInfo.EUCount = euCount;
+        auto result = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, 256);
+        EXPECT_EQ(expectedThreadCount, result);
+    }
 }
