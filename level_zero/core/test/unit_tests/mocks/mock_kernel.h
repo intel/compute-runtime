@@ -58,7 +58,6 @@ struct WhiteBox<::L0::KernelImp> : public ::L0::KernelImp {
     using ::L0::KernelImp::maxWgCountPerTileCcs;
     using ::L0::KernelImp::maxWgCountPerTileCooperative;
     using ::L0::KernelImp::maxWgCountPerTileRcs;
-    using ::L0::KernelImp::midThreadPreemptionDisallowedForRayTracingKernels;
     using ::L0::KernelImp::module;
     using ::L0::KernelImp::numThreadsPerThreadGroup;
     using ::L0::KernelImp::patchBindlessOffsetsInCrossThreadData;

@@ -605,28 +605,7 @@ HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingWhenGettingPreemptio
     kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
 
     auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
-
-    NEO::ReleaseHelper *releaseHelper = device->getRootDeviceEnvironment().getReleaseHelper();
-    if (releaseHelper) {
-        EXPECT_EQ(flags.flags.disabledMidThreadPreemptionKernel, releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
-    } else {
-        EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
-    }
-}
-
-HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingAndMidThreadPreemptionIsDisabledWhenGettingPreemptionFlagsThenMidThreadPreemptionIsDisabled) {
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    KernelDescriptor kernelDescriptor{};
-
-    kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
-
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernelsResult = true;
-    device->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
-    auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
-    EXPECT_TRUE(flags.flags.disabledMidThreadPreemptionKernel);
+    EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
 }
 
 HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingAndMidThreadPreemptionIsEnabledWhenGettingPreemptionFlagsThenMidThreadPreemptionIsEnabled) {
@@ -637,9 +616,6 @@ HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingAndMidThreadPreempti
 
     kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
 
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernelsResult = false;
-    device->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
     auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
     EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
 }
@@ -649,11 +625,6 @@ HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingWhenGettingPreemptio
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     KernelDescriptor kernelDescriptor{};
     kernelDescriptor.kernelAttributes.flags.hasRTCalls = true;
-    NEO::ReleaseHelper *releaseHelper = device->getRootDeviceEnvironment().getReleaseHelper();
     auto flags = PreemptionHelper::createPreemptionLevelFlags(*device, &kernelDescriptor);
-    if (releaseHelper) {
-        EXPECT_EQ(flags.flags.disabledMidThreadPreemptionKernel, releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
-    } else {
-        EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
-    }
+    EXPECT_FALSE(flags.flags.disabledMidThreadPreemptionKernel);
 }

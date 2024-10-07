@@ -62,7 +62,6 @@ class ReleaseHelper {
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;
-    virtual bool isMidThreadPreemptionDisallowedForRayTracingKernels() const = 0;
     virtual bool isDisablingMsaaRequired() const = 0;
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
 
@@ -106,7 +105,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
     bool isLocalOnlyAllowed() const override;
-    bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
     bool isDisablingMsaaRequired() const override;
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;
 

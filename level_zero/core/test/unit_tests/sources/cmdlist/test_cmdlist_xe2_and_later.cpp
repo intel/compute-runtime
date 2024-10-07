@@ -250,126 +250,12 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest, givenAppendLaunchKernelWhenKerne
 }
 
 HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
-          givenAppendLaunchKernelWhenKernelRequiresDisablePreemptionForRayTracingAndKernelIsUsingRayTracingCallsThenExpectInterfaceDescriptorDataDisablePreemption,
-          Platforms) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
-
-    auto &container = commandList->getCmdContainer();
-    auto &cmdListStream = *container.getCommandStream();
-
-    NEO::MockGraphicsAllocation rtMockAllocation;
-    neoDevice->rtMemoryBackedBuffer = &rtMockAllocation;
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = true;
-    kernel->midThreadPreemptionDisallowedForRayTracingKernels = true;
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    size_t sizeBefore = cmdListStream.getUsed();
-    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t sizeAfter = cmdListStream.getUsed();
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
-        sizeAfter - sizeBefore));
-
-    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, walkerCmds.size());
-
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
-    std::visit([](auto &&walker) {
-        auto &idd = walker->getInterfaceDescriptor();
-        EXPECT_FALSE(idd.getThreadPreemption());
-    },
-               walkerVariant);
-
-    neoDevice->rtMemoryBackedBuffer = nullptr;
-}
-
-HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
-          givenAppendLaunchKernelWhenKernelRequiresDisablePreemptionForRayTracingAndKernelIsNotUsingRayTracingCallsThenExpectInterfaceDescriptorDataEnablePreemption,
-          Platforms) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
-
-    auto &container = commandList->getCmdContainer();
-    auto &cmdListStream = *container.getCommandStream();
-
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = false;
-    kernel->midThreadPreemptionDisallowedForRayTracingKernels = true;
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    size_t sizeBefore = cmdListStream.getUsed();
-    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t sizeAfter = cmdListStream.getUsed();
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
-        sizeAfter - sizeBefore));
-
-    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, walkerCmds.size());
-
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
-    std::visit([](auto &&walker) {
-        auto &idd = walker->getInterfaceDescriptor();
-        EXPECT_TRUE(idd.getThreadPreemption());
-    },
-               walkerVariant);
-}
-
-HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
-          givenAppendLaunchKernelWhenKernelDoNotRequireDisablePreemptionForRayTracingAndKernelIsUsingRayTracingCallsThenExpectInterfaceDescriptorDataEnablePreemption,
-          Platforms) {
-    using WalkerVariant = typename FamilyType::WalkerVariant;
-
-    auto &container = commandList->getCmdContainer();
-    auto &cmdListStream = *container.getCommandStream();
-
-    NEO::MockGraphicsAllocation rtMockAllocation;
-    neoDevice->rtMemoryBackedBuffer = &rtMockAllocation;
-    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = true;
-    kernel->midThreadPreemptionDisallowedForRayTracingKernels = false;
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    size_t sizeBefore = cmdListStream.getUsed();
-    auto result = commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    size_t sizeAfter = cmdListStream.getUsed();
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
-        cmdList,
-        ptrOffset(cmdListStream.getCpuBase(), sizeBefore),
-        sizeAfter - sizeBefore));
-
-    auto walkerCmds = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
-    ASSERT_EQ(1u, walkerCmds.size());
-
-    WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerCmds[0]);
-    std::visit([](auto &&walker) {
-        auto &idd = walker->getInterfaceDescriptor();
-        EXPECT_TRUE(idd.getThreadPreemption());
-    },
-               walkerVariant);
-
-    neoDevice->rtMemoryBackedBuffer = nullptr;
-}
-
-HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
           givenObtainKernelPreemptionModeWhenInDeviceFrocePreemptionModeDifferentThanMidThreadThenThreadGroupPreemptionModeIsReturned,
           Platforms) {
 
     neoDevice->preemptionMode = NEO::PreemptionMode::Disabled;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = false;
-    kernel->midThreadPreemptionDisallowedForRayTracingKernels = false;
 
     auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);
@@ -385,7 +271,6 @@ HWTEST2_F(CommandListXe2AndLaterPreemptionTest,
     neoDevice->preemptionMode = NEO::PreemptionMode::MidThread;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption = false;
     mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = false;
-    kernel->midThreadPreemptionDisallowedForRayTracingKernels = false;
 
     auto commandListCore = std::make_unique<WhiteBox<L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandListCore->initialize(device, NEO::EngineGroupType::compute, 0u);

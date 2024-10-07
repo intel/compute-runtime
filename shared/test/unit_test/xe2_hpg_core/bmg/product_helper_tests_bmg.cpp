@@ -33,11 +33,6 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSup
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
-BMGTEST_F(BmgProductHelper, whenGettingMidThreadPreemptionSupportForRtKernelsThenExpectNoSupport) {
-
-    EXPECT_TRUE(releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
-}
-
 BMGTEST_F(BmgProductHelper, givenBmgProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
 }

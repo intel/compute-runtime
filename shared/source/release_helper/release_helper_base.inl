@@ -158,11 +158,6 @@ bool ReleaseHelperHw<releaseType>::isLocalOnlyAllowed() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isMidThreadPreemptionDisallowedForRayTracingKernels() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isDisablingMsaaRequired() const {
     return false;
 }

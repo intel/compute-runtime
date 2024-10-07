@@ -106,12 +106,6 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHa
     kernel->initialize(&desc);
     EXPECT_EQ(kernel->kernelArgHandlers[0], &KernelImp::setArgUnknown);
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::argTUnknown);
-    auto releaseHelper = neoDevice->getRootDeviceEnvironment().getReleaseHelper();
-    if (releaseHelper) {
-        EXPECT_EQ(releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels(), kernel->isMidThreadPreemptionDisallowedForRayTracingKernels());
-    } else {
-        EXPECT_FALSE(kernel->isMidThreadPreemptionDisallowedForRayTracingKernels());
-    }
 }
 
 TEST_F(KernelInitTest, givenKernelToInitAndPreemptionEnabledWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {
@@ -125,7 +119,6 @@ TEST_F(KernelInitTest, givenKernelToInitAndPreemptionEnabledWhenItHasUnknownArgT
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernelsResult = true;
     module.get()->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     ze_kernel_desc_t desc = {};
@@ -135,7 +128,6 @@ TEST_F(KernelInitTest, givenKernelToInitAndPreemptionEnabledWhenItHasUnknownArgT
     kernel->initialize(&desc);
     EXPECT_EQ(kernel->kernelArgHandlers[0], &KernelImp::setArgUnknown);
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::argTUnknown);
-    EXPECT_TRUE(kernel->isMidThreadPreemptionDisallowedForRayTracingKernels());
 }
 
 TEST_F(KernelInitTest, givenKernelToInitAndPreemptionDisabledWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {
@@ -149,7 +141,6 @@ TEST_F(KernelInitTest, givenKernelToInitAndPreemptionDisabledWhenItHasUnknownArg
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernelsResult = false;
     module.get()->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().releaseHelper = std::move(releaseHelper);
 
     ze_kernel_desc_t desc = {};
@@ -159,7 +150,6 @@ TEST_F(KernelInitTest, givenKernelToInitAndPreemptionDisabledWhenItHasUnknownArg
     kernel->initialize(&desc);
     EXPECT_EQ(kernel->kernelArgHandlers[0], &KernelImp::setArgUnknown);
     EXPECT_EQ(mockKernelImmData->getDescriptor().payloadMappings.explicitArgs[0].type, NEO::ArgDescriptor::argTUnknown);
-    EXPECT_FALSE(kernel->isMidThreadPreemptionDisallowedForRayTracingKernels());
 }
 
 TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigPrivateSizeThenOutOfMemoryIsRetutned) {

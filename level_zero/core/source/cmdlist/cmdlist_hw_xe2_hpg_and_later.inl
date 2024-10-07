@@ -14,8 +14,7 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline NEO::PreemptionMode CommandListCoreFamily<gfxCoreFamily>::obtainKernelPreemptionMode(Kernel *kernel) {
     auto kernelDescriptor = &kernel->getImmutableData()->getDescriptor();
-    bool disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption ||
-                                             (kernelDescriptor->kernelAttributes.flags.hasRTCalls && kernel->isMidThreadPreemptionDisallowedForRayTracingKernels());
+    bool disabledMidThreadPreemptionKernel = kernelDescriptor->kernelAttributes.flags.requiresDisabledMidThreadPreemption;
     bool debuggingEnabled = device->getNEODevice()->getDebugger();
     disabledMidThreadPreemptionKernel |= debuggingEnabled;
     disabledMidThreadPreemptionKernel |= device->getNEODevice()->getPreemptionMode() != NEO::PreemptionMode::MidThread;

@@ -35,11 +35,6 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSup
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }
 
-LNLTEST_F(LnlProductHelper, whenGettingMidThreadPreemptionSupportForRtKernelsThenExpectNoSupport) {
-
-    EXPECT_TRUE(releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels());
-}
-
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
 
     EXPECT_TRUE(productHelper->getScmPropertyThreadArbitrationPolicySupport());

@@ -184,10 +184,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
 
     inline ze_kernel_handle_t toHandle() { return this; }
 
-    bool isMidThreadPreemptionDisallowedForRayTracingKernels() const {
-        return midThreadPreemptionDisallowedForRayTracingKernels;
-    }
-
     uint32_t getMaxWgCountPerTile(NEO::EngineGroupType engineGroupType) const {
         auto value = maxWgCountPerTileCcs;
         if (engineGroupType == NEO::EngineGroupType::renderCompute) {
@@ -202,7 +198,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     uint32_t maxWgCountPerTileCcs = 0;
     uint32_t maxWgCountPerTileRcs = 0;
     uint32_t maxWgCountPerTileCooperative = 0;
-    bool midThreadPreemptionDisallowedForRayTracingKernels = false;
     bool heaplessEnabled = false;
     bool implicitScalingEnabled = false;
     bool localDispatchSupport = false;

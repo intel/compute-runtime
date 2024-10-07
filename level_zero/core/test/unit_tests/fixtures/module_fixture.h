@@ -88,7 +88,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::kernelImmData;
         using KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
         using KernelImp::kernelRequiresUncachedMocsCount;
-        using KernelImp::midThreadPreemptionDisallowedForRayTracingKernels;
         using KernelImp::patchBindlessOffsetsInCrossThreadData;
         using KernelImp::pImplicitArgs;
         using KernelImp::printfBuffer;

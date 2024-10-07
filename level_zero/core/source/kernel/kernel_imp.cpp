@@ -1037,11 +1037,6 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto deviceBitfield = neoDevice->getDeviceBitfield();
     const auto &gfxHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
-    auto releaseHelper = neoDevice->getRootDeviceEnvironment().getReleaseHelper();
-    if (releaseHelper) {
-        this->midThreadPreemptionDisallowedForRayTracingKernels = releaseHelper->isMidThreadPreemptionDisallowedForRayTracingKernels();
-    }
-
     this->heaplessEnabled = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>().isHeaplessModeEnabled();
     this->localDispatchSupport = productHelper.getSupportedLocalDispatchSizes(hwInfo).size() > 0;
 
