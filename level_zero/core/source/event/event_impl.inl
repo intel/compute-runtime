@@ -115,12 +115,12 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
     interruptMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
     kmdWaitMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
 
-    if (kmdWaitMode) {
-        event->enableKmdWaitMode();
-    }
-
     if (interruptMode) {
         event->enableInterruptMode();
+
+        if (kmdWaitMode) {
+            event->enableKmdWaitMode();
+        }
     }
 
     return event.release();
@@ -628,7 +628,7 @@ ze_result_t EventImp<TagSizeT>::waitForUserFence(uint64_t timeout) {
         hostAlloc = inOrderExecInfo->isHostStorageDuplicated() ? inOrderExecInfo->getHostCounterAllocation() : inOrderExecInfo->getDeviceCounterAllocation();
     }
 
-    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout, isKmdWaitModeEnabled(), this->externalInterruptId, hostAlloc)) {
+    if (!csrs[0]->waitUserFence(getInOrderExecSignalValueWithSubmissionCounter(), waitAddress, timeout, true, this->externalInterruptId, hostAlloc)) {
         return ZE_RESULT_NOT_READY;
     }
 

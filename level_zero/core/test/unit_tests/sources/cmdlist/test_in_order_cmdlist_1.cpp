@@ -107,7 +107,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventSyncModeDescPassedWhenCreatingEventThen
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
     auto event2 = DestroyableZeUniquePtr<FixtureMockEvent>(static_cast<FixtureMockEvent *>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device)));
     EXPECT_FALSE(event2->isInterruptModeEnabled());
-    EXPECT_TRUE(event2->isKmdWaitModeEnabled());
+    EXPECT_FALSE(event2->isKmdWaitModeEnabled());
 
     eventDesc.index = 3;
     syncModeDesc.syncModeFlags = ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT | ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT;
