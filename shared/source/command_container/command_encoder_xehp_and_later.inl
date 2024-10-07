@@ -1015,42 +1015,41 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
 template <typename Family>
 uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
-    auto alignedSlmSize = EncodeDispatchKernel<Family>::alignSlmSize(slmSize);
 
-    if (alignedSlmSize == 0u) {
+    if (slmSize == 0u) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
     }
 
     UNRECOVERABLE_IF(slmSize > 128u * MemoryConstants::kiloByte);
 
-    if (alignedSlmSize > 96u * MemoryConstants::kiloByte) {
+    if (slmSize > 96u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_128K;
     }
-    if (alignedSlmSize > 64u * MemoryConstants::kiloByte) {
+    if (slmSize > 64u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_96K;
     }
-    if (alignedSlmSize > 48u * MemoryConstants::kiloByte) {
+    if (slmSize > 48u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_64K;
     }
-    if (alignedSlmSize > 32u * MemoryConstants::kiloByte) {
+    if (slmSize > 32u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_48K;
     }
-    if (alignedSlmSize > 24u * MemoryConstants::kiloByte) {
+    if (slmSize > 24u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_32K;
     }
-    if (alignedSlmSize > 16u * MemoryConstants::kiloByte) {
+    if (slmSize > 16u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_24K;
     }
-    if (alignedSlmSize > 8u * MemoryConstants::kiloByte) {
+    if (slmSize > 8u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_16K;
     }
-    if (alignedSlmSize > 4u * MemoryConstants::kiloByte) {
+    if (slmSize > 4u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_8K;
     }
-    if (alignedSlmSize > 2u * MemoryConstants::kiloByte) {
+    if (slmSize > 2u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_4K;
     }
-    if (alignedSlmSize > 1u * MemoryConstants::kiloByte) {
+    if (slmSize > 1u * MemoryConstants::kiloByte) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_2K;
     }
     return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K;
