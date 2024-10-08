@@ -22,9 +22,9 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     void removeClient() override;
 
-    void drain(bool blocking, bool hostptrsOnly) override;
+    void drain(bool blocking) override;
 
-    bool areElementsReleased(bool hostptrsOnly) override;
+    bool areElementsReleased() override;
 
     bool shouldStop() override;
 
@@ -56,8 +56,6 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     int areElementsReleasedCalled = 0;
 
-    bool areElementsReleasedCalledForHostptrs = false;
-
     std::atomic<int> shouldStopCalled;
 
     std::atomic<int> clearCalled;
@@ -75,6 +73,6 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     bool expectDrainCalled = false;
 
-    void clearQueue(bool hostptrsOnly) override;
+    void clearQueue() override;
 };
 } // namespace NEO

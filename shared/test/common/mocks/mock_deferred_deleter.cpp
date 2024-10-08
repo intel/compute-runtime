@@ -34,20 +34,19 @@ void MockDeferredDeleter::removeClient() {
     --numClients;
 }
 
-void MockDeferredDeleter::drain(bool blocking, bool hostptrsOnly) {
+void MockDeferredDeleter::drain(bool blocking) {
     if (expectDrainCalled) {
         EXPECT_EQ(expectedDrainValue, blocking);
     }
-    DeferredDeleter::drain(blocking, hostptrsOnly);
+    DeferredDeleter::drain(blocking);
     drainCalled++;
 }
 
 void MockDeferredDeleter::drain() {
-    return drain(true, false);
+    return drain(true);
 }
 
-bool MockDeferredDeleter::areElementsReleased(bool hostptrsOnly) {
-    this->areElementsReleasedCalledForHostptrs = hostptrsOnly;
+bool MockDeferredDeleter::areElementsReleased() {
     areElementsReleasedCalled++;
     return areElementsReleasedCalled != 1;
 }
@@ -66,8 +65,8 @@ bool MockDeferredDeleter::shouldStop() {
     return shouldStopCalled > 1;
 }
 
-void MockDeferredDeleter::clearQueue(bool hostptrsOnly) {
-    DeferredDeleter::clearQueue(hostptrsOnly);
+void MockDeferredDeleter::clearQueue() {
+    DeferredDeleter::clearQueue();
     clearCalled++;
 }
 
@@ -101,7 +100,7 @@ void MockDeferredDeleter::setDoWorkInBackgroundValue(bool value) {
 }
 
 bool MockDeferredDeleter::baseAreElementsReleased() {
-    return DeferredDeleter::areElementsReleased(false);
+    return DeferredDeleter::areElementsReleased();
 }
 
 bool MockDeferredDeleter::baseShouldStop() {
