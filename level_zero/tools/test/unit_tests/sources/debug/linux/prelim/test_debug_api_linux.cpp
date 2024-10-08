@@ -1003,7 +1003,10 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessa
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("\nERROR: PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN failed: open.pid: 4660, open.events: 0, retCode: -1, errno: 22\n"), errorMessage);
+    // Trim errorMessage and remove timestamp + first space
+    size_t pos = errorMessage.find(']');
+    errorMessage.erase(0, pos + 2);
+    EXPECT_EQ(std::string("ERROR: PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN failed: open.pid: 4660, open.events: 0, retCode: -1, errno: 22\n"), errorMessage);
 }
 
 TEST_F(DebugApiLinuxTest, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
@@ -1147,7 +1150,10 @@ TEST_F(DebugApiLinuxTest, GivenPrintDebugMessagesWhenDebugSessionClosesConnectio
     NEO::SysCalls::closeFuncRetVal = 0;
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("\nERROR: Debug connection close() on fd: 10 failed: retCode: -1\n"), errorMessage);
+    // Trim errorMessage and remove timestamp + first space
+    size_t pos = errorMessage.find(']');
+    errorMessage.erase(0, pos + 2);
+    EXPECT_EQ(std::string("ERROR: Debug connection close() on fd: 10 failed: retCode: -1\n"), errorMessage);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenCallingIoctlThenIoctlHandlerIsInvokedWithDebugFd) {
@@ -5076,7 +5082,10 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndFailingReadUuidEventIoctlWhenHandl
     EXPECT_EQ(0u, session->getClassHandleToIndex().size());
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("\nERROR: PRELIM_I915_DEBUG_IOCTL_READ_UUID ret = -1 errno = 0\n"), errorMessage);
+    // Trim errorMessage and remove timestamp + first space
+    size_t pos = errorMessage.find(']');
+    errorMessage.erase(0, pos + 2);
+    EXPECT_EQ(std::string("ERROR: PRELIM_I915_DEBUG_IOCTL_READ_UUID ret = -1 errno = 0\n"), errorMessage);
 }
 
 TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreReturned) {
@@ -5316,7 +5325,10 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidConte
               session->clientHandleToConnection[contextParamEvent.client_handle]->contextsCreated.find(77));
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("\nERROR: CONTEXT handle does not exist\n"), errorMessage);
+    // Trim errorMessage and remove timestamp + first space
+    size_t pos = errorMessage.find(']');
+    errorMessage.erase(0, pos + 2);
+    EXPECT_EQ(std::string("ERROR: CONTEXT handle does not exist\n"), errorMessage);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerInfoLogsWhenHandlingContextParamEventWithUnknownParamThenInfoIsPrinted) {

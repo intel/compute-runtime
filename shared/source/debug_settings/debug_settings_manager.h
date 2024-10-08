@@ -208,22 +208,34 @@ class DurationLog {
 
 #define PRINT_DEBUGGER_THREAD_LOG(STR, ...)                                                                          \
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_THREADS) { \
-        PRINT_DEBUGGER_LOG(stdout, "\nTHREAD INFO: " STR, __VA_ARGS__)                                               \
+                                                                                                                     \
+        auto time = NEO::DurationLog::getTimeString();                                                               \
+        time = "\n" + time + " THREAD INFO: " + STR;                                                                 \
+        PRINT_DEBUGGER_LOG(stdout, time.c_str(), __VA_ARGS__)                                                        \
     }
 
 #define PRINT_DEBUGGER_ERROR_LOG(STR, ...)                                                                         \
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR) { \
-        PRINT_DEBUGGER_LOG(stderr, "\nERROR: " STR, __VA_ARGS__)                                                   \
+                                                                                                                   \
+        auto time = NEO::DurationLog::getTimeString();                                                             \
+        time = "\n" + time + " ERROR: " + STR;                                                                     \
+        PRINT_DEBUGGER_LOG(stderr, time.c_str(), __VA_ARGS__)                                                      \
     }
 
 #define PRINT_DEBUGGER_MEM_ACCESS_LOG(STR, ...)                                                                  \
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_MEM) { \
-        PRINT_DEBUGGER_LOG(stdout, "\nINFO: " STR, __VA_ARGS__)                                                  \
+                                                                                                                 \
+        auto time = NEO::DurationLog::getTimeString();                                                           \
+        time = "\n" + time + " MEM_ACCESS: " + STR;                                                              \
+        PRINT_DEBUGGER_LOG(stdout, time.c_str(), __VA_ARGS__)                                                    \
     }
 
 #define PRINT_DEBUGGER_FIFO_LOG(STR, ...)                                                                         \
     if (NEO::debugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_FIFO) { \
-        PRINT_DEBUGGER_LOG(stdout, "\nFIFO ACCESS: " STR, __VA_ARGS__)                                            \
+                                                                                                                  \
+        auto time = NEO::DurationLog::getTimeString();                                                            \
+        time = "\n" + time + " FIFO ACCESS: " + STR;                                                              \
+        PRINT_DEBUGGER_LOG(stdout, time.c_str(), __VA_ARGS__)                                                     \
     }
 
 template <DebugFunctionalityLevel debugLevel>

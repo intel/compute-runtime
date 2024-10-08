@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,7 +158,10 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithEv
     EXPECT_TRUE(euThread.isRunning());
 
     auto message = ::testing::internal::GetCapturedStderr();
-    EXPECT_STREQ("\nERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state STOPPED when thread is running. Switching to RUNNING", message.c_str());
+    // Trim message and remove timestamp + first space
+    size_t pos = message.find(']');
+    message.erase(0, pos + 2);
+    EXPECT_STREQ("ERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state STOPPED when thread is running. Switching to RUNNING", message.c_str());
 }
 
 TEST(EuThread, GivenThreadStateRunningWhenVerifyingStopWithOddCounterForSecondStopThenTrueIsReturnedAndStateStopped) {
@@ -210,7 +213,10 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithOd
     EXPECT_TRUE(euThread.isStopped());
 
     auto message = ::testing::internal::GetCapturedStderr();
-    EXPECT_STREQ("\nERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state out of sync.", message.c_str());
+    // Trim message and remove timestamp + first space
+    size_t pos = message.find(']');
+    message.erase(0, pos + 2);
+    EXPECT_STREQ("ERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state out of sync.", message.c_str());
 }
 
 TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateRunningAndVerifyingStopWithOddCounterEqualToPreviousThenErrorMessageIsPrinted) {
@@ -230,7 +236,10 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateRunningAndVerifyingStopWithOd
     EXPECT_TRUE(euThread.isStopped());
 
     auto message = ::testing::internal::GetCapturedStderr();
-    EXPECT_STREQ("\nERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state RUNNING when thread is stopped. Switching to STOPPED", message.c_str());
+    // Trim message and remove timestamp + first space
+    size_t pos = message.find(']');
+    message.erase(0, pos + 2);
+    EXPECT_STREQ("ERROR: Thread: device index = 0 slice = 0 subslice = 0 eu = 0 thread = 0 state RUNNING when thread is stopped. Switching to STOPPED", message.c_str());
 }
 
 TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterBiggerByMoreThanTwoThenFalseIsReturnedAndStateRunning) {

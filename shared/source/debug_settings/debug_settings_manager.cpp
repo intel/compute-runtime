@@ -16,7 +16,10 @@
 #include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/logger.h"
 
+#include <chrono>
+#include <cinttypes>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <type_traits>
@@ -165,10 +168,14 @@ void logDebugString(std::string_view debugString) {
 }
 
 std::string DurationLog::getTimeString() {
-    static const std::chrono::time_point<std::chrono::steady_clock> processStartTime = std::chrono::steady_clock::now();
-    auto elapsedTime = std::chrono::steady_clock::now().time_since_epoch() - processStartTime.time_since_epoch();
-    auto elapsedTimeUs = std::chrono::duration_cast<std::chrono::microseconds>(elapsedTime);
-    return std::to_string(elapsedTimeUs.count());
+    auto now = std::chrono::steady_clock::now();
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch());
+    auto seconds = microseconds.count() / 1000000;
+    auto remainingMicroSeconds = microseconds.count() % 1000000;
+    char buffer[32];
+    std::snprintf(buffer, sizeof(buffer), "[%5" PRId64 ".%06" PRId64 "]",
+                  static_cast<int64_t>(seconds), static_cast<int64_t>(remainingMicroSeconds));
+    return std::string(buffer);
 }
 
 template class DebugSettingsManager<DebugFunctionalityLevel::none>;

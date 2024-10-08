@@ -830,6 +830,7 @@ bool DebugSessionImp::isAIPequalToThreadStartIP(uint32_t *cr0, uint32_t *dbg0) {
 void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport, std::vector<EuThread::ThreadId> &interruptedThreads) {
 
     if (newlyStoppedThreads.empty()) {
+        PRINT_DEBUGGER_INFO_LOG("%s", "No newly stopped threads found. Returning");
         return;
     }
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
@@ -1716,14 +1717,14 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
             for (uint32_t i = 0; i < readSize; i++) {
                 const uint64_t gpuVa = currentFifoOffset + (i * sizeof(SIP::fifo_node));
                 PRINT_DEBUGGER_FIFO_LOG("Validate entry at index %u in SW Fifo:: vmHandle: %" SCNx64
-                                        " gpuVa: %" SCNx64
-                                        " valid: %" SCNx8
-                                        " thread_id: %" SCNx8
-                                        " eu_id: %" SCNx8
-                                        " subslice_id: %" SCNx8
-                                        " slice_id: %" SCNx8
+                                        " gpuVa = %" SCNx64
+                                        " valid = %" SCNx8
+                                        " slice = %" SCNx8
+                                        " subslice = %" SCNx8
+                                        " eu = %" SCNx8
+                                        " thread = %" SCNx8
                                         "\n",
-                                        (i + fifoTailIndex), vmHandle, gpuVa, nodes[i].valid, nodes[i].thread_id, nodes[i].eu_id, nodes[i].subslice_id, nodes[i].slice_id);
+                                        (i + fifoTailIndex), vmHandle, gpuVa, nodes[i].valid, nodes[i].slice_id, nodes[i].subslice_id, nodes[i].eu_id, nodes[i].thread_id);
                 retVal = isValidNode(vmHandle, gpuVa, nodes[i]);
                 if (retVal != ZE_RESULT_SUCCESS) {
                     return retVal;
