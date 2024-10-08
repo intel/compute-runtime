@@ -111,7 +111,7 @@ HWTEST_F(PreambleTest, givenInactiveKernelDebuggingWhenPreambleKernelDebuggingCo
     EXPECT_EQ(0u, size);
 }
 
-HWTEST_F(PreambleTest, givenDebuggerInitializedAndMidThreadPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreAdded) {
+HWTEST_F(PreambleTest, givenDebuggerInitializedAndMidThreadPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAreAddedInsteadOfBasePreambleProgramming) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
 
@@ -121,10 +121,9 @@ HWTEST_F(PreambleTest, givenDebuggerInitializedAndMidThreadPreemptionWhenGetAddi
     size_t withDebugging = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
     EXPECT_LT(withoutDebugging, withDebugging);
 
-    size_t diff = withDebugging - withoutDebugging;
     auto expectedProgrammedCmdsCount = UnitTestHelper<FamilyType>::getMiLoadRegisterImmProgrammedCmdsCount(true);
     size_t sizeExpected = expectedProgrammedCmdsCount * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(sizeExpected, diff);
+    EXPECT_EQ(sizeExpected, withDebugging);
 }
 
 HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsReturned) {

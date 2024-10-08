@@ -897,10 +897,11 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
 }
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
-    if (EngineHelpers::isBcs(osContext->getEngineType())) {
+    auto &rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    if (EngineHelpers::isBcs(osContext->getEngineType()) || rootDeviceEnvironment->debugger.get()) {
         return true;
     }
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
     size_t preemptionSurfaceSize = hwInfo->capabilityTable.requiredPreemptionSurfaceSize;
     if (debugManager.flags.OverrideCsrAllocationSize.get() > 0) {

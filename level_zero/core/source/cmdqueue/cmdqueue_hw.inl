@@ -715,7 +715,7 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
     this->firstCommandList = CommandList::fromHandle(commandListHandles[0]);
     this->lastCommandList = CommandList::fromHandle(commandListHandles[numCommandLists - 1]);
 
-    this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread;
+    this->isDevicePreemptionModeMidThread = device->getDevicePreemptionMode() == NEO::PreemptionMode::MidThread && !this->isNEODebuggerActive(device);
     this->stateSipRequired = (this->isPreemptionModeInitial && this->isDevicePreemptionModeMidThread) ||
                              (!sipSent && this->isNEODebuggerActive(device));
 

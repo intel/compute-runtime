@@ -61,18 +61,17 @@ struct Xe2ThreadGroupPreemptionTests : public Xe2PreemptionTests {
     }
 };
 
-HWTEST2_F(Xe2MidThreadPreemptionTests, givenMidThreadPreemptionOrDebugEnabledWhenQueryingRequiredPreambleSizeThenExpectCorrectSize, IsAtLeastXe2HpgCore) {
+HWTEST2_F(Xe2MidThreadPreemptionTests, givenMidThreadPreemptionAndNoDebugEnabledWhenQueryingRequiredPreambleSizeThenExpectCorrectSize, IsAtLeastXe2HpgCore) {
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
 
     // Mid thread preemption is forced And debugger not enabled
     size_t cmdSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
     EXPECT_EQ(sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS), cmdSize);
 
-    // No mid thread preemption but debugger enabled
-    device->overridePreemptionMode(PreemptionMode::Initial);
+    // Mid thread preemption and debugger enabled
     device->getExecutionEnvironment()->rootDeviceEnvironments[0]->initDebuggerL0(device.get());
     cmdSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
-    EXPECT_EQ(sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS), cmdSize);
+    EXPECT_EQ(0u, cmdSize);
 }
 
 HWTEST2_F(Xe2MidThreadPreemptionTests, givenNeitherMidThreadPreemptionNOrDebugEnabledWhenQueryingRequiredPreambleSizeThenExpectZeroSize, IsAtLeastXe2HpgCore) {

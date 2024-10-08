@@ -23,8 +23,7 @@ template <typename GfxFamily>
 void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr) {
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
-    if (isMidThreadPreemption || debuggingEnabled) {
-        UNRECOVERABLE_IF(nullptr == preemptionCsr);
+    if (isMidThreadPreemption && !debuggingEnabled) {
 
         programCsrBaseAddressCmd<GfxFamily>(preambleCmdStream, preemptionCsr);
     }

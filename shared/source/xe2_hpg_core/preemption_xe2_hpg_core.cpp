@@ -38,7 +38,7 @@ template <>
 size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device) {
     using STATE_CONTEXT_DATA_BASE_ADDRESS = typename GfxFamily::STATE_CONTEXT_DATA_BASE_ADDRESS;
     bool debuggingEnabled = device.getDebugger() != nullptr;
-    if ((device.getPreemptionMode() == PreemptionMode::MidThread) || debuggingEnabled) {
+    if ((device.getPreemptionMode() == PreemptionMode::MidThread) && !debuggingEnabled) {
         return sizeof(STATE_CONTEXT_DATA_BASE_ADDRESS);
     }
     return 0u;

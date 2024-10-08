@@ -64,7 +64,9 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr) {
-    PreemptionHelper::programCsrBaseAddress<GfxFamily>(*pCommandStream, device, preemptionCsr);
+    if (preemptionCsr) {
+        PreemptionHelper::programCsrBaseAddress<GfxFamily>(*pCommandStream, device, preemptionCsr);
+    }
 }
 
 template <typename GfxFamily>
