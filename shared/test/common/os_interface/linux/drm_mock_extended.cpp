@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,8 @@ int DrmMockExtended::handleRemainingRequests(DrmIoctl request, void *arg) {
         vmAdviseCalled = true;
         vmAdviseFlags = vmAdvise->attribute;
         vmAdviseHandle = vmAdvise->handle;
-        vmAdviseRegion = *reinterpret_cast<MemoryClassInstance *>(&vmAdvise->region);
+        vmAdviseRegion.memoryClass = vmAdvise->region.memory_class;
+        vmAdviseRegion.memoryInstance = vmAdvise->region.memory_instance;
         return vmAdviseRetValue;
     }
 

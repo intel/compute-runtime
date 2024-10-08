@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -391,7 +391,7 @@ struct EnqueueReadBufferTraits : public EnqueueTraits {
     static const size_t offset;
     static const size_t sizeInBytes;
     static void *hostPtr;
-    static cl_command_type cmdType;
+    static constexpr cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
     static NEO::GraphicsAllocation *mapAllocation;
 };
 
@@ -497,7 +497,7 @@ struct EnqueueWriteBufferTraits : public EnqueueTraits {
     static const size_t offset;
     static const size_t sizeInBytes;
     static void *hostPtr;
-    static cl_command_type cmdType;
+    static constexpr cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER;
     static NEO::GraphicsAllocation *mapAllocation;
 };
 

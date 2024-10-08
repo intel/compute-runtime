@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -273,7 +273,7 @@ size_t writeIntelGTNote(ArrayRef<uint8_t> dst, NEO::Zebin::Elf::IntelGTSectionTy
 
 size_t writeIntelGTVersionNote(ArrayRef<uint8_t> dst, NEO::ConstStringRef version) {
     std::vector<uint8_t> desc(version.length() + 1U, 0U);
-    std::memcpy(desc.data(), version.begin(), version.length());
+    memcpy_s(desc.data(), desc.size(), version.begin(), version.length());
     return writeIntelGTNote(dst, NEO::Zebin::Elf::zebinVersion, {desc.data(), desc.size()});
 }
 
