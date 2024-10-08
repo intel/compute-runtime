@@ -15,4 +15,9 @@ size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment() {
     return alignment;
 }
 
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareInfo &hwInfo) {
+    return hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
+}
+
 } // namespace NEO

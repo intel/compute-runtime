@@ -1644,3 +1644,15 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenForcingDifferent
     debugManager.flags.ForceIOHAlignment.set(expectedAlignemnt);
     EXPECT_EQ(NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment(), expectedAlignemnt);
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseDualSubSliceAsDenominator, IsAtMostXeHpcCore) {
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
+    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenGettingThreadCountPerSubsliceThenUseSubSliceAsDenominator, IsAtLeastXe2HpgCore) {
+    auto &hwInfo = pDevice->getHardwareInfo();
+    auto expectedValue = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
+    EXPECT_EQ(expectedValue, NEO::EncodeDispatchKernel<FamilyType>::getThreadCountPerSubslice(hwInfo));
+}

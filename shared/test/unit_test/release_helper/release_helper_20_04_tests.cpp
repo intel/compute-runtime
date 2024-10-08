@@ -44,28 +44,8 @@ TEST_F(ReleaseHelper2004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper2004Tests, whenGettingMaxPreferredSlmSizeThenSizeSizeIsLimitedBy128K) {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-
-        using PREFERRED_SLM_ALLOCATION_SIZE = typename Xe2HpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-        for (auto &preferredSlmSize : {PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K,
-                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K,
-                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K,
-                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K,
-                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K,
-                                       PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K}) {
-
-            auto maxPreferredSlmValue = releaseHelper->getProductMaxPreferredSlmSize(preferredSlmSize);
-            EXPECT_EQ(maxPreferredSlmValue, preferredSlmSize);
-        }
-        auto preferredSlmSize128k = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K;
-        auto preferredSlmSize160k = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_160K;
-        auto maxPreferredSlmValue = releaseHelper->getProductMaxPreferredSlmSize(preferredSlmSize160k);
-        EXPECT_EQ(maxPreferredSlmValue, preferredSlmSize128k);
-    }
+TEST_F(ReleaseHelper2004Tests, whenGettingMaxPreferredSlmSizeThenSizeIsNotModified) {
+    whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
 }
 
 TEST_F(ReleaseHelper2004Tests, whenShouldAdjustCalledThenTrueReturned) {
@@ -96,6 +76,31 @@ TEST_F(ReleaseHelper2004Tests, whenIsLocalOnlyAllowedCalledThenFalseReturned) {
     whenIsLocalOnlyAllowedCalledThenFalseReturned();
 }
 
-TEST_F(ReleaseHelper2004Tests, whenGettingPreferredSlmSizeThenAllEntriesEmpty) {
-    whenGettingPreferredSlmSizeThenAllEntriesEmpty();
+TEST_F(ReleaseHelper2004Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+
+        constexpr uint32_t kB = 1024;
+
+        auto &preferredSlmValueArray = releaseHelper->getSizeToPreferredSlmValue(false);
+        EXPECT_EQ(0u, preferredSlmValueArray[0].upperLimit);
+        EXPECT_EQ(0u, preferredSlmValueArray[0].valueToProgram);
+
+        EXPECT_EQ(16 * kB, preferredSlmValueArray[1].upperLimit);
+        EXPECT_EQ(1u, preferredSlmValueArray[1].valueToProgram);
+
+        EXPECT_EQ(32 * kB, preferredSlmValueArray[2].upperLimit);
+        EXPECT_EQ(2u, preferredSlmValueArray[2].valueToProgram);
+
+        EXPECT_EQ(64 * kB, preferredSlmValueArray[3].upperLimit);
+        EXPECT_EQ(3u, preferredSlmValueArray[3].valueToProgram);
+
+        EXPECT_EQ(96 * kB, preferredSlmValueArray[4].upperLimit);
+        EXPECT_EQ(4u, preferredSlmValueArray[4].valueToProgram);
+
+        EXPECT_EQ(std::numeric_limits<uint32_t>::max(), preferredSlmValueArray[5].upperLimit);
+        EXPECT_EQ(5u, preferredSlmValueArray[5].valueToProgram);
+    }
 }
