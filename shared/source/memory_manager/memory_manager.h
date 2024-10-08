@@ -314,6 +314,7 @@ class MemoryManager {
 
     size_t getUsedLocalMemorySize(uint32_t rootDeviceIndex) const { return localMemAllocsSize[rootDeviceIndex]; }
     size_t getUsedSystemMemorySize() const { return sysMemAllocsSize; }
+    uint32_t getFirstContextIdForRootDevice(uint32_t rootDeviceIndex);
 
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
