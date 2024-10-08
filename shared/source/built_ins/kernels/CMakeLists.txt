@@ -31,15 +31,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   list(APPEND __ocloc__options__ "-D DEBUG")
 endif()
 
-function(get_bits_for_stateless core_type platform_it_lower)
-  # Force 32bits compiling on gen9lp for stateless builtins
-  if((${core_type} STREQUAL "GEN9") AND ((${platform_it_lower} STREQUAL "glk") OR (${platform_it_lower} STREQUAL "bxt")))
-    set(BITS "32" PARENT_SCOPE)
-  else()
-    set(BITS ${NEO_BITS} PARENT_SCOPE)
-  endif()
-endfunction()
-
 function(get_builtin_options core_type neo_arch mode_type)
   if("${neo_arch}" STREQUAL "x32")
     set(BUILTIN_OPTIONS "${BUILTIN_OPTIONS_STATELESS}" PARENT_SCOPE)
@@ -208,7 +199,6 @@ macro(macro_for_each_platform)
   CORE_CONTAINS_PLATFORM("SUPPORTED_AUX_TRANSLATION" ${CORE_TYPE} ${PLATFORM_IT} AUX_TRANSLATION_SUPPORT)
   CORE_CONTAINS_PLATFORM("SUPPORTED_HEAPLESS" ${CORE_TYPE} ${PLATFORM_IT} HEAPLESS_SUPPORT)
 
-  get_bits_for_stateless(${CORE_TYPE} ${PLATFORM_IT})
   set(target_name builtins_${PLATFORM_IT_LOWER})
   add_custom_target(${target_name})
   add_dependencies(builtins ${target_name})
