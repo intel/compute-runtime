@@ -75,13 +75,19 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
 void BindlessHeapsHelper::clearStateDirtyForContext(uint32_t osContextId) {
     std::lock_guard<std::mutex> autolock(this->mtx);
 
-    stateCacheDirtyForContext.reset(osContextId);
+    uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
+    DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
+
+    stateCacheDirtyForContext.reset(contextIdShifted);
 }
 
 bool BindlessHeapsHelper::getStateDirtyForContext(uint32_t osContextId) {
     std::lock_guard<std::mutex> autolock(this->mtx);
 
-    return stateCacheDirtyForContext.test(osContextId);
+    uint32_t contextIdShifted = osContextId - memManager->getFirstContextIdForRootDevice(rootDeviceIndex);
+    DEBUG_BREAK_IF(contextIdShifted >= stateCacheDirtyForContext.size());
+
+    return stateCacheDirtyForContext.test(contextIdShifted);
 }
 
 SurfaceStateInHeapInfo BindlessHeapsHelper::allocateSSInHeap(size_t ssSize, GraphicsAllocation *surfaceAllocation, BindlesHeapType heapType) {

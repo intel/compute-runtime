@@ -368,6 +368,14 @@ void MemoryManager::updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex)
     }
 }
 
+uint32_t MemoryManager::getFirstContextIdForRootDevice(uint32_t rootDeviceIndex) {
+    auto entry = rootDeviceIndexToContextId.find(rootDeviceIndex);
+    if (entry != rootDeviceIndexToContextId.end()) {
+        return entry->second + 1;
+    }
+    return 0;
+}
+
 OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                                      const EngineDescriptor &engineDescriptor) {
     auto rootDeviceIndex = commandStreamReceiver->getRootDeviceIndex();
