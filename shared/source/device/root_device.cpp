@@ -72,7 +72,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     auto defaultEngineType = getChosenEngineType(hwInfo);
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
-    EngineDescriptor engineDescriptor(EngineTypeUsage{defaultEngineType, EngineUsage::regular}, getDeviceBitfield(), preemptionMode, true, false);
+    EngineDescriptor engineDescriptor(EngineTypeUsage{defaultEngineType, EngineUsage::regular}, getDeviceBitfield(), preemptionMode, true);
 
     auto &gfxCoreHelper = getGfxCoreHelper();
     bool isPrimaryEngine = EngineHelpers::isCcs(defaultEngineType);

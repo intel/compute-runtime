@@ -2144,7 +2144,7 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         auto device = driverHandle->devices[0];
 
         for (auto &engine : neoDevice->secondaryEngines[aub_stream::ENGINE_CCS].engines) {
-            EngineDescriptor descriptor({aub_stream::ENGINE_CCS, engine.osContext->getEngineUsage()}, engine.osContext->getDeviceBitfield(), PreemptionMode::Disabled, false, false);
+            EngineDescriptor descriptor({aub_stream::ENGINE_CCS, engine.osContext->getEngineUsage()}, engine.osContext->getDeviceBitfield(), PreemptionMode::Disabled, false);
             auto newOsContext = new MockOsContext(0, 0, descriptor);
             mockOsContexts.push_back(newOsContext);
             newOsContext->incRefInternal();

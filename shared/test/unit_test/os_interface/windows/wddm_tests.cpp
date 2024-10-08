@@ -157,7 +157,7 @@ TEST(WddmNewRsourceTest, whenSetNewResourcesBoundToPageTableThenSetInContextFrom
     executionEnvironment.initializeMemoryManager();
     auto csr1 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0, 1));
     auto csr2 = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 1, 1));
-    EngineDescriptor engineDesc({aub_stream::ENGINE_CCS, EngineUsage::regular}, 1, PreemptionMode::Disabled, false, false);
+    EngineDescriptor engineDesc({aub_stream::ENGINE_CCS, EngineUsage::regular}, 1, PreemptionMode::Disabled, false);
     executionEnvironment.memoryManager->createAndRegisterOsContext(csr1.get(), engineDesc);
     executionEnvironment.memoryManager->createAndRegisterOsContext(csr2.get(), engineDesc);
 

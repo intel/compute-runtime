@@ -463,7 +463,6 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     uint32_t expectedOsContextCountForCcs = 0u;
 
     {
-        debugManager.flags.EngineInstancedSubDevices.set(false);
         MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
 
         for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
@@ -485,7 +484,6 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     }
 
     {
-        debugManager.flags.EngineInstancedSubDevices.set(true);
         MockExecutionEnvironment executionEnvironment(nullptr, true, numRootDevices);
 
         EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);

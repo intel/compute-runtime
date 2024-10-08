@@ -170,7 +170,6 @@ class Device : public ReferenceTrackedObject<Device> {
     uint32_t getNumSubDevices() const { return numSubDevices; }
     virtual bool isSubDevice() const = 0;
     bool hasRootCsr() const { return rootCsrCreated; }
-    bool isEngineInstanced() const { return engineInstanced; }
 
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
 
@@ -245,16 +244,12 @@ class Device : public ReferenceTrackedObject<Device> {
 
     MOCKABLE_VIRTUAL std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL SubDevice *createSubDevice(uint32_t subDeviceIndex);
-    MOCKABLE_VIRTUAL SubDevice *createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType);
     MOCKABLE_VIRTUAL size_t getMaxParameterSizeFromIGC() const;
     double getPercentOfGlobalMemoryAvailable() const;
     virtual void createBindlessHeapsHelper() {}
     bool createSubDevices();
     bool createGenericSubDevices();
-    bool createEngineInstancedSubDevices();
     virtual bool genericSubDevicesAllowed();
-    bool engineInstancedSubDevicesAllowed();
-    void setAsEngineInstanced();
     void finalizeRayTracing();
     void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t regularPriorityCount, uint32_t highPriorityContextCount);
     void allocateDebugSurface(size_t debugSurfaceSize);
@@ -273,7 +268,6 @@ class Device : public ReferenceTrackedObject<Device> {
 
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    aub_stream::EngineType engineInstancedType = aub_stream::EngineType::NUM_ENGINES;
     uint32_t defaultEngineIndex = 0;
     uint32_t numSubDevices = 0;
     std::atomic_uint32_t regularCommandQueuesCreatedWithinDeviceCount{0};
@@ -281,7 +275,6 @@ class Device : public ReferenceTrackedObject<Device> {
     uint32_t queuesPerEngineCount = 1;
     void initializeEngineRoundRobinControls();
     bool hasGenericSubDevices = false;
-    bool engineInstanced = false;
     bool rootCsrCreated = false;
     const uint32_t rootDeviceIndex;
     GraphicsAllocation *debugSurface = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ bool GfxCoreHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGrou
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const {
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return maxWorkGroupCount;
 }
 

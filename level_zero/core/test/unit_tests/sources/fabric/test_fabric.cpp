@@ -156,16 +156,12 @@ TEST_F(FabricVertexFixture, givenFabricVerticesAreCreatedWhenzeFabricVertexGetPr
     }
 }
 
-TEST(FabricEngineInstanceTest, GivenEngineInstancedDeviceWhenFabricVerticesAreCreatedThenSkipCreationForEngineInstanced) {
+TEST(FabricEngineInstanceTest, GivenSubDeviceWhenFabricVerticesAreCreatedThenSkipCreationForSubDevice) {
 
     auto hwInfo = *NEO::defaultHwInfo.get();
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
     std::vector<std::unique_ptr<NEO::Device>> devices(1);
     devices[0].reset(static_cast<NEO::Device *>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u)));
-
-    auto mockDevice = static_cast<NEO::MockDevice *>(devices[0].get());
-    NEO::SubDevice *subDevice = static_cast<NEO::SubDevice *>(mockDevice->createEngineInstancedSubDevice(0, defaultHwInfo->capabilityTable.defaultEngineType));
-    mockDevice->subdevices.push_back(subDevice);
 
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();

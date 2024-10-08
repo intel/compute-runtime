@@ -190,7 +190,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.streamProperties.pipelineSelect.setPropertiesAll(true, false, false);
         commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(0, GrfConfig::defaultGrfNumber,
                                                                                  gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode());
-        commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false, -1);
+        commandStreamReceiver.streamProperties.frontEndState.setPropertiesAll(false, false, false);
     }
 
     template <typename GfxFamily>

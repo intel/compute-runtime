@@ -442,7 +442,7 @@ int IoctlHelperI915::createDrmContext(Drm &drm, OsContextLinux &osContext, uint3
     if (drm.isPreemptionSupported() && osContext.isLowPriority()) {
         drm.setLowPriorityContextParam(drmContextId);
     }
-    auto engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType(), osContext.isEngineInstanced());
+    auto engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, osContext.getEngineType());
     osContext.setEngineFlag(engineFlag);
     return drmContextId;
 }

@@ -33,7 +33,7 @@ struct CommandQueueHw : public CommandQueueImp {
     size_t estimateStateBaseAddressCmdSize();
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSlot0Size, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
-    MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool &isFrontEndStateDirty, int32_t engineInstanced, CommandList *commandList,
+    MOCKABLE_VIRTUAL size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool &isFrontEndStateDirty, CommandList *commandList,
                                                                            NEO::StreamProperties &csrState,
                                                                            const NEO::StreamProperties &cmdListRequired,
                                                                            const NEO::StreamProperties &cmdListFinal,
@@ -88,7 +88,6 @@ struct CommandQueueHw : public CommandQueueImp {
         NEO::PreemptionMode statePreemption{};
         uint32_t perThreadScratchSpaceSlot0Size = 0;
         uint32_t perThreadScratchSpaceSlot1Size = 0;
-        int32_t engineInstanced = -1;
         UnifiedMemoryControls unifiedMemoryControls{};
 
         bool anyCommandListWithCooperativeKernels = false;

@@ -630,57 +630,6 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
     device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
 }
 
-struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
-    void SetUp() override {
-        debugManager.flags.EngineInstancedSubDevices.set(true);
-    }
-
-    bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
-        debugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
-
-        auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
-
-        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0].get();
-        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-        hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
-        hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);
-
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-        auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
-        gfxCoreHelper.adjustDefaultEngineType(hwInfo, productHelper, rootDeviceEnvironment.ailConfiguration.get());
-
-        if (!multiCcsDevice(rootDeviceEnvironment, numCcs)) {
-            return false;
-        }
-        executionEnvironment->parseAffinityMask();
-        deviceFactory = std::make_unique<NEO::UltDeviceFactory>(1, numGenericSubDevices, *executionEnvironment.release());
-        rootDevice = deviceFactory->rootDevices[0];
-        EXPECT_NE(nullptr, rootDevice);
-
-        return true;
-    }
-
-    bool multiCcsDevice(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, uint32_t expectedNumCcs) {
-
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
-
-        uint32_t numCcs = 0;
-
-        for (auto &engine : gpgpuEngines) {
-            if (EngineHelpers::isCcs(engine.first) && (engine.second == EngineUsage::regular)) {
-                numCcs++;
-            }
-        }
-
-        return (numCcs == expectedNumCcs);
-    }
-
-    DebugManagerStateRestore restorer;
-    std::unique_ptr<NEO::UltDeviceFactory> deviceFactory;
-    NEO::MockDevice *rootDevice = nullptr;
-};
-
 struct SingleSliceDispatchSupportMatcher {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
@@ -688,106 +637,6 @@ struct SingleSliceDispatchSupportMatcher {
         return GfxProduct::FrontEndStateSupport::singleSliceDispatchCcsMode;
     }
 };
-
-HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWhenExecutingThenEnableSingleSliceDispatch, SingleSliceDispatchSupportMatcher) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    constexpr uint32_t genericDevicesCount = 1;
-    constexpr uint32_t ccsCount = 2;
-
-    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
-
-    if (!createDevices(genericDevicesCount, ccsCount)) {
-        GTEST_SKIP();
-    }
-
-    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
-    auto defaultEngine = subDevice->getDefaultEngine();
-    EXPECT_TRUE(defaultEngine.osContext->isEngineInstanced());
-
-    std::vector<std::unique_ptr<NEO::Device>> devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(subDevice));
-
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->initialize(std::move(devices));
-
-    auto l0Device = driverHandle->devices[0];
-
-    ze_command_queue_desc_t desc = {};
-    NEO::CommandStreamReceiver *csr;
-    l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
-    auto commandListHandle = commandList->toHandle();
-    commandList->close();
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
-
-    GenCmdList cmdList;
-    FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
-
-    auto cfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
-
-    EXPECT_NE(0u, cfeStates.size());
-
-    for (auto &cmd : cfeStates) {
-        auto cfeState = reinterpret_cast<CFE_STATE *>(*cmd);
-        EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
-    }
-
-    commandQueue->destroy();
-}
-
-HWTEST2_F(EngineInstancedDeviceExecuteTests, givenEngineInstancedDeviceWithFabricEnumerationWhenExecutingThenEnableSingleSliceDispatch, SingleSliceDispatchSupportMatcher) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    constexpr uint32_t genericDevicesCount = 1;
-    constexpr uint32_t ccsCount = 2;
-
-    debugManager.flags.AllowSingleTileEngineInstancedSubDevices.set(true);
-
-    if (!createDevices(genericDevicesCount, ccsCount)) {
-        GTEST_SKIP();
-    }
-
-    auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
-    auto defaultEngine = subDevice->getDefaultEngine();
-    EXPECT_TRUE(defaultEngine.osContext->isEngineInstanced());
-
-    std::vector<std::unique_ptr<NEO::Device>> devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(subDevice));
-
-    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->initialize(std::move(devices));
-
-    driverHandle->initializeVertexes();
-
-    auto l0Device = driverHandle->devices[0];
-
-    ze_command_queue_desc_t desc = {};
-    NEO::CommandStreamReceiver *csr;
-    l0Device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    ze_result_t returnValue;
-    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, l0Device, csr, &desc, false, false, false, returnValue));
-    auto commandList = std::unique_ptr<CommandList>(CommandList::whiteboxCast(CommandList::create(productFamily, l0Device, NEO::EngineGroupType::compute, 0u, returnValue, false)));
-    auto commandListHandle = commandList->toHandle();
-    commandList->close();
-    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
-
-    GenCmdList cmdList;
-    FamilyType::Parse::parseCommandBuffer(cmdList, commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
-
-    auto cfeStates = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
-
-    EXPECT_NE(0u, cfeStates.size());
-
-    for (auto &cmd : cfeStates) {
-        auto cfeState = reinterpret_cast<CFE_STATE *>(*cmd);
-        EXPECT_TRUE(cfeState->getSingleSliceDispatchCcsMode());
-    }
-
-    commandQueue->destroy();
-}
 
 HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessCalled, MatchAny) {
     ze_command_queue_desc_t desc = {};
@@ -1050,7 +899,7 @@ size_t estimateAllCommmandLists(MockCommandQueueHw<gfxCoreFamily> *commandQueue,
         auto cmdListPtr = CommandList::fromHandle(commandListHandles[i]);
         auto requiredState = cmdListPtr->getRequiredStreamState();
         auto finalState = cmdListPtr->getFinalStreamState();
-        estimatedSize += commandQueue->estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, -1, cmdListPtr, csrStateCopy, requiredState, finalState, dummyProperties, feDirty, feRetPoint);
+        estimatedSize += commandQueue->estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdListPtr, csrStateCopy, requiredState, finalState, dummyProperties, feDirty, feRetPoint);
     }
     return estimatedSize;
 }
@@ -1481,7 +1330,7 @@ TEST(CommandQueue, givenContextGroupEnabledWhenCreatingCommandQueuesWithInterrup
         auto device = driverHandle->devices[0];
 
         for (auto &engine : neoDevice->secondaryEngines[aub_stream::ENGINE_CCS].engines) {
-            EngineDescriptor descriptor({aub_stream::ENGINE_CCS, engine.osContext->getEngineUsage()}, engine.osContext->getDeviceBitfield(), PreemptionMode::Disabled, false, false);
+            EngineDescriptor descriptor({aub_stream::ENGINE_CCS, engine.osContext->getEngineUsage()}, engine.osContext->getDeviceBitfield(), PreemptionMode::Disabled, false);
             auto newOsContext = new MockOsContext(0, 0, descriptor);
             mockOsContexts.push_back(newOsContext);
             newOsContext->incRefInternal();

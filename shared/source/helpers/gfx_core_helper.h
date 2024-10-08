@@ -124,7 +124,7 @@ class GfxCoreHelper {
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const = 0;
+                                             const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
@@ -347,7 +347,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                     const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const override;
+                                     const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     uint32_t adjustMaxWorkGroupSize(const uint32_t grfCount, const uint32_t simd, bool isHwLocalGeneration, const uint32_t defaultMaxGroupSize, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;

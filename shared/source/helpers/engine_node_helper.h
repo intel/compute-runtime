@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,14 +34,13 @@ using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
 
 struct EngineDescriptor {
     EngineDescriptor() = delete;
-    constexpr EngineDescriptor(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool isRootDevice, bool isEngineInstanced)
-        : engineTypeUsage(engineTypeUsage), deviceBitfield(deviceBitfield), preemptionMode(preemptionMode), isRootDevice(isRootDevice), isEngineInstanced(isEngineInstanced) {}
+    constexpr EngineDescriptor(EngineTypeUsage engineTypeUsage, DeviceBitfield deviceBitfield, PreemptionMode preemptionMode, bool isRootDevice)
+        : engineTypeUsage(engineTypeUsage), deviceBitfield(deviceBitfield), preemptionMode(preemptionMode), isRootDevice(isRootDevice) {}
 
     EngineTypeUsage engineTypeUsage;
     DeviceBitfield deviceBitfield;
     PreemptionMode preemptionMode;
     bool isRootDevice;
-    bool isEngineInstanced;
 };
 
 namespace EngineHelpers {

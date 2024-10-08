@@ -1166,7 +1166,7 @@ void Drm::configureGpuFaultCheckThreshold() {
     }
 }
 
-unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {
+unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType) {
     auto engineInfo = this->engineInfo.get();
 
     auto retVal = static_cast<unsigned int>(ioctlHelper->getDrmParamValue(DrmEngineMapper::engineNodeMap(engineType)));
@@ -1179,7 +1179,7 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
         return retVal;
     }
 
-    bool useVirtualEnginesForCcs = !engineInstancedDevice;
+    bool useVirtualEnginesForCcs = true;
     if (debugManager.flags.UseDrmVirtualEnginesForCcs.get() != -1) {
         useVirtualEnginesForCcs = !!debugManager.flags.UseDrmVirtualEnginesForCcs.get();
     }

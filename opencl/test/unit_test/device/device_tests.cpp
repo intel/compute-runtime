@@ -307,12 +307,8 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     const auto &numGpgpuEngines = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(device1->getRootDeviceEnvironment()).size());
 
     size_t numExpectedGenericEnginesPerDevice = numGpgpuEngines;
-    size_t numExpectedEngineInstancedEnginesPerDevice = 0;
-    if (device1->getNumSubDevices() > 0) {
-        numExpectedEngineInstancedEnginesPerDevice = device1->getNumSubDevices();
-    }
 
-    auto expectedTotalRegisteredEnginesPerRootDevice = numExpectedGenericEnginesPerDevice + numExpectedEngineInstancedEnginesPerDevice;
+    auto expectedTotalRegisteredEnginesPerRootDevice = numExpectedGenericEnginesPerDevice;
 
     uint32_t contextId = 0;
     for (uint32_t i = 0; i < numDevices; i++) {
@@ -321,19 +317,6 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
 
         EXPECT_EQ(expectedTotalRegisteredEnginesPerRootDevice, registeredEngines.size());
         auto device = devices[i];
-
-        for (uint32_t j = 0; j < numExpectedEngineInstancedEnginesPerDevice; j++) {
-            auto subDevice = device->getSubDevice(j);
-            auto &engine = subDevice->getEngine(0);
-            EXPECT_EQ(contextId, engine.osContext->getContextId());
-            EXPECT_EQ(1u, engine.osContext->getDeviceBitfield().to_ulong());
-
-            EXPECT_EQ(registeredEngines[contextWithinRootDevice].commandStreamReceiver,
-                      engine.commandStreamReceiver);
-
-            contextId++;
-            contextWithinRootDevice++;
-        }
 
         for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
             auto &engine = device->getEngine(j);
@@ -772,7 +755,6 @@ TEST_P(MultipleDeviceTest, givenMultipleDevicesWhenGetNumTilesThenReturnNumberOf
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     auto numDevices = GetParam();
     debugManager.flags.CreateMultipleSubDevices.set(numDevices);
-    debugManager.flags.EngineInstancedSubDevices.set(false);
     debugManager.flags.DeferOsContextInitialization.set(0);
     initPlatform();
     auto device = platform()->getClDevice(0);

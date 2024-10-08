@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,8 +70,8 @@ HWTEST_F(ClEnqueueVerifyMemoryIntelTests, givenActiveBcsEngineWhenCallingExpectM
     UltCommandStreamReceiver<FamilyType> ultCsrBcs0(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     UltCommandStreamReceiver<FamilyType> ultCsrBcs1(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
 
-    MockOsContext osContext0(0, {{aub_stream::ENGINE_BCS, EngineUsage::regular}, 0, PreemptionMode::Disabled, false, false});
-    MockOsContext osContext1(1, {{aub_stream::ENGINE_BCS1, EngineUsage::regular}, 0, PreemptionMode::Disabled, false, false});
+    MockOsContext osContext0(0, {{aub_stream::ENGINE_BCS, EngineUsage::regular}, 0, PreemptionMode::Disabled, false});
+    MockOsContext osContext1(1, {{aub_stream::ENGINE_BCS1, EngineUsage::regular}, 0, PreemptionMode::Disabled, false});
 
     EngineControl engineControl[2] = {{&ultCsrBcs0, &osContext0}, {&ultCsrBcs1, &osContext1}};
 

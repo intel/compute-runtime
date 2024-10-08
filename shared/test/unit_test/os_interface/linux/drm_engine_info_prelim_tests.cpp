@@ -176,7 +176,7 @@ static void givenEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(std:
     ASSERT_NE(nullptr, drm->engineInfo);
 
     auto drmContextId = 42u;
-    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
 
     I915_DEFINE_CONTEXT_PARAM_ENGINES(enginesStruct, 1){};
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
@@ -206,7 +206,7 @@ TEST(DrmTest, givenRcsEngineWhenBindingDrmContextThenContextParamEngineIsSet) {
 static void givenBcsEngineTypeWhenBindingDrmContextThenContextParamEngineIsSet(std::unique_ptr<DrmQueryMock> &drm, aub_stream::EngineType engineType, size_t numBcsSiblings, unsigned int engineIndex, uint32_t tileId) {
     auto drmContextId = 42u;
     drm->receivedContextParamRequestCount = 0u;
-    auto engineFlag = drm->bindDrmContext(drmContextId, tileId, engineType, false);
+    auto engineFlag = drm->bindDrmContext(drmContextId, tileId, engineType);
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
     EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
@@ -305,7 +305,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmTestXeHPAndLater, givenLinkBcsEngineWithoutMainC
             engineType = static_cast<aub_stream::EngineType>(aub_stream::ENGINE_BCS1 + engineIndex - 1);
             numBcsSiblings -= 1;
         }
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
 
         if (engineIndex == 0) {
             EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_BLT), engineFlag);
@@ -358,7 +358,7 @@ HWTEST2_F(DrmTestXeHPAndLater, givenNotAllLinkBcsEnginesWhenBindingSingleTileDrm
 
         auto drmContextId = 42u;
         drm->receivedContextParamRequestCount = 0u;
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
         if (drm->supportedCopyEnginesMask.test(engineIndex)) {
             EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
             EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
@@ -504,7 +504,7 @@ HWTEST2_F(DrmTestXeHPCAndLater, givenBcsVirtualEnginesDisabledWhenCreatingContex
         drm->receivedContextParamRequestCount = 0u;
         auto drmContextId = 42u;
         auto engineType = static_cast<aub_stream::EngineType>(engineBase + engineIndex);
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
         EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
@@ -546,7 +546,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
         drm->receivedContextParamRequestCount = 0u;
         auto drmContextId = 42u;
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + engineIndex);
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
         EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
@@ -588,7 +588,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledWhenCreatingContextThenEnableLoadBalanci
         drm->receivedContextParamRequestCount = 0u;
         auto drmContextId = 42u;
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + engineIndex);
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
         EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
@@ -654,7 +654,7 @@ TEST(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBa
         drm->receivedContextParamRequestCount = 0u;
         auto drmContextId = 42u;
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + engineIndex);
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, false);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
         EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
@@ -667,7 +667,7 @@ TEST(DrmTest, givenVirtualEnginesDisabledWhenCreatingContextThenDontEnableLoadBa
     }
 }
 
-TEST(DrmTest, givenEngineInstancedDeviceWhenCreatingContextThenDontUseVirtualEngines) {
+TEST(DrmTest, givenDeviceWhenCreatingContextThenDontUseVirtualEngines) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
@@ -685,16 +685,12 @@ TEST(DrmTest, givenEngineInstancedDeviceWhenCreatingContextThenDontUseVirtualEng
         drm->receivedContextParamRequestCount = 0u;
         auto drmContextId = 42u;
         auto engineType = static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + engineIndex);
-        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType, true);
+        auto engineFlag = drm->bindDrmContext(drmContextId, 0u, engineType);
         EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
         EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
         EXPECT_EQ(drmContextId, drm->receivedContextParamRequest.contextId);
         EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_ENGINES), drm->receivedContextParamRequest.param);
-        EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 1, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
-        auto extensions = drm->receivedContextParamEngines.extensions;
-        EXPECT_EQ(0ull, extensions);
-        EXPECT_EQ(static_cast<__u16>(DrmPrelimHelper::getComputeEngineClass()), drm->receivedContextParamEngines.engines[0].engineClass);
-        EXPECT_EQ(static_cast<__u16>(engineIndex), DrmMockHelper::getIdFromEngineOrMemoryInstance(drm->receivedContextParamEngines.engines[0].engineInstance));
+        EXPECT_EQ(ptrDiff(drm->receivedContextParamEngines.engines + 5, &drm->receivedContextParamEngines), drm->receivedContextParamRequest.size);
     }
 }
 
@@ -712,7 +708,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNotEnoughCcsEnginesWhenCreatingContex
 
     drm->receivedContextParamRequestCount = 0u;
     auto drmContextId = 42u;
-    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, aub_stream::ENGINE_CCS, false);
+    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, aub_stream::ENGINE_CCS);
 
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
@@ -740,7 +736,7 @@ TEST(DrmTest, givenVirtualEnginesEnabledAndNonCcsEnginesWhenCreatingContextThenD
 
     drm->receivedContextParamRequestCount = 0u;
     auto drmContextId = 42u;
-    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, defaultCopyEngine, false);
+    auto engineFlag = drm->bindDrmContext(drmContextId, 0u, defaultCopyEngine);
 
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(1u, drm->receivedContextParamRequestCount);
@@ -766,7 +762,7 @@ TEST(DrmTest, givenInvalidTileWhenBindingDrmContextThenErrorIsReturned) {
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
     ASSERT_NE(nullptr, drm->engineInfo);
 
-    auto engineFlag = drm->bindDrmContext(42u, 20u, aub_stream::ENGINE_CCS, false);
+    auto engineFlag = drm->bindDrmContext(42u, 20u, aub_stream::ENGINE_CCS);
     EXPECT_EQ(static_cast<unsigned int>(I915_EXEC_DEFAULT), engineFlag);
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
     EXPECT_EQ(0u, drm->receivedContextParamRequestCount);
@@ -785,7 +781,7 @@ TEST(DrmTest, givenInvalidEngineTypeWhenBindingDrmContextThenExceptionIsThrown) 
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
     ASSERT_NE(nullptr, drm->engineInfo);
 
-    EXPECT_THROW(drm->bindDrmContext(42u, 0u, aub_stream::ENGINE_VCS, false), std::exception);
+    EXPECT_THROW(drm->bindDrmContext(42u, 0u, aub_stream::ENGINE_VCS), std::exception);
     EXPECT_EQ(haveLocalMemory ? 3u : 2u, drm->ioctlCallsCount);
     EXPECT_EQ(0u, drm->receivedContextParamRequestCount);
 }
@@ -807,7 +803,7 @@ TEST(DrmTest, givenSetParamEnginesFailsWhenBindingDrmContextThenCallUnrecoverabl
 
     drm->storedRetValForSetParamEngines = -1;
     auto drmContextId = 42u;
-    EXPECT_ANY_THROW(drm->bindDrmContext(drmContextId, 0u, renderEngine, false));
+    EXPECT_ANY_THROW(drm->bindDrmContext(drmContextId, 0u, renderEngine));
 }
 
 TEST(DrmTest, whenQueryingEngineInfoThenMultiTileArchInfoIsUnchanged) {

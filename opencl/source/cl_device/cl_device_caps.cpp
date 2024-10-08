@@ -296,9 +296,6 @@ void ClDevice::initializeCaps() {
     deviceInfo.maxWorkItemDimensions = 3;
 
     deviceInfo.maxComputUnits = systemInfo.EUCount * subDevicesCount;
-    if (device.isEngineInstanced()) {
-        deviceInfo.maxComputUnits /= systemInfo.CCSInfo.NumberOfCCSEnabled;
-    }
 
     deviceInfo.maxConstantArgs = 8;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;

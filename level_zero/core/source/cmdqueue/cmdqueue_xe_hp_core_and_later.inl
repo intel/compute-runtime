@@ -181,7 +181,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
 
             cfeStateCmd->setScratchSpaceBuffer(lowScratchAddress);
-            NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, csr->getOsContext().isEngineInstanced());
+            NEO::PreambleHelper<GfxFamily>::setSingleSliceDispatchMode(cfeStateCmd, false);
 
             *reinterpret_cast<CFE_STATE *>(commandToPatch.pDestination) = *cfeStateCmd;
             break;

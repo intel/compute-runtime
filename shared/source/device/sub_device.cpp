@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,6 @@ SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDev
 
 SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDeviceIndex, Device &rootDevice, aub_stream::EngineType engineType)
     : SubDevice(executionEnvironment, subDeviceIndex, rootDevice) {
-    this->engineInstancedType = engineType;
-    engineInstanced = true;
 }
 
 void SubDevice::incRefInternal() {

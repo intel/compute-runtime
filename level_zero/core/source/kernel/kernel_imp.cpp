@@ -431,13 +431,12 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     }
 
     if (this->heaplessEnabled && this->localDispatchSupport) {
-        auto isEngineIstanced = neoDevice->isEngineInstanced();
-        this->maxWgCountPerTileCcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::compute, isEngineIstanced, true);
+        this->maxWgCountPerTileCcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::compute, true);
         if (this->rcsAvailable) {
-            this->maxWgCountPerTileRcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::renderCompute, isEngineIstanced, true);
+            this->maxWgCountPerTileRcs = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::renderCompute, true);
         }
         if (this->cooperativeSupport) {
-            this->maxWgCountPerTileCooperative = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::cooperativeCompute, isEngineIstanced, true);
+            this->maxWgCountPerTileCooperative = suggestMaxCooperativeGroupCount(NEO::EngineGroupType::cooperativeCompute, true);
         }
     }
     return ZE_RESULT_SUCCESS;
@@ -503,7 +502,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
     return ZE_RESULT_SUCCESS;
 }
 
-uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, uint32_t *groupSize, bool isEngineInstanced, bool forceSingleTileQuery) {
+uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, uint32_t *groupSize, bool forceSingleTileQuery) {
     auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
     auto &helper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     auto &descriptor = kernelImmData->getDescriptor();
@@ -525,8 +524,7 @@ uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineG
                                                    usedSlmSize,
                                                    workDim,
                                                    localWorkSize,
-                                                   engineGroupType,
-                                                   isEngineInstanced);
+                                                   engineGroupType);
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {

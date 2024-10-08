@@ -46,7 +46,7 @@ struct KernelHelperMaxWorkGroupsTests : ::testing::Test {
         hwInfo->gtSystemInfo.DualSubSliceCount = dssCount;
         hwInfo->capabilityTable.slmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
 
-        return KernelHelper::getMaxWorkGroupCount(*rootDeviceEnvironment, descriptor, numSubdevices, usedSlm, workDim, lws, engineType, false);
+        return KernelHelper::getMaxWorkGroupCount(*rootDeviceEnvironment, descriptor, numSubdevices, usedSlm, workDim, lws, engineType);
     }
 
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
@@ -59,7 +59,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMa
     uint32_t workGroupSize = static_cast<uint32_t>(lws[0] * lws[1] * lws[2]);
     uint32_t expected = helper.calculateAvailableThreadCount(*rootDeviceEnvironment->getHardwareInfo(), grf) / static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
 
-    expected = helper.adjustMaxWorkGroupCount(expected, EngineGroupType::compute, *rootDeviceEnvironment, false);
+    expected = helper.adjustMaxWorkGroupCount(expected, EngineGroupType::compute, *rootDeviceEnvironment);
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 

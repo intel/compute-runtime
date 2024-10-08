@@ -103,7 +103,7 @@ ze_result_t zeKernelSuggestGroupSize(
 ze_result_t zeKernelSuggestMaxCooperativeGroupCount(
     ze_kernel_handle_t hKernel,
     uint32_t *totalGroupCount) {
-    *totalGroupCount = L0::Kernel::fromHandle(hKernel)->suggestMaxCooperativeGroupCount(NEO::EngineGroupType::compute, false, false);
+    *totalGroupCount = L0::Kernel::fromHandle(hKernel)->suggestMaxCooperativeGroupCount(NEO::EngineGroupType::compute, false);
     return ZE_RESULT_SUCCESS;
 }
 

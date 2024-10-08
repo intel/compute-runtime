@@ -97,7 +97,6 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         auto &engineInstances = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment);
         auto osContextCount = static_cast<uint32_t>(engineInstances.size());
         auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
-        auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
 
         uint32_t numRegularEngines = 0;
@@ -121,10 +120,6 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         }
 
         MemoryManager::maxOsContextCount += (numSecondaryContexts + osContextCount) * subDevicesCount + numRootContexts;
-
-        if (ccsCount > 1 && debugManager.flags.EngineInstancedSubDevices.get()) {
-            MemoryManager::maxOsContextCount += ccsCount * subDevicesCount;
-        }
     }
 }
 
@@ -270,7 +265,7 @@ void ExecutionEnvironment::parseAffinityMask() {
                 continue;
             }
 
-            // FlatHierarchy not supported with AllowSingleTileEngineInstancedSubDevices
+            // FlatHierarchy
             // so ignore X.Y
             if (subEntries.size() > 1) {
                 continue;
@@ -293,19 +288,7 @@ void ExecutionEnvironment::parseAffinityMask() {
             if (subEntries.size() > 1) {
                 uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);
 
-                bool enableSecondLevelEngineInstanced = ((subDevicesCount == 1) &&
-                                                         (hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) &&
-                                                         debugManager.flags.AllowSingleTileEngineInstancedSubDevices.get());
-
-                if (enableSecondLevelEngineInstanced) {
-                    UNRECOVERABLE_IF(subEntries.size() != 2);
-
-                    if (subDeviceIndex < hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
-                        // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
-                        mapOfSubDeviceIndices[rootDeviceIndex] = std::make_tuple(rootDeviceIndex, subDeviceIndex, subDevicesCount);
-                        affinityMaskHelper[rootDeviceIndex].enableEngineInstancedSubDevice(0, subDeviceIndex); // Mask: X.Y
-                    }
-                } else if (subDeviceIndex < subDevicesCount) {
+                if (subDeviceIndex < subDevicesCount) {
                     if (subEntries.size() == 2) {
                         // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
                         mapOfSubDeviceIndices[rootDeviceIndex] = std::make_tuple(rootDeviceIndex, subDeviceIndex, subDevicesCount);

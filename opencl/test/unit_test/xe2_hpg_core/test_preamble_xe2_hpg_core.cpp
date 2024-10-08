@@ -18,7 +18,7 @@ XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndConcurrentKernelExecution
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
     StreamProperties streamProperties{};
     streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
-    streamProperties.frontEndState.setPropertiesAll(true, false, false, false);
+    streamProperties.frontEndState.setPropertiesAll(true, false, false);
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
@@ -34,7 +34,7 @@ XE2_HPG_CORETEST_F(PreambleCfeState, givenXe2HpgCoreAndDefaultKernelExecutionTyp
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, *defaultHwInfo, EngineGroupType::renderCompute);
     StreamProperties streamProperties{};
     streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
-    streamProperties.frontEndState.setPropertiesAll(false, false, false, false);
+    streamProperties.frontEndState.setPropertiesAll(false, false, false);
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());

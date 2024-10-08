@@ -614,7 +614,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenAllBcsEnginesReadyWhenWaitingForEventThe
 
     EXPECT_EQ(copyDefaultEngineType, eventObj->getBcsEngineType());
 
-    MockOsContext osContext(123, {{aub_stream::EngineType::ENGINE_BCS2, EngineUsage::regular}, device->getDeviceBitfield(), PreemptionMode::Disabled, false, false});
+    MockOsContext osContext(123, {{aub_stream::EngineType::ENGINE_BCS2, EngineUsage::regular}, device->getDeviceBitfield(), PreemptionMode::Disabled, false});
     UltCommandStreamReceiver<FamilyType> ultCsr2(*device->getExecutionEnvironment(), 0, device->getDeviceBitfield());
     ultCsr2.initializeTagAllocation();
     ultCsr2.setupContext(osContext);

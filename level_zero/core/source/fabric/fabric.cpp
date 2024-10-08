@@ -25,11 +25,6 @@ FabricVertex::~FabricVertex() {
 
 FabricVertex *FabricVertex::createFromDevice(Device *device) {
 
-    // Fabric Vertices are not created for engine instanced devices
-    if (device->getNEODevice()->isEngineInstanced()) {
-        return nullptr;
-    }
-
     auto fabricVertex = new FabricVertex();
     UNRECOVERABLE_IF(fabricVertex == nullptr);
 

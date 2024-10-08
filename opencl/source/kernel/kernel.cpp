@@ -1182,7 +1182,6 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
 
     auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                      commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();
 
     auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
 
@@ -1201,8 +1200,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                                                 usedSlmSize,
                                                                 workDim,
                                                                 localWorkSize,
-                                                                engineGroupType,
-                                                                isEngineInstanced);
+                                                                engineGroupType);
 
     return maxWorkGroupCount;
 }

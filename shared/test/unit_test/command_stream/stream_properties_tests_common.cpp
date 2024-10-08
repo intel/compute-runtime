@@ -85,7 +85,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     for (auto isCooperativeKernel : ::testing::Bool()) {
         for (auto disableOverdispatch : ::testing::Bool()) {
             for (auto disableEUFusion : ::testing::Bool()) {
-                properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, false);
+                properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch);
                 if (frontEndPropertiesSupport.computeDispatchAllWalker) {
                     EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
                 } else {
@@ -102,7 +102,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
                     EXPECT_EQ(-1, properties.frontEndState.disableOverdispatch.value);
                 }
                 if (frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
-                    EXPECT_EQ(false, properties.frontEndState.singleSliceDispatchCcsMode.value);
+                    EXPECT_EQ(-1, properties.frontEndState.singleSliceDispatchCcsMode.value);
                 } else {
                     EXPECT_EQ(-1, properties.frontEndState.singleSliceDispatchCcsMode.value);
                 }
@@ -512,88 +512,75 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
     feProperties.initSupport(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_TRUE(feProperties.propertiesSupportLoaded);
 
-    int32_t engineInstancedDevice = 1;
-
-    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice);
     if (fePropertiesSupport.singleSliceDispatchCcsMode) {
-        EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
-        EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
+        EXPECT_FALSE(feProperties.singleSliceDispatchCcsMode.isDirty);
     } else {
         EXPECT_FALSE(feProperties.singleSliceDispatchCcsMode.isDirty);
         EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
     }
 
     feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = true;
-    engineInstancedDevice = 2;
-
-    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice);
-    EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
-    EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_FALSE(feProperties.singleSliceDispatchCcsMode.isDirty);
 }
 
-TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+TEST(StreamPropertiesTests, givenDisableOverdispatchFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
     bool clearDirtyState = false;
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
     feProperties.frontEndPropertiesSupport.disableOverdispatch = false;
     feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = false;
 
-    int32_t engineInstancedDevice = 0;
     bool disableOverdispatch = false;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(-1, feProperties.disableOverdispatch.value);
     EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
     feProperties.frontEndPropertiesSupport.disableOverdispatch = true;
     feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = true;
-    engineInstancedDevice = -1;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
-    engineInstancedDevice = 0;
-    feProperties.setPropertiesAll(false, false, disableOverdispatch, engineInstancedDevice);
-    EXPECT_TRUE(feProperties.isDirty());
-    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
-
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesAll(false, false, disableOverdispatch);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
-    engineInstancedDevice = 1;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
-    EXPECT_TRUE(feProperties.isDirty());
-    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
-
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
+
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
+
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
     disableOverdispatch = true;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(1, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(1, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
     clearDirtyState = true;
     disableOverdispatch = false;
-    engineInstancedDevice = 0;
 
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatch(disableOverdispatch, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 }
 
 TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusionFrontEndPropertiesWhenSettingPropertiesAndCheckIfSupportedThenExpectCorrectState) {
@@ -611,7 +598,7 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
 
     feProperties.frontEndPropertiesSupport.disableEuFusion = true;
     feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
-    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, false, -1);
+    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, false);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableEUFusion.value);
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
@@ -685,13 +672,12 @@ TEST(StreamPropertiesTests, givenSetAllFrontEndPropertiesWhenResettingStateThenR
     bool isCooperativeKernel = false;
     bool disableEuFusion = true;
     bool disableOverdispatch = true;
-    int32_t engineInstancedDevice = 3;
-    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice);
+    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(1, feProperties.disableEUFusion.value);
     EXPECT_EQ(1, feProperties.disableOverdispatch.value);
-    EXPECT_EQ(3, feProperties.singleSliceDispatchCcsMode.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
     feProperties.resetState();
     EXPECT_FALSE(feProperties.isDirty());
@@ -1446,8 +1432,7 @@ TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesRe
     bool isCooperativeKernel = false;
     bool disableEuFusion = true;
     bool disableOverdispatch = true;
-    int32_t engineInstancedDevice = 3;
-    globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice);
+    globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch);
 
     bool modeSelected = false;
     bool mediaSamplerDopClockGate = false;

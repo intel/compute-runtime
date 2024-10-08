@@ -796,12 +796,12 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
 
 TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithLowPriorityDescIsCalledThenCopyCsrIsAssigned) {
     auto copyCsr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-    EngineDescriptor copyEngineDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false, false);
+    EngineDescriptor copyEngineDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false);
     auto copyOsContext = neoDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(copyCsr.get(), copyEngineDescriptor);
     copyCsr->setupContext(*copyOsContext);
 
     auto computeCsr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-    EngineDescriptor computeEngineDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false, false);
+    EngineDescriptor computeEngineDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false);
     auto computeOsContext = neoDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(computeCsr.get(), computeEngineDescriptor);
     computeCsr->setupContext(*computeOsContext);
 

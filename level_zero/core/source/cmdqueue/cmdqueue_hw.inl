@@ -617,7 +617,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSize(bool isFrontEndDir
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
-    bool &isFrontEndStateDirty, int32_t engineInstanced, CommandList *commandList,
+    bool &isFrontEndStateDirty, CommandList *commandList,
     NEO::StreamProperties &csrState,
     const NEO::StreamProperties &cmdListRequired,
     const NEO::StreamProperties &cmdListFinal,
@@ -635,7 +635,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
 
     if (isFrontEndStateDirty) {
         csrState.frontEndState.copyPropertiesAll(cmdListRequired.frontEndState);
-        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced);
+        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode();
     } else {
         csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListRequired.frontEndState);
         feCurrentDirty = csrState.frontEndState.isDirty();
@@ -906,14 +906,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateCommandListResidencySize(CommandLi
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecutionContext &ctx) {
 
-    auto isEngineInstanced = csr->getOsContext().isEngineInstanced();
     auto &streamProperties = this->csr->getStreamProperties();
     if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setPropertiesAll(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
-                                                        true, isEngineInstanced);
+                                                        true);
         ctx.frontEndStateDirty |= streamProperties.frontEndState.isDirty();
-    } else {
-        ctx.engineInstanced = isEngineInstanced;
     }
     ctx.frontEndStateDirty |= csr->getMediaVFEStateDirty();
     ctx.globalInit |= ctx.frontEndStateDirty;
@@ -971,7 +968,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
         const NEO::StreamProperties &requiredStreamState = cmdList->getRequiredStreamState();
         const NEO::StreamProperties &finalStreamState = cmdList->getFinalStreamState();
 
-        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, ctx.engineInstanced, cmdList,
+        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, cmdList,
                                                                                    streamProperties, requiredStreamState, finalStreamState,
                                                                                    cmdListState.requiredState,
                                                                                    cmdListState.flags.propertyFeDirty, cmdListState.flags.frontEndReturnPoint);

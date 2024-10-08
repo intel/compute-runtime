@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,15 +117,6 @@ ClDevice *ClDevice::getSubDevice(uint32_t deviceId) const {
 }
 
 ClDevice *ClDevice::getNearestGenericSubDevice(uint32_t deviceId) {
-    /*
-     * EngineInstanced: Upper level
-     * Generic SubDevice: 'this'
-     * RootCsr Device: Next level SubDevice (generic)
-     */
-
-    if (getDevice().isEngineInstanced()) {
-        return rootClDevice.getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(getDeviceBitfield().to_ulong())));
-    }
 
     if (subDevices.empty() || !getDevice().hasRootCsr()) {
         return this;

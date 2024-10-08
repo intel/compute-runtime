@@ -1886,9 +1886,9 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithoutVirtualEnginesThenProperEngi
     uint16_t tileId = 1u;
     uint16_t expectedGtId = 2u;
 
-    EXPECT_EQ(expectedValue, drm->bindDrmContext(0, tileId, aub_stream::EngineType::ENGINE_CCS, true));
+    EXPECT_EQ(expectedValue, drm->bindDrmContext(0, tileId, aub_stream::EngineType::ENGINE_CCS));
 
-    EXPECT_EQ(1u, ioctlHelper->contextParamEngine.size());
+    EXPECT_EQ(4u, ioctlHelper->contextParamEngine.size());
     auto expectedEngine = drm->getEngineInfo()->getEngineInstance(1, aub_stream::EngineType::ENGINE_CCS);
     auto notExpectedEngine = drm->getEngineInfo()->getEngineInstance(0, aub_stream::EngineType::ENGINE_CCS);
     EXPECT_NE(expectedEngine->engineInstance, notExpectedEngine->engineInstance);
@@ -1910,7 +1910,7 @@ TEST(IoctlHelperXeTest, whenBindingDrmContextWithVirtualEnginesThenProperEngines
     unsigned int expectedValue = DRM_XE_ENGINE_CLASS_COMPUTE;
     uint16_t tileId = 1u;
     uint16_t expectedGtId = 2u;
-    EXPECT_EQ(expectedValue, drm->bindDrmContext(0, tileId, aub_stream::EngineType::ENGINE_CCS, false));
+    EXPECT_EQ(expectedValue, drm->bindDrmContext(0, tileId, aub_stream::EngineType::ENGINE_CCS));
 
     EXPECT_EQ(2u, ioctlHelper->contextParamEngine.size());
     {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -372,7 +372,6 @@ TEST_F(ClCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoV
 }
 
 TEST_F(ClCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
-    debugManager.flags.EngineInstancedSubDevices.set(false);
     setup(1);
 
     clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE,

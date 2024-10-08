@@ -349,7 +349,7 @@ ze_result_t DriverHandleImp::parseAffinityMaskCombined(uint32_t *pCount, ze_devi
             continue;
         }
 
-        // Combined Device Hierarchy not supported with AllowSingleTileEngineInstancedSubDevices
+        // Combined Device Hierarchy
         // so ignore X.Y
         if (subEntries.size() > 1) {
             continue;

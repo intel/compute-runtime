@@ -83,10 +83,6 @@ SubDevice *Device::createSubDevice(uint32_t subDeviceIndex) {
     return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *getRootDevice());
 }
 
-SubDevice *Device::createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_stream::EngineType engineType) {
-    return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *getRootDevice(), engineType);
-}
-
 bool Device::genericSubDevicesAllowed() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
     uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
@@ -98,56 +94,6 @@ bool Device::genericSubDevicesAllowed() {
     }
 
     return (numSubDevices > 0);
-}
-
-bool Device::engineInstancedSubDevicesAllowed() {
-    bool notAllowed = !debugManager.flags.EngineInstancedSubDevices.get();
-    notAllowed |= engineInstanced;
-    notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
-    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!debugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
-
-    if (notAllowed) {
-        return false;
-    }
-
-    UNRECOVERABLE_IF(deviceBitfield.count() != 1);
-    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-
-    auto enginesMask = getRootDeviceEnvironment().deviceAffinityMask.getEnginesMask(subDeviceIndex);
-    auto ccsCount = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-
-    numSubDevices = std::min(ccsCount, static_cast<uint32_t>(enginesMask.count()));
-
-    if (numSubDevices == 1) {
-        numSubDevices = 0;
-    }
-
-    return (numSubDevices > 0);
-}
-
-bool Device::createEngineInstancedSubDevices() {
-    UNRECOVERABLE_IF(deviceBitfield.count() != 1);
-    UNRECOVERABLE_IF(!subdevices.empty());
-
-    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-
-    auto enginesMask = getRootDeviceEnvironment().deviceAffinityMask.getEnginesMask(subDeviceIndex);
-    auto ccsCount = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-
-    subdevices.resize(ccsCount, nullptr);
-
-    for (uint32_t i = 0; i < ccsCount; i++) {
-        if (!enginesMask.test(i)) {
-            continue;
-        }
-
-        auto engineType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
-        auto subDevice = createEngineInstancedSubDevice(subDeviceIndex, engineType);
-        UNRECOVERABLE_IF(!subDevice);
-        subdevices[i] = subDevice;
-    }
-
-    return true;
 }
 
 bool Device::createGenericSubDevices() {
@@ -176,40 +122,7 @@ bool Device::createSubDevices() {
         return createGenericSubDevices();
     }
 
-    if (engineInstancedSubDevicesAllowed()) {
-        return createEngineInstancedSubDevices();
-    }
-
     return true;
-}
-
-void Device::setAsEngineInstanced() {
-    if (subdevices.size() > 0) {
-        return;
-    }
-
-    UNRECOVERABLE_IF(deviceBitfield.count() != 1);
-
-    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    auto enginesMask = getRootDeviceEnvironment().deviceAffinityMask.getEnginesMask(subDeviceIndex);
-
-    if (enginesMask.count() != 1) {
-        return;
-    }
-
-    auto ccsCount = getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-
-    for (uint32_t i = 0; i < ccsCount; i++) {
-        if (!enginesMask.test(i)) {
-            continue;
-        }
-
-        UNRECOVERABLE_IF(engineInstanced);
-        engineInstanced = true;
-        engineInstancedType = static_cast<aub_stream::EngineType>(aub_stream::EngineType::ENGINE_CCS + i);
-    }
-
-    UNRECOVERABLE_IF(!engineInstanced);
 }
 
 bool Device::createDeviceImpl() {
@@ -243,8 +156,6 @@ bool Device::createDeviceImpl() {
 }
 
 bool Device::initDeviceWithEngines() {
-    setAsEngineInstanced();
-
     auto &productHelper = getProductHelper();
     if (getDebugger() && productHelper.disableL3CacheForDebug(getHardwareInfo())) {
         getGmmHelper()->forceAllResourcesUncached();
@@ -338,37 +249,31 @@ bool Device::initDeviceFully() {
     }
 
     createBindlessHeapsHelper();
-    if (!isEngineInstanced()) {
-        uuid.isValid = false;
+    uuid.isValid = false;
 
-        if (getRootDeviceEnvironment().osInterface == nullptr) {
-            return true;
+    if (getRootDeviceEnvironment().osInterface == nullptr) {
+        return true;
+    }
+
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &productHelper = getProductHelper();
+    if (debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
+        if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
+
+            auto deviceIndex = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+            uuid.isValid = productHelper.getUuid(getRootDeviceEnvironment().osInterface->getDriverModel(), getRootDevice()->getNumSubDevices(), deviceIndex, uuid.id);
         }
+    }
 
-        auto &gfxCoreHelper = getGfxCoreHelper();
-        auto &productHelper = getProductHelper();
-        if (debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
-            if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
-
-                auto deviceIndex = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
-                uuid.isValid = productHelper.getUuid(getRootDeviceEnvironment().osInterface->getDriverModel(), getRootDevice()->getNumSubDevices(), deviceIndex, uuid.id);
-            }
-        }
-
-        if (!uuid.isValid) {
-            PhysicalDevicePciBusInfo pciBusInfo = getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
-            uuid.isValid = generateUuidFromPciBusInfo(pciBusInfo, uuid.id);
-        }
+    if (!uuid.isValid) {
+        PhysicalDevicePciBusInfo pciBusInfo = getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+        uuid.isValid = generateUuidFromPciBusInfo(pciBusInfo, uuid.id);
     }
 
     return true;
 }
 
 bool Device::createEngines() {
-    if (engineInstanced) {
-        return createEngine({engineInstancedType, EngineUsage::regular});
-    }
-
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(getRootDeviceEnvironment());
 
@@ -529,9 +434,8 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     auto &gfxCoreHelper = getGfxCoreHelper();
     const auto engineType = engineTypeUsage.first;
     const auto engineUsage = engineTypeUsage.second;
-    const auto defaultEngineType = engineInstanced ? this->engineInstancedType : getChosenEngineType(hwInfo);
+    const auto defaultEngineType = getChosenEngineType(hwInfo);
     const bool isDefaultEngine = defaultEngineType == engineType && engineUsage == EngineUsage::regular;
-    const bool createAsEngineInstanced = engineInstanced && EngineHelpers::isCcs(engineType);
 
     bool primaryEngineTypeAllowed = (EngineHelpers::isCcs(engineType) || EngineHelpers::isBcs(engineType));
 
@@ -558,7 +462,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
         commandStreamReceiver->createPageTableManager();
     }
 
-    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
+    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
     osContext->setContextGroup(useContextGroup);
@@ -648,7 +552,7 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
         commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
 
-    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, false);
+    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterSecondaryOsContext(&primaryCsr->getOsContext(), commandStreamReceiver.get(), engineDescriptor);
     osContext->incRefInternal();
@@ -693,7 +597,7 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bo
                 commandStreamReceiver->createPageTableManager();
             }
 
-            EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, false);
+            EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
             if (!commandStreamReceiver->initializeResources(allocateInterrupt)) {
                 return nullptr;
@@ -825,16 +729,6 @@ Device *Device::getSubDevice(uint32_t deviceId) const {
 }
 
 Device *Device::getNearestGenericSubDevice(uint32_t deviceId) {
-    /*
-     * EngineInstanced: Upper level
-     * Generic SubDevice: 'this'
-     * RootCsr Device: Next level SubDevice (generic)
-     */
-
-    if (engineInstanced) {
-        return getRootDevice()->getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong())));
-    }
-
     if (subdevices.empty() || !hasRootCsr()) {
         return this;
     }
