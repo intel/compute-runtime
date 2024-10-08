@@ -120,14 +120,7 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize(Device &device, bool isRcs) 
 }
 
 template <typename GfxFamily, typename InterfaceDescriptorType>
-void PreemptionHelper::programInterfaceDescriptorDataPreemption(InterfaceDescriptorType *idd, PreemptionMode preemptionMode) {
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-    if (preemptionMode == PreemptionMode::MidThread) {
-        idd->setThreadPreemptionDisable(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_DISABLE);
-    } else {
-        idd->setThreadPreemptionDisable(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_ENABLE);
-    }
-}
+void PreemptionHelper::programInterfaceDescriptorDataPreemption(InterfaceDescriptorType *idd, PreemptionMode preemptionMode) {}
 
 template <typename GfxFamily>
 constexpr uint32_t PreemptionConfig<GfxFamily>::mmioAddress = 0x2580;

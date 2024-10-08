@@ -17,7 +17,6 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool systemMemCompressionAubsSupported = false;
     static constexpr bool l3ControlSupported = true;
     static constexpr bool forceNonCoherentSupported = true;
-    static constexpr bool threadPreemptionDisableBitMatcher = true;
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = false;
     static constexpr bool iohInSbaSupported = false;
     static constexpr bool auxTranslationSupported = true;
