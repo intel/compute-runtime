@@ -144,10 +144,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferStateless> : public BuiltInOp<EBu
         : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyBufferToBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
-                 "CopyBufferToBufferMiddle", kernMiddle,
-                 "CopyBufferToBufferMiddleMisaligned", kernMiddleMisaligned,
-                 "CopyBufferToBufferRightLeftover", kernRightLeftover);
+                 "CopyBufferToBufferLeftLeftoverStateless", kernLeftLeftover,
+                 "CopyBufferToBufferMiddleStateless", kernMiddle,
+                 "CopyBufferToBufferMiddleMisalignedStateless", kernMiddleMisaligned,
+                 "CopyBufferToBufferRightLeftoverStateless", kernRightLeftover);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -162,10 +162,10 @@ class BuiltInOp<EBuiltInOps::copyBufferToBufferStatelessHeapless> : public Built
         : BuiltInOp<EBuiltInOps::copyBufferToBuffer>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyBufferToBufferStatelessHeapless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "CopyBufferToBufferLeftLeftover", kernLeftLeftover,
-                 "CopyBufferToBufferMiddle", kernMiddle,
-                 "CopyBufferToBufferMiddleMisaligned", kernMiddleMisaligned,
-                 "CopyBufferToBufferRightLeftover", kernRightLeftover);
+                 "CopyBufferToBufferLeftLeftoverStateless", kernLeftLeftover,
+                 "CopyBufferToBufferMiddleStateless", kernMiddle,
+                 "CopyBufferToBufferMiddleMisalignedStateless", kernMiddleMisaligned,
+                 "CopyBufferToBufferRightLeftoverStateless", kernRightLeftover);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -408,18 +408,18 @@ class BuiltInOp<EBuiltInOps::copyBufferRectStateless> : public BuiltInOp<EBuiltI
         : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyBufferRectStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "CopyBufferRectBytes2d", kernelBytes[0],
-                 "CopyBufferRectBytes2d", kernelBytes[1],
-                 "CopyBufferRectBytes3d", kernelBytes[2],
-                 "CopyBufferRectBytes2d", kernelLeft[0],
-                 "CopyBufferRectBytes2d", kernelLeft[1],
-                 "CopyBufferRectBytes3d", kernelLeft[2],
-                 "CopyBufferRectBytesMiddle2d", kernelMiddle[0],
-                 "CopyBufferRectBytesMiddle2d", kernelMiddle[1],
-                 "CopyBufferRectBytesMiddle3d", kernelMiddle[2],
-                 "CopyBufferRectBytes2d", kernelRight[0],
-                 "CopyBufferRectBytes2d", kernelRight[1],
-                 "CopyBufferRectBytes3d", kernelRight[2]);
+                 "CopyBufferRectBytes2dStateless", kernelBytes[0],
+                 "CopyBufferRectBytes2dStateless", kernelBytes[1],
+                 "CopyBufferRectBytes3dStateless", kernelBytes[2],
+                 "CopyBufferRectBytes2dStateless", kernelLeft[0],
+                 "CopyBufferRectBytes2dStateless", kernelLeft[1],
+                 "CopyBufferRectBytes3dStateless", kernelLeft[2],
+                 "CopyBufferRectBytesMiddle2dStateless", kernelMiddle[0],
+                 "CopyBufferRectBytesMiddle2dStateless", kernelMiddle[1],
+                 "CopyBufferRectBytesMiddle3dStateless", kernelMiddle[2],
+                 "CopyBufferRectBytes2dStateless", kernelRight[0],
+                 "CopyBufferRectBytes2dStateless", kernelRight[1],
+                 "CopyBufferRectBytes3dStateless", kernelRight[2]);
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
@@ -433,18 +433,18 @@ class BuiltInOp<EBuiltInOps::copyBufferRectStatelessHeapless> : public BuiltInOp
         : BuiltInOp<EBuiltInOps::copyBufferRect>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyBufferRectStatelessHeapless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "CopyBufferRectBytes2d", kernelBytes[0],
-                 "CopyBufferRectBytes2d", kernelBytes[1],
-                 "CopyBufferRectBytes3d", kernelBytes[2],
-                 "CopyBufferRectBytes2d", kernelLeft[0],
-                 "CopyBufferRectBytes2d", kernelLeft[1],
-                 "CopyBufferRectBytes3d", kernelLeft[2],
-                 "CopyBufferRectBytesMiddle2d", kernelMiddle[0],
-                 "CopyBufferRectBytesMiddle2d", kernelMiddle[1],
-                 "CopyBufferRectBytesMiddle3d", kernelMiddle[2],
-                 "CopyBufferRectBytes2d", kernelRight[0],
-                 "CopyBufferRectBytes2d", kernelRight[1],
-                 "CopyBufferRectBytes3d", kernelRight[2]);
+                 "CopyBufferRectBytes2dStateless", kernelBytes[0],
+                 "CopyBufferRectBytes2dStateless", kernelBytes[1],
+                 "CopyBufferRectBytes3dStateless", kernelBytes[2],
+                 "CopyBufferRectBytes2dStateless", kernelLeft[0],
+                 "CopyBufferRectBytes2dStateless", kernelLeft[1],
+                 "CopyBufferRectBytes3dStateless", kernelLeft[2],
+                 "CopyBufferRectBytesMiddle2dStateless", kernelMiddle[0],
+                 "CopyBufferRectBytesMiddle2dStateless", kernelMiddle[1],
+                 "CopyBufferRectBytesMiddle3dStateless", kernelMiddle[2],
+                 "CopyBufferRectBytes2dStateless", kernelRight[0],
+                 "CopyBufferRectBytes2dStateless", kernelRight[1],
+                 "CopyBufferRectBytes3dStateless", kernelRight[2]);
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
@@ -550,9 +550,9 @@ class BuiltInOp<EBuiltInOps::fillBufferStateless> : public BuiltInOp<EBuiltInOps
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, false) {
         populate(EBuiltInOps::fillBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "FillBufferLeftLeftover", kernLeftLeftover,
-                 "FillBufferMiddle", kernMiddle,
-                 "FillBufferRightLeftover", kernRightLeftover);
+                 "FillBufferLeftLeftoverStateless", kernLeftLeftover,
+                 "FillBufferMiddleStateless", kernMiddle,
+                 "FillBufferRightLeftoverStateless", kernRightLeftover);
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfos);
@@ -565,9 +565,9 @@ class BuiltInOp<EBuiltInOps::fillBufferStatelessHeapless> : public BuiltInOp<EBu
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::fillBuffer>(kernelsLib, device, false) {
         populate(EBuiltInOps::fillBufferStatelessHeapless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "FillBufferLeftLeftover", kernLeftLeftover,
-                 "FillBufferMiddle", kernMiddle,
-                 "FillBufferRightLeftover", kernRightLeftover);
+                 "FillBufferLeftLeftoverStateless", kernLeftLeftover,
+                 "FillBufferMiddleStateless", kernMiddle,
+                 "FillBufferRightLeftoverStateless", kernRightLeftover);
     }
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfos) const override {
         return buildDispatchInfosTyped<uint64_t>(multiDispatchInfos);
@@ -677,11 +677,11 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless> : public BuiltInOp<EB
         : BuiltInOp<EBuiltInOps::copyBufferToImage3d>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyBufferToImage3dStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "CopyBufferToImage3dBytes", kernelBytes[0],
-                 "CopyBufferToImage3d2Bytes", kernelBytes[1],
-                 "CopyBufferToImage3d4Bytes", kernelBytes[2],
-                 "CopyBufferToImage3d8Bytes", kernelBytes[3],
-                 "CopyBufferToImage3d16Bytes", kernelBytes[4]);
+                 "CopyBufferToImage3dBytesStateless", kernelBytes[0],
+                 "CopyBufferToImage3d2BytesStateless", kernelBytes[1],
+                 "CopyBufferToImage3d4BytesStateless", kernelBytes[2],
+                 "CopyBufferToImage3d8BytesStateless", kernelBytes[3],
+                 "CopyBufferToImage3d16BytesStateless", kernelBytes[4]);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
@@ -799,11 +799,11 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless> : public BuiltInOp<EB
         : BuiltInOp<EBuiltInOps::copyImage3dToBuffer>(kernelsLib, device, false) {
         populate(EBuiltInOps::copyImage3dToBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
-                 "CopyImage3dToBufferBytes", kernelBytes[0],
-                 "CopyImage3dToBuffer2Bytes", kernelBytes[1],
-                 "CopyImage3dToBuffer4Bytes", kernelBytes[2],
-                 "CopyImage3dToBuffer8Bytes", kernelBytes[3],
-                 "CopyImage3dToBuffer16Bytes", kernelBytes[4]);
+                 "CopyImage3dToBufferBytesStateless", kernelBytes[0],
+                 "CopyImage3dToBuffer2BytesStateless", kernelBytes[1],
+                 "CopyImage3dToBuffer4BytesStateless", kernelBytes[2],
+                 "CopyImage3dToBuffer8BytesStateless", kernelBytes[3],
+                 "CopyImage3dToBuffer16BytesStateless", kernelBytes[4]);
     }
 
     bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {

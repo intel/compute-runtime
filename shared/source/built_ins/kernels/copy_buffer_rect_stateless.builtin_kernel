@@ -7,7 +7,7 @@
 
 R"===(
 
-__kernel void CopyBufferRectBytes2d(
+__kernel void CopyBufferRectBytes2dStateless(
     __global const char* src,
     __global char* dst,
     ulong4 SrcOrigin,
@@ -26,7 +26,7 @@ __kernel void CopyBufferRectBytes2d(
 
 }
 
-__kernel void CopyBufferRectBytesMiddle2d(
+__kernel void CopyBufferRectBytesMiddle2dStateless(
     const __global uint* src,
     __global uint* dst,
     ulong4 SrcOrigin,
@@ -48,7 +48,7 @@ __kernel void CopyBufferRectBytesMiddle2d(
     vstore4(loaded,x,dst);
 }
 
-__kernel void CopyBufferRectBytes3d(
+__kernel void CopyBufferRectBytes3dStateless(
     __global const char* src, 
     __global char* dst, 
     ulong4 SrcOrigin, 
@@ -68,7 +68,7 @@ __kernel void CopyBufferRectBytes3d(
  
 }
 
-__kernel void CopyBufferRectBytesMiddle3d(
+__kernel void CopyBufferRectBytesMiddle3dStateless(
     const __global uint* src,
     __global uint* dst,
     ulong4 SrcOrigin,

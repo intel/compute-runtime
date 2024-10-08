@@ -11,7 +11,7 @@ __kernel void fullCopy(__global const uint* src, __global uint* dst) {
     vstore4(loaded, gid, dst);
 }
 
-__kernel void CopyBufferToBufferBytes(
+__kernel void CopyBufferToBufferBytesStateless(
     const __global uchar* pSrc,
     __global uchar* pDst,
     ulong srcOffsetInBytes,
@@ -23,7 +23,7 @@ __kernel void CopyBufferToBufferBytes(
     pDst[ 0 ] = pSrc[ 0 ];
 }
 
-__kernel void CopyBufferToBufferLeftLeftover(
+__kernel void CopyBufferToBufferLeftLeftoverStateless(
     const __global uchar* pSrc,
     __global uchar* pDst,
     ulong srcOffsetInBytes,
@@ -33,7 +33,7 @@ __kernel void CopyBufferToBufferLeftLeftover(
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
-__kernel void CopyBufferToBufferMiddle(
+__kernel void CopyBufferToBufferMiddleStateless(
     const __global uint* pSrc,
     __global uint* pDst,
     ulong srcOffsetInBytes,
@@ -46,7 +46,7 @@ __kernel void CopyBufferToBufferMiddle(
     vstore4(loaded, gid, pDst);
 }
 
-__kernel void CopyBufferToBufferMiddleMisaligned(
+__kernel void CopyBufferToBufferMiddleMisalignedStateless(
     __global const uint* pSrc,
      __global uint* pDst,
      ulong srcOffsetInBytes,
@@ -67,7 +67,7 @@ __kernel void CopyBufferToBufferMiddleMisaligned(
     vstore4(result, gid, pDst);
 }
 
-__kernel void CopyBufferToBufferRightLeftover(
+__kernel void CopyBufferToBufferRightLeftoverStateless(
     const __global uchar* pSrc,
     __global uchar* pDst,
     ulong srcOffsetInBytes,
@@ -77,11 +77,11 @@ __kernel void CopyBufferToBufferRightLeftover(
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
-__kernel void copyBufferToBufferBytesSingle(__global uchar *dst, const __global uchar *src) {
+__kernel void copyBufferToBufferBytesSingleStateless(__global uchar *dst, const __global uchar *src) {
     size_t gid = get_global_id(0);
     dst[gid] = (uchar)(src[gid]);
 }
-__kernel void CopyBufferToBufferSideRegion(
+__kernel void CopyBufferToBufferSideRegionStateless(
     __global uchar* pDst,
     const __global uchar* pSrc,
     ulong len,
@@ -97,7 +97,7 @@ __kernel void CopyBufferToBufferSideRegion(
     }
 }
 
-__kernel void CopyBufferToBufferMiddleRegion(
+__kernel void CopyBufferToBufferMiddleRegionStateless(
     __global uint* pDst,
     const __global uint* pSrc,
     ulong elems,
@@ -115,7 +115,7 @@ __kernel void CopyBufferToBufferMiddleRegion(
 }
 
 // assumption is local work size = pattern size
-__kernel void FillBufferBytes(
+__kernel void FillBufferBytesStateless(
     __global uchar* pDst,
     ulong dstOffsetInBytes,
     const __global uchar* pPattern )
@@ -125,7 +125,7 @@ __kernel void FillBufferBytes(
     pDst[dstIndex] = pPattern[srcIndex];
 }
 
-__kernel void FillBufferLeftLeftover(
+__kernel void FillBufferLeftLeftoverStateless(
     __global uchar* pDst,
     ulong dstOffsetInBytes,
     const __global uchar* pPattern,
@@ -135,7 +135,7 @@ __kernel void FillBufferLeftLeftover(
     pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
 }
 
-__kernel void FillBufferMiddle(
+__kernel void FillBufferMiddleStateless(
     __global uchar* pDst,
     ulong dstOffsetInBytes,
     const __global uint* pPattern,
@@ -145,7 +145,7 @@ __kernel void FillBufferMiddle(
     ((__global uint*)(pDst + dstOffsetInBytes))[gid] = pPattern[ gid & (patternSizeInEls - 1) ];
 }
 
-__kernel void FillBufferRightLeftover(
+__kernel void FillBufferRightLeftoverStateless(
     __global uchar* pDst,
     ulong dstOffsetInBytes,
     const __global uchar* pPattern,
@@ -155,7 +155,7 @@ __kernel void FillBufferRightLeftover(
     pDst[ gid + dstOffsetInBytes ] = pPattern[ gid & (patternSizeInEls - 1) ];
 }
 
-__kernel void FillBufferImmediate(
+__kernel void FillBufferImmediateStateless(
     __global uchar* ptr,
     ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const uint value)
@@ -165,7 +165,7 @@ __kernel void FillBufferImmediate(
     dstPtr[gid] = value;
 }
 
-__kernel void FillBufferImmediateLeftOver(
+__kernel void FillBufferImmediateLeftOverStateless(
     __global uchar* ptr,
     ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const uint value)
@@ -174,7 +174,7 @@ __kernel void FillBufferImmediateLeftOver(
     (ptr + dstSshOffset)[gid] = value;
 }
 
-__kernel void FillBufferSSHOffset(
+__kernel void FillBufferSSHOffsetStateless(
     __global uchar* ptr,
     ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const __global uchar* pPattern,
@@ -189,7 +189,7 @@ __kernel void FillBufferSSHOffset(
 }
 
 //////////////////////////////////////////////////////////////////////////////
-__kernel void CopyBufferRectBytes2d(
+__kernel void CopyBufferRectBytes2dStateless(
     __global const char* src,
     __global char* dst,
     uint4 SrcOrigin,
@@ -208,7 +208,7 @@ __kernel void CopyBufferRectBytes2d(
 
 }
 //////////////////////////////////////////////////////////////////////////////
-__kernel void CopyBufferRectBytes3d(
+__kernel void CopyBufferRectBytes3dStateless(
     __global const char* src, 
     __global char* dst, 
     uint4 SrcOrigin, 
@@ -228,7 +228,7 @@ __kernel void CopyBufferRectBytes3d(
  
 }
 
-__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
+__kernel void QueryKernelTimestampsStateless(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
     uint gid = get_global_id(0);
     uint currentOffset = gid * 4;
     dst[currentOffset] = 0;
@@ -276,7 +276,7 @@ __kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* d
 
 }
 
-__kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
+__kernel void QueryKernelTimestampsWithOffsetsStateless(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
     uint gid = get_global_id(0);
     uint currentOffset = offsets[gid] / 8;
     dst[currentOffset] = 0;
@@ -324,7 +324,7 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
 
 }
 
-__kernel void CopyBufferRectBytesMiddle2d(
+__kernel void CopyBufferRectBytesMiddle2dStateless(
     const __global uint* src,
     __global uint* dst,
     ulong4 SrcOrigin,
@@ -346,7 +346,7 @@ __kernel void CopyBufferRectBytesMiddle2d(
     vstore4(loaded,x,dst);
 }
 
-__kernel void CopyBufferRectBytesMiddle3d(
+__kernel void CopyBufferRectBytesMiddle3dStateless(
     const __global uint* src,
     __global uint* dst,
     ulong4 SrcOrigin,

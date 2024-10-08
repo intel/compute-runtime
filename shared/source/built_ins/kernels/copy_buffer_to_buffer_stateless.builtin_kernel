@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 R"===(
-__kernel void CopyBufferToBufferBytes(
+__kernel void CopyBufferToBufferBytesStateless(
     const __global uchar* pSrc,
     __global uchar* pDst,
     ulong srcOffsetInBytes,
@@ -18,7 +18,7 @@ __kernel void CopyBufferToBufferBytes(
     pDst[ 0 ] = pSrc[ 0 ];
 }
 
-__kernel void CopyBufferToBufferLeftLeftover(
+__kernel void CopyBufferToBufferLeftLeftoverStateless(
     const __global uchar* pSrc,
     __global uchar* pDst,
     ulong srcOffsetInBytes,
@@ -28,7 +28,7 @@ __kernel void CopyBufferToBufferLeftLeftover(
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
-__kernel void CopyBufferToBufferMiddle(
+__kernel void CopyBufferToBufferMiddleStateless(
     const __global uint* pSrc,
     __global uint* pDst,
     ulong srcOffsetInBytes,
@@ -41,7 +41,7 @@ __kernel void CopyBufferToBufferMiddle(
     vstore4(loaded, gid, pDst);
 }
 
-__kernel void CopyBufferToBufferMiddleMisaligned(
+__kernel void CopyBufferToBufferMiddleMisalignedStateless(
     __global const uint* pSrc,
      __global uint* pDst,
      ulong srcOffsetInBytes,
@@ -62,7 +62,7 @@ __kernel void CopyBufferToBufferMiddleMisaligned(
     vstore4(result, gid, pDst);
 }
 
-__kernel void CopyBufferToBufferRightLeftover(
+__kernel void CopyBufferToBufferRightLeftoverStateless(
     const __global uchar* pSrc,
     __global uchar* pDst,
     ulong srcOffsetInBytes,
@@ -72,12 +72,12 @@ __kernel void CopyBufferToBufferRightLeftover(
     pDst[ gid + dstOffsetInBytes ] = pSrc[ gid + srcOffsetInBytes ];
 }
 
-__kernel void copyBufferToBufferBytesSingle(__global uchar *dst, const __global uchar *src) {
+__kernel void copyBufferToBufferBytesSingleStateless(__global uchar *dst, const __global uchar *src) {
     size_t gid = get_global_id(0);
     dst[gid] = (uchar)(src[gid]);
 }
 
-__kernel void CopyBufferToBufferSideRegion(
+__kernel void CopyBufferToBufferSideRegionStateless(
     __global uchar* pDst,
     const __global uchar* pSrc,
     ulong len,
@@ -93,7 +93,7 @@ __kernel void CopyBufferToBufferSideRegion(
     }
 }
 
-__kernel void CopyBufferToBufferMiddleRegion(
+__kernel void CopyBufferToBufferMiddleRegionStateless(
     __global uint* pDst,
     const __global uint* pSrc,
     ulong elems,

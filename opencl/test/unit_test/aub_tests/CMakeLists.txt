@@ -30,6 +30,13 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
   set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
   set_property(TARGET igdrcl_aub_tests PROPERTY ENABLE_EXPORTS TRUE)
 
+  target_sources(igdrcl_aub_tests PRIVATE
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
+  )
+
   if(MSVC)
     set_target_properties(igdrcl_aub_tests PROPERTIES
                           VS_DEBUGGER_WORKING_DIRECTORY ${TargetDir}

@@ -157,39 +157,39 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessBuiltinsWhenInitBuiltinKernel
 
     lib.initBuiltinKernel(L0::Builtin::copyBufferBytesStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("copyBufferToBufferBytesSingle", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("copyBufferToBufferBytesSingleStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::copyBufferToBufferMiddleStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyBufferToBufferMiddleRegion", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyBufferToBufferMiddleRegionStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::copyBufferToBufferSideStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyBufferToBufferSideRegion", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyBufferToBufferSideRegionStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::fillBufferImmediateStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("FillBufferImmediate", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("FillBufferImmediateStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::fillBufferImmediateLeftOverStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("FillBufferImmediateLeftOver", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("FillBufferImmediateLeftOverStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::fillBufferSSHOffsetStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("FillBufferSSHOffset", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("FillBufferSSHOffsetStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::fillBufferSSHOffsetStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("FillBufferSSHOffset", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("FillBufferSSHOffsetStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::fillBufferMiddleStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("FillBufferMiddle", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("FillBufferMiddleStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinKernel(L0::Builtin::fillBufferRightLeftoverStatelessHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::fillBufferStatelessHeapless, lib.builtinPassed);
-    EXPECT_STREQ("FillBufferRightLeftover", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("FillBufferRightLeftoverStateless", lib.kernelNamePassed.c_str());
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {

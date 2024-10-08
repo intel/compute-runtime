@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 R"===(
-__kernel void CopyImage3dToBufferBytes(__read_only image3d_t input,
+__kernel void CopyImage3dToBufferBytesStateless(__read_only image3d_t input,
                                        __global uchar *dst,
                                        int4 srcOffset,
                                        ulong dstOffset,
@@ -22,7 +22,7 @@ __kernel void CopyImage3dToBufferBytes(__read_only image3d_t input,
     *(dst + DstOffset + x) = convert_uchar_sat(c.x);
 }
 
-__kernel void CopyImage3dToBuffer2Bytes(__read_only image3d_t input,
+__kernel void CopyImage3dToBuffer2BytesStateless(__read_only image3d_t input,
                                         __global uchar *dst,
                                         int4 srcOffset,
                                         ulong dstOffset,
@@ -45,7 +45,7 @@ __kernel void CopyImage3dToBuffer2Bytes(__read_only image3d_t input,
     }
 }
 
-__kernel void CopyImage3dToBuffer4Bytes(__read_only image3d_t input,
+__kernel void CopyImage3dToBuffer4BytesStateless(__read_only image3d_t input,
                                         __global uchar *dst,
                                         int4 srcOffset,
                                         ulong dstOffset,
@@ -70,7 +70,7 @@ __kernel void CopyImage3dToBuffer4Bytes(__read_only image3d_t input,
     }
 }
 
-__kernel void CopyImage3dToBuffer8Bytes(__read_only image3d_t input,
+__kernel void CopyImage3dToBuffer8BytesStateless(__read_only image3d_t input,
                                         __global uchar *dst,
                                         int4 srcOffset,
                                         ulong dstOffset,
@@ -100,7 +100,7 @@ __kernel void CopyImage3dToBuffer8Bytes(__read_only image3d_t input,
     }
 }
 
-__kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
+__kernel void CopyImage3dToBuffer16BytesStateless(__read_only image3d_t input,
                                          __global uchar *dst,
                                          int4 srcOffset,
                                          ulong dstOffset,
