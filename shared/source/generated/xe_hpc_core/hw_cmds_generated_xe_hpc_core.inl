@@ -5360,9 +5360,11 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         return static_cast<DENORM_MODE>(TheStructure.Common.DenormMode);
     }
     inline void setThreadPreemptionDisable(const THREAD_PREEMPTION_DISABLE value) {
+        UNRECOVERABLE_IF(true); // patched
         TheStructure.Common.ThreadPreemptionDisable = value;
     }
     inline THREAD_PREEMPTION_DISABLE getThreadPreemptionDisable() const {
+        UNRECOVERABLE_IF(true); // patched
         return static_cast<THREAD_PREEMPTION_DISABLE>(TheStructure.Common.ThreadPreemptionDisable);
     }
     inline void setBindingTableEntryCount(const uint32_t value) {
