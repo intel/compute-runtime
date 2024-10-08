@@ -44,6 +44,9 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData
 }
 
 bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
+    if (false == sizeAllowed(size)) {
+        return false;
+    }
     std::lock_guard<std::mutex> lock(this->mtx);
     if (size + this->totalSize > this->maxSize) {
         return false;
@@ -62,6 +65,9 @@ bool SVMAllocsManager::SvmAllocationCache::allocUtilizationAllows(size_t request
 }
 
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager) {
+    if (false == sizeAllowed(size)) {
+        return nullptr;
+    }
     std::lock_guard<std::mutex> lock(this->mtx);
     for (auto allocationIter = std::lower_bound(allocations.begin(), allocations.end(), size);
          allocationIter != allocations.end();

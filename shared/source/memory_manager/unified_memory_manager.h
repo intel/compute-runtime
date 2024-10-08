@@ -157,12 +157,16 @@ class SVMAllocsManager {
     };
 
     struct SvmAllocationCache {
+        static constexpr size_t maxServicedSize = 256 * MemoryConstants::megaByte;
+        static constexpr size_t minimalSizeToCheckUtilization = 4 * MemoryConstants::pageSize64k;
+        static constexpr double minimalAllocUtilization = 0.5;
+
+        static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
         bool insert(size_t size, void *);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager);
         void trim(SVMAllocsManager *svmAllocsManager);
-        static constexpr size_t minimalSizeToCheckUtilization = 4 * MemoryConstants::pageSize64k;
-        static constexpr double minimalAllocUtilization = 0.5;
+
         std::vector<SvmCacheAllocationInfo> allocations;
         std::mutex mtx;
         size_t maxSize = 0;
