@@ -20,7 +20,7 @@ Xe HPC (PVC) contains 4 CCSs (Compute-Command Streamers) per tile, which can be 
 - All EUs may be assigned to a single CCS, on which case, only 1 CCS is needed to be exposed to users.
 - EUs may be distributed equally among the 4 CCSs, and all CCSs are exposed.
 
-Applications query for the number of CCSs exposed in the target device by using Level Zero queue groups [https://spec.oneapi.io/level-zero/latest/core/PROG.html#command-queue-groups](https://spec.oneapi.io/level-zero/latest/core/PROG.html#command-queue-groups).
+Applications query for the number of CCSs exposed in the target device by using Level Zero queue groups [https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#command-queue-groups](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#command-queue-groups).
 
 Depending on their execution patterns, applications may benefit more from using one or other configuration: Some may benefit from using 1 single CCS to access all EUs, while others may benefit from using more than 1 CCS, each with a fixed number of assigned EUs. For instance:
 

@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 # Introduction
 
-Implementation independent details of Level-Zero metrics are described in the Level-Zero specification [Metrics Section](https://spec.oneapi.io/level-zero/latest/tools/PROG.html#metrics). This implementation supports Time-based and Event-based sampling. Two domains are supported, one for collecting GPU performance metrics and one for collecting EU stall sampling data (type ZET_METRIC_TYPE_IP).
+Implementation independent details of Level-Zero metrics are described in the Level-Zero specification [Metrics Section](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/tools/PROG.html#metrics). This implementation supports Time-based and Event-based sampling. Two domains are supported, one for collecting GPU performance metrics and one for collecting EU stall sampling data (type ZET_METRIC_TYPE_IP).
 
 # Dependencies
 
@@ -29,7 +29,7 @@ Metrics collection depends on:
 
 # Environment Setup
 
-As described in Level-Zero specification [Tools Section](https://spec.oneapi.io/level-zero/latest/tools/PROG.html#environment-variables) environment variable `ZET_ENABLE_METRICS` must be set to 1.
+As described in Level-Zero specification [Tools Section](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/tools/PROG.html#environment-variables) environment variable `ZET_ENABLE_METRICS` must be set to 1.
 
 ## Linux
 Additionally in Linux environment, is is required to disable the kernel module driver i915 performance stream paranoid mode. This can be done with command
@@ -92,8 +92,8 @@ Using Level-Zero Loader Tracing Layer register epilog callbacks for L0 APIs. See
 2.	Store the disassembled GPU kernel code. 
 
 ### Metrics collection:
-1.	Enumerate available metric groups and query properties for metrics in each group. Match the metric group named "EU stall sampling", which contains the metric type ZET_METRIC_TYPE_IP. See high level generic steps at https://spec.oneapi.io/level-zero/latest/tools/PROG.html#enumeration
-2.	Open a streamer to collect metrics in "EU stall sampling" metric group.   See high level generic steps at  https://spec.oneapi.io/level-zero/latest/tools/PROG.html#metric-streamer 
+1.	Enumerate available metric groups and query properties for metrics in each group. Match the metric group named "EU stall sampling", which contains the metric type ZET_METRIC_TYPE_IP. See high level generic steps at https://oneapi-src.github.io/level-zero-spec/level-zero/latest/tools/PROG.html#enumeration
+2.	Open a streamer to collect metrics in "EU stall sampling" metric group.   See high level generic steps at  https://oneapi-src.github.io/level-zero-spec/level-zero/latest/tools/PROG.html#metric-streamer 
 3.	Run workload using Level-Zero Core APIs. 
 4.	Read metrics data (zetMetricStreamerReadData()) and calculate metrics values  (zetMetricGroupCalculateMultipleMetricValuesExp()).
 

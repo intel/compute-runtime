@@ -18,11 +18,11 @@ The update involves changes introduced in Level Zero spec v1.6. Some of the impo
 
 | Feature	| Spec link	| Notes |
 | ------------------ | -------------------| ----------------------------- |
-| Support for zeCommandListHostSynchronize API |	https://spec.oneapi.io/level-zero/latest/core/api.html#zecommandlisthostsynchronize | |	
-| Support for zeDriverGetLastErrorDescription API |	https://spec.oneapi.io/level-zero/latest/core/api.html#zedrivergetlasterrordescription | |
-| Support for zeMemPutIpcHandle API | https://spec.oneapi.io/level-zero/latest/core/api.html#zememputipchandle | |
-| Support for EventPool Get and put IPC handle APIs | https://spec.oneapi.io/level-zero/latest/core/api.html#zeeventpoolgetipchandle , https://spec.oneapi.io/level-zero/latest/core/api.html#zeeventpoolputipchandle | |
-| Support for host mapped and synchronized event timestamp extension API | https://spec.oneapi.io/level-zero/latest/core/api.html#eventquerykerneltimestamps | |
+| Support for zeCommandListHostSynchronize API |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zecommandlisthostsynchronize | |
+| Support for zeDriverGetLastErrorDescription API |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zedrivergetlasterrordescription | |
+| Support for zeMemPutIpcHandle API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zememputipchandle | |
+| Support for EventPool Get and put IPC handle APIs | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventpoolgetipchandle , https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zeeventpoolputipchandle | |
+| Support for host mapped and synchronized event timestamp extension API | https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#eventquerykerneltimestamps | |
 
 # Release Notes v1.5
 
@@ -36,11 +36,11 @@ The update involves changes introduced across Level Zero spec from v1.3 upto and
 
 | Feature	| Spec link	| Notes |
 | ------------------ | -------------------| ----------------------------- |
-| Support for Device IP Version extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#deviceipversion-structures | |	
-| Support for Image view and Image view planar extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#imageview | |	
-| Support for sub allocation properties extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#suballocationsproperties	| |
+| Support for Device IP Version extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#deviceipversion-structures | |
+| Support for Image view and Image view planar extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#imageview | |
+| Support for sub allocation properties extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#suballocationsproperties	| |
 | Allow IPC events with timestamp events		| | Previously spec had limitation disallowing usage of IPC for event pools created with timestamp flag. This limitation is now removed for both spec and implemenation |
-| Support for kernel max group size properties extension |	https://spec.oneapi.io/level-zero/latest/core/api.html#kernelmaxgroupsizeproperties	| |
+| Support for kernel max group size properties extension |	https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#kernelmaxgroupsizeproperties	| |
 
 
 # Release Notes v1.3
@@ -55,15 +55,15 @@ January 2022
 
 Implicit scaling has been enabled by default on Level Zero on Xe HPC (PVC) B and later steppings. The `EnableImplicitScaling` debug key may be used to enable (`EnableImplicitScaling=1`) or disable (`EnableImplicitScaling=0`) implicit scaling on on Xe HPC and other multi-tile architectures.
 
-### [Blocking Free](https://spec.oneapi.io/level-zero/latest/core/api.html#zememfreeext)
+### [Blocking Free](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zememfreeext)
 
 The blocking free memory policy has been implemented for `zeMemFreeExt` extension. Defer free policy will be added in upcoming releases.
 
-### [PCI Properties Extension](https://spec.oneapi.io/level-zero/latest/core/EXT_PCIProperties.html#pci-properties-extension)
+### [PCI Properties Extension](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/EXT_PCIProperties.html#pci-properties-extension)
 
 Support for PCI properties extension has been added via `zeDevicePciGetPropertiesExt` interface. This currently provides access to device's BDF address only. Device bandwidth property will be exposed in future based on support from underlying components
 
-### [Memory Compression Hints](https://spec.oneapi.io/level-zero/latest/core/EXT_MemoryCompressionHints.html#memory-compression-hints-extension)
+### [Memory Compression Hints](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/EXT_MemoryCompressionHints.html#memory-compression-hints-extension)
 
 Memory compression hints for shared and device memory allocations and images have been added.
 
@@ -82,7 +82,7 @@ August 2021
 
 ## Changes in this release:
 
-### [Extension to create image views for planar formats](https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=relaxed#relaxedalloclimits-enums)
+### [Extension to create image views for planar formats](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/EXT_ImageViewPlanar.html#ze-extension-image-view-planar)
 
 This extension allows accessing each plane for planar formats and have different interpretations of created images.
 
@@ -90,11 +90,11 @@ Sample code:
 
 [https://github.com/intel/compute-runtime/blob/master/level_zero/core/test/black_box_tests/zello_image_view.cpp](https://github.com/intel/compute-runtime/blob/master/level_zero/core/test/black_box_tests/zello_image_view.cpp)
 
-### [Extension for querying image properties](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_image_memory_properties_exp_t#_CPPv432ze_image_memory_properties_exp_t)
+### [Extension for querying image properties](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_image_memory_properties_exp_t#_CPPv432ze_image_memory_properties_exp_t)
 
 This extension allows querying the different properties of an image, such as size, row pitch, and slice pitch.
 
-### [Definition of ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2 properties](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_structure_type_device_properties_1_2#_CPPv439ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2)
+### [Definition of ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2 properties](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#_CPPv4N19ze_structure_type_t39ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2E)
 
 `ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2` properties allows users to request driver to return timer resolution in cycles per seconds,
 as defined v1.2 specification:
@@ -122,36 +122,36 @@ zeDeviceGetProperties(device, &devProperties);
 uint64_t timerResolutionInNanoSeconds = devProperties.timerResolution;
 ```
 ### Extension to set preferred allocation for USM shared allocations
-[`ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT`](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=mem_alloc_flag_bias_initial_placement#_CPPv447ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) and [`ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT`](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=mem_alloc_flag_bias_initial_placement#_CPPv445ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT) can now be set in
+[`ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT`](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#_CPPv4N26ze_device_mem_alloc_flag_t47ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENTE) and [`ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT`](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#_CPPv4N24ze_host_mem_alloc_flag_t45ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENTE) can now be set in
 `ze_device_mem_alloc_flags_t` and `ze_host_mem_alloc_flags_t`, respectively, when creating a shared-alloaction, to indicate
 the driver where a shared-allocation should be initially placed.
 
-### [IPC Memory Cache Bias Flags](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_ipc_memory_flag_bias_cached#ze-ipc-memory-flags-t)
+### [IPC Memory Cache Bias Flags](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_ipc_memory_flag_bias_cached#ze-ipc-memory-flags-t)
 
 `ZE_IPC_MEMORY_FLAG_BIAS_CACHED` and `ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED ` can be passed when opening an IPC
 memory handle with `zeMemOpenIpcHandle` to set the cache settings of the imported allocation.
 
-### [Support for preferred group size](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_kernel_preferred_group_size_properties_t#ze-kernel-preferred-group-size-properties-t)
+### [Support for preferred group size](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_kernel_preferred_group_size_properties_t#ze-kernel-preferred-group-size-properties-t)
 
 `ze_kernel_preferred_group_size_properties_t` can be used through `zeKernelGetProperties` to query for the preferred
 multiple group size of a kernel for submission. Submitting a kernel with the preferred group size returned by the driver
 may improve performance in certain platforms.
 
-### [Module compilation options](https://spec.oneapi.io/level-zero/latest/core/PROG.html#module-build-options)
+### [Module compilation options](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#module-build-options)
 
 Optimization levels can now be passed to `zeModuleCreate` using the `-ze-opt-level` option, which are then communicated
 to the underlying graphics compiler as hint to indicate the level of optimization desired.
 
-### [Extension to read the timestamps of each subdevice](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=zeeventquerytimestampsexp#zeeventquerytimestampsexp)
+### [Extension to read the timestamps of each subdevice](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=zeeventquerytimestampsexp#zeeventquerytimestampsexp)
 
 This extension defines the `zeEventQueryTimestampsExp` interface to query for timestamps of the parent device or
 all of the available subdevices.
 
-### [Extension to set thread arbitration policy](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_structure_type_device_properties_1_2#kernelschedulinghints)
+### [Extension to set thread arbitration policy](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_structure_type_device_properties_1_2#kernelschedulinghints)
 
 The `zeKernelSchedulingHintExp` interface allows applications to set the thread arbitration policy desired for the
 target kernel. Avaialable policies can be queried by application through `zeDeviceGetModuleProperties` with the
-[`ze_scheduling_hint_exp_properties_t`](https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=ze_scheduling_hint_exp_properties_t#_CPPv435ze_scheduling_hint_exp_properties_t) structure.
+[`ze_scheduling_hint_exp_properties_t`](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_scheduling_hint_exp_properties_t#_CPPv435ze_scheduling_hint_exp_properties_t) structure.
 
 Policies include:
 
@@ -159,7 +159,7 @@ Policies include:
 * `ZE_SCHEDULING_HINT_EXP_FLAG_ROUND_ROBIN`
 * `ZE_SCHEDULING_HINT_EXP_FLAG_STALL_BASED_ROUND_ROBIN`
 
-### [Extension for cache reservation](https://spec.oneapi.io/level-zero/latest/core/EXT_CacheReservation.html#cache-reservation-extension)
+### [Extension for cache reservation](https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/EXT_CacheReservation.html#cache-reservation-extension)
 
 With `zeDeviceReserveCacheExt`, applications can reserve sections of the GPU cache for exclusive use. Cache level
 support varies between platforms.
@@ -176,7 +176,7 @@ April 2021
 ## Changes in this release:
 
 ### Device allocations larger than 4GB size.
-https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=relaxed#relaxedalloclimits-enums
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=relaxed#relaxedalloclimits-enums
 
 L0 driver now allows the allocation of buffers larger than 4GB. To use, the `ze_relaxed_allocation_limits_exp_desc_t`
 structure needs to be passed to `zeMemAllocHost` or `zeMemAllocShared` as a linked descriptor.
@@ -197,7 +197,7 @@ In addition to this, kernels need to be compiled with `ze-opt-greater-than-4GB-b
 passed in `pBuildFlags` field in `ze_module_desc_t` descriptor while calling `zeModuleCreate`.
 
 ### zeDeviceGetGlobalTimestamps for CPU/GPU synchronized time.
-https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=zedevicegetglobaltimestamps#_CPPv427zeDeviceGetGlobalTimestamps18ze_device_handle_tP8uint64_tP8uint64_t
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=zedevicegetglobaltimestamps#_CPPv427zeDeviceGetGlobalTimestamps18ze_device_handle_tP8uint64_tP8uint64_t
 
 Returns synchronized Host and device global timestamps.
 
@@ -214,7 +214,7 @@ zeMemAllocDevice(context, &deviceDesc, size, 0, device, &ptr);
 ```
 
 ### Global work offset
-https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=globaloffset#_CPPv426zeKernelSetGlobalOffsetExp18ze_kernel_handle_t8uint32_t8uint32_t8uint32_t
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=globaloffset#_CPPv426zeKernelSetGlobalOffsetExp18ze_kernel_handle_t8uint32_t8uint32_t8uint32_t
 
 Applications now can set a global work offset to kernels.
 
@@ -235,7 +235,7 @@ zeKernelSetGlobalOffsetExp(kernel, offsetx, offsety, offsetz);
 ```
 
 ### Atomic floating point properties
-https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=ze_structure_type_float_atomic_ext_properties#_CPPv432ze_float_atomic_ext_properties_t
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=ze_structure_type_float_atomic_ext_properties#_CPPv432ze_float_atomic_ext_properties_t
 
 Applications now can query for floating atomic properties supported by the device in a kernel.
 This is done by passing `ze_float_atomic_ext_properties_t` to zeDeviceGetModuleProperties as a linked property structure.
@@ -255,7 +255,7 @@ if (extendedProperties.fp16Flags & ZE_DEVICE_FP_ATOMIC_EXT_FLAG_GLOBAL_ADD) {
 ```
 
 ### Context Creation for specific devices
-https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=zecontextcreate#_CPPv417zeContextCreateEx18ze_driver_handle_tPK17ze_context_desc_t8uint32_tP18ze_device_handle_tP19ze_context_handle_t
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=zecontextcreate#_CPPv417zeContextCreateEx18ze_driver_handle_tPK17ze_context_desc_t8uint32_tP18ze_device_handle_tP19ze_context_handle_t
 
 Added `zeContextCreateEX` to create a context with a set of devices. Resources allocated against that context
 are visible only to the devices for which the context was created.
@@ -271,7 +271,7 @@ zeContextCreateEx(hDriver, &desc, devices.size(), devices.data(), &phContext);
 ```
 
 ### Change on timer resolution
-https://spec.oneapi.com/level-zero/latest/core/api.html?highlight=timerresolution#_CPPv4N22ze_device_properties_t15timerResolutionE
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=timerresolution#_CPPv4N22ze_device_properties_t15timerResolutionE
 
 Time resolution returned by device properties has been changed to cycles/second (v1.0 has a resolution of nano-seconds).
 To help libraries with the transtition to the new resolution, the `UseCyclesPerSecondTimer` variable has been defined.

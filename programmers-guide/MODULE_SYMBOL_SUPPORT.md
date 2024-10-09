@@ -35,7 +35,7 @@ To enable the ability for a Module to export Symbols, the Intel Graphics Compile
 - `-library-compilation` : Enables IGC to export Functions other than kernels as symbols.
 
 # Function Pointers
-Function Pointers are supported in Level Zero through the API `https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=functionpointer#_CPPv426zeModuleGetFunctionPointer18ze_module_handle_tPKcPPv`
+Function Pointers are supported in Level Zero through the API `https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=functionpointer#_CPPv426zeModuleGetFunctionPointer18ze_module_handle_tPKcPPv`
 
 Function pointers refer to non-kernel functions reported as an `export` symbol in the module.
 
@@ -56,18 +56,18 @@ And during llvm-spirv compile, use of the SPIRv function pointer extension:
 # Global Variables
 Global Variables in SPIRv Modules are reported and accessed through export symbols when the module is compiled with `-ze-take-global-address`.
 
-The memory address retrieved from the API `https://spec.oneapi.io/level-zero/latest/core/api.html?highlight=getglobal#_CPPv424zeModuleGetGlobalPointer18ze_module_handle_tPKcP6size_tPPv`
+The memory address retrieved from the API `https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html?highlight=getglobal#_CPPv424zeModuleGetGlobalPointer18ze_module_handle_tPKcP6size_tPPv`
 
 Is device-only and must not be read on the host otherwise one will access invalid memory. Only usage of the memory on the device is allowed.
 
 # Dynamic Module Linking
 Dynamic Module Linking or Linking L0 Modules to other L0 Modules to resolve imported symbols is enabled through the following L0 APIs:
-`https://spec.oneapi.io/level-zero/latest/core/api.html#zemoduledynamiclink`
+`https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#zemoduledynamiclink`
 
-Please see the functionality described in detail here in the L0 spec: `https://spec.oneapi.io/level-zero/latest/core/PROG.html#dynamically-linked-modules`
+Please see the functionality described in detail here in the L0 spec: `https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/PROG.html#dynamically-linked-modules`
 
 # Static Module Linking
-Static Module Linking or Linking L0 Modules to other L0 Modules during the zeModuleCreate is enabled through the extension:`https://spec.oneapi.io/level-zero/latest/core/api.html#ze-module-program-exp-desc-t`
+Static Module Linking or Linking L0 Modules to other L0 Modules during the zeModuleCreate is enabled through the extension:`https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#ze-module-program-exp-desc-t`
 
 This extension to `zeModuleCreate` allows for one to pass more than one Module to Create for the symbol linkage to be resolved into a single large binary.
 

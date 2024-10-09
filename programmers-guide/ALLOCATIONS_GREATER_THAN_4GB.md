@@ -149,6 +149,6 @@ When above flags are passed, compiler compiles kernels in a stateless addressing
 
 # References
 
-https://spec.oneapi.io/level-zero/latest/core/api.html#relaxedalloclimits
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#relaxedalloclimits
 
-https://spec.oneapi.io/level-zero/latest/core/api.html#ze-module-desc-t
+https://oneapi-src.github.io/level-zero-spec/level-zero/latest/core/api.html#ze-module-desc-t
