@@ -15,3 +15,7 @@ using Dg2ProductHelperWindows = ProductHelperTestWindows;
 HWTEST2_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned, IsDG2) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
+
+HWTEST2_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned, IsDG2) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(nullptr));
+}
