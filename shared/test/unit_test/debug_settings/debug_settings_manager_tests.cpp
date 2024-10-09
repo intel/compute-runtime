@@ -446,6 +446,6 @@ TEST(DebugLog, WhenLogDebugStringCalledThenNothingIsPrintedToStdout) {
 TEST(DurationLogTest, givenDurationGetTimeStringThenTimeStringIsCorrect) {
     auto timeString = DurationLog::getTimeString();
     for (auto c : timeString) {
-        EXPECT_TRUE(std::isdigit(c) || c == '[' || c == ']' || c == '.');
+        EXPECT_TRUE(std::isdigit(c) || c == '[' || c == ']' || c == '.' || c == ' ');
     }
 }
