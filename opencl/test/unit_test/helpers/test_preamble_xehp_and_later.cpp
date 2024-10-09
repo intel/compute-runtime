@@ -432,6 +432,7 @@ using PipelineSelectTest = ::testing::Test;
 
 HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
@@ -439,10 +440,7 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWi
     std::vector<uint8_t> linearStreamBackingMemory;
     size_t sizeNeededForCommandSream = 0;
     if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
-        PipeControlArgs args;
-        args.csStallOnly = true;
-        args.renderTargetCacheFlushEnable = true;
-        sizeNeededForCommandSream += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(args.tlbInvalidation);
+        sizeNeededForCommandSream += MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }
 
     sizeNeededForCommandSream += sizeof(PIPELINE_SELECT);
@@ -468,4 +466,23 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWi
     }
 
     EXPECT_EQ(expectedMask, cmd->getMaskBits());
+
+    HardwareParse hwParser;
+    hwParser.parsePipeControl = true;
+    hwParser.parseCommands<FamilyType>(pipelineSelectStream, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+        bool pcWithRenderFlushFound = false;
+
+        auto itorPipeControl = hwParser.pipeControlList.begin();
+        if (itorPipeControl != hwParser.pipeControlList.end()) {
+            auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+            if (pipeControl->getRenderTargetCacheFlushEnable()) {
+                pcWithRenderFlushFound = true;
+            }
+        }
+
+        EXPECT_TRUE(pcWithRenderFlushFound);
+    }
 }

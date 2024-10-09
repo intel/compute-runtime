@@ -66,6 +66,9 @@ HWTEST2_F(PreambleTest, givenSpecificDeviceWhenProgramPipelineSelectIsCalledThen
     auto numPipeControl = hwParser.getCommandsList<PIPE_CONTROL>().size();
     EXPECT_EQ(1u, numPipeControl);
 
+    auto pipeControl = hwParser.getCommand<PIPE_CONTROL>();
+    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+
     auto numPipelineSelect = hwParser.getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numPipelineSelect);
 }

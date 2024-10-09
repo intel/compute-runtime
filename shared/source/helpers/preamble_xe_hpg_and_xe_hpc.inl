@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         PipeControlArgs args;
-        args.csStallOnly = true;
         args.renderTargetCacheFlushEnable = true;
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
