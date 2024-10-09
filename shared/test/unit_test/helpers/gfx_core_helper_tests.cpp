@@ -1863,3 +1863,13 @@ HWTEST2_F(GfxCoreHelperTest, GivenModifiedGtSystemInfoWhenCallingCalculateAvaila
         EXPECT_EQ(expectedThreadCount, result);
     }
 }
+
+HWTEST_F(GfxCoreHelperTest, givenGetDeviceTimestampWidthCalledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    auto &helper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(0u, helper.getDeviceTimestampWidth());
+
+    debugManager.flags.OverrideTimestampWidth.set(64);
+    EXPECT_EQ(64u, helper.getDeviceTimestampWidth());
+}
