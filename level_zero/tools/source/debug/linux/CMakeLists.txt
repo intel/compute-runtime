@@ -12,7 +12,7 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/drm_helper.cpp
   )
 
-  if(NEO_ENABLE_i915_PRELIM_DETECTION)
+  if(NEO_ENABLE_I915_PRELIM_DETECTION)
     target_sources(${L0_STATIC_LIB_NAME}
                    PRIVATE
                    ${CMAKE_CURRENT_SOURCE_DIR}/prelim/debug_session.cpp

@@ -121,7 +121,7 @@ else()
   )
 endif()
 
-if(NOT NEO_ENABLE_i915_PRELIM_DETECTION)
+if(NOT NEO_ENABLE_I915_PRELIM_DETECTION)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter_upstream.cpp
   )

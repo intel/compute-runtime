@@ -13,7 +13,7 @@ if(UNIX)
     )
   endif()
 
-  if(NEO_ENABLE_i915_PRELIM_DETECTION)
+  if(NEO_ENABLE_I915_PRELIM_DETECTION)
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SOURCE_DIR}/level_zero/tools/source/debug/linux/prelim/debug_session_linux_helper.cpp

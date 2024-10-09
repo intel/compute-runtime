@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,7 +8,7 @@ set(L0_TESTS_TOOLS_SYSMAN_POWER_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
-if(NEO_ENABLE_i915_PRELIM_DETECTION)
+if(NEO_ENABLE_I915_PRELIM_DETECTION)
   list(APPEND L0_TESTS_TOOLS_SYSMAN_POWER_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_power_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_power_helper_prelim.cpp

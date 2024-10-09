@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,7 +14,7 @@ if(UNIX)
         ${CMAKE_CURRENT_SOURCE_DIR}/mock_nl_dll.h
     )
 
-    if(NEO_ENABLE_i915_PRELIM_DETECTION)
+    if(NEO_ENABLE_I915_PRELIM_DETECTION)
       list(APPEND L0_TESTS_TOOLS_SYSMAN_IAF_NLAPI_LINUX
            ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_iaf_nl_api_prelim.cpp
            ${CMAKE_CURRENT_SOURCE_DIR}/mock_nl_api_prelim.cpp
