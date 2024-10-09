@@ -1856,3 +1856,13 @@ HWTEST_F(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncod
     GenCmdList storeRegMemList = hwParser.getCommandsList<MI_STORE_REGISTER_MEM>();
     EXPECT_EQ(0u, storeRegMemList.size());
 }
+
+HWTEST_F(GfxCoreHelperTest, givenGetDeviceTimestampWidthCalledThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    auto &helper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(0u, helper.getDeviceTimestampWidth());
+
+    debugManager.flags.OverrideTimestampWidth.set(64);
+    EXPECT_EQ(64u, helper.getDeviceTimestampWidth());
+}

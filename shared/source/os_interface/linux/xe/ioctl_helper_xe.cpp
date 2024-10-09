@@ -429,6 +429,9 @@ bool IoctlHelperXe::setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     ret = IoctlHelper::ioctl(DrmIoctl::query, &deviceQuery);
 
     auto nValidBits = queryEngineCycles->width;
+    if (osTime->getDeviceTimestampWidth() != 0) {
+        nValidBits = osTime->getDeviceTimestampWidth();
+    }
     auto gpuTimestampValidBits = maxNBitValue(nValidBits);
     auto gpuCycles = queryEngineCycles->engine_cycles & gpuTimestampValidBits;
 

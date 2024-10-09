@@ -200,6 +200,8 @@ class GfxCoreHelper {
 
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
 
+    virtual uint32_t getDeviceTimestampWidth() const = 0;
+
     virtual ~GfxCoreHelper() = default;
 
   protected:
@@ -435,6 +437,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t getDefaultSshSize(const ProductHelper &productHelper) const override;
 
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
+
+    uint32_t getDeviceTimestampWidth() const override;
 
     ~GfxCoreHelperHw() override = default;
 

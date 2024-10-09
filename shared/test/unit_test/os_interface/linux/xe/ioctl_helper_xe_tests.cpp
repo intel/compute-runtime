@@ -1793,6 +1793,35 @@ TEST(IoctlHelperXeTest, givenIoctlFailureWhenSetGpuCpuTimesIsCalledThenProperVal
     EXPECT_EQ(pGpuCpuTime.cpuTimeinNS, expectedTimestamp);
 }
 
+TEST(IoctlHelperXeTest, whenDeviceTimestampWidthSetThenProperValuesAreSet) {
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0];
+    rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+    rootDeviceEnvironment.osInterface->setDriverModel(std::make_unique<DrmMockTime>(mockFd, rootDeviceEnvironment));
+    auto drm = DrmMockXe::create(rootDeviceEnvironment);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    auto engineInfo = xeIoctlHelper->createEngineInfo(false);
+    ASSERT_NE(nullptr, engineInfo);
+
+    uint64_t expectedCycles = maxNBitValue(64);
+    auto xeQueryEngineCycles = reinterpret_cast<drm_xe_query_engine_cycles *>(drm->queryEngineCycles);
+    xeQueryEngineCycles->width = 32;
+    xeQueryEngineCycles->engine_cycles = expectedCycles;
+    xeQueryEngineCycles->cpu_timestamp = 100;
+
+    TimeStampData pGpuCpuTime{};
+    std::unique_ptr<MockOSTimeLinux> osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
+    auto ret = xeIoctlHelper->setGpuCpuTimes(&pGpuCpuTime, osTime.get());
+    EXPECT_EQ(true, ret);
+
+    EXPECT_EQ(pGpuCpuTime.gpuTimeStamp, expectedCycles & maxNBitValue(32));
+    osTime->setDeviceTimestampWidth(64);
+    ret = xeIoctlHelper->setGpuCpuTimes(&pGpuCpuTime, osTime.get());
+    EXPECT_EQ(true, ret);
+    EXPECT_EQ(pGpuCpuTime.gpuTimeStamp, expectedCycles);
+}
+
 TEST(IoctlHelperXeTest, whenSetDefaultEngineIsCalledThenProperEngineIsSet) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(&hwInfo);

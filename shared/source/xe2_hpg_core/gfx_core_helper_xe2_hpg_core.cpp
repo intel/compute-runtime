@@ -332,6 +332,14 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe2HPG);
 }
 
+template <>
+uint32_t GfxCoreHelperHw<Family>::getDeviceTimestampWidth() const {
+    if (debugManager.flags.OverrideTimestampWidth.get() != -1) {
+        return debugManager.flags.OverrideTimestampWidth.get();
+    }
+    return 64u;
+};
+
 } // namespace NEO
 
 namespace NEO {
