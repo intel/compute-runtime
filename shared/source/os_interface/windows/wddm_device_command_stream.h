@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/submission_status.h"
 
-struct COMMAND_BUFFER_HEADER_REC;
+struct COMMAND_BUFFER_HEADER_REC; // NOLINT(readability-identifier-naming), forward declaration from sharedata_wrapper.h
 
 namespace NEO {
 class GmmPageTableMngr;

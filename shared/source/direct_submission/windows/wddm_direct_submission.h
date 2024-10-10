@@ -8,7 +8,8 @@
 #pragma once
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/os_interface/windows/windows_defs.h"
-struct COMMAND_BUFFER_HEADER_REC;
+
+struct COMMAND_BUFFER_HEADER_REC; // NOLINT(readability-identifier-naming), forward declaration from sharedata_wrapper.h
 typedef struct COMMAND_BUFFER_HEADER_REC COMMAND_BUFFER_HEADER;
 
 namespace NEO {
