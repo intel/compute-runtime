@@ -19,6 +19,7 @@ struct PowerKmdSysManager : public MockKmdSysManager {
     uint32_t mockPowerDomainCount = 2;
     uint32_t mockPowerLimit1Enabled = 1;
     uint32_t mockPowerLimit2Enabled = 1;
+    uint32_t mockPowerLimit4Enabled = 1;
     int32_t mockPowerLimit1 = 25000;
     int32_t mockPowerLimit2 = 41000;
     int32_t mockTauPowerLimit1 = 20800;
@@ -161,6 +162,12 @@ struct PowerKmdSysManager : public MockKmdSysManager {
             memcpy_s(pValueTS, sizeof(uint64_t), &mockTimeStamp, sizeof(mockEnergyCounter64Bit));
             pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
             pResponse->outDataSize = sizeof(uint64_t) + sizeof(uint64_t);
+        } break;
+        case KmdSysman::Requests::Power::PowerLimit4Enabled: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            *pValue = mockPowerLimit4Enabled;
+            pResponse->outReturnCode = getReturnCode(pRequest->inRequestId);
+            pResponse->outDataSize = sizeof(uint32_t);
         } break;
         default: {
             pResponse->outDataSize = 0;

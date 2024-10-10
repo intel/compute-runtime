@@ -325,7 +325,7 @@ ze_result_t WddmPowerImp::setEnergyThreshold(double threshold) {
 
 bool WddmPowerImp::isPowerModuleSupported() {
     powerLimitCount = 0;
-    std::vector<KmdSysman::RequestProperty> vRequests(4);
+    std::vector<KmdSysman::RequestProperty> vRequests(3);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
 
@@ -338,10 +338,8 @@ bool WddmPowerImp::isPowerModuleSupported() {
     request.requestId = KmdSysman::Requests::Power::PowerLimit2Enabled;
     vRequests[1] = request;
 
-    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
+    request.requestId = KmdSysman::Requests::Power::PowerLimit4Enabled;
     vRequests[2] = request;
-    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Dc;
-    vRequests[3] = request;
 
     ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
@@ -349,8 +347,9 @@ bool WddmPowerImp::isPowerModuleSupported() {
         return status;
     }
 
-    for (uint32_t i = 0; i < vResponses.size() - 2; i++) {
-        ze_bool_t enabled = false;
+    ze_bool_t enabled;
+    for (uint32_t i = 0; i < vResponses.size() - 1; i++) {
+        enabled = false;
         if (vResponses[i].returnCode == KmdSysman::Success) {
             memcpy_s(&enabled, sizeof(ze_bool_t), vResponses[i].dataBuffer, sizeof(ze_bool_t));
         }
@@ -359,13 +358,13 @@ bool WddmPowerImp::isPowerModuleSupported() {
         }
     }
 
-    // CurrentPowerLimit4Ac is not a bool hence check for it individually
+    enabled = false;
     if (vResponses[2].returnCode == KmdSysman::Success) {
-        powerLimitCount++;
-    }
-
-    if (vResponses[3].returnCode == KmdSysman::Success) {
-        powerLimitCount++;
+        memcpy_s(&enabled, sizeof(ze_bool_t), vResponses[2].dataBuffer, sizeof(ze_bool_t));
+        if (enabled) {
+            // PowerLimit4Enabled controls AC and DC peak limit, hence increment the count by 2.
+            powerLimitCount += 2;
+        }
     }
 
     if (powerLimitCount > 0) {
@@ -386,7 +385,7 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
 
     *pCount = std::min(*pCount, powerLimitCount);
 
-    std::vector<KmdSysman::RequestProperty> vRequests(7);
+    std::vector<KmdSysman::RequestProperty> vRequests(8);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
     KmdSysman::RequestProperty request = {};
 
@@ -408,11 +407,14 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
     request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit2;
     vRequests[4] = request;
 
-    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
+    request.requestId = KmdSysman::Requests::Power::PowerLimit4Enabled;
     vRequests[5] = request;
 
-    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Dc;
+    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Ac;
     vRequests[6] = request;
+
+    request.requestId = KmdSysman::Requests::Power::CurrentPowerLimit4Dc;
+    vRequests[7] = request;
 
     ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
@@ -474,11 +476,16 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
         }
     }
     // Peak AC
-    if (count < *pCount) {
-        if (vResponses[5].returnCode == KmdSysman::Success) {
+    enabled = false;
+    if (vResponses[5].returnCode == KmdSysman::Success) {
+        memcpy_s(&enabled, sizeof(ze_bool_t), vResponses[5].dataBuffer, sizeof(ze_bool_t));
+    }
+
+    if (count < *pCount && enabled) {
+        if (vResponses[6].returnCode == KmdSysman::Success) {
             uint32_t powerAC = 0;
             memset(&pSustained[count], 0, sizeof(zes_power_limit_ext_desc_t));
-            memcpy_s(&powerAC, sizeof(uint32_t), vResponses[5].dataBuffer, sizeof(uint32_t));
+            memcpy_s(&powerAC, sizeof(uint32_t), vResponses[6].dataBuffer, sizeof(uint32_t));
             pSustained[count].enabled = true;
             pSustained[count].limit = powerAC;
             pSustained[count].enabledStateLocked = true;
@@ -492,11 +499,11 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
         }
     }
     // Peak DC
-    if (count < *pCount) {
-        if (vResponses[6].returnCode == KmdSysman::Success) {
+    if (count < *pCount && enabled) {
+        if (vResponses[7].returnCode == KmdSysman::Success) {
             uint32_t powerDC = 0;
             memset(&pSustained[count], 0, sizeof(zes_power_limit_ext_desc_t));
-            memcpy_s(&powerDC, sizeof(uint32_t), vResponses[6].dataBuffer, sizeof(uint32_t));
+            memcpy_s(&powerDC, sizeof(uint32_t), vResponses[7].dataBuffer, sizeof(uint32_t));
             pSustained[count].enabled = true;
             pSustained[count].limit = powerDC;
             pSustained[count].enabledStateLocked = true;

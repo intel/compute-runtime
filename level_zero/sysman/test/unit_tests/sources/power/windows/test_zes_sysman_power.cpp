@@ -428,7 +428,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPower
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAnsSetPowerLimitsExtThenProperValuesAreReturnedCoveringMutlipleBranches) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAndSetPowerLimitsExtThenProperValuesAreReturnedCoveringMutlipleBranches) {
     // Setting allow set calls or not
     init(true);
     auto handles = getPowerHandles(powerHandleComponentCount);
@@ -442,7 +442,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAnsSetPowerL
         std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
 
-        std::vector<uint32_t> requestId = {KmdSysman::Requests::Power::PowerLimit1Enabled, KmdSysman::Requests::Power::CurrentPowerLimit1, KmdSysman::Requests::Power::CurrentPowerLimit1Tau, KmdSysman::Requests::Power::PowerLimit2Enabled, KmdSysman::Requests::Power::CurrentPowerLimit2, KmdSysman::Requests::Power::CurrentPowerLimit4Ac, KmdSysman::Requests::Power::CurrentPowerLimit4Dc};
+        std::vector<uint32_t> requestId = {KmdSysman::Requests::Power::PowerLimit1Enabled, KmdSysman::Requests::Power::CurrentPowerLimit1, KmdSysman::Requests::Power::CurrentPowerLimit1Tau, KmdSysman::Requests::Power::PowerLimit2Enabled, KmdSysman::Requests::Power::CurrentPowerLimit2, KmdSysman::Requests::Power::PowerLimit4Enabled, KmdSysman::Requests::Power::CurrentPowerLimit4Ac, KmdSysman::Requests::Power::CurrentPowerLimit4Dc};
         for (auto it = requestId.begin(); it != requestId.end(); it++) {
             pKmdSysManager->mockPowerFailure[*it] = 1;
             uint32_t count = limitCount;
@@ -476,6 +476,11 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenCallingGetAnsSetPowerL
         count = mockLimitCount;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
         pKmdSysManager->mockPowerLimit1Enabled = 1;
+
+        pKmdSysManager->mockPowerLimit4Enabled = 0;
+        count = mockLimitCount;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, allLimits.data()));
+        pKmdSysManager->mockPowerLimit4Enabled = 1;
 
         allLimits[0].level = ZES_POWER_LEVEL_UNKNOWN;
         count = mockLimitCount;

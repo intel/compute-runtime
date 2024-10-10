@@ -131,6 +131,8 @@ enum Power {
     DisableEnergyThreshold,
     CurrentEnergyCounter,
     CurrentEnergyCounter64Bit,
+    PowerSupportedSubDevices,
+    PowerLimit4Enabled,
 
     MaxPowerRequests,
 };

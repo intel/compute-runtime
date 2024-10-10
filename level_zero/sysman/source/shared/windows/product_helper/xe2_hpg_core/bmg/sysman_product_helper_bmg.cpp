@@ -564,7 +564,7 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
     // PMT reports maxBandwidth in units of 100 MBps (decimal). Need to convert it into Bytes/sec, unit to be returned by sysman.
     pBandwidth->maxBandwidth = static_cast<uint64_t>(maxBandwidth) * megaBytesToBytes * 100;
 
-    // timestamp calcuation
+    // timestamp calculation
     uint32_t timeStampL = 0;
     uint32_t timeStampH = 0;
 
