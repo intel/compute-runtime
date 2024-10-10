@@ -1070,6 +1070,8 @@ void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType
     const uint32_t threadsPerDssCount = EncodeDispatchKernel<Family>::getThreadCountPerSubslice(hwInfo);
     const uint32_t workGroupCountPerDss = static_cast<uint32_t>(Math::divideAndRoundUp(threadsPerDssCount, threadsPerThreadGroup));
 
+    slmTotalSize = EncodeDispatchKernel<Family>::alignPreferredSlmSize(slmTotalSize);
+
     uint32_t slmSize = 0u;
 
     switch (slmPolicy) {

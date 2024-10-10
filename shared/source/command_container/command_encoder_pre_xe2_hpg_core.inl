@@ -16,4 +16,9 @@ uint32_t EncodeDispatchKernel<Family>::getThreadCountPerSubslice(const HardwareI
     return hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.DualSubSliceCount;
 }
 
+template <typename Family>
+uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize) {
+    return EncodeDispatchKernel<Family>::alignSlmSize(slmSize);
+}
+
 } // namespace NEO

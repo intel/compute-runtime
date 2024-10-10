@@ -133,6 +133,7 @@ struct EncodeDispatchKernel {
                                       const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);
 
     static uint32_t getThreadCountPerSubslice(const HardwareInfo &hwInfo);
+    static uint32_t alignPreferredSlmSize(uint32_t slmSize);
 
     template <typename InterfaceDescriptorType>
     static void encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy);
