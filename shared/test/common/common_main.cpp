@@ -433,6 +433,7 @@ int main(int argc, char **argv) {
             MockSipData::mockSipKernel.reset(new MockSipKernel());
             if (testMode == TestMode::aubTests || testMode == TestMode::aubTestsWithTbx) {
                 MockSipData::useMockSip = false;
+                debugManager.flags.OverrideCsrAllocationSize.set(1);
             } else {
                 MockSipData::useMockSip = true;
             }
