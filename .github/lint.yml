@@ -114,6 +114,8 @@ lint:
         - ci
         xe_kmd:
         - ci
+        ze_raytracing:
+        - ci
         kernels_bin:
         - feature
         - fix
