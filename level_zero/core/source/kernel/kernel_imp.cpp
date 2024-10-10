@@ -948,7 +948,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_KERNEL_MAX_GROUP_SIZE_EXT_PROPERTIES) {
             ze_kernel_max_group_size_properties_ext_t *properties = reinterpret_cast<ze_kernel_max_group_size_properties_ext_t *>(extendedProperties);
             properties->maxGroupSize = maxKernelWorkGroupSize;
-        } else if (extendedProperties->stype == ZEX_STRUCTURE_KERNEL_REGISTER_FILE_SIZE_EXP) {
+        } else if (extendedProperties->stype == ZEX_STRUCTURE_KERNEL_REGISTER_FILE_SIZE_EXP) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
             zex_kernel_register_file_size_exp_t *properties = reinterpret_cast<zex_kernel_register_file_size_exp_t *>(extendedProperties);
             properties->registerFileSize = kernelDescriptor.kernelAttributes.numGrfRequired;
         }

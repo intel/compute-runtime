@@ -32,7 +32,7 @@ struct AppResourceTests : public MockExecutionEnvironmentTagTest {
 };
 
 TEST_F(AppResourceTests, givenIncorrectGraphicsAllocationTypeWhenGettingResourceTagThenNOTFOUNDIsReturned) {
-    auto tag = AppResourceHelper::getResourceTagStr(static_cast<AllocationType>(999));
+    auto tag = AppResourceHelper::getResourceTagStr(static_cast<AllocationType>(999)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     EXPECT_STREQ(tag, "NOTFOUND");
 }
 

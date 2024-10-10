@@ -634,7 +634,7 @@ TEST_F(OfflineLinkerTest, GivenHelpRequestWhenExecuteIsInvokedThenHelpIsPrinted)
 
 TEST_F(OfflineLinkerTest, GivenInvalidOperationModeWhenExecuteIsInvokedThenErrorIsIssued) {
     MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
-    mockOfflineLinker.operationMode = static_cast<OperationMode>(7);
+    mockOfflineLinker.operationMode = static_cast<OperationMode>(7); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
 
     ::testing::internal::CaptureStdout();
     const auto executionResult{mockOfflineLinker.execute()};

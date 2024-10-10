@@ -184,7 +184,7 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
 }
 
 inline std::optional<NEO::SynchronizedDispatchMode> getSyncDispatchMode(const ze_base_desc_t *desc) {
-    if (desc->stype == ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC) {
+    if (desc->stype == ZE_STRUCTURE_TYPE_SYNCHRONIZED_DISPATCH_EXP_DESC) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
         auto syncDispatch = reinterpret_cast<const ze_synchronized_dispatch_exp_desc_t *>(desc);
         return (syncDispatch->flags == ZE_SYNCHRONIZED_DISPATCH_ENABLED_EXP_FLAG ? NEO::SynchronizedDispatchMode::full : NEO::SynchronizedDispatchMode::limited);
     }

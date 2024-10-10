@@ -2157,7 +2157,7 @@ TEST(CommandList, givenContextGroupEnabledWhenCreatingImmediateCommandListWithIn
         }
 
         zex_intel_queue_allocate_msix_hint_exp_desc_t allocateMsix = {};
-        allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES;
+        allocateMsix.stype = ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
         allocateMsix.uniqueMsix = true;
 
         ze_command_queue_desc_t desc = {};

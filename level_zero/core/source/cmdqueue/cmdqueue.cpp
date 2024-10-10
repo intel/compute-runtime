@@ -368,13 +368,13 @@ QueueProperties CommandQueue::extractQueueProperties(const ze_command_queue_desc
     auto baseProperties = static_cast<const ze_base_desc_t *>(desc.pNext);
 
     while (baseProperties) {
-        if (baseProperties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES) {
+        if (baseProperties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_ALLOCATE_MSIX_HINT_EXP_PROPERTIES) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
             queueProperties.interruptHint = static_cast<const zex_intel_queue_allocate_msix_hint_exp_desc_t *>(desc.pNext)->uniqueMsix;
         } else if (auto syncDispatchMode = getSyncDispatchMode(baseProperties)) {
             if (syncDispatchMode.has_value()) {
                 queueProperties.synchronizedDispatchMode = syncDispatchMode.value();
             }
-        } else if (baseProperties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES) {
+        } else if (baseProperties->stype == ZEX_INTEL_STRUCTURE_TYPE_QUEUE_COPY_OPERATIONS_OFFLOAD_HINT_EXP_PROPERTIES) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
             queueProperties.copyOffloadHint = static_cast<const zex_intel_queue_copy_operations_offload_hint_exp_desc_t *>(desc.pNext)->copyOffloadEnabled;
         }
 

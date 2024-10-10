@@ -175,7 +175,7 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpacki
     zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_XE2_HPG_CORE);
     NEO::Zebin::Elf::ZebinTargetFlags targetFlags;
     targetDevice.productFamily = IGFX_UNKNOWN;
-    targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine + 1);
+    targetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(zebin.machine + 1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     targetFlags.machineEntryUsesGfxCoreInsteadOfProductFamily = true;
     zebin.flags = targetFlags.packed;
     unpackResult = NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);

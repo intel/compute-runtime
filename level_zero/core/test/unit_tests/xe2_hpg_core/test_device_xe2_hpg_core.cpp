@@ -34,7 +34,7 @@ HWTEST2_F(DeviceXe2HpgCoreTest, whenCallingGetMemoryPropertiesWithNonNullPtrThen
 
 HWTEST2_F(DeviceXe2HpgCoreTest, GivenTargetXeHpgCoreWhenGettingDpSupportThenReturnsTrue, IsXe2HpgCore) {
     ze_device_module_properties_t deviceModProps = {ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES};
-    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES};
+    ze_intel_device_module_dp_exp_properties_t moduleDpProps = {ZE_STRUCTURE_INTEL_DEVICE_MODULE_DP_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     moduleDpProps.flags = 0u;
     deviceModProps.pNext = &moduleDpProps;
 
