@@ -10,6 +10,7 @@
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -23,7 +24,6 @@
 #include "shared/source/helpers/local_work_size.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
-#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -970,7 +970,14 @@ NEO::GraphicsAllocation *KernelImp::allocatePrivateMemoryGraphicsAllocation() {
     auto privateMemoryGraphicsAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::AllocationType::privateSurface, neoDevice->getDeviceBitfield()});
 
-    UNRECOVERABLE_IF(privateMemoryGraphicsAllocation == nullptr);
+    if (privateMemoryGraphicsAllocation == nullptr) {
+        const auto usedLocalMemorySize = neoDevice->getMemoryManager()->getUsedLocalMemorySize(neoDevice->getRootDeviceIndex());
+        const auto maxGlobalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
+        CREATE_DEBUG_STRING(str, "Failed to allocate private surface of %zu bytes, used local memory %zu, max global memory %zu\n", static_cast<size_t>(privateSurfaceSize), usedLocalMemorySize, static_cast<size_t>(maxGlobalMemorySize));
+        neoDevice->getRootDeviceEnvironment().executionEnvironment.setErrorDescription(std::string(str.get()));
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, str.get());
+    }
+
     return privateMemoryGraphicsAllocation;
 }
 
@@ -1137,6 +1144,9 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     auto &kernelAttributes = kernelDescriptor.kernelAttributes;
     if ((kernelAttributes.perHwThreadPrivateMemorySize != 0U) && (false == module->shouldAllocatePrivateMemoryPerDispatch())) {
         this->privateMemoryGraphicsAllocation = allocatePrivateMemoryGraphicsAllocation();
+        if (this->privateMemoryGraphicsAllocation == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
         this->patchCrossthreadDataWithPrivateAllocation(this->privateMemoryGraphicsAllocation);
         this->internalResidencyContainer.push_back(this->privateMemoryGraphicsAllocation);
     }

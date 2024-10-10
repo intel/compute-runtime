@@ -187,6 +187,35 @@ TEST_F(KernelInitTest, givenKernelToInitWhenItHasTooBigScratchSizeThenInvalidBin
     EXPECT_EQ(kernel->initialize(&desc), ZE_RESULT_ERROR_INVALID_NATIVE_BINARY);
 }
 
+TEST_F(KernelInitTest, givenKernelToInitWhenPrivateSurfaceAllocationFailsThenOutOfDeviceMemoryIsRetutned) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.PrintDebugMessages.set(true);
+    ::testing::internal::CaptureStderr();
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, false, mockKernelImmData.get());
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    mockKernelImmData->resizeExplicitArgs(1);
+
+    std::unique_ptr<NEO::MemoryManager> otherMemoryManager = std::make_unique<NEO::FailMemoryManager>(0, *device->getNEODevice()->getExecutionEnvironment());
+    device->getNEODevice()->getExecutionEnvironment()->memoryManager.swap(otherMemoryManager);
+
+    EXPECT_EQ(kernel->initialize(&desc), ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+
+    device->getNEODevice()->getExecutionEnvironment()->memoryManager.swap(otherMemoryManager);
+
+    auto output = ::testing::internal::GetCapturedStderr();
+    std::string errorMsg = "Failed to allocate private surface";
+    EXPECT_NE(std::string::npos, output.find(errorMsg));
+}
+
 using KernelBaseAddressTests = Test<ModuleImmutableDataFixture>;
 TEST_F(KernelBaseAddressTests, whenQueryingKernelBaseAddressThenCorrectAddressIsReturned) {
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
