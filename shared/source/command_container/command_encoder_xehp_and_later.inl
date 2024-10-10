@@ -1078,7 +1078,7 @@ void EncodeDispatchKernel<Family>::setupPreferredSlmSize(InterfaceDescriptorType
         break;
     case SlmPolicy::slmPolicyLargeSlm:
     default:
-        slmSize = std::min(slmTotalSize * workGroupCountPerDss, static_cast<uint32_t>(hwInfo.capabilityTable.slmSize * MemoryConstants::kiloByte));
+        slmSize = slmTotalSize * workGroupCountPerDss;
         break;
     }
 
