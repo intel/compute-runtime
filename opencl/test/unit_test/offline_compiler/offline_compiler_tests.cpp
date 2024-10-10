@@ -566,9 +566,10 @@ TEST_F(MockOfflineCompilerTests, givenDeviceIdsFromDevicesFileWhenInitHwInfoThen
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.argHelper->getPrinterRef().setSuppressMessages(true);
     for (const auto &deviceId : deviceIds) {
+        mockOfflineCompiler.deviceConfig = AOT::UNKNOWN_ISA;
         std::stringstream deviceIDStr;
         deviceIDStr << "0x" << std::hex << deviceId;
-        mockOfflineCompiler.initHardwareInfo(deviceIDStr.str());
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.initHardwareInfo(deviceIDStr.str()));
         EXPECT_NE(mockOfflineCompiler.deviceConfig, AOT::UNKNOWN_ISA);
     }
 }
