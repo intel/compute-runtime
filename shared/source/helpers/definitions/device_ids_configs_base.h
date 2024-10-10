@@ -48,37 +48,3 @@
 #include "shared/source/gen12lp/adln/device_ids_configs_adln.h"
 #endif
 #endif
-
-#ifdef SUPPORT_GEN11
-#ifdef SUPPORT_ICLLP
-#include "shared/source/gen11/icllp/device_ids_configs_icllp.h"
-#endif
-#ifdef SUPPORT_EHL
-#include "shared/source/gen11/ehl/device_ids_configs_ehl.h"
-#endif
-#ifdef SUPPORT_LKF
-#include "shared/source/gen11/lkf/device_ids_configs_lkf.h"
-#endif
-#endif
-
-#ifdef SUPPORT_GEN9
-#ifdef SUPPORT_SKL
-#include "shared/source/gen9/skl/device_ids_configs_skl.h"
-#endif
-#ifdef SUPPORT_KBL
-#include "shared/source/gen9/kbl/device_ids_configs_kbl.h"
-#endif
-#ifdef SUPPORT_CFL
-#include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
-#endif
-#ifdef SUPPORT_GLK
-#include "shared/source/gen9/glk/device_ids_configs_glk.h"
-#endif
-#ifdef SUPPORT_BXT
-#include "shared/source/gen9/bxt/device_ids_configs_bxt.h"
-#endif
-#endif
-
-#ifdef SUPPORT_GEN8
-#include "shared/source/gen8/bdw/device_ids_configs_bdw.h"
-#endif

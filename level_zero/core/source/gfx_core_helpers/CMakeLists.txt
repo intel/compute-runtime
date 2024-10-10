@@ -26,7 +26,7 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
-if(SUPPORT_GEN12LP OR SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE)
+if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG_CORE)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_tgllp_to_dg2.inl
@@ -54,7 +54,7 @@ if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
   )
 endif()
 
-if(SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE OR SUPPORT_XE2_HPG_CORE)
+if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE2_HPG_CORE)
   target_sources(${L0_STATIC_LIB_NAME}
                  PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_xe_hpg_to_xe2_hpg.inl

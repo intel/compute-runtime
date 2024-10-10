@@ -1,20 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#ifdef SUPPORT_GEN8
-#include "shared/source/gen8/reg_configs.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "shared/source/gen9/reg_configs.h"
-#endif
-#ifdef SUPPORT_GEN11
-#include "shared/source/gen11/reg_configs.h"
-#endif
 #ifdef SUPPORT_GEN12LP
 #include "shared/source/gen12lp/reg_configs.h"
 #endif

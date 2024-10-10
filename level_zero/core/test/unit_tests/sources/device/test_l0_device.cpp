@@ -4513,30 +4513,6 @@ struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTe
     L0::Device *deviceWithoutLocalMemory = nullptr;
 };
 
-struct MultipleDevicesDifferentFamilyAndLocalMemorySupportTest : public MultipleDevicesTest {
-    void SetUp() override {
-
-        if ((NEO::ProductHelper::create(IGFX_SKYLAKE) == nullptr) ||
-            (NEO::ProductHelper::create(IGFX_KABYLAKE) == nullptr)) {
-            GTEST_SKIP();
-        }
-
-        MultipleDevicesTest::SetUp();
-
-        memoryManager->localMemorySupported[0] = 1;
-        memoryManager->localMemorySupported[1] = 1;
-
-        deviceSKL = driverHandle->devices[0];
-        deviceKBL = driverHandle->devices[1];
-
-        deviceSKL->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.eProductFamily = IGFX_SKYLAKE;
-        deviceKBL->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.eProductFamily = IGFX_KABYLAKE;
-    }
-
-    L0::Device *deviceSKL = nullptr;
-    L0::Device *deviceKBL = nullptr;
-};
-
 struct MultipleDevicesSameFamilyAndLocalMemorySupportTest : public MultipleDevicesTest {
     void SetUp() override {
         MultipleDevicesTest::SetUp();
