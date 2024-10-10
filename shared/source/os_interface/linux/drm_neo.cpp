@@ -1007,7 +1007,7 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
     gtSysInfo->CsrSizeInMb = sysInfo->getCsrSizeInMb();
     gtSysInfo->SLMSizeInKb = sysInfo->getSlmSizePerDss();
 
-    if (!hwInfo->capabilityTable.slmSize) {
+    if (gtSysInfo->SLMSizeInKb > 0) {
         hwInfo->capabilityTable.slmSize = gtSysInfo->SLMSizeInKb;
     }
 }

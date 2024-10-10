@@ -278,8 +278,8 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_GT(gtSystemInfo.MemoryType, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, drm.getSystemInfo()->getCsrSizeInMb());
     EXPECT_EQ(gtSystemInfo.SLMSizeInKb, drm.getSystemInfo()->getSlmSizePerDss());
-    EXPECT_EQ(newHwInfo.capabilityTable.slmSize, hwInfo.capabilityTable.slmSize);
-    EXPECT_NE(newHwInfo.capabilityTable.slmSize, drm.getSystemInfo()->getSlmSizePerDss());
+    EXPECT_NE(newHwInfo.capabilityTable.slmSize, hwInfo.capabilityTable.slmSize);
+    EXPECT_EQ(newHwInfo.capabilityTable.slmSize, drm.getSystemInfo()->getSlmSizePerDss());
 }
 
 TEST(DrmSystemInfoTest, givenHardwareInfoWithoutSlmSizeInCapabilityTableWhenQuerySystemInfoSucceedsThenSlmSizeInCapabilityTableIsSetBasedOnGtSystemInfo) {
