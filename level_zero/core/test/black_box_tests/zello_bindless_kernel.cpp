@@ -21,32 +21,17 @@
 namespace {
 
 const char *source = R"===(
-typedef ulong16 TYPE;
-__attribute__((reqd_work_group_size(32, 1, 1)))  // force LWS to 32
-__attribute__((intel_reqd_sub_group_size(16)))   // force SIMD to 16
+
 __kernel void kernel_copy(__global char *dst, __global char *src){
     uint gid = get_global_id(0);
     dst[gid] = src[gid];
-
-    __local TYPE locMem[32];
-    {
-        size_t lid = get_local_id(0);
-        size_t gid = get_global_id(0);
-
-        TYPE res1 = (TYPE)(src[gid]);
-        TYPE res2 = (TYPE)(src[gid] + 1);
-        TYPE res3 = (TYPE)(src[gid] + 2);
-
-        locMem[lid] = res1;
-        barrier(CLK_LOCAL_MEM_FENCE);
-        barrier(CLK_GLOBAL_MEM_FENCE);
-    
-        TYPE res = (locMem[src[gid] % 32] * res3) * res2 + res1;
-        src[0] += (char)res[lid % 16];
-    }
-    barrier(CLK_GLOBAL_MEM_FENCE);
-    src[0] = dst[0];
 }
+
+__kernel void kernel_fill(__global char *dst, char value){
+    uint gid = get_global_id(0);
+    dst[gid] = value;
+}
+
 )===";
 
 const char *source2 = R"===(
@@ -353,9 +338,9 @@ bool testBindlessBufferCopy(ze_context_handle_t context, ze_device_handle_t devi
     ze_module_handle_t module = nullptr;
     ze_module_handle_t module2 = nullptr;
     createModule(source, AddressingMode::bindless, context, device, deviceId, revisionId, module, "", false);
-    createModule(source2, AddressingMode::bindful, context, device, deviceId, revisionId, module2, "", false);
+    createModule(source, AddressingMode::bindful, context, device, deviceId, revisionId, module2, "", false);
 
-    ExecutionMode executionModes[] = {ExecutionMode::commandQueue, ExecutionMode::immSyncCmdList};
+    ExecutionMode executionModes[] = {ExecutionMode::immSyncCmdList, ExecutionMode::commandQueue};
     ze_kernel_handle_t copyKernel = nullptr;
     ze_kernel_handle_t fillKernel = nullptr;
     createKernel(module, copyKernel, kernelName.c_str());
