@@ -60,6 +60,18 @@ void CommandListFixture::tearDown() {
     DeviceFixture::tearDown();
 }
 
+DirectSubmissionCommandListFixture::DirectSubmissionCommandListFixture() = default;
+DirectSubmissionCommandListFixture ::~DirectSubmissionCommandListFixture() = default;
+
+void DirectSubmissionCommandListFixture::setUp() {
+    debugManager.flags.EnableDirectSubmission.set(1);
+    CommandListFixture::setUp();
+}
+
+void DirectSubmissionCommandListFixture::tearDown() {
+    CommandListFixture::tearDown();
+}
+
 void MultiTileCommandListFixtureInit::setUp() {
     debugManager.flags.EnableImplicitScaling.set(1);
     osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);

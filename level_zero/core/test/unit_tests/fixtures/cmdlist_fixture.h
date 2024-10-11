@@ -27,6 +27,16 @@ class CommandListFixture : public DeviceFixture {
     std::unique_ptr<WhiteBox<L0::Event>> event;
 };
 
+class DirectSubmissionCommandListFixture : public CommandListFixture {
+  public:
+    DirectSubmissionCommandListFixture();
+    ~DirectSubmissionCommandListFixture() override;
+    void setUp();
+    void tearDown();
+
+    DebugManagerStateRestore restorer;
+};
+
 struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture {
     void setUp();
     void setUpParams(bool createImmediate, bool createInternal, bool createCopy, int32_t primaryBuffer);

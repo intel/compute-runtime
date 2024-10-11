@@ -987,6 +987,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
+    if (this->device->getNEODevice()->isAnyDirectSubmissionEnabled()) {
+        NEO::PipeControlArgs pipeControlArgs;
+        pipeControlArgs.textureCacheInvalidationEnable = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), pipeControlArgs);
+    }
+
     ze_group_count_t kernelArgs{pSrcRegion->width / groupSizeX, pSrcRegion->height / groupSizeY,
                                 pSrcRegion->depth / groupSizeZ};
 

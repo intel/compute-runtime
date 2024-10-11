@@ -23,6 +23,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
+#include "test_traits_common.h"
+
 namespace L0 {
 
 namespace ult {
@@ -1302,6 +1304,74 @@ HWTEST2_F(CommandListAppend, givenComputeCommandListAndEventIsUsedWhenCopyFromIm
     cmdList.appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(cmdList.appendCopyImageBlitCalledTimes, 0u);
     EXPECT_EQ(event.get(), cmdList.appendKernelEventValue);
+}
+
+struct IsAtLeastDg2AndSupportsImages {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return productFamily >= IGFX_DG2 && TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::imagesSupported;
+    }
+};
+
+using DirectSubmissionCommandListTest = Test<DirectSubmissionCommandListFixture>;
+
+HWTEST2_F(DirectSubmissionCommandListTest, givenComputeCommandListWhenCopyImageToMemoryThenTextureCacheFlushIsAddedPriorToWalker, IsAtLeastDg2AndSupportsImages) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
+
+    if (!neoDevice->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    Mock<::L0::KernelImp> *mockKernel = static_cast<Mock<::L0::KernelImp> *>(device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion));
+    mockKernel->setArgRedescribedImageCallBase = false;
+
+    MockCommandListHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    ze_image_desc_t zeDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                              nullptr,
+                              0,
+                              ZE_IMAGE_TYPE_1D,
+                              {ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                               ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                               ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                              4,
+                              1,
+                              1,
+                              0,
+                              0};
+    auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHWSrc->initialize(device, &zeDesc);
+
+    ze_image_region_t srcRegion = {0, 0, 0, 1, 1, 1};
+    uint32_t data[16];
+
+    cmdList.appendImageCopyToMemory(&data[0], imageHWSrc->toHandle(), &srcRegion, nullptr, 0, nullptr, false);
+
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdList.commandContainer.getCommandStream()->getCpuBase(), 0), cmdList.commandContainer.getCommandStream()->getUsed()));
+
+    auto allPcs = findAll<PIPE_CONTROL *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(0u, allPcs.size());
+
+    bool textureCacheInvFound = false;
+    auto iteratorPc = genCmdList.begin();
+    for (auto it : allPcs) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+
+        if (cmd->getTextureCacheInvalidationEnable()) {
+            textureCacheInvFound = true;
+            iteratorPc = it;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(textureCacheInvFound);
+
+    auto itorWalker = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(iteratorPc, genCmdList.end());
+    ASSERT_NE(itorWalker, genCmdList.end());
 }
 
 using BlitBlockCopyPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
