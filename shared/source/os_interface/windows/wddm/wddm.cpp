@@ -110,7 +110,7 @@ bool Wddm::init() {
     hardwareInfo->capabilityTable.instrumentationEnabled =
         (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
-    if (gtSystemInfo->SLMSizeInKb > 0) {
+    if (!hardwareInfo->capabilityTable.slmSize) {
         hardwareInfo->capabilityTable.slmSize = gtSystemInfo->SLMSizeInKb;
     }
     rootDeviceEnvironment.initProductHelper();

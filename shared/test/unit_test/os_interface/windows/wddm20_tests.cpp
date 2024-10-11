@@ -85,7 +85,7 @@ TEST_F(Wddm20Tests, whenInitializingWddmAndSlmSizeInCapabilityTableIsNotSetThenS
     EXPECT_EQ(outputHwInfo.gtSystemInfo.SLMSizeInKb, inputHwInfo.gtSystemInfo.SLMSizeInKb);
 }
 
-TEST_F(Wddm20Tests, whenInitializingWddmAndSlmSizeInCapabilityTableAndInGtSystemInfoAreSetThenSetupSlmSizeInCapabilityTableBasedOnGtSystemInfo) {
+TEST_F(Wddm20Tests, whenInitializingWddmAndSlmSizeInCapabilityTableIsSetThenItStaysTheSame) {
     auto inputHwInfo = *defaultHwInfo;
     inputHwInfo.capabilityTable.slmSize = 0x54321u;
     EXPECT_NE(0u, inputHwInfo.gtSystemInfo.SLMSizeInKb);
@@ -94,8 +94,8 @@ TEST_F(Wddm20Tests, whenInitializingWddmAndSlmSizeInCapabilityTableAndInGtSystem
     wddm->init();
     auto &outputHwInfo = *rootDeviceEnvironment->getHardwareInfo();
 
-    EXPECT_EQ(outputHwInfo.gtSystemInfo.SLMSizeInKb, outputHwInfo.capabilityTable.slmSize);
-    EXPECT_NE(outputHwInfo.capabilityTable.slmSize, inputHwInfo.capabilityTable.slmSize);
+    EXPECT_NE(outputHwInfo.gtSystemInfo.SLMSizeInKb, outputHwInfo.capabilityTable.slmSize);
+    EXPECT_EQ(outputHwInfo.capabilityTable.slmSize, inputHwInfo.capabilityTable.slmSize);
 }
 
 TEST_F(Wddm20Tests, givenNullPageTableManagerAndCompressedResourceWhenMappingGpuVaThenDontUpdateAuxTable) {
