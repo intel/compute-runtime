@@ -27,6 +27,8 @@ struct DrmMockXe : public DrmMockCustom {
     int gemVmBindReturn = 0;
     GemClose passedGemClose{};
     int gemCloseCalled = 0;
+    int gemMmapOffsetCalled = 0;
+    int gemDestroyContextCalled = 0;
 
     const uint16_t revId = 0x12;
     const uint16_t devId = 0xabc;
@@ -58,6 +60,7 @@ struct DrmMockXe : public DrmMockCustom {
     uint16_t createParamsCpuCaching = 0u;
     uint32_t createParamsPlacement = 0u;
     bool ioctlCalled = false;
+    bool forceMmapOffsetFail = false;
 
   protected:
     // Don't call directly, use the create() function

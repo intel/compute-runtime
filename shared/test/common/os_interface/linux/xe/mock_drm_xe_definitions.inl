@@ -47,11 +47,16 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
             ret = 0;
     } break;
     case DrmIoctl::gemMmapOffset: {
-        struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
-        if (v->handle == testValueMapOff) {
-            v->offset = v->handle;
-            ret = 0;
+        gemMmapOffsetCalled++;
+
+        if (forceMmapOffsetFail) {
+            ret = -1;
+            break;
         }
+        struct drm_xe_gem_mmap_offset *v = static_cast<struct drm_xe_gem_mmap_offset *>(arg);
+        v->offset = v->handle;
+        ret = 0;
+
     } break;
     case DrmIoctl::primeFdToHandle: {
         PrimeHandle *v = static_cast<PrimeHandle *>(arg);
@@ -174,6 +179,7 @@ int DrmMockXe::ioctl(DrmIoctl request, void *arg) {
         ret = 0;
     } break;
     case DrmIoctl::gemContextDestroy: {
+        gemDestroyContextCalled++;
         ret = 0;
     } break;
     case DrmIoctl::perfOpen: {

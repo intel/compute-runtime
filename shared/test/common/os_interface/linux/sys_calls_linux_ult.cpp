@@ -74,6 +74,7 @@ bool mmapAllowExtendedPointers = false;
 bool failMmap = false;
 uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
+bool failMunmap = false;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 int (*sysCallsClose)(int fileDescriptor) = nullptr;
@@ -324,6 +325,10 @@ void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noex
 
 int munmap(void *addr, size_t size) noexcept {
     munmapFuncCalled++;
+    if (failMunmap) {
+        return -1;
+    }
+
     auto ptrIt = std::find(mmapVector.begin(), mmapVector.end(), addr);
     if (ptrIt != mmapVector.end()) {
         mmapVector.erase(ptrIt);
