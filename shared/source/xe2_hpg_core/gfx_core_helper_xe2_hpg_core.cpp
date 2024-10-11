@@ -24,6 +24,8 @@ using Family = NEO::Xe2HpgCoreFamily;
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
+#include "gfx_core_helper_xe2_hpg_core_additional.inl"
+
 namespace NEO {
 
 template <>
