@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,10 +33,6 @@ class AffinityMaskHelper {
 
     void enableGenericSubDevice(uint32_t subDeviceIndex) {
         enableGenericSubDevice(subDeviceIndex, std::numeric_limits<uint32_t>::max());
-    }
-
-    void enableEngineInstancedSubDevice(uint32_t subDeviceIndex, uint32_t engineIndex) {
-        enableGenericSubDevice(subDeviceIndex, (1u << engineIndex));
     }
 
     void enableAllGenericSubDevices(uint32_t subDeviceCount) {

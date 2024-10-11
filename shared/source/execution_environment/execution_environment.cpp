@@ -295,11 +295,6 @@ void ExecutionEnvironment::parseAffinityMask() {
                         affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
                     } else {
                         UNRECOVERABLE_IF(subEntries.size() != 3);
-                        uint32_t ccsIndex = StringHelpers::toUint32t(subEntries[2]);
-
-                        if (ccsIndex < hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
-                            affinityMaskHelper[rootDeviceIndex].enableEngineInstancedSubDevice(subDeviceIndex, ccsIndex); // Mask: X.Y.Z
-                        }
                     }
                 }
             } else {

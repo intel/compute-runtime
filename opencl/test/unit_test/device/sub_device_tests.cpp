@@ -412,25 +412,6 @@ struct DeviceTests : public ::testing::Test {
         return (numCcs == expectedNumCcs);
     }
 
-    template <typename MockDeviceT>
-    bool hasEngineInstancedEngines(MockDeviceT *device, aub_stream::EngineType engineType) {
-        if (device->getAllEngines().size() != 1) {
-            return false;
-        }
-
-        OsContext *defaultOsContext = device->getDefaultEngine().osContext;
-        EXPECT_EQ(engineType, defaultOsContext->getEngineType());
-        EXPECT_EQ(EngineUsage::regular, defaultOsContext->getEngineUsage());
-        EXPECT_TRUE(defaultOsContext->isDefaultContext());
-
-        auto &engine = device->getAllEngines()[0];
-
-        EXPECT_EQ(engine.getEngineType(), engineType);
-        EXPECT_TRUE(engine.osContext->isRegular());
-
-        return true;
-    }
-
     DebugManagerStateRestore restorer;
     std::unique_ptr<UltDeviceFactory> deviceFactory;
     MockDevice *rootDevice = nullptr;
@@ -553,71 +534,6 @@ TEST_F(DeviceTests, givenMultipleClSubDevicesWhenCallingGetSubDeviceThenReturnCo
 
     EXPECT_EQ(clRootDevice->getSubDevice(0), clRootDevice->getNearestGenericSubDevice(0));
     EXPECT_EQ(clSubDevice.get(), clSubDevice->getNearestGenericSubDevice(0));
-}
-
-TEST_F(DeviceTests, givenAffinityMaskSetWhenCreatingDevicesThenFilterMaskedDevices) {
-    constexpr uint32_t genericDevicesCount = 3;
-    constexpr uint32_t ccsCount = 4;
-    constexpr bool supportedGenericSubDevices[3] = {true, false, true};
-
-    debugManager.flags.ZE_AFFINITY_MASK.set("0.0.0, 0.0.1, 0.0.2, 0.2.2, 0.2.3, 0.1.5");
-
-    if (!createDevices(genericDevicesCount, ccsCount)) {
-        GTEST_SKIP();
-    }
-
-    EXPECT_TRUE(hasRootCsrOnly(rootDevice));
-
-    for (uint32_t i = 0; i < genericDevicesCount; i++) {
-        if (!supportedGenericSubDevices[i]) {
-            EXPECT_EQ(nullptr, rootDevice->getSubDevice(i));
-            continue;
-        }
-
-        auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(i));
-
-        ASSERT_NE(nullptr, subDevice);
-
-        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
-        EXPECT_EQ(0u, subDevice->getNumSubDevices());
-        EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
-
-        EXPECT_TRUE(hasAllEngines(subDevice));
-    }
-}
-
-TEST_F(DeviceTests, givenAffinityMaskForSingle3rdLevelDeviceWhenCreatingDevicesThenCreate2ndLevel) {
-    constexpr uint32_t genericDevicesCount = 2;
-    constexpr uint32_t ccsCount = 2;
-    constexpr uint32_t create2ndLevel[2] = {false, true};
-
-    debugManager.flags.ZE_AFFINITY_MASK.set("0.0, 0.1.1");
-
-    if (!createDevices(genericDevicesCount, ccsCount)) {
-        GTEST_SKIP();
-    }
-
-    EXPECT_TRUE(hasRootCsrOnly(rootDevice));
-
-    for (uint32_t i = 0; i < genericDevicesCount; i++) {
-        auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(i));
-
-        ASSERT_NE(nullptr, subDevice);
-
-        EXPECT_FALSE(subDevice->allEngines[0].osContext->isRootDevice());
-
-        if (create2ndLevel[i]) {
-            EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
-            EXPECT_EQ(0u, subDevice->getNumSubDevices());
-
-            continue;
-        }
-
-        EXPECT_TRUE(hasAllEngines(subDevice));
-
-        EXPECT_EQ(0u, subDevice->getNumGenericSubDevices());
-        EXPECT_EQ(0u, subDevice->getNumSubDevices());
-    }
 }
 
 TEST_F(DeviceTests, givenAffinityMaskForSecondLevelOnSingleTileDeviceWithoutDebugFlagWhenCreatingThenDontEnableAllSubDevices) {
