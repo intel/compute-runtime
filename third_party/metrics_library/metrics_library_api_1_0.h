@@ -738,6 +738,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 173
+#define METRICS_LIBRARY_BUILD_NUMBER 178
 
 } // namespace MetricsLibraryApi
