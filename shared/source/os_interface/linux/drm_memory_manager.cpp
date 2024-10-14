@@ -2755,12 +2755,12 @@ bool DrmMemoryManager::releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceI
     return getDrm(rootDeviceIndex).getIoctlHelper()->releaseInterrupt(outHandle);
 }
 
-bool DrmMemoryManager::createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) {
+bool DrmMemoryManager::createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, void *&outDoorbell) {
     auto &drm = getDrm(rootDeviceIndex);
     return drm.getIoctlHelper()->createMediaContext(drm.getVirtualMemoryAddressSpace(0), controlSharedMemoryBuffer, controlSharedMemoryBufferSize, controlBatchBuffer, controlBatchBufferSize, outDoorbell);
 }
 
-bool DrmMemoryManager::releaseMediaContext(uint32_t rootDeviceIndex, uint64_t doorbellHandle) {
+bool DrmMemoryManager::releaseMediaContext(uint32_t rootDeviceIndex, void *doorbellHandle) {
     return getDrm(rootDeviceIndex).getIoctlHelper()->releaseMediaContext(doorbellHandle);
 }
 

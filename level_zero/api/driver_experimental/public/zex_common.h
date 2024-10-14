@@ -120,7 +120,7 @@ typedef struct _ze_intel_media_doorbell_handle_desc_t ze_intel_media_doorbell_ha
 typedef struct _ze_intel_media_doorbell_handle_desc_t {
     ze_structure_type_t stype; ///< [in] type of this structure
     void *pNext;               ///< [in][optional] must be null or a pointer to an extension-specific, this will be used to extend this in future
-    uint64_t doorbell;         ///< [in,out] handle of the doorbell
+    void *doorbell;            ///< [in,out] handle of the doorbell
 } ze_intel_media_doorbell_handle_desc_t;
 
 ///////////////////////////////////////////////////////////////////////////////

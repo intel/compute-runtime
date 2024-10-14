@@ -303,8 +303,8 @@ class MemoryManager {
     virtual bool allocateInterrupt(uint32_t &outHandle, uint32_t rootDeviceIndex) { return false; }
     virtual bool releaseInterrupt(uint32_t outHandle, uint32_t rootDeviceIndex) { return false; }
 
-    virtual bool createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, uint64_t &outDoorbell) { return false; }
-    virtual bool releaseMediaContext(uint32_t rootDeviceIndex, uint64_t doorbellHandle) { return false; }
+    virtual bool createMediaContext(uint32_t rootDeviceIndex, void *controlSharedMemoryBuffer, uint32_t controlSharedMemoryBufferSize, void *controlBatchBuffer, uint32_t controlBatchBufferSize, void *&outDoorbell) { return false; }
+    virtual bool releaseMediaContext(uint32_t rootDeviceIndex, void *doorbellHandle) { return false; }
 
     virtual uint32_t getNumMediaDecoders(uint32_t rootDeviceIndex) const { return 0; }
     virtual uint32_t getNumMediaEncoders(uint32_t rootDeviceIndex) const { return 0; }

@@ -35,8 +35,8 @@ class MockIoctlHelper : public IoctlHelperPrelim20 {
     ADDMETHOD_NOBASE(vmBind, int, 0, (const VmBindParams &));
     ADDMETHOD_NOBASE(vmUnbind, int, 0, (const VmBindParams &));
     ADDMETHOD_NOBASE(allocateInterrupt, bool, true, (uint32_t &));
-    ADDMETHOD_NOBASE(createMediaContext, bool, true, (uint32_t, void *, uint32_t, void *, uint32_t, uint64_t &));
-    ADDMETHOD_NOBASE(releaseMediaContext, bool, true, (uint64_t));
+    ADDMETHOD_NOBASE(createMediaContext, bool, true, (uint32_t, void *, uint32_t, void *, uint32_t, void *&));
+    ADDMETHOD_NOBASE(releaseMediaContext, bool, true, (void *));
     ADDMETHOD_CONST_NOBASE(getNumMediaDecoders, uint32_t, 0, ());
     ADDMETHOD_CONST_NOBASE(getNumMediaEncoders, uint32_t, 0, ());
 
