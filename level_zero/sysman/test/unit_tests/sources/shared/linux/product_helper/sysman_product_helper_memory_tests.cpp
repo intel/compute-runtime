@@ -1014,7 +1014,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem2Offset = 0;
         uint32_t mockMsuBitMask = 0x3;
-        std::string validOobmsmGuid = "0x5e2F8210";
+        std::string validOobmsmGuid = "0x5e2f8210";
         if (fd == 4) {
             memcpy(buf, &telem2Offset, count);
         } else if (fd == 5) {
@@ -1068,7 +1068,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
         uint64_t telem2Offset = 0;
         uint64_t telem3Offset = 0;
         uint32_t mockKeyValue = 0x3;
-        std::string validOobmsmGuid = "0x5e2F8210";
+        std::string validOobmsmGuid = "0x5e2f8210";
         std::string validPunitGuid = "0x1e2f8200";
         if (fd == 4) {
             memcpy(buf, &telem2Offset, count);
@@ -1106,7 +1106,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem2Offset = 0;
         uint64_t telem3Offset = 0;
-        std::string validOobmsmGuid = "0x5e2F8210";
+        std::string validOobmsmGuid = "0x5e2f8210";
         std::string validPunitGuid = "0x1e2f8200";
         uint32_t mockMsuBitMask = 0x3;
         uint32_t mockKeyValue = 0;

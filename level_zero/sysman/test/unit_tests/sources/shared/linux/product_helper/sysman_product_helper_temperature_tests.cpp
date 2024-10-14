@@ -811,7 +811,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2F8210";
+        std::string validGuid = "0x5e2f8210";
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -903,7 +903,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2F8210";
+        std::string validGuid = "0x5e2f8210";
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
         } else if (fd == 5) {
@@ -927,7 +927,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2F8210";
+        std::string validGuid = "0x5e2f8210";
         long gpuMaxTemperatureKeyOffset = 41;
         if (fd == 4) {
             memcpy(buf, &telemOffset, count);
@@ -954,7 +954,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2F8210";
+        std::string validGuid = "0x5e2f8210";
         long gpuMaxTemperatureKeyOffset = 41;
         long memoryMaxTemperatureKeyOffset = 42;
         if (fd == 4) {
@@ -985,7 +985,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telemOffset = 0;
-        std::string validGuid = "0x5e2F8210";
+        std::string validGuid = "0x5e2f8210";
         long gpuMaxTemperatureKeyOffset = 41;
         long memoryMaxTemperatureKeyOffset = 42;
         if (fd == 4) {

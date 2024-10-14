@@ -17,7 +17,7 @@ const std::string telem2NodePath("/sys/class/intel_pmt/telem2");
 const std::string telem3NodePath("/sys/class/intel_pmt/telem3");
 const std::string telem4NodePath("/sys/class/intel_pmt/telem4");
 
-const std::string mockValidGuid("0x5e2F8210");
+const std::string mockValidGuid("0x5e2f8210");
 const std::string telem3OffsetString = "10";
 const std::string telem3GuidFile = "/sys/class/intel_pmt/telem3/guid";
 const std::string telem3OffsetFile = "/sys/class/intel_pmt/telem3/offset";

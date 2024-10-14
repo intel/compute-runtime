@@ -56,15 +56,15 @@ HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGui
 }
 
 HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGuidToKeyOffsetMapIsCalledThenValidMapIsReturned, IsBMG) {
-    const std::map<std::string, std::map<std::string, uint64_t>> mockBmgGuidToKeyOffsetMap = {{"0x5e2F8210",
+    const std::map<std::string, std::map<std::string, uint64_t>> mockBmgGuidToKeyOffsetMap = {{"0x5e2f8210",
                                                                                                {{"reg_PCIESS_rx_bytecount_lsb", 70},
                                                                                                 {"reg_PCIESS_tx_bytecount_msb", 71}}}};
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     auto pGuidToKeyOffsetMap = pSysmanProductHelper->getGuidToKeyOffsetMap();
     EXPECT_NE(nullptr, pGuidToKeyOffsetMap);
-    EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x5e2F8210").at("reg_PCIESS_rx_bytecount_lsb"), (*pGuidToKeyOffsetMap).at("0x5e2F8210").at("reg_PCIESS_rx_bytecount_lsb"));
-    EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x5e2F8210").at("reg_PCIESS_tx_bytecount_msb"), (*pGuidToKeyOffsetMap).at("0x5e2F8210").at("reg_PCIESS_tx_bytecount_msb"));
+    EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x5e2f8210").at("reg_PCIESS_rx_bytecount_lsb"), (*pGuidToKeyOffsetMap).at("0x5e2f8210").at("reg_PCIESS_rx_bytecount_lsb"));
+    EXPECT_EQ(mockBmgGuidToKeyOffsetMap.at("0x5e2f8210").at("reg_PCIESS_tx_bytecount_msb"), (*pGuidToKeyOffsetMap).at("0x5e2f8210").at("reg_PCIESS_tx_bytecount_msb"));
 }
 
 } // namespace ult
