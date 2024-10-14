@@ -14,11 +14,11 @@ namespace NEO {
 MockOclocIgcFacade::MockOclocIgcFacade(OclocArgHelper *argHelper) : OclocIgcFacade(argHelper){};
 MockOclocIgcFacade::~MockOclocIgcFacade() = default;
 
-std::unique_ptr<OsLibrary> MockOclocIgcFacade::loadIgcLibrary() const {
+std::unique_ptr<OsLibrary> MockOclocIgcFacade::loadIgcLibrary(const char *libName) const {
     if (shouldFailLoadingOfIgcLib) {
         return nullptr;
     } else {
-        return OclocIgcFacade::loadIgcLibrary();
+        return OclocIgcFacade::loadIgcLibrary(libName);
     }
 }
 

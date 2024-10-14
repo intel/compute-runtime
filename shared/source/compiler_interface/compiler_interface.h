@@ -64,6 +64,7 @@ struct TranslationOutput {
 
     IGC::CodeType::CodeType_t intermediateCodeType = IGC::CodeType::invalid;
     MemAndSize intermediateRepresentation;
+    MemAndSize finalizerInputRepresentation;
     MemAndSize deviceBinary;
     MemAndSize debugData;
     std::string frontendCompilerLog;
@@ -76,6 +77,22 @@ struct TranslationOutput {
             return;
         }
         dst.assign(src->GetMemory<char>(), src->GetSize<char>());
+    }
+
+    template <typename ContainerT, typename SeparatorT>
+    static void append(ContainerT &dst, CIF::Builtins::BufferSimple *src, const SeparatorT *separator, size_t separatorLen) {
+        if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
+            return;
+        }
+        if ((false == dst.empty()) && separator && (separatorLen > 0)) {
+            dst.append(separator, separatorLen);
+        }
+        dst.append(src->GetMemory<char>(), src->GetSize<char>());
+    }
+
+    template <typename ContainerT, typename SeparatorT>
+    static void append(ContainerT &dst, CIF::Builtins::BufferSimple *src, const SeparatorT *separator) {
+        append(dst, src, separator, 1);
     }
 
     static void makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src);
@@ -133,17 +150,20 @@ class CompilerInterface {
     bool disableZebin(std::string &options, std::string &internalOptions);
 
   protected:
+    struct CompilerLibraryEntry {
+        std::string revision;
+        size_t libSize{};
+        time_t libMTime{};
+        std::unique_ptr<OsLibrary> library;
+        CIF::RAII::UPtr_t<CIF::CIFMain> entryPoint;
+    };
+
     MOCKABLE_VIRTUAL bool initialize(std::unique_ptr<CompilerCache> &&cache, bool requireFcl);
     MOCKABLE_VIRTUAL bool loadFcl();
-    MOCKABLE_VIRTUAL bool loadIgc();
+    MOCKABLE_VIRTUAL bool loadIgcBasedCompiler(CompilerLibraryEntry &entryPoint, const char *libName);
 
     template <template <CIF::Version_t> class EntryPointT>
     std::once_flag &getIcbeVersionCallOnceFlag();
-
-    template <template <CIF::Version_t> class EntryPointT>
-    bool checkIcbeVersionOnce(CIF::CIFMain *main, const char *libName);
-
-    bool verifyIcbeVersion();
 
     static SpinLock spinlock;
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
@@ -152,22 +172,24 @@ class CompilerInterface {
     std::unique_ptr<CompilerCache> cache;
 
     using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
+    using finalizerDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
     using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;
 
-    std::unique_ptr<OsLibrary> igcLib;
-    CIF::RAII::UPtr_t<CIF::CIFMain> igcMain;
-    std::map<const Device *, igcDevCtxUptr> igcDeviceContexts;
-    std::string igcRevision;
-    size_t igcLibSize{};
-    time_t igcLibMTime{};
+    CompilerLibraryEntry defaultIgc;
+    std::mutex customCompilerLibraryLoadMutex;
+    std::unordered_map<std::string, std::unique_ptr<CompilerLibraryEntry>> customCompilerLibraries;
+    std::unordered_map<const Device *, igcDevCtxUptr> igcDeviceContexts;
 
-    std::unique_ptr<OsLibrary> fclLib;
-    CIF::RAII::UPtr_t<CIF::CIFMain> fclMain;
-    std::map<const Device *, fclDevCtxUptr> fclDeviceContexts;
+    CompilerLibraryEntry fcl;
+    std::unordered_map<const Device *, fclDevCtxUptr> fclDeviceContexts;
     CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx;
+
+    std::unordered_map<const Device *, finalizerDevCtxUptr> finalizerDeviceContexts;
+    IGC::CodeType::CodeType_t finalizerInputType = IGC::CodeType::undefined;
 
     MOCKABLE_VIRTUAL IGC::FclOclDeviceCtxTagOCL *getFclDeviceCtx(const Device &device);
     MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL IGC::IgcOclDeviceCtxTagOCL *getFinalizerDeviceCtx(const Device &device);
     MOCKABLE_VIRTUAL IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device);
 
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
@@ -176,22 +198,47 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createIgcTranslationCtx(const Device &device,
                                                                                                 IGC::CodeType::CodeType_t inType,
                                                                                                 IGC::CodeType::CodeType_t outType);
+    MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createFinalizerTranslationCtx(const Device &device,
+                                                                                                      IGC::CodeType::CodeType_t inType,
+                                                                                                      IGC::CodeType::CodeType_t outType);
     bool isFclAvailable() const {
-        return (fclMain != nullptr);
+        return (fcl.entryPoint.get() != nullptr);
     }
 
-    bool isIgcAvailable() const {
-        return (igcMain != nullptr);
+    bool isIgcAvailable(const Device *device);
+    bool isFinalizerAvailable(const Device *device);
+
+    const CompilerLibraryEntry *getCustomCompilerLibrary(const char *libName);
+
+    const CompilerLibraryEntry *getIgc(const char *libName) {
+        if (libName == nullptr) {
+            if (defaultIgc.entryPoint == nullptr) {
+                return nullptr;
+            }
+            return &defaultIgc;
+        }
+
+        return getCustomCompilerLibrary(libName);
     }
 
-    bool isCompilerAvailable(IGC::CodeType::CodeType_t translationSrc, IGC::CodeType::CodeType_t translationDst) const {
+    const CompilerLibraryEntry *getIgc(const Device *device);
+
+    const CompilerLibraryEntry *getFinalizer(const char *libName) {
+        if (libName == nullptr) {
+            return nullptr;
+        }
+
+        return getCustomCompilerLibrary(libName);
+    }
+
+    const CompilerLibraryEntry *getFinalizer(const Device *device);
+
+    bool isCompilerAvailable(const Device *device, IGC::CodeType::CodeType_t translationSrc, IGC::CodeType::CodeType_t translationDst) {
         bool requiresFcl = (IGC::CodeType::oclC == translationSrc);
         bool requiresIgc = (IGC::CodeType::oclC != translationSrc) || ((IGC::CodeType::spirV != translationDst) && (IGC::CodeType::llvmBc != translationDst) && (IGC::CodeType::llvmLl != translationDst));
-        return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable() || (false == requiresIgc));
+        bool requiresFinalizer = (finalizerInputType != IGC::CodeType::undefined) && ((translationDst == IGC::CodeType::oclGenBin) || (translationSrc == finalizerInputType));
+        return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable(device) || (false == requiresIgc)) && ((false == requiresFinalizer) || isFinalizerAvailable(device));
     }
-
-    std::once_flag igcIcbeCheckVersionCallOnce;
-    std::once_flag fclIcbeCheckVersionCallOnce;
 };
 
 class CompilerCacheHelper {

@@ -15,6 +15,7 @@
 
 #include <functional>
 #include <map>
+#include <optional>
 #include <string>
 
 namespace NEO {
@@ -22,17 +23,18 @@ namespace NEO {
 class MockCompilerInterface : public CompilerInterface {
   public:
     using CompilerInterface::cache;
-    using CompilerInterface::checkIcbeVersionOnce;
     using CompilerInterface::fclBaseTranslationCtx;
     using CompilerInterface::fclDeviceContexts;
     using CompilerInterface::initialize;
     using CompilerInterface::isCompilerAvailable;
     using CompilerInterface::isFclAvailable;
     using CompilerInterface::isIgcAvailable;
-    using CompilerInterface::verifyIcbeVersion;
 
-    using CompilerInterface::fclMain;
-    using CompilerInterface::igcMain;
+    using CompilerInterface::defaultIgc;
+    using CompilerInterface::fcl;
+
+    using CompilerInterface::customCompilerLibraries;
+    using CompilerInterface::finalizerDeviceContexts;
 
     bool loadFcl() override {
         if (failLoadFcl) {
@@ -41,18 +43,23 @@ class MockCompilerInterface : public CompilerInterface {
         return CompilerInterface::loadFcl();
     }
 
-    bool loadIgc() override {
+    bool loadIgcBasedCompiler(CompilerLibraryEntry &entryPoint, const char *libName) override {
         if (failLoadIgc) {
             return false;
         }
-        return CompilerInterface::loadIgc();
+
+        if (igcLibraryNameOverride.has_value()) {
+            libName = *igcLibraryNameOverride;
+        }
+
+        return CompilerInterface::loadIgcBasedCompiler(entryPoint, libName);
     }
 
     void setFclDeviceCtx(const Device &d, IGC::FclOclDeviceCtxTagOCL *ctx) {
         this->fclDeviceContexts[&d] = CIF::RAII::RetainAndPack<IGC::FclOclDeviceCtxTagOCL>(ctx);
     }
 
-    std::map<const Device *, fclDevCtxUptr> &getFclDeviceContexts() {
+    std::unordered_map<const Device *, fclDevCtxUptr> &getFclDeviceContexts() {
         return this->fclDeviceContexts;
     }
 
@@ -60,7 +67,11 @@ class MockCompilerInterface : public CompilerInterface {
         this->igcDeviceContexts[&d] = CIF::RAII::RetainAndPack<IGC::IgcOclDeviceCtxTagOCL>(ctx);
     }
 
-    std::map<const Device *, igcDevCtxUptr> &getIgcDeviceContexts() {
+    void setFinalizerDeviceCtx(const Device &d, IGC::IgcOclDeviceCtxTagOCL *ctx) {
+        this->finalizerDeviceContexts[&d] = CIF::RAII::RetainAndPack<IGC::IgcOclDeviceCtxTagOCL>(ctx);
+    }
+
+    std::unordered_map<const Device *, igcDevCtxUptr> &getIgcDeviceContexts() {
         return this->igcDeviceContexts;
     }
 
@@ -73,7 +84,7 @@ class MockCompilerInterface : public CompilerInterface {
     }
 
     template <typename DeviceCtx>
-    std::map<const Device *, CIF::RAII::UPtr_t<DeviceCtx>> &getDeviceContexts();
+    std::unordered_map<const Device *, CIF::RAII::UPtr_t<DeviceCtx>> &getDeviceContexts();
 
     std::unique_lock<SpinLock> lock() override {
         if (lockListener != nullptr) {
@@ -84,13 +95,13 @@ class MockCompilerInterface : public CompilerInterface {
     }
 
     void setIgcMain(CIF::CIFMain *main) {
-        this->igcMain.release();
-        this->igcMain.reset(main);
+        this->defaultIgc.entryPoint.release();
+        this->defaultIgc.entryPoint.reset(main);
     }
 
     void setFclMain(CIF::CIFMain *main) {
-        this->fclMain.release();
-        this->fclMain.reset(main);
+        this->fcl.entryPoint.release();
+        this->fcl.entryPoint.reset(main);
     }
 
     IGC::IgcOclDeviceCtxTagOCL *getIgcDeviceCtx(const Device &device) override {
@@ -121,6 +132,17 @@ class MockCompilerInterface : public CompilerInterface {
         }
 
         return CompilerInterface::createIgcTranslationCtx(device, inType, outType);
+    }
+
+    CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> createFinalizerTranslationCtx(const Device &device,
+                                                                                     IGC::CodeType::CodeType_t inType,
+                                                                                     IGC::CodeType::CodeType_t outType) override {
+        requestedTranslationCtxs.emplace_back(inType, outType);
+        if (failCreateFinalizerTranslationCtx) {
+            return nullptr;
+        }
+
+        return CompilerInterface::createFinalizerTranslationCtx(device, inType, outType);
     }
 
     IGC::FclOclTranslationCtxTagOCL *getFclBaseTranslationCtx() {
@@ -154,9 +176,11 @@ class MockCompilerInterface : public CompilerInterface {
     IGC::IgcFeaturesAndWorkaroundsTagOCL *igcFeaturesAndWorkaroundsTagOCL = nullptr;
     bool failCreateFclTranslationCtx = false;
     bool failCreateIgcTranslationCtx = false;
+    bool failCreateFinalizerTranslationCtx = false;
     bool failLoadFcl = false;
     bool failLoadIgc = false;
     bool failGetIgcDeviceCtx = false;
+    std::optional<const char *> igcLibraryNameOverride;
 
     using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;
     std::vector<TranslationOpT> requestedTranslationCtxs;
@@ -168,12 +192,12 @@ class MockCompilerInterface : public CompilerInterface {
 };
 
 template <>
-inline std::map<const Device *, MockCompilerInterface::igcDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::IgcOclDeviceCtxTagOCL>() {
+inline std::unordered_map<const Device *, MockCompilerInterface::igcDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::IgcOclDeviceCtxTagOCL>() {
     return getIgcDeviceContexts();
 }
 
 template <>
-inline std::map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::FclOclDeviceCtxTagOCL>() {
+inline std::unordered_map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::FclOclDeviceCtxTagOCL>() {
     return getFclDeviceContexts();
 }
 
