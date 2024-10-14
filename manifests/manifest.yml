@@ -27,12 +27,6 @@ components:
     revision: V0.9.3
     repository: https://github.com/intel/igsc.git
     component_version: 279
-  infra:
-    branch: master
-    dest_dir: infra
-    fetch_tags: true
-    revision: v6442
-    type: git
   internal:
     branch: master
     dest_dir: internal
@@ -92,4 +86,6 @@ components:
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
 converter: M-3107
+include:
+- infra.yml
 version: '1'
