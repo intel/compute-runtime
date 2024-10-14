@@ -50,7 +50,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     InOrderExecInfo() = delete;
 
     static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
-    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue);
+    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue);
 
     InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
 
@@ -100,6 +100,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     NEO::TagNodeBase *deviceCounterNode = nullptr;
     NEO::TagNodeBase *hostCounterNode = nullptr;
     NEO::GraphicsAllocation *externalHostAllocation = nullptr;
+    NEO::GraphicsAllocation *externalDeviceAllocation = nullptr;
     std::vector<std::pair<NEO::TagNodeBase *, uint64_t>> tempTimestampNodes;
 
     std::mutex mutex;

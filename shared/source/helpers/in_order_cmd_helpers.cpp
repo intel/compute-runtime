@@ -27,11 +27,12 @@ std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCoun
     return std::make_shared<NEO::InOrderExecInfo>(deviceCounterNode, hostCounterNode, device, partitionCount, regularCmdList, atomicDeviceSignalling);
 }
 
-std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(NEO::Device &device, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue) {
+std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue) {
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(nullptr, nullptr, device, 1, false, true);
 
     inOrderExecInfo->counterValue = counterValue;
     inOrderExecInfo->externalHostAllocation = hostAllocation;
+    inOrderExecInfo->externalDeviceAllocation = deviceAllocation;
     inOrderExecInfo->hostAddress = hostAddress;
     inOrderExecInfo->deviceAddress = deviceAddress;
     inOrderExecInfo->duplicatedHostStorage = true;
@@ -122,6 +123,9 @@ void InOrderExecInfo::reset() {
 }
 
 NEO::GraphicsAllocation *InOrderExecInfo::getDeviceCounterAllocation() const {
+    if (externalDeviceAllocation) {
+        return externalDeviceAllocation;
+    }
     return deviceCounterNode ? deviceCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex) : nullptr;
 }
 
