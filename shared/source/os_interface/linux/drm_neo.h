@@ -212,9 +212,8 @@ class Drm : public DriverModel {
 
     static Drm *create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     static void overrideBindSupport(bool &useVmBind);
-    std::string getPciPath() {
-        return hwDeviceId->getPciPath();
-    }
+    std::string getPciPath() { return hwDeviceId->getPciPath(); }
+    std::string getDeviceNode() { return hwDeviceId->getDeviceNode(); }
 
     void waitForBind(uint32_t vmHandleId);
     uint64_t getNextFenceVal(uint32_t vmHandleId) { return fenceVal[vmHandleId] + 1; }
