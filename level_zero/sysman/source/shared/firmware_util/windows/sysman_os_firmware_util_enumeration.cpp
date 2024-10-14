@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,5 +10,6 @@
 namespace L0 {
 namespace Sysman {
 std::string FirmwareUtilImp::fwUtilLibraryName = "igsc.dll";
+int FirmwareUtilImp::fwUtilLoadFlags{};
 } // namespace Sysman
 } // namespace L0

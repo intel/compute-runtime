@@ -73,4 +73,15 @@ TEST(OsLibraryTest, GivenInvalidLibraryWhenOpeningLibraryThenDlopenErrorIsReturn
     EXPECT_TRUE(NEO::SysCalls::dlOpenCalled);
 }
 
+TEST(OsLibraryTest, GivenLoadFlagsOverwriteWhenOpeningLibraryThenDlOpenIsCalledWithExpectedFlags) {
+    VariableBackup<int> dlOpenFlagsBackup{&NEO::SysCalls::dlOpenFlags, 0};
+    VariableBackup<bool> dlOpenCalledBackup{&NEO::SysCalls::dlOpenCalled, false};
+
+    auto expectedFlag = RTLD_LAZY | RTLD_GLOBAL;
+    NEO::OsLibrary::loadFlagsOverwrite = &expectedFlag;
+    auto lib = std::make_unique<Linux::OsLibrary>("_abc.so", nullptr);
+    EXPECT_TRUE(NEO::SysCalls::dlOpenCalled);
+    EXPECT_EQ(NEO::SysCalls::dlOpenFlags, expectedFlag);
+}
+
 } // namespace NEO

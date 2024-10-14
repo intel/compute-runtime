@@ -127,6 +127,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     ze_result_t fwFlashIafPsc(void *pImage, uint32_t size);
     ze_result_t fwCallGetstatusExt(uint32_t &supportedTests, uint32_t &ifrApplied, uint32_t &prevErrors, uint32_t &pendingReset);
 
+    static int fwUtilLoadFlags;
     static std::string fwUtilLibraryName;
     std::string fwDevicePath{};
     struct igsc_device_handle fwDeviceHandle = {};

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,3 +13,4 @@ if(igsc_FOUND)
   )
 endif()
 
+add_subdirectories()

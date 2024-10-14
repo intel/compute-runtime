@@ -43,6 +43,8 @@ OsLibrary::OsLibrary(const std::string &name, std::string *errorValue) {
         auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
         /* Background: https://github.com/intel/compute-runtime/issues/122 */
 #endif
+        dlopenFlag = OsLibrary::loadFlagsOverwrite ? *OsLibrary::loadFlagsOverwrite : dlopenFlag;
+        OsLibrary::loadFlagsOverwrite = nullptr;
         adjustLibraryFlags(dlopenFlag);
         this->handle = SysCalls::dlopen(name.c_str(), dlopenFlag);
         if (!this->handle && (errorValue != nullptr)) {

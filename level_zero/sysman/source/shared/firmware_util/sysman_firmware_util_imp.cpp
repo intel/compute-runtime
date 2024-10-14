@@ -208,6 +208,7 @@ FirmwareUtilImp::~FirmwareUtilImp() {
 FirmwareUtil *FirmwareUtil::create(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function) {
     FirmwareUtilImp *pFwUtilImp = new FirmwareUtilImp(domain, bus, device, function);
     UNRECOVERABLE_IF(nullptr == pFwUtilImp);
+    NEO::OsLibrary::loadFlagsOverwrite = &FirmwareUtilImp::fwUtilLoadFlags;
     pFwUtilImp->libraryHandle = NEO::OsLibrary::loadFunc(FirmwareUtilImp::fwUtilLibraryName);
     if (pFwUtilImp->libraryHandle == nullptr || pFwUtilImp->loadEntryPoints() == false || pFwUtilImp->fwDeviceInit() != ZE_RESULT_SUCCESS) {
         if (nullptr != pFwUtilImp->libraryHandle) {

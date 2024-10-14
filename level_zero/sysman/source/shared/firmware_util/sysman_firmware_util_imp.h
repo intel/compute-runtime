@@ -127,6 +127,7 @@ class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
     void getDeviceSupportedFwTypes(std::vector<std::string> &fwTypes) override;
     void fwGetMemoryHealthIndicator(zes_mem_health_t *health) override;
 
+    static int fwUtilLoadFlags;
     static std::string fwUtilLibraryName;
     bool loadEntryPoints();
     bool loadEntryPointsExt();

@@ -31,6 +31,8 @@ class OsLibrary {
   public:
     virtual ~OsLibrary() = default;
 
+    static const int *loadFlagsOverwrite;
+
     static decltype(&OsLibrary::load) loadFunc;
     static OsLibrary *loadAndCaptureError(const std::string &name, std::string *errorValue);
     static const std::string createFullSystemPath(const std::string &name);
