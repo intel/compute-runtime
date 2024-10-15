@@ -2310,7 +2310,7 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
         driverHandle->setErrorDescription(std::string(str.get()));
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "invalid imageType: %d\n", imageType);
         UNRECOVERABLE_IF(true);
-        break;
+        return 0;
     }
     case NEO::ImageType::image1D:
         return bufferRowPitch;
