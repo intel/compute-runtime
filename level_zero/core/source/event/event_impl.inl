@@ -58,7 +58,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
     event->maxKernelCount = eventDescriptor.maxKernelCount;
     event->maxPacketCount = eventDescriptor.maxPacketsCount;
     event->isFromIpcPool = eventDescriptor.importedIpcPool;
-    if (event->isFromIpcPool || eventDescriptor.ipcPool) {
+    if ((event->isFromIpcPool || eventDescriptor.ipcPool) && (eventDescriptor.counterBasedFlags == 0)) {
         event->disableImplicitCounterBasedMode();
     }
 

@@ -50,7 +50,8 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     InOrderExecInfo() = delete;
 
     static std::shared_ptr<InOrderExecInfo> create(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList);
-    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue);
+    static std::shared_ptr<InOrderExecInfo> createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation,
+                                                                         uint64_t *hostAddress, uint64_t counterValue, uint32_t devicePartitions, uint32_t hostPartitions);
 
     InOrderExecInfo(TagNodeBase *deviceCounterNode, TagNodeBase *hostCounterNode, NEO::Device &device, uint32_t partitionCount, bool regularCmdList, bool atomicDeviceSignalling);
 
@@ -89,6 +90,7 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     }
 
     NEO::GraphicsAllocation *getExternalHostAllocation() const { return externalHostAllocation; }
+    NEO::GraphicsAllocation *getExternalDeviceAllocation() const { return externalDeviceAllocation; }
 
     void pushTempTimestampNode(TagNodeBase *node, uint64_t value);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);

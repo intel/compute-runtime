@@ -24,12 +24,16 @@ namespace ult {
 struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     class WhiteboxInOrderExecInfo : public InOrderExecInfo {
       public:
+        using InOrderExecInfo::numDevicePartitionsToWait;
+        using InOrderExecInfo::numHostPartitionsToWait;
         using InOrderExecInfo::tempTimestampNodes;
     };
 
     struct FixtureMockEvent : public EventImp<uint32_t> {
         using EventImp<uint32_t>::Event::counterBasedMode;
+        using EventImp<uint32_t>::Event::isFromIpcPool;
         using EventImp<uint32_t>::Event::counterBasedFlags;
+        using EventImp<uint32_t>::Event::isSharableCouterBased;
         using EventImp<uint32_t>::eventPoolAllocation;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
@@ -37,6 +41,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::inOrderAllocationOffset;
         using EventImp<uint32_t>::csrs;
         using EventImp<uint32_t>::signalScope;
+        using EventImp<uint32_t>::waitScope;
         using EventImp<uint32_t>::unsetCmdQueue;
         using EventImp<uint32_t>::externalInterruptId;
         using EventImp<uint32_t>::latestUsedCmdQueue;
@@ -98,7 +103,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         uint64_t *hostAddress = &(standaloneCbEventStorage.data()[standaloneCbEventStorage.size() - 1]);
         uint64_t *deviceAddress = ptrOffset(hostAddress, 0x1000);
 
-        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(deviceAddress), nullptr, hostAddress, 1);
+        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(deviceAddress), nullptr, hostAddress, 1, 1, 1);
 
         ze_event_desc_t eventDesc = {};
         eventDesc.pNext = pNext;

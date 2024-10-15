@@ -13,6 +13,7 @@ namespace NEO {
 class MemoryAllocation : public GraphicsAllocation {
   public:
     const unsigned long long id;
+    uint64_t internalHandle = 0;
     size_t sizeToFree = 0;
     const bool uncacheable;
 
@@ -43,6 +44,15 @@ class MemoryAllocation : public GraphicsAllocation {
             info.residencyTaskCount = objectNotResident;
             info.taskCount = objectNotUsed;
         }
+    }
+
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
+        if (internalHandle == std::numeric_limits<uint64_t>::max()) {
+            return -1;
+        }
+
+        handle = internalHandle;
+        return 0;
     }
 };
 

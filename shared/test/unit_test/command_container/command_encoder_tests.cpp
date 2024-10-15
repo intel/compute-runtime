@@ -64,7 +64,7 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
 
     MockGraphicsAllocation alloc(nullptr, gpuAddress, 1);
 
-    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, &alloc, gpuAddress, nullptr, hostAddress, counterValue);
+    auto inOrderExecInfo = InOrderExecInfo::createFromExternalAllocation(mockDevice, &alloc, gpuAddress, nullptr, hostAddress, counterValue, 2, 3);
 
     EXPECT_EQ(counterValue, inOrderExecInfo->getCounterValue());
     EXPECT_EQ(hostAddress, inOrderExecInfo->getBaseHostAddress());
@@ -72,6 +72,8 @@ HWTEST_F(CommandEncoderTests, givenDifferentInputParamsWhenCreatingStandaloneInO
     EXPECT_EQ(&alloc, inOrderExecInfo->getDeviceCounterAllocation());
     EXPECT_EQ(nullptr, inOrderExecInfo->getHostCounterAllocation());
     EXPECT_TRUE(inOrderExecInfo->isExternalMemoryExecInfo());
+    EXPECT_EQ(2u, inOrderExecInfo->getNumDevicePartitionsToWait());
+    EXPECT_EQ(3u, inOrderExecInfo->getNumHostPartitionsToWait());
 
     inOrderExecInfo->reset();
 

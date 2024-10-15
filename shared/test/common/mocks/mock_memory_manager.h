@@ -63,6 +63,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::reservedMemory;
     using MemoryManager::secondaryEngines;
 
+    static constexpr osHandle invalidSharedHandle = -1;
+
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
 
     MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment);
@@ -217,6 +219,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return OsAgnosticMemoryManager::mapPhysicalToVirtualMemory(physicalAllocation, gpuRange, bufferSize);
     };
 
+    void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
+        registerIpcExportedAllocationCalled++;
+    }
+
     MockGraphicsAllocation *mockGa;
     size_t ipcAllocationSize = 4096u;
     uint32_t copyMemoryToAllocationBanksCalled = 0u;
@@ -227,6 +233,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
     uint32_t allocInUseCalled = 0u;
+    uint32_t registerIpcExportedAllocationCalled = 0;
     int32_t overrideAllocateAsPackReturn = -1;
     std::vector<GraphicsAllocation *> allocationsFromExistingStorage{};
     AllocationData alignAllocationData;
@@ -237,7 +244,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t waitForEnginesCompletionCalled = 0u;
     uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
     osHandle capturedSharedHandle = 0u;
-    osHandle invalidSharedHandle = -1;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
     bool allocationInDevicePoolCreated = false;

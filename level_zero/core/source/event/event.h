@@ -61,8 +61,22 @@ struct IpcEventPoolData {
     bool isHostVisibleEventPoolAllocation = false;
     bool isImplicitScalingCapable = false;
 };
+
+struct IpcCounterBasedEventData {
+    uint64_t deviceHandle = 0;
+    uint64_t hostHandle = 0;
+    uint64_t counterValue = 0;
+    uint32_t rootDeviceIndex = 0;
+    uint32_t counterOffset = 0;
+    uint32_t devicePartitions = 0;
+    uint32_t hostPartitions = 0;
+    uint32_t counterBasedFlags = 0;
+    uint32_t signalScopeFlags = 0;
+    uint32_t waitScopeFlags = 0;
+};
 #pragma pack()
 static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
+static_assert(sizeof(IpcCounterBasedEventData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcCounterBasedEventData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
 namespace EventPacketsCount {
 inline constexpr uint32_t maxKernelSplit = 3;
@@ -121,6 +135,11 @@ struct Event : _ze_event_handle_t {
     static Event *create(const EventDescriptor &eventDescriptor, const ze_event_desc_t *desc, Device *device);
 
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
+
+    static ze_result_t openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
+                                                 DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles);
+
+    ze_result_t getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData);
 
     inline ze_event_handle_t toHandle() { return this; }
 
@@ -368,6 +387,7 @@ struct Event : _ze_event_handle_t {
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
     bool interruptMode = false;
+    bool isSharableCouterBased = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 

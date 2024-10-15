@@ -77,7 +77,7 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
     if (hostAddress && deviceAddress) {
         NEO::GraphicsAllocation *allocation = nullptr;
         allocation = externalHostAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(deviceAddress), allocation, hostAddress, completionValue);
+        auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(deviceAddress), allocation, hostAddress, completionValue, 1, 1);
         Event::fromHandle(*phEvent)->updateInOrderExecState(inOrderExecInfo, completionValue, 0);
     }
 

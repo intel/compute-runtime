@@ -260,6 +260,115 @@ ze_result_t EventPool::closeIpcHandle() {
     return this->destroy();
 }
 
+ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *eventHandle,
+                                             DriverHandleImp *driver, ContextImp *context, uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+
+    auto device = Device::fromHandle(*deviceHandles);
+    auto neoDevice = device->getNEODevice();
+    auto memoryManager = driver->getMemoryManager();
+
+    NEO::MemoryManager::OsHandleData deviceOsHandleData{ipcData.deviceHandle};
+    NEO::MemoryManager::OsHandleData hostOsHandleData{ipcData.hostHandle};
+
+    NEO::AllocationProperties unifiedMemoryProperties{ipcData.rootDeviceIndex, MemoryConstants::pageSize64k, NEO::DeviceAllocNodeType<true>::getAllocationType(), systemMemoryBitfield};
+    unifiedMemoryProperties.subDevicesBitfield = neoDevice->getDeviceBitfield();
+    auto *deviceAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(deviceOsHandleData, unifiedMemoryProperties, false, (ipcData.hostHandle == 0), false, nullptr);
+
+    if (!deviceAlloc) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
+        deviceAlloc->setWriteMemoryOnly(true);
+    }
+
+    NEO::GraphicsAllocation *hostAlloc = nullptr;
+    if (ipcData.hostHandle != 0) {
+        unifiedMemoryProperties.allocationType = NEO::DeviceAllocNodeType<false>::getAllocationType();
+        hostAlloc = memoryManager->createGraphicsAllocationFromSharedHandle(hostOsHandleData, unifiedMemoryProperties, false, true, false, nullptr);
+        if (!hostAlloc) {
+            memoryManager->freeGraphicsMemory(deviceAlloc);
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
+            hostAlloc->setWriteMemoryOnly(true);
+        }
+    } else {
+        hostAlloc = deviceAlloc;
+    }
+
+    auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*neoDevice, deviceAlloc, deviceAlloc->getGpuAddress(), hostAlloc, static_cast<uint64_t *>(hostAlloc->getUnderlyingBuffer()),
+                                                                              ipcData.counterValue, ipcData.devicePartitions, ipcData.hostPartitions);
+
+    const EventDescriptor eventDescriptor = {
+        nullptr,                           // eventPoolAllocation
+        0,                                 // totalEventSize
+        EventPacketsCount::maxKernelSplit, // maxKernelCount
+        0,                                 // maxPacketsCount
+        ipcData.counterBasedFlags,         // counterBasedFlags
+        false,                             // timestampPool
+        false,                             // kerneMappedTsPoolFlag
+        true,                              // importedIpcPool
+        false,                             // ipcPool
+    };
+
+    ze_event_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    desc.signal = ipcData.signalScopeFlags;
+    desc.wait = ipcData.waitScopeFlags;
+
+    auto event = Event::create<uint64_t>(eventDescriptor, &desc, device);
+    event->updateInOrderExecState(inOrderExecInfo, ipcData.counterValue, ipcData.counterOffset);
+
+    *eventHandle = event;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
+    if (!this->isSharableCouterBased) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (!isCounterBasedExplicitlyEnabled() || !this->inOrderExecInfo.get() || isEventTimestampFlagSet()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ipcData = {};
+    ipcData.rootDeviceIndex = device->getRootDeviceIndex();
+    ipcData.counterValue = this->getInOrderExecSignalValueWithSubmissionCounter();
+    ipcData.counterBasedFlags = this->counterBasedFlags;
+    ipcData.signalScopeFlags = this->signalScope;
+    ipcData.waitScopeFlags = this->waitScope;
+
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
+    auto deviceAlloc = inOrderExecInfo->getDeviceCounterAllocation();
+
+    uint64_t handle = 0;
+    if (int retCode = deviceAlloc->peekInternalHandle(memoryManager, handle); retCode != 0) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    memoryManager->registerIpcExportedAllocation(deviceAlloc);
+
+    ipcData.deviceHandle = handle;
+    ipcData.devicePartitions = inOrderExecInfo->getNumDevicePartitionsToWait();
+    ipcData.hostPartitions = ipcData.devicePartitions;
+
+    ipcData.counterOffset = static_cast<uint32_t>(inOrderExecInfo->getBaseDeviceAddress() - deviceAlloc->getGpuAddress()) + inOrderAllocationOffset;
+
+    if (inOrderExecInfo->isHostStorageDuplicated()) {
+        auto hostAlloc = inOrderExecInfo->getHostCounterAllocation();
+        if (int retCode = hostAlloc->peekInternalHandle(memoryManager, handle); retCode != 0) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+        memoryManager->registerIpcExportedAllocation(hostAlloc);
+
+        ipcData.hostHandle = handle;
+        ipcData.hostPartitions = inOrderExecInfo->getNumHostPartitionsToWait();
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     if (!this->isShareableEventMemory) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -396,6 +505,15 @@ void Event::releaseTempInOrderTimestampNodes() {
 ze_result_t Event::destroy() {
     resetInOrderTimestampNode(nullptr);
     releaseTempInOrderTimestampNodes();
+
+    if (isCounterBasedExplicitlyEnabled() && isFromIpcPool) {
+        auto memoryManager = device->getNEODevice()->getMemoryManager();
+
+        memoryManager->freeGraphicsMemory(inOrderExecInfo->getExternalDeviceAllocation());
+        if (inOrderExecInfo->isHostStorageDuplicated()) {
+            memoryManager->freeGraphicsMemory(inOrderExecInfo->getExternalHostAllocation());
+        }
+    }
 
     delete this;
     return ZE_RESULT_SUCCESS;

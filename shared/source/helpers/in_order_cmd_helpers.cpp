@@ -27,7 +27,8 @@ std::shared_ptr<InOrderExecInfo> InOrderExecInfo::create(TagNodeBase *deviceCoun
     return std::make_shared<NEO::InOrderExecInfo>(deviceCounterNode, hostCounterNode, device, partitionCount, regularCmdList, atomicDeviceSignalling);
 }
 
-std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation, uint64_t *hostAddress, uint64_t counterValue) {
+std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(NEO::Device &device, NEO::GraphicsAllocation *deviceAllocation, uint64_t deviceAddress, NEO::GraphicsAllocation *hostAllocation,
+                                                                               uint64_t *hostAddress, uint64_t counterValue, uint32_t devicePartitions, uint32_t hostPartitions) {
     auto inOrderExecInfo = std::make_shared<NEO::InOrderExecInfo>(nullptr, nullptr, device, 1, false, true);
 
     inOrderExecInfo->counterValue = counterValue;
@@ -35,7 +36,9 @@ std::shared_ptr<InOrderExecInfo> InOrderExecInfo::createFromExternalAllocation(N
     inOrderExecInfo->externalDeviceAllocation = deviceAllocation;
     inOrderExecInfo->hostAddress = hostAddress;
     inOrderExecInfo->deviceAddress = deviceAddress;
-    inOrderExecInfo->duplicatedHostStorage = true;
+    inOrderExecInfo->duplicatedHostStorage = (deviceAllocation != hostAllocation);
+    inOrderExecInfo->numDevicePartitionsToWait = devicePartitions;
+    inOrderExecInfo->numHostPartitionsToWait = hostPartitions;
 
     return inOrderExecInfo;
 }

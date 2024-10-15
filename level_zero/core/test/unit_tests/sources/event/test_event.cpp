@@ -4421,7 +4421,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     inOrderExecInfo0->setLastWaitedCounterValue(1);
     event0->updateInOrderExecState(inOrderExecInfo0, 1, 0);
 
-    auto inOrderExecInfo1 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, 0x1, nullptr, nullptr, 1);
+    auto inOrderExecInfo1 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, 0x1, nullptr, nullptr, 1, 1, 1);
     inOrderExecInfo1->setLastWaitedCounterValue(1);
     event1->updateInOrderExecState(inOrderExecInfo1, 1, 0);
 
