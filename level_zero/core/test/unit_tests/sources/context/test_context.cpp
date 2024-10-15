@@ -1705,14 +1705,19 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidMultiPageSizeI
 
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
 
-    size = pagesize * 3 + 10;
-
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     NEO::MemoryManager *failingReserveMemoryManager = new ReserveMemoryManagerMock(*neoDevice->executionEnvironment);
     auto memoryManager = driverHandle->getMemoryManager();
     driverHandle->setMemoryManager(failingReserveMemoryManager);
+
+    size = pagesize * 3 + 10;
     res = contextImp->reserveVirtualMem(pStart, size, &ptr);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
+    size = pagesize * 2 + 1;
+    res = contextImp->reserveVirtualMem(pStart, size, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, res);
+
     driverHandle->setMemoryManager(memoryManager);
     delete failingReserveMemoryManager;
 

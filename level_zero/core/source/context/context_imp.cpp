@@ -1105,7 +1105,7 @@ size_t ContextImp::getPageAlignedSizeRequired(size_t size, NEO::HeapIndex *heapR
     // Given a size larger than the pageSize, then round the size up to the next pageSize alignment if unaligned
     if (size > pageSize) {
         if (size % pageSize > 0) {
-            return ((size + pageSize) & (~pageSize));
+            return ((size + pageSize - 1) & ~(pageSize - 1));
         } else {
             return size;
         }
