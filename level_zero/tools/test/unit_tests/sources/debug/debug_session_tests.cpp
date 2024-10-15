@@ -2703,37 +2703,6 @@ HWTEST2_F(DebugSessionRegistersAccessTest,
     EXPECT_EQ(128u, threadRegsetProps[0].count);
 }
 
-TEST_F(DebugSessionRegistersAccessTest, givenGetThreadRegisterSetPropertiesCalledPropertieAreTheSameAsgetRegisterSetProperties) {
-
-    auto mockBuiltins = new MockBuiltins();
-    mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-    MockRootDeviceEnvironment::resetBuiltins(neoDevice->executionEnvironment->rootDeviceEnvironments[0].get(), mockBuiltins);
-
-    uint32_t count = 0;
-    uint32_t threadCount = 0;
-    ze_device_thread_t thread = stoppedThread;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(session->getConnectedDevice(), &count, nullptr));
-    EXPECT_EQ(13u, count);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &threadCount, nullptr));
-    ASSERT_EQ(threadCount, count);
-
-    std::vector<zet_debug_regset_properties_t> regsetProps(count);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(session->getConnectedDevice(), &count, regsetProps.data()));
-    std::vector<zet_debug_regset_properties_t> threadRegsetProps(count);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, zetDebugGetThreadRegisterSetProperties(session->toHandle(), thread, &count, threadRegsetProps.data()));
-
-    for (size_t i = 0; i < count; i++) {
-        EXPECT_EQ(regsetProps[i].stype, threadRegsetProps[i].stype);
-        EXPECT_EQ(regsetProps[i].pNext, threadRegsetProps[i].pNext);
-        EXPECT_EQ(regsetProps[i].version, threadRegsetProps[i].version);
-        EXPECT_EQ(regsetProps[i].generalFlags, threadRegsetProps[i].generalFlags);
-        EXPECT_EQ(regsetProps[i].deviceFlags, threadRegsetProps[i].deviceFlags);
-        EXPECT_EQ(regsetProps[i].count, threadRegsetProps[i].count);
-        EXPECT_EQ(regsetProps[i].bitSize, threadRegsetProps[i].bitSize);
-        EXPECT_EQ(regsetProps[i].byteSize, threadRegsetProps[i].byteSize);
-    }
-}
-
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, 0x12345, 0, 1, nullptr));

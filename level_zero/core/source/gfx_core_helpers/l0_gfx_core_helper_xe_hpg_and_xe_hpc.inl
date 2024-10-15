@@ -14,4 +14,14 @@ zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLar
     return ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU;
 }
 
+template <typename Family>
+uint32_t L0GfxCoreHelperHw<Family>::getGrfRegisterCount(uint32_t *regPtr) const {
+    bool largeGrfModeEnabled = false;
+    largeGrfModeEnabled = regPtr[0] & 0x2000;
+    if (largeGrfModeEnabled) {
+        return 256;
+    }
+    return 128;
+}
+
 } // namespace L0

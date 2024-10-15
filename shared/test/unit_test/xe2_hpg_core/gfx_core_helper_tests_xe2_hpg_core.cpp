@@ -732,11 +732,6 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenParamsWhenCalculateNumThre
     }
 }
 
-XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgWhenLargeGrfModeSupportedIsQueriedThenTrueIsReturned) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.largeGrfModeSupported());
-}
-
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     MockExecutionEnvironment mockExecutionEnvironment{};

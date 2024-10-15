@@ -162,7 +162,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version, uint16_t grfNum, u
         {4096, 1, 256, 32},             // addr
         {4128, 2, 32, 4},               // flag
         {4156, 1, 32, 4},               // emask
-        {4160, 2, 128, 16},             // sr
+        {4160, 2, 160, 20},             // sr
         {4192, 1, 128, 16},             // cr
         {4256, 1, 96, 12},              // notification
         {4288, 1, 128, 16},             // tdr

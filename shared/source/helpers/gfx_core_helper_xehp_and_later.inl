@@ -210,11 +210,6 @@ bool GfxCoreHelperHw<Family>::isChipsetUniqueUUIDSupported() const {
     return true;
 }
 
-template <>
-bool GfxCoreHelperHw<Family>::largeGrfModeSupported() const {
-    return true;
-}
-
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const {
     const auto &kernelAttributes = kernelDescriptor.kernelAttributes;

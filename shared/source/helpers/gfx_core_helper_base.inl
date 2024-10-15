@@ -648,11 +648,6 @@ bool GfxCoreHelperHw<GfxFamily>::isChipsetUniqueUUIDSupported() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::largeGrfModeSupported() const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isTimestampShiftRequired() const {
     return true;
 }

@@ -1335,31 +1335,15 @@ void DebugSession::updateGrfRegisterSetProperties(EuThread::ThreadId thread, uin
         return;
     }
 
-    auto &gfxCoreHelper = this->connectedDevice->getGfxCoreHelper();
-    if (!gfxCoreHelper.largeGrfModeSupported()) {
-        return;
-    }
-
-    // update GRF, if large GRF is enabled
     auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto regsetType = l0GfxCoreHelper.getRegsetTypeForLargeGrfDetection();
-    bool largeGrfModeEnabled = false;
     const auto regSize = std::max(getRegisterSize(regsetType), 64u);
     auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
     memset(reg.get(), 0, regSize);
     readRegistersImp(thread, regsetType, 0, 1, reg.get());
-    auto regPtr = reg.get();
-    if (regsetType == ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU) {
-        largeGrfModeEnabled = regPtr[0] & 0x2000;
-    } else if (regsetType == ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU) {
-        largeGrfModeEnabled = ((regPtr[1] & 0x6000) == 0x6000);
-    }
-
-    if (largeGrfModeEnabled) {
-        for (uint32_t i = 0; i < *pCount; i++) {
-            if (pRegisterSetProperties[i].type == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) {
-                pRegisterSetProperties[i].count = 256;
-            }
+    for (uint32_t i = 0; i < *pCount; i++) {
+        if (pRegisterSetProperties[i].type == ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU) {
+            pRegisterSetProperties[i].count = l0GfxCoreHelper.getGrfRegisterCount(reg.get());
         }
     }
 }

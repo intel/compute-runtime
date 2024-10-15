@@ -103,7 +103,6 @@ class GfxCoreHelper {
     virtual uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const = 0;
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const = 0;
     virtual uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const = 0;
-    virtual bool largeGrfModeSupported() const = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) const = 0;
     virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const = 0;
 
@@ -308,7 +307,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const override;
 
     uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const override;
-    bool largeGrfModeSupported() const override;
 
     uint32_t alignSlmSize(uint32_t slmSize) const override;
 
