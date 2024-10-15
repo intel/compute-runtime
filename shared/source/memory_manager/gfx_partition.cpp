@@ -269,7 +269,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::heapSvm, 0ull, 0ull);
         } else {
-            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices, systemMemorySize)) {
+            if (!initAdditionalRange(cpuVirtualAddressSize, gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, systemMemorySize)) {
                 return false;
             }
         }
@@ -318,7 +318,7 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     return true;
 }
 
-bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices, uint64_t systemMemorySize) {
+bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, uint64_t systemMemorySize) {
     /*
      * 57-bit Full Range SVM gfx layout:
      *
@@ -381,8 +381,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
 
     // Init HEAP_EXTENDED only for 57 bit GPU
     if (gpuAddressSpace == maxNBitValue(57)) {
-        // Split HEAP_EXTENDED among root devices (like HEAP_STANDARD64K)
-        auto heapExtendedSize = alignDown((maxNBitValue(48) + 1) / numRootDevices, GfxPartition::heapGranularity);
+        auto heapExtendedSize = alignDown((maxNBitValue(48) + 1), GfxPartition::heapGranularity);
         heapInit(HeapIndex::heapExtended, maxNBitValue(57 - 1) + 1 + rootDeviceIndex * heapExtendedSize, heapExtendedSize);
     }
 

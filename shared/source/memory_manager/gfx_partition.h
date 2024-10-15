@@ -104,7 +104,7 @@ class GfxPartition {
     static const std::array<HeapIndex, 8> heapNonSvmNames;
 
   protected:
-    bool initAdditionalRange(uint32_t cpuAddressWidth, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices, uint64_t systemMemorySize);
+    bool initAdditionalRange(uint32_t cpuAddressWidth, uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, uint64_t systemMemorySize);
 
     class Heap {
       public:

@@ -908,7 +908,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop));
 
         auto heapExtendedTotalSize = maxNBitValue(48) + 1;
-        auto heapExtendedSize = alignDown(heapExtendedTotalSize / numRootDevices, GfxPartition::heapGranularity);
+        auto heapExtendedSize = alignDown(heapExtendedTotalSize, GfxPartition::heapGranularity);
 
         EXPECT_EQ(heapExtendedSize, gfxPartition.getHeapSize(HeapIndex::heapExtended));
         EXPECT_EQ(maxNBitValue(56) + 1 + rootDeviceIndex * heapExtendedSize, gfxPartition.getHeapBase(HeapIndex::heapExtended));
@@ -922,7 +922,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices, false, 0u, gfxTop));
 
         auto heapExtendedTotalSize = maxNBitValue(48) + 1;
-        auto heapExtendedSize = alignDown(heapExtendedTotalSize / numRootDevices, GfxPartition::heapGranularity);
+        auto heapExtendedSize = alignDown(heapExtendedTotalSize, GfxPartition::heapGranularity);
 
         EXPECT_EQ(heapExtendedSize, gfxPartition.getHeapSize(HeapIndex::heapExtended));
         EXPECT_EQ(maxNBitValue(56) + 1 + rootDeviceIndex * heapExtendedSize, gfxPartition.getHeapBase(HeapIndex::heapExtended));
