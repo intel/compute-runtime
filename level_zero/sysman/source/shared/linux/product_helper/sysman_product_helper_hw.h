@@ -72,6 +72,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isUpstreamPortConnected() override;
 
     // Pci
+    ze_result_t getPciProperties(zes_pci_properties_t *pProperties) override;
     ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) override;
 
     ~SysmanProductHelperHw() override = default;

@@ -303,6 +303,14 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciProperties(zes_pci_properties_t *pProperties) {
+    pProperties->haveBandwidthCounters = false;
+    pProperties->havePacketCounters = false;
+    pProperties->haveReplayCounters = false;
+    return ZE_RESULT_SUCCESS;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 };

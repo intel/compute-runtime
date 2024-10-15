@@ -26,12 +26,11 @@ namespace Sysman {
 const std::string LinuxPciImp::deviceDir("device");
 const std::string LinuxPciImp::resourceFile("device/resource");
 
-ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *properties) {
-    properties->haveBandwidthCounters = false;
-    properties->havePacketCounters = false;
-    properties->haveReplayCounters = false;
-    return ZE_RESULT_SUCCESS;
+ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *pProperties) {
+    auto pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPciProperties(pProperties);
 }
+
 ze_result_t LinuxPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);

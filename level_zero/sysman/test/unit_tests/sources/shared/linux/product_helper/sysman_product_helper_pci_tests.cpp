@@ -47,7 +47,6 @@ constexpr uint32_t mockTxPacketCounterLsb = 0xFAu;
 constexpr uint32_t mockTxPacketCounterMsb = 0xFFu;
 
 using SysmanProductHelperPciTest = SysmanDeviceFixture;
-using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
     std::map<std::string, std::string> fileNameLinkMap = {
@@ -110,7 +109,7 @@ static ssize_t mockPreadSuccess(int fd, void *buf, size_t count, off_t offset) {
 
 HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndTelemNodesAreNotAvailableThenCallFails, IsBMG) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
@@ -118,7 +117,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
@@ -133,7 +132,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
         return count;
     });
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
@@ -149,7 +148,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
         return count;
     });
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
@@ -165,7 +164,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     });
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 }
 
@@ -210,7 +209,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     });
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     while (readFailCount <= 8) {
         EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
         readFailCount++;
@@ -224,7 +223,7 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
 
-    zes_pci_stats_t stats;
+    zes_pci_stats_t stats = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
 
     uint64_t mockRxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
@@ -238,10 +237,48 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
 }
 
+HWTEST2_F(SysmanProductHelperPciTest, GivenValidSysmanDeviceHandleWhenDeviceGetPciStatsIsCalledThenCallSucceeds, IsBMG) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockPreadSuccess);
+
+    zes_pci_stats_t stats = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetStats(pSysmanDevice->toHandle(), &stats));
+
+    uint64_t mockRxCounter = packInto64Bit(mockRxCounterMsb, mockRxCounterLsb);
+    EXPECT_EQ(mockRxCounter, stats.rxCounter);
+
+    uint64_t mockTxCounter = packInto64Bit(mockTxCounterMsb, mockTxCounterLsb);
+    EXPECT_EQ(mockTxCounter, stats.txCounter);
+
+    uint64_t mockRxPacketCounter = packInto64Bit(mockRxPacketCounterMsb, mockRxPacketCounterLsb);
+    uint64_t mockTxPacketCounter = packInto64Bit(mockTxPacketCounterMsb, mockTxPacketCounterLsb);
+    EXPECT_EQ(mockRxPacketCounter + mockTxPacketCounter, stats.packetCounter);
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenValidDeviceHandleWhenDeviceGetPciPropertiesIsCalledThenCallSucceeds, IsBMG) {
+    zes_pci_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetProperties(pSysmanDevice->toHandle(), &properties));
+    EXPECT_TRUE(properties.haveBandwidthCounters);
+    EXPECT_TRUE(properties.havePacketCounters);
+    EXPECT_FALSE(properties.haveReplayCounters);
+}
+
 HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledThenCallFails, IsNotBMG) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     zes_pci_stats_t stats;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
+}
+
+HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciPropertiesIsCalledThenCallFails, IsNotBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+
+    zes_pci_properties_t properties = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysmanProductHelper->getPciProperties(&properties));
+
+    EXPECT_FALSE(properties.haveBandwidthCounters);
+    EXPECT_FALSE(properties.havePacketCounters);
+    EXPECT_FALSE(properties.haveReplayCounters);
 }
 
 } // namespace ult

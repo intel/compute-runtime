@@ -294,6 +294,14 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }
 
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPciProperties(zes_pci_properties_t *pProperties) {
+    pProperties->haveBandwidthCounters = true;
+    pProperties->havePacketCounters = true;
+    pProperties->haveReplayCounters = false;
+    return ZE_RESULT_SUCCESS;
+}
+
 static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::string, uint64_t> &keyOffsetMap, const std::string &telemNodeDir, uint64_t telemOffset) {
     uint32_t rxCounterLsb = 0;
     if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "reg_PCIESS_rx_bytecount_lsb", telemOffset, rxCounterLsb)) {

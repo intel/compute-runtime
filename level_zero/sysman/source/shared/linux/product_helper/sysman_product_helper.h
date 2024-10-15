@@ -97,6 +97,7 @@ class SysmanProductHelper {
     virtual bool isUpstreamPortConnected() = 0;
 
     // Pci
+    virtual ze_result_t getPciProperties(zes_pci_properties_t *pProperties) = 0;
     virtual ze_result_t getPciStats(zes_pci_stats_t *pStats, LinuxSysmanImp *pLinuxSysmanImp) = 0;
 
     virtual ~SysmanProductHelper() = default;
