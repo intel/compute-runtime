@@ -12,6 +12,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
@@ -51,6 +52,11 @@ size_t threadSlotOffset(SIP::StateSaveAreaHeader *pStateSaveAreaHeader, int slic
 size_t regOffsetInThreadSlot(const SIP::regset_desc *regdesc, uint32_t start);
 
 void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version, L0::Device *device);
+
+template <typename GfxFamily>
+struct MockL0GfxCoreHelperSupportsThreadControlStopped : L0::L0GfxCoreHelperHw<GfxFamily> {
+    bool isThreadControlStoppedSupported() const override { return true; }
+};
 
 } // namespace ult
 } // namespace L0

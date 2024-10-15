@@ -80,6 +80,11 @@ std::unique_ptr<NEO::TagAllocatorBase> L0GfxCoreHelperHw<Family>::getInOrderTime
 }
 
 template <typename Family>
+bool L0GfxCoreHelperHw<Family>::isThreadControlStoppedSupported() const {
+    return true;
+}
+
+template <typename Family>
 bool L0GfxCoreHelperHw<Family>::threadResumeRequiresUnlock() const {
     return false;
 }

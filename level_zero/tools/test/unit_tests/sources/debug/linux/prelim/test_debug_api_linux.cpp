@@ -25,6 +25,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -5499,16 +5500,23 @@ TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAnd
     handler->outputBitmask = std::move(bitmask);
 
     sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
-
-    EXPECT_EQ(3, handler->ioctlCalled);
-    EXPECT_EQ(1u, handler->euControlArgs.size());
-    EXPECT_EQ(2u, sessionMock->numThreadsPassedToThreadControl);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
-    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
-    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_ptr);
+    if (l0GfxCoreHelper.isThreadControlStoppedSupported()) {
+        EXPECT_EQ(3, handler->ioctlCalled);
+        EXPECT_EQ(1u, handler->euControlArgs.size());
+        EXPECT_EQ(2u, sessionMock->numThreadsPassedToThreadControl);
+        EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
+        EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
+        EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_ptr);
+    } else {
+        EXPECT_EQ(2, handler->ioctlCalled);
+        EXPECT_EQ(0u, handler->euControlArgs.size());
+        EXPECT_EQ(0u, sessionMock->numThreadsPassedToThreadControl);
+    }
 
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
-    EXPECT_EQ(0, memcmp(handler->euControlArgs[0].euControlBitmask.get(), bitmask.get(), bitmaskSize));
+    if (l0GfxCoreHelper.isThreadControlStoppedSupported()) {
+        EXPECT_EQ(0, memcmp(handler->euControlArgs[0].euControlBitmask.get(), bitmask.get(), bitmaskSize));
+    }
 
     EXPECT_TRUE(sessionMock->allThreads[thread.packed]->isStopped());
     EXPECT_TRUE(sessionMock->allThreads[thread1.packed]->isStopped());
@@ -5577,7 +5585,11 @@ TEST_F(DebugApiLinuxTest, GivenStoppedThreadResumeCausingPageFaultAndFEBitSetWhe
     EXPECT_EQ(0u, sessionMock->apiEvents.size());
 }
 
-TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated) {
+HWTEST2_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated, MatchAny) {
+    MockL0GfxCoreHelperSupportsThreadControlStopped<FamilyType> mockL0GfxCoreHelper;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -5624,6 +5636,8 @@ TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckSt
     EXPECT_FALSE(sessionMock->allThreads[thread2.packed]->isStopped());
 
     EXPECT_EQ(0u, sessionMock->apiEvents.size());
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
 }
 
 TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenSingleThreadPassedToCheckStoppedThreadsAndGenerateEventsThenThreadStoppedEventsGeneratedOnlyForNewlyStoppedThreadFromPassedVector) {
@@ -5682,7 +5696,11 @@ TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenSingleThreadPassedToCheckStopp
     EXPECT_EQ(0u, sessionMock->apiEvents.size());
 }
 
-TEST_F(DebugApiLinuxTest, GivenErrorFromSynchronousAttScanWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotChecked) {
+HWTEST2_F(DebugApiLinuxTest, GivenErrorFromSynchronousAttScanWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotChecked, MatchAny) {
+    MockL0GfxCoreHelperSupportsThreadControlStopped<FamilyType> mockL0GfxCoreHelper;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -5727,6 +5745,8 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromSynchronousAttScanWhenMultipleThreadsPas
     EXPECT_FALSE(sessionMock->allThreads[thread1.packed]->isStopped());
 
     EXPECT_EQ(0u, sessionMock->apiEvents.size());
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
 }
 
 TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask) {

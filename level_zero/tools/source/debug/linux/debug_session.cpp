@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/debug/debug_session.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -228,8 +229,9 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
     std::vector<EuThread::ThreadId> threadsWithAttention;
     std::vector<EuThread::ThreadId> stoppedThreadsToReport;
     NEO::sleep(std::chrono::microseconds(1));
+    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    if (threads.size() > 1) {
+    if (threads.size() > 1 && l0GfxCoreHelper.isThreadControlStoppedSupported()) {
         auto hwInfo = connectedDevice->getHwInfo();
         auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
 

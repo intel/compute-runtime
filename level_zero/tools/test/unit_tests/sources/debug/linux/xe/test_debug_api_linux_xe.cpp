@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -1892,7 +1893,11 @@ TEST_F(DebugApiLinuxTestXe, WhenCallingThreadControlForResumeThenProperIoctlsIsC
     EXPECT_EQ(nullptr, bitmaskOut.get());
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated) {
+HWTEST2_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckStoppedThreadsAndGenerateEventsThenThreadsStateNotCheckedAndEventsNotGenerated, MatchAny) {
+    MockL0GfxCoreHelperSupportsThreadControlStopped<FamilyType> mockL0GfxCoreHelper;
+    std::unique_ptr<ApiGfxCoreHelper> l0GfxCoreHelperBackup(static_cast<ApiGfxCoreHelper *>(&mockL0GfxCoreHelper));
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -1943,6 +1948,8 @@ TEST_F(DebugApiLinuxTestXe, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheck
     EXPECT_FALSE(sessionMock->allThreads[thread2.packed]->isStopped());
 
     EXPECT_EQ(0u, sessionMock->apiEvents.size());
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(l0GfxCoreHelperBackup);
+    l0GfxCoreHelperBackup.release();
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenEventSeqnoLowerEqualThanSentInterruptWhenHandlingAttentionEventThenEventIsNotProcessed) {
