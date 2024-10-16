@@ -6084,7 +6084,7 @@ struct RTASDeviceTest : public ::testing::Test {
         std::string getFullPath() override {
             return std::string();
         }
-        static OsLibrary *load(const std::string &name) {
+        static OsLibrary *load(const NEO::OsLibraryCreateProperties &properties) {
             if (failLibraryLoad) {
                 return nullptr;
             }

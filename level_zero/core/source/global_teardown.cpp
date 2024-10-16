@@ -19,15 +19,30 @@ decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc = nullptr;
 decltype(&zelSetDriverTeardown) setDriverTeardownFunc = nullptr;
 
 void globalDriverSetup() {
-    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc("")};
-    loaderTranslateHandleFunc = reinterpret_cast<decltype(&zelLoaderTranslateHandle)>(loaderLibrary->getProcAddress("zelLoaderTranslateHandle"));
-    setDriverTeardownFunc = reinterpret_cast<decltype(&zelSetDriverTeardown)>(loaderLibrary->getProcAddress("zelSetDriverTeardown"));
+    NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
+    loaderLibraryProperties.performSelfLoad = true;
+    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};
+    if (loaderLibrary) {
+        loaderTranslateHandleFunc = reinterpret_cast<decltype(&zelLoaderTranslateHandle)>(loaderLibrary->getProcAddress("zelLoaderTranslateHandle"));
+    }
 }
 
 void globalDriverTeardown() {
-    if (levelZeroDriverInitialized && setDriverTeardownFunc) {
-        setDriverTeardownFunc();
+    if (levelZeroDriverInitialized) {
+
+        NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
+        loaderLibraryProperties.performSelfLoad = true;
+        std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};
+        if (loaderLibrary) {
+            setDriverTeardownFunc = reinterpret_cast<decltype(&zelSetDriverTeardown)>(loaderLibrary->getProcAddress("zelSetDriverTeardown"));
+            if (setDriverTeardownFunc) {
+                setDriverTeardownFunc();
+            }
+        } else {
+            loaderTranslateHandleFunc = nullptr;
+        }
     }
+
     if (globalDriver != nullptr) {
 
         if (globalDriver->pid == NEO::SysCalls::getCurrentProcessId()) {

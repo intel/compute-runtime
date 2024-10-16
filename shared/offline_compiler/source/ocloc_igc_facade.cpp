@@ -112,7 +112,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
 }
 
 std::unique_ptr<OsLibrary> OclocIgcFacade::loadIgcLibrary() const {
-    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc(Os::igcDllName)};
+    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc({Os::igcDllName})};
 }
 
 CIF::CreateCIFMainFunc_t OclocIgcFacade::loadCreateIgcMainFunction() const {

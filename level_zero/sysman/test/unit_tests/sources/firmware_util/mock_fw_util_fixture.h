@@ -43,8 +43,6 @@ struct MockFwUtilInterface : public L0::Sysman::FirmwareUtil {
 struct MockFwUtilOsLibrary : public OsLibrary {
   public:
     static bool mockLoad;
-    MockFwUtilOsLibrary(const std::string &name, std::string *errorValue) {
-    }
     MockFwUtilOsLibrary() {}
     ~MockFwUtilOsLibrary() override = default;
     void *getProcAddress(const std::string &procName) override {
@@ -61,7 +59,7 @@ struct MockFwUtilOsLibrary : public OsLibrary {
     std::string getFullPath() override {
         return std::string();
     }
-    static OsLibrary *load(const std::string &name) {
+    static OsLibrary *load(const OsLibraryCreateProperties &properties) {
         if (mockLoad == true) {
             auto ptr = new (std::nothrow) MockFwUtilOsLibrary();
             return ptr;

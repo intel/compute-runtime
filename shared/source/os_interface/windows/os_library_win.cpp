@@ -9,8 +9,8 @@
 
 namespace NEO {
 
-OsLibrary *OsLibrary::loadAndCaptureError(const std::string &name, std::string *errorValue) {
-    Windows::OsLibrary *ptr = new Windows::OsLibrary(name, errorValue);
+OsLibrary *OsLibrary::load(const OsLibraryCreateProperties &properties) {
+    Windows::OsLibrary *ptr = new Windows::OsLibrary(properties);
 
     if (!ptr->isLoaded()) {
         delete ptr;
@@ -30,9 +30,11 @@ const std::string OsLibrary::createFullSystemPath(const std::string &name) {
 }
 
 namespace Windows {
+decltype(&GetModuleHandleA) OsLibrary::getModuleHandleA = GetModuleHandleA;
 decltype(&LoadLibraryExA) OsLibrary::loadLibraryExA = LoadLibraryExA;
 decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA;
 decltype(&GetSystemDirectoryA) OsLibrary::getSystemDirectoryA = GetSystemDirectoryA;
+decltype(&FreeLibrary) OsLibrary::freeLibrary = FreeLibrary;
 
 extern "C" IMAGE_DOS_HEADER __ImageBase; // NOLINT(readability-identifier-naming)
 __inline HINSTANCE getModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
@@ -66,23 +68,29 @@ HMODULE OsLibrary::loadDependency(const std::string &dependencyFileName) const {
     return loadLibraryExA(dllPath, NULL, 0);
 }
 
-OsLibrary::OsLibrary(const std::string &name, std::string *errorValue) {
-    if (name.empty()) {
-        this->handle = GetModuleHandleA(nullptr);
+OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {
+    if (properties.libraryName.empty()) {
+        this->handle = getModuleHandleA(nullptr);
+        this->selfOpen = true;
     } else {
-        this->handle = loadDependency(name);
-        if (this->handle == nullptr) {
-            this->handle = loadLibraryExA(name.c_str(), NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
-            if ((this->handle == nullptr) && (errorValue != nullptr)) {
-                getLastErrorString(errorValue);
+        if (properties.performSelfLoad) {
+            this->handle = getModuleHandleA(properties.libraryName.c_str());
+            this->selfOpen = true;
+        } else {
+            this->handle = loadDependency(properties.libraryName);
+            if (this->handle == nullptr) {
+                this->handle = loadLibraryExA(properties.libraryName.c_str(), NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
             }
+        }
+        if ((this->handle == nullptr) && (properties.errorValue != nullptr)) {
+            getLastErrorString(properties.errorValue);
         }
     }
 }
 
 OsLibrary::~OsLibrary() {
-    if ((this->handle != nullptr) && (this->handle != GetModuleHandleA(nullptr))) {
-        ::FreeLibrary(this->handle);
+    if (!this->selfOpen && this->handle) {
+        freeLibrary(this->handle);
         this->handle = nullptr;
     }
 }

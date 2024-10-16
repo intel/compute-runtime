@@ -21,7 +21,7 @@
 namespace L0 {
 namespace ult {
 
-TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionsAreLoadedIfAvailable) {
+TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTranslateHandleIsLoadedIfAvailable) {
 
     void *mockSetDriverTeardownPtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x1234ABC8));
     void *mockLoaderTranslateHandlePtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x5678EF08));
@@ -30,6 +30,12 @@ TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionsAreLoad
     VariableBackup<decltype(loaderTranslateHandleFunc)> translateFuncBackup{&loaderTranslateHandleFunc, nullptr};
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
     VariableBackup<decltype(MockOsLibrary::loadLibraryNewObject)> mockLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
+
+    MockOsLibrary::loadLibraryNewObject = nullptr;
+    globalDriverSetup();
+
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
+    EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
 
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
     globalDriverSetup();
@@ -42,7 +48,7 @@ TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionsAreLoad
     osLibrary->procMap["zelSetDriverTeardown"] = mockSetDriverTeardownPtr;
     globalDriverSetup();
 
-    EXPECT_EQ(mockSetDriverTeardownPtr, reinterpret_cast<void *>(setDriverTeardownFunc));
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
 
     MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
@@ -59,8 +65,69 @@ TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionsAreLoad
     osLibrary->procMap["zelLoaderTranslateHandle"] = mockLoaderTranslateHandlePtr;
     globalDriverSetup();
 
-    EXPECT_EQ(mockSetDriverTeardownPtr, reinterpret_cast<void *>(setDriverTeardownFunc));
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
+}
+
+uint32_t loaderTearDownCalled = 0;
+
+ze_result_t loaderTearDown() {
+    loaderTearDownCalled++;
+    return ZE_RESULT_ERROR_UNKNOWN;
+};
+
+TEST(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardownThenLoaderFunctionForTeardownIsLoadedAndCalledIfAvailable) {
+
+    void *mockLoaderTranslateHandlePtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x5678EF08));
+
+    VariableBackup<decltype(loaderTearDownCalled)> loaderTeardownCalledBackup{&loaderTearDownCalled, 0};
+    VariableBackup<decltype(levelZeroDriverInitialized)> driverInitializeBackup{&levelZeroDriverInitialized, true};
+    VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc, nullptr};
+    VariableBackup<decltype(loaderTranslateHandleFunc)> translateFuncBackup{&loaderTranslateHandleFunc, nullptr};
+    VariableBackup<decltype(NEO::OsLibrary::loadFunc)> loadFuncBackup{&NEO::OsLibrary::loadFunc, MockOsLibraryCustom::load};
+    VariableBackup<decltype(MockOsLibrary::loadLibraryNewObject)> mockLibraryBackup{&MockOsLibrary::loadLibraryNewObject, nullptr};
+
+    loaderTranslateHandleFunc = reinterpret_cast<decltype(loaderTranslateHandleFunc)>(mockLoaderTranslateHandlePtr);
+    MockOsLibrary::loadLibraryNewObject = nullptr;
+    globalDriverTeardown();
+
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
+    EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
+
+    loaderTranslateHandleFunc = reinterpret_cast<decltype(loaderTranslateHandleFunc)>(mockLoaderTranslateHandlePtr);
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+    globalDriverTeardown();
+
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
+    EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
+
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+    osLibrary->procMap["zelSetDriverTeardown"] = reinterpret_cast<void *>(&loaderTearDown);
+    globalDriverTeardown();
+
+    EXPECT_EQ(&loaderTearDown, reinterpret_cast<void *>(setDriverTeardownFunc));
+    EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
+    EXPECT_EQ(1u, loaderTearDownCalled);
+
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+    osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+    osLibrary->procMap["zelLoaderTranslateHandle"] = mockLoaderTranslateHandlePtr;
+    globalDriverTeardown();
+
+    EXPECT_EQ(nullptr, setDriverTeardownFunc);
+    EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
+    EXPECT_EQ(1u, loaderTearDownCalled);
+
+    loaderTranslateHandleFunc = nullptr;
+    MockOsLibrary::loadLibraryNewObject = new MockOsLibraryCustom(nullptr, true);
+    osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+    osLibrary->procMap["zelSetDriverTeardown"] = reinterpret_cast<void *>(&loaderTearDown);
+    osLibrary->procMap["zelLoaderTranslateHandle"] = mockLoaderTranslateHandlePtr;
+    globalDriverTeardown();
+
+    EXPECT_EQ(&loaderTearDown, reinterpret_cast<void *>(setDriverTeardownFunc));
+    EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
 }
 
 TEST(GlobalTearDownTests, givenInitializedDriverAndNoTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCrash) {
@@ -70,22 +137,6 @@ TEST(GlobalTearDownTests, givenInitializedDriverAndNoTeardownFunctionIsAvailable
     levelZeroDriverInitialized = true;
     setDriverTeardownFunc = nullptr;
     EXPECT_NO_THROW(globalDriverTeardown());
-}
-
-TEST(GlobalTearDownTests, givenInitializedDriverAndTeardownFunctionIsAvailableWhenCallGlobalTeardownThenCallTeardownFunc) {
-    VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized};
-    VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc};
-    static uint32_t teardownCalled = 0u;
-
-    levelZeroDriverInitialized = true;
-    setDriverTeardownFunc = []() -> ze_result_t {
-        EXPECT_EQ(0u, teardownCalled);
-        teardownCalled++;
-        return ZE_RESULT_SUCCESS;
-    };
-    teardownCalled = 0u;
-    globalDriverTeardown();
-    EXPECT_EQ(1u, teardownCalled);
 }
 
 TEST(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCallTeardownFunc) {
@@ -98,22 +149,6 @@ TEST(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailabl
         return ZE_RESULT_SUCCESS;
     };
     EXPECT_NO_THROW(globalDriverTeardown());
-}
-
-TEST(GlobalTearDownTests, givenInitializedDriverAndTeardownFunctionFailsWhenCallGlobalTeardownThenDontCrash) {
-    VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized};
-    VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc};
-    static uint32_t teardownCalled = 0u;
-
-    levelZeroDriverInitialized = true;
-    setDriverTeardownFunc = []() -> ze_result_t {
-        EXPECT_EQ(0u, teardownCalled);
-        teardownCalled++;
-        return ZE_RESULT_ERROR_UNKNOWN;
-    };
-    teardownCalled = 0u;
-    EXPECT_NO_THROW(globalDriverTeardown());
-    EXPECT_EQ(1u, teardownCalled);
 }
 
 TEST(GlobalTearDownTests, givenCallToGlobalTearDownFunctionThenGlobalDriversAreNull) {

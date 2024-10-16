@@ -20,7 +20,7 @@ namespace ult {
 
 class MockOsLibrary : public NEO::OsLibrary {
   public:
-    MockOsLibrary(const std::string &name, std::string *errorValue) {
+    MockOsLibrary() {
     }
 
     void *getProcAddress(const std::string &procName) override {
@@ -35,8 +35,8 @@ class MockOsLibrary : public NEO::OsLibrary {
         return std::string();
     }
 
-    static OsLibrary *load(const std::string &name) {
-        auto ptr = new (std::nothrow) MockOsLibrary(name, nullptr);
+    static OsLibrary *load(const OsLibraryCreateProperties &properties) {
+        auto ptr = new (std::nothrow) MockOsLibrary();
         if (ptr == nullptr) {
             return nullptr;
         }

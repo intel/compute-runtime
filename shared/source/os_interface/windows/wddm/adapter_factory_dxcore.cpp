@@ -19,7 +19,7 @@ namespace NEO {
 
 DxCoreAdapterFactory::DxCoreAdapterFactory(AdapterFactory::CreateAdapterFactoryFcn createAdapterFactoryFcn) : createAdapterFactoryFcn(createAdapterFactoryFcn) {
     if (nullptr == createAdapterFactoryFcn) {
-        dxCoreLibrary.reset(OsLibrary::loadFunc(Os::dxcoreDllName));
+        dxCoreLibrary.reset(OsLibrary::loadFunc({Os::dxcoreDllName}));
         if (dxCoreLibrary && dxCoreLibrary->isLoaded()) {
             auto func = dxCoreLibrary->getProcAddress(dXCoreCreateAdapterFactoryFuncName);
             createAdapterFactoryFcn = reinterpret_cast<DxCoreAdapterFactory::CreateAdapterFactoryFcn>(func);

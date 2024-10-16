@@ -19,7 +19,7 @@ namespace GmmInterface {
 
 GMM_STATUS initialize(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
     if (!gmmLib) {
-        gmmLib.reset(OsLibrary::loadFunc(GMM_UMD_DLL));
+        gmmLib.reset(OsLibrary::loadFunc({GMM_UMD_DLL}));
         UNRECOVERABLE_IF(!gmmLib);
     }
     auto initGmmFunc = reinterpret_cast<decltype(&InitializeGmm)>(gmmLib->getProcAddress(GMM_ADAPTER_INIT_NAME));
