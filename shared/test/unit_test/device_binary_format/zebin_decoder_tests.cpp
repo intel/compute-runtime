@@ -2068,7 +2068,7 @@ kernels:
     EXPECT_TRUE(equals(attributes.invalidKernel.value(), "invalid_kernel_reason"));
 }
 
-TEST(ReadZeInfoDebugEnvironment, givenValidYamlEntryThenSetProperMembers) {
+TEST(ReadZeInfoDebugEnvironment, givenSipSurfaceBtiEntryThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
   - name:            some_kernel
@@ -2092,6 +2092,32 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
 
     EXPECT_EQ(0, debugEnv.debugSurfaceBTI);
+}
+
+TEST(ReadZeInfoDebugEnvironment, givenSipSurfaceOffsetEntryThenSetProperMembers) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    debug_env:
+        sip_surface_offset: 0
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &argsNode = *parser.findNodeWithKeyDfs("debug_env");
+    std::string errors;
+    std::string warnings;
+    NEO::Zebin::ZeInfo::Types::Kernel::DebugEnv::DebugEnvBaseT debugEnv;
+    auto err = NEO::Zebin::ZeInfo::readZeInfoDebugEnvironment(parser, argsNode, debugEnv, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    EXPECT_EQ(0, debugEnv.debugSurfaceOffset);
 }
 
 TEST(ReadZeInfoDebugEnvironment, givenUnknownEntryThenEmitsWarning) {

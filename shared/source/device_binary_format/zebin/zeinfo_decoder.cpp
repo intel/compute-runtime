@@ -821,6 +821,8 @@ DecodeError readZeInfoDebugEnvironment(const Yaml::YamlParser &parser, const Yam
         auto key = parser.readKey(debugEnvNd);
         if (Tags::Kernel::DebugEnv::debugSurfaceBTI == key) {
             validDebugEnv &= readZeInfoValueChecked(parser, debugEnvNd, outDebugEnv.debugSurfaceBTI, context, outErrReason);
+        } else if (Tags::Kernel::DebugEnv::debugSurfaceOffset == key) {
+            validDebugEnv &= readZeInfoValueChecked(parser, debugEnvNd, outDebugEnv.debugSurfaceOffset, context, outErrReason);
         } else {
             outWarning.append("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"" + key.str() + "\" in context of " + context.str() + "\n");
         }

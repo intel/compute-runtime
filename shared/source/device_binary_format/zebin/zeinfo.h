@@ -81,6 +81,7 @@ inline constexpr ConstStringRef hintSuffix("_hint");
 
 namespace DebugEnv {
 inline constexpr ConstStringRef debugSurfaceBTI("sip_surface_bti");
+inline constexpr ConstStringRef debugSurfaceOffset("sip_surface_offset");
 } // namespace DebugEnv
 
 namespace PayloadArgument {
@@ -452,13 +453,16 @@ struct AttributesBaseT {
 
 namespace DebugEnv {
 using DebugSurfaceBTIT = int32_t;
+using DebugSurfaceOffset = int32_t;
 
 namespace Defaults {
 inline constexpr DebugSurfaceBTIT debugSurfaceBTI = -1;
+inline constexpr DebugSurfaceOffset debugSurfaceOffset = -1;
 } // namespace Defaults
 
 struct DebugEnvBaseT {
     DebugSurfaceBTIT debugSurfaceBTI = Defaults::debugSurfaceBTI;
+    DebugSurfaceOffset debugSurfaceOffset = Defaults::debugSurfaceOffset;
 };
 } // namespace DebugEnv
 
