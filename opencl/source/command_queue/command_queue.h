@@ -486,6 +486,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool gpgpuCsrClientRegistered = false;
     bool heaplessModeEnabled = false;
     bool heaplessStateInitEnabled = false;
+    bool isForceStateless = false;
 };
 
 template <typename PtrType>

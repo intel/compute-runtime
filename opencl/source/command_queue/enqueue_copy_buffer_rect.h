@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/compiler_product_helper.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -35,7 +34,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), region};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
-    bool isStateless = device->getCompilerProductHelper().isForceToStatelessRequired();
+    bool isStateless = isForceStateless;
     if (std::max(srcBuffer->getSize(), dstBuffer->getSize()) >= 4ull * MemoryConstants::gigaByte) {
         isStateless = true;
     }
