@@ -11,8 +11,11 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
+#include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <algorithm>
@@ -86,16 +89,21 @@ TEST_F(KernelHelperMaxWorkGroupsTests, givenMultipleSubdevicesWenCalculatingMaxW
     }
 }
 
-TEST_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount) {
+HWTEST2_F(KernelHelperMaxWorkGroupsTests, GivenBarriersWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithRegardToBarriersCount, MatchAny) {
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*rootDeviceEnvironment);
+    raii.mockProductHelper->isCooperativeEngineSupportedValue = false;
+    lws[0] = 1;
+    lws[1] = 0;
+    lws[2] = 0;
+    workDim = 1;
     numberOfBarriers = 0;
-    auto baseCount = getMaxWorkGroupCount();
 
     numberOfBarriers = 16;
 
     auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
     auto maxBarrierCount = helper.getMaxBarrierRegisterPerSlice();
 
-    auto expected = std::min(baseCount, static_cast<uint32_t>(dssCount * (maxBarrierCount / numberOfBarriers)));
+    auto expected = static_cast<uint32_t>(dssCount * (maxBarrierCount / numberOfBarriers));
     EXPECT_EQ(expected, getMaxWorkGroupCount());
 }
 

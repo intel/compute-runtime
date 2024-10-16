@@ -199,6 +199,7 @@ class GfxCoreHelper {
     virtual bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
 
     virtual uint32_t getDeviceTimestampWidth() const = 0;
+    virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -305,6 +306,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     uint8_t getBarriersCountFromHasBarriers(uint8_t hasBarriers) const override;
 
     uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const override;
+
+    void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const override;
 
     uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const override;
 

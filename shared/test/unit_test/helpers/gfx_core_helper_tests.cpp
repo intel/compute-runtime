@@ -1873,3 +1873,11 @@ HWTEST_F(GfxCoreHelperTest, givenGetDeviceTimestampWidthCalledThenReturnCorrectV
     debugManager.flags.OverrideTimestampWidth.set(64);
     EXPECT_EQ(64u, helper.getDeviceTimestampWidth());
 }
+
+HWTEST2_F(GfxCoreHelperTest, givenHwHelperWhenAligningThreadGroupCountToDssSizeThenThreadGroupCountDoesNotChange, IsAtMostXe2HpgCore) {
+    auto &helper = getHelper<GfxCoreHelper>();
+    uint32_t threadGroupCountBefore = 4096;
+    uint32_t threadCount = threadGroupCountBefore;
+    helper.alignThreadGroupCountToDssSize(threadCount, 1, 1, 1);
+    EXPECT_EQ(threadGroupCountBefore, threadCount);
+}
