@@ -13,30 +13,24 @@
 
 #include <dlfcn.h>
 
-extern void *(*dlopenFunc)(const char *filename, int flags);
+namespace NEO {
+namespace SysCalls {
+extern int dlOpenFlags;
+extern bool dlOpenCalled;
+} // namespace SysCalls
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
 namespace ult {
 
-static int dlOpenFlags = 0;
-static bool dlOpenCalled = false;
-
-void *mockDlopen(const char *filename, int flags) {
-    dlOpenCalled = true;
-    dlOpenFlags = flags;
-    return nullptr;
-}
-
 TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceThenLibraryIsLoadedWithDeepbindDisabled) {
-    VariableBackup<decltype(dlopenFunc)> dlopenFuncBackup(&dlopenFunc, nullptr);
-    dlopenFunc = mockDlopen;
-    VariableBackup<bool> dlOpenCalledBackup{&dlOpenCalled, false};
-    VariableBackup<int> dlOpenFlagsBackup{&dlOpenFlags, 0};
+    VariableBackup<bool> dlOpenCalledBackup{&NEO::SysCalls::dlOpenCalled, false};
+    VariableBackup<int> dlOpenFlagsBackup{&NEO::SysCalls::dlOpenFlags, 0};
 
     L0::Sysman::FirmwareUtil *pFwUtil = L0::Sysman::FirmwareUtil::create(0, 0, 0, 0);
-    EXPECT_EQ(dlOpenCalled, true);
-    EXPECT_EQ(dlOpenFlags, RTLD_LAZY);
+    EXPECT_EQ(NEO::SysCalls::dlOpenCalled, true);
+    EXPECT_EQ(NEO::SysCalls::dlOpenFlags, RTLD_LAZY);
     EXPECT_EQ(pFwUtil, nullptr);
 }
 
