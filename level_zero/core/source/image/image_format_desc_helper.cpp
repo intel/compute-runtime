@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
     switch (imgDescription.layout) {
     case ZE_IMAGE_FORMAT_LAYOUT_8:
     case ZE_IMAGE_FORMAT_LAYOUT_8_8:
+    case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
     case ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8:
         if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UINT)
             return CL_UNSIGNED_INT8;
@@ -27,6 +28,7 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
         break;
     case ZE_IMAGE_FORMAT_LAYOUT_16:
     case ZE_IMAGE_FORMAT_LAYOUT_16_16:
+    case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
     case ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16:
         if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UINT)
             return CL_UNSIGNED_INT16;
@@ -40,6 +42,7 @@ cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
         return CL_HALF_FLOAT;
     case ZE_IMAGE_FORMAT_LAYOUT_32:
     case ZE_IMAGE_FORMAT_LAYOUT_32_32:
+    case ZE_IMAGE_FORMAT_LAYOUT_32_32_32:
     case ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32:
         if (imgDescription.type == ZE_IMAGE_FORMAT_TYPE_UINT)
             return CL_UNSIGNED_INT32;
