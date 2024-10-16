@@ -81,7 +81,8 @@ const RuntimeCapabilityTable ADLN::capabilityTable{
     true,                                           // fusedEuEnabled
     false,                                          // l0DebuggerSupported;
     true,                                           // supportsFloatAtomics
-    0                                               // cxlType
+    0,                                              // cxlType
+    2048                                            // syncNumRTStacksPerDSS
 };
 
 WorkaroundTable ADLN::workaroundTable = {};

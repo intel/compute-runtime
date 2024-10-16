@@ -81,7 +81,8 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     true,                                            // fusedEuEnabled
     false,                                           // l0DebuggerSupported;
     true,                                            // supportsFloatAtomics
-    0                                                // cxlType
+    0,                                               // cxlType
+    2048                                             // syncNumRTStacksPerDSS
 };
 
 WorkaroundTable RKL::workaroundTable = {};

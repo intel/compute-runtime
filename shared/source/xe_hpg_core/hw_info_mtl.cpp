@@ -80,7 +80,8 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported
     true,                                                      // supportsFloatAtomics
-    0                                                          // cxlType
+    0,                                                         // cxlType
+    2048                                                       // syncNumRTStacksPerDSS
 };
 
 WorkaroundTable MTL::workaroundTable = {};

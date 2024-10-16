@@ -39,7 +39,7 @@ TEST(RayTracingHelperTests, whenRTStackSizeIsRequestedThenCorrectValueIsReturned
     uint32_t extraBytesGlobal = 100;
     uint32_t tiles = 2;
 
-    size_t expectedSize = alignUp(RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal) * RayTracingHelper::getNumRtStacks(device) + extraBytesGlobal, MemoryConstants::cacheLineSize);
+    size_t expectedSize = alignUp(RayTracingHelper::getStackSizePerRay(maxBvhLevel, extraBytesLocal) * RayTracingHelper::getNumRtStacks(device.getHardwareInfo()) + extraBytesGlobal, MemoryConstants::cacheLineSize);
     size_t size = RayTracingHelper::getRTStackSizePerTile(device, tiles, maxBvhLevel, extraBytesLocal, extraBytesGlobal);
     EXPECT_EQ(expectedSize, size);
 }
@@ -47,16 +47,16 @@ TEST(RayTracingHelperTests, whenRTStackSizeIsRequestedThenCorrectValueIsReturned
 TEST(RayTracingHelperTests, whenNumRtStacksPerDssIsRequestedThenCorrectValueIsReturned) {
     MockDevice device;
 
-    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacksPerDss(device);
-    uint32_t expectedValue = RayTracingHelper::stackDssMultiplier;
+    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacksPerDss(device.getHardwareInfo());
+    uint32_t expectedValue = device.getHardwareInfo().capabilityTable.syncNumRTStacksPerDSS;
     EXPECT_EQ(expectedValue, numDssRtStacks);
 }
 
 TEST(RayTracingHelperTests, whenNumRtStacksIsQueriedThenItIsEqualToNumRtStacksPerDssMultipliedByDualSubsliceCount) {
     MockDevice device;
 
-    uint32_t numDssRtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(device);
-    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacks(device);
+    uint32_t numDssRtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(device.getHardwareInfo());
+    uint32_t numDssRtStacks = RayTracingHelper::getNumRtStacks(device.getHardwareInfo());
     uint32_t subsliceCount = GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo());
 
     EXPECT_LT(0u, numDssRtStacks);

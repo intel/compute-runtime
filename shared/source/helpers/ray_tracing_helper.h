@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@
 namespace NEO {
 class RayTracingHelper : public NonCopyableOrMovableClass {
   public:
-    static constexpr uint32_t stackDssMultiplier = 2048;
     static constexpr uint32_t hitInfoSize = 64;
     static constexpr uint32_t bvhStackSize = 96;
     static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * MemoryConstants::kiloByte;
@@ -31,7 +30,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static size_t getRTStackSizePerTile(const Device &device, uint32_t tiles, uint32_t maxBvhLevel, uint32_t extraBytesLocal, uint32_t extraBytesGlobal) {
-        return static_cast<size_t>(alignUp(getStackSizePerRay(maxBvhLevel, extraBytesLocal) * (getNumRtStacks(device)) + extraBytesGlobal, MemoryConstants::cacheLineSize));
+        return static_cast<size_t>(alignUp(getStackSizePerRay(maxBvhLevel, extraBytesLocal) * (getNumRtStacks(device.getHardwareInfo())) + extraBytesGlobal, MemoryConstants::cacheLineSize));
     }
 
     static size_t getTotalMemoryBackedFifoSize(const Device &device) {
@@ -42,12 +41,12 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
         return static_cast<size_t>(Math::log2(memoryBackedFifoSizePerDss / MemoryConstants::kiloByte) - 1);
     }
 
-    static uint32_t getNumRtStacks(const Device &device) {
-        return NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo()) * stackDssMultiplier;
+    static uint32_t getNumRtStacks(const HardwareInfo &hwInfo) {
+        return NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(hwInfo) * getNumRtStacksPerDss(hwInfo);
     }
 
-    static uint32_t getNumRtStacksPerDss(const Device &device) {
-        return stackDssMultiplier;
+    static uint32_t getNumRtStacksPerDss(const HardwareInfo &hwInfo) {
+        return hwInfo.capabilityTable.syncNumRTStacksPerDSS;
     }
 
     static uint32_t getStackSizePerRay(uint32_t maxBvhLevel, uint32_t extraBytesLocal) {

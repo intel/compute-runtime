@@ -84,7 +84,8 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported
     true,                                                      // supportsFloatAtomics
-    0                                                          // cxlType
+    0,                                                         // cxlType
+    2048                                                       // syncNumRTStacksPerDSS
 };
 
 WorkaroundTable DG2::workaroundTable = {};

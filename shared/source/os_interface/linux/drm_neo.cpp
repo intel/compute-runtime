@@ -494,6 +494,11 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     if (systemInfo) {
         systemInfo->checkSysInfoMismatch(hwInfo);
         setupSystemInfo(hwInfo, systemInfo.get());
+
+        auto numRtStacks = systemInfo->getSyncNumRtStacksPerDss();
+        if (numRtStacks > 0) {
+            hwInfo->capabilityTable.syncNumRTStacksPerDSS = numRtStacks;
+        }
     }
     if (!queryMemoryInfo()) {
         setPerContextVMRequired(true);

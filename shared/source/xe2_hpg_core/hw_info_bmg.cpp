@@ -83,7 +83,8 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     false,                                                     // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
     true,                                                      // supportsFloatAtomics
-    0                                                          // cxlType
+    0,                                                         // cxlType
+    2048                                                       // syncNumRTStacksPerDSS
 };
 
 void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

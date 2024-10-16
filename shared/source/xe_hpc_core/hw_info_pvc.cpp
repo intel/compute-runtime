@@ -94,7 +94,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     false,                                                     // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
     true,                                                      // supportsFloatAtomics
-    0                                                          // cxlType
+    0,                                                         // cxlType
+    2048                                                       // syncNumRTStacksPerDSS
 };
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

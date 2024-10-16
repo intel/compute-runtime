@@ -285,6 +285,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, drm.getSystemInfo()->getCsrSizeInMb());
     EXPECT_EQ(gtSystemInfo.SLMSizeInKb, drm.getSystemInfo()->getSlmSizePerDss());
     EXPECT_EQ(newHwInfo.capabilityTable.slmSize, hwInfo.capabilityTable.slmSize);
+    EXPECT_EQ(newHwInfo.capabilityTable.syncNumRTStacksPerDSS, drm.getSystemInfo()->getSyncNumRtStacksPerDss());
     EXPECT_NE(newHwInfo.capabilityTable.slmSize, drm.getSystemInfo()->getSlmSizePerDss());
 }
 
@@ -319,6 +320,27 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
 
     EXPECT_EQ(expectedMaxEusPerSubsliceSupported, gtSystemInfo.MaxEuPerSubSlice);
     EXPECT_NE(0u, gtSystemInfo.MaxEuPerSubSlice);
+}
+
+TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlobHasZerosThenHardwareInfoDefaultValuesNotChanged) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+
+    DrmMockEngine drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, &hwInfo, setupHardwareInfo};
+
+    drm.systemInfo.reset(new SystemInfo(inputBlobDataZeros));
+    drm.systemInfoQueried = true;
+    int ret = drm.setupHardwareInfo(&device, false);
+    EXPECT_EQ(ret, 0);
+    EXPECT_NE(nullptr, drm.getSystemInfo());
+    const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+
+    EXPECT_EQ(newHwInfo.capabilityTable.syncNumRTStacksPerDSS, 2048u);
 }
 
 TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubslicesToCalculateL3Size) {
