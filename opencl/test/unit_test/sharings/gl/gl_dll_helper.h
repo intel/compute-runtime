@@ -38,7 +38,7 @@ using setGLMockValue = void (*)(GLMockReturnedValues);
 struct GlDllHelper {
   public:
     GlDllHelper() {
-        glDllLoad.reset(OsLibrary::loadFunc(Os::openglDllName));
+        glDllLoad.reset(OsLibrary::loadFunc({Os::openglDllName}));
         if (glDllLoad) {
             glSetString = (*glDllLoad)["glSetString"];
             UNRECOVERABLE_IF(glSetString == nullptr);

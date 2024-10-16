@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ class OsLibrary : public NEO::OsLibrary {
     void *handle;
 
   public:
-    OsLibrary(const std::string &name, std::string *errorValue);
+    OsLibrary(const OsLibraryCreateProperties &properties);
     ~OsLibrary() override;
 
     bool isLoaded() override;

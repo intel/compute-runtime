@@ -84,6 +84,8 @@ extern uint32_t munmapFuncCalled;
 
 extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
+extern bool captureDlOpenFilePath;
+extern std::string dlOpenFilePathPassed;
 
 extern long sysconfReturn;
 } // namespace SysCalls

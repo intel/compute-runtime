@@ -17,7 +17,7 @@
 namespace NEO {
 
 bool PinContext::init(const std::string &gtPinOpenFunctionName) {
-    auto hGtPinLibrary = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc(PinContext::gtPinLibraryFilename.c_str()));
+    auto hGtPinLibrary = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc({PinContext::gtPinLibraryFilename}));
 
     if (hGtPinLibrary == nullptr) {
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library %s\n", PinContext::gtPinLibraryFilename.c_str());

@@ -81,7 +81,7 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
 }
 
 std::unique_ptr<OsLibrary> OclocFclFacade::loadFclLibrary() const {
-    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc(Os::frontEndDllName)};
+    return std::unique_ptr<OsLibrary>{OsLibrary::loadFunc({Os::frontEndDllName})};
 }
 
 CIF::CreateCIFMainFunc_t OclocFclFacade::loadCreateFclMainFunction() const {

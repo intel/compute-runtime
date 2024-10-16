@@ -16,7 +16,7 @@ namespace NEO {
 ///////////////////////////////////////////////////////
 MetricsLibrary::MetricsLibrary() {
     api = std::make_unique<MetricsLibraryInterface>();
-    osLibrary.reset(OsLibrary::loadFunc(Os::metricsLibraryDllName));
+    osLibrary.reset(OsLibrary::loadFunc({Os::metricsLibraryDllName}));
 }
 
 //////////////////////////////////////////////////////
