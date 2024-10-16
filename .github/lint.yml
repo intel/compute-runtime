@@ -85,7 +85,9 @@ lint:
       files:
         '*/l0_blackbox_runner_configs.yml':
         - ci
-        'manifests/ci.yml':
+        'manifests/ci*.yml':
+        - ci
+        'manifests/*/ci*.yml':
         - ci
         '.lint-revision':
         - ci
