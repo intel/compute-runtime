@@ -98,15 +98,16 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
 
     bool interruptMode = false;
     bool kmdWaitMode = false;
+    bool externalInterruptWait = false;
 
     if (extendedDesc && (extendedDesc->stype == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC)) {
         auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
 
         interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
         kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
-        bool externalInterrupt = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
+        externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
 
-        if (externalInterrupt) {
+        if (externalInterruptWait) {
             event->setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
             UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
         }
@@ -117,10 +118,10 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
 
     if (interruptMode) {
         event->enableInterruptMode();
+    }
 
-        if (kmdWaitMode) {
-            event->enableKmdWaitMode();
-        }
+    if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
+        event->enableKmdWaitMode();
     }
 
     return event.release();
