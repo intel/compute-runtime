@@ -22,7 +22,7 @@ const std::string fnName = "testDynamicLibraryFunc";
 using namespace NEO;
 
 TEST(OSLibraryTest, whenLibraryNameIsEmptyThenCurrentProcesIsUsedAsLibrary) {
-    std::unique_ptr<OsLibrary> library{OsLibrary::loadFunc({""})};
+    std::unique_ptr<OsLibrary> library{OsLibrary::loadFunc("")};
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress("selfDynamicLibraryFunc");
     EXPECT_NE(nullptr, ptr);
@@ -35,36 +35,32 @@ TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturned) {
 
 TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturnedAndErrorString) {
     std::string errorValue;
-    OsLibraryCreateProperties properties(fakeLibName);
-    properties.errorValue = &errorValue;
-    OsLibrary *library = OsLibrary::loadFunc(properties);
+    OsLibrary *library = OsLibrary::loadAndCaptureError(fakeLibName, &errorValue);
     EXPECT_FALSE(errorValue.empty());
     EXPECT_EQ(nullptr, library);
 }
 
 TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoaded) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc({Os::testDllName}));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
 TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoadedWithNoErrorString) {
     std::string errorValue;
-    OsLibraryCreateProperties properties(Os::testDllName);
-    properties.errorValue = &errorValue;
-    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(properties));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadAndCaptureError(Os::testDllName, &errorValue));
     EXPECT_TRUE(errorValue.empty());
     EXPECT_NE(nullptr, library);
 }
 
 TEST(OSLibraryTest, whenSymbolNameIsValidThenGetProcAddressReturnsNonNullPointer) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc({Os::testDllName}));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress(fnName);
     EXPECT_NE(nullptr, ptr);
 }
 
 TEST(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer) {
-    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc({Os::testDllName}));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
     void *ptr = library->getProcAddress(fnName + "invalid");
     EXPECT_EQ(nullptr, ptr);

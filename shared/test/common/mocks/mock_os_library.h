@@ -35,10 +35,7 @@ class MockOsLibrary : public NEO::OsLibrary {
 
     static OsLibrary *loadLibraryNewObject;
 
-    static OsLibrary *load(const NEO::OsLibraryCreateProperties &properties) {
-        if (properties.errorValue) {
-            return OsLibrary::load(properties);
-        }
+    static OsLibrary *load(const std::string &name) {
         OsLibrary *ptr = loadLibraryNewObject;
         loadLibraryNewObject = nullptr;
         return ptr;

@@ -15,8 +15,8 @@
 
 namespace NEO {
 
-OsLibrary *OsLibrary::load(const OsLibraryCreateProperties &properties) {
-    auto ptr = new (std::nothrow) Linux::OsLibrary(properties);
+OsLibrary *OsLibrary::loadAndCaptureError(const std::string &name, std::string *errorValue) {
+    auto ptr = new (std::nothrow) Linux::OsLibrary(name, errorValue);
     if (ptr == nullptr)
         return nullptr;
 
@@ -33,8 +33,8 @@ const std::string OsLibrary::createFullSystemPath(const std::string &name) {
 
 namespace Linux {
 
-OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {
-    if (properties.libraryName.empty() || properties.performSelfLoad) {
+OsLibrary::OsLibrary(const std::string &name, std::string *errorValue) {
+    if (name.empty()) {
         this->handle = SysCalls::dlopen(0, RTLD_LAZY);
     } else {
 #ifdef SANITIZER_BUILD
@@ -43,11 +43,12 @@ OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {
         auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
         /* Background: https://github.com/intel/compute-runtime/issues/122 */
 #endif
-        dlopenFlag = properties.customLoadFlags ? *properties.customLoadFlags : dlopenFlag;
+        dlopenFlag = OsLibrary::loadFlagsOverwrite ? *OsLibrary::loadFlagsOverwrite : dlopenFlag;
+        OsLibrary::loadFlagsOverwrite = nullptr;
         adjustLibraryFlags(dlopenFlag);
-        this->handle = SysCalls::dlopen(properties.libraryName.c_str(), dlopenFlag);
-        if (!this->handle && (properties.errorValue != nullptr)) {
-            properties.errorValue->assign(dlerror());
+        this->handle = SysCalls::dlopen(name.c_str(), dlopenFlag);
+        if (!this->handle && (errorValue != nullptr)) {
+            errorValue->assign(dlerror());
         }
     }
 }

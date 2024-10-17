@@ -29,7 +29,7 @@ GLSharingFunctionsWindows::~GLSharingFunctionsWindows() {
 }
 
 bool GLSharingFunctionsWindows::isGlSharingEnabled() {
-    static bool oglLibAvailable = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc({Os::openglDllName})).get() != nullptr;
+    static bool oglLibAvailable = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc(Os::openglDllName)).get() != nullptr;
     return oglLibAvailable;
 }
 
@@ -128,7 +128,7 @@ void GLSharingFunctionsWindows::removeGlArbSyncEventMapping(Event &baseEvent) {
 }
 
 GLboolean GLSharingFunctionsWindows::initGLFunctions() {
-    glLibrary.reset(OsLibrary::loadFunc({Os::openglDllName}));
+    glLibrary.reset(OsLibrary::loadFunc(Os::openglDllName));
 
     if (glLibrary->isLoaded()) {
         GlFunctionHelper wglLibrary(glLibrary.get(), "wglGetProcAddress");

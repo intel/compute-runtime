@@ -42,7 +42,7 @@ struct IgaWrapper::Impl {
         iga.optsContext.cb = sizeof(igaLib.optsContext);
         iga.optsContext.gen = igaGen;
 
-        iga.library.reset(NEO::OsLibrary::loadFunc({Os::igaDllName}));
+        iga.library.reset(NEO::OsLibrary::loadFunc(Os::igaDllName));
         if (iga.library == nullptr) {
             return;
         }

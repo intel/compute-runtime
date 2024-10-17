@@ -23,25 +23,18 @@ struct ConvertibleProcAddr {
     void *ptr = nullptr;
 };
 
-struct OsLibraryCreateProperties {
-    OsLibraryCreateProperties(std::string name) {
-        libraryName = name;
-    }
-    std::string libraryName;
-    std::string *errorValue = nullptr;
-    bool performSelfLoad = false;
-    int *customLoadFlags = nullptr;
-};
-
 class OsLibrary {
   protected:
     OsLibrary() = default;
-    static OsLibrary *load(const OsLibraryCreateProperties &properties);
+    static OsLibrary *load(const std::string &name) { return loadAndCaptureError(name, nullptr); }
 
   public:
     virtual ~OsLibrary() = default;
 
+    static const int *loadFlagsOverwrite;
+
     static decltype(&OsLibrary::load) loadFunc;
+    static OsLibrary *loadAndCaptureError(const std::string &name, std::string *errorValue);
     static const std::string createFullSystemPath(const std::string &name);
 
     ConvertibleProcAddr operator[](const std::string &name) {

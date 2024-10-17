@@ -34,6 +34,8 @@ TEST(FwUtilTest, GivenLibraryWasSetWhenCreatingFirmwareUtilInterfaceThenLibraryI
     VariableBackup<bool> dlOpenCalledBackup{&dlOpenCalled, false};
     VariableBackup<int> dlOpenFlagsBackup{&dlOpenFlags, 0};
 
+    auto flags = RTLD_LAZY;
+    NEO::OsLibrary::loadFlagsOverwrite = &flags;
     L0::Sysman::FirmwareUtil *pFwUtil = L0::Sysman::FirmwareUtil::create(0, 0, 0, 0);
     EXPECT_EQ(dlOpenCalled, true);
     EXPECT_EQ(dlOpenFlags, RTLD_LAZY);

@@ -20,7 +20,7 @@ class OsLibrary : public NEO::OsLibrary, NEO::NonCopyableOrMovableClass {
     HMODULE handle;
 
   public:
-    OsLibrary(const OsLibraryCreateProperties &properties);
+    OsLibrary(const std::string &name, std::string *errorValue);
     ~OsLibrary();
 
     bool isLoaded();
@@ -32,10 +32,8 @@ class OsLibrary : public NEO::OsLibrary, NEO::NonCopyableOrMovableClass {
   protected:
     HMODULE loadDependency(const std::string &dependencyFileName) const;
 
-    static decltype(&GetModuleHandleA) getModuleHandleA;
     static decltype(&LoadLibraryExA) loadLibraryExA;
     static decltype(&GetModuleFileNameA) getModuleFileNameA;
-    static decltype(&FreeLibrary) freeLibrary;
 };
 } // namespace Windows
 } // namespace NEO

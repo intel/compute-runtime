@@ -90,9 +90,7 @@ template <template <CIF::Version_t> class EntryPointT>
 inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib,
                          CIF::RAII::UPtr_t<CIF::CIFMain> &outLibMain) {
     std::string loadLibraryError;
-    OsLibraryCreateProperties libraryProperties(libName);
-    libraryProperties.errorValue = &loadLibraryError;
-    auto lib = std::unique_ptr<OsLibrary>(OsLibrary::loadFunc(libraryProperties));
+    auto lib = std::unique_ptr<OsLibrary>(OsLibrary::loadAndCaptureError(libName, &loadLibraryError));
     if (lib == nullptr) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Compiler Library %s could not be loaded with error: %s\n", libName, loadLibraryError.c_str());
         DEBUG_BREAK_IF(true); // could not load library

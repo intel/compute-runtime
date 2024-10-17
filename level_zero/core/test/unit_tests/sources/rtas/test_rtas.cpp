@@ -221,7 +221,7 @@ struct MockRTASOsLibrary : public OsLibrary {
     std::string getFullPath() override {
         return std::string();
     }
-    static OsLibrary *load(const OsLibraryCreateProperties &properties) {
+    static OsLibrary *load(const std::string &name) {
         if (mockLoad == true) {
             auto ptr = new (std::nothrow) MockRTASOsLibrary();
             return ptr;
@@ -264,7 +264,7 @@ TEST_F(RTASTest, GivenLibraryLoadsSymbolsAndUnderlyingFunctionsSucceedThenSucces
         std::string getFullPath() override {
             return std::string();
         }
-        static OsLibrary *load(const OsLibraryCreateProperties &properties) {
+        static OsLibrary *load(const std::string &name) {
             auto ptr = new (std::nothrow) MockSymbolsLoadedOsLibrary();
             return ptr;
         }

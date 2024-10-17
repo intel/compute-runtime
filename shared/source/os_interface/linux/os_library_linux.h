@@ -18,7 +18,7 @@ class OsLibrary : public NEO::OsLibrary {
     void *handle;
 
   public:
-    OsLibrary(const OsLibraryCreateProperties &properties);
+    OsLibrary(const std::string &name, std::string *errorValue);
     ~OsLibrary() override;
 
     bool isLoaded() override;

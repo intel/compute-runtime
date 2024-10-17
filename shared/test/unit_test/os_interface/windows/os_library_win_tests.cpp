@@ -20,10 +20,6 @@ extern const char *testDllName;
 using namespace NEO;
 
 class OsLibraryBackup : public Windows::OsLibrary {
-  public:
-    using Windows::OsLibrary::getModuleHandleA;
-    using Windows::OsLibrary::loadLibraryExA;
-
     using Type = decltype(Windows::OsLibrary::loadLibraryExA);
     using BackupType = VariableBackup<Type>;
 
@@ -39,6 +35,7 @@ class OsLibraryBackup : public Windows::OsLibrary {
         std::unique_ptr<SystemDirectoryBackupType> bkp3 = nullptr;
     };
 
+  public:
     static std::unique_ptr<Backup> backup(Type newValue, ModuleNameType newModuleName, SystemDirectoryType newSystemDirectoryName) {
         std::unique_ptr<Backup> bkp(new Backup());
         bkp->bkp1.reset(new BackupType(&OsLibrary::loadLibraryExA, newValue));
@@ -87,7 +84,7 @@ UINT WINAPI getSystemDirectoryAMock(LPSTR lpBuffer, UINT uSize) {
 TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToSystem32) {
     auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
 
-    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc({Os::testDllName}));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
@@ -95,7 +92,7 @@ TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
     auto bkp = OsLibraryBackup::backup(loadLibraryExAMock, getModuleFileNameAMock, getSystemDirectoryAMock);
     VariableBackup<bool> bkpM(&mockWillFailInNonSystem32, false);
 
-    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc({Os::testDllName}));
+    std::unique_ptr<OsLibrary> library(OsLibrary::loadFunc(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
@@ -109,41 +106,17 @@ TEST(OSLibraryWinTest, WhenCreatingFullSystemPathThenProperPathIsConstructed) {
 
 TEST(OSLibraryWinTest, GivenInvalidLibraryWhenOpeningLibraryThenLoadLibraryErrorIsReturned) {
     std::string errorValue;
-    OsLibraryCreateProperties properties("abc");
-    properties.errorValue = &errorValue;
-    auto lib = std::make_unique<Windows::OsLibrary>(properties);
+    auto lib = std::make_unique<Windows::OsLibrary>("abc", &errorValue);
     EXPECT_FALSE(errorValue.empty());
 }
 
 TEST(OSLibraryWinTest, GivenNoLastErrorOnWindowsThenErrorStringisEmpty) {
     std::string errorValue;
 
-    OsLibraryCreateProperties properties(Os::testDllName);
-    properties.errorValue = &errorValue;
-    auto lib = std::make_unique<Windows::OsLibrary>(properties);
+    auto lib = std::make_unique<Windows::OsLibrary>(Os::testDllName, &errorValue);
     EXPECT_NE(nullptr, lib);
     EXPECT_TRUE(errorValue.empty());
     lib->getLastErrorString(&errorValue);
     EXPECT_TRUE(errorValue.empty());
     lib->getLastErrorString(nullptr);
-}
-
-TEST(OSLibraryWinTest, WhenCreateOsLibraryWithSelfOpenThenDontLoadLibrary) {
-    OsLibraryCreateProperties properties(Os::testDllName);
-    VariableBackup<decltype(OsLibraryBackup::loadLibraryExA)> backupLoadLibrary(&OsLibraryBackup::loadLibraryExA, [](LPCSTR, HANDLE, DWORD) -> HMODULE {
-        UNRECOVERABLE_IF(true);
-        return nullptr;
-    });
-
-    VariableBackup<decltype(OsLibraryBackup::getModuleHandleA)> backupGetModuleHandle(&OsLibraryBackup::getModuleHandleA, [](LPCSTR moduleName) -> HMODULE {
-        return nullptr;
-    });
-    properties.performSelfLoad = true;
-    auto lib = std::make_unique<Windows::OsLibrary>(properties);
-    EXPECT_FALSE(lib->isLoaded());
-    OsLibraryBackup::getModuleHandleA = [](LPCSTR moduleName) -> HMODULE {
-        return reinterpret_cast<HMODULE>(0x1000);
-    };
-    lib = std::make_unique<Windows::OsLibrary>(properties);
-    EXPECT_TRUE(lib->isLoaded());
 }
