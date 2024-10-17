@@ -738,6 +738,11 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidHandleWhenQueryingMemory
     EXPECT_EQ(false, result);
 }
 
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWhenQueryingIsMemoryMaxTemperatureSupportedThenTrueIsReturned, IsBMG) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isMemoryMaxTemperatureSupported());
+}
+
 HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceAndNoTelemNodesAvailableWhenGettingGpuMaxTemperatureThenFailureIsReturned, IsBMG) {
     uint32_t subdeviceId = 0;
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
@@ -1009,6 +1014,65 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenSysmanProductHelperInstanceWh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto expectedValue = std::max(static_cast<double>(gpuMaxTemperature), static_cast<double>(memoryMaxTemperature));
     EXPECT_EQ(expectedValue, temperature);
+}
+
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZesGetTemperatureStateIsCalledThenValidTemperatureValueForEachSensorTypeIsReturned, IsBMG) {
+    static uint32_t gpuMaxTemperature = 10;
+    static uint32_t memoryMaxTemperature = 20;
+    static uint32_t validTemperatureHandleCount = 3u;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telemOffset = 0;
+        std::string validGuid = "0x5e2f8210";
+        long gpuMaxTemperatureKeyOffset = 41;
+        long memoryMaxTemperatureKeyOffset = 42;
+        if (fd == 4) {
+            memcpy(buf, &telemOffset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validGuid.data(), count);
+        } else if (fd == 6) {
+            if (offset == gpuMaxTemperatureKeyOffset) {
+                memcpy(buf, &gpuMaxTemperature, count);
+            } else if (offset == memoryMaxTemperatureKeyOffset) {
+                memcpy(buf, &memoryMaxTemperature, count);
+            }
+        }
+        return count;
+    });
+
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, validTemperatureHandleCount);
+
+    uint32_t testcount = count + 1;
+    result = zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &testcount, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testcount, validTemperatureHandleCount);
+
+    std::vector<zes_temp_handle_t> handles(count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, handles.data()));
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_temp_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        double temperature;
+
+        if (properties.type == ZES_TEMP_SENSORS_GPU) {
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(gpuMaxTemperature));
+        } else if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(memoryMaxTemperature));
+        } else if (properties.type == ZES_TEMP_SENSORS_GLOBAL) {
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(std::max(gpuMaxTemperature, memoryMaxTemperature)));
+        }
+    }
 }
 
 } // namespace ult

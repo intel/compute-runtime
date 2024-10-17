@@ -427,6 +427,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getGpuMaxTemperature(LinuxSysmanI
 }
 
 template <>
+bool SysmanProductHelperHw<gfxProduct>::isMemoryMaxTemperatureSupported() {
+    return true;
+}
+
+template <>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
     std::string telemDir = "";
     std::string guid = "";
