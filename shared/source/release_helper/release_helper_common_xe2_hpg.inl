@@ -28,4 +28,9 @@ const std::string ReleaseHelperHw<release>::getDeviceConfigString(uint32_t tileC
     return configString;
 }
 
+template <>
+bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
+    return true;
+}
+
 } // namespace NEO
