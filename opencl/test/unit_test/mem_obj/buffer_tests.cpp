@@ -1916,7 +1916,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
     constexpr size_t bigBufferSize = smallBufferSize + 1;
     char memory[smallBufferSize];
     char bigMemory[bigBufferSize];
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> overrideGfxCoreHelperHw{
         *executionEnvironment->rootDeviceEnvironments[0]};
 
     {
@@ -2023,7 +2023,7 @@ HWTEST_F(BufferCreateTests, givenClMemCopyHostPointerPassedToBufferCreateWhenAll
         auto writeBufferCounter = commandQueue->writeBufferCounter;
         size_t lockResourceCalled = memoryManager->lockResourceCalled;
 
-        static_cast<MockGfxCoreHelperHwWithSetIsLockable<FamilyType> *>(executionEnvironment->rootDeviceEnvironments[0]->gfxCoreHelper.get())->setIsLockable = false;
+        static_cast<MockGfxCoreHelperHw<FamilyType> *>(executionEnvironment->rootDeviceEnvironments[0]->gfxCoreHelper.get())->setIsLockable = false;
 
         std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, sizeof(memory), memory, retVal));
         ASSERT_NE(nullptr, buffer.get());

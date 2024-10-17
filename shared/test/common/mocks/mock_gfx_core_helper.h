@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,26 +13,18 @@
 namespace NEO {
 
 template <typename GfxFamily>
-class MockGfxCoreHelperWithFenceAllocation : public GfxCoreHelperHw<GfxFamily> {
+class MockGfxCoreHelperHw : public GfxCoreHelperHw<GfxFamily> {
   public:
     bool isFenceAllocationRequired(const HardwareInfo &hwInfo) const override {
         return true;
     }
-};
-
-template <typename GfxFamily>
-class MockGfxCoreHelperWithLocalMemory : public GfxCoreHelperHw<GfxFamily> {
-  public:
-    bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override {
-        return true;
-    }
-};
-
-template <typename GfxFamily>
-struct MockGfxCoreHelperHwWithSetIsLockable : public GfxCoreHelperHw<GfxFamily> {
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
         allocationData.storageInfo.isLockable = setIsLockable;
     }
+    void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const override {
+        alignThreadGroupCountToDssSizeCalledTimes++;
+    }
+    mutable uint32_t alignThreadGroupCountToDssSizeCalledTimes = 0;
     bool setIsLockable = true;
 };
 } // namespace NEO

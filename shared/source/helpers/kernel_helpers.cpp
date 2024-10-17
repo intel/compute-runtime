@@ -54,16 +54,16 @@ uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDev
     UNRECOVERABLE_IF(workGroupSize == 0);
     auto numThreadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simdSize));
     auto maxWorkGroupsCount = availableThreadCount / numThreadsPerThreadGroup;
-
-    if (barrierCount > 0) {
-        auto maxWorkGroupsCountDueToBarrierUsage = dssCount * (maxBarrierCount / barrierCount);
+    if (barrierCount > 0 || usedSlmSize > 0) {
         helper.alignThreadGroupCountToDssSize(maxWorkGroupsCount, dssCount, availableThreadCount / dssCount, numThreadsPerThreadGroup);
-        maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToBarrierUsage);
-    }
-
-    if (usedSlmSize > 0) {
-        auto maxWorkGroupsCountDueToSlm = availableSlmSize / usedSlmSize;
-        maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToSlm);
+        if (barrierCount > 0) {
+            auto maxWorkGroupsCountDueToBarrierUsage = dssCount * (maxBarrierCount / barrierCount);
+            maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToBarrierUsage);
+        }
+        if (usedSlmSize > 0) {
+            auto maxWorkGroupsCountDueToSlm = availableSlmSize / usedSlmSize;
+            maxWorkGroupsCount = std::min(maxWorkGroupsCount, maxWorkGroupsCountDueToSlm);
+        }
     }
 
     maxWorkGroupsCount = helper.adjustMaxWorkGroupCount(maxWorkGroupsCount, engineGroupType, rootDeviceEnvironment);

@@ -162,7 +162,7 @@ HWTEST_F(BufferCreateWindowsTests, givenClMemCopyHostPointerPassedToBufferCreate
     context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
     constexpr size_t smallBufferSize = Buffer::maxBufferSizeForCopyOnCpu;
     char memory[smallBufferSize];
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> overrideGfxCoreHelperHw{
         *executionEnvironment->rootDeviceEnvironments[0]};
 
     {
@@ -204,7 +204,7 @@ HWTEST_F(BufferCreateWindowsTests, givenClMemCopyHostPointerPassedToBufferCreate
     context.setSpecialQueue(commandQueue, mockRootDeviceIndex);
     constexpr size_t bigBufferSize = Buffer::maxBufferSizeForCopyOnCpu + 1;
     char bigMemory[bigBufferSize];
-    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHwWithSetIsLockable<FamilyType>> overrideGfxCoreHelperHw{*executionEnvironment->rootDeviceEnvironments[0]};
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelperHw<FamilyType>> overrideGfxCoreHelperHw{*executionEnvironment->rootDeviceEnvironments[0]};
 
     {
         // buffer size over threshold -> cpu copy disallowed
