@@ -85,6 +85,8 @@ lint:
       files:
         '*/l0_blackbox_runner_configs.yml':
         - ci
+        'manifests/packaging_linux.yml':
+        - ci
         'manifests/ci*.yml':
         - ci
         'manifests/*/ci*.yml':
