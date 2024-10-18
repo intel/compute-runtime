@@ -1,11 +1,11 @@
 components:
   cal:
-    dest_dir: cal
     version: 636
-  ci_l0_loader:
-    dest_dir: level_zero
-    version: v1.18.2
+    dest_dir: cal
   ze_raytracing:
-    dest_dir: ze_raytracing
     version: 80
+    dest_dir: ze_raytracing
+  ci_l0_loader:
+    version: v1.17.44
+    dest_dir: level_zero
 version: '1'
