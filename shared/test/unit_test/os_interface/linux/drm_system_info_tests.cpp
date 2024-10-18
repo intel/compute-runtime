@@ -341,6 +341,7 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlob
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
     EXPECT_EQ(newHwInfo.capabilityTable.syncNumRTStacksPerDSS, 2048u);
+    EXPECT_EQ(newHwInfo.featureTable.regionCount, 1u);
 }
 
 TEST(DrmSystemInfoTest, givenZeroBankCountWhenCreatingSystemInfoThenUseDualSubslicesToCalculateL3Size) {

@@ -499,6 +499,11 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         if (numRtStacks > 0) {
             hwInfo->capabilityTable.syncNumRTStacksPerDSS = numRtStacks;
         }
+
+        auto numRegions = systemInfo->getNumRegions();
+        if (numRegions > 0) {
+            hwInfo->featureTable.regionCount = numRegions;
+        }
     }
     if (!queryMemoryInfo()) {
         setPerContextVMRequired(true);
