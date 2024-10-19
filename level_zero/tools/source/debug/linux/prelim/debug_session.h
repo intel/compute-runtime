@@ -111,7 +111,7 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
 
     bool handleInternalEvent() override;
 
-    void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override {}
+    void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) override {}
     uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) override;
     bool handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind);
     void handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam);

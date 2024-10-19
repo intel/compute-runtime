@@ -2308,6 +2308,21 @@ TEST_F(DebugApiLinuxTestXe, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaTh
     EXPECT_EQ(4u, session->debugArea.pgsize);
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenFifoPollEnvironmentVariableWhenAsyncThreadLaunchedThenFifoPollIntervalUpdated) {
+    DebugManagerStateRestore stateRestore;
+    NEO::debugManager.flags.FifoPollInterval.set(100);
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    EXPECT_EQ(150, session->fifoPollInterval);
+    session->asyncThread.threadActive = false;
+    session->asyncThreadFunction(session.get());
+
+    EXPECT_EQ(100, session->fifoPollInterval);
+
+    session->closeAsyncThread();
+}
+
 TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsNotCreated) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));

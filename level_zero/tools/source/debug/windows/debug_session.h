@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,8 @@ struct DebugSessionWindows : DebugSessionImp {
     void cleanRootSessionAfterDetach(uint32_t deviceIndex) override {
         UNRECOVERABLE_IF(true);
     }
+
+    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
 
     static void *asyncThreadFunction(void *arg);
 

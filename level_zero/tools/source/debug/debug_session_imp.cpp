@@ -1664,7 +1664,6 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
     // Drain the fifo
     uint32_t drainRetries = 2, lastHead = ~0u;
     const uint64_t offsetTail = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_tail);
-    const uint64_t offsetHead = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_head);
     const uint64_t offsetFifoSize = (sizeof(SIP::StateSaveArea)) + offsetof(struct SIP::intelgt_state_save_area_V3, fifo_size);
     const uint64_t offsetFifo = gpuVa + (stateSaveAreaHeader->versionHeader.size * 8) + stateSaveAreaHeader->regHeaderV3.fifo_offset;
 
@@ -1688,6 +1687,8 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
         PRINT_DEBUGGER_FIFO_LOG("fifoHeadIndex: %u fifoTailIndex: %u fifoSize: %u lastHead: %u drainRetries: %u\n",
                                 fifoHeadIndex, fifoTailIndex, fifoSize, lastHead, drainRetries);
 
+        lastHead = fifoHeadIndex;
+        bool updateTailIndex = false;
         while (fifoTailIndex != fifoHeadIndex) {
             uint32_t readSize = fifoTailIndex < fifoHeadIndex ? fifoHeadIndex - fifoTailIndex : fifoSize - fifoTailIndex;
             std::vector<SIP::fifo_node> nodes(readSize);
@@ -1730,22 +1731,52 @@ ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::T
                 // wrap around
                 fifoTailIndex = 0;
             }
+            updateTailIndex = true;
         }
 
-        retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
-        if (retVal != ZE_RESULT_SUCCESS) {
-            PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
-            return retVal;
+        if (updateTailIndex) {
+            retVal = writeGpuMemory(vmHandle, reinterpret_cast<char *>(&fifoTailIndex), sizeof(uint32_t), gpuVa + offsetTail);
+            if (retVal != ZE_RESULT_SUCCESS) {
+                PRINT_DEBUGGER_ERROR_LOG("Writing FIFO failed, error = %d\n", retVal);
+                return retVal;
+            }
+            NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
+        } else {
+            break;
         }
-
-        retVal = readGpuMemory(vmHandle, reinterpret_cast<char *>(&lastHead), sizeof(uint32_t), gpuVa + offsetHead);
-        if (retVal != ZE_RESULT_SUCCESS) {
-            PRINT_DEBUGGER_ERROR_LOG("Reading fifo_head failed, error = %d\n", retVal);
-            return retVal;
-        }
-        NEO::sleep(std::chrono::milliseconds(failsafeTimeoutWait));
     }
     return ZE_RESULT_SUCCESS;
+}
+
+void DebugSessionImp::pollFifo() {
+    if (attentionEventContext.empty()) {
+        return;
+    }
+    auto now = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+
+    auto timeSinceLastFifoRead = currentTime - lastFifoReadTime;
+    if (timeSinceLastFifoRead.count() > fifoPollInterval) {
+        handleStoppedThreads();
+    }
+}
+
+void DebugSessionImp::handleStoppedThreads() {
+    for (const auto &entry : attentionEventContext) {
+        auto vmHandle = entry.first;
+        std::vector<EuThread::ThreadId> threadsWithAttention;
+        auto result = readFifo(vmHandle, threadsWithAttention);
+        if (result != ZE_RESULT_SUCCESS) {
+            return;
+        }
+        auto now = std::chrono::steady_clock::now();
+        lastFifoReadTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+
+        if (threadsWithAttention.empty()) {
+            return;
+        }
+        updateStoppedThreadsAndCheckTriggerEvents(entry.second, 0, threadsWithAttention);
+    }
 }
 
 } // namespace L0

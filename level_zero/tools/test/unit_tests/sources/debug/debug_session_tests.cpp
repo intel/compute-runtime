@@ -1937,6 +1937,54 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWithHeadIndexAtZeroWhenReadingS
     }
 }
 
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoAndAttentionEventContextEmptyWhenPollSwFifoThenReadFifoIsNotCalled) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    session->pollFifo();
+
+    EXPECT_TRUE(session->attentionEventContext.empty());
+    EXPECT_EQ(session->readFifoCallCount, 0u);
+}
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenTimeSinceLastFifoReadLessThanPollIntervalWhenPollSwFifoThenReadFifoIsNotCalled) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+
+    auto now = std::chrono::steady_clock::now();
+    session->lastFifoReadTime = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+    session->fifoPollInterval = INT32_MAX;
+    session->attentionEventContext[10] = {11, 12, 1};
+    session->pollFifo();
+
+    EXPECT_EQ(session->readFifoCallCount, 0u);
+}
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWithHeadAndTailIndexEqualWhenPollSwFifoThenOneReadAndNoWriteIsDone) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoTail;
+
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.FifoPollInterval.set(0);
+    session->attentionEventContext[10] = {11, 12, 1};
+    session->pollFifo();
+
+    EXPECT_EQ(session->readFifoCallCount, 1u);
+    EXPECT_LE(session->readGpuMemoryCallCount, 1u);
+    EXPECT_EQ(session->writeGpuMemoryCallCount, 0u);
+}
+
+TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWithHeadAndTailIndexEqualWhenSwFifoReadThenOneReadAndNoWriteIsDone) {
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    stateSaveAreaHeaderPtr = reinterpret_cast<NEO::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
+    stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoTail;
+
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    session->readFifo(0, threadsWithAttention);
+
+    EXPECT_EQ(session->readFifoCallCount, 1u);
+    EXPECT_LE(session->readGpuMemoryCallCount, 1u);
+    EXPECT_EQ(session->writeGpuMemoryCallCount, 0u);
+}
+
 TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWhenWriteGpuMemoryFailsWhileInValidatingNodeDuringFifoReadThenErrorReturned) {
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
     session->writeMemoryResult = ZE_RESULT_ERROR_UNKNOWN;

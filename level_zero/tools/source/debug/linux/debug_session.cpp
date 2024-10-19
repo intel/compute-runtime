@@ -686,7 +686,7 @@ ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t 
     return status;
 }
 
-void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
+void DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto vmHandle = getVmHandleFromClientAndlrcHandle(attention.clientHandle, attention.lrcHandle);
     if (vmHandle == invalidHandle) {
         return;

@@ -69,7 +69,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     MOCKABLE_VIRTUAL void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
     void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
     bool handleMetadataOpEvent(drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata);
-    void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) override;
+    void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) override;
     int eventAckIoctl(EventToAck &event) override;
     MOCKABLE_VIRTUAL int getEuControlCmdUnlock() const;
     Module &getModule(uint64_t moduleHandle) override {

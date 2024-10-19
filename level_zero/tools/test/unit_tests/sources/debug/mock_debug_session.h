@@ -151,6 +151,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::allocateStateSaveAreaMemory;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::applyResumeWa;
+    using L0::DebugSessionImp::attentionEventContext;
     using L0::DebugSessionImp::calculateSrMagicOffset;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
@@ -162,6 +163,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::getStateSaveAreaHeader;
     using L0::DebugSessionImp::isValidNode;
     using L0::DebugSessionImp::newAttentionRaised;
+    using L0::DebugSessionImp::pollFifo;
     using L0::DebugSessionImp::readDebugScratchRegisters;
     using L0::DebugSessionImp::readFifo;
     using L0::DebugSessionImp::readModeFlags;
@@ -172,6 +174,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::sendInterrupts;
     using L0::DebugSessionImp::stateSaveAreaMemory;
     using L0::DebugSessionImp::typeToRegsetDesc;
+    using L0::DebugSessionImp::updateStoppedThreadsAndCheckTriggerEvents;
     using L0::DebugSessionImp::validateAndSetStateSaveAreaHeader;
 
     using L0::DebugSessionImp::interruptSent;
@@ -179,9 +182,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::triggerEvents;
 
     using L0::DebugSessionImp::expectedAttentionEvents;
+    using L0::DebugSessionImp::fifoPollInterval;
     using L0::DebugSessionImp::interruptMutex;
     using L0::DebugSessionImp::interruptRequests;
     using L0::DebugSessionImp::isValidGpuAddress;
+    using L0::DebugSessionImp::lastFifoReadTime;
     using L0::DebugSessionImp::minSlmSipVersion;
     using L0::DebugSessionImp::newlyStoppedThreads;
     using L0::DebugSessionImp::pendingInterrupts;
@@ -345,6 +350,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return DebugSessionImp::readThreadScratchRegisters(thread, start, count, pRegisterValues);
     }
 
+    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override {}
     void resumeAccidentallyStoppedThreads(const std::vector<EuThread::ThreadId> &threadIds) override {
         resumeAccidentallyStoppedCalled++;
         return DebugSessionImp::resumeAccidentallyStoppedThreads(threadIds);
@@ -521,8 +527,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return L0::DebugSessionImp::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
     }
 
+    ze_result_t readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) override {
+        readFifoCallCount++;
+        return L0::DebugSessionImp::readFifo(vmHandle, threadsWithAttention);
+    }
+
     NEO::TopologyMap topologyMap;
 
+    uint32_t readFifoCallCount = 0;
     uint32_t interruptImpCalled = 0;
     uint32_t resumeImpCalled = 0;
     uint32_t resumeAccidentallyStoppedCalled = 0;

@@ -175,14 +175,6 @@ struct DebugSessionLinux : DebugSessionImp {
         interruptAll
     };
 
-    struct AttentionEventFields {
-        uint64_t clientHandle;
-        uint64_t contextHandle;
-        uint64_t lrcHandle;
-        uint32_t bitmaskSize;
-        uint8_t *bitmask;
-    };
-
     std::vector<std::pair<zet_debug_event_t, uint64_t>> eventsToAck; // debug event, handle to module
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         pushApiEvent(debugEvent);
@@ -205,8 +197,8 @@ struct DebugSessionLinux : DebugSessionImp {
         apiEventCondition.notify_all();
     }
 
-    MOCKABLE_VIRTUAL void updateStoppedThreadsAndCheckTriggerEvents(AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention);
-    virtual void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) = 0;
+    void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override;
+    virtual void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) = 0;
     virtual uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) = 0;
     virtual std::unique_lock<std::mutex> getThreadStateMutexForTileSession(uint32_t tileIndex) = 0;
     virtual void checkTriggerEventsForAttentionForTileSession(uint32_t tileIndex) = 0;

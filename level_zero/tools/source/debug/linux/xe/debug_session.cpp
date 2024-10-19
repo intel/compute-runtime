@@ -75,12 +75,17 @@ bool DebugSessionLinuxXe::handleInternalEvent() {
 
 void *DebugSessionLinuxXe::asyncThreadFunction(void *arg) {
     DebugSessionLinuxXe *self = reinterpret_cast<DebugSessionLinuxXe *>(arg);
+    if (NEO::debugManager.flags.FifoPollInterval.get() != -1) {
+        self->fifoPollInterval = NEO::debugManager.flags.FifoPollInterval.get();
+    }
+
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
 
     while (self->asyncThread.threadActive) {
         self->handleEventsAsync();
         self->generateEventsAndResumeStoppedThreads();
         self->sendInterrupts();
+        self->pollFifo();
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
@@ -769,7 +774,7 @@ int DebugSessionLinuxXe::threadControl(const std::vector<EuThread::ThreadId> &th
     return -1;
 }
 
-void DebugSessionLinuxXe::updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, AttentionEventFields &attention) {
+void DebugSessionLinuxXe::updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) {
     allThreads[threadId]->setContextHandle(attention.contextHandle);
     allThreads[threadId]->setLrcHandle(attention.lrcHandle);
 }
