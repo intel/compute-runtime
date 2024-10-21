@@ -864,15 +864,6 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWithOneFamilyBeingGen
     }
 
     auto familiesToReleases = {
-        std::make_tuple("gen8:gen12lp", AOT::GEN8_FAMILY, AOT::GEN8_RELEASE, AOT::XE_LP_RELEASE),
-        std::make_tuple("gen12lp:gen8", AOT::GEN8_FAMILY, AOT::GEN8_RELEASE, AOT::XE_LP_RELEASE),
-
-        std::make_tuple("gen9:gen12lp", AOT::GEN9_FAMILY, AOT::GEN9_RELEASE, AOT::XE_LP_RELEASE),
-        std::make_tuple("gen12lp:gen9", AOT::GEN9_FAMILY, AOT::GEN9_RELEASE, AOT::XE_LP_RELEASE),
-
-        std::make_tuple("gen11:gen12lp", AOT::GEN11_FAMILY, AOT::GEN11_RELEASE, AOT::XE_LP_RELEASE),
-        std::make_tuple("gen12lp:gen11", AOT::GEN11_FAMILY, AOT::GEN11_RELEASE, AOT::XE_LP_RELEASE),
-
         std::make_tuple("gen12lp:xe", AOT::XE_FAMILY, AOT::XE_LP_RELEASE, AOT::XE_LPGPLUS_RELEASE),
         std::make_tuple("xe:gen12lp", AOT::XE_FAMILY, AOT::XE_LP_RELEASE, AOT::XE_LPGPLUS_RELEASE),
     };

@@ -107,10 +107,7 @@ TEST_F(AotDeviceInfoTests, givenGen12lpFamilyAcronymWhenAdjustClosedRangeDeviceN
     if (productConfigHelper->getReleasesAcronyms().size() < 2) {
         GTEST_SKIP();
     }
-    std::map<AOT::FAMILY, AOT::RELEASE> familyToReleaseAcronyms = {{AOT::GEN8_FAMILY, AOT::GEN8_RELEASE},
-                                                                   {AOT::GEN9_FAMILY, AOT::GEN9_RELEASE},
-                                                                   {AOT::GEN11_FAMILY, AOT::GEN11_RELEASE},
-                                                                   {AOT::XE_FAMILY, AOT::XE_LP_RELEASE}};
+    std::map<AOT::FAMILY, AOT::RELEASE> familyToReleaseAcronyms = {{AOT::XE_FAMILY, AOT::XE_LP_RELEASE}};
 
     if (productConfigHelper->isSupportedRelease(AOT::XE_LPGPLUS_RELEASE)) {
         familyToReleaseAcronyms[AOT::XE_FAMILY] = AOT::XE_LPGPLUS_RELEASE;
