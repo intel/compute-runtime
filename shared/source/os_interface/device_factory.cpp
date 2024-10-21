@@ -97,6 +97,11 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, rootDeviceEnvironment.getReleaseHelper());
 
+        if (debugManager.flags.MaxSubSlicesSupportedOverride.get() > 0) {
+            hardwareInfo->gtSystemInfo.MaxSubSlicesSupported = debugManager.flags.MaxSubSlicesSupportedOverride.get();
+            hardwareInfo->gtSystemInfo.MaxDualSubSlicesSupported = debugManager.flags.MaxSubSlicesSupportedOverride.get();
+        }
+
         if (debugManager.flags.BlitterEnableMaskOverride.get() > 0) {
             hardwareInfo->featureTable.ftrBcsInfo = debugManager.flags.BlitterEnableMaskOverride.get();
         }

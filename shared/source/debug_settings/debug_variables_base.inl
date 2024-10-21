@@ -31,6 +31,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ClDeviceGlobalMemSizeAvailablePercent, -1, "Perc
 DECLARE_DEBUG_VARIABLE(int32_t, SetCommandStreamReceiver, -1, "Set command stream receiver to: 0 - HW, 1 - AUB, 2 - TBX, 3 - HW & AUB, 4 - TBX & AUB, 5 - NULL AUB")
 DECLARE_DEBUG_VARIABLE(int32_t, TbxPort, 4321, "TCP-IP port of TBX server")
 DECLARE_DEBUG_VARIABLE(int32_t, HBMSizePerTileInGigabytes, 0, "Size of HBM memory in GigaBytes per tile.")
+DECLARE_DEBUG_VARIABLE(int32_t, MaxSubSlicesSupportedOverride, -1, "Value to override MaxSubSlicesSupported")
 DECLARE_DEBUG_VARIABLE(bool, TbxFrontdoorMode, false, "Set TBX frontdoor mode for read and write memory accesses (the default mode is via backdoor)")
 DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-level batch buffers to AUB as single, flat batch buffer")
 DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump comments containing allocations and patching information")

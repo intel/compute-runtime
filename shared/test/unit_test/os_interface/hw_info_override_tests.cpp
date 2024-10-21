@@ -43,3 +43,17 @@ HWTEST2_F(HwInfoOverrideTest, givenBlitterEnableMaskOverrideWhenPrepareDeviceEnv
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     EXPECT_EQ(hwInfo->featureTable.ftrBcsInfo, 0x6);
 }
+
+TEST_F(HwInfoOverrideTest, givenMaxSubSlicesSupportedOverrideWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenMaxSubSlicesSupportedValueIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.MaxSubSlicesSupportedOverride.set(128);
+
+    MockExecutionEnvironment executionEnvironment{};
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    EXPECT_TRUE(success);
+
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+    EXPECT_EQ(hwInfo->gtSystemInfo.MaxSubSlicesSupported, 128u);
+    EXPECT_EQ(hwInfo->gtSystemInfo.MaxDualSubSlicesSupported, 128u);
+}
