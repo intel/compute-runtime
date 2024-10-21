@@ -62,6 +62,8 @@ enum PRODUCT_CONFIG : uint32_t {
     LNL_A0 = 0x05010000,
     LNL_A1 = 0x05010001,
     LNL_B0 = 0x05010004,
+    PTL_H_A0 = 0x07800000,
+    PTL_U_A0 = 0x07804000,
     CONFIG_MAX_PLATFORM
 };
 
@@ -79,6 +81,7 @@ enum RELEASE : uint32_t {
     XE_LPGPLUS_RELEASE,
     XE2_HPG_RELEASE,
     XE2_LPG_RELEASE,
+    XE3_LPG_RELEASE,
     RELEASE_MAX
 };
 
@@ -89,6 +92,7 @@ enum FAMILY : uint32_t {
     GEN11_FAMILY,
     XE_FAMILY,
     XE2_FAMILY,
+    XE3_FAMILY,
     FAMILY_MAX
 };
 
@@ -107,6 +111,9 @@ inline const std::map<std::string, FAMILY> familyAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_XE2
     {"xe2", XE2_FAMILY},
+#endif
+#ifdef SUPPORT_AOT_XE3
+    {"xe3", XE3_FAMILY},
 #endif
 };
 
@@ -147,6 +154,9 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_XE2_LPG
     {"xe2-lpg", XE2_LPG_RELEASE},
+#endif
+#ifdef SUPPORT_AOT_XE3_LPG
+    {"xe3-lpg", XE3_LPG_RELEASE},
 #endif
 };
 
@@ -242,6 +252,10 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_AOT_LNL
     {"lnl-m", LNL_B0},
 #endif
+#ifdef SUPPORT_AOT_PTL
+    {"ptl-h", PTL_H_A0},
+    {"ptl-u", PTL_U_A0},
+#endif
 };
 
 inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
@@ -283,6 +297,10 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
     {"lnl-a0", LNL_A0},
     {"lnl-a1", LNL_A1},
     {"lnl-b0", LNL_B0},
+#endif
+#ifdef SUPPORT_AOT_PTL
+    {"ptl-h-a0", PTL_H_A0},
+    {"ptl-u-a0", PTL_U_A0},
 #endif
 };
 
