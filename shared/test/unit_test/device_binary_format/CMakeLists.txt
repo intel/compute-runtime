@@ -24,3 +24,5 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_debug_binary_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder_tests.cpp
 )
+
+add_subdirectories()

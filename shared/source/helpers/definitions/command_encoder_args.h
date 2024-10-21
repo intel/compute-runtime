@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <limits>
 
@@ -43,5 +44,10 @@ enum class RequiredDispatchWalkOrder : uint32_t {
 };
 
 static constexpr uint32_t additionalKernelLaunchSizeParamNotSet = 0;
+
+namespace EncodeParamsApiMappings {
+static constexpr std::array<NEO::RequiredPartitionDim, 3> partitionDim = {{RequiredPartitionDim::x, NEO::RequiredPartitionDim::y, NEO::RequiredPartitionDim::z}};
+static constexpr std::array<NEO::RequiredDispatchWalkOrder, 3> walkOrder = {{NEO::RequiredDispatchWalkOrder::x, NEO::RequiredDispatchWalkOrder::y, NEO::RequiredDispatchWalkOrder::additional}};
+} // namespace EncodeParamsApiMappings
 
 } // namespace NEO

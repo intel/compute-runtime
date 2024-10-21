@@ -135,10 +135,12 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_SRCS_BUILT_IN_KERNELS
                                NEO_CORE_TBX
                                NEO_CORE_UTILITIES
+                               NEO_CORE_ZEINFO_EXTRA
                                NEO_DEVICE_BINARY_FORMAT
                                NEO_UNIFIED_MEMORY
                                NEO_CORE_RELEASE_HELPER
                                NEO_GTPIN
+
 )
 
 if(WIN32)

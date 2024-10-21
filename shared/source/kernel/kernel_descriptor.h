@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
@@ -56,6 +57,9 @@ struct KernelDescriptor {
         uint32_t numThreadsRequired = 0u;
         uint32_t spillFillScratchMemorySize = 0u;
         uint32_t privateScratchMemorySize = 0u;
+        uint32_t additionalSize = NEO::additionalKernelLaunchSizeParamNotSet;
+        NEO::RequiredDispatchWalkOrder walkOrder = NEO::RequiredDispatchWalkOrder::none;
+        NEO::RequiredPartitionDim partitionDim = NEO::RequiredPartitionDim::none;
         ThreadArbitrationPolicy threadArbitrationPolicy = NotPresent;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
         uint16_t crossThreadDataSize = 0U;

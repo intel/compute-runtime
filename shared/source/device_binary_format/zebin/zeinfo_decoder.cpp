@@ -674,7 +674,7 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
         } else if (Tags::Kernel::ExecutionEnv::spillSize == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.spillSize, context, outErrReason);
         } else {
-            encounterUnknownZeInfoAttribute("\"" + key.str() + "\" in context of " + context.str(), outErrReason, outWarning, err);
+            readZeInfoValueCheckedExtra(parser, execEnvMetadataNd, outExecEnv, context, key, outErrReason, outWarning, validExecEnv, err);
         }
     }
 
@@ -717,6 +717,17 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.workgroupWalkOrder[2] = static_cast<uint8_t>(execEnv.workgroupWalkOrderDimensions[2]);
     dst.kernelAttributes.hasIndirectStatelessAccess = (execEnv.indirectStatelessCount > 0);
     dst.kernelAttributes.numThreadsRequired = static_cast<uint32_t>(execEnv.euThreadCount);
+
+    if (execEnv.additionalSize != Types::Kernel::ExecutionEnv::Defaults::additionalSize) {
+        dst.kernelAttributes.additionalSize = static_cast<uint32_t>(execEnv.additionalSize);
+    }
+    if (execEnv.walkOrder != Types::Kernel::ExecutionEnv::Defaults::walkOrder) {
+        dst.kernelAttributes.walkOrder = EncodeParamsApiMappings::walkOrder[execEnv.walkOrder];
+    }
+    if (execEnv.partitionDim != Types::Kernel::ExecutionEnv::Defaults::partitionDim) {
+        dst.kernelAttributes.partitionDim = EncodeParamsApiMappings::partitionDim[execEnv.partitionDim];
+    }
+
     if (isScratchMemoryUsageDefinedInExecutionEnvironment(srcZeInfoVersion)) {
         dst.kernelAttributes.privateScratchMemorySize = static_cast<uint32_t>(execEnv.privateSize);
         dst.kernelAttributes.spillFillScratchMemorySize = static_cast<uint32_t>(execEnv.spillSize);

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device_binary_format/yaml/yaml_parser.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <array>
@@ -349,6 +350,9 @@ using IndirectStatelessCountT = int32_t;
 using HasSampleT = bool;
 using PrivateSizeT = int32_t;
 using SpillSizeT = int32_t;
+using AdditionalSizeT = int32_t;
+using WalkOrderT = int32_t;
+using PartitionDimT = int32_t;
 
 namespace Defaults {
 inline constexpr BarrierCountT barrierCount = 0;
@@ -380,6 +384,9 @@ inline constexpr IndirectStatelessCountT indirectStatelessCount = 0;
 inline constexpr HasSampleT hasSample = false;
 inline constexpr PrivateSizeT privateSize = 0;
 inline constexpr SpillSizeT spillSize = 0;
+inline constexpr AdditionalSizeT additionalSize = -1;
+inline constexpr WalkOrderT walkOrder = -1;
+inline constexpr PartitionDimT partitionDim = -1;
 } // namespace Defaults
 
 inline constexpr ConstStringRef required[] = {
@@ -415,6 +422,9 @@ struct ExecutionEnvBaseT {
     HasSampleT hasSample = Defaults::hasSample;
     PrivateSizeT privateSize = Defaults::privateSize;
     SpillSizeT spillSize = Defaults::spillSize;
+    AdditionalSizeT additionalSize = Defaults::additionalSize;
+    WalkOrderT walkOrder = Defaults::walkOrder;
+    PartitionDimT partitionDim = Defaults::partitionDim;
 };
 
 struct ExperimentalPropertiesBaseT {

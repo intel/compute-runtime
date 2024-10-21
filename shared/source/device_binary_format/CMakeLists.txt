@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2023 Intel Corporation
+# Copyright (C) 2020-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -42,3 +42,5 @@ set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_enum_lookup.h
 )
 set_property(GLOBAL PROPERTY NEO_DEVICE_BINARY_FORMAT ${NEO_DEVICE_BINARY_FORMAT})
+
+add_subdirectories()
