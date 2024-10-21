@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,9 @@ namespace NEO {
 const GfxMemoryAllocationMethod preferredAllocationMethod = GfxMemoryAllocationMethod::useUmdSystemPtr;
 
 size_t WddmMemoryManager::getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod allocationMethod) const {
+    if (NEO::debugManager.flags.ForceWddmHugeChunkSizeMB.get() != -1) {
+        return NEO::debugManager.flags.ForceWddmHugeChunkSizeMB.get() * MemoryConstants::megaByte;
+    }
     return 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k;
 }
 
