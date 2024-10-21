@@ -60,7 +60,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     uint32_t dim = dispatchInfo.getDim();
     uint32_t simd = kernelInfo.getMaxSimdSize();
 
-    auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
+    const auto &kernelAttributes = kernelInfo.kernelDescriptor.kernelAttributes;
+
+    auto numChannels = kernelAttributes.numLocalIdChannels;
 
     size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
     size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
@@ -71,10 +73,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     bool localIdsGenerationByRuntime = kernelUsesLocalIds && EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
                                                                  numChannels,
                                                                  walkerArgs.localWorkSizes,
-                                                                 std::array<uint8_t, 3>{{kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
-                                                                                         kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
-                                                                                         kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
-                                                                 kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+                                                                 std::array<uint8_t, 3>{{kernelAttributes.workgroupWalkOrder[0],
+                                                                                         kernelAttributes.workgroupWalkOrder[1],
+                                                                                         kernelAttributes.workgroupWalkOrder[2]}},
+                                                                 kernelAttributes.flags.requiresWorkgroupWalkOrder,
                                                                  requiredWalkOrder,
                                                                  simd);
 
@@ -142,7 +144,9 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
     auto maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads;
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, maxFrontEndThreads};
+
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor, kernelAttributes.walkOrder, kernelAttributes.additionalSize, maxFrontEndThreads};
+
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
@@ -161,6 +165,10 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         const uint64_t workPartitionAllocationGpuVa = queueCsr.getWorkPartitionAllocationGpuAddress();
         uint32_t partitionCount = 0u;
         RequiredPartitionDim requiredPartitionDim = kernel.usesImages() ? RequiredPartitionDim::x : RequiredPartitionDim::none;
+
+        if (kernelAttributes.partitionDim != NEO::RequiredPartitionDim::none) {
+            requiredPartitionDim = kernelAttributes.partitionDim;
+        }
 
         ImplicitScalingDispatchCommandArgs implicitScalingArgs{
             workPartitionAllocationGpuVa,        // workPartitionAllocationGpuVa
