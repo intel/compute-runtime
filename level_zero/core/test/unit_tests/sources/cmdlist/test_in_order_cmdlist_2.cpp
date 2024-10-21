@@ -165,7 +165,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
     }
 }
 
-HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUserCopyCommands, IsAtLeastXeHpCore) {
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsThenUseCopyCommands, IsAtLeastXeHpCore) {
     using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
 
     auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
@@ -202,6 +202,51 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), copyItor);
     }
+}
+
+HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgrammingHwCmdsThenDontUseCopyCommands, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyCopyBlt)>::type;
+
+    auto immCmdList = createImmCmdListWithOffload<gfxCoreFamily>();
+    EXPECT_FALSE(immCmdList->isCopyOnly(false));
+    EXPECT_TRUE(immCmdList->isCopyOnly(true));
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    void *deviceMem = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 1, 1, &deviceMem));
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        immCmdList->appendMemoryCopy(deviceMem, deviceMem, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), copyItor);
+    }
+
+    {
+        auto offset = cmdStream->getUsed();
+
+        ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
+        immCmdList->appendMemoryCopyRegion(deviceMem, &region, 1, 1, deviceMem, &region, 1, 1, nullptr, 0, nullptr, false, false);
+
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                          ptrOffset(cmdStream->getCpuBase(), offset),
+                                                          (cmdStream->getUsed() - offset)));
+
+        auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), copyItor);
+    }
+
+    context->freeMem(deviceMem);
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCommands, IsAtLeastXeHpCore) {
