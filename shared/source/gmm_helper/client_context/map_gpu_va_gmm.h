@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,13 @@ class FreeGpuVirtualAddressGmm {
     D3DGPU_VIRTUAL_ADDRESS baseAddress;
     D3DGPU_SIZE_T size;
     GmmResourceInfo *resourceInfoHandle;
+    Gdi *gdi;
+};
+
+class DeallocateGmm {
+  public:
+    DeallocateGmm(D3DKMT_DESTROYALLOCATION2 *destroyAllocation2, Gdi *gdi) : destroyAllocation2(destroyAllocation2), gdi(gdi) {}
+    D3DKMT_DESTROYALLOCATION2 *destroyAllocation2;
     Gdi *gdi;
 };
 

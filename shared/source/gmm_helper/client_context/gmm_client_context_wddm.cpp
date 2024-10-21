@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,11 @@ uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFree
     } else {
         return 0;
     }
+}
+long GmmClientContext::deallocate2(DeallocateGmm *deallocateGmm) {
+    GMM_DESTROYALLOCATION2 gmmDestroyAllocation2{};
+    memcpy_s(&gmmDestroyAllocation2.KmtObj, sizeof(D3DKMT_DESTROYALLOCATION2), deallocateGmm->destroyAllocation2, sizeof(D3DKMT_DESTROYALLOCATION2));
+    return clientContext->DeAllocate2(&gmmDestroyAllocation2);
 }
 
 } // namespace NEO

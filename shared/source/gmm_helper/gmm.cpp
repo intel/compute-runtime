@@ -69,6 +69,7 @@ Gmm::Gmm(GmmHelper *gmmHelper, const void *alignedPtr, size_t alignedSize, size_
     applyAuxFlagsForBuffer(gmmRequirements.preferCompressed && !storageInfo.isLockable);
     applyMemoryFlags(storageInfo);
     applyAppResource(storageInfo);
+    applyExtraInitFlag();
     applyDebugOverrides();
 
     gmmResourceInfo.reset(GmmResourceInfo::create(gmmHelper->getClientContext(), &resourceParams));
