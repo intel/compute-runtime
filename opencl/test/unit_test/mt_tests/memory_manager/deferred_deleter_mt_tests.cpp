@@ -213,13 +213,13 @@ TEST_F(DeferredDeleterTest, WhenSettingDoWorkInBackgroundThenThreadShouldStopIsS
 }
 
 TEST_F(DeferredDeleterTest, givenDeferredDeleterWhenBlockingDrainIsCalledThenArElementsReleasedIsCalled) {
-    deleter->drain(true, false);
+    deleter->drain(true);
     EXPECT_NE(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
 }
 
 TEST_F(DeferredDeleterTest, givenDeferredDeleterWhenNonBlockingDrainIsCalledThenArElementsReleasedIsNotCalled) {
-    deleter->drain(false, false);
+    deleter->drain(false);
     EXPECT_EQ(0, deleter->areElementsReleasedCalled);
     EXPECT_EQ(1, deleter->drainCalled);
 }

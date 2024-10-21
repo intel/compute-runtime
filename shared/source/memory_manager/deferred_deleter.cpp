@@ -11,7 +11,10 @@
 #include "shared/source/os_interface/os_thread.h"
 
 namespace NEO {
-DeferredDeleter::DeferredDeleter() = default;
+DeferredDeleter::DeferredDeleter() {
+    doWorkInBackground = false;
+    elementsToRelease = 0;
+}
 
 void DeferredDeleter::stop() {
     // Called with threadMutex acquired
@@ -32,7 +35,7 @@ void DeferredDeleter::stop() {
         // Delete working thread
         worker.reset();
     }
-    drain(false, false);
+    drain(false);
 }
 
 void DeferredDeleter::safeStop() {
@@ -46,14 +49,8 @@ DeferredDeleter::~DeferredDeleter() {
 
 void DeferredDeleter::deferDeletion(DeferrableDeletion *deletion) {
     std::unique_lock<std::mutex> lock(queueMutex);
-
-    this->elementsToRelease++;
-    if (deletion->isExternalHostptr()) {
-        this->hostptrsToRelease++;
-    }
-
+    elementsToRelease++;
     queue.pushTailOne(*deletion);
-
     lock.unlock();
     condition.notify_one();
 }
@@ -79,8 +76,8 @@ void DeferredDeleter::ensureThread() {
     worker = Thread::createFunc(run, reinterpret_cast<void *>(this));
 }
 
-bool DeferredDeleter::areElementsReleased(bool hostptrsOnly) {
-    return hostptrsOnly ? this->hostptrsToRelease == 0 : this->elementsToRelease == 0;
+bool DeferredDeleter::areElementsReleased() {
+    return elementsToRelease == 0;
 }
 
 bool DeferredDeleter::shouldStop() {
@@ -99,7 +96,7 @@ void *DeferredDeleter::run(void *arg) {
         }
         lock.unlock();
         // Delete items placed into deferred delete queue
-        self->clearQueue(false);
+        self->clearQueue();
         lock.lock();
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
@@ -107,28 +104,24 @@ void *DeferredDeleter::run(void *arg) {
     return nullptr;
 }
 
-void DeferredDeleter::drain(bool blocking, bool hostptrsOnly) {
-    clearQueue(hostptrsOnly);
+void DeferredDeleter::drain(bool blocking) {
+    clearQueue();
     if (blocking) {
-        while (!areElementsReleased(hostptrsOnly))
+        while (!areElementsReleased())
             ;
     }
 }
 
-void DeferredDeleter::clearQueue(bool hostptrsOnly) {
+void DeferredDeleter::clearQueue() {
     do {
         auto deletion = queue.removeFrontOne();
         if (deletion) {
-            bool isDeletionHostptr = deletion->isExternalHostptr();
-            if ((!hostptrsOnly || isDeletionHostptr) && deletion->apply()) {
-                this->elementsToRelease--;
-                if (isDeletionHostptr) {
-                    this->hostptrsToRelease--;
-                }
+            if (deletion->apply()) {
+                elementsToRelease--;
             } else {
                 queue.pushTailOne(*deletion.release());
             }
         }
-    } while (hostptrsOnly ? !areElementsReleased(hostptrsOnly) : !queue.peekIsEmpty());
+    } while (!queue.peekIsEmpty());
 }
 } // namespace NEO
