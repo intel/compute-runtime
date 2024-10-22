@@ -7,10 +7,12 @@
 
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 
@@ -38,6 +40,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
@@ -83,6 +86,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
@@ -203,6 +207,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
@@ -210,7 +215,6 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
-
     DirectSubmissionControllerMock controller;
     controller.timeoutElapsedReturnValue.store(true);
     controller.setTimeoutParamsForPlatform(csr.getProductHelper());
@@ -650,6 +654,99 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenCheckTi
 
     controller.timeSinceLastCheck = controller.getCpuTimestamp() - std::chrono::seconds(1);
     EXPECT_FALSE(controller.timeoutElapsed());
+}
+
+struct TagUpdateMockCommandStreamReceiver : public MockCommandStreamReceiver {
+
+    TagUpdateMockCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, const DeviceBitfield deviceBitfield)
+        : MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
+
+    SubmissionStatus flushTagUpdate() override {
+        flushTagUpdateCalledTimes++;
+        return SubmissionStatus::success;
+    }
+
+    bool isBusy() override {
+        return isBusyReturnValue;
+    }
+
+    uint32_t flushTagUpdateCalledTimes = 0;
+    bool isBusyReturnValue = false;
+};
+
+struct DirectSubmissionIdleDetectionTests : public ::testing::Test {
+    void SetUp() override {
+        debugManager.flags.DirectSubmissionControllerIdleDetection.set(true);
+        controller = std::make_unique<DirectSubmissionControllerMock>();
+        executionEnvironment.prepareRootDeviceEnvironments(1);
+        executionEnvironment.initializeMemoryManager();
+        executionEnvironment.rootDeviceEnvironments[0]->osTime.reset(new MockOSTime{});
+
+        DeviceBitfield deviceBitfield(1);
+        csr = std::make_unique<TagUpdateMockCommandStreamReceiver>(executionEnvironment, 0, deviceBitfield);
+        osContext.reset(OsContext::create(nullptr, 0, 0,
+                                          EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular},
+                                                                                       PreemptionMode::ThreadGroup, deviceBitfield)));
+        csr->setupContext(*osContext);
+
+        controller->timeoutElapsedReturnValue.store(true);
+        controller->registerDirectSubmission(csr.get());
+        csr->taskCount.store(10u);
+        controller->checkNewSubmissions();
+    }
+
+    void TearDown() override {
+        controller->unregisterDirectSubmission(csr.get());
+    }
+
+    DebugManagerStateRestore restorer;
+
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<OsContext> osContext;
+    std::unique_ptr<TagUpdateMockCommandStreamReceiver> csr;
+    std::unique_ptr<DirectSubmissionControllerMock> controller;
+};
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCountAndGpuBusyThenDontTerminateDirectSubmission) {
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = true;
+
+    controller->checkNewSubmissions();
+    EXPECT_FALSE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
+    EXPECT_EQ(0u, csr->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCountAndGpuIdleThenTerminateDirectSubmission) {
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = false;
+
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskLowerThanTaskCountAndGpuBusyThenFlushTagAndDontTerminateDirectSubmission) {
+    csr->isBusyReturnValue = true;
+
+    controller->checkNewSubmissions();
+    EXPECT_FALSE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
+    EXPECT_EQ(0u, csr->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(1u, csr->flushTagUpdateCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskLowerThanTaskCountAndGpuIdleThenFlushTagAndTerminateDirectSubmission) {
+    csr->isBusyReturnValue = false;
+
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(1u, csr->flushTagUpdateCalledTimes);
 }
 
 } // namespace NEO

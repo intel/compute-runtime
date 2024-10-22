@@ -20,6 +20,7 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenTimeo
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
@@ -82,6 +83,7 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenEnque
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
 
     DeviceBitfield deviceBitfield(1);
     MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);

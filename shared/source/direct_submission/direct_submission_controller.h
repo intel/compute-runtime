@@ -43,6 +43,7 @@ struct WaitForPagingFenceRequest {
 class DirectSubmissionController {
   public:
     static constexpr size_t defaultTimeout = 5'000;
+    static constexpr size_t timeToPollTagUpdateNS = 20'000;
     DirectSubmissionController();
     virtual ~DirectSubmissionController();
 
@@ -86,6 +87,7 @@ class DirectSubmissionController {
 
     static void *controlDirectSubmissionsState(void *self);
     void checkNewSubmissions();
+    bool isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
 
@@ -115,6 +117,7 @@ class DirectSubmissionController {
     std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
     bool adjustTimeoutOnThrottleAndAcLineStatus = false;
+    bool isCsrIdleDetectionEnabled = false;
 
     std::condition_variable condVar;
     std::mutex condVarMutex;

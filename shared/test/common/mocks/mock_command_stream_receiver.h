@@ -204,6 +204,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     void stopDirectSubmission(bool blocking) override {
         this->blockingStopDirectSubmissionCalled = blocking;
+        stopDirectSubmissionCalledTimes++;
     }
 
     bool createPreemptionAllocation() override {
@@ -264,6 +265,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t makeResidentCalledTimes = 0;
     uint32_t downloadAllocationsCalledCount = 0;
     uint32_t submitDependencyUpdateCalledTimes = 0;
+    uint32_t stopDirectSubmissionCalledTimes = 0;
     int hostPtrSurfaceCreationMutexLockCount = 0;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;
