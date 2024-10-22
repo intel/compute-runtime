@@ -2244,7 +2244,7 @@ TEST_F(DebugApiLinuxTestXe, GivenInterruptedThreadsWhenNoAttentionEventIsReadThe
 
     auto handler = new MockIoctlHandlerXe;
     session->ioctlHandler.reset(handler);
-    session->returnTimeDiff = DebugSessionLinuxXe::interruptTimeout * 10;
+    session->returnTimeDiff = session->interruptTimeout * 10;
     session->synchronousInternalEventRead = true;
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
@@ -2308,9 +2308,9 @@ TEST_F(DebugApiLinuxTestXe, GivenBindInfoForVmHandleWhenReadingModuleDebugAreaTh
     EXPECT_EQ(4u, session->debugArea.pgsize);
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenFifoPollEnvironmentVariableWhenAsyncThreadLaunchedThenFifoPollIntervalUpdated) {
+TEST_F(DebugApiLinuxTestXe, GivenFifoPollEnvironmentVariableWhenAsyncThreadLaunchedThenDebugUmdFifoPollIntervalUpdated) {
     DebugManagerStateRestore stateRestore;
-    NEO::debugManager.flags.FifoPollInterval.set(100);
+    NEO::debugManager.flags.DebugUmdFifoPollInterval.set(100);
     auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, session);
 
@@ -2319,6 +2319,36 @@ TEST_F(DebugApiLinuxTestXe, GivenFifoPollEnvironmentVariableWhenAsyncThreadLaunc
     session->asyncThreadFunction(session.get());
 
     EXPECT_EQ(100, session->fifoPollInterval);
+
+    session->closeAsyncThread();
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenInterruptTimeoutProvidedByDebugVariablesWhenAsyncThreadLaunchedThenInterruptTimeoutCorrectlyRead) {
+    DebugManagerStateRestore stateRestore;
+    NEO::debugManager.flags.DebugUmdInterruptTimeout.set(5000);
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    EXPECT_EQ(2000, session->interruptTimeout);
+    session->asyncThread.threadActive = false;
+    session->asyncThreadFunction(session.get());
+
+    EXPECT_EQ(5000, session->interruptTimeout);
+
+    session->closeAsyncThread();
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenMaxRetriesProvidedByDebugVariablesWhenAsyncThreadLaunchedThenMaxRetriesCorrectlyRead) {
+    DebugManagerStateRestore stateRestore;
+    NEO::debugManager.flags.DebugUmdMaxReadWriteRetry.set(10);
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    EXPECT_EQ(3, session->maxRetries);
+    session->asyncThread.threadActive = false;
+    session->asyncThreadFunction(session.get());
+
+    EXPECT_EQ(10, session->maxRetries);
 
     session->closeAsyncThread();
 }

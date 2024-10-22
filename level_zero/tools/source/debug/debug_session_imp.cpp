@@ -1757,7 +1757,9 @@ void DebugSessionImp::pollFifo() {
 
     auto timeSinceLastFifoRead = currentTime - lastFifoReadTime;
     if (timeSinceLastFifoRead.count() > fifoPollInterval) {
+        PRINT_DEBUGGER_FIFO_LOG("%s", "Polling FIFO start\n");
         handleStoppedThreads();
+        PRINT_DEBUGGER_FIFO_LOG("%s", "Polling FIFO ends\n");
     }
 }
 

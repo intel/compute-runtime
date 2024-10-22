@@ -70,7 +70,6 @@ struct DebugSessionImp : DebugSession {
     static const SIP::regset_desc *getDebugScratchRegsetDesc();
     static const SIP::regset_desc *getThreadScratchRegsetDesc();
     static uint32_t typeToRegsetFlags(uint32_t type);
-    constexpr static int64_t interruptTimeout = 2000;
 
     using ApiEventQueue = std::queue<zet_debug_event_t>;
 
@@ -176,6 +175,7 @@ struct DebugSessionImp : DebugSession {
     void handleStoppedThreads();
     void pollFifo();
     int32_t fifoPollInterval = 150;
+    int64_t interruptTimeout = 2000;
     std::unordered_map<uint64_t, AttentionEventFields> attentionEventContext{};
     std::chrono::milliseconds lastFifoReadTime = std::chrono::milliseconds(0);
     virtual void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) = 0;

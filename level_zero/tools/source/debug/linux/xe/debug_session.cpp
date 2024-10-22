@@ -75,17 +75,23 @@ bool DebugSessionLinuxXe::handleInternalEvent() {
 
 void *DebugSessionLinuxXe::asyncThreadFunction(void *arg) {
     DebugSessionLinuxXe *self = reinterpret_cast<DebugSessionLinuxXe *>(arg);
-    if (NEO::debugManager.flags.FifoPollInterval.get() != -1) {
-        self->fifoPollInterval = NEO::debugManager.flags.FifoPollInterval.get();
+    if (NEO::debugManager.flags.DebugUmdFifoPollInterval.get() != -1) {
+        self->fifoPollInterval = NEO::debugManager.flags.DebugUmdFifoPollInterval.get();
+    }
+    if (NEO::debugManager.flags.DebugUmdInterruptTimeout.get() != -1) {
+        self->interruptTimeout = NEO::debugManager.flags.DebugUmdInterruptTimeout.get();
+    }
+    if (NEO::debugManager.flags.DebugUmdMaxReadWriteRetry.get() != -1) {
+        self->maxRetries = NEO::debugManager.flags.DebugUmdMaxReadWriteRetry.get();
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
 
     while (self->asyncThread.threadActive) {
         self->handleEventsAsync();
+        self->pollFifo();
         self->generateEventsAndResumeStoppedThreads();
         self->sendInterrupts();
-        self->pollFifo();
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");

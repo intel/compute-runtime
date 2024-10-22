@@ -140,6 +140,7 @@ struct MockDebugSessionLinuxi915 : public L0::DebugSessionLinuxi915 {
     using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
     using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::interruptSent;
+    using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::isValidGpuAddress;
     using L0::DebugSessionImp::newAttentionRaised;
     using L0::DebugSessionImp::sipSupportsSlm;

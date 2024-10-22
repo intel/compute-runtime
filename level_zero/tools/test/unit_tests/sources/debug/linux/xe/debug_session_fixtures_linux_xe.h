@@ -150,10 +150,12 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionImp::expectedAttentionEvents;
     using L0::DebugSessionImp::fifoPollInterval;
     using L0::DebugSessionImp::interruptSent;
+    using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::readFifo;
     using L0::DebugSessionImp::stateSaveAreaHeader;
     using L0::DebugSessionImp::triggerEvents;
     using L0::DebugSessionLinux::getClientConnection;
+    using L0::DebugSessionLinux::maxRetries;
     using L0::DebugSessionLinux::updateStoppedThreadsAndCheckTriggerEvents;
     using L0::DebugSessionLinuxXe::addThreadToNewlyStoppedFromRaisedAttentionForTileSession;
     using L0::DebugSessionLinuxXe::asyncThread;

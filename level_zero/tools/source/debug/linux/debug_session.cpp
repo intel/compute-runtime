@@ -337,7 +337,6 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
     } else {
         size_t pendingSize = size;
         uint8_t retry = 0;
-        const uint8_t maxRetries = 3;
         size_t retrySize = size;
         do {
             PRINT_DEBUGGER_MEM_ACCESS_LOG("Reading (pread) memory from gpu va = %#" PRIx64 ", size = %zu\n", gpuVa, pendingSize);
@@ -400,7 +399,6 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
     } else {
         size_t pendingSize = size;
         uint8_t retry = 0;
-        const uint8_t maxRetries = 3;
         size_t retrySize = size;
         do {
             PRINT_DEBUGGER_MEM_ACCESS_LOG("Writing (pwrite) memory to gpu va = %#" PRIx64 ", size = %zu\n", gpuVa, pendingSize);

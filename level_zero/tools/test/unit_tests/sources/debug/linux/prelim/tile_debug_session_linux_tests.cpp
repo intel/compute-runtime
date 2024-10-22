@@ -1149,7 +1149,7 @@ using TileAttachAsyncThreadTest = Test<TileAttachFixture<>>;
 
 TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsReadThenThreadUnavailableEventIsGenerated) {
     rootSession->tileSessions[0].second = true;
-    tileSessions[0]->returnTimeDiff = DebugSessionLinuxi915::interruptTimeout * 10;
+    tileSessions[0]->returnTimeDiff = rootSession->interruptTimeout * 10;
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     auto result = tileSessions[0]->interrupt(thread);

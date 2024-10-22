@@ -7185,7 +7185,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     auto handler = new MockIoctlHandlerI915;
     session->ioctlHandler.reset(handler);
-    session->returnTimeDiff = DebugSessionLinuxi915::interruptTimeout * 10;
+    session->returnTimeDiff = session->interruptTimeout * 10;
     session->synchronousInternalEventRead = true;
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};

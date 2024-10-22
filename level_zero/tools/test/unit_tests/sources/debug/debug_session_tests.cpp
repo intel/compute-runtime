@@ -621,7 +621,7 @@ TEST(DebugSessionTest, givenPendingInterruptAfterTimeoutWhenGenerateEventsAndRes
 
     sessionMock->triggerEvents = false;
     sessionMock->interruptSent = true;
-    sessionMock->returnTimeDiff = 5 * DebugSessionImp::interruptTimeout;
+    sessionMock->returnTimeDiff = 5 * sessionMock->interruptTimeout;
 
     sessionMock->generateEventsAndResumeStoppedThreads();
 
@@ -651,7 +651,7 @@ TEST(DebugSessionTest, givenPendingInterruptBeforeTimeoutWhenGenerateEventsAndRe
 
     sessionMock->triggerEvents = false;
     sessionMock->interruptSent = true;
-    sessionMock->returnTimeDiff = DebugSessionImp::interruptTimeout / 2;
+    sessionMock->returnTimeDiff = sessionMock->interruptTimeout / 2;
 
     sessionMock->generateEventsAndResumeStoppedThreads();
 
@@ -1963,7 +1963,7 @@ TEST_F(DebugSessionTestSwFifoFixture, GivenSwFifoWithHeadAndTailIndexEqualWhenPo
     stateSaveAreaHeaderPtr->regHeaderV3.fifo_head = fifoTail;
 
     DebugManagerStateRestore stateRestore;
-    debugManager.flags.FifoPollInterval.set(0);
+    debugManager.flags.DebugUmdFifoPollInterval.set(0);
     session->attentionEventContext[10] = {11, 12, 1};
     session->pollFifo();
 

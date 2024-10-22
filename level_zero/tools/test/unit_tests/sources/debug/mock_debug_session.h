@@ -161,6 +161,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
     using L0::DebugSessionImp::getRegisterSize;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
+    using L0::DebugSessionImp::interruptTimeout;
     using L0::DebugSessionImp::isValidNode;
     using L0::DebugSessionImp::newAttentionRaised;
     using L0::DebugSessionImp::pollFifo;
@@ -586,7 +587,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     std::vector<uint8_t> readMemoryBuffer;
     uint64_t regs[16];
 
-    int returnTimeDiff = -1;
+    int64_t returnTimeDiff = -1;
     bool returnStateSaveAreaGpuVa = true;
     bool forceZeroStateSaveAreaSize = false;
 

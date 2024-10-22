@@ -250,6 +250,7 @@ struct DebugSessionLinux : DebugSessionImp {
     };
     void handlePageFaultEvent(PageFaultEvent &pfEvent);
 
+    uint8_t maxRetries = 3;
     std::unique_ptr<IoctlHandler> ioctlHandler;
 };
 } // namespace L0
