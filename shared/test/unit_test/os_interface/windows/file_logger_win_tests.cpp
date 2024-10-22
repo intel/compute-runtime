@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
@@ -38,7 +39,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.setGpuAddress(0x12345);
     allocation.size = 777u;
 
-    fileLogger.logAllocation(&allocation, executionEnvironment->memoryManager.get());
+    logAllocation(fileLogger, &allocation, executionEnvironment->memoryManager.get());
 
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -93,7 +94,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
-    fileLogger.logAllocation(&allocation, nullptr);
+    logAllocation(fileLogger, &allocation, nullptr);
 
     std::thread::id thisThread = std::this_thread::get_id();
 

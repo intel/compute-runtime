@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/utilities/base_object_utils.h"
@@ -535,7 +536,7 @@ TEST(AllocationTypeLoggingSingle, givenDebugVariableToCaptureAllocationTypeWhenF
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     testing::internal::CaptureStdout();
-    fileLogger.logAllocation(&graphicsAllocation, nullptr);
+    logAllocation(fileLogger, &graphicsAllocation, nullptr);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";
@@ -557,7 +558,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     EXPECT_FALSE(logFileCreated);
 
     testing::internal::CaptureStdout();
-    fileLogger.logAllocation(&graphicsAllocation, nullptr);
+    logAllocation(fileLogger, &graphicsAllocation, nullptr);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput = "Created Graphics Allocation of type COMMAND_BUFFER\n";

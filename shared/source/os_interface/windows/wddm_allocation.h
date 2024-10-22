@@ -82,7 +82,7 @@ class WddmAllocation : public GraphicsAllocation {
     void setCpuAddress(void *cpuPtr) { this->cpuPtr = cpuPtr; }
 
     std::string getAllocationInfoString() const override;
-    std::string getPatIndexInfoString() const override;
+    std::string getPatIndexInfoString(const ProductHelper &productHelper) const override;
     uint64_t &getGpuAddressToModify() { return gpuAddress; }
     bool needsMakeResidentBeforeLock() const { return makeResidentBeforeLockRequired; }
     void setMakeResidentBeforeLockRequired(bool makeResidentBeforeLockRequired) { this->makeResidentBeforeLockRequired = makeResidentBeforeLockRequired; }

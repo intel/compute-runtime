@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/utilities/logger_neo_only.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -47,7 +48,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
 
     allocation.bufferObjects[0] = &bo;
 
-    fileLogger.logAllocation(&allocation, executionEnvironment->memoryManager.get());
+    logAllocation(fileLogger, &allocation, executionEnvironment->memoryManager.get());
 
     std::thread::id thisThread = std::this_thread::get_id();
 
@@ -114,7 +115,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     allocation.bufferObjects[0] = &bo;
 
     testing::internal::CaptureStdout();
-    fileLogger.logAllocation(&allocation, nullptr);
+    logAllocation(fileLogger, &allocation, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
 
     std::thread::id thisThread = std::this_thread::get_id();
@@ -161,7 +162,7 @@ TEST(FileLogger, GivenDrmAllocationWithoutBOThenNoHandleLogged) {
 
     allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_BUFFER;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.Cacheable = true;
-    fileLogger.logAllocation(&allocation, nullptr);
+    logAllocation(fileLogger, &allocation, nullptr);
     std::thread::id thisThread = std::this_thread::get_id();
 
     std::stringstream threadIDCheck;
@@ -190,7 +191,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIsNotLogg
     EXPECT_FALSE(logFileCreated);
 
     MockDrmAllocation allocation(0u, AllocationType::buffer, MemoryPool::system64KBPages);
-    fileLogger.logAllocation(&allocation, nullptr);
+    logAllocation(fileLogger, &allocation, nullptr);
 
     std::thread::id thisThread = std::this_thread::get_id();
 

@@ -40,6 +40,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/utilities/logger_neo_only.h"
 
 #include <algorithm>
 #include <emmintrin.h>
@@ -642,7 +643,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(
         return nullptr;
     }
 
-    fileLoggerInstance().logAllocation(allocation.get(), this);
+    logAllocation(fileLoggerInstance(), allocation.get(), this);
     return allocation.release();
 }
 

@@ -16,12 +16,13 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/source/utilities/logger_neo_only.h"
 
 namespace NEO {
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
     if (this->allocationType != allocationType) {
         this->allocationType = allocationType;
-        fileLoggerInstance().logAllocation(this, nullptr);
+        logAllocation(fileLoggerInstance(), this, nullptr);
     }
 }
 
@@ -70,7 +71,7 @@ std::string GraphicsAllocation::getAllocationInfoString() const {
     return "";
 }
 
-std::string GraphicsAllocation::getPatIndexInfoString() const {
+std::string GraphicsAllocation::getPatIndexInfoString(const ProductHelper &) const {
     return "";
 }
 

@@ -36,6 +36,7 @@ class Gmm;
 class MemoryManager;
 class CommandStreamReceiver;
 class GraphicsAllocation;
+class ProductHelper;
 
 struct AllocationProperties;
 
@@ -183,7 +184,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isResidencyTaskCountBelow(TaskCountType taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
     virtual std::string getAllocationInfoString() const;
-    virtual std::string getPatIndexInfoString() const;
+    virtual std::string getPatIndexInfoString(const ProductHelper &) const;
     virtual int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) { return 0; }
     virtual int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) { return 0; }
     virtual void clearInternalHandle(uint32_t handleId) { return; }

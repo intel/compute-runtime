@@ -41,7 +41,6 @@ class FileLogger {
 
     void dumpKernel(const std::string &name, const std::string &src);
     void logApiCall(const char *function, bool enter, int32_t errorCode);
-    void logAllocation(GraphicsAllocation const *graphicsAllocation, MemoryManager const *memoryManager);
     size_t getInput(const size_t *input, int32_t index);
 
     MOCKABLE_VIRTUAL void writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode);
@@ -135,15 +134,15 @@ class FileLogger {
 
     void logDebugString(bool enableLog, std::string_view debugString);
 
-    const char *getLogFileName() {
-        return logFileName.c_str();
-    }
+    const char *getLogFileName() { return logFileName.c_str(); }
+    std::string getLogFileNameString() { return logFileName; }
 
-    void setLogFileName(std::string filename) {
-        logFileName = std::move(filename);
-    }
+    void setLogFileName(std::string filename) { logFileName = std::move(filename); }
 
     bool peekLogApiCalls() { return logApiCalls; }
+    bool shouldLogAllocationType() { return logAllocationType; }
+    bool shouldLogAllocationToStdout() { return logAllocationStdout; }
+    bool shouldLogAllocationMemoryPool() { return logAllocationMemoryPool; }
 
   protected:
     std::mutex mutex;

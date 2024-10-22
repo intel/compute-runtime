@@ -42,6 +42,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/utilities/logger_neo_only.h"
 
 #include <algorithm>
 #include <iostream>
@@ -671,7 +672,7 @@ GraphicsAllocation *MemoryManager::allocatePhysicalGraphicsMemory(const Allocati
         return nullptr;
     }
 
-    fileLoggerInstance().logAllocation(allocation, this);
+    logAllocation(fileLoggerInstance(), allocation, this);
     registerAllocationInOs(allocation);
     return allocation;
 }
@@ -709,7 +710,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         allocation->setAsReadOnly();
     }
 
-    fileLoggerInstance().logAllocation(allocation, this);
+    logAllocation(fileLoggerInstance(), allocation, this);
     registerAllocationInOs(allocation);
     return allocation;
 }

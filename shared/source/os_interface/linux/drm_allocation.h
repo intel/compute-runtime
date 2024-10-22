@@ -59,7 +59,7 @@ class DrmAllocation : public GraphicsAllocation {
     ~DrmAllocation() override;
 
     std::string getAllocationInfoString() const override;
-    std::string getPatIndexInfoString() const override;
+    std::string getPatIndexInfoString(const ProductHelper &productHelper) const override;
 
     BufferObject *getBO() const {
         if (fragmentsStorage.fragmentCount) {
