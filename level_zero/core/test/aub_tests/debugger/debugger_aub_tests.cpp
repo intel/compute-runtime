@@ -126,24 +126,42 @@ HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExe
     expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, instructionBaseAddress)),
                              &instructionHeapBaseAddress, sizeof(instructionHeapBaseAddress));
 
-    auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::surfaceState);
-    if (commandListSurfaceHeapAllocation) {
-        auto surfaceStateBaseAddress = commandListSurfaceHeapAllocation->getGraphicsAllocation()->getGpuAddress();
-        surfaceStateBaseAddress = gmmHelper->canonize(surfaceStateBaseAddress);
+    if (neoDevice->getBindlessHeapsHelper()) {
+        auto globalBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+
+        auto surfaceStateBaseAddress = 0ull;
+        auto bindlessSurfaceStateBaseAddress = globalBase;
+        auto dynamicStateBaseAddress = globalBase;
 
         expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, surfaceStateBaseAddress)),
                                  &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
-        expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, bindlessSurfaceStateBaseAddress)),
-                                 &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
-    }
 
-    auto commandListDynamicHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::dynamicState);
-    if (commandListDynamicHeapAllocation) {
-        auto dynamicStateBaseAddress = commandListDynamicHeapAllocation->getGraphicsAllocation()->getGpuAddress();
-        dynamicStateBaseAddress = gmmHelper->canonize(dynamicStateBaseAddress);
+        expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, bindlessSurfaceStateBaseAddress)),
+                                 &bindlessSurfaceStateBaseAddress, sizeof(bindlessSurfaceStateBaseAddress));
 
         expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, dynamicStateBaseAddress)),
                                  &dynamicStateBaseAddress, sizeof(dynamicStateBaseAddress));
+
+    } else {
+        auto commandListSurfaceHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::surfaceState);
+        if (commandListSurfaceHeapAllocation) {
+            auto surfaceStateBaseAddress = commandListSurfaceHeapAllocation->getGraphicsAllocation()->getGpuAddress();
+            surfaceStateBaseAddress = gmmHelper->canonize(surfaceStateBaseAddress);
+
+            expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, surfaceStateBaseAddress)),
+                                     &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
+            expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, bindlessSurfaceStateBaseAddress)),
+                                     &surfaceStateBaseAddress, sizeof(surfaceStateBaseAddress));
+        }
+
+        auto commandListDynamicHeapAllocation = commandList->commandContainer.getIndirectHeap(HeapType::dynamicState);
+        if (commandListDynamicHeapAllocation) {
+            auto dynamicStateBaseAddress = commandListDynamicHeapAllocation->getGraphicsAllocation()->getGpuAddress();
+            dynamicStateBaseAddress = gmmHelper->canonize(dynamicStateBaseAddress);
+
+            expectMemory<FamilyType>(reinterpret_cast<void *>(sbaAddress + offsetof(NEO::SbaTrackedAddresses, dynamicStateBaseAddress)),
+                                     &dynamicStateBaseAddress, sizeof(dynamicStateBaseAddress));
+        }
     }
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelDestroy(kernel));
