@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,11 @@ class PerformanceCounters {
     ContextHandle_1_0 getMetricsLibraryContext();
     void getQueryHandleRef(QueryHandle_1_0 &handle);
     void deleteQuery(QueryHandle_1_0 &handle);
+
+    /////////////////////////////////////////////////////
+    // Metrics Library callbacks.
+    /////////////////////////////////////////////////////
+    static MetricsLibraryApi::StatusCode ML_STDCALL flushCommandBufferCallback(MetricsLibraryApi::ClientHandle_1_0 handle);
 
   protected:
     /////////////////////////////////////////////////////

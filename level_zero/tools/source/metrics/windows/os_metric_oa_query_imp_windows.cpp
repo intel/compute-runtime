@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,9 @@ bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &conte
     osData.KmdInstrumentationEnabled = true;
     osData.Device = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getDeviceHandle()));
     osData.Escape = reinterpret_cast<void *>(wddm->getEscapeHandle());
-    osData.Adapter =
-        reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));
+    osData.Adapter = reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getAdapter()));
+    callbacks.CommandBufferFlush = &flushCommandBufferCallback;
+    contextData.ClientData->Handle = reinterpret_cast<void *>(&device);
 
     return osData.Device && osData.Escape && osData.Adapter;
 }

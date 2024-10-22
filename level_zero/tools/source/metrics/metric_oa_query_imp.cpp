@@ -943,4 +943,13 @@ MetricQuery *MetricQuery::fromHandle(zet_metric_query_handle_t handle) {
 
 zet_metric_query_handle_t MetricQuery::toHandle() { return this; }
 
+StatusCode ML_STDCALL MetricsLibrary::flushCommandBufferCallback(ClientHandle_1_0 handle) {
+    Device *device = static_cast<Device *>(handle.data);
+    if (device) {
+        device->getNEODevice()->stopDirectSubmissionAndWaitForCompletion();
+        return StatusCode::Success;
+    }
+    return StatusCode::Failed;
+}
+
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -187,6 +187,7 @@ struct Mock<MetricsLibrary> : public MetricsLibrary {
 
     // Not mocked metrics library functions.
     bool metricsLibraryGetContextData(::L0::Device &device, ContextCreateData_1_0 &contextData) { return MetricsLibrary::getContextData(device, contextData); }
+    ClientCallbacks_1_0 &metricsLibraryGetCallbacks() { return callbacks; }
 
     // Original metrics library implementation used by metric context.
     ::L0::MetricsLibrary *metricsLibrary = nullptr;

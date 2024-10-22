@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,8 @@ std::unique_ptr<PerformanceCounters> PerformanceCounters::create(Device *device)
     counter->clientData.Windows.KmdInstrumentationEnabled = device->getHardwareInfo().capabilityTable.instrumentationEnabled;
     counter->contextData.ClientData = &counter->clientData;
     counter->clientType.Gen = static_cast<MetricsLibraryApi::ClientGen>(gfxCoreHelper.getMetricsLibraryGenId());
+    counter->metricsLibrary->api->callbacks.CommandBufferFlush = &PerformanceCounters::flushCommandBufferCallback;
+    counter->clientData.Handle = reinterpret_cast<void *>(device);
 
     return counter;
 }

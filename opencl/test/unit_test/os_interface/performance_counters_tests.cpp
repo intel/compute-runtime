@@ -62,6 +62,30 @@ TEST_F(PerformanceCountersTest, WhenCreatingPerformanceCountersThenObjectIsNotNu
     EXPECT_NE(nullptr, performanceCounters.get());
 }
 
+TEST_F(PerformanceCountersTest, GivenValidDeviceHandleWhenFlushCommandBufferCallbackIsCalledThenReturnsSuccess) {
+    auto performanceCounters = PerformanceCounters::create(&device->getDevice());
+    EXPECT_NE(nullptr, performanceCounters);
+    EXPECT_NE(nullptr, performanceCounters.get());
+
+    MetricsLibraryApi::ClientHandle_1_0 handle = reinterpret_cast<void *>(&device->getDevice());
+    auto callback = performanceCounters->getMetricsLibraryInterface()->api->callbacks.CommandBufferFlush;
+
+    EXPECT_NE(nullptr, callback);
+    EXPECT_EQ(MetricsLibraryApi::StatusCode::Success, callback(handle));
+}
+
+TEST_F(PerformanceCountersTest, GivenInvalidDeviceHandleWhenFlushCommandBufferCallbackIsCalledThenReturnsFailed) {
+    auto performanceCounters = PerformanceCounters::create(&device->getDevice());
+    EXPECT_NE(nullptr, performanceCounters);
+    EXPECT_NE(nullptr, performanceCounters.get());
+
+    MetricsLibraryApi::ClientHandle_1_0 handle = {};
+    auto callback = performanceCounters->getMetricsLibraryInterface()->api->callbacks.CommandBufferFlush;
+
+    EXPECT_NE(nullptr, callback);
+    EXPECT_EQ(MetricsLibraryApi::StatusCode::Failed, callback(handle));
+}
+
 TEST_F(PerformanceCountersTest, givenPerformanceCountersWhenCreatedThenAllValuesProperlyInitialized) {
     auto performanceCounters = MockPerformanceCounters::create();
 

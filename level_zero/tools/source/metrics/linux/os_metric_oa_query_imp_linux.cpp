@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,8 @@ bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &conte
 
     osData.Adapter->Type = LinuxAdapterType::DrmFileDescriptor;
     osData.Adapter->DrmFileDescriptor = drmFileDescriptor;
+    callbacks.CommandBufferFlush = &flushCommandBufferCallback;
+    contextData.ClientData->Handle = reinterpret_cast<void *>(&device);
 
     return drmFileDescriptor != -1;
 }

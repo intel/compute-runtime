@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/performance_counters.h"
 
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/perf_counter.h"
@@ -281,5 +282,17 @@ bool PerformanceCounters::getApiReport(const TagNodeBase *performanceCounters, c
     }
 
     return metricsLibrary->hwCountersGetReport(performanceCounters->getQueryHandleRef(), 0, 1, outputSize, pInputParam);
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::flushCommandBufferCallback
+//////////////////////////////////////////////////////
+MetricsLibraryApi::StatusCode ML_STDCALL PerformanceCounters::flushCommandBufferCallback(MetricsLibraryApi::ClientHandle_1_0 handle) {
+    Device *device = static_cast<Device *>(handle.data);
+    if (device) {
+        device->stopDirectSubmissionAndWaitForCompletion();
+        return MetricsLibraryApi::StatusCode::Success;
+    }
+    return MetricsLibraryApi::StatusCode::Failed;
 }
 } // namespace NEO

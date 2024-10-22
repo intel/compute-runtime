@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 
 using MetricsLibraryApi::ClientCallbacks_1_0;
 using MetricsLibraryApi::ClientGen;
+using MetricsLibraryApi::ClientHandle_1_0;
 using MetricsLibraryApi::ClientOptionsData_1_0;
 using MetricsLibraryApi::CommandBufferData_1_0;
 using MetricsLibraryApi::ConfigurationHandle_1_0;
@@ -25,6 +26,7 @@ using MetricsLibraryApi::ContextDeleteFunction_1_0;
 using MetricsLibraryApi::ContextHandle_1_0;
 using MetricsLibraryApi::Interface_1_0;
 using MetricsLibraryApi::QueryHandle_1_0;
+using MetricsLibraryApi::StatusCode;
 
 namespace L0 {
 struct Device;
@@ -73,6 +75,7 @@ struct MetricsLibrary {
     bool getGpuCommands(CommandList &commandList, CommandBufferData_1_0 &commandBuffer);
     bool getGpuCommands(CommandBufferData_1_0 &commandBuffer);
     uint32_t getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer);
+    static StatusCode ML_STDCALL flushCommandBufferCallback(ClientHandle_1_0 handle);
 
     // Metric group configuration.
     ConfigurationHandle_1_0 getConfiguration(const zet_metric_group_handle_t metricGroup);
