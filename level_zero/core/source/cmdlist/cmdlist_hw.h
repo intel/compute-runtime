@@ -378,7 +378,6 @@ struct CommandListCoreFamily : public CommandListImp {
     bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
     void programEventL3Flush(Event *event);
     bool isCopyOffloadAllowed(const NEO::GraphicsAllocation &srcAllocation, const NEO::GraphicsAllocation &dstAllocation) const;
-    void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
