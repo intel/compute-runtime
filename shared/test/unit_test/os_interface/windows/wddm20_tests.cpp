@@ -394,30 +394,6 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
     EXPECT_EQ(1u, ptrToDestroyAlloc2->Flags.AssumeNotInUse);
 }
 
-TEST_F(Wddm20WithMockGdiDllTests, GivenSetAssumeNotInUseSetToFalseWhenDestroyAllocationsThenAssumeNotInUseNotSet) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.SetAssumeNotInUse.set(false);
-
-    OsHandleStorage storage;
-    OsHandleWin osHandle1;
-
-    osHandle1.handle = ALLOCATION_HANDLE;
-
-    storage.fragmentStorageData[0].osHandleStorage = &osHandle1;
-    storage.fragmentStorageData[0].freeTheFragment = true;
-
-    D3DKMT_HANDLE handles[1] = {ALLOCATION_HANDLE};
-    bool retVal = wddm->destroyAllocations(handles, 1, 0);
-    EXPECT_TRUE(retVal);
-
-    auto destroyWithResourceHandleCalled = 0u;
-    D3DKMT_DESTROYALLOCATION2 *ptrToDestroyAlloc2 = nullptr;
-
-    getSizesFcn(destroyWithResourceHandleCalled, ptrToDestroyAlloc2);
-
-    EXPECT_EQ(0u, ptrToDestroyAlloc2->Flags.AssumeNotInUse);
-}
-
 TEST_F(Wddm20Tests, WhenMappingAndFreeingGpuVaThenReturnIsCorrect) {
     OsAgnosticMemoryManager mm(*executionEnvironment);
     auto gmmHelper = getGmmHelper();

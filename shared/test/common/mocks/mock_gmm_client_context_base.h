@@ -22,7 +22,6 @@ class MockGmmClientContextBase : public GmmClientContext {
     GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) override;
     GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) override;
     void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
-    long deallocate2(DeallocateGmm *deallocateGmm) override;
     uint8_t getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     uint8_t getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT format) override;
     void setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override;

@@ -12,7 +12,4 @@ uint64_t MockGmmClientContextBase::mapGpuVirtualAddress(MapGpuVirtualAddressGmm 
     mapGpuVirtualAddressCalled++;
     return 0;
 }
-long MockGmmClientContextBase::deallocate2(DeallocateGmm *deallocateGmm) {
-    return 0;
-}
 } // namespace NEO
