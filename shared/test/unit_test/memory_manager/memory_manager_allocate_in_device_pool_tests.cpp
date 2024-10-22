@@ -876,7 +876,7 @@ HWTEST2_F(MemoryManagerDirectSubmissionImplicitScalingTest, givenDirectSubmissio
     }
 }
 
-TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourceInHeapExtendedThenCorrectGpuVaIsSet) {
+TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourceInHeapExtendedThenSpecificBitIsToggled) {
     if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
         GTEST_SKIP();
     }
@@ -905,7 +905,10 @@ TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourc
         ASSERT_NE(nullptr, allocation);
 
         auto gpuVA = allocation->getGpuAddress();
-        EXPECT_EQ(gpuVA, 0xff0000ffffff0000);
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_FALSE(isBitSet(gpuVA, 55));
+        EXPECT_TRUE(isBitSet(gpuVA, 32));
 
         memoryManager.freeGraphicsMemory(allocation);
     }
@@ -916,7 +919,10 @@ TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourc
         ASSERT_NE(nullptr, allocation);
 
         auto gpuVA = allocation->getGpuAddress();
-        EXPECT_EQ(gpuVA, 0xff8000fffffe0000);
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_TRUE(isBitSet(gpuVA, 55));
+        EXPECT_TRUE(isBitSet(gpuVA, 32));
 
         memoryManager.freeGraphicsMemory(allocation);
     }
@@ -928,7 +934,10 @@ TEST(MemoryManagerTest, givenDebugVariableToToggleGpuVaBitsWhenAllocatingResourc
         ASSERT_NE(nullptr, allocation);
 
         auto gpuVA = allocation->getGpuAddress();
-        EXPECT_EQ(gpuVA, 0xff0000fefffd0000);
+
+        EXPECT_TRUE(isBitSet(gpuVA, 56));
+        EXPECT_FALSE(isBitSet(gpuVA, 55));
+        EXPECT_FALSE(isBitSet(gpuVA, 32));
 
         memoryManager.freeGraphicsMemory(allocation);
     }

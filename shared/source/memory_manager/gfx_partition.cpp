@@ -102,15 +102,14 @@ GfxPartition::~GfxPartition() {
     osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForHeapExtended);
 }
 
-void GfxPartition::Heap::init(HeapIndex heapIndex, uint64_t base, uint64_t size, size_t allocationAlignment) {
+void GfxPartition::Heap::init(uint64_t base, uint64_t size, size_t allocationAlignment) {
     this->base = base;
     this->size = size;
 
     auto heapGranularity = GfxPartition::heapGranularity;
-    if (heapIndex == HeapIndex::heapExtended)
-        heapGranularity = 0;
-    else if (allocationAlignment > heapGranularity)
+    if (allocationAlignment > heapGranularity) {
         heapGranularity = GfxPartition::heapGranularity2MB;
+    }
 
     // Exclude very first and very last 64K from GPU address range allocation
     if (size > 2 * heapGranularity) {

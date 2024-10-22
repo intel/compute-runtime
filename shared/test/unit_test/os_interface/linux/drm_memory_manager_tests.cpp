@@ -6722,7 +6722,7 @@ struct DrmMemoryManagerLocalMemoryAlignmentTest : DrmMemoryManagerWithLocalMemor
 
     bool isAllocationWithinHeap(MemoryManager &memoryManager, const GraphicsAllocation &allocation, HeapIndex heap) {
         const auto allocationStart = allocation.getGpuAddress();
-        const auto allocationEnd = allocationStart + allocation.getUnderlyingBufferSize() - 1;
+        const auto allocationEnd = allocationStart + allocation.getUnderlyingBufferSize();
         const auto gmmHelper = device->getGmmHelper();
         const auto heapStart = gmmHelper->canonize(memoryManager.getGfxPartition(rootDeviceIndex)->getHeapBase(heap));
         const auto heapEnd = gmmHelper->canonize(memoryManager.getGfxPartition(rootDeviceIndex)->getHeapLimit(heap));
