@@ -4250,4 +4250,19 @@ void CommandListCoreFamily<gfxCoreFamily>::programEventL3Flush(Event *event) {
         args);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const {
+    auto &kernelDescriptor = kernel.getImmutableData()->getDescriptor();
+
+    if (launchParams.additionalSizeParam == NEO::additionalKernelLaunchSizeParamNotSet) {
+        launchParams.additionalSizeParam = kernelDescriptor.kernelAttributes.additionalSize;
+    }
+    if (launchParams.requiredDispatchWalkOrder == NEO::RequiredDispatchWalkOrder::none) {
+        launchParams.requiredDispatchWalkOrder = kernelDescriptor.kernelAttributes.walkOrder;
+    }
+    if (launchParams.requiredPartitionDim == NEO::RequiredPartitionDim::none) {
+        launchParams.requiredPartitionDim = kernelDescriptor.kernelAttributes.partitionDim;
+    }
+}
+
 } // namespace L0

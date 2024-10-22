@@ -80,6 +80,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    setAdditionalKernelLaunchParams(launchParams, *kernel);
+
     auto kernelInfo = kernelImmutableData->getKernelInfo();
 
     NEO::IndirectHeap *ssh = nullptr;
