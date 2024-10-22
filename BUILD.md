@@ -66,5 +66,13 @@ cmake -DCMAKE_BUILD_TYPE=Release -DNEO_SKIP_UNIT_TESTS=1 ../neo
 make -j`nproc`
 sudo make install
 ```
+## Optional - Building NEO with support for XeKMD EU Debugging
+
+NEO Driver has build options to enable support for EU Debugging with XeKMD. Kernel support for this feature is currently only available via a topic branch hosted at https://gitlab.freedesktop.org/miku/kernel/-/tree/eudebug-dev 
+
+To build NEO with support for this feature follow above steps with these additional cmake options added to step 6.
+
+` -DNEO_ENABLE_XE_EU_DEBUG_SUPPORT=1  -DNEO_ENABLE_XE_PRELIM_DETECTION=0 `
+
 
 ___(*) Other names and brands may be claimed as property of others.___
