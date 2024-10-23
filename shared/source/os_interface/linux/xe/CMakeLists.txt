@@ -29,7 +29,7 @@ if(NEO_ENABLE_XE_PRELIM_DETECTION)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX_XE
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_xe_prelim.h
-       ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/create_ioctl_helper_xe_prelim.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/create_ioctl_helper_xe_prelim.cpp
   )
   list(REMOVE_ITEM NEO_CORE_OS_INTERFACE_LINUX_XE
        ${CMAKE_CURRENT_SOURCE_DIR}/create_ioctl_helper_xe.cpp
