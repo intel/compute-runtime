@@ -31,13 +31,19 @@ using SteadyClock = std::chrono::steady_clock;
 struct TimeoutParams {
     std::chrono::microseconds maxTimeout;
     std::chrono::microseconds timeout;
-    int timeoutDivisor;
+    int32_t timeoutDivisor;
     bool directSubmissionEnabled;
 };
 
 struct WaitForPagingFenceRequest {
     CommandStreamReceiver *csr;
     uint64_t pagingFenceValue;
+};
+
+enum class TimeoutElapsedMode {
+    notElapsed,
+    bcsOnly,
+    fullyElapsed
 };
 
 class DirectSubmissionController {
@@ -98,7 +104,8 @@ class DirectSubmissionController {
     size_t getTimeoutParamsMapKey(QueueThrottle throttle, bool acLineStatus);
 
     void handlePagingFenceRequests(std::unique_lock<std::mutex> &lock, bool checkForNewSubmissions);
-    MOCKABLE_VIRTUAL bool timeoutElapsed();
+    MOCKABLE_VIRTUAL TimeoutElapsedMode timeoutElapsed();
+    std::chrono::microseconds getSleepValue() const { return std::chrono::microseconds(this->timeout / this->bcsTimeoutDivisor); }
 
     uint32_t maxCcsCount = 1u;
     std::array<uint32_t, DeviceBitfield().size()> ccsCount = {};
@@ -113,7 +120,8 @@ class DirectSubmissionController {
     SteadyClock::time_point lastTerminateCpuTimestamp{};
     std::chrono::microseconds maxTimeout{defaultTimeout};
     std::chrono::microseconds timeout{defaultTimeout};
-    int timeoutDivisor = 1;
+    int32_t timeoutDivisor = 1;
+    int32_t bcsTimeoutDivisor = 1;
     std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
     QueueThrottle lowestThrottleSubmitted = QueueThrottle::HIGH;
     bool adjustTimeoutOnThrottleAndAcLineStatus = false;

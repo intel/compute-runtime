@@ -34,7 +34,7 @@ TEST(DirectSubmissionControllerTestsMt, givenDirectSubmissionControllerWhenTimeo
 
     DirectSubmissionControllerMock controller;
     executionEnvironment.directSubmissionController.reset(&controller);
-    controller.timeoutElapsedReturnValue.store(true);
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.startThread();
     csr.startControllingDirectSubmissions();
     controller.registerDirectSubmission(&csr);

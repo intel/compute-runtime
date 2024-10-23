@@ -51,7 +51,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr.taskCount.store(5u);
 
     DirectSubmissionControllerMock controller;
-    controller.timeoutElapsedReturnValue.store(true);
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.registerDirectSubmission(&csr);
     controller.checkNewSubmissions();
     EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
@@ -78,6 +78,94 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.unregisterDirectSubmission(&csr);
 }
 
+TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingIfTimeoutElapsedThenReturnCorrectValue) {
+    DebugManagerStateRestore restorer;
+    DirectSubmissionControllerMock defaultController;
+    defaultController.timeoutElapsedCallBase.store(true);
+    EXPECT_EQ(1, defaultController.bcsTimeoutDivisor);
+    EXPECT_EQ(std::chrono::microseconds{defaultController.timeout}, defaultController.getSleepValue());
+
+    debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.set(2);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedCallBase.store(true);
+    EXPECT_EQ(2, controller.bcsTimeoutDivisor);
+    EXPECT_EQ(std::chrono::microseconds{controller.timeout / controller.bcsTimeoutDivisor}, controller.getSleepValue());
+
+    auto now = SteadyClock::now();
+    controller.timeSinceLastCheck = now;
+    controller.cpuTimestamp = now;
+
+    defaultController.timeSinceLastCheck = now;
+    defaultController.cpuTimestamp = now;
+
+    EXPECT_EQ(TimeoutElapsedMode::notElapsed, controller.timeoutElapsed());
+    EXPECT_EQ(TimeoutElapsedMode::notElapsed, defaultController.timeoutElapsed());
+
+    controller.cpuTimestamp = now + std::chrono::microseconds{controller.timeout / controller.bcsTimeoutDivisor};
+    defaultController.cpuTimestamp = now + std::chrono::microseconds{defaultController.timeout - std::chrono::microseconds{1}};
+
+    EXPECT_EQ(TimeoutElapsedMode::bcsOnly, controller.timeoutElapsed());
+    EXPECT_EQ(TimeoutElapsedMode::notElapsed, defaultController.timeoutElapsed());
+
+    controller.cpuTimestamp = now + std::chrono::microseconds{controller.timeout};
+    defaultController.cpuTimestamp = now + std::chrono::microseconds{defaultController.timeout};
+    EXPECT_EQ(TimeoutElapsedMode::fullyElapsed, controller.timeoutElapsed());
+    EXPECT_EQ(TimeoutElapsedMode::fullyElapsed, defaultController.timeoutElapsed());
+}
+
+TEST(DirectSubmissionControllerTests, givenDebugFlagSetWhenCheckingNewSubmissionThenStopOnlyBcsEngines) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.set(2);
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    executionEnvironment.rootDeviceEnvironments[0]->initOsTime();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver bcsCsr(executionEnvironment, 0, deviceBitfield);
+    MockCommandStreamReceiver ccsCsr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> bcsOsContext(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+    std::unique_ptr<OsContext> ccsOsContext(OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, deviceBitfield)));
+    bcsCsr.setupContext(*bcsOsContext.get());
+    ccsCsr.setupContext(*ccsOsContext.get());
+    bcsCsr.taskCount.store(5u);
+    ccsCsr.taskCount.store(5u);
+
+    DirectSubmissionControllerMock controller;
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
+    controller.registerDirectSubmission(&bcsCsr);
+    controller.registerDirectSubmission(&ccsCsr);
+    controller.checkNewSubmissions();
+
+    EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
+    EXPECT_EQ(controller.directSubmissions[&bcsCsr].taskCount, 5u);
+    EXPECT_FALSE(controller.directSubmissions[&ccsCsr].isStopped);
+    EXPECT_EQ(controller.directSubmissions[&ccsCsr].taskCount, 5u);
+
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::bcsOnly);
+
+    auto timeSinceLastCheck = controller.timeSinceLastCheck;
+
+    bcsCsr.taskCount.store(6u);
+    ccsCsr.taskCount.store(6u);
+    controller.checkNewSubmissions();
+    EXPECT_FALSE(controller.directSubmissions[&bcsCsr].isStopped);
+    EXPECT_EQ(controller.directSubmissions[&bcsCsr].taskCount, 6u);
+    EXPECT_FALSE(controller.directSubmissions[&ccsCsr].isStopped);
+    EXPECT_EQ(controller.directSubmissions[&ccsCsr].taskCount, 5u);
+
+    controller.checkNewSubmissions();
+    EXPECT_TRUE(controller.directSubmissions[&bcsCsr].isStopped);
+    EXPECT_FALSE(controller.directSubmissions[&ccsCsr].isStopped);
+
+    EXPECT_EQ(timeSinceLastCheck, controller.timeSinceLastCheck);
+
+    controller.unregisterDirectSubmission(&bcsCsr);
+    controller.unregisterDirectSubmission(&ccsCsr);
+}
+
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorDisabledWhenIncreaseTimeoutEnabledThenTimeoutIsIncreased) {
     DebugManagerStateRestore restorer;
     debugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
@@ -96,7 +184,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
     csr.setupContext(*osContext.get());
 
     DirectSubmissionControllerMock controller;
-    controller.timeoutElapsedReturnValue.store(true);
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.registerDirectSubmission(&csr);
     {
         csr.taskCount.store(1u);
@@ -216,7 +304,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndAdjustOn
                                                                                                         PreemptionMode::ThreadGroup, deviceBitfield)));
     csr.setupContext(*osContext.get());
     DirectSubmissionControllerMock controller;
-    controller.timeoutElapsedReturnValue.store(true);
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.setTimeoutParamsForPlatform(csr.getProductHelper());
     controller.registerDirectSubmission(&csr);
     EXPECT_TRUE(controller.adjustTimeoutOnThrottleAndAcLineStatus);
@@ -638,7 +726,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenEnqueue
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lock(mtx);
-    controller.timeoutElapsedReturnValue.store(true);
+    controller.timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller.handlePagingFenceRequests(lock, true);
     EXPECT_EQ(10u, csr.pagingFenceValueToUnblock);
     EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 5u);
@@ -650,10 +738,10 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenCheckTi
     controller.timeoutElapsedCallBase.store(true);
 
     controller.timeSinceLastCheck = controller.getCpuTimestamp() - std::chrono::seconds(10);
-    EXPECT_TRUE(controller.timeoutElapsed());
+    EXPECT_EQ(TimeoutElapsedMode::fullyElapsed, controller.timeoutElapsed());
 
     controller.timeSinceLastCheck = controller.getCpuTimestamp() - std::chrono::seconds(1);
-    EXPECT_FALSE(controller.timeoutElapsed());
+    EXPECT_EQ(TimeoutElapsedMode::notElapsed, controller.timeoutElapsed());
 }
 
 struct TagUpdateMockCommandStreamReceiver : public MockCommandStreamReceiver {
@@ -688,7 +776,7 @@ struct DirectSubmissionIdleDetectionTests : public ::testing::Test {
                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
         csr->setupContext(*osContext);
 
-        controller->timeoutElapsedReturnValue.store(true);
+        controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
         controller->registerDirectSubmission(csr.get());
         csr->taskCount.store(10u);
         controller->checkNewSubmissions();
@@ -751,7 +839,7 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpda
     debugManager.flags.DirectSubmissionControllerIdleDetection.set(false);
     controller->unregisterDirectSubmission(csr.get());
     controller = std::make_unique<DirectSubmissionControllerMock>();
-    controller->timeoutElapsedReturnValue.store(true);
+    controller->timeoutElapsedReturnValue.store(TimeoutElapsedMode::fullyElapsed);
     controller->registerDirectSubmission(csr.get());
 
     csr->taskCount.store(10u);
