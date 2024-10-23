@@ -4,7 +4,7 @@ components:
     version: 636
   ci_l0_loader:
     dest_dir: level_zero
-    version: v1.18.3
+    version: v1.17.44
   ze_raytracing:
     dest_dir: ze_raytracing
     version: 80
