@@ -206,6 +206,7 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_memory_manager_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux${BRANCH_DIR_SUFFIX}/options.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/options.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/setup_external_dependencies_${DRIVER_MODEL}.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/sys_calls_linux_ult.cpp
 )
@@ -217,6 +218,7 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_direct_submission_controller_enabled.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows${BRANCH_DIR_SUFFIX}/options.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/setup_external_dependencies_drm_or_wddm.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls_winmm.cpp

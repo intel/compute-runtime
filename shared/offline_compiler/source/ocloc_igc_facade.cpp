@@ -39,10 +39,9 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
     }
 
     auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-
     igcLib = loadIgcLibrary(compilerProductHelper ? compilerProductHelper->getCustomIgcLibraryName() : nullptr);
     if (!igcLib) {
-        argHelper->printf("Error! Loading of IGC library has failed! Filename: %s\n", Os::igcDllName);
+        argHelper->printf("Error! Loading of IGC library has failed! Filename: %s\n", (compilerProductHelper && compilerProductHelper->getCustomIgcLibraryName()) ? compilerProductHelper->getCustomIgcLibraryName() : Os::igcDllName);
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
