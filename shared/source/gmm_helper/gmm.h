@@ -80,6 +80,7 @@ class Gmm {
     void setupImageResourceParams(ImageInfo &imgInfo, bool preferCompressed);
     bool extraMemoryFlagsRequired();
     void applyExtraMemoryFlags(const StorageInfo &storageInfo);
+    void applyExtraInitFlag();
     void applyDebugOverrides();
     GmmHelper *gmmHelper = nullptr;
 

@@ -31,4 +31,11 @@ class FreeGpuVirtualAddressGmm {
     Gdi *gdi;
 };
 
+class DeallocateGmm {
+  public:
+    DeallocateGmm(D3DKMT_DESTROYALLOCATION2 *destroyAllocation2, Gdi *gdi) : destroyAllocation2(destroyAllocation2), gdi(gdi) {}
+    D3DKMT_DESTROYALLOCATION2 *destroyAllocation2;
+    Gdi *gdi;
+};
+
 } // namespace NEO

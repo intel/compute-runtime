@@ -16,5 +16,8 @@ uint64_t GmmClientContext::mapGpuVirtualAddress(MapGpuVirtualAddressGmm *pMapGpu
 uint64_t GmmClientContext::freeGpuVirtualAddress(FreeGpuVirtualAddressGmm *pFreeGpuVa) {
     return 0;
 }
+long GmmClientContext::deallocate2(DeallocateGmm *deallocateGmm) {
+    return deallocateGmm->gdi->destroyAllocation2(deallocateGmm->destroyAllocation2);
+}
 
 } // namespace NEO
