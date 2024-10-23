@@ -364,34 +364,34 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
-    ultCsr->waitUserFenecParams.forceRetStatusValue = false;
-    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+    ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenceParams.forceRetStatusValue = false;
+    EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);
 
     EXPECT_EQ(ZE_RESULT_NOT_READY, events[0]->hostSynchronize(2));
 
-    EXPECT_EQ(1u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(hostAddress, ultCsr->waitUserFenecParams.latestWaitedAddress);
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, ultCsr->waitUserFenecParams.latestWaitedValue);
-    EXPECT_EQ(2, ultCsr->waitUserFenecParams.latestWaitedTimeout);
+    EXPECT_EQ(1u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(hostAddress, ultCsr->waitUserFenceParams.latestWaitedAddress);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, ultCsr->waitUserFenceParams.latestWaitedValue);
+    EXPECT_EQ(2, ultCsr->waitUserFenceParams.latestWaitedTimeout);
 
-    ultCsr->waitUserFenecParams.forceRetStatusValue = true;
+    ultCsr->waitUserFenceParams.forceRetStatusValue = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(3));
 
-    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(hostAddress, ultCsr->waitUserFenecParams.latestWaitedAddress);
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, ultCsr->waitUserFenecParams.latestWaitedValue);
-    EXPECT_EQ(3, ultCsr->waitUserFenecParams.latestWaitedTimeout);
+    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(hostAddress, ultCsr->waitUserFenceParams.latestWaitedAddress);
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, ultCsr->waitUserFenceParams.latestWaitedValue);
+    EXPECT_EQ(3, ultCsr->waitUserFenceParams.latestWaitedTimeout);
 
     // already completed
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(3));
-    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
 
     // non in-order event
     events[1]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     events[1]->hostSynchronize(2);
-    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenRegularCmdListWhenAppendQueryKernelTimestampsCalledThenSynchronizeCounterBasedEvents, IsAtLeastXeHpCore) {
@@ -561,28 +561,28 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUser
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
 
-    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(2));
 
-    EXPECT_EQ(1u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(NEO::InterruptId::notUsed, ultCsr->waitUserFenecParams.externalInterruptId);
-    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+    EXPECT_EQ(1u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(NEO::InterruptId::notUsed, ultCsr->waitUserFenceParams.externalInterruptId);
+    EXPECT_TRUE(ultCsr->waitUserFenceParams.userInterrupt);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[1]->hostSynchronize(2));
 
-    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(events[1]->externalInterruptId, ultCsr->waitUserFenecParams.externalInterruptId);
-    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(events[1]->externalInterruptId, ultCsr->waitUserFenceParams.externalInterruptId);
+    EXPECT_TRUE(ultCsr->waitUserFenceParams.userInterrupt);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventAndTbxModeWhenWaitingThenDontWaitForUserFence, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
     ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
     auto eventPool = createEvents<FamilyType>(2, false);
@@ -598,7 +598,7 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventAndTbxModeWhenWaitingThenD
 
     events[0]->hostSynchronize(2);
     events[1]->hostSynchronize(2);
-    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenPassCorrectAllocation, IsAtLeastXeHpCore) {
@@ -622,23 +622,23 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenPassCorrect
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
-    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+    ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
 
-    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+    EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);
 
     // Single counter storage
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(2));
 
-    EXPECT_EQ(1u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(events[0]->getInOrderExecInfo()->getDeviceCounterAllocation(), ultCsr->waitUserFenecParams.latestAllocForInterruptWait);
-    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+    EXPECT_EQ(1u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(events[0]->getInOrderExecInfo()->getDeviceCounterAllocation(), ultCsr->waitUserFenceParams.latestAllocForInterruptWait);
+    EXPECT_TRUE(ultCsr->waitUserFenceParams.userInterrupt);
 
     // Duplicated host storage
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[1]->hostSynchronize(2));
 
-    EXPECT_EQ(2u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(events[1]->getInOrderExecInfo()->getHostCounterAllocation(), ultCsr->waitUserFenecParams.latestAllocForInterruptWait);
-    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+    EXPECT_EQ(2u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(events[1]->getInOrderExecInfo()->getHostCounterAllocation(), ultCsr->waitUserFenceParams.latestAllocForInterruptWait);
+    EXPECT_TRUE(ultCsr->waitUserFenceParams.userInterrupt);
 
     // External host storage
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
@@ -657,9 +657,9 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenPassCorrect
 
     event2->hostSynchronize(2);
 
-    EXPECT_EQ(3u, ultCsr->waitUserFenecParams.callCount);
-    EXPECT_EQ(event2->getInOrderExecInfo()->getExternalHostAllocation(), ultCsr->waitUserFenecParams.latestAllocForInterruptWait);
-    EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
+    EXPECT_EQ(3u, ultCsr->waitUserFenceParams.callCount);
+    EXPECT_EQ(event2->getInOrderExecInfo()->getExternalHostAllocation(), ultCsr->waitUserFenceParams.latestAllocForInterruptWait);
+    EXPECT_TRUE(ultCsr->waitUserFenceParams.userInterrupt);
 
     event2->destroy();
     context->freeMem(hostAddress);

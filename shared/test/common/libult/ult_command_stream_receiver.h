@@ -510,16 +510,16 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override {
-        waitUserFenecParams.callCount++;
-        waitUserFenecParams.latestWaitedAddress = hostAddress;
-        waitUserFenecParams.latestWaitedValue = waitValue;
-        waitUserFenecParams.latestWaitedTimeout = timeout;
-        waitUserFenecParams.userInterrupt = timeout;
-        waitUserFenecParams.externalInterruptId = externalInterruptId;
-        waitUserFenecParams.latestAllocForInterruptWait = allocForInterruptWait;
+        waitUserFenceParams.callCount++;
+        waitUserFenceParams.latestWaitedAddress = hostAddress;
+        waitUserFenceParams.latestWaitedValue = waitValue;
+        waitUserFenceParams.latestWaitedTimeout = timeout;
+        waitUserFenceParams.userInterrupt = timeout;
+        waitUserFenceParams.externalInterruptId = externalInterruptId;
+        waitUserFenceParams.latestAllocForInterruptWait = allocForInterruptWait;
 
-        if (waitUserFenecParams.forceRetStatusEnabled) {
-            return waitUserFenecParams.forceRetStatusValue;
+        if (waitUserFenceParams.forceRetStatusEnabled) {
+            return waitUserFenceParams.forceRetStatusValue;
         }
 
         return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
@@ -546,7 +546,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic<TaskCountType> latestWaitForCompletionWithTimeoutTaskCount{0};
     TaskCountType latestSentTaskCountValueDuringFlush = 0;
     WaitParams latestWaitForCompletionWithTimeoutWaitParams{};
-    WaitUserFenceParams waitUserFenecParams;
+    WaitUserFenceParams waitUserFenceParams;
     WriteMemoryParams writeMemoryParams;
     TaskCountType flushBcsTaskReturnValue{};
 
