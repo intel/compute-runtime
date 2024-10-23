@@ -27,7 +27,7 @@ bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
         return getDrmAdapterId(major, minor, device);
 }
 
-MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
+MetricsDiscovery::IAdapter_1_13 *MetricEnumeration::getMetricsAdapter() {
     auto osInterface = metricSource.getMetricDeviceContext().getDevice().getNEODevice()->getRootDeviceEnvironment().osInterface.get();
 
     if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm)

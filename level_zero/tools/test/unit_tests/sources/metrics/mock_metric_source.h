@@ -26,6 +26,13 @@ class MockMetricSource : public L0::MetricSource {
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    ze_result_t createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
+                                              const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
+                                              const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                              uint32_t *maxMetricGroupCount,
+                                              std::vector<zet_metric_group_handle_t> &metricGroupList) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t getConcurrentMetricGroups(std::vector<zet_metric_group_handle_t> &hMetricGroups,
                                           uint32_t *pConcurrentGroupCount,
                                           uint32_t *pCountPerConcurrentGroup) override {
@@ -34,6 +41,7 @@ class MockMetricSource : public L0::MetricSource {
     void setType(uint32_t type) {
         this->type = type;
     }
+
     ~MockMetricSource() override = default;
 };
 

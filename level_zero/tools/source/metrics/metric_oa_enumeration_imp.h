@@ -20,6 +20,7 @@ static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize
 static constexpr std::string_view globalSymbolOaMaxTimestamp = "MaxTimestamp";
 
 struct MetricEnumeration {
+    static const uint32_t oaSourceId = 0x0A;
     MetricEnumeration(OaMetricSourceImp &metricSource);
     virtual ~MetricEnumeration();
 
@@ -34,40 +35,38 @@ struct MetricEnumeration {
     uint32_t getMaxOaBufferSize() const { return maximumOaBufferSize; }
     bool readGlobalSymbol(const char *name, uint32_t &symbolValue);
     bool readGlobalSymbol(const char *name, uint64_t &symbolValue);
-    MetricsDiscovery::IMetricsDevice_1_5 *getMetricDevice() { return pMetricsDevice; };
-
-    MetricsDiscovery::IMetricsDevice_1_5 *getMdapiDevice() { return pMetricsDevice; }
-    MetricsDiscovery::IAdapter_1_9 *getMdapiAdapter() { return pAdapter; }
-    MetricsDiscovery::IAdapterGroup_1_9 *getMdapiAdapterGroup() { return pAdapterGroup; }
+    MetricsDiscovery::IMetricsDevice_1_13 *getMdapiDevice() { return pMetricsDevice; }
+    MetricsDiscovery::IAdapter_1_13 *getMdapiAdapter() { return pAdapter; }
+    MetricsDiscovery::IAdapterGroup_1_13 *getMdapiAdapterGroup() { return pAdapterGroup; }
     OaMetricSourceImp &getMetricSource() { return metricSource; }
-    virtual MetricsDiscovery::IAdapter_1_9 *getAdapterFromAdapterGroup(
-        MetricsDiscovery::IAdapterGroup_1_9 *adapterGroup,
+    virtual MetricsDiscovery::IAdapter_1_13 *getAdapterFromAdapterGroup(
+        MetricsDiscovery::IAdapterGroup_1_13 *adapterGroup,
         uint32_t index) {
         UNRECOVERABLE_IF(pAdapterGroup == nullptr);
         UNRECOVERABLE_IF(pAdapterGroup->GetAdapter(index) == nullptr);
         return pAdapterGroup->GetAdapter(index);
     }
-    virtual const MetricsDiscovery::TAdapterGroupParams_1_6 *getAdapterGroupParams(MetricsDiscovery::IAdapterGroup_1_9 *adapterGroup) {
+    virtual const MetricsDiscovery::TAdapterGroupParams_1_6 *getAdapterGroupParams(MetricsDiscovery::IAdapterGroup_1_13 *adapterGroup) {
         return adapterGroup->GetParams();
     }
     virtual const MetricsDiscovery::TAdapterParams_1_9 *getAdapterParams(
-        MetricsDiscovery::IAdapter_1_9 *pAdapter) {
+        MetricsDiscovery::IAdapter_1_13 *pAdapter) {
         return pAdapter->GetParams();
     }
 
-    virtual void openMetricsSubDeviceFromAdapter(MetricsDiscovery::IAdapter_1_9 *pAdapter,
-                                                 const uint32_t subDeviceIndex, MetricsDiscovery::IMetricsDevice_1_5 **metricsDevice) {
+    virtual void openMetricsSubDeviceFromAdapter(MetricsDiscovery::IAdapter_1_13 *pAdapter,
+                                                 const uint32_t subDeviceIndex, MetricsDiscovery::IMetricsDevice_1_13 **metricsDevice) {
         pAdapter->OpenMetricsSubDevice(subDeviceIndex, metricsDevice);
     }
 
     virtual void openMetricsDeviceFromAdapter(
-        MetricsDiscovery::IAdapter_1_9 *pAdapter,
-        MetricsDiscovery::IMetricsDevice_1_5 **metricsDevice) {
+        MetricsDiscovery::IAdapter_1_13 *pAdapter,
+        MetricsDiscovery::IMetricsDevice_1_13 **metricsDevice) {
         pAdapter->OpenMetricsDevice(metricsDevice);
     }
 
-    virtual MetricsDiscovery::IConcurrentGroup_1_5 *getConcurrentGroupFromDevice(
-        MetricsDiscovery::IMetricsDevice_1_5 *metricDevice,
+    virtual MetricsDiscovery::IConcurrentGroup_1_13 *getConcurrentGroupFromDevice(
+        MetricsDiscovery::IMetricsDevice_1_13 *metricDevice,
         uint32_t index) {
         return metricDevice->GetConcurrentGroup(index);
     }
@@ -77,18 +76,34 @@ struct MetricEnumeration {
     void getL0MetricPropertiesFromMdapiMetric(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IMetric_1_0 *mdapiMetric);
     void getL0MetricPropertiesFromMdapiInformation(zet_metric_properties_t &l0MetricProps, MetricsDiscovery::IInformation_1_0 *mdapiInformation);
     MetricsDiscovery::IInformationLatest *getOaBufferOverflowInformation() const { return pOaBufferOverflowInformation; }
+    ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables);
+    MetricsDiscovery::IConcurrentGroup_1_13 *getConcurrentGroup() {
+        return pConcurrentGroup;
+    }
+    void cleanupExtendedMetricInformation();
+    void setAdapterGroup(MetricsDiscovery::IAdapterGroup_1_13 *adapterGroup) {
+        pAdapterGroup = adapterGroup;
+    }
+    ze_result_t cacheExtendedMetricInformation(
+        MetricsDiscovery::IConcurrentGroup_1_13 &pConcurrentGroup,
+        const uint32_t domain);
+    void setInitializationState(ze_result_t state) {
+        initializationState = state;
+    }
 
   protected:
     ze_result_t initialize();
-
     virtual ze_result_t openMetricsDiscovery();
     virtual bool getAdapterId(uint32_t &major, uint32_t &minor);
-    virtual MetricsDiscovery::IAdapter_1_9 *getMetricsAdapter();
+    virtual MetricsDiscovery::IAdapter_1_13 *getMetricsAdapter();
     ze_result_t cleanupMetricsDiscovery();
 
+    bool isMetricProgrammableSupportEnabled() {
+        return metricSource.getMetricDeviceContext().isProgrammableMetricsEnabled;
+    }
     ze_result_t cacheMetricInformation();
     ze_result_t cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                                 MetricsDiscovery::IConcurrentGroup_1_5 &pConcurrentGroup,
+                                 MetricsDiscovery::IConcurrentGroup_1_13 &pConcurrentGroup,
                                  const uint32_t domain,
                                  const zet_metric_group_sampling_type_flag_t samplingType);
     ze_result_t createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
@@ -98,30 +113,37 @@ struct MetricEnumeration {
     uint32_t getMetricTierNumber(const uint32_t sourceUsageFlagsMask) const;
     zet_metric_type_t
     getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
-    virtual ze_result_t cacheExtendedMetricInformation(
-        MetricsDiscovery::IConcurrentGroup_1_5 &pConcurrentGroup,
-        const uint32_t domain) { return ZE_RESULT_SUCCESS; };
+    zet_intel_metric_sampling_type_exp_flag_t getSamplingTypeFromApiMask(const uint32_t apiMask);
+    std::vector<MetricProgrammable *> &getProgrammables() {
+        return metricProgrammables;
+    }
 
-    virtual void cleanupExtendedMetricInformation() {}
-
-  protected:
     OaMetricSourceImp &metricSource;
     std::vector<MetricGroup *> metricGroups; // Cached metric groups
+    std::vector<MetricProgrammable *> metricProgrammables{};
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
 
     // Metrics Discovery API.
     std::unique_ptr<NEO::OsLibrary> hMetricsDiscovery = nullptr;
     MetricsDiscovery::OpenAdapterGroup_fn openAdapterGroup = nullptr;
-    MetricsDiscovery::IAdapterGroup_1_9 *pAdapterGroup = nullptr;
-    MetricsDiscovery::IAdapter_1_9 *pAdapter = nullptr;
-    MetricsDiscovery::IMetricsDevice_1_5 *pMetricsDevice = nullptr;
+    MetricsDiscovery::IAdapterGroup_1_13 *pAdapterGroup = nullptr;
+    MetricsDiscovery::IAdapter_1_13 *pAdapter = nullptr;
+    MetricsDiscovery::IMetricsDevice_1_13 *pMetricsDevice = nullptr;
     uint32_t maximumOaBufferSize = 0u;
     MetricsDiscovery::IInformationLatest *pOaBufferOverflowInformation = nullptr;
+    void cacheMetricPrototypes(
+        MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
+        const uint32_t domain);
+    void updateMetricProgrammablesFromPrototypes(
+        MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
+        const std::vector<MetricsDiscovery::IMetricPrototype_1_13 *> &metricPrototypes,
+        uint32_t domain);
+    MetricsDiscovery::IConcurrentGroup_1_13 *pConcurrentGroup = nullptr;
 
   public:
-    // Metrics Discovery version should be at least 1.5.
+    // Metrics Discovery version should be at least 1.13.
     static const uint32_t requiredMetricsDiscoveryMajorVersion = 1;
-    static const uint32_t requiredMetricsDiscoveryMinorVersion = 5;
+    static const uint32_t requiredMetricsDiscoveryMinorVersion = 13;
     static const char *oaConcurrentGroupName;
 };
 
@@ -155,7 +177,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
     }
     ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                           MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
+                           MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
                            const std::vector<Metric *> &groupMetrics,
                            OaMetricSourceImp &metricSource);
 
@@ -191,7 +213,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
                               uint8_t *pExportData) override;
     static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
-                               MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
+                               MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup,
                                const std::vector<Metric *> &metrics,
                                MetricSource &metricSource);
     OaMetricSourceImp *getMetricSource() const { return static_cast<OaMetricSourceImp *>(&metricSource); }
@@ -218,7 +240,7 @@ struct OaMetricGroupImp : public MetricGroupImp {
     std::vector<Metric *> metrics;
     zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
-    MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
+    MetricsDiscovery::IConcurrentGroup_1_13 *pReferenceConcurrentGroup = nullptr;
 
     std::vector<MetricGroupImp *> metricGroups;
     size_t cachedExportDataHeapSize = 0;

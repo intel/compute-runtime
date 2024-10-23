@@ -188,8 +188,8 @@ TEST_F(MetricQueryPoolLinuxTest, givenMetricLibraryIsInIncorrectInitializedState
 TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCalledThenCacheingIsSuccessfull) {
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
-    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
-    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
     metricsConcurrentGroupParams.SymbolName = "OA";
     metricsConcurrentGroupParams.MetricSetsCount = 1;
     metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
@@ -205,8 +205,8 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCa
     MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
     oaInformation.SymbolName = "BufferOverflow";
     oaInformation.IoReadEquation = &ioReadEquation;
-    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
-    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
     metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
     openMetricsAdapter();
 

@@ -17,6 +17,7 @@ target_sources(${ZELLO_METRICS_TARGET}
                ${CMAKE_CURRENT_SOURCE_DIR}/zello_metrics_util.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zello_metrics_export.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zello_metrics_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/zello_metrics_programmable_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zello_metrics_util.h
                ${CMAKE_CURRENT_SOURCE_DIR}/zello_metrics.h
 )

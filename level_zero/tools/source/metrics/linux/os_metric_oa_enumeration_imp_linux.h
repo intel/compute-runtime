@@ -16,7 +16,7 @@ struct MetricEnumeration;
 
 bool getDrmAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor, Device &device);
 
-MetricsDiscovery::IAdapter_1_9 *getDrmMetricsAdapter(MetricEnumeration *metricEnumeration);
+MetricsDiscovery::IAdapter_1_13 *getDrmMetricsAdapter(MetricEnumeration *metricEnumeration);
 
 class MetricOALinuxImp : public MetricOAOsInterface {
   public:

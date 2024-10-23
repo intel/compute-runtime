@@ -42,7 +42,7 @@ bool getDrmAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor, Device &dev
     return result == 0;
 }
 
-MetricsDiscovery::IAdapter_1_9 *getDrmMetricsAdapter(MetricEnumeration *metricEnumeration) {
+MetricsDiscovery::IAdapter_1_13 *getDrmMetricsAdapter(MetricEnumeration *metricEnumeration) {
     // Obtain drm minor / major version.
     uint32_t drmMajor = 0;
     uint32_t drmMinor = 0;

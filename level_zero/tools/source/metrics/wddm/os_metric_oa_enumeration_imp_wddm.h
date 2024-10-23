@@ -17,7 +17,7 @@ struct MetricEnumeration;
 
 bool getWddmAdapterId(uint32_t &major, uint32_t &minor, Device &device);
 
-MetricsDiscovery::IAdapter_1_9 *getWddmMetricsAdapter(MetricEnumeration *metricEnumeration);
+MetricsDiscovery::IAdapter_1_13 *getWddmMetricsAdapter(MetricEnumeration *metricEnumeration);
 
 class MetricOAWindowsImp : public MetricOAOsInterface {
   public:

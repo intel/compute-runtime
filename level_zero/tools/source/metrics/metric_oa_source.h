@@ -51,6 +51,18 @@ class OaMetricSourceImp : public MetricSource {
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
     void setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface);
     MetricOAOsInterface *getMetricOsInterface() { return metricOAOsInterface.get(); }
+    ze_result_t metricGroupCreateFromMetric(const char *pName, const char *pDescription,
+                                            zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
+                                            zet_metric_group_handle_t *phMetricGroup);
+    ze_result_t createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
+                                              const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
+                                              const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                              uint32_t *maxMetricGroupCount,
+                                              std::vector<zet_metric_group_handle_t> &metricGroupList) override;
+    void metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
+                           const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                           zet_metric_group_sampling_type_flag_t samplingType,
+                           zet_metric_group_handle_t *pMetricGroupHandle);
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;

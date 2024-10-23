@@ -24,7 +24,7 @@ bool getWddmAdapterId(uint32_t &major, uint32_t &minor, Device &device) {
     return true;
 }
 
-MetricsDiscovery::IAdapter_1_9 *getWddmMetricsAdapter(MetricEnumeration *metricEnumeration) {
+MetricsDiscovery::IAdapter_1_13 *getWddmMetricsAdapter(MetricEnumeration *metricEnumeration) {
     uint32_t major = 0;
     uint32_t minor = 0;
 

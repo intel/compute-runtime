@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,7 @@ void MetricContextFixture::openMetricsAdapterGroup() {
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
 
-void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
+void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_13> &metricDevice) {
     metricDevice.GetParamsResult = &metricsDeviceParams;
 }
 
@@ -198,7 +198,7 @@ void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
     adapter.openMetricsDeviceOutDevice = &metricsDevice;
 }
 
-void MetricMultiDeviceFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
+void MetricMultiDeviceFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_13> &metricDevice) {
     metricDevice.GetParamsResult = &metricsDeviceParams;
 }
 

@@ -13,7 +13,10 @@
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/metrics/metric_multidevice_programmable.h"
+#include "level_zero/tools/source/metrics/metric_multidevice_programmable.inl"
 #include "level_zero/tools/source/metrics/metric_oa_enumeration_imp.h"
+#include "level_zero/tools/source/metrics/metric_oa_programmable_imp.h"
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 
 namespace L0 {
@@ -234,6 +237,165 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
     }
 
     return retVal;
+}
+
+void OaMetricSourceImp::metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
+                                          const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                          zet_metric_group_sampling_type_flag_t samplingType,
+                                          zet_metric_group_handle_t *pMetricGroupHandle) {
+
+    zet_metric_group_properties_t properties{};
+    memcpy_s(properties.description, ZET_MAX_METRIC_GROUP_DESCRIPTION, description, ZET_MAX_METRIC_GROUP_DESCRIPTION);
+    memcpy_s(properties.name, ZET_MAX_METRIC_GROUP_NAME, name, ZET_MAX_METRIC_GROUP_NAME);
+    properties.samplingType = samplingType;
+    properties.domain = UINT32_MAX;
+
+    auto concurrentGrp = getMetricEnumeration().getConcurrentGroup();
+    MetricsDiscovery::IMetricSet_1_13 *metricSet = concurrentGrp->AddMetricSet(name, description);
+    auto metricGroup = OaMetricGroupUserDefined::create(properties, *metricSet, *concurrentGrp, *this);
+    *pMetricGroupHandle = metricGroup->toHandle();
+}
+
+ze_result_t OaMetricSourceImp::metricGroupCreateFromMetric(const char *pName, const char *pDescription,
+                                                           zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
+                                                           zet_metric_group_handle_t *phMetricGroup) {
+
+    zet_metric_group_handle_t hMetricGroup{};
+    metricGroupCreate(pName, pDescription, static_cast<zet_metric_group_sampling_type_flag_t>(samplingType), &hMetricGroup);
+
+    auto oaMetricGroupImp = static_cast<OaMetricGroupUserDefined *>(MetricGroup::fromHandle(hMetricGroup));
+    size_t errorStringSize = 0;
+    auto status = oaMetricGroupImp->addMetric(hMetric, &errorStringSize, nullptr);
+    if (status != ZE_RESULT_SUCCESS) {
+        oaMetricGroupImp->destroy();
+        return status;
+    }
+
+    *phMetricGroup = hMetricGroup;
+    return status;
+}
+
+ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
+                                                             const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
+                                                             const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
+                                                             uint32_t *maxMetricGroupCount,
+                                                             std::vector<zet_metric_group_handle_t> &metricGroupList) {
+
+    if (isImplicitScalingCapable()) {
+        return MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFromMetrics<OaMultiDeviceMetricGroupUserDefined>(
+            metricDeviceContext, *this, metricList,
+            metricGroupNamePrefix, description,
+            maxMetricGroupCount, metricGroupList);
+    }
+
+    const auto isCountCalculationPath = *maxMetricGroupCount == 0;
+
+    auto cleanupCreatedGroups = [](std::vector<zet_metric_group_handle_t> &createdMetricGroupList) {
+        for (auto &metricGroup : createdMetricGroupList) {
+            zetMetricGroupDestroyExp(metricGroup);
+        }
+        createdMetricGroupList.clear();
+    };
+
+    if (isCountCalculationPath) {
+        // Metric group can be for streamer and query from a single programmable
+        // So multiplying by 2 to estimate the maximum metric group count
+        *maxMetricGroupCount = static_cast<uint32_t>(metricList.size()) * 2u;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    // Arrange the metrics based on their sampling types
+    std::map<zet_metric_group_sampling_type_flags_t, std::vector<zet_metric_handle_t>> samplingTypeToMeticMap{};
+    for (auto &metric : metricList) {
+        auto metricImp = static_cast<OaMetricImp *>(Metric::fromHandle(metric));
+        auto metricFromProgrammable = static_cast<OaMetricFromProgrammable *>(metricImp);
+        auto samplingType = metricFromProgrammable->getSupportedSamplingType();
+        // Different metric groups based on sampling type
+        if (samplingType == ZET_INTEL_METRIC_SAMPLING_TYPE_EXP_FLAG_TIME_AND_EVENT_BASED) {
+            samplingTypeToMeticMap[ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED].push_back(metric);
+            samplingTypeToMeticMap[ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED].push_back(metric);
+        } else {
+            samplingTypeToMeticMap[samplingType].push_back(metric);
+        }
+    }
+
+    metricGroupList.clear();
+    uint32_t numMetricGroupsCreated = 0;
+
+    auto createMetricGroupAndAddMetric = [&](zet_metric_handle_t metricHandle,
+                                             zet_metric_group_sampling_type_flags_t samplingType,
+                                             zet_metric_group_handle_t &metricGroup) {
+        char metricGroupName[ZET_MAX_METRIC_GROUP_NAME] = {};
+        snprintf(metricGroupName, ZET_MAX_METRIC_GROUP_NAME - 1, "%s%d", metricGroupNamePrefix, numMetricGroupsCreated);
+        auto status = metricGroupCreateFromMetric(metricGroupName, description, samplingType, metricHandle, &metricGroup);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+        numMetricGroupsCreated++;
+        return ZE_RESULT_SUCCESS;
+    };
+
+    bool isMaxMetricGroupCountReached = numMetricGroupsCreated >= *maxMetricGroupCount;
+    // Process the metrics in each sampling type seperately
+    for (auto &entry : samplingTypeToMeticMap) {
+        if (isMaxMetricGroupCountReached) {
+            break;
+        }
+        std::vector<zet_metric_group_handle_t> perSamplingTypeMetricGroupList{};
+        zet_metric_group_handle_t currentMetricGroup{};
+        auto samplingType = entry.first;
+
+        // Create and add the metrics to group
+        for (uint32_t index = 0; index < static_cast<uint32_t>(entry.second.size()); index++) {
+
+            auto &metricToAdd = entry.second[index];
+            bool isAddedToExistingMetricGroup = false;
+            for (auto &perSamplingTypeMetricGroup : perSamplingTypeMetricGroupList) {
+                auto oaMetricGroup = static_cast<OaMetricGroupUserDefined *>(MetricGroup::fromHandle(perSamplingTypeMetricGroup));
+                size_t errorStringSize = 0;
+                auto status = oaMetricGroup->addMetric(metricToAdd, &errorStringSize, nullptr);
+                if (status == ZE_RESULT_SUCCESS) {
+                    isAddedToExistingMetricGroup = true;
+                    break;
+                }
+            }
+
+            if (!isAddedToExistingMetricGroup) {
+                if (isMaxMetricGroupCountReached) {
+                    break;
+                }
+                currentMetricGroup = nullptr;
+                auto status = createMetricGroupAndAddMetric(metricToAdd, samplingType, currentMetricGroup);
+                if (status != ZE_RESULT_SUCCESS) {
+                    cleanupCreatedGroups(metricGroupList);
+                    cleanupCreatedGroups(perSamplingTypeMetricGroupList);
+                    *maxMetricGroupCount = 0;
+                    return status;
+                }
+                perSamplingTypeMetricGroupList.push_back(currentMetricGroup);
+                isMaxMetricGroupCountReached = numMetricGroupsCreated >= *maxMetricGroupCount;
+            }
+        }
+        metricGroupList.insert(metricGroupList.end(), perSamplingTypeMetricGroupList.begin(), perSamplingTypeMetricGroupList.end());
+    }
+
+    // close all the metric groups
+    for (auto &metricGroup : metricGroupList) {
+        auto oaMetricGroup = static_cast<OaMetricGroupUserDefined *>(MetricGroup::fromHandle(metricGroup));
+        auto status = oaMetricGroup->close();
+        if (status != ZE_RESULT_SUCCESS) {
+            cleanupCreatedGroups(metricGroupList);
+            *maxMetricGroupCount = 0;
+            return status;
+        }
+    }
+
+    *maxMetricGroupCount = static_cast<uint32_t>(metricGroupList.size());
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t OaMetricSourceImp::metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
+    return getMetricEnumeration().metricProgrammableGet(pCount, phMetricProgrammables);
 }
 
 template <>

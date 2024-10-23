@@ -15,7 +15,7 @@ bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
     return getWddmAdapterId(major, minor, device);
 }
 
-MetricsDiscovery::IAdapter_1_9 *MetricEnumeration::getMetricsAdapter() {
+MetricsDiscovery::IAdapter_1_13 *MetricEnumeration::getMetricsAdapter() {
     return getWddmMetricsAdapter(this);
 }
 

@@ -468,6 +468,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Lo
 DECLARE_DEBUG_VARIABLE(bool, EnablePrivateBO, false, "Enable PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE extension creating VM_PRIVATE BOs")
 DECLARE_DEBUG_VARIABLE(bool, EnableAIL, true, "Enables AIL")
 DECLARE_DEBUG_VARIABLE(bool, EnableReservingInSvmRange, false, "Enables reserving virtual memory in the SVM range")
+DECLARE_DEBUG_VARIABLE(bool, EnableProgrammableMetricsSupport, false, "Enable Programmable Metrics support")
 DECLARE_DEBUG_VARIABLE(int64_t, VmBindWaitUserFenceTimeout, -1, "-1: default, >0: time in ns for wait function timeout")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")

@@ -58,6 +58,19 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesUnAvailableForSubDev
     EXPECT_TRUE(metricSource1.isAvailable());
 }
 
+HWTEST2_F(MetricIpSamplingEnumerationTest, GivenIpSamplingAvailableWhenCreateMetricGroupsFromMetricsIsCalledThenErrorIsReturned, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+    auto &metricSource = testDevices[0]->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+
+    std::vector<zet_metric_handle_t> metricList{};
+    const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP] = {};
+    const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION] = {};
+    uint32_t maxMetricGroupCount = 0;
+    std::vector<zet_metric_group_handle_t> metricGroupList = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, metricSource.createMetricGroupsFromMetrics(metricList, metricGroupNamePrefix, description, &maxMetricGroupCount, metricGroupList));
+}
+
 HWTEST2_F(MetricIpSamplingEnumerationTest, GivenDependenciesAvailableWhenMetricGroupGetIsCalledThenValidMetricGroupIsReturned, EustallSupportedPlatforms) {
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());

@@ -277,12 +277,12 @@ class MetricContextFixture : public DeviceFixture {
     MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
 
     // Metrics discovery device
-    Mock<IAdapterGroup_1_9> adapterGroup;
-    Mock<IAdapter_1_9> adapter;
-    Mock<IMetricsDevice_1_5> metricsDevice;
+    Mock<IAdapterGroup_1_13> adapterGroup;
+    Mock<IAdapter_1_13> adapter;
+    Mock<IMetricsDevice_1_13> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
     MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
-    void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice);
+    void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_13> &metricDevice);
     MockOAOsInterface *mockOAOsInterface;
     MockIpSamplingOsInterface *mockIpSamplingOsInterface;
 };
@@ -312,12 +312,12 @@ class MetricMultiDeviceFixture : public MultiDeviceFixture {
     MockMetricsDiscoveryApi mockMetricsDiscoveryApi = {};
 
     // Metrics discovery device
-    Mock<IAdapterGroup_1_9> adapterGroup;
-    Mock<IAdapter_1_9> adapter;
-    Mock<IMetricsDevice_1_5> metricsDevice;
+    Mock<IAdapterGroup_1_13> adapterGroup;
+    Mock<IAdapter_1_13> adapter;
+    Mock<IMetricsDevice_1_13> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
     //    MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
-    void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice);
+    void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_13> &metricDevice);
 };
 
 class MetricStreamerMultiDeviceFixture : public MetricMultiDeviceFixture {
