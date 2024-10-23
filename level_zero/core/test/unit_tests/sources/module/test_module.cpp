@@ -27,6 +27,7 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compiler_product_helper.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -3471,9 +3472,8 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingBuildFromSpirvThenF
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(nullptr);
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.options = "abcd";
@@ -3481,7 +3481,6 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingBuildFromSpirvThenF
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
 }
 
@@ -3489,9 +3488,8 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingCompileGenBinaryThe
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(nullptr);
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.options = "abcd";
@@ -3500,7 +3498,6 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingCompileGenBinaryThe
     TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
     result = moduleTu.compileGenBinary(inputArgs, false);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
 }
 
@@ -3508,9 +3505,8 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVThen
     auto &rootDeviceEnvironment = this->neoDevice->executionEnvironment->rootDeviceEnvironments[this->neoDevice->getRootDeviceIndex()];
     rootDeviceEnvironment->compilerInterface.reset(nullptr);
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
 
     L0::ModuleTranslationUnit moduleTu(this->device);
     moduleTu.options = "abcd";
@@ -3521,7 +3517,6 @@ HWTEST_F(ModuleTranslationUnitTest, WithNoCompilerWhenCallingStaticLinkSpirVThen
     std::vector<const ze_module_constants_t *> specConstants;
     result = moduleTu.staticLinkSpirV(inputSpirVs, inputModuleSizes, "", "", specConstants);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-    Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
 }
 

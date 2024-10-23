@@ -905,13 +905,11 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
     driverImp.initialize(&result);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
-    Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
 
     ASSERT_EQ(nullptr, L0::globalDriver);
@@ -929,13 +927,11 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithVal
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
     driverImp.initialize(&result);
     EXPECT_EQ(result, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
-    Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
 
     ASSERT_EQ(nullptr, L0::globalDriver);

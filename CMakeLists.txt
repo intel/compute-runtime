@@ -417,7 +417,7 @@ if(NOT DEFINED AOT_CONFIG_HEADERS_DIR)
 endif()
 
 # Intel Graphics Compiler detection
-include(cmake/find_igc.cmake)
+include(cmake${BRANCH_DIR_SUFFIX}/find_igc.cmake)
 
 # GmmLib detection
 include(cmake/find_gmmlib.cmake)

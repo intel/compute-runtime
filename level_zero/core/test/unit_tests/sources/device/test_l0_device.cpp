@@ -26,6 +26,8 @@
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_compiler_product_helper.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -321,16 +323,12 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryThenInvalidDependencyIsNo
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-
-    auto oldIgcDllName = Os::igcDllName;
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
     auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
     mockDevice->setPreemptionMode(NEO::PreemptionMode::Initial);
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    Os::igcDllName = oldIgcDllName;
 }
 
 TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyIsNotReturned) {
@@ -342,18 +340,15 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryThenInvalidDependencyIsNo
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
 
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
     auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
     mockDevice->setPreemptionMode(NEO::PreemptionMode::Initial);
 
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
+    Os::frontEndDllName = oldFclDllName;
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
-
-    Os::igcDllName = oldIgcDllName;
-    Os::frontEndDllName = oldFclDllName;
 }
 
 TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPreemptionThenInvalidDependencyIsReturned) {
@@ -364,8 +359,7 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPreemptionThe
     std::unique_ptr<DriverHandleImp> driverHandle(new DriverHandleImp);
     auto hwInfo = *NEO::defaultHwInfo;
 
-    auto oldIgcDllName = Os::igcDllName;
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
     mockDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
@@ -373,8 +367,6 @@ TEST(L0DeviceTest, givenDeviceWithoutIGCCompilerLibraryAndMidThreadPreemptionThe
     auto device = std::unique_ptr<L0::Device>(Device::create(driverHandle.get(), neoDevice.release(), false, &returnValue));
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
-
-    Os::igcDllName = oldIgcDllName;
 }
 
 TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPreemptionThenInvalidDependencyIsReturned) {
@@ -386,9 +378,8 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPreemptionThe
     auto hwInfo = *NEO::defaultHwInfo;
 
     auto oldFclDllName = Os::frontEndDllName;
-    auto oldIgcDllName = Os::igcDllName;
     Os::frontEndDllName = "_invalidFCL";
-    Os::igcDllName = "_invalidIGC";
+    auto igcNameGuard = NEO::pushIgcDllName("_invalidIGC");
     auto neoDevice = std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     auto mockDevice = reinterpret_cast<NEO::MockDevice *>(neoDevice.get());
     mockDevice->setPreemptionMode(NEO::PreemptionMode::MidThread);
@@ -397,7 +388,6 @@ TEST(L0DeviceTest, givenDeviceWithoutAnyCompilerLibraryAndMidThreadPreemptionThe
     ASSERT_NE(nullptr, device);
     EXPECT_EQ(returnValue, ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 
-    Os::igcDllName = oldIgcDllName;
     Os::frontEndDllName = oldFclDllName;
 }
 

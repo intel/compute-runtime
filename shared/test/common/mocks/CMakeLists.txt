@@ -65,6 +65,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_igc_path.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kmd_notify_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_product_helper.cpp

@@ -19,6 +19,11 @@
 
 namespace NEO {
 
+struct PopIgcDllNameGuard {
+    ~PopIgcDllNameGuard();
+};
+[[nodiscard]] std::unique_ptr<PopIgcDllNameGuard> pushIgcDllName(const char *name);
+
 struct MockCompilerDebugVars {
     enum class SipAddressingType {
         unknown,
@@ -61,9 +66,9 @@ struct MockCompilerEnableGuard {
     void Disable(); // NOLINT(readability-identifier-naming)
 
     const char *oldFclDllName;
-    const char *oldIgcDllName;
 
     bool enabled = false;
+    std::unique_ptr<PopIgcDllNameGuard> igcNameGuard;
 };
 
 void setFclDebugVars(MockCompilerDebugVars &dbgv);

@@ -11,6 +11,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 
 #include "mock/mock_ocloc_igc_facade.h"
 
@@ -23,6 +24,8 @@ TEST_F(OclocIgcFacadeTest, GivenMissingIgcLibraryWhenPreparingIgcThenFailureIsRe
     mockIgcFacade.shouldFailLoadingOfIgcLib = true;
 
     ::testing::internal::CaptureStdout();
+    std::string libName = "invalidigc.so";
+    auto igcNameGuard = NEO::pushIgcDllName(libName.c_str());
     const auto igcPreparationResult{mockIgcFacade.initialize(hwInfo)};
     const auto output{::testing::internal::GetCapturedStdout()};
 
@@ -30,7 +33,7 @@ TEST_F(OclocIgcFacadeTest, GivenMissingIgcLibraryWhenPreparingIgcThenFailureIsRe
     EXPECT_FALSE(mockIgcFacade.isInitialized());
 
     std::stringstream expectedErrorMessage;
-    expectedErrorMessage << "Error! Loading of IGC library has failed! Filename: " << Os::igcDllName << "\n";
+    expectedErrorMessage << "Error! Loading of IGC library has failed! Filename: " << libName << "\n";
 
     EXPECT_EQ(expectedErrorMessage.str(), output);
 }

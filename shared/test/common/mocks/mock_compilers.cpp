@@ -70,9 +70,8 @@ void MockCompilerEnableGuard::Enable() {
     if (enabled == false) {
         // load mock from self (don't load dynamic libraries)
         this->oldFclDllName = Os::frontEndDllName;
-        this->oldIgcDllName = Os::igcDllName;
         Os::frontEndDllName = "";
-        Os::igcDllName = "";
+        igcNameGuard = pushIgcDllName("");
         MockCIFMain::setGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
         MockCIFMain::setGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
         if (fclDebugVars == nullptr) {
@@ -89,7 +88,7 @@ void MockCompilerEnableGuard::Enable() {
 void MockCompilerEnableGuard::Disable() {
     if (enabled) {
         Os::frontEndDllName = this->oldFclDllName;
-        Os::igcDllName = this->oldIgcDllName;
+        igcNameGuard.reset();
 
         MockCIFMain::removeGlobalCreatorFunc<NEO::MockIgcOclDeviceCtx>();
         MockCIFMain::removeGlobalCreatorFunc<NEO::MockFclOclDeviceCtx>();
