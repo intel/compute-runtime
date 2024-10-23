@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ ze_result_t WddmFirmwareImp::getFirmwareVersion(std::string fwType, zes_firmware
 
 void WddmFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {
     if (ZE_RESULT_SUCCESS != getFirmwareVersion(osFwType, pProperties)) {
-        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     }
     pProperties->canControl = true; // Assuming that user has permission to flash the firmware
 }

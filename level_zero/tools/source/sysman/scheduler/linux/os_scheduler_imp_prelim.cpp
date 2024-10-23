@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@ const std::string LinuxSchedulerImp::heartbeatIntervalMilliSecs("heartbeat_inter
 const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::engineDir("engine");
 const std::string LinuxSchedulerImp::enableEuDebug("prelim_enable_eu_debug");
-constexpr uint16_t milliSecsToMicroSecs = 1000;
 
 static const std::map<__u16, std::string> i915EngineClassToSysfsEngineMap = {
     {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, "rcs"},

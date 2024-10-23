@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,8 +73,8 @@ void LinuxPciImp::getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) {
     }
 
     uint16_t linkCaps = L0::PciUtil::getWordFromConfig(linkCapPos, configMemory.data());
-    maxLinkSpeed = convertPciGenToLinkSpeed(BITS(linkCaps, 0, 4));
-    maxLinkWidth = BITS(linkCaps, 4, 6);
+    maxLinkSpeed = convertPciGenToLinkSpeed(bits(linkCaps, 0, 4));
+    maxLinkWidth = bits(linkCaps, 4, 6);
 
     return;
 }
@@ -181,7 +181,7 @@ uint16_t LinuxPciImp::getLinkCapabilityPos(uint8_t *configMem) {
         id = L0::PciUtil::getByteFromConfig(pos + PCI_CAP_LIST_ID, configMem);
         if (id == PCI_CAP_ID_EXP) {
             capRegister = L0::PciUtil::getWordFromConfig(pos + PCI_CAP_FLAGS, configMem);
-            type = BITS(capRegister, 4, 4);
+            type = bits(capRegister, 4, 4);
 
             // Root Complex Integrated end point and
             // Root Complex Event collector will not implement link capabilities
@@ -250,11 +250,11 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
 
     // Only first Control register(at offset 008h, as shown above), could tell about number of resizable Bars
     controlRegister = L0::PciUtil::getDwordFromConfig(rebarCapabilityPos + PCI_REBAR_CTRL, configMemory.data());
-    nBars = BITS(controlRegister, 5, 3); // control register's bits 5,6 and 7 contain number of resizable bars information
+    nBars = bits(controlRegister, 5, 3); // control register's bits 5,6 and 7 contain number of resizable bars information
     for (auto barNumber = 0u; barNumber < nBars; barNumber++) {
         uint32_t barId = 0;
         controlRegister = L0::PciUtil::getDwordFromConfig(rebarCapabilityPos + PCI_REBAR_CTRL, configMemory.data());
-        barId = BITS(controlRegister, 0, 3); // Control register's bit 0,1,2 tells the index of bar
+        barId = bits(controlRegister, 0, 3); // Control register's bit 0,1,2 tells the index of bar
         if (barId == barIndex) {
             isBarResizable = true;
             break;
@@ -278,7 +278,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
 
     // Control register's bit 8 to 13 indicates current BAR size in encoded form.
     // Example, real value of current size could be 2^currentSize MB
-    auto currentSize = BITS(controlRegister, 8, 6);
+    auto currentSize = bits(controlRegister, 8, 6);
 
     // If current size is equal to larget possible BAR size, it indicates resizable BAR is enabled.
     return (currentSize == largestPossibleBarSize);

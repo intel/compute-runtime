@@ -288,7 +288,7 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPciStateAndSp
 }
 
 TEST_F(SysmanDevicePciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
-    for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
+    for (int32_t i = static_cast<int32_t>(PciGenerations::pciGen1); i <= static_cast<int32_t>(PciGenerations::pciGen5); i++) {
         double speed = convertPciGenToLinkSpeed(i);
         int32_t gen = convertLinkSpeedToPciGen(speed);
         EXPECT_EQ(i, gen);

@@ -146,13 +146,13 @@ void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERT
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(brandName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
-        std::strncpy(brandName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(brandName, vendorIntel.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
-        std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(brandName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     }
 }
 
@@ -168,15 +168,15 @@ void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPE
     std::stringstream pciId;
     pciId << std::hex << coreDeviceProperties.vendorId;
     if (("0x" + pciId.str()).compare(intelPciId) == 0) {
-        std::strncpy(vendorName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(vendorName, vendorIntel.data(), ZES_STRING_PROPERTY_SIZE);
     } else {
-        std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        std::strncpy(vendorName, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     }
 }
 
 void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
-    std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+    std::strncpy(driverVersion, unknown.data(), ZES_STRING_PROPERTY_SIZE);
     ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         if (ZE_RESULT_ERROR_NOT_AVAILABLE != result) {

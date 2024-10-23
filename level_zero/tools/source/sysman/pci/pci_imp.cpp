@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,19 +48,19 @@ int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
 
 double convertPciGenToLinkSpeed(uint32_t gen) {
     switch (gen) {
-    case PciGenerations::PciGen1: {
+    case static_cast<uint32_t>(PciGenerations::pciGen1): {
         return PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond;
     } break;
-    case PciGenerations::PciGen2: {
+    case static_cast<uint32_t>(PciGenerations::pciGen2): {
         return PciLinkSpeeds::pci5GigaTransfersPerSecond;
     } break;
-    case PciGenerations::PciGen3: {
+    case static_cast<uint32_t>(PciGenerations::pciGen3): {
         return PciLinkSpeeds::pci8GigaTransfersPerSecond;
     } break;
-    case PciGenerations::PciGen4: {
+    case static_cast<uint32_t>(PciGenerations::pciGen4): {
         return PciLinkSpeeds::pci16GigaTransfersPerSecond;
     } break;
-    case PciGenerations::PciGen5: {
+    case static_cast<uint32_t>(PciGenerations::pciGen5): {
         return PciLinkSpeeds::pci32GigaTransfersPerSecond;
     } break;
     default: {
@@ -71,15 +71,15 @@ double convertPciGenToLinkSpeed(uint32_t gen) {
 
 int32_t convertLinkSpeedToPciGen(double speed) {
     if (speed == PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond) {
-        return PciGenerations::PciGen1;
+        return static_cast<int32_t>(PciGenerations::pciGen1);
     } else if (speed == PciLinkSpeeds::pci5GigaTransfersPerSecond) {
-        return PciGenerations::PciGen2;
+        return static_cast<int32_t>(PciGenerations::pciGen2);
     } else if (speed == PciLinkSpeeds::pci8GigaTransfersPerSecond) {
-        return PciGenerations::PciGen3;
+        return static_cast<int32_t>(PciGenerations::pciGen3);
     } else if (speed == PciLinkSpeeds::pci16GigaTransfersPerSecond) {
-        return PciGenerations::PciGen4;
+        return static_cast<int32_t>(PciGenerations::pciGen4);
     } else if (speed == PciLinkSpeeds::pci32GigaTransfersPerSecond) {
-        return PciGenerations::PciGen5;
+        return static_cast<int32_t>(PciGenerations::pciGen5);
     } else {
         return -1;
     }

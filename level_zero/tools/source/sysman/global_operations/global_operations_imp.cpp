@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,11 +81,11 @@ void GlobalOperationsImp::init() {
     pOsGlobalOperations->getBrandName(sysmanProperties.brandName);
     memset(sysmanProperties.boardNumber, 0, ZES_STRING_PROPERTY_SIZE);
     if (!pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber)) {
-        memcpy_s(sysmanProperties.boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+        memcpy_s(sysmanProperties.boardNumber, ZES_STRING_PROPERTY_SIZE, unknown.data(), unknown.length() + 1);
     }
     memset(sysmanProperties.serialNumber, 0, ZES_STRING_PROPERTY_SIZE);
     if (!pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber)) {
-        memcpy_s(sysmanProperties.serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.c_str(), unknown.length() + 1);
+        memcpy_s(sysmanProperties.serialNumber, ZES_STRING_PROPERTY_SIZE, unknown.data(), unknown.length() + 1);
     }
 }
 void GlobalOperationsImp::initGlobalOperations() {

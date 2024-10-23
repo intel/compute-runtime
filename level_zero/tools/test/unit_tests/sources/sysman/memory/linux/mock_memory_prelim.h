@@ -253,7 +253,7 @@ struct MockMemoryPmt : public PlatformMonitoringTech {
     bool mockVfid1Status = false;
     bool isRepeated = false;
 
-    void setGuid(std::string guid) {
+    void setGuid(std::string_view guid) {
         this->guid = guid;
     }
 
