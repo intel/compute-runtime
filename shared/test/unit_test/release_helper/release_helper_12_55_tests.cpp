@@ -45,10 +45,6 @@ TEST_F(ReleaseHelper1255Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper1255Tests, whenGettingMaxPreferredSlmSizeThenSizeIsNotModified) {
-    whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
-}
-
 TEST_F(ReleaseHelper1255Tests, whenShouldAdjustCalledThenFalseReturned) {
     whenShouldAdjustCalledThenFalseReturned();
 }

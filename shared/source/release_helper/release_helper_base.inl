@@ -60,11 +60,6 @@ inline bool ReleaseHelperHw<releaseType>::isAuxSurfaceModeOverrideRequired() con
 }
 
 template <ReleaseType releaseType>
-int ReleaseHelperHw<releaseType>::getProductMaxPreferredSlmSize(int preferredEnumValue) const {
-    return preferredEnumValue;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
     return true;
 }

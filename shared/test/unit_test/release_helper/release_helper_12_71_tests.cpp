@@ -46,10 +46,6 @@ TEST_F(ReleaseHelper1271Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper1271Tests, whenGettingMaxPreferredSlmSizeThenSizeIsNotModified) {
-    whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
-}
-
 TEST_F(ReleaseHelper1271Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }

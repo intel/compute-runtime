@@ -18,19 +18,6 @@ using namespace NEO;
 ReleaseHelperTestsBase::ReleaseHelperTestsBase() = default;
 ReleaseHelperTestsBase ::~ReleaseHelperTestsBase() = default;
 
-void ReleaseHelperTestsBase::whenGettingMaxPreferredSlmSizeThenSizeIsNotModified() {
-    for (auto &revision : getRevisions()) {
-        ipVersion.revision = revision;
-        releaseHelper = ReleaseHelper::create(ipVersion);
-        ASSERT_NE(nullptr, releaseHelper);
-        for (auto i = 0; i < 10; i++) {
-            auto preferredEnumValue = i;
-            auto expectedEnumValue = i;
-            EXPECT_EQ(expectedEnumValue, releaseHelper->getProductMaxPreferredSlmSize(preferredEnumValue));
-        }
-    }
-}
-
 void ReleaseHelperTestsBase::whenShouldAdjustCalledThenTrueReturned() {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;

@@ -45,11 +45,6 @@ TEST_F(ReleaseHelper2004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
     }
 }
-
-TEST_F(ReleaseHelper2004Tests, whenGettingMaxPreferredSlmSizeThenSizeIsNotModified) {
-    whenGettingMaxPreferredSlmSizeThenSizeIsNotModified();
-}
-
 TEST_F(ReleaseHelper2004Tests, whenShouldAdjustCalledThenTrueReturned) {
     whenShouldAdjustCalledThenTrueReturned();
 }
