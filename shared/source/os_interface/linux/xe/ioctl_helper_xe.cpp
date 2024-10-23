@@ -631,11 +631,15 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     create.size = allocSize;
     MemoryClassInstance mem = memClassInstances[regionsSize - 1];
     std::bitset<32> memoryInstances{};
+    bool isSysMemOnly = true;
     for (const auto &memoryClassInstance : memClassInstances) {
         memoryInstances.set(memoryClassInstance.memoryInstance);
+        if (memoryClassInstance.memoryClass != drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM) {
+            isSysMemOnly = false;
+        }
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode(isCoherent, mem.memoryClass == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
+    create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
     printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
                      create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
@@ -661,10 +665,14 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     auto banks = std::bitset<4>(memoryBanks);
     size_t currentBank = 0;
     size_t i = 0;
+    bool isSysMemOnly = true;
     while (i < banks.count()) {
         if (banks.test(currentBank)) {
             auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(1u << currentBank, *pHwInfo);
             memoryInstances.set(regionClassAndInstance.memoryInstance);
+            if (regionClassAndInstance.memoryClass != drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM) {
+                isSysMemOnly = false;
+            }
             i++;
         }
         currentBank++;
@@ -674,7 +682,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
         memoryInstances.set(regionClassAndInstance.memoryInstance);
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
-    create.cpu_caching = this->getCpuCachingMode(isCoherent, create.placement == drm_xe_memory_class::DRM_XE_MEM_REGION_CLASS_SYSMEM);
+    create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
     printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
                      create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
