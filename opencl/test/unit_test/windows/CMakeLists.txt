@@ -29,7 +29,7 @@ if(WIN32)
                  ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_wddm.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.cpp
+                 ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows${BRANCH_DIR_SUFFIX}/options.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/setup_external_dependencies_drm_or_wddm.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
                  ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls_winmm.cpp
