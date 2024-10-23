@@ -676,7 +676,6 @@ struct TagUpdateMockCommandStreamReceiver : public MockCommandStreamReceiver {
 
 struct DirectSubmissionIdleDetectionTests : public ::testing::Test {
     void SetUp() override {
-        debugManager.flags.DirectSubmissionControllerIdleDetection.set(true);
         controller = std::make_unique<DirectSubmissionControllerMock>();
         executionEnvironment.prepareRootDeviceEnvironments(1);
         executionEnvironment.initializeMemoryManager();
@@ -698,8 +697,6 @@ struct DirectSubmissionIdleDetectionTests : public ::testing::Test {
     void TearDown() override {
         controller->unregisterDirectSubmission(csr.get());
     }
-
-    DebugManagerStateRestore restorer;
 
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<OsContext> osContext;
@@ -747,6 +744,26 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskLowerThanTaskCo
     EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
     EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
     EXPECT_EQ(1u, csr->flushTagUpdateCalledTimes);
+}
+
+TEST_F(DirectSubmissionIdleDetectionTests, givenDebugFlagSetWhenTaskCountNotUpdatedAndGpuBusyThenTerminateDirectSubmission) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionControllerIdleDetection.set(false);
+    controller->unregisterDirectSubmission(csr.get());
+    controller = std::make_unique<DirectSubmissionControllerMock>();
+    controller->timeoutElapsedReturnValue.store(true);
+    controller->registerDirectSubmission(csr.get());
+
+    csr->taskCount.store(10u);
+    controller->checkNewSubmissions();
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = true;
+
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
 }
 
 } // namespace NEO

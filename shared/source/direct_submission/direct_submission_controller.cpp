@@ -31,7 +31,7 @@ DirectSubmissionController::DirectSubmissionController() {
     if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
         maxTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
     }
-    isCsrIdleDetectionEnabled = false;
+    isCsrIdleDetectionEnabled = true;
     if (debugManager.flags.DirectSubmissionControllerIdleDetection.get() != -1) {
         isCsrIdleDetectionEnabled = debugManager.flags.DirectSubmissionControllerIdleDetection.get();
     }
