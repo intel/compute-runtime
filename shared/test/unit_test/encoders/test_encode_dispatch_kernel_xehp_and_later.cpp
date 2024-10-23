@@ -68,7 +68,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpAndLaterWhenDispatchingKernelThenSetDenormMode) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -371,8 +371,8 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDispatchingKernelThenPostSyncIsAdded) {
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA = typename DefaultWalkerType::PostSyncType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -716,14 +716,14 @@ HWTEST2_F(CommandEncodeStatesTest, givenInterfaceDescriptorDataWhenForceThreadGr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInterfaceDescriptorDataWhenForceThreadGroupDispatchSizeVariableIsSetThenThreadGroupDispatchSizeIsChanged) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using INTERFACE_DESCRIPTOR_DATA = typename DefaultWalkerType::InterfaceDescriptorType;
     INTERFACE_DESCRIPTOR_DATA iddArg;
     DefaultWalkerType walkerCmd{};
     walkerCmd.setThreadGroupIdXDimension(1);
     walkerCmd.setThreadGroupIdYDimension(1);
     walkerCmd.setThreadGroupIdZDimension(1);
-    iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+    iddArg = FamilyType::template getInitInterfaceDescriptor<INTERFACE_DESCRIPTOR_DATA>();
     iddArg.setNumberOfThreadsInGpgpuThreadGroup(1u);
 
     const uint32_t forceThreadGroupDispatchSize = 1;
@@ -1369,8 +1369,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhenTimestampPostSyncRequiredThenTimestampPostSyncIsAdded) {
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA = typename DefaultWalkerType::PostSyncType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;

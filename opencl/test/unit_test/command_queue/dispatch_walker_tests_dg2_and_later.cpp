@@ -92,6 +92,7 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramCompute
 
 HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData, matcherDG2AndLater) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using POSTSYNC_DATA = typename DefaultWalkerType::PostSyncType;
 
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
@@ -125,7 +126,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
     auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
     auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walker->getPostSync().getOperation());
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walker->getPostSync().getOperation());
     EXPECT_TRUE(walker->getPostSync().getDataportPipelineFlush());
     EXPECT_TRUE(walker->getPostSync().getDataportSubsliceCacheFlush());
     EXPECT_EQ(expectedMocs, walker->getPostSync().getMocs());
@@ -135,7 +136,7 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
     auto secondWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++hwParser.itorWalker, hwParser.cmdList.end());
     auto secondWalker = genCmdCast<DefaultWalkerType *>(*secondWalkerItor);
 
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, secondWalker->getPostSync().getOperation());
+    EXPECT_EQ(POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, secondWalker->getPostSync().getOperation());
     EXPECT_TRUE(secondWalker->getPostSync().getDataportPipelineFlush());
     EXPECT_TRUE(secondWalker->getPostSync().getDataportSubsliceCacheFlush());
     EXPECT_EQ(expectedMocs, walker->getPostSync().getMocs());

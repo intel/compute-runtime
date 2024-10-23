@@ -452,6 +452,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+    using PostSyncType = typename DefaultWalkerType::PostSyncType;
 
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
@@ -484,7 +485,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getRootDeviceEnvironment()) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
     auto walker = genCmdCast<DefaultWalkerType *>(*hwParser.itorWalker);
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, walker->getPostSync().getOperation());
+    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, walker->getPostSync().getOperation());
     EXPECT_TRUE(walker->getPostSync().getDataportPipelineFlush());
     EXPECT_EQ(expectedMocs, walker->getPostSync().getMocs());
     auto contextStartAddress = TimestampPacketHelper::getContextStartGpuAddress(*timestampPacketContainer.peekNodes()[0]);
@@ -493,7 +494,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     auto secondWalkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(++hwParser.itorWalker, hwParser.cmdList.end());
     auto secondWalker = genCmdCast<DefaultWalkerType *>(*secondWalkerItor);
 
-    EXPECT_EQ(FamilyType::POSTSYNC_DATA::OPERATION::OPERATION_WRITE_TIMESTAMP, secondWalker->getPostSync().getOperation());
+    EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, secondWalker->getPostSync().getOperation());
     EXPECT_TRUE(secondWalker->getPostSync().getDataportPipelineFlush());
     EXPECT_EQ(expectedMocs, walker->getPostSync().getMocs());
     contextStartAddress = TimestampPacketHelper::getContextStartGpuAddress(*timestampPacketContainer.peekNodes()[1]);
