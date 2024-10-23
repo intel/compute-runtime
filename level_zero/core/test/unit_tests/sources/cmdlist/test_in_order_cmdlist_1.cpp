@@ -578,6 +578,29 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUser
     EXPECT_TRUE(ultCsr->waitUserFenecParams.userInterrupt);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventAndTbxModeWhenWaitingThenDontWaitForUserFence, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr->waitUserFenecParams.forceRetStatusEnabled = true;
+    ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    auto eventPool = createEvents<FamilyType>(2, false);
+    events[0]->enableKmdWaitMode();
+    events[0]->enableInterruptMode();
+
+    events[1]->enableKmdWaitMode();
+    events[1]->enableInterruptMode();
+    events[1]->externalInterruptId = 0x123;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+
+    events[0]->hostSynchronize(2);
+    events[1]->hostSynchronize(2);
+    EXPECT_EQ(0u, ultCsr->waitUserFenecParams.callCount);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenPassCorrectAllocation, IsAtLeastXeHpCore) {
     debugManager.flags.InOrderDuplicatedCounterStorageEnabled.set(0);
 

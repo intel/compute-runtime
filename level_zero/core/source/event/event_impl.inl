@@ -656,8 +656,11 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
+
+    const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && !this->tbxMode;
+
     do {
-        if (isKmdWaitModeEnabled() && isCounterBased()) {
+        if (fenceWait) {
             ret = waitForUserFence(timeout);
         } else {
             ret = queryStatus();
