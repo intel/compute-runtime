@@ -984,7 +984,7 @@ set(BUILTINS_BINARIES_BINDLESS_LIB_NAME "builtins_binaries_bindless")
 set(BUILTINS_SPIRV_LIB_NAME "builtins_spirv")
 
 if(WIN32)
-  set(NEO_EXTRA_LIBS Ws2_32)
+  set(NEO_EXTRA_LIBS Ws2_32 winmm)
 else()
   set(NEO_EXTRA_LIBS dl pthread rt)
 endif()

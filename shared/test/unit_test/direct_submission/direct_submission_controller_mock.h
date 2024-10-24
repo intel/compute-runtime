@@ -32,10 +32,14 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::timeSinceLastCheck;
 
     bool sleep(std::unique_lock<std::mutex> &lock) override {
-        auto ret = sleepReturnValue.load();
         this->sleepCalled = true;
-        sleepReturnValue.store(false);
-        return ret;
+        if (callBaseSleepMethod) {
+            return DirectSubmissionController::sleep(lock);
+        } else {
+            auto ret = sleepReturnValue.load();
+            sleepReturnValue.store(false);
+            return ret;
+        }
     }
 
     SteadyClock::time_point getCpuTimestamp() override {
@@ -55,5 +59,6 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     std::atomic<bool> sleepReturnValue{false};
     std::atomic<TimeoutElapsedMode> timeoutElapsedReturnValue{TimeoutElapsedMode::notElapsed};
     std::atomic<bool> timeoutElapsedCallBase{false};
+    bool callBaseSleepMethod = false;
 };
 } // namespace NEO

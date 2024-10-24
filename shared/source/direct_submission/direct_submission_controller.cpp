@@ -188,10 +188,6 @@ void DirectSubmissionController::checkNewSubmissions() {
     }
 }
 
-bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
-    return NEO::waitOnConditionWithPredicate(condVar, lock, getSleepValue(), [&] { return !pagingFenceRequests.empty(); });
-}
-
 bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock) {
     if (csr->peekLatestFlushedTaskCount() == csr->peekTaskCount()) {
         return !csr->isBusy();
