@@ -36,6 +36,8 @@ const std::set<std::string_view> applicationsBufferPoolDisabled = {};
 
 const std::set<std::string_view> applicationsOverfetchDisabled = {};
 
+const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited = {};
+
 AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
 
 void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {

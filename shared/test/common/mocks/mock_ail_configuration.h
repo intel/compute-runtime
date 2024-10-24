@@ -33,6 +33,11 @@ class MockAILConfiguration : public AILConfiguration {
         return isBufferPoolEnabledReturn;
     }
 
+    bool limitAmountOfDeviceMemoryForRecyclingReturn = false;
+    bool limitAmountOfDeviceMemoryForRecycling() override {
+        return limitAmountOfDeviceMemoryForRecyclingReturn;
+    }
+
     bool fallbackToLegacyValidationLogic = false;
     bool useLegacyValidationLogic() override {
         return fallbackToLegacyValidationLogic;

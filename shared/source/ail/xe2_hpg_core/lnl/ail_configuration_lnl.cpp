@@ -19,6 +19,12 @@ bool AILConfigurationHw<IGFX_LUNARLAKE>::isBufferPoolEnabled() {
 }
 
 template <>
+bool AILConfigurationHw<IGFX_LUNARLAKE>::limitAmountOfDeviceMemoryForRecycling() {
+    auto iterator = applicationsDeviceUSMRecyclingLimited.find(processName);
+    return iterator != applicationsDeviceUSMRecyclingLimited.end();
+}
+
+template <>
 bool AILConfigurationHw<IGFX_LUNARLAKE>::is256BPrefetchDisableRequired() {
     auto iterator = applicationsOverfetchDisabled.find(processName);
     return iterator != applicationsOverfetchDisabled.end();

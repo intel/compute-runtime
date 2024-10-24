@@ -58,6 +58,12 @@ bool AILConfigurationHw<IGFX_METEORLAKE>::isBufferPoolEnabled() {
     return iterator == applicationsBufferPoolDisabled.end();
 }
 
+template <>
+bool AILConfigurationHw<IGFX_METEORLAKE>::limitAmountOfDeviceMemoryForRecycling() {
+    auto iterator = applicationsDeviceUSMRecyclingLimited.find(processName);
+    return iterator != applicationsDeviceUSMRecyclingLimited.end();
+}
+
 template class AILConfigurationHw<IGFX_METEORLAKE>;
 
 } // namespace NEO

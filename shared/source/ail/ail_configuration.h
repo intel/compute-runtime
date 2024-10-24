@@ -82,6 +82,8 @@ class AILConfiguration {
 
     virtual bool disableBindlessAddressing() = 0;
 
+    virtual bool limitAmountOfDeviceMemoryForRecycling() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -96,6 +98,7 @@ extern const std::set<std::string_view> applicationsContextSyncFlag;
 extern const std::set<std::string_view> applicationsForceRcsDg2;
 extern const std::set<std::string_view> applicationsBufferPoolDisabled;
 extern const std::set<std::string_view> applicationsOverfetchDisabled;
+extern const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited;
 
 template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
@@ -115,6 +118,7 @@ class AILConfigurationHw : public AILConfiguration {
     bool forceRcs() override;
     bool handleDivergentBarriers() override;
     bool disableBindlessAddressing() override;
+    bool limitAmountOfDeviceMemoryForRecycling() override;
 
     bool shouldForceRcs = false;
     bool shouldHandleDivergentBarriers = false;

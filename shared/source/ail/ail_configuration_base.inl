@@ -61,4 +61,9 @@ inline void AILConfigurationHw<product>::setDisableBindlessAddressing(bool val) 
     shouldDisableBindlessAddressing = val;
 }
 
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::limitAmountOfDeviceMemoryForRecycling() {
+    return false;
+}
+
 } // namespace NEO

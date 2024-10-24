@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -713,7 +714,9 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
 void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     this->usmDeviceAllocationsCache.allocations.reserve(128u);
     const auto totalDeviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(device.getDeviceBitfield().to_ulong()));
-    auto fractionOfTotalMemoryForRecycling = 0.08;
+    auto ailConfiguration = device.getAilConfigurationHelper();
+    const bool limitDeviceMemoryForReuse = ailConfiguration && ailConfiguration->limitAmountOfDeviceMemoryForRecycling();
+    auto fractionOfTotalMemoryForRecycling = limitDeviceMemoryForReuse ? 0.02 : 0.08;
     if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
         fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
     }

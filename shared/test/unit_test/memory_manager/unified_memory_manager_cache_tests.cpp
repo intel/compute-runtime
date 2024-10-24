@@ -8,6 +8,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/mocks/mock_ail_configuration.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -136,6 +137,8 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEn
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     auto device = deviceFactory->rootDevices[0];
     RAIIProductHelperFactory<MockProductHelper> raii(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    MockAILConfiguration mockAilConfigurationHelper;
+    device->mockAilConfigurationHelper = &mockAilConfigurationHelper;
     {
         raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = false;
         auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
@@ -150,6 +153,16 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEn
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
         const auto expectedMaxSize = static_cast<size_t>(0.08 * device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ullong())));
+        EXPECT_EQ(expectedMaxSize, svmManager->usmDeviceAllocationsCache.maxSize);
+    }
+    {
+        raii.mockProductHelper->isDeviceUsmAllocationReuseSupportedResult = true;
+        mockAilConfigurationHelper.limitAmountOfDeviceMemoryForRecyclingReturn = true;
+        auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+        EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
+        svmManager->initUsmAllocationsCaches(*device);
+        EXPECT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
+        const auto expectedMaxSize = static_cast<size_t>(0.02 * device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ullong())));
         EXPECT_EQ(expectedMaxSize, svmManager->usmDeviceAllocationsCache.maxSize);
     }
 }
