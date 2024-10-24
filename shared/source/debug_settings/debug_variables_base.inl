@@ -295,8 +295,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, DeferStateInitSubmissionToFirstRegularUsage, -1,
 DECLARE_DEBUG_VARIABLE(int32_t, ForceNonWalkerSplitMemoryCopy, -1, "-1: default, 0: disabled, 1: enabled. If set, memory copy will be executed as single byte copy Walker without performance optimizations")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampWidth, -1, "-1: default from KMD, > 0: Override timestamp width used for profiling. Requires XeKMD kernel.")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdFifoPollInterval, -1, "-1: default , > 0: Fifo will be polled based on input in milliseconds.")
-DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdInterruptTimeout, -1, "-1: default , > 0: Fifo will be polled based on input in milliseconds. Default is 2000 milliseconds")
-DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdMaxReadWriteRetry, -1, "-1: default , > 0: Fifo will be polled based on input in milliseconds. Default is 3")
+DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdInterruptTimeout, -1, "-1: default , > 0: interruptTimeout based on input in milliseconds. Default is 2000 milliseconds")
+DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdMaxReadWriteRetry, -1, "-1: default , > 0: max pread/pwrite retry attempts in read/writeGpuMemory calls based on input in milliseconds. Default is 3")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
