@@ -1352,8 +1352,6 @@ TEST_F(ContextTest, whenCallingVirtualMemoryGetAttributeWithInvalidValuesThenFai
 }
 
 TEST_F(ContextTest, whenCallingVirtualMemoryFreeWithInvalidValuesThenFailuresReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1483,8 +1481,6 @@ class ReserveMemoryManagerMock : public NEO::MemoryManager {
 };
 
 TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartInSvmRangeWithSuccessfulAllocationThenSuccessReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     ze_context_handle_t hContext{};
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1516,8 +1512,6 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartInSvmRangeWithSuccessf
 }
 
 TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartAboveSvmRangeWithSuccessfulAllocationThenSuccessReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     ze_context_handle_t hContext{};
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1691,8 +1685,6 @@ TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryWithMultiplePhysica
 }
 
 TEST_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOutOfMemoryReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1728,8 +1720,6 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOutOfM
 }
 
 TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithInvalidArgumentsThenUnsupportedSizeReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1827,8 +1817,6 @@ TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithValidMultiPageSizeInA
 }
 
 TEST_F(ContextTest, whenCallingVirtualMemoryReservationWithOverlappingReservationRangeThenSuccessReturned) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
 
@@ -1889,8 +1877,6 @@ class MockCpuInfoOverrideVirtualAddressSize {
 };
 
 TEST_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(32);
 
     ze_context_handle_t hContext;
@@ -1936,8 +1922,6 @@ TEST_F(ContextTest, Given32BitCpuAddressWidthWhenCallingVirtualMemoryReservation
 }
 
 TEST_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(48);
 
     ze_context_handle_t hContext;
@@ -1982,8 +1966,6 @@ TEST_F(ContextTest, Given48BitCpuAddressWidthWhenCallingVirtualMemoryReservation
 }
 
 TEST_F(ContextTest, Given57BitCpuAddressWidthWhenCallingVirtualMemoryReservationCorrectAllocationMethodIsSelected) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.EnableReservingInSvmRange.set(true);
     MockCpuInfoOverrideVirtualAddressSize overrideCpuInfo(57);
 
     ze_context_handle_t hContext;
