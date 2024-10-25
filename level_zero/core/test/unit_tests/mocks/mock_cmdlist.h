@@ -472,7 +472,7 @@ struct MockCommandList : public CommandList {
                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch));
 
     ADDMETHOD_NOBASE(appendSignalEvent, ze_result_t, ZE_RESULT_SUCCESS,
-                     (ze_event_handle_t hEvent));
+                     (ze_event_handle_t hEvent, bool relaxedOrderingDispatch));
 
     ADDMETHOD_NOBASE(appendWaitOnEvents, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numEvents,

@@ -33,7 +33,7 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    auto result = commandList->appendSignalEvent(event->toHandle());
+    auto result = commandList->appendSignalEvent(event->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -51,7 +51,7 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
 }
 
 HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenEventPoolGraphicsAllocationIsAddedToResidencyContainer) {
-    auto result = commandList->appendSignalEvent(event->toHandle());
+    auto result = commandList->appendSignalEvent(event->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
@@ -81,7 +81,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     auto eventHostVisible = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolHostVisible.get(), &eventDesc, device));
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
-    result = commandList->appendSignalEvent(eventHostVisible->toHandle());
+    result = commandList->appendSignalEvent(eventHostVisible->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -365,7 +365,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
-    commandList->appendSignalEvent(event->toHandle());
+    commandList->appendSignalEvent(event->toHandle(), false);
     auto contextOffset = event->getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
@@ -410,7 +410,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
-    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle());
+    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
@@ -455,7 +455,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
     event->setEventTimestampFlag(true);
 
     commandList->partitionCount = 2;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), false));
 
     size_t expectedSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
 
@@ -510,7 +510,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenMultiTileAndDynamicPostSy
 
     offset = cmdStream->getUsed();
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle()));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendSignalEvent(event->toHandle(), false));
 
     expectedSize = sizeof(MI_STORE_DATA_IMM);
     usedSize = cmdStream->getUsed() - offset;
@@ -547,7 +547,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = 0;
 
     commandList->partitionCount = packets;
-    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle());
+    ze_result_t returnValue = commandList->appendSignalEvent(event->toHandle(), false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(packets, event->getPacketsInUse());
 
@@ -885,7 +885,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
 
     event->setEventTimestampFlag(false);
 
-    commandList->appendSignalEvent(event->toHandle());
+    commandList->appendSignalEvent(event->toHandle(), false);
     size_t usedAfterSize = cmdStream->getUsed();
 
     GenCmdList cmdList;

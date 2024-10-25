@@ -1496,7 +1496,7 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
     }
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
-    immCmdList->appendSignalEvent(eventHandle);
+    immCmdList->appendSignalEvent(eventHandle, false);
     if (dcFlushRequired) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
     } else {
@@ -1623,7 +1623,7 @@ HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEven
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, copyOnlyCmdList->appendBlitFill(alloc, &copyData, 1, 16, events[0].get(), 0, nullptr, false));
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendSignalEvent(eventHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendSignalEvent(eventHandle, false));
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(copyData), eventHandle, 0, nullptr));
 
@@ -1874,6 +1874,53 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxed
     offset = cmdStream->getUsed();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     findConditionalBbStarts(1); // implicit dependency
+}
+
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->recordFlushedBatchBuffer = true;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+
+    auto verifyFlags = [&ultCsr](bool relaxedOrderingExpected, bool stallingCmdsExpected) {
+        EXPECT_EQ(stallingCmdsExpected, ultCsr->recordedImmediateDispatchFlags.hasStallingCmds);
+        EXPECT_EQ(stallingCmdsExpected, ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+
+        EXPECT_EQ(relaxedOrderingExpected, ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    };
+
+    auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false); // NP state init
+
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
+    auto immCmdList2 = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(2, false);
+    events[1]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
+    auto nonCbEvent = events[1]->toHandle();
+
+    immCmdList1->appendSignalEvent(events[0]->toHandle(), true);
+    verifyFlags(false, false); // no dependencies
+
+    immCmdList2->appendSignalEvent(events[0]->toHandle(), false);
+    verifyFlags(false, false); // no dependencies
+
+    immCmdList1->appendSignalEvent(events[0]->toHandle(), true);
+    verifyFlags(true, false); // relaxed ordering with implicit dependency
+
+    immCmdList1->appendSignalEvent(nonCbEvent, true);
+    verifyFlags(true, true); // relaxed ordering with implicit dependency
+
+    immCmdList1->cmdQImmediate->unregisterCsrClient();
+    immCmdList2->cmdQImmediate->unregisterCsrClient();
+
+    immCmdList1->appendSignalEvent(events[0]->toHandle(), false);
+    verifyFlags(false, true); // relaxed ordering disabled == stalling semaphore
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenWaitingForEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
@@ -2724,7 +2771,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventT
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendSignalEvent(events[0]->toHandle());
+    immCmdList->appendSignalEvent(events[0]->toHandle(), false);
 
     auto inOrderExecInfo = immCmdList->inOrderExecInfo;
     uint64_t sdiSyncVa = 0;
@@ -6368,7 +6415,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
 
-    regularCmdList->appendSignalEvent(eventHandle);
+    regularCmdList->appendSignalEvent(eventHandle, false);
 
     regularCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 

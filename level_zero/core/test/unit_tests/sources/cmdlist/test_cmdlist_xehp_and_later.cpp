@@ -737,7 +737,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         ASSERT_NE(nullptr, event.get());
 
         size_t sizeBefore = cmdStream->getUsed();
-        result = commandList->appendSignalEvent(event->toHandle());
+        result = commandList->appendSignalEvent(event->toHandle(), false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
