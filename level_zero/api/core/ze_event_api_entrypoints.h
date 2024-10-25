@@ -58,7 +58,7 @@ ze_result_t zeEventPoolCloseIpcHandle(
 ze_result_t zeCommandListAppendSignalEvent(
     ze_command_list_handle_t hCommandList,
     ze_event_handle_t hEvent) {
-    return L0::CommandList::fromHandle(hCommandList)->appendSignalEvent(hEvent);
+    return L0::CommandList::fromHandle(hCommandList)->appendSignalEvent(hEvent, false);
 }
 
 ze_result_t zeCommandListAppendWaitOnEvents(

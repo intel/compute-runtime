@@ -179,7 +179,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t hostSynchronize(uint64_t timeout) override;
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent, CommandToPatchContainer *outWaitCmds,
                                    bool relaxedOrderingAllowed, bool trackDependencies, bool apiRequest, bool skipAddingWaitEventsToResidency, bool skipFlush, bool copyOffloadOperation) override;
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,

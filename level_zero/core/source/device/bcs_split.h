@@ -85,7 +85,7 @@ struct BcsSplit {
 
         auto barrierRequired = !cmdList->isInOrderExecutionEnabled() && cmdList->isBarrierRequired();
         if (barrierRequired) {
-            cmdList->appendSignalEvent(this->events.barrier[markerEventIndex]->toHandle());
+            cmdList->appendSignalEvent(this->events.barrier[markerEventIndex]->toHandle(), false);
         }
 
         auto subcopyEventIndex = markerEventIndex * this->cmdQs.size();

@@ -1405,7 +1405,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
 
-    regularCmdList->appendSignalEvent(eventHandle);
+    regularCmdList->appendSignalEvent(eventHandle, false);
 
     regularCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
@@ -1685,7 +1685,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSi
     size_t offset = cmdStream->getUsed();
 
     {
-        cmdList->appendSignalEvent(events[1]->toHandle());
+        cmdList->appendSignalEvent(events[1]->toHandle(), false);
 
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -1697,7 +1697,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenSignalScopeEventWhenSi
     offset = cmdStream->getUsed();
 
     {
-        cmdList->appendSignalEvent(events[0]->toHandle());
+        cmdList->appendSignalEvent(events[0]->toHandle(), false);
 
         GenCmdList hwCmdList;
         EXPECT_TRUE(FamilyType::Parse::parseCommandBuffer(hwCmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
