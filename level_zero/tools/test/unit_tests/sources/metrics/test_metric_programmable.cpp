@@ -310,7 +310,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParamer
 
     EXPECT_EQ(parameterInfo[3].defaultValue.ui64, 0u);
     EXPECT_STREQ(parameterInfo[3].name, "mockParam4");
-    EXPECT_EQ(parameterInfo[3].type, static_cast<zet_metric_programmable_param_type_exp_t>(ZET_INTEL_METRIC_PROGRAMMABLE_PARAM_TYPE_NORMALIZATION_BYTE_EXP));
+    EXPECT_EQ(parameterInfo[3].type, static_cast<zet_metric_programmable_param_type_exp_t>(ZET_INTEL_METRIC_PROGRAMMABLE_PARAM_TYPE_NORMALIZATION_BYTE_EXP)); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     EXPECT_EQ(parameterInfo[3].valueInfoCount, 1u);
     EXPECT_EQ(parameterInfo[3].valueInfoType, ZET_VALUE_INFO_TYPE_EXP_UINT64_RANGE);
 
@@ -438,7 +438,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricProgrammableThenCorrectParamer
     uint32_t valueInfoCount = 2;
     zet_metric_programmable_param_value_info_exp_t valueInfo{};
     zet_intel_metric_programmable_param_value_info_exp_desc_t paramValueInfoDesc{};
-    paramValueInfoDesc.stype = static_cast<zet_structure_type_t>(ZET_INTEL_STRUCTURE_TYPE_METRIC_PROGRAMMABLE_PARAM_VALUE_INFO_DESC_EXP);
+    paramValueInfoDesc.stype = static_cast<zet_structure_type_t>(ZET_INTEL_STRUCTURE_TYPE_METRIC_PROGRAMMABLE_PARAM_VALUE_INFO_DESC_EXP); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     paramValueInfoDesc.pNext = nullptr;
     valueInfo.pNext = &paramValueInfoDesc;
     EXPECT_EQ(ZE_RESULT_SUCCESS, MetricProgrammable::fromHandle(programmable)->getParamValueInfo(0, &valueInfoCount, &valueInfo));

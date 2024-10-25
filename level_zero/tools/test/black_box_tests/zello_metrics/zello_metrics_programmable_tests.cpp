@@ -143,7 +143,7 @@ bool displayAllProgrammables() {
                 std::vector<zet_metric_programmable_param_value_info_exp_t> paramValueInfos(paramValueInfoCount);
                 std::vector<zet_intel_metric_programmable_param_value_info_exp_desc_t> paramValueInfoDescList(paramValueInfoCount);
                 for (auto &desc : paramValueInfoDescList) {
-                    desc.stype = static_cast<zet_structure_type_t>(ZET_INTEL_STRUCTURE_TYPE_METRIC_PROGRAMMABLE_PARAM_VALUE_INFO_DESC_EXP);
+                    desc.stype = static_cast<zet_structure_type_t>(ZET_INTEL_STRUCTURE_TYPE_METRIC_PROGRAMMABLE_PARAM_VALUE_INFO_DESC_EXP); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
                     desc.pNext = nullptr;
                 }
 
