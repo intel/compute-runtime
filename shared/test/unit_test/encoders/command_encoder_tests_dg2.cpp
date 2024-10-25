@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,6 +70,7 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     INTERFACE_DESCRIPTOR_DATA iddArg;
     DefaultWalkerType walkerCmd{};
+    uint32_t threadGroups[] = {walkerCmd.getThreadGroupIdXDimension(), walkerCmd.getThreadGroupIdYDimension(), walkerCmd.getThreadGroupIdZDimension()};
     iddArg = FamilyType::cmdInitInterfaceDescriptorData;
     const uint32_t forceThreadGroupDispatchSize = -1;
     auto hwInfo = pDevice->getHardwareInfo();
@@ -84,7 +85,7 @@ HWTEST2_F(DG2CommandEncoderTest, givenInterfaceDescriptorDataWhenForceThreadGrou
 
         for (auto numberOfThreadsInGroup : {1u, 4u, 16u}) {
             iddArg.setNumberOfThreadsInGpgpuThreadGroup(numberOfThreadsInGroup);
-            EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, 0, 0, walkerCmd);
+            EncodeDispatchKernel<FamilyType>::encodeThreadGroupDispatch(iddArg, *pDevice, hwInfo, threadGroups, 0, 0, numberOfThreadsInGroup, walkerCmd);
 
             if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
                 if (numberOfThreadsInGroup == 1) {

@@ -196,8 +196,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         defaultPipelinedThreadArbitrationPolicy = NEO::debugManager.flags.OverrideThreadArbitrationPolicy.get();
     }
     EncodeDispatchKernel<GfxFamily>::encodeEuSchedulingPolicy(&interfaceDescriptor, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
-
-    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, device, hardwareInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, *walkerCmd);
+    const uint32_t threadGroupDimensions[] = {walkerCmd->getThreadGroupIdXDimension(), walkerCmd->getThreadGroupIdYDimension(), walkerCmd->getThreadGroupIdXDimension()};
+    EncodeDispatchKernel<GfxFamily>::encodeThreadGroupDispatch(interfaceDescriptor, device, hardwareInfo, threadGroupDimensions, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, threadsPerThreadGroup, *walkerCmd);
 
     *pInterfaceDescriptor = interfaceDescriptor;
     return (size_t)offsetInterfaceDescriptor;

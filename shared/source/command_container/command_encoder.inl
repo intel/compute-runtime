@@ -762,10 +762,6 @@ void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPT
 }
 
 template <typename Family>
-template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {}
-
-template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
@@ -789,119 +785,6 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
     }
 
     return size;
-}
-
-template <typename GfxFamily>
-template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorDataForOverdispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {
-    const auto &productHelper = device.getProductHelper();
-
-    if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
-        interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-
-        bool adjustTGDispatchSize = true;
-        if (debugManager.flags.AdjustThreadGroupDispatchSize.get() != -1) {
-            adjustTGDispatchSize = !!debugManager.flags.AdjustThreadGroupDispatchSize.get();
-        }
-        // apply v2 algorithm only for parts where MaxSubSlicesSupported is equal to SubSliceCount
-        auto algorithmVersion = hwInfo.gtSystemInfo.MaxSubSlicesSupported == hwInfo.gtSystemInfo.SubSliceCount ? 2 : 1;
-        if (debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get() != -1) {
-            algorithmVersion = debugManager.flags.ForceThreadGroupDispatchSizeAlgorithm.get();
-        }
-
-        if (algorithmVersion == 2) {
-            auto threadsPerXeCore = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.MaxSubSlicesSupported;
-            if (grfCount == 256) {
-                threadsPerXeCore /= 2;
-            }
-            auto tgDispatchSizeSelected = 8;
-            uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
-
-            if (walkerCmd.getThreadGroupIdXDimension() > 1 && (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1)) {
-                while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
-                    tgDispatchSizeSelected /= 2;
-                }
-            } else if (walkerCmd.getThreadGroupIdYDimension() > 1 && walkerCmd.getThreadGroupIdZDimension() > 1) {
-                while (walkerCmd.getThreadGroupIdYDimension() % tgDispatchSizeSelected != 0) {
-                    tgDispatchSizeSelected /= 2;
-                }
-            }
-
-            auto workgroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
-            auto tileCount = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true) ? device.getNumSubDevices() : 1u;
-
-            // make sure we fit all xe core
-            while (workgroupCount / tgDispatchSizeSelected < hwInfo.gtSystemInfo.MaxSubSlicesSupported * tileCount && tgDispatchSizeSelected > 1) {
-                tgDispatchSizeSelected /= 2;
-            }
-
-            auto threadCountPerGrouping = tgDispatchSizeSelected * numberOfThreadsInThreadGroup;
-            // make sure we do not use more threads then present on each xe core
-            while (threadCountPerGrouping > threadsPerXeCore && tgDispatchSizeSelected > 1) {
-                tgDispatchSizeSelected /= 2;
-                threadCountPerGrouping /= 2;
-            }
-
-            if (tgDispatchSizeSelected == 8) {
-                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
-            } else if (tgDispatchSizeSelected == 1) {
-                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-            } else if (tgDispatchSizeSelected == 2) {
-                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
-            } else {
-                interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
-            }
-        } else {
-            if (adjustTGDispatchSize) {
-                UNRECOVERABLE_IF(grfCount == 0u);
-                constexpr uint32_t maxThreadsInTGForTGDispatchSize8 = 16u;
-                constexpr uint32_t maxThreadsInTGForTGDispatchSize4 = 32u;
-                auto &gfxCoreHelper = device.getGfxCoreHelper();
-                uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount);
-                if (ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), true)) {
-                    const uint32_t tilesCount = device.getNumSubDevices();
-                    availableThreadCount *= tilesCount;
-                }
-                uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
-                uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
-                UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
-                auto tgDispatchSizeSelected = 1u;
-
-                if (dispatchedTotalThreadCount <= availableThreadCount) {
-                    tgDispatchSizeSelected = 1;
-                } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
-                    tgDispatchSizeSelected = 8;
-                } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
-                    tgDispatchSizeSelected = 4;
-                } else {
-                    tgDispatchSizeSelected = 2;
-                }
-                if (walkerCmd.getThreadGroupIdXDimension() > 1 && (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1)) {
-                    while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
-                        tgDispatchSizeSelected /= 2;
-                    }
-                } else if (walkerCmd.getThreadGroupIdYDimension() > 1 && walkerCmd.getThreadGroupIdZDimension() > 1) {
-                    while (walkerCmd.getThreadGroupIdYDimension() % tgDispatchSizeSelected != 0) {
-                        tgDispatchSizeSelected /= 2;
-                    }
-                }
-                if (tgDispatchSizeSelected == 8) {
-                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8);
-                } else if (tgDispatchSizeSelected == 1) {
-                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-                } else if (tgDispatchSizeSelected == 2) {
-                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
-                } else {
-                    interfaceDescriptor.setThreadGroupDispatchSize(InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4);
-                }
-            }
-        }
-    }
-
-    if (debugManager.flags.ForceThreadGroupDispatchSize.get() != -1) {
-        interfaceDescriptor.setThreadGroupDispatchSize(static_cast<typename InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE>(
-            debugManager.flags.ForceThreadGroupDispatchSize.get()));
-    }
 }
 
 template <typename Family>

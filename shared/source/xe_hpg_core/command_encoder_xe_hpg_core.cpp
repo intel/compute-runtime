@@ -29,7 +29,8 @@ namespace NEO {
 
 template <>
 template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {
+void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo,
+                                                             const uint32_t *threadGroupDimensions, const uint32_t threadGroupCount, const uint32_t grfCount, const uint32_t threadsPerThreadGroup, WalkerType &walkerCmd) {
     const auto &productHelper = device.getProductHelper();
     if (productHelper.isDisableOverdispatchAvailable(hwInfo)) {
         if (interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup() == 1) {

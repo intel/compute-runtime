@@ -33,10 +33,4 @@ void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER
     cmd.setPredicationEnable(predicate);
 }
 
-template <>
-template <typename WalkerType, typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t grfCount, WalkerType &walkerCmd) {
-    EncodeDispatchKernel<Family>::adjustInterfaceDescriptorDataForOverdispatch(interfaceDescriptor, device, hwInfo, threadGroupCount, grfCount, walkerCmd);
-}
-
 } // namespace NEO
