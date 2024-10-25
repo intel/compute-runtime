@@ -3989,7 +3989,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
     }
 
     if (signalEvent->isCounterBased()) {
-        if (!isInOrderExecutionEnabled()) {
+        if (!isInOrderExecutionEnabled() || signalEvent->isIpcImported()) {
             return false;
         }
 

@@ -232,5 +232,25 @@ HWTEST2_F(InOrderIpcTests, givenTbxModeWhenOpenIsCalledThenSetAllocationParams, 
     zeEventDestroy(newEvent);
 }
 
+HWTEST2_F(InOrderIpcTests, givenIpcImportedEventWhenSignalingThenReturnError, MatchAny) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto pool = createEvents<FamilyType>(1, false);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    enableEventSharing(*events[0]);
+
+    IpcCounterBasedEventData ipcData = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->getCounterBasedIpcHandle(ipcData));
+
+    ze_event_handle_t newEvent = nullptr;
+    auto deviceH = device->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->openCounterBasedIpcHandle(ipcData, &newEvent, driverHandle.get(), context, 1, &deviceH));
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, newEvent, 0, nullptr, launchParams, false));
+
+    zeEventDestroy(newEvent);
+}
+
 } // namespace ult
 } // namespace L0

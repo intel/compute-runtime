@@ -321,6 +321,8 @@ struct Event : _ze_event_handle_t {
 
     bool hasInOrderTimestampNode() const { return inOrderTimestampNode != nullptr; }
 
+    bool isIpcImported() const { return isFromIpcPool; }
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 
