@@ -50,7 +50,7 @@ void BaseUltConfigListener::OnTestEnd(const ::testing::TestInfo &) {
 
     // Ensure that global state is restored
     UltHwConfig expectedState{};
-    static_assert(sizeof(UltHwConfig) == (16 * sizeof(bool) + sizeof(const char *)), ""); // Ensure that there is no internal padding
+    static_assert(sizeof(UltHwConfig) == (17 * sizeof(bool) + sizeof(const char *)) + sizeof(UltHwConfig::padding), ""); // Ensure that there is no internal padding
     EXPECT_EQ(0, memcmp(&expectedState, &ultHwConfig, sizeof(UltHwConfig)));
 
     EXPECT_EQ(0, memcmp(&referencedHwInfo.platform, &defaultHwInfo->platform, sizeof(PLATFORM)));
