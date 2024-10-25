@@ -268,7 +268,7 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         UNRECOVERABLE_IF(retVal != 0);
         if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
             bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) != 0);
-            IoFunctions::fprintf(stderr, "FATAL: Unexpected page fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+            IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
                                  fault.addr,
                                  resetStats.contextId,
                                  EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
@@ -276,7 +276,7 @@ bool Drm::checkResetStatus(OsContext &osContext) {
                                  fault.level, GpuPageFaultHelpers::faultLevelToString(static_cast<FaultLevel>(fault.level)).c_str(),
                                  fault.access, GpuPageFaultHelpers::faultAccessToString(static_cast<FaultAccess>(fault.access)).c_str(),
                                  banned);
-            IoFunctions::fprintf(stdout, "FATAL: Unexpected page fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
+            IoFunctions::fprintf(stdout, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
                                  fault.addr,
                                  resetStats.contextId,
                                  EngineHelpers::engineTypeToString(osContext.getEngineType()).c_str(),
