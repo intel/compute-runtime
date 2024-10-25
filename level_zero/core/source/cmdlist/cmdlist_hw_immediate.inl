@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -671,13 +671,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hSignalEvent) {
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hSignalEvent, bool relaxedOrderingDispatch) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
+    relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0);
+    bool hasStallingCmds = true;
+
     checkAvailableSpace(0, false, commonImmediateCommandSize);
-    ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
-    return flushImmediate(ret, true, true, false, false, hSignalEvent);
+    ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
+    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, false, hSignalEvent);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -712,7 +715,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
             this->appendMemoryCopyBlit(dstAddressParam, dstAllocation, 0u,
                                        srcAddressParam, srcAllocation, 0u,
                                        sizeParam);
-            return CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam);
+            return CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam, false);
         });
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
@@ -1345,5 +1348,4 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::allocateOrReuseKernelPrivate
         this->allocateOrReuseKernelPrivateMemory(kernel, sizePerHwThread, this->csr->getOwnedPrivateAllocations());
     }
 }
-
 } // namespace L0

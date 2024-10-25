@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -331,7 +331,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionEnabledWithImmediat
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = commandList->appendSignalEvent(event);
+    returnValue = commandList->appendSignalEvent(event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = eventObject->hostSignal();
@@ -395,7 +395,7 @@ HWTEST_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledWithImmedia
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
-    returnValue = commandList->appendSignalEvent(event);
+    returnValue = commandList->appendSignalEvent(event, false);
     EXPECT_EQ(returnValue, ZE_RESULT_SUCCESS);
 
     returnValue = eventObject->hostSignal();

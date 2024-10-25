@@ -999,7 +999,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendSignalEvent
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendSignalEvent(event);
+    commandList->appendSignalEvent(event, false);
 
     auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1114,7 +1114,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     verifyFlags(commandList->appendEventReset(event), true, true);
 
-    verifyFlags(commandList->appendSignalEvent(event), true, true);
+    verifyFlags(commandList->appendSignalEvent(event, false), true, true);
 
     verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
 
@@ -1488,7 +1488,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
         verifyFlags(commandList->appendEventReset(event), false, false);
 
-        verifyFlags(commandList->appendSignalEvent(event), false, false);
+        verifyFlags(commandList->appendSignalEvent(event, false), false, false);
 
         verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
                     false, false);
@@ -1878,7 +1878,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     whiteBoxCmdList->csr = &mockCommandStreamReceiver;
     static_cast<WhiteBox<::L0::CommandQueue> *>(whiteBoxCmdList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendSignalEvent(event);
+    returnValue = commandList->appendSignalEvent(event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     whiteBoxCmdList->csr = oldCsr;
@@ -2162,7 +2162,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     returnValue = commandList->appendBarrier(nullptr, 1, &event, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    returnValue = commandList->appendSignalEvent(event);
+    returnValue = commandList->appendSignalEvent(event, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = eventObject->hostSignal();
@@ -2332,7 +2332,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendSignalEven
     ASSERT_NE(nullptr, eventObject->csrs[0]);
     ASSERT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csrs[0]);
 
-    commandList->appendSignalEvent(event);
+    commandList->appendSignalEvent(event, false);
 
     auto result = eventObject->hostSignal();
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

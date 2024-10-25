@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2297,9 +2297,9 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(uint
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) {
     if (this->isInOrderExecutionEnabled()) {
-        handleInOrderImplicitDependencies(isRelaxedOrderingDispatchAllowed(0));
+        handleInOrderImplicitDependencies(relaxedOrderingDispatch);
     }
 
     auto event = Event::fromHandle(hEvent);

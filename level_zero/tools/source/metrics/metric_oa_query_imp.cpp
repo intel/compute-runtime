@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -901,7 +901,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
 
     // Write completion event.
     if (result && writeCompletionEvent) {
-        result = commandList.appendSignalEvent(hSignalEvent) == ZE_RESULT_SUCCESS;
+        result = commandList.appendSignalEvent(hSignalEvent, false) == ZE_RESULT_SUCCESS;
     }
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -543,7 +543,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    result = commandList->appendSignalEvent(event->toHandle());
+    result = commandList->appendSignalEvent(event->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -575,7 +575,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    result = commandList->appendSignalEvent(event->toHandle());
+    result = commandList->appendSignalEvent(event->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();
@@ -607,7 +607,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    result = commandList->appendSignalEvent(event->toHandle());
+    result = commandList->appendSignalEvent(event->toHandle(), false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();

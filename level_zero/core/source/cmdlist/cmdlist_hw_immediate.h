@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,7 +91,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                  uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
-    ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
+    ze_result_t appendSignalEvent(ze_event_handle_t hEvent, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendEventReset(ze_event_handle_t hEvent) override;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2231,7 +2231,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingAppendSignalEventT
 
     auto offset = cmdStream->getUsed();
 
-    immCmdList->appendSignalEvent(events[0]->toHandle());
+    immCmdList->appendSignalEvent(events[0]->toHandle(), false);
 
     uint64_t inOrderSyncVa = immCmdList->inOrderExecInfo->inOrderDependencyCounterAllocation.getGpuAddress();
 
@@ -4612,7 +4612,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
 
-    regularCmdList->appendSignalEvent(eventHandle);
+    regularCmdList->appendSignalEvent(eventHandle, false);
 
     regularCmdList->appendBarrier(nullptr, 1, &eventHandle, false);
 
