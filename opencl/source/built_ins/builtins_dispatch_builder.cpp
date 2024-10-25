@@ -690,6 +690,25 @@ class BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless> : public BuiltInOp<EB
 };
 
 template <>
+class BuiltInOp<EBuiltInOps::copyBufferToImage3dHeapless> : public BuiltInOp<EBuiltInOps::copyBufferToImage3d> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::copyBufferToImage3d>(kernelsLib, device, false) {
+        populate(EBuiltInOps::copyBufferToImage3dHeapless,
+                 CompilerOptions::greaterThan4gbBuffersRequired,
+                 "CopyBufferToImage3dBytesStateless", kernelBytes[0],
+                 "CopyBufferToImage3d2BytesStateless", kernelBytes[1],
+                 "CopyBufferToImage3d4BytesStateless", kernelBytes[2],
+                 "CopyBufferToImage3d8BytesStateless", kernelBytes[3],
+                 "CopyBufferToImage3d16BytesStateless", kernelBytes[4]);
+    }
+
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
+        return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
+    }
+};
+
+template <>
 class BuiltInOp<EBuiltInOps::copyImage3dToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
@@ -812,6 +831,25 @@ class BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless> : public BuiltInOp<EB
 };
 
 template <>
+class BuiltInOp<EBuiltInOps::copyImage3dToBufferHeapless> : public BuiltInOp<EBuiltInOps::copyImage3dToBuffer> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::copyImage3dToBuffer>(kernelsLib, device, false) {
+        populate(EBuiltInOps::copyImage3dToBufferHeapless,
+                 CompilerOptions::greaterThan4gbBuffersRequired,
+                 "CopyImage3dToBufferBytesStateless", kernelBytes[0],
+                 "CopyImage3dToBuffer2BytesStateless", kernelBytes[1],
+                 "CopyImage3dToBuffer4BytesStateless", kernelBytes[2],
+                 "CopyImage3dToBuffer8BytesStateless", kernelBytes[3],
+                 "CopyImage3dToBuffer16BytesStateless", kernelBytes[4]);
+    }
+
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const override {
+        return buildDispatchInfosTyped<uint64_t>(multiDispatchInfo);
+    }
+};
+
+template <>
 class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
     BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
@@ -873,7 +911,27 @@ class BuiltInOp<EBuiltInOps::copyImageToImage3d> : public BuiltinDispatchInfoBui
     }
 
   protected:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+            populate(EBuiltInOps::copyImageToImage3d,
+                     "",
+                     "CopyImageToImage3d", kernel);
+        }
+    }
+
     MultiDeviceKernel *kernel = nullptr;
+};
+
+template <>
+class BuiltInOp<EBuiltInOps::copyImageToImage3dHeapless> : public BuiltInOp<EBuiltInOps::copyImageToImage3d> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::copyImageToImage3d>(kernelsLib, device, false) {
+        populate(EBuiltInOps::copyImageToImage3dHeapless,
+                 "",
+                 "CopyImageToImage3d", kernel);
+    }
 };
 
 template <>
@@ -930,7 +988,28 @@ class BuiltInOp<EBuiltInOps::fillImage3d> : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device, bool populateKernels)
+        : BuiltinDispatchInfoBuilder(kernelsLib, device) {
+        if (populateKernels) {
+
+            populate(EBuiltInOps::fillImage3d,
+                     "",
+                     "FillImage3d", kernel);
+        }
+    }
+
     MultiDeviceKernel *kernel = nullptr;
+};
+
+template <>
+class BuiltInOp<EBuiltInOps::fillImage3dHeapless> : public BuiltInOp<EBuiltInOps::fillImage3d> {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
+        : BuiltInOp<EBuiltInOps::fillImage3d>(kernelsLib, device, false) {
+        populate(EBuiltInOps::fillImage3dHeapless,
+                 "",
+                 "FillImage3d", kernel);
+    }
 };
 
 BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
@@ -972,17 +1051,29 @@ BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuil
     case EBuiltInOps::copyBufferToImage3dStateless:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3dStateless>>(builtins, device); });
         break;
+    case EBuiltInOps::copyBufferToImage3dHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyBufferToImage3dHeapless>>(builtins, device); });
+        break;
     case EBuiltInOps::copyImage3dToBuffer:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBuffer>>(builtins, device); });
         break;
     case EBuiltInOps::copyImage3dToBufferStateless:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBufferStateless>>(builtins, device); });
         break;
+    case EBuiltInOps::copyImage3dToBufferHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImage3dToBufferHeapless>>(builtins, device); });
+        break;
     case EBuiltInOps::copyImageToImage3d:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImageToImage3d>>(builtins, device); });
         break;
+    case EBuiltInOps::copyImageToImage3dHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::copyImageToImage3dHeapless>>(builtins, device); });
+        break;
     case EBuiltInOps::fillImage3d:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage3d>>(builtins, device); });
+        break;
+    case EBuiltInOps::fillImage3dHeapless:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::fillImage3dHeapless>>(builtins, device); });
         break;
     case EBuiltInOps::auxTranslation:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<EBuiltInOps::auxTranslation>>(builtins, device); });

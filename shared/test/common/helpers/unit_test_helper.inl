@@ -137,4 +137,9 @@ size_t UnitTestHelper<GfxFamily>::getWalkerSize(bool isHeaplessEnabled) {
     return sizeof(DefaultWalkerType);
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isHeaplessAllowed() {
+    return false;
+}
+
 } // namespace NEO

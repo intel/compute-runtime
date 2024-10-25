@@ -159,50 +159,93 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
         builtinName = "CopyBufferToImage3d16Bytes";
         builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
+    case ImageBuiltin::copyBufferToImage3d16BytesHeapless:
+        builtinName = "CopyBufferToImage3d16Bytes";
+        builtin = NEO::EBuiltInOps::copyBufferToImage3dHeapless;
+        break;
     case ImageBuiltin::copyBufferToImage3d2Bytes:
         builtinName = "CopyBufferToImage3d2Bytes";
         builtin = NEO::EBuiltInOps::copyBufferToImage3d;
+        break;
+    case ImageBuiltin::copyBufferToImage3d2BytesHeapless:
+        builtinName = "CopyBufferToImage3d2Bytes";
+        builtin = NEO::EBuiltInOps::copyBufferToImage3dHeapless;
         break;
     case ImageBuiltin::copyBufferToImage3d4Bytes:
         builtinName = "CopyBufferToImage3d4Bytes";
         builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
+    case ImageBuiltin::copyBufferToImage3d4BytesHeapless:
+        builtinName = "CopyBufferToImage3d4Bytes";
+        builtin = NEO::EBuiltInOps::copyBufferToImage3dHeapless;
+        break;
     case ImageBuiltin::copyBufferToImage3d8Bytes:
         builtinName = "CopyBufferToImage3d8Bytes";
         builtin = NEO::EBuiltInOps::copyBufferToImage3d;
+        break;
+    case ImageBuiltin::copyBufferToImage3d8BytesHeapless:
+        builtinName = "CopyBufferToImage3d8Bytes";
+        builtin = NEO::EBuiltInOps::copyBufferToImage3dHeapless;
         break;
     case ImageBuiltin::copyBufferToImage3dBytes:
         builtinName = "CopyBufferToImage3dBytes";
         builtin = NEO::EBuiltInOps::copyBufferToImage3d;
         break;
+    case ImageBuiltin::copyBufferToImage3dBytesHeapless:
+        builtinName = "CopyBufferToImage3dBytes";
+        builtin = NEO::EBuiltInOps::copyBufferToImage3dHeapless;
+        break;
     case ImageBuiltin::copyImage3dToBuffer16Bytes:
         builtinName = "CopyImage3dToBuffer16Bytes";
         builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
+        break;
+    case ImageBuiltin::copyImage3dToBuffer16BytesHeapless:
+        builtinName = "CopyImage3dToBuffer16Bytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
         break;
     case ImageBuiltin::copyImage3dToBuffer2Bytes:
         builtinName = "CopyImage3dToBuffer2Bytes";
         builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
+    case ImageBuiltin::copyImage3dToBuffer2BytesHeapless:
+        builtinName = "CopyImage3dToBuffer2Bytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
+        break;
     case ImageBuiltin::copyImage3dToBuffer4Bytes:
         builtinName = "CopyImage3dToBuffer4Bytes";
         builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
+        break;
+    case ImageBuiltin::copyImage3dToBuffer4BytesHeapless:
+        builtinName = "CopyImage3dToBuffer4Bytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
         break;
     case ImageBuiltin::copyImage3dToBuffer8Bytes:
         builtinName = "CopyImage3dToBuffer8Bytes";
         builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
+    case ImageBuiltin::copyImage3dToBuffer8BytesHeapless:
+        builtinName = "CopyImage3dToBuffer8Bytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
+        break;
     case ImageBuiltin::copyImage3dToBufferBytes:
         builtinName = "CopyImage3dToBufferBytes";
         builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
+        break;
+    case ImageBuiltin::copyImage3dToBufferBytesHeapless:
+        builtinName = "CopyImage3dToBufferBytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
         break;
     case ImageBuiltin::copyImageRegion:
         builtinName = "CopyImageToImage3d";
         builtin = NEO::EBuiltInOps::copyImageToImage3d;
         break;
+    case ImageBuiltin::copyImageRegionHeapless:
+        builtinName = "CopyImageToImage3d";
+        builtin = NEO::EBuiltInOps::copyImageToImage3dHeapless;
+        break;
     default:
         UNRECOVERABLE_IF(true);
     };
-
     auto builtId = static_cast<uint32_t>(func);
     imageBuiltins[builtId] = loadBuiltIn(builtin, builtinName);
 }

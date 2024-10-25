@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -100,7 +100,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     dc.bcsSplit = bcsSplit;
     dc.direction = csrSelectionArgs.direction;
 
-    auto eBuiltInOps = EBuiltInOps::copyBufferToImage3d;
+    auto eBuiltInOps = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyBufferToImage3d>(this->heaplessModeEnabled);
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);

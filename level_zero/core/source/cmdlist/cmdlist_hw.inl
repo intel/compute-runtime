@@ -743,30 +743,32 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
         return status;
     }
 
-    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-
-    Kernel *builtinKernel = nullptr;
+    bool isHeaplessEnabled = this->heaplessModeEnabled;
+    ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
+    case 1u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3dBytes>(isHeaplessEnabled);
+        break;
+    case 2u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d2Bytes>(isHeaplessEnabled);
+        break;
+    case 4u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d4Bytes>(isHeaplessEnabled);
+        break;
+    case 8u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d8Bytes>(isHeaplessEnabled);
+        break;
+    case 16u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyBufferToImage3d16Bytes>(isHeaplessEnabled);
+        break;
     default:
         UNRECOVERABLE_IF(true);
         break;
-    case 1u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3dBytes);
-        break;
-    case 2u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d2Bytes);
-        break;
-    case 4u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d4Bytes);
-        break;
-    case 8u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d8Bytes);
-        break;
-    case 16u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyBufferToImage3d16Bytes);
-        break;
     }
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
 
     builtinKernel->setArgBufferWithAlloc(0u, allocationStruct.alignedAllocationPtr,
                                          allocationStruct.alloc,
@@ -913,11 +915,25 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         return status;
     }
 
-    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
-
-    Kernel *builtinKernel = nullptr;
+    bool isHeaplessEnabled = this->heaplessModeEnabled;
+    ImageBuiltin builtInType = ImageBuiltin::copyBufferToImage3dBytes;
 
     switch (bytesPerPixel) {
+    case 1u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBufferBytes>(isHeaplessEnabled);
+        break;
+    case 2u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer2Bytes>(isHeaplessEnabled);
+        break;
+    case 4u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer4Bytes>(isHeaplessEnabled);
+        break;
+    case 8u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer8Bytes>(isHeaplessEnabled);
+        break;
+    case 16u:
+        builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImage3dToBuffer16Bytes>(isHeaplessEnabled);
+        break;
     default: {
         CREATE_DEBUG_STRING(str, "Invalid bytesPerPixel of size: %u\n", bytesPerPixel);
         driverHandle->setErrorDescription(std::string(str.get()));
@@ -925,22 +941,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
         UNRECOVERABLE_IF(true);
         break;
     }
-    case 1u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBufferBytes);
-        break;
-    case 2u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer2Bytes);
-        break;
-    case 4u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer4Bytes);
-        break;
-    case 8u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer8Bytes);
-        break;
-    case 16u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImage3dToBuffer16Bytes);
-        break;
     }
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+    Kernel *builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
 
     builtinKernel->setArgRedescribedImage(0u, image->toHandle());
     builtinKernel->setArgBufferWithAlloc(1u, allocationStruct.alignedAllocationPtr,
@@ -1109,9 +1113,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         return status;
     }
 
-    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+    ImageBuiltin builtInType = BuiltinTypeHelper::adjustImageBuiltinType<ImageBuiltin::copyImageRegion>(this->heaplessModeEnabled);
 
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::copyImageRegion);
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(builtInType);
 
     ze_result_t ret = kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
                                                &groupSizeY, &groupSizeZ);

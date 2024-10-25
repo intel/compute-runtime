@@ -52,16 +52,27 @@ enum class Builtin : uint32_t {
 
 enum class ImageBuiltin : uint32_t {
     copyBufferToImage3d16Bytes = 0u,
+    copyBufferToImage3d16BytesHeapless,
     copyBufferToImage3d2Bytes,
+    copyBufferToImage3d2BytesHeapless,
     copyBufferToImage3d4Bytes,
+    copyBufferToImage3d4BytesHeapless,
     copyBufferToImage3d8Bytes,
+    copyBufferToImage3d8BytesHeapless,
     copyBufferToImage3dBytes,
+    copyBufferToImage3dBytesHeapless,
     copyImage3dToBuffer16Bytes,
+    copyImage3dToBuffer16BytesHeapless,
     copyImage3dToBuffer2Bytes,
+    copyImage3dToBuffer2BytesHeapless,
     copyImage3dToBuffer4Bytes,
+    copyImage3dToBuffer4BytesHeapless,
     copyImage3dToBuffer8Bytes,
+    copyImage3dToBuffer8BytesHeapless,
     copyImage3dToBufferBytes,
+    copyImage3dToBufferBytesHeapless,
     copyImageRegion,
+    copyImageRegionHeapless,
     count
 };
 
@@ -170,6 +181,30 @@ constexpr Builtin adjustBuiltinType<Builtin::fillBufferRightLeftover>(const bool
     }
     return Builtin::fillBufferRightLeftover;
 }
+
+template <ImageBuiltin type>
+constexpr ImageBuiltin adjustImageBuiltinType(const bool isHeapless) {
+    return type;
+}
+
+#define DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(type)                                   \
+    template <>                                                                  \
+    constexpr ImageBuiltin adjustImageBuiltinType<type>(const bool isHeapless) { \
+        return isHeapless ? type##Heapless : type;                               \
+    }
+
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d16Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d2Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d4Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d8Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3dBytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer16Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer2Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer4Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer8Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBufferBytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImageRegion);
+
 } // namespace BuiltinTypeHelper
 
 } // namespace L0

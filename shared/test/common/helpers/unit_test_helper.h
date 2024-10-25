@@ -120,6 +120,8 @@ struct UnitTestHelper {
     static void getSpaceAndInitWalkerCmd(LinearStream &stream, bool heapless);
     static void *getInitWalkerCmd(bool heapless);
     static size_t getWalkerSize(bool isHeaplessEnabled);
+
+    static bool isHeaplessAllowed();
 };
 
 } // namespace NEO

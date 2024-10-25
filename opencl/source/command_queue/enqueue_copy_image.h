@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
 
     MultiDispatchInfo dispatchInfo(dc);
 
-    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, EBuiltInOps::copyImageToImage3d, numEventsInWaitList, eventWaitList, event, false, csr);
+    auto builtIn = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(this->heaplessModeEnabled);
+
+    return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_IMAGE>(dispatchInfo, surfaces, builtIn, numEventsInWaitList, eventWaitList, event, false, csr);
 }
 
 } // namespace NEO

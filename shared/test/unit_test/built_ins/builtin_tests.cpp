@@ -124,9 +124,43 @@ HWTEST_F(BuiltInSharedTest, GivenRequestedTypeIntermediateWhenGettingResourceNam
 }
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndExtensionWhenCreatingBuiltinResourceNameThenCorrectNameIsReturned) {
-    std::string builtinResourceName = createBuiltinResourceName(EBuiltInOps::copyBufferToBuffer, ".bin");
-    std::string expectedBuiltinResourceName = std::string(getBuiltinAsString(EBuiltInOps::copyBufferToBuffer)) + ".bin";
-    EXPECT_EQ(expectedBuiltinResourceName, builtinResourceName);
+
+    const std::pair<EBuiltInOps::Type, const char *> testCases[] = {
+        {EBuiltInOps::auxTranslation, "aux_translation.builtin_kernel"},
+        {EBuiltInOps::copyBufferToBuffer, "copy_buffer_to_buffer.builtin_kernel"},
+        {EBuiltInOps::copyBufferToBufferStateless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferToBufferStatelessHeapless, "copy_buffer_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferRect, "copy_buffer_rect.builtin_kernel"},
+        {EBuiltInOps::copyBufferRectStateless, "copy_buffer_rect_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferRectStatelessHeapless, "copy_buffer_rect_stateless.builtin_kernel"},
+        {EBuiltInOps::fillBuffer, "fill_buffer.builtin_kernel"},
+        {EBuiltInOps::fillBufferStateless, "fill_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::fillBufferStatelessHeapless, "fill_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferToImage3d, "copy_buffer_to_image3d.builtin_kernel"},
+        {EBuiltInOps::copyBufferToImage3dStateless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
+        {EBuiltInOps::copyBufferToImage3dHeapless, "copy_buffer_to_image3d_stateless.builtin_kernel"},
+        {EBuiltInOps::copyImage3dToBuffer, "copy_image3d_to_buffer.builtin_kernel"},
+        {EBuiltInOps::copyImage3dToBufferStateless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyImage3dToBufferHeapless, "copy_image3d_to_buffer_stateless.builtin_kernel"},
+        {EBuiltInOps::copyImageToImage1d, "copy_image_to_image1d.builtin_kernel"},
+        {EBuiltInOps::copyImageToImage1dHeapless, "copy_image_to_image1d.builtin_kernel"},
+        {EBuiltInOps::copyImageToImage2d, "copy_image_to_image2d.builtin_kernel"},
+        {EBuiltInOps::copyImageToImage2dHeapless, "copy_image_to_image2d.builtin_kernel"},
+        {EBuiltInOps::copyImageToImage3d, "copy_image_to_image3d.builtin_kernel"},
+        {EBuiltInOps::copyImageToImage3dHeapless, "copy_image_to_image3d.builtin_kernel"},
+        {EBuiltInOps::fillImage1d, "fill_image1d.builtin_kernel"},
+        {EBuiltInOps::fillImage1dHeapless, "fill_image1d.builtin_kernel"},
+        {EBuiltInOps::fillImage2d, "fill_image2d.builtin_kernel"},
+        {EBuiltInOps::fillImage2dHeapless, "fill_image2d.builtin_kernel"},
+        {EBuiltInOps::fillImage3d, "fill_image3d.builtin_kernel"},
+        {EBuiltInOps::fillImage3dHeapless, "fill_image3d.builtin_kernel"},
+        {EBuiltInOps::queryKernelTimestamps, "copy_kernel_timestamps.builtin_kernel"}};
+
+    for (const auto &[type, name] : testCases) {
+        std::string builtinResourceName = createBuiltinResourceName(type, ".bin");
+        std::string expectedBuiltinResourceName = std::string(name) + ".bin";
+        EXPECT_EQ(expectedBuiltinResourceName, builtinResourceName);
+    }
 }
 
 HWTEST_F(BuiltInSharedTest, GivenValidBuiltinTypeAndAnyTypeWhenGettingBuiltinCodeThenNonEmptyBuiltinIsReturned) {

@@ -1115,6 +1115,161 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
     EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
 }
 
+HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyBufferToImageHeaplessIsUsedThenParamsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    if (!heaplessAllowed) {
+        GTEST_SKIP();
+    }
+    MockBuffer buffer;
+    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    ASSERT_NE(nullptr, image.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToImage3dHeapless, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &buffer;
+    dc.dstMemObj = image.get();
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.srcRowPitch = 0;
+    dc.srcSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
+HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToBufferHeaplessIsUsedThenParamsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    if (!heaplessAllowed) {
+        GTEST_SKIP();
+    }
+    MockBuffer buffer;
+    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    ASSERT_NE(nullptr, image.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBufferHeapless, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = image.get();
+    dc.dstPtr = &buffer;
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+    dc.dstRowPitch = 0;
+    dc.dstSlicePitch = 0;
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
+HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderCopyImageToImageHeaplessIsUsedThenParamsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    if (!heaplessAllowed) {
+        GTEST_SKIP();
+    }
+    std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+
+    ASSERT_NE(nullptr, srcImage.get());
+    ASSERT_NE(nullptr, dstImage.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3dHeapless, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcImage.get();
+    dc.dstMemObj = dstImage.get();
+
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
+HWTEST_F(BuiltInTests, WhenBuilderCopyImageToImageIsUsedThenParamsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    std ::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
+    std ::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
+
+    ASSERT_NE(nullptr, srcImage.get());
+    ASSERT_NE(nullptr, dstImage.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcMemObj = srcImage.get();
+    dc.dstMemObj = dstImage.get();
+
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
+HWTEST_F(BuiltInTests, givenHeaplessWhenBuilderFillImageHeaplessIsUsedThenParamsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+    if (!heaplessAllowed) {
+        GTEST_SKIP();
+    }
+    MockBuffer fillColor;
+    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    ASSERT_NE(nullptr, image.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage3dHeapless, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &fillColor;
+    dc.dstMemObj = image.get();
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
+HWTEST_F(BuiltInTests, WhenBuilderFillImageIsUsedThenParamsAreCorrect) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    MockBuffer fillColor;
+    std ::unique_ptr<Image> image(Image2dHelper<>::create(pContext));
+    ASSERT_NE(nullptr, image.get());
+
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::fillImage3d, *pClDevice);
+
+    BuiltinOpParams dc;
+    dc.srcPtr = &fillColor;
+    dc.dstMemObj = image.get();
+    dc.srcOffset = {0, 0, 0};
+    dc.dstOffset = {0, 0, 0};
+    dc.size = {1, 1, 1};
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
+    EXPECT_EQ(1u, multiDispatchInfo.size());
+    EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
+}
+
 HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToSystemBufferStatelessIsUsedThenParamsAreCorrect) {
     if (is32bit) {
         GTEST_SKIP();
@@ -1298,6 +1453,58 @@ TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
     BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyBufferToBuffer, *pClDevice);
 
     EXPECT_EQ(&builder1, &builder2);
+}
+
+HWTEST_F(BuiltInTests, GivenBuiltInOperationWhenGettingBuilderThenCorrectBuiltInBuilderIsReturned) {
+
+    auto clExecutionEnvironment = static_cast<ClExecutionEnvironment *>(pClDevice->getExecutionEnvironment());
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+
+    auto verifyBuilder = [&](auto operation) {
+        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(operation, *pClDevice);
+        auto *expectedBuilder = clExecutionEnvironment->peekBuilders(pClDevice->getRootDeviceIndex())[static_cast<uint32_t>(operation)].first.get();
+
+        EXPECT_EQ(expectedBuilder, &builder);
+    };
+
+    EBuiltInOps::Type operationsBuffers[] = {
+        EBuiltInOps::copyBufferToBuffer,
+        EBuiltInOps::copyBufferToBufferStateless,
+        EBuiltInOps::copyBufferToBufferStatelessHeapless,
+        EBuiltInOps::copyBufferRect,
+        EBuiltInOps::copyBufferRectStateless,
+        EBuiltInOps::copyBufferRectStatelessHeapless,
+        EBuiltInOps::fillBuffer,
+        EBuiltInOps::fillBufferStateless,
+        EBuiltInOps::fillBufferStatelessHeapless};
+
+    EBuiltInOps::Type operationsImages[] = {
+        EBuiltInOps::copyBufferToImage3d,
+        EBuiltInOps::copyBufferToImage3dStateless,
+        EBuiltInOps::copyBufferToImage3dHeapless,
+        EBuiltInOps::copyImage3dToBuffer,
+        EBuiltInOps::copyImage3dToBufferStateless,
+        EBuiltInOps::copyImage3dToBufferHeapless,
+        EBuiltInOps::copyImageToImage3d,
+        EBuiltInOps::copyImageToImage3dHeapless,
+        EBuiltInOps::fillImage3d,
+        EBuiltInOps::fillImage3dHeapless};
+
+    for (auto operation : operationsBuffers) {
+        if (EBuiltInOps::isHeapless(operation) && (heaplessAllowed == false)) {
+            continue;
+        }
+        verifyBuilder(operation);
+    }
+
+    if (pClDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        for (auto operation : operationsImages) {
+            if (EBuiltInOps::isHeapless(operation) && (heaplessAllowed == false)) {
+                continue;
+            }
+            verifyBuilder(operation);
+        }
+    }
 }
 
 TEST_F(BuiltInTests, GivenUnknownBuiltInOpWhenGettingBuilderInfoThenExceptionThrown) {
@@ -1484,6 +1691,29 @@ TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
+HWTEST2_F(BuiltInTests, GivenImagesAndHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupportedMatcher) {
+
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImage3dToBufferHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage1dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage2dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyImageToImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3dHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+}
+
+HWTEST2_F(BuiltInTests, GivenHeaplessBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero, HeaplessSupportedMatcher) {
+    auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferToBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::copyBufferRectStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillBufferStatelessHeapless, BuiltinCode::ECodeType::binary, *pDevice).size());
+}
+
 TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::auxTranslation, BuiltinCode::ECodeType::source, *pDevice).size());
@@ -1515,6 +1745,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBu
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage1d, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage2d, BuiltinCode::ECodeType::binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::fillImage3d, BuiltinCode::ECodeType::binary, *pDevice).size());
+
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::count, BuiltinCode::ECodeType::binary, *pDevice).size());
 }
 

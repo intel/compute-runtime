@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
 
 struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
                                     public ::testing::Test,
-                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>> {
+                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t, bool>> {
 
     void SetUp(void) override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);

@@ -215,43 +215,54 @@ HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadWriteBufferCallWhenBu
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueWriteImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {
 
-    setUpImpl(EBuiltInOps::copyBufferToImage3d);
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
 
-    std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
+    for (auto useHeapless : {false, true}) {
 
-    auto imageDesc = dstImage->getImageDesc();
-    size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
+        if (useHeapless && !heaplessAllowed) {
+            continue;
+        }
+        reinterpret_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled = useHeapless;
+        auto builtInType = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyBufferToImage3d>(useHeapless);
 
-    size_t rowPitch = dstImage->getHostPtrRowPitch();
-    size_t slicePitch = dstImage->getHostPtrSlicePitch();
+        setUpImpl(builtInType);
 
-    char array[3 * MemoryConstants::cacheLineSize];
-    char *ptr = &array[MemoryConstants::cacheLineSize];
-    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
-    ptr -= 1;
+        std::unique_ptr<Image> dstImage(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
 
-    void *alignedPtr = alignDown(ptr, 4);
-    size_t ptrOffset = ptrDiff(ptr, alignedPtr);
-    Vec3<size_t> offset = {0, 0, 0};
+        auto imageDesc = dstImage->getImageDesc();
+        size_t origin[] = {0, 0, 0};
+        size_t region[] = {imageDesc.image_width, imageDesc.image_height, 0};
 
-    cl_int status = pCmdQ->enqueueWriteImage(dstImage.get(),
-                                             CL_FALSE,
-                                             origin,
-                                             region,
-                                             rowPitch,
-                                             slicePitch,
-                                             ptr,
-                                             nullptr,
-                                             0,
-                                             0,
-                                             nullptr);
-    EXPECT_EQ(CL_SUCCESS, status);
+        size_t rowPitch = dstImage->getHostPtrRowPitch();
+        size_t slicePitch = dstImage->getHostPtrSlicePitch();
 
-    auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
-    EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
-    EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
-    EXPECT_EQ(offset, builtinParams.dstOffset);
+        char array[3 * MemoryConstants::cacheLineSize];
+        char *ptr = &array[MemoryConstants::cacheLineSize];
+        ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+        ptr -= 1;
+
+        void *alignedPtr = alignDown(ptr, 4);
+        size_t ptrOffset = ptrDiff(ptr, alignedPtr);
+        Vec3<size_t> offset = {0, 0, 0};
+
+        cl_int status = pCmdQ->enqueueWriteImage(dstImage.get(),
+                                                 CL_FALSE,
+                                                 origin,
+                                                 region,
+                                                 rowPitch,
+                                                 slicePitch,
+                                                 ptr,
+                                                 nullptr,
+                                                 0,
+                                                 0,
+                                                 nullptr);
+        EXPECT_EQ(CL_SUCCESS, status);
+
+        auto builtinParams = mockBuilder->paramsReceived.multiDispatchInfo.peekBuiltinOpParams();
+        EXPECT_EQ(alignedPtr, builtinParams.srcPtr);
+        EXPECT_EQ(ptrOffset, builtinParams.srcOffset.x);
+        EXPECT_EQ(offset, builtinParams.dstOffset);
+    }
 }
 
 HWTEST_F(BuiltinParamsCommandQueueHwTests, givenEnqueueReadImageCallWhenBuiltinParamsArePassedThenCheckValuesCorectness) {

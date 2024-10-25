@@ -221,20 +221,31 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueCopyImageTest, WhenCopyingImageThenMediaVf
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-typedef EnqueueCopyImageMipMapTest MipMapCopyImageTest;
+using MipMapCopyImageTest = EnqueueCopyImageMipMapTest;
 
 HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
+    bool heaplessAllowed = UnitTestHelper<FamilyType>::isHeaplessAllowed();
+
+    bool useHeapless = false;
     cl_mem_object_type srcImageType, dstImageType;
-    std::tie(srcImageType, dstImageType) = GetParam();
+    std::tie(srcImageType, dstImageType, useHeapless) = GetParam();
+
+    if (useHeapless && !heaplessAllowed) {
+        return;
+    }
+
+    reinterpret_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ)->heaplessModeEnabled = useHeapless;
+    auto builtInType = EBuiltInOps::adjustImageBuiltinType<EBuiltInOps::copyImageToImage3d>(useHeapless);
+
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyImageToImage3d,
+        builtInType,
         pCmdQ->getClDevice());
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyImageToImage3d,
+        builtInType,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
@@ -298,7 +309,6 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
         dstImage = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context, &dstImageDesc));
         break;
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-        dstImageDesc.image_array_size = 2;
         dstOrigin[3] = expectedDstMipLevel;
         dstImage = std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(context, &dstImageDesc));
         break;
@@ -321,7 +331,7 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImageToImage3d,
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
                                                                                                                               pCmdQ->getClDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 
@@ -331,7 +341,7 @@ HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCall
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyImageToImage3d,
+        builtInType,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }
@@ -342,7 +352,8 @@ INSTANTIATE_TEST_SUITE_P(MipMapCopyImageTest_GivenImagesWithNonZeroMipLevelsWhen
                          MipMapCopyImageTest,
                          ::testing::Combine(
                              ::testing::ValuesIn(types),
-                             ::testing::ValuesIn(types)));
+                             ::testing::ValuesIn(types),
+                             ::testing::Values(false, true)));
 
 using OneMipLevelCopyImageImageTests = Test<OneMipLevelImageFixture>;
 
