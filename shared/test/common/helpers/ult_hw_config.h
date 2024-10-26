@@ -16,7 +16,6 @@ struct UltHwConfig {
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
     bool useFirstSubmissionInitDevice = false;
-    bool useGpuCopyForDcFlushMitigation = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
@@ -28,8 +27,6 @@ struct UltHwConfig {
     bool csrBaseCallCreatePreemption = true;
     bool csrCreatePreemptionReturnValue = true;
     bool reserved = false;
-
-    char padding[7];
 
     const char *aubTestName = nullptr;
 };

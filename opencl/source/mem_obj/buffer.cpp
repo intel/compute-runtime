@@ -24,7 +24,6 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/cpuintrinsics.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -213,7 +212,8 @@ bool inline copyHostPointer(Buffer *buffer,
                                 size <= Buffer::maxBufferSizeForCopyOnCpu &&
                                 isCompressionEnabled == false &&
                                 productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::cpuAccessDisallowed &&
-                                isLockable;
+                                isLockable &&
+                                !isGpuCopyRequiredForDcFlushMitigation;
 
         if (debugManager.flags.CopyHostPtrOnCpu.get() != -1) {
             copyOnCpuAllowed = debugManager.flags.CopyHostPtrOnCpu.get() == 1;
@@ -222,11 +222,6 @@ bool inline copyHostPointer(Buffer *buffer,
             memory->setAubWritable(true, GraphicsAllocation::defaultBank);
             memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
             memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
-
-            if (isGpuCopyRequiredForDcFlushMitigation) {
-                CpuIntrinsics::sfence();
-            }
-
             return true;
         } else {
             auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
