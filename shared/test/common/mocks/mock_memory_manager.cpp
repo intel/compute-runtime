@@ -22,6 +22,9 @@
 
 namespace NEO {
 
+const unsigned int MockMemoryManager::moduleId = 123u;
+const unsigned int MockMemoryManager::serverType = 456u;
+
 MockMemoryManager::MockMemoryManager(bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, enableLocalMemory, executionEnvironment) {
     hostPtrManager.reset(new MockHostPtrManager);
 }

@@ -2794,4 +2794,8 @@ bool DrmMemoryManager::usmCompressionSupported(Device *device) {
     return false;
 }
 
+void DrmMemoryManager::getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) {
+    getDrm(rootDeviceIndex).getIoctlHelper()->queryDeviceParams(moduleId, serverType);
+}
+
 } // namespace NEO

@@ -120,6 +120,8 @@ class DrmMemoryManager : public MemoryManager {
     bool usmCompressionSupported(Device *device) override;
     MOCKABLE_VIRTUAL SubmissionStatus emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const;
 
+    void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override;
+
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);

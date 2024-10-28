@@ -879,3 +879,13 @@ TEST(IoctlHelperTestsUpstream, whenCallingGetStatusAndFlagsForResetStatsThenZero
 
     EXPECT_FALSE(ioctlHelper.validPageFault(0u));
 }
+
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenQueryDeviceParamsIsCalledThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    IoctlHelperUpstream ioctlHelper{*drm};
+
+    uint32_t moduleId = 0;
+    uint16_t serverType = 0;
+    EXPECT_FALSE(ioctlHelper.queryDeviceParams(&moduleId, &serverType));
+}

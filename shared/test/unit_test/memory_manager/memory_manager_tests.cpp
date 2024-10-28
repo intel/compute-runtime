@@ -3315,3 +3315,24 @@ TEST(MemoryManagerTest, givenIsCompressionSupportedForShareableThenReturnTrue) {
     EXPECT_TRUE(memoryManager.isCompressionSupportedForShareable(true));
     EXPECT_TRUE(memoryManager.isCompressionSupportedForShareable(false));
 }
+
+TEST(MemoryManagerTest, WhenGettingExtraDevicePropertiesThenNoExceptionIsThrown) {
+    MockMemoryManager memoryManager;
+    uint32_t moduleId = 0;
+    uint16_t serverType = 0;
+
+    EXPECT_NO_THROW(memoryManager.getExtraDeviceProperties(0, &moduleId, &serverType));
+}
+
+TEST(MemoryManagerTest, WhenGettingExtraDevicePropertiesThenPropertiesRemainUnchanged) {
+    NEO::ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    uint32_t moduleId = 0;
+    uint16_t serverType = 0;
+
+    memoryManager.getExtraDeviceProperties(0, &moduleId, &serverType);
+
+    EXPECT_EQ(moduleId, 0u);
+    EXPECT_EQ(serverType, 0u);
+}

@@ -2532,3 +2532,13 @@ TEST(IoctlHelperXeTest, givenIoctlHelperWhenGettingFenceAddressThenReturnCorrect
     fenceAddr = ioctlHelper.getPagingFenceAddress(0, &osContext);
     EXPECT_EQ(osContext.getFenceAddr(0), fenceAddr);
 }
+
+TEST(IoctlHelperXeTest, givenIoctlWhenQueryDeviceParamsIsCalledThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+
+    uint32_t moduleId = 0;
+    uint16_t serverType = 0;
+    EXPECT_FALSE(xeIoctlHelper->queryDeviceParams(&moduleId, &serverType));
+}

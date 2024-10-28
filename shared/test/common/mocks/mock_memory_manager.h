@@ -64,6 +64,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::secondaryEngines;
 
     static constexpr osHandle invalidSharedHandle = -1;
+    static const unsigned int moduleId;
+    static const unsigned int serverType;
 
     MockMemoryManager(ExecutionEnvironment &executionEnvironment) : MockMemoryManager(false, executionEnvironment) {}
 
@@ -232,6 +234,11 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
 
     void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override {
         registerIpcExportedAllocationCalled++;
+    }
+
+    void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override {
+        *moduleId = MockMemoryManager::moduleId;
+        *serverType = MockMemoryManager::serverType;
     }
 
     MockGraphicsAllocation *mockGa;

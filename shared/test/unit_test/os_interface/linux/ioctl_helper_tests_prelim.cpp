@@ -406,6 +406,12 @@ TEST_F(IoctlPrelimHelperTests, givenPrelimWhenGettingEuStallFdParameterThenCorre
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_I915_PERF_FLAG_FD_EU_STALL), ioctlHelper.getEuStallFdParameter());
 }
 
+TEST_F(IoctlPrelimHelperTests, givenPrelimWhenQueryDeviceParamsIsCalledThenFalseIsReturned) {
+    uint32_t moduleId = 0;
+    uint16_t serverType = 0;
+    EXPECT_FALSE(ioctlHelper.queryDeviceParams(&moduleId, &serverType));
+}
+
 struct MockIoctlHelperPrelim20 : IoctlHelperPrelim20 {
     using IoctlHelperPrelim20::createGemExt;
     using IoctlHelperPrelim20::IoctlHelperPrelim20;

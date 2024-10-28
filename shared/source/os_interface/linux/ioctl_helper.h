@@ -223,6 +223,8 @@ class IoctlHelper {
 
     virtual uint64_t *getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux *osContext);
 
+    virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
+
   protected:
     Drm &drm;
     ExternalCtx *externalCtx = nullptr;

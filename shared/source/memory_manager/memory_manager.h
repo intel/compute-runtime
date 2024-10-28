@@ -322,6 +322,8 @@ class MemoryManager {
     size_t getUsedSystemMemorySize() const { return sysMemAllocsSize; }
     uint32_t getFirstContextIdForRootDevice(uint32_t rootDeviceIndex);
 
+    virtual void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) { return; }
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
