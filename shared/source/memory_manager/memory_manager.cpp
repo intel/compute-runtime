@@ -473,7 +473,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::gpuTimestampDeviceBuffer:
     case AllocationType::preemption:
     case AllocationType::syncDispatchToken:
-    case AllocationType::timestampPacketTagBuffer:
         allow64KbPages = true;
     default:
         break;

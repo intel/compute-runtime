@@ -243,6 +243,7 @@ INSTANTIATE_TEST_SUITE_P(Allow32BitAnd64kbPagesTypes,
                          ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesAllowed));
 
 static const AllocationType allocationTypesWith32BitAnd64KbPagesNotAllowed[] = {AllocationType::commandBuffer,
+                                                                                AllocationType::timestampPacketTagBuffer,
                                                                                 AllocationType::profilingTagBuffer,
                                                                                 AllocationType::image,
                                                                                 AllocationType::instructionHeap,
@@ -611,7 +612,6 @@ HWTEST_F(GetAllocationDataTestHw, givenTimestampPacketTagBufferTypeWhenGetAlloca
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
-    EXPECT_TRUE(allocData.flags.allow64kbPages);
 }
 
 TEST(MemoryManagerTest, givenProfilingTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
