@@ -9,3 +9,4 @@
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_LUNARLAKE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnTrue, IGFX_LUNARLAKE);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse, IGFX_LUNARLAKE);
