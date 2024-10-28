@@ -5909,7 +5909,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     session->handleEvent(&client.base);
 
     unsigned char bytes1[sizeof(prelim_drm_i915_debug_event_engines) + 2 * sizeof(prelim_drm_i915_debug_engine_info)];
-    prelim_drm_i915_debug_event_engines *engines1 = reinterpret_cast<prelim_drm_i915_debug_event_engines *>(bytes1);
+    prelim_drm_i915_debug_event_engines *engines1 = new (bytes1) prelim_drm_i915_debug_event_engines;
     engines1->base.type = PRELIM_DRM_I915_DEBUG_EVENT_ENGINES;
     engines1->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
     engines1->client_handle = clientHandle;
@@ -5919,7 +5919,7 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     engines1->engines[1].lrc_handle = 2;
 
     unsigned char bytes2[sizeof(prelim_drm_i915_debug_event_engines) + 4 * sizeof(prelim_drm_i915_debug_engine_info)];
-    prelim_drm_i915_debug_event_engines *engines2 = reinterpret_cast<prelim_drm_i915_debug_event_engines *>(bytes2);
+    prelim_drm_i915_debug_event_engines *engines2 = new (bytes2) prelim_drm_i915_debug_event_engines;
     engines2->base.type = PRELIM_DRM_I915_DEBUG_EVENT_ENGINES;
     engines2->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
     engines2->client_handle = clientHandle;

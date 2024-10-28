@@ -107,26 +107,28 @@ ze_result_t MultiDeviceCreatedMetricGroupManager::createMultipleMetricGroupsFrom
             multiDeviceMetricImp.push_back(static_cast<MultiDeviceMetricImp *>(Metric::fromHandle(hMetric)));
         }
         auto metricGroup = T::create(metricSource, metricGroupsAcrossSubDevices, multiDeviceMetricImp);
-        auto closeStatus = metricGroup->close();
-        if (closeStatus != ZE_RESULT_SUCCESS) {
-            // Cleanup and exit
-            metricGroup->destroy();
-            for (auto &metricGroupCreated : metricGroupList) {
-                MetricGroup::fromHandle(metricGroupCreated)->destroy();
-            }
-            metricGroupList.clear();
-
-            // Delete the remaining subdevice groups
-            for (uint32_t subDevGroupIndex = groupIndex + 1; subDevGroupIndex < static_cast<uint32_t>(metricGroupsPerSubDevice[0].size()); subDevGroupIndex++) {
-                for (uint32_t subDeviceIndex = 0; subDeviceIndex < subDeviceCount; subDeviceIndex++) {
-                    [[maybe_unused]] auto status = zetMetricGroupDestroyExp(metricGroupsPerSubDevice[subDeviceIndex][subDevGroupIndex]);
-                    DEBUG_BREAK_IF(status != ZE_RESULT_SUCCESS);
+        if (metricGroup) {
+            auto closeStatus = metricGroup->close();
+            if (closeStatus != ZE_RESULT_SUCCESS) {
+                // Cleanup and exit
+                metricGroup->destroy();
+                for (auto &metricGroupCreated : metricGroupList) {
+                    MetricGroup::fromHandle(metricGroupCreated)->destroy();
                 }
+                metricGroupList.clear();
+
+                // Delete the remaining subdevice groups
+                for (uint32_t subDevGroupIndex = groupIndex + 1; subDevGroupIndex < static_cast<uint32_t>(metricGroupsPerSubDevice[0].size()); subDevGroupIndex++) {
+                    for (uint32_t subDeviceIndex = 0; subDeviceIndex < subDeviceCount; subDeviceIndex++) {
+                        [[maybe_unused]] auto status = zetMetricGroupDestroyExp(metricGroupsPerSubDevice[subDeviceIndex][subDevGroupIndex]);
+                        DEBUG_BREAK_IF(status != ZE_RESULT_SUCCESS);
+                    }
+                }
+                *maxMetricGroupCount = 0;
+                return closeStatus;
             }
-            *maxMetricGroupCount = 0;
-            return closeStatus;
+            metricGroupList.push_back(metricGroup);
         }
-        metricGroupList.push_back(metricGroup);
     }
 
     *maxMetricGroupCount = static_cast<uint32_t>(metricGroupList.size());

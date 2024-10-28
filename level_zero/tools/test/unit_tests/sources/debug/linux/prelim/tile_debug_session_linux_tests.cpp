@@ -112,7 +112,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     EXPECT_TRUE(session->stateSaveAreaHeader.empty());
 
     const char *header = "cssa";
-    rootSession->stateSaveAreaHeader.assign(header, header + sizeof(header));
+    rootSession->stateSaveAreaHeader.assign(header, header + strlen(header) + 1);
 
     session->readStateSaveAreaHeader();
     EXPECT_FALSE(session->stateSaveAreaHeader.empty());
@@ -134,7 +134,7 @@ TEST(TileDebugSessionLinuxi915Test, GivenTileDebugSessionWhenReadingContextState
     ASSERT_NE(nullptr, session);
 
     const char *header = "cssa";
-    rootSession->stateSaveAreaHeader.assign(header, header + sizeof(header));
+    rootSession->stateSaveAreaHeader.assign(header, header + strlen(header) + 1);
     rootSession->sipSupportsSlm = false;
 
     session->readStateSaveAreaHeader();

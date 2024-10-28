@@ -4137,7 +4137,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 HWTEST2_F(MultipleDevicePeerAllocationTest,
           whenFreeingNotKnownPointerThenInvalidArgumentIsReturned,
           MatchAny) {
-    void *ptr = malloc(1u);
+    void *ptr = calloc(1, 1u);
     ze_result_t result = context->freeMem(ptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
     free(ptr);

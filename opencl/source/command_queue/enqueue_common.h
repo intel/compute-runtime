@@ -1217,15 +1217,17 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
-        const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
-        if (newTaskCount > CompletionStamp::notReady) {
-            CompletionStamp completionStamp{};
-            completionStamp.taskCount = newTaskCount;
+        if (bcsCsr) {
+            const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+            if (newTaskCount > CompletionStamp::notReady) {
+                CompletionStamp completionStamp{};
+                completionStamp.taskCount = newTaskCount;
 
-            return completionStamp;
+                return completionStamp;
+            }
+
+            this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
         }
-
-        this->updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     }
 
     return completionStamp;

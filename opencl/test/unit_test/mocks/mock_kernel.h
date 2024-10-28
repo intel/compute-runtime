@@ -191,8 +191,7 @@ class MockKernel : public Kernel {
             crossThreadDataSize = 0;
         }
         if (crossThreadDataPattern && (newCrossThreadDataSize > 0)) {
-            mockCrossThreadData.clear();
-            mockCrossThreadData.insert(mockCrossThreadData.begin(), (char *)crossThreadDataPattern, ((char *)crossThreadDataPattern) + newCrossThreadDataSize);
+            mockCrossThreadData.assign((char *)crossThreadDataPattern, ((char *)crossThreadDataPattern) + newCrossThreadDataSize);
         } else {
             mockCrossThreadData.resize(newCrossThreadDataSize, 0);
         }

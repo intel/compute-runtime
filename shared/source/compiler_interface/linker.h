@@ -109,7 +109,7 @@ struct LinkerInput {
     using SymbolMap = std::unordered_map<std::string, SymbolInfo>;
     using RelocationsPerInstSegment = std::vector<Relocations>;
 
-    virtual ~LinkerInput() = default;
+    virtual ~LinkerInput();
 
     static SegmentType getSegmentForSection(ConstStringRef name);
 

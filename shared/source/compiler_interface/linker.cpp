@@ -30,6 +30,8 @@
 
 namespace NEO {
 
+LinkerInput::~LinkerInput() = default;
+
 SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {
     if (name == NEO::Zebin::Elf::SectionNames::dataConst || name == NEO::Zebin::Elf::SectionNames::dataGlobalConst) {
         return NEO::SegmentType::globalConstants;
