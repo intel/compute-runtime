@@ -97,6 +97,7 @@ class AILConfiguration {
 extern const std::set<std::string_view> applicationsContextSyncFlag;
 extern const std::set<std::string_view> applicationsForceRcsDg2;
 extern const std::set<std::string_view> applicationsBufferPoolDisabled;
+extern const std::set<std::string_view> applicationsBufferPoolDisabledDg2;
 extern const std::set<std::string_view> applicationsOverfetchDisabled;
 extern const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited;
 
