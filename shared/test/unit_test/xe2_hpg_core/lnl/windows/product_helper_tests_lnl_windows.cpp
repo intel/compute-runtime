@@ -57,6 +57,21 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledT
     expectedPatIndexOverride = 1u;
     EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::linearStream));
     EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHeap));
+
+    expectedPatIndexOverride = 19u;
+    debugManager.flags.OverrideReadWritePatForDcFlushMitigation.set(static_cast<int32_t>(expectedPatIndexOverride));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::bufferHostMemory));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::mapAllocation));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::svmCpu));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::svmZeroCopy));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHostMemory));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::timestampPacketTagBuffer));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::tagBuffer));
+
+    expectedPatIndexOverride = 33u;
+    debugManager.flags.OverrideWriteOnlyPatForDcFlushMitigation.set(static_cast<int32_t>(expectedPatIndexOverride));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::linearStream));
+    EXPECT_EQ(expectedPatIndexOverride, productHelper->overridePatIndex(0u, expectedPatIndex, AllocationType::internalHeap));
 }
 
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabledThenTrueIsReturned) {

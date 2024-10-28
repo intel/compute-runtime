@@ -223,6 +223,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForSystemMemory, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForDeviceMemory, -1, "-1: default, >=0: PatIndex to override. Applicable only for Device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForUncachedTypes, -1, "-1: default, >=0: PatIndex to override for uncached resource types. Applicable only on Linux.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePatIndexForCachedTypes, -1, "-1: default, >=0: PatIndex to override for cached resource types. Applicable only on Linux.")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideReadWritePatForDcFlushMitigation, -1, "-1: default, >=0: PatIndex to override for read wirte resources when mitigating dc flush")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideWriteOnlyPatForDcFlushMitigation, -1, "-1: default, >=0: PatIndex to override for wirte only resources when mitigating dc flush")
 DECLARE_DEBUG_VARIABLE(int32_t, UseGemCreateExtInAllocateMemoryByKMD, -1, "Use gem create ext when allocating memory by KMD")
 DECLARE_DEBUG_VARIABLE(int32_t, UseTileMemoryBankInVirtualMemoryCreation, -1, "-1: default - on, 0: do not assign tile memory bank to virtual memory space, 1: assign tile memory bank to virtual memory space")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampEvents, -1, "-1: default (based on user settings), 0: Force disable timestamp events (no timestamps will be reported), 1: Force enable timestamp events")
