@@ -2,5 +2,5 @@ components:
   i915_kmd:
     version: rel-24.5-17
   xe_kmd:
-    version: dev-636
+    version: dev-1900
 version: '1'
