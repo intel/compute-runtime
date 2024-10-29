@@ -1703,4 +1703,16 @@ void IoctlHelperXe::querySupportedFeatures() {
 bool IoctlHelperXe::isEuPerDssTopologyType(uint16_t topologyType) const {
     return topologyType == DRM_XE_TOPO_EU_PER_DSS;
 }
+
+void *IoctlHelperXe::pciBarrierMmap() {
+    GemMmapOffset mmapOffset = {};
+    mmapOffset.flags = DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER;
+    auto ret = ioctl(DrmIoctl::gemMmapOffset, &mmapOffset);
+    if (ret != 0) {
+        return false;
+    }
+
+    return SysCalls::mmap(NULL, MemoryConstants::pageSize, PROT_WRITE, MAP_SHARED, drm.getFileDescriptor(), static_cast<off_t>(mmapOffset.offset));
+}
+
 } // namespace NEO
