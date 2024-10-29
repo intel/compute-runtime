@@ -68,6 +68,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     LinearStream *listCmdBufferStream = container.getCommandStream();
 
     auto threadGroupDims = static_cast<const uint32_t *>(args.threadGroupDimensions);
+    uint32_t threadDimsVec[3] = {0, 0, 0};
+    if (!args.isIndirect) {
+        threadDimsVec[0] = threadGroupDims[0];
+        threadDimsVec[1] = threadGroupDims[1];
+        threadDimsVec[2] = threadGroupDims[2];
+    }
 
     if (!args.makeCommandView) {
         bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
@@ -378,7 +384,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     walkerCmd.setPredicateEnable(args.isPredicate);
 
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
-    EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(idd, *args.device, hwInfo, threadGroupDims, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, threadsPerThreadGroup, walkerCmd);
+    EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(idd, *args.device, hwInfo, threadDimsVec, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, threadsPerThreadGroup, walkerCmd);
     if (debugManager.flags.PrintKernelDispatchParameters.get()) {
         fprintf(stdout, "kernel, %s, grfCount, %d, simdSize, %d, tilesCount, %d, implicitScaling, %s, threadGroupCount, %d, numberOfThreadsInGpgpuThreadGroup, %d, threadGroupDimensions, %d, %d, %d, threadGroupDispatchSize enum, %d\n",
                 kernelDescriptor.kernelMetadata.kernelName.c_str(),
@@ -1143,26 +1149,23 @@ void EncodeDispatchKernel<GfxFamily>::encodeThreadGroupDispatch(InterfaceDescrip
                 threadsPerXeCore /= 2;
             }
             auto tgDispatchSizeSelected = 8;
-            uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
 
-            if (walkerCmd.getThreadGroupIdXDimension() > 1 && (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1)) {
-                while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
+            if (threadGroupDimensions[0] > 1 && (threadGroupDimensions[1] > 1 || threadGroupDimensions[2] > 1)) {
+                while (threadGroupDimensions[0] % tgDispatchSizeSelected != 0) {
                     tgDispatchSizeSelected /= 2;
                 }
-            } else if (walkerCmd.getThreadGroupIdYDimension() > 1 && walkerCmd.getThreadGroupIdZDimension() > 1) {
-                while (walkerCmd.getThreadGroupIdYDimension() % tgDispatchSizeSelected != 0) {
+            } else if (threadGroupDimensions[1] > 1 && threadGroupDimensions[2] > 1) {
+                while (threadGroupDimensions[1] % tgDispatchSizeSelected != 0) {
                     tgDispatchSizeSelected /= 2;
                 }
             }
 
-            auto workgroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
-
             // make sure we fit all xe core
-            while (workgroupCount / tgDispatchSizeSelected < hwInfo.gtSystemInfo.MaxSubSlicesSupported * tileCount && tgDispatchSizeSelected > 1) {
+            while (threadGroupCount / tgDispatchSizeSelected < hwInfo.gtSystemInfo.MaxSubSlicesSupported * tileCount && tgDispatchSizeSelected > 1) {
                 tgDispatchSizeSelected /= 2;
             }
 
-            auto threadCountPerGrouping = tgDispatchSizeSelected * numberOfThreadsInThreadGroup;
+            auto threadCountPerGrouping = tgDispatchSizeSelected * threadsPerThreadGroup;
             // make sure we do not use more threads then present on each xe core
             while (threadCountPerGrouping > threadsPerXeCore && tgDispatchSizeSelected > 1) {
                 tgDispatchSizeSelected /= 2;
@@ -1187,26 +1190,25 @@ void EncodeDispatchKernel<GfxFamily>::encodeThreadGroupDispatch(InterfaceDescrip
                 uint32_t availableThreadCount = gfxCoreHelper.calculateAvailableThreadCount(hwInfo, grfCount);
                 availableThreadCount *= tileCount;
 
-                uint32_t numberOfThreadsInThreadGroup = interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup();
-                uint32_t dispatchedTotalThreadCount = numberOfThreadsInThreadGroup * threadGroupCount;
-                UNRECOVERABLE_IF(numberOfThreadsInThreadGroup == 0u);
+                uint32_t dispatchedTotalThreadCount = threadsPerThreadGroup * threadGroupCount;
+                UNRECOVERABLE_IF(threadsPerThreadGroup == 0u);
                 auto tgDispatchSizeSelected = 1u;
 
                 if (dispatchedTotalThreadCount <= availableThreadCount) {
                     tgDispatchSizeSelected = 1;
-                } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
+                } else if (threadsPerThreadGroup <= maxThreadsInTGForTGDispatchSize8) {
                     tgDispatchSizeSelected = 8;
-                } else if (numberOfThreadsInThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
+                } else if (threadsPerThreadGroup <= maxThreadsInTGForTGDispatchSize4) {
                     tgDispatchSizeSelected = 4;
                 } else {
                     tgDispatchSizeSelected = 2;
                 }
-                if (walkerCmd.getThreadGroupIdXDimension() > 1 && (walkerCmd.getThreadGroupIdYDimension() > 1 || walkerCmd.getThreadGroupIdZDimension() > 1)) {
-                    while (walkerCmd.getThreadGroupIdXDimension() % tgDispatchSizeSelected != 0) {
+                if (threadGroupDimensions[0] > 1 && (threadGroupDimensions[1] > 1 || threadGroupDimensions[2] > 1)) {
+                    while (threadGroupDimensions[0] % tgDispatchSizeSelected != 0) {
                         tgDispatchSizeSelected /= 2;
                     }
-                } else if (walkerCmd.getThreadGroupIdYDimension() > 1 && walkerCmd.getThreadGroupIdZDimension() > 1) {
-                    while (walkerCmd.getThreadGroupIdYDimension() % tgDispatchSizeSelected != 0) {
+                } else if (threadGroupDimensions[1] > 1 && threadGroupDimensions[2] > 1) {
+                    while (threadGroupDimensions[1] % tgDispatchSizeSelected != 0) {
                         tgDispatchSizeSelected /= 2;
                     }
                 }
