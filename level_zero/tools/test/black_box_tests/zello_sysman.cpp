@@ -1417,6 +1417,7 @@ void testSysmanGlobalOperations(ze_device_handle_t &device) {
         std::cout << "properties.core.numEUsPerSubslice = " << properties.core.numEUsPerSubslice << std::endl;
         std::cout << "properties.core.numSubslicesPerSlice = " << properties.core.numSubslicesPerSlice << std::endl;
         std::cout << "properties.core.numSlices = " << properties.core.numSlices << std::endl;
+        std::cout << "properties.core.timerResolution = " << properties.core.timerResolution << std::endl;
         std::cout << "properties.core.timestampValidBits = " << properties.core.timestampValidBits << std::endl;
         std::cout << "properties.core.kernelTimestampValidBits = " << properties.core.kernelTimestampValidBits << std::endl;
         std::cout << "properties.core.uuid = " << std::endl;

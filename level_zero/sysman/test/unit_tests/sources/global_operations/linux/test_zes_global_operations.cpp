@@ -74,6 +74,11 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
+
+        auto &hwInfo = pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo();
+        pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
+        pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution(hwInfo);
+
         pEngineHandleContextOld = pSysmanDeviceImp->pEngineHandleContext;
         pDiagnosticsHandleContextOld = pSysmanDeviceImp->pDiagnosticsHandleContext;
         pFirmwareHandleContextOld = pSysmanDeviceImp->pFirmwareHandleContext;
@@ -1237,6 +1242,31 @@ TEST_F(SysmanGlobalOperationsFixture, WhenGettingDevicePropertiesThenSubslicesPe
     EXPECT_EQ(8u, properties.core.numSubslicesPerSlice);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetPropertiesThenCorrectTimerResolutionInCorePropertiesAreReturned) {
+    pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime.reset(new NEO::MockOSTimeWithConstTimestamp());
+    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    double mockedTimerResolution = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osTime->getDynamicDeviceTimerResolution(*pHwInfo);
+    zes_device_properties_t properties = {};
+    ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(properties.core.timerResolution, static_cast<uint64_t>(mockedTimerResolution));
+
+    properties = {};
+    ze_device_properties_t coreProperties = {};
+    coreProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
+    properties.core = coreProperties;
+    result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(properties.core.timerResolution, static_cast<uint64_t>(1000000000.0 / mockedTimerResolution));
+
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.UseCyclesPerSecondTimer.set(1);
+    properties = {};
+    result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(properties.core.timerResolution, static_cast<uint64_t>(1000000000.0 / mockedTimerResolution));
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesPerSliceIsBasedOnMaxSubslicesSupported) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.DebugApiUsed.set(1);
@@ -1304,7 +1334,17 @@ TEST_F(SysmanDevicePropertiesExtensionTest,
     EXPECT_EQ(0u, extProperties.flags);
 }
 
-using SysmanDevicePropertiesExtensionTestMultiDevice = SysmanMultiDeviceFixture;
+class SysmanDevicePropertiesExtensionTestMultiDevice : public SysmanMultiDeviceFixture {
+  protected:
+    void SetUp() override {
+        SysmanMultiDeviceFixture::SetUp();
+        for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
+            auto &hwInfo = *execEnv->rootDeviceEnvironments[i]->getMutableHardwareInfo();
+            execEnv->rootDeviceEnvironments[i]->osTime = MockOSTime::create();
+            execEnv->rootDeviceEnvironments[i]->osTime->setDeviceTimerResolution(hwInfo);
+        }
+    }
+};
 
 HWTEST2_F(SysmanDevicePropertiesExtensionTestMultiDevice,
           GivenValidDeviceHandleWhenCallingGetPropertiesForExtensionThenSubDeviceFlagSetCorrectly, IsXeHpcCore) {
@@ -1415,7 +1455,18 @@ HWTEST2_F(SysmanSubDevicePropertiesExperimentalTestMultiDevice,
     }
 }
 
-using SysmanDeviceGetByUuidExperimentalTestMultiDevice = SysmanMultiDeviceFixture;
+class SysmanDeviceGetByUuidExperimentalTestMultiDevice : public SysmanMultiDeviceFixture {
+  protected:
+    void SetUp() override {
+        SysmanMultiDeviceFixture::SetUp();
+        for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
+            auto &hwInfo = *execEnv->rootDeviceEnvironments[i]->getMutableHardwareInfo();
+            execEnv->rootDeviceEnvironments[i]->osTime = MockOSTime::create();
+            execEnv->rootDeviceEnvironments[i]->osTime->setDeviceTimerResolution(hwInfo);
+        }
+    }
+};
+
 HWTEST2_F(SysmanDeviceGetByUuidExperimentalTestMultiDevice,
           GivenValidDriverHandleWhenCallingGetDeviceByUuidWithInvalidUuidThenErrorResultIsReturned, IsXeHpcCore) {
     zes_uuid_t uuid = {};

@@ -72,6 +72,11 @@ ze_result_t SysmanDeviceImp::init() {
     return result;
 }
 
+double SysmanDeviceImp::getTimerResolution() {
+    getRootDeviceEnvironmentRef().initOsTime();
+    return getRootDeviceEnvironment().osTime.get()->getDynamicDeviceTimerResolution(getHardwareInfo());
+}
+
 ze_result_t SysmanDeviceImp::deviceGetProperties(zes_device_properties_t *pProperties) {
     return pGlobalOperations->deviceGetProperties(pProperties);
 }

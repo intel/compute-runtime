@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_time.h"
 
 namespace L0 {
 namespace Sysman {
@@ -35,6 +36,11 @@ void WddmGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_
 
 void WddmGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
 }
+
+void WddmGlobalOperationsImp::getTimerResolution(double *pTimerResolution) {
+    *pTimerResolution = pWddmSysmanImp->getSysmanDeviceImp()->getTimerResolution();
+}
+
 bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
     if (pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
         auto driverModel = pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();
@@ -50,6 +56,7 @@ bool WddmGlobalOperationsImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uu
 
     return this->uuid.isValid;
 }
+
 bool WddmGlobalOperationsImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
         uuid.fill(0);

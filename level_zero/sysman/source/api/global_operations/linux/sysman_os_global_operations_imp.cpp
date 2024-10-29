@@ -751,6 +751,11 @@ void LinuxGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
     }
 }
 
+void LinuxGlobalOperationsImp::getTimerResolution(double *pTimerResolution) {
+    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+    *pTimerResolution = pLinuxSysmanImp->getParentSysmanDeviceImp()->getTimerResolution();
+}
+
 ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     memset(pState, 0, sizeof(zes_device_state_t));
     pState->repaired = ZES_REPAIR_STATUS_UNSUPPORTED;

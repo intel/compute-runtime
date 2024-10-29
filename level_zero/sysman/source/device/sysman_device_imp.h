@@ -39,6 +39,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     PRODUCT_FAMILY getProductFamily() const { return getHardwareInfo().platform.eProductFamily; }
     NEO::ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
+    double getTimerResolution();
 
     GlobalOperations *pGlobalOperations = nullptr;
     PowerHandleContext *pPowerHandleContext = nullptr;

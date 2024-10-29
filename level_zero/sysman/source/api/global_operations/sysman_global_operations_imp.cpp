@@ -69,6 +69,16 @@ ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pP
         pProperties->core.numSubslicesPerSlice = hardwareInfo.gtSystemInfo.SubSliceCount / hardwareInfo.gtSystemInfo.SliceCount;
     }
     pProperties->core.numSlices = hardwareInfo.gtSystemInfo.SliceCount;
+
+    double timerResolution = 0;
+    pOsGlobalOperations->getTimerResolution(&timerResolution);
+    if ((NEO::debugManager.flags.UseCyclesPerSecondTimer.get() == 1) ||
+        (pProperties->core.stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2)) {
+        pProperties->core.timerResolution = static_cast<uint64_t>(1000000000.0 / timerResolution);
+    } else {
+        pProperties->core.timerResolution = static_cast<uint64_t>(timerResolution);
+    }
+
     pProperties->core.timestampValidBits = hardwareInfo.capabilityTable.timestampValidBits;
     pProperties->core.kernelTimestampValidBits = hardwareInfo.capabilityTable.kernelTimestampValidBits;
 
