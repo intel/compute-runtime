@@ -174,11 +174,6 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
     auto &postSyncData = walkerCmd.getPostSync();
     postSyncData.setSystemMemoryFenceRequest(programGlobalFenceAsPostSyncOperationInComputeWalker);
 
-    int32_t forceL3PrefetchForComputeWalker = debugManager.flags.ForceL3PrefetchForComputeWalker.get();
-    if (forceL3PrefetchForComputeWalker != -1) {
-        walkerCmd.setL3PrefetchDisable(!forceL3PrefetchForComputeWalker);
-    }
-
     int32_t overrideDispatchAllWalkerEnableInComputeWalker = debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
     if (overrideDispatchAllWalkerEnableInComputeWalker != -1) {
         walkerCmd.setComputeDispatchAllWalkerEnable(overrideDispatchAllWalkerEnableInComputeWalker);

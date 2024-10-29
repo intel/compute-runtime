@@ -59,41 +59,13 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
     EXPECT_TRUE(pScm->getLargeGrfMode());
 }
 
-DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0) {
+DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenSetL3PrefetchDefaultValue) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    MockExecutionEnvironment executionEnvironment{};
-    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+    auto idd = FamilyType::cmdInitInterfaceDescriptorData;
 
-    std::vector<std::pair<unsigned short, uint16_t>> dg2Configs =
-        {{dg2G10DeviceIds[0], revIdA0},
-         {dg2G10DeviceIds[0], revIdA1},
-         {dg2G10DeviceIds[0], revIdB0},
-         {dg2G10DeviceIds[0], revIdC0},
-         {dg2G11DeviceIds[0], revIdA0},
-         {dg2G11DeviceIds[0], revIdB0},
-         {dg2G11DeviceIds[0], revIdB1},
-         {dg2G12DeviceIds[0], revIdA0}};
-
-    KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0};
-
-    for (const auto &[deviceID, revisionID] : dg2Configs) {
-        hwInfo.platform.usRevId = revisionID;
-        hwInfo.platform.usDeviceID = deviceID;
-        hwInfo.ipVersion = compilerProductHelper.getHwIpVersion(hwInfo);
-        rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
-
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
-
-        if (DG2::isG10(hwInfo) && revisionID < revIdB0) {
-            EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
-        } else {
-            EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
-        }
-    }
+    EncodeDispatchKernel<FamilyType>::overrideDefaultValues(walkerCmd, idd);
+    EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
 }
 
 using Dg2SbaTest = SbaTest;
