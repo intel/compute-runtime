@@ -29,7 +29,6 @@ TEST_F(ReleaseHelper1257Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired());
         EXPECT_FALSE(releaseHelper->isPipeControlPriorToPipelineSelectWaRequired());
         EXPECT_TRUE(releaseHelper->isProgramAllStateComputeCommandFieldsWARequired());
-        EXPECT_FALSE(releaseHelper->isPrefetchDisablingRequired());
         EXPECT_TRUE(releaseHelper->isSplitMatrixMultiplyAccumulateSupported());
         EXPECT_TRUE(releaseHelper->isBFloat16ConversionSupported());
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());

@@ -40,7 +40,6 @@ class ReleaseHelper {
     virtual bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const = 0;
     virtual bool isPipeControlPriorToPipelineSelectWaRequired() const = 0;
     virtual bool isProgramAllStateComputeCommandFieldsWARequired() const = 0;
-    virtual bool isPrefetchDisablingRequired() const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported() const = 0;
     virtual bool isBFloat16ConversionSupported() const = 0;
     virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
@@ -83,7 +82,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isPipeControlPriorToNonPipelinedStateCommandsWARequired() const override;
     bool isPipeControlPriorToPipelineSelectWaRequired() const override;
     bool isProgramAllStateComputeCommandFieldsWARequired() const override;
-    bool isPrefetchDisablingRequired() const override;
     bool isSplitMatrixMultiplyAccumulateSupported() const override;
     bool isBFloat16ConversionSupported() const override;
     bool isAuxSurfaceModeOverrideRequired() const override;

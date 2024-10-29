@@ -40,11 +40,6 @@ bool ReleaseHelperHw<releaseType>::isProgramAllStateComputeCommandFieldsWARequir
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isPrefetchDisablingRequired() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isSplitMatrixMultiplyAccumulateSupported() const {
     return false;
 }

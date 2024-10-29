@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,12 +13,6 @@
 
 namespace NEO {
 constexpr auto release = ReleaseType::release1255;
-
-template <>
-bool ReleaseHelperHw<release>::isPrefetchDisablingRequired() const {
-
-    return hardwareIpVersion.value < AOT::DG2_G10_B0;
-}
 
 } // namespace NEO
 #include "shared/source/release_helper/release_helper_common_xe_hpg.inl"
