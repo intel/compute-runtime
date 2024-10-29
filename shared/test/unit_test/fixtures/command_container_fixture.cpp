@@ -82,6 +82,18 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
     return args;
 }
 
+EncodeWalkerArgs CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(const KernelDescriptor &kernelDescriptor) {
+    EncodeWalkerArgs args{
+        kernelDescriptor,                      // kernelDescriptor
+        NEO::KernelExecutionType::defaultType, // kernelExecutionType
+        NEO::RequiredDispatchWalkOrder::none,  // requiredDispatchWalkOrder
+        0,                                     // additionalSizeParam
+        0,                                     // maxFrontEndThreads
+        false};                                // requiredSystemFence
+
+    return args;
+}
+
 void ScratchProgrammingFixture::setUp() {
     NEO::DeviceFixture::setUp();
     size_t sizeStream = 512;

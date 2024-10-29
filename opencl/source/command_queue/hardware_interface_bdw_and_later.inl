@@ -83,7 +83,13 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         0,
         commandQueue.getDevice());
 
-    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, 0};
+    EncodeWalkerArgs encodeWalkerArgs{
+        kernel.getKernelInfo().kernelDescriptor, // kernelDescriptor
+        kernel.getExecutionType(),               // kernelExecutionType
+        RequiredDispatchWalkOrder::none,         // requiredDispatchWalkOrder
+        0,                                       // additionalSizeParam
+        0,                                       // maxFrontEndThreads
+        false};                                  // requiredSystemFence
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }

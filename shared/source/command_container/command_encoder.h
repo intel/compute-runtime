@@ -106,12 +106,12 @@ enum class CompareOperation : uint32_t {
 struct EncodeWalkerArgs {
     EncodeWalkerArgs() = delete;
 
-    KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
-    bool requiredSystemFence = false;
     const KernelDescriptor &kernelDescriptor;
+    KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t additionalSizeParam = NEO::additionalKernelLaunchSizeParamNotSet;
     uint32_t maxFrontEndThreads = 0;
+    bool requiredSystemFence = false;
 };
 
 template <typename GfxFamily>

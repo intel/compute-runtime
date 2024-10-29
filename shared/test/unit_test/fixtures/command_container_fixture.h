@@ -38,6 +38,8 @@ class CommandEncodeStatesFixture : public DeviceFixture {
                                                              const void *threadGroupDimensions,
                                                              bool requiresUncachedMocs);
 
+    static EncodeWalkerArgs createDefaultEncodeWalkerArgs(const KernelDescriptor &kernelDescriptor);
+
     template <typename FamilyType>
     EncodeStateBaseAddressArgs<FamilyType> createDefaultEncodeStateBaseAddressArgs(
         CommandContainer *container,

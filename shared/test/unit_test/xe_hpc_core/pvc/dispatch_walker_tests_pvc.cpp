@@ -16,6 +16,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;
 
@@ -44,7 +45,9 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0};
+    EncodeWalkerArgs walkerArgs = CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(kernelDescriptor);
+    walkerArgs.requiredSystemFence = true;
+
     for (auto &testInput : testInputs) {
         for (auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
@@ -70,7 +73,7 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemF
     hwInfo.platform.usRevId = 0x3;
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, false, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0};
+    EncodeWalkerArgs walkerArgs = CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(kernelDescriptor);
     for (auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 

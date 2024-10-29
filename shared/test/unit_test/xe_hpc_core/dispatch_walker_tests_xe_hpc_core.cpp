@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;
 
@@ -24,7 +25,9 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0};
+    EncodeWalkerArgs walkerArgs = CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(kernelDescriptor);
+    walkerArgs.requiredSystemFence = true;
+
     {
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());

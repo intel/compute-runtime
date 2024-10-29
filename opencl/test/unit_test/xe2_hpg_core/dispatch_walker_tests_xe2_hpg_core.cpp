@@ -26,7 +26,13 @@ XE2_HPG_CORETEST_F(WalkerDispatchTestsXe2HpGCore, whenEncodeAdditionalWalkerFiel
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     KernelDescriptor kernelDescriptor;
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::concurrent, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0, 0};
+    EncodeWalkerArgs walkerArgs{
+        kernelDescriptor,                     // kernelDescriptor
+        KernelExecutionType::concurrent,      // kernelExecutionType
+        NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
+        0,                                    // additionalSizeParam
+        0,                                    // maxFrontEndThreads
+        true};                                // requiredSystemFence
     {
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
