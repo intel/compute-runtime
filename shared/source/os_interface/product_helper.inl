@@ -63,7 +63,7 @@ void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const Hardwa
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    bool tlbFlushRequired = true;
+    bool tlbFlushRequired = false;
     if (debugManager.flags.ForceTlbFlush.get() != -1) {
         tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();
     }

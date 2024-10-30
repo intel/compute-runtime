@@ -492,14 +492,14 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCallGetInternalHeapsPrealloca
     EXPECT_EQ(productHelper->getInternalHeapsPreallocated(), 3u);
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned, IsNotXeHpgOrXeHpcCore) {
-    EXPECT_TRUE(productHelper->isTlbFlushRequired());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned, IsNotXeHpgCore) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperAndForceTlbFlushNotSetWhenAskedIfIsTlbFlushRequiredThenFalseIsReturned, IsNotPVC) {
+HWTEST_F(ProductHelperTest, givenProductHelperAndForceTlbFlushSetWhenAskedIfIsTlbFlushRequiredThenTrueIsReturned) {
     DebugManagerStateRestore restore{};
-    debugManager.flags.ForceTlbFlush.set(0);
-    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+    debugManager.flags.ForceTlbFlush.set(1);
+    EXPECT_TRUE(productHelper->isTlbFlushRequired());
 }
 
 HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {

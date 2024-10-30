@@ -149,15 +149,6 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
-    bool tlbFlushRequired = false;
-    if (debugManager.flags.ForceTlbFlush.get() != -1) {
-        tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();
-    }
-    return tlbFlushRequired;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
     return true;
 }

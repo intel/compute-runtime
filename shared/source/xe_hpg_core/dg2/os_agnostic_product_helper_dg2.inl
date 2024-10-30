@@ -266,4 +266,13 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
+    bool tlbFlushRequired = true;
+    if (debugManager.flags.ForceTlbFlush.get() != -1) {
+        tlbFlushRequired = !!debugManager.flags.ForceTlbFlush.get();
+    }
+    return tlbFlushRequired;
+}
+
 } // namespace NEO
