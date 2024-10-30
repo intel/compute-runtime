@@ -778,8 +778,40 @@ bool IoctlHelperXe::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uin
 }
 
 bool IoctlHelperXe::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
-    xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
-    return false;
+    xeLog(" -> IoctlHelperXe::%s s=0x%llx l=0x%llx vmid=0x%x\n", __FUNCTION__, start, length, vmId);
+    drm_xe_vm_bind bind = {};
+    bind.vm_id = vmId;
+    bind.num_binds = 1;
+
+    bind.bind.range = length;
+    bind.bind.addr = start;
+    bind.bind.op = DRM_XE_VM_BIND_OP_PREFETCH;
+
+    auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
+    constexpr uint32_t subDeviceMaskSize = DeviceBitfield().size();
+    constexpr uint32_t subDeviceMaskMax = (1u << subDeviceMaskSize) - 1u;
+    uint32_t subDeviceId = region & subDeviceMaskMax;
+    DeviceBitfield subDeviceMask = (1u << subDeviceId);
+    MemoryClassInstance regionInstanceClass = this->drm.getMemoryInfo()->getMemoryRegionClassAndInstance(subDeviceMask, *pHwInfo);
+    bind.bind.prefetch_mem_region_instance = regionInstanceClass.memoryInstance;
+
+    int ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
+
+    xeLog(" vm=%d addr=0x%lx range=0x%lx region=0x%x operation=%d(%s) ret=%d\n",
+          bind.vm_id,
+          bind.bind.addr,
+          bind.bind.range,
+          bind.bind.prefetch_mem_region_instance,
+          bind.bind.op,
+          xeGetBindOperationName(bind.bind.op),
+          ret);
+
+    if (ret != 0) {
+        xeLog("error: %s ret=%d\n", xeGetBindOperationName(bind.bind.op), ret);
+        return false;
+    }
+
+    return true;
 }
 
 uint32_t IoctlHelperXe::getDirectSubmissionFlag() {
