@@ -99,6 +99,18 @@ lint:
         - ci
         '*.md':
         - documentation
+        'level_zero/api/driver_experimental/public/*':
+        - feature
+        - fix
+        - refactor
+        - performance
+        - build
+        'level_zero/include/*':
+        - feature
+        - fix
+        - refactor
+        - performance
+        - build
       directory_0:
         '.github':
         - ci
