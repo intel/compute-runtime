@@ -548,6 +548,10 @@ class CommandStreamReceiver {
         return !testTaskCountReady(getTagAddress(), this->taskCount);
     }
 
+    bool isBusyWithoutHang(TimeType &lastHangCheckTime) {
+        return isBusy() && !this->checkGpuHangDetected(std::chrono::high_resolution_clock::now(), lastHangCheckTime);
+    }
+
     bool canUse4GbHeaps() const {
         return this->use4GbHeaps;
     }

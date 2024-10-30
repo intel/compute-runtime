@@ -803,6 +803,18 @@ TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCount
     EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
 }
 
+TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCountAndGpuHangThenTerminateDirectSubmission) {
+    csr->setLatestFlushedTaskCount(10u);
+    csr->isBusyReturnValue = true;
+    csr->isGpuHangDetectedReturnValue = true;
+
+    controller->checkNewSubmissions();
+    EXPECT_TRUE(controller->directSubmissions[csr.get()].isStopped);
+    EXPECT_EQ(controller->directSubmissions[csr.get()].taskCount, 10u);
+    EXPECT_EQ(1u, csr->stopDirectSubmissionCalledTimes);
+    EXPECT_EQ(0u, csr->flushTagUpdateCalledTimes);
+}
+
 TEST_F(DirectSubmissionIdleDetectionTests, givenLatestFlushedTaskSameAsTaskCountAndGpuIdleThenTerminateDirectSubmission) {
     csr->setLatestFlushedTaskCount(10u);
     csr->isBusyReturnValue = false;

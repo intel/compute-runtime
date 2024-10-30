@@ -27,6 +27,7 @@ class Thread;
 class ProductHelper;
 
 using SteadyClock = std::chrono::steady_clock;
+using HighResolutionClock = std::chrono::high_resolution_clock;
 
 struct TimeoutParams {
     std::chrono::microseconds maxTimeout;
@@ -118,6 +119,7 @@ class DirectSubmissionController {
 
     SteadyClock::time_point timeSinceLastCheck{};
     SteadyClock::time_point lastTerminateCpuTimestamp{};
+    HighResolutionClock::time_point lastHangCheckTime{};
     std::chrono::microseconds maxTimeout{defaultTimeout};
     std::chrono::microseconds timeout{defaultTimeout};
     int32_t timeoutDivisor = 1;

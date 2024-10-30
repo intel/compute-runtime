@@ -125,6 +125,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
     }
 
     controller->timeSinceLastCheck = controller->getCpuTimestamp();
+    controller->lastHangCheckTime = std::chrono::high_resolution_clock::now();
     while (true) {
         if (!controller->keepControlling.load()) {
             return nullptr;
@@ -190,7 +191,7 @@ void DirectSubmissionController::checkNewSubmissions() {
 
 bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock) {
     if (csr->peekLatestFlushedTaskCount() == csr->peekTaskCount()) {
-        return !csr->isBusy();
+        return !csr->isBusyWithoutHang(lastHangCheckTime);
     }
 
     csr->flushTagUpdate();
@@ -203,13 +204,13 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
     // unblock csr during polling
     csrLock.unlock();
     while (currCpuTimeInNS < timeToWait) {
-        if (!csr->isBusy()) {
+        if (!csr->isBusyWithoutHang(lastHangCheckTime)) {
             break;
         }
         osTime->getCpuTime(&currCpuTimeInNS);
     }
     csrLock.lock();
-    return !csr->isBusy();
+    return !csr->isBusyWithoutHang(lastHangCheckTime);
 }
 
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
