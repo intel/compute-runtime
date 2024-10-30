@@ -154,7 +154,7 @@ bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, co
 
 bool StagingBufferManager::isValidForStagingWriteImage(const Device &device, size_t size) const {
     auto thresholdSizeForImages = 32 * MemoryConstants::megaByte;
-    auto stagingCopyEnabled = false;
+    auto stagingCopyEnabled = true;
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }

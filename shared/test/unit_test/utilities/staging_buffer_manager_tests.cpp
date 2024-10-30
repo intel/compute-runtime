@@ -284,7 +284,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferManagerWhenIsValidForStagin
     EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::pageSize2M));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
-    EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::pageSize2M));
+    EXPECT_TRUE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::pageSize2M));
 }
 
 HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBufferCalledThenReturnNullptr) {
