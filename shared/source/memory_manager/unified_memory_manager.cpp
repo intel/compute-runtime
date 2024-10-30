@@ -791,11 +791,11 @@ void SVMAllocsManager::prepareIndirectAllocationForDestruction(SvmAllocationData
                 continue;
             }
 
-            // Marking gpuAllocation task count as objectNotUsed means we will not wait for GPU completion.
+            // If this is non blocking free, we will wait for latest known usage of this allocation.
             // However, if this is blocking free, we must select "safest" task count to wait for.
             TaskCountType desiredTaskCount = std::max(internalAllocationsHandling.second.latestSentTaskCount, gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId()));
             if (isNonBlockingFree) {
-                desiredTaskCount = GraphicsAllocation::objectNotUsed;
+                desiredTaskCount = gpuAllocation->getTaskCount(commandStreamReceiver->getOsContext().getContextId());
             }
             if (gpuAllocation->isAlwaysResident(commandStreamReceiver->getOsContext().getContextId())) {
                 gpuAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, commandStreamReceiver->getOsContext().getContextId());
