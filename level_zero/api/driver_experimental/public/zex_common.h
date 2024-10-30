@@ -146,6 +146,44 @@ typedef struct _ze_intel_device_media_exp_properties_t {
     uint32_t numDecoderCores;                ///< [out] number of decoder cores
 } ze_intel_device_media_exp_properties_t;
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief IPC handle to counter based event
+typedef struct _zex_ipc_counter_based_event_handle_t {
+    char data[ZE_MAX_IPC_HANDLE_SIZE]; ///< [out] Opaque data representing an IPC handle
+} zex_ipc_counter_based_event_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported event flags for defining counter-based event
+typedef uint32_t zex_counter_based_event_exp_flags_t;
+typedef enum _zex_counter_based_event_exp_flag_t {
+    ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE = ZE_BIT(0),               ///< Counter-based event is used for immediate command lists. Immediate and/or Non-immediate mode must be set
+    ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE = ZE_BIT(1),           ///< Counter-based event is used for non-immediate command lists. Immediate and/or Non-immediate mode must be set
+    ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE = ZE_BIT(2),            ///< Signals and waits are also visible to host
+    ZEX_COUNTER_BASED_EVENT_FLAG_IPC = ZE_BIT(3),                     ///< Event can be shared across processes for waiting
+    ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP = ZE_BIT(4),        ///< Event contains kernel timestamps
+    ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP = ZE_BIT(5), ///< Event contains kernel timestamps synchronized to host time domain.
+                                                                      ///< Cannot be combined with::ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP
+    ZEX_COUNTER_BASED_EVENT_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} zex_counter_based_event_exp_flag_t;
+
+typedef struct _zex_counter_based_event_desc_t {
+    ze_structure_type_t stype;                 ///< [in] type of this structure
+    const void *pNext;                         ///< [in][optional] must be null or a pointer to an extension-specific
+    zex_counter_based_event_exp_flags_t flags; ///< [in] counter based event flags
+} zex_counter_based_event_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Initial Counter Based Event synchronization parameters. This structure may be
+///        passed as pNext member of ::zex_counter_based_event_desc_t.
+typedef struct _zex_counter_based_event_external_sync_alloc_properties_t {
+    ze_structure_type_t stype; ///< [in] type of this structure
+    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific
+    uint64_t *deviceAddress;   ///< [in] device address for external synchronization allocation
+    uint64_t *hostAddress;     ///< [in] host address for external synchronization allocation
+    uint64_t completionValue;  ///< [in] completion value for external synchronization allocation
+} zex_counter_based_event_external_sync_alloc_properties_t;
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
