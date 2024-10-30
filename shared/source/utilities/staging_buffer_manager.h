@@ -44,10 +44,10 @@ class StagingBuffer {
 };
 
 struct StagingBufferTracker {
-    HeapAllocator *allocator;
-    uint64_t chunkAddress;
-    size_t size;
-    uint64_t taskCountToWait;
+    HeapAllocator *allocator = nullptr;
+    uint64_t chunkAddress = 0;
+    size_t size = 0;
+    uint64_t taskCountToWait = 0;
 };
 
 class StagingBufferManager {
@@ -59,13 +59,16 @@ class StagingBufferManager {
     StagingBufferManager &operator=(StagingBufferManager &&other) noexcept = delete;
     StagingBufferManager &operator=(const StagingBufferManager &other) = delete;
 
-    bool isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
+    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
+    bool isValidForStagingWriteImage(const Device &device, size_t size) const;
+
     int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
+    std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size, CommandStreamReceiver *csr);
+    void trackChunk(const StagingBufferTracker &tracker);
 
   private:
-    std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size, CommandStreamReceiver *csr);
     std::pair<HeapAllocator *, uint64_t> getExistingBuffer(size_t &size);
-    void *allocateStagingBuffer();
+    void *allocateStagingBuffer(size_t size);
     void clearTrackedChunks(CommandStreamReceiver *csr);
 
     int32_t performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);

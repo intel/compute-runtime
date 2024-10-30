@@ -234,14 +234,17 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage2.get(), CL_FALSE, origin, region);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
-
-    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
-    ASSERT_NE(nullptr, temporaryAllocation1);
-
-    EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
+    if (!pCmdQ->isValidForStagingWriteImage(imageSize)) {
+        auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
+        ASSERT_NE(nullptr, temporaryAllocation1);
+        EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
+    }
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage2.get(), CL_FALSE, origin, region);
-    auto temporaryAllocation2 = temporaryAllocation1->next;
+    auto temporaryAllocation2 = csr.getTemporaryAllocations().peekHead();
+    if (!pCmdQ->isValidForStagingWriteImage(imageSize)) {
+        temporaryAllocation2 = temporaryAllocation2->next;
+    }
     ASSERT_NE(nullptr, temporaryAllocation2);
     EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
 }
@@ -296,15 +299,19 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenH
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
 
-    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
-    ASSERT_NE(nullptr, temporaryAllocation1);
-
-    EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
+    if (!pCmdQ->isValidForStagingWriteImage(imageSize)) {
+        auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
+        ASSERT_NE(nullptr, temporaryAllocation1);
+        EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
+    }
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage.get(), CL_FALSE, origin, region);
-    auto temporaryAllocation2 = temporaryAllocation1->next;
+    auto temporaryAllocation2 = csr.getTemporaryAllocations().peekHead();
+    if (!pCmdQ->isValidForStagingWriteImage(imageSize)) {
+        temporaryAllocation2 = temporaryAllocation2->next;
+    }
     ASSERT_NE(nullptr, temporaryAllocation2);
-    EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
+    EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
 }
 
 HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {
@@ -746,4 +753,109 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
 
     pCmdQ1->release();
     pImage->release();
+}
+
+HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrThenDontImportAllocation) {
+    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
+    if (!svmSupported) {
+        GTEST_SKIP();
+    }
+    auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    unifiedMemoryProperties.device = pDevice;
+    auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(MemoryConstants::pageSize, unifiedMemoryProperties);
+
+    auto res = EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, CL_FALSE,
+                                                            EnqueueWriteImageTraits::origin,
+                                                            EnqueueWriteImageTraits::region,
+                                                            EnqueueWriteImageTraits::rowPitch,
+                                                            EnqueueWriteImageTraits::slicePitch,
+                                                            usmPtr,
+                                                            nullptr,
+                                                            0u,
+                                                            nullptr,
+                                                            nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+    pCmdQ->finish();
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+    svmManager->freeSVMAlloc(usmPtr);
+}
+
+HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanRequiredThenFail) {
+    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
+    if (!svmSupported) {
+        GTEST_SKIP();
+    }
+    auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    unifiedMemoryProperties.device = pDevice;
+    auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
+
+    auto res = EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, CL_FALSE,
+                                                            EnqueueWriteImageTraits::origin,
+                                                            EnqueueWriteImageTraits::region,
+                                                            EnqueueWriteImageTraits::rowPitch,
+                                                            EnqueueWriteImageTraits::slicePitch,
+                                                            usmPtr,
+                                                            nullptr,
+                                                            0u,
+                                                            nullptr,
+                                                            nullptr);
+    EXPECT_EQ(res, CL_INVALID_OPERATION);
+    pCmdQ->finish();
+    svmManager->freeSVMAlloc(usmPtr);
+}
+
+HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithStagingCopyEnabledThenDontImportAllocation) {
+    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
+    if (!svmSupported) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    auto res = EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, CL_FALSE,
+                                                            EnqueueWriteImageTraits::origin,
+                                                            EnqueueWriteImageTraits::region,
+                                                            EnqueueWriteImageTraits::rowPitch,
+                                                            EnqueueWriteImageTraits::slicePitch,
+                                                            EnqueueWriteImageTraits::hostPtr,
+                                                            nullptr,
+                                                            0u,
+                                                            nullptr,
+                                                            nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+    pCmdQ->finish();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithStagingCopyEnabledAndStagingBufferFailedThenImportAllocation) {
+    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
+    if (!svmSupported) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    memoryManager->singleFailureInPrimaryAllocation = true;
+    auto res = EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage, CL_FALSE,
+                                                            EnqueueWriteImageTraits::origin,
+                                                            EnqueueWriteImageTraits::region,
+                                                            EnqueueWriteImageTraits::rowPitch,
+                                                            EnqueueWriteImageTraits::slicePitch,
+                                                            EnqueueWriteImageTraits::hostPtr,
+                                                            nullptr,
+                                                            0u,
+                                                            nullptr,
+                                                            nullptr);
+    EXPECT_EQ(res, CL_SUCCESS);
+    pCmdQ->finish();
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
 }

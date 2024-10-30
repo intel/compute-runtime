@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -46,10 +47,7 @@ int32_t StagingBufferManager::performChunkCopy(void *chunkDst, const void *chunk
     auto allocatedSize = size;
     auto [allocator, chunkBuffer] = requestStagingBuffer(allocatedSize, csr);
     auto ret = chunkCopyFunc(chunkDst, addrToPtr(chunkBuffer), chunkSrc, size);
-    {
-        auto lock = std::lock_guard<std::mutex>(mtx);
-        trackers.push_back({allocator, chunkBuffer, allocatedSize, csr->peekTaskCount()});
-    }
+    trackChunk({allocator, chunkBuffer, allocatedSize, csr->peekTaskCount()});
     if (csr->isAnyDirectSubmissionEnabled()) {
         csr->flushTagUpdate();
     }
@@ -104,10 +102,14 @@ std::pair<HeapAllocator *, uint64_t> StagingBufferManager::requestStagingBuffer(
         return {retriedAllocator, retriedChunkBuffer};
     }
 
-    StagingBuffer stagingBuffer{allocateStagingBuffer(), chunkSize};
-    allocator = stagingBuffer.getAllocator();
-    chunkBuffer = allocator->allocate(size);
-    stagingBuffers.push_back(std::move(stagingBuffer));
+    auto stagingBufferSize = alignUp(std::max(chunkSize, size), MemoryConstants::pageSize2M);
+    auto usmHost = allocateStagingBuffer(stagingBufferSize);
+    if (usmHost != nullptr) {
+        StagingBuffer stagingBuffer{usmHost, stagingBufferSize};
+        allocator = stagingBuffer.getAllocator();
+        chunkBuffer = allocator->allocate(size);
+        stagingBuffers.push_back(std::move(stagingBuffer));
+    }
     return {allocator, chunkBuffer};
 }
 
@@ -129,13 +131,13 @@ std::pair<HeapAllocator *, uint64_t> StagingBufferManager::getExistingBuffer(siz
     return {allocator, buffer};
 }
 
-void *StagingBufferManager::allocateStagingBuffer() {
+void *StagingBufferManager::allocateStagingBuffer(size_t size) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 0u, rootDeviceIndices, deviceBitfields);
-    auto hostPtr = svmAllocsManager->createHostUnifiedMemoryAllocation(chunkSize, unifiedMemoryProperties);
+    auto hostPtr = svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     return hostPtr;
 }
 
-bool StagingBufferManager::isValidForCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const {
+bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const {
     auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
@@ -150,6 +152,15 @@ bool StagingBufferManager::isValidForCopy(Device &device, void *dstPtr, const vo
     return stagingCopyEnabled && hostToUsmCopy && !hasDependencies && (isUsedByOsContext || size <= chunkSize);
 }
 
+bool StagingBufferManager::isValidForStagingWriteImage(const Device &device, size_t size) const {
+    auto thresholdSizeForImages = 32 * MemoryConstants::megaByte;
+    auto stagingCopyEnabled = false;
+    if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
+        stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
+    }
+    return stagingCopyEnabled && (0 < size && size <= thresholdSizeForImages);
+}
+
 void StagingBufferManager::clearTrackedChunks(CommandStreamReceiver *csr) {
     for (auto iterator = trackers.begin(); iterator != trackers.end();) {
         if (csr->testTaskCountReady(csr->getTagAddress(), iterator->taskCountToWait)) {
@@ -159,6 +170,11 @@ void StagingBufferManager::clearTrackedChunks(CommandStreamReceiver *csr) {
             break;
         }
     }
+}
+
+void StagingBufferManager::trackChunk(const StagingBufferTracker &tracker) {
+    auto lock = std::lock_guard<std::mutex>(mtx);
+    trackers.push_back(tracker);
 }
 
 } // namespace NEO

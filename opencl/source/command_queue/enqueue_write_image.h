@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -61,6 +62,35 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
 
+    StagingBufferTracker stagingBufferTracker{};
+    if (!mapAllocation) {
+        InternalMemoryType memoryType = InternalMemoryType::notSpecified;
+        bool isCpuCopyAllowed = false;
+        cl_int retVal = getContext().tryGetExistingHostPtrAllocation(srcPtr, hostPtrSize, device->getRootDeviceIndex(), mapAllocation, memoryType, isCpuCopyAllowed);
+        if (retVal != CL_SUCCESS) {
+            return retVal;
+        }
+
+        if (!mapAllocation && this->isValidForStagingWriteImage(hostPtrSize)) {
+            auto allocatedSize = hostPtrSize;
+            auto [heapAllocator, stagingBuffer] = getContext().getStagingBufferManager()->requestStagingBuffer(allocatedSize, &csr);
+            auto stagingBufferPtr = addrToPtr(stagingBuffer);
+            if (stagingBufferPtr != nullptr) {
+                stagingBufferTracker = StagingBufferTracker{heapAllocator, stagingBuffer, allocatedSize, 0};
+                memcpy(stagingBufferPtr, srcPtr, hostPtrSize);
+                srcPtr = stagingBufferPtr;
+
+                mapAllocation = getContext().getSVMAllocsManager()->getSVMAlloc(srcPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+                UNRECOVERABLE_IF(mapAllocation == nullptr);
+            }
+        }
+
+        if (mapAllocation) {
+            mapAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
+            mapAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
+        }
+    }
+
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
@@ -104,6 +134,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     MultiDispatchInfo dispatchInfo(dc);
 
     const auto dispatchResult = dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, csr);
+    if (stagingBufferTracker.chunkAddress != 0) {
+        stagingBufferTracker.taskCountToWait = csr.peekTaskCount();
+        getContext().getStagingBufferManager()->trackChunk(stagingBufferTracker);
+    }
+
     if (dispatchResult != CL_SUCCESS) {
         return dispatchResult;
     }

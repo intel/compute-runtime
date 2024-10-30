@@ -1032,7 +1032,9 @@ HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteImageWhenHostPtrAllocation
 
     size_t rowPitch = image->getHostPtrRowPitch();
     size_t slicePitch = image->getHostPtrSlicePitch();
-
+    auto memoryManager = static_cast<MockMemoryManager *>(pCmdQ->getContext().getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
     retVal = pCmdQ->enqueueWriteImage(image.get(),
                                       CL_FALSE,
                                       origin,
@@ -1067,4 +1069,32 @@ HWTEST_F(OneMipLevelReadImageTests, GivenNotMippedImageWhenReadingImageThenDoNot
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(builtinOpsParamsCaptured);
     EXPECT_EQ(0u, usedBuiltinOpsParams.srcMipLevel);
+}
+
+HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAllocation) {
+    bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
+    if (!svmSupported) {
+        GTEST_SKIP();
+    }
+    auto svmManager = pCmdQ->getContext().getSVMAllocsManager();
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 4096, pCmdQ->getContext().getRootDeviceIndices(), pCmdQ->getContext().getDeviceBitfields());
+    unifiedMemoryProperties.device = pDevice;
+    auto usmPtr = svmManager->createHostUnifiedMemoryAllocation(1, unifiedMemoryProperties);
+
+    EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage, CL_FALSE,
+                                               EnqueueWriteImageTraits::origin,
+                                               EnqueueWriteImageTraits::region,
+                                               EnqueueWriteImageTraits::rowPitch,
+                                               EnqueueWriteImageTraits::slicePitch,
+                                               usmPtr,
+                                               nullptr,
+                                               0u,
+                                               nullptr,
+                                               nullptr);
+    pCmdQ->finish();
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+    svmManager->freeSVMAlloc(usmPtr);
 }

@@ -1633,4 +1633,12 @@ bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, con
     return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
 }
 
+bool CommandQueue::isValidForStagingWriteImage(size_t size) {
+    auto stagingBufferManager = context->getStagingBufferManager();
+    if (!stagingBufferManager) {
+        return false;
+    }
+    return stagingBufferManager->isValidForStagingWriteImage(this->getDevice(), size);
+}
+
 } // namespace NEO

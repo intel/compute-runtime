@@ -273,3 +273,25 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabled
     svmAllocsManager->freeSVMAlloc(usmBuffer);
     delete[] nonUsmBuffer;
 }
+
+HWTEST_F(StagingBufferManagerTest, givenStagingBufferManagerWhenIsValidForStagingWriteImageCalledThenReturnCorrectValue) {
+    EXPECT_TRUE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::pageSize2M));
+
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, 0));
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::gigaByte));
+
+    debugManager.flags.EnableCopyWithStagingBuffers.set(0);
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::pageSize2M));
+
+    debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, MemoryConstants::pageSize2M));
+}
+
+HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBufferCalledThenReturnNullptr) {
+    size_t size = MemoryConstants::pageSize2M;
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->isMockHostMemoryManager = true;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    auto [heapAllocator, stagingBuffer] = stagingBufferManager->requestStagingBuffer(size, csr);
+    EXPECT_EQ(stagingBuffer, 0u);
+}
