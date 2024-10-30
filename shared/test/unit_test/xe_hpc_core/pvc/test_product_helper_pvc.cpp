@@ -29,6 +29,10 @@ PVCTEST_F(PvcProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Pvc, productHelper->getAubStreamProductFamily());
 }
 
+PVCTEST_F(PvcProductHelper, whenCheckIsTlbFlushRequiredThenReturnProperValue) {
+    EXPECT_FALSE(productHelper->isTlbFlushRequired());
+}
+
 PVCTEST_F(PvcProductHelper, whenForceTlbFlushSetAndCheckIsTlbFlushRequiredThenReturnProperValue) {
     DebugManagerStateRestore restore;
     debugManager.flags.ForceTlbFlush.set(1);
