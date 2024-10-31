@@ -156,8 +156,12 @@ function(neo_gen_kernels platform_it_lower device revision_id forcePatchtokenFor
                          OUTPUT ${output_files}
                          COMMAND ${ocloc_cmd_prefix} -q -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -revision_id ${revision_id} -out_dir ${outputdir} ${formatArgument} -output_no_suffix -output ${outputname_base}
                          WORKING_DIRECTORY ${workdir}
-                         DEPENDS ${filepath} ocloc
+                         DEPENDS ${filepath} ocloc ${PREVIOUS_KERNELS}
       )
+
+      if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+        set(PREVIOUS_KERNELS ${output_files})
+      endif()
 
       list(APPEND kernels_to_compile ${output_files})
     else()
@@ -204,8 +208,12 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
                            OUTPUT ${output_files}
                            COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -revision_id ${revision_id} -options ${arg}
                            WORKING_DIRECTORY ${workdir}
-                           DEPENDS ${filearg} ocloc
+                           DEPENDS ${filearg} ocloc ${PREVIOUS_KERNELS}
         )
+
+        if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+          set(PREVIOUS_KERNELS ${output_files})
+        endif()
         list(APPEND kernels_to_compile ${output_files})
       else()
         foreach(extension "spv" "bin")
@@ -222,62 +230,6 @@ function(neo_gen_kernels_with_options platform_it_lower device revision_id filep
     endforeach()
   endforeach()
   list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile})
-  set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
-endfunction()
-
-function(neo_gen_kernels_with_internal_options platform_it_lower device revision_id filepath output_name_prefix)
-  set(kernels_to_compile)
-
-  set(filearg ${filepath})
-  get_filename_component(filename ${filearg} NAME)
-  get_filename_component(basename ${filearg} NAME_WE)
-  get_filename_component(base_workdir ${filearg} DIRECTORY)
-  get_filename_component(absolute_filepath ${filearg} ABSOLUTE)
-
-  set(outputdir "${TargetDir}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
-  set(addrmode "bindful")
-
-  if(NOT "${output_name_prefix}" STREQUAL "")
-    set(basename ${output_name_prefix}_${basename})
-  endif()
-
-  if("${ARGN}" STREQUAL "-cl-intel-use-bindless-mode -cl-intel-use-bindless-advanced-mode")
-    set(addrmode "bindless")
-  endif()
-
-  if("${ARGN}" STREQUAL "-cl-intel-greater-than-4GB-buffer-required")
-    set(addrmode "default")
-  endif()
-
-  set(outputname_base "${basename}_${platform_it_lower}")
-  set(outputpath_base "${outputdir}/${outputname_base}")
-  if(NOT NEO_DISABLE_BUILTINS_COMPILATION)
-    set(output_files
-        ${outputpath_base}.spv
-        ${outputpath_base}.bin
-    )
-
-    add_custom_command(
-                       OUTPUT ${output_files}
-                       COMMAND ${ocloc_cmd_prefix} -file ${absolute_filepath} -device ${device} -revision_id ${revision_id} -${NEO_BITS} -stateful_address_mode ${addrmode} -out_dir ${outputdir} -output_no_suffix -output ${outputname_base} -internal_options ${ARGN}
-                       WORKING_DIRECTORY ${workdir}
-                       DEPENDS ${filearg} ocloc
-    )
-    list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${output_files})
-  else()
-    foreach(extension "spv" "bin")
-      set(_file_prebuilt "${NEO_KERNELS_BIN_DIR}/${platform_it_lower}/${revision_id}/test_files/${NEO_ARCH}/${basename}_${platform_it_lower}.${extension}")
-      add_custom_command(
-                         OUTPUT ${outputpath_base}.${extension}
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}
-                         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${_file_prebuilt} ${outputdir}
-      )
-
-      list(APPEND kernels_to_compile_${platform_it_lower}_${revision_id} ${outputpath_base}.${extension})
-    endforeach()
-  endif()
-
   set(kernels_to_compile_${platform_it_lower}_${revision_id} ${kernels_to_compile_${platform_it_lower}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
@@ -301,6 +253,8 @@ macro(macro_for_each_platform)
     set(KERNEL_TO_REMOVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test_files/${KERNEL_TO_REMOVE}")
     list(REMOVE_ITEM PLATFORM_TEST_KERNELS ${KERNEL_TO_REMOVE_PATH})
   endforeach()
+
+  set(PREVIOUS_KERNELS)
 
   if(WIN32 OR CMAKE_SIZEOF_VOID_P EQUAL 8)
     foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
@@ -329,16 +283,14 @@ macro(macro_for_each_platform)
 
   endif()
 
-  set(PREVIOUS_TARGET)
-
   foreach(REVISION_CONFIG ${${PLATFORM_IT}_${CORE_TYPE}_REVISIONS})
     parse_revision_config(${REVISION_CONFIG} ${PLATFORM_IT_LOWER} DEVICE_ID REVISION_ID)
-    add_custom_target(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${kernels_to_compile_${PLATFORM_IT_LOWER}_${REVISION_ID}} copy_compiler_files)
-    add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} ${PREVIOUS_TARGET})
+    add_custom_target(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} DEPENDS ${kernels_to_compile_${PLATFORM_IT_LOWER}_${REVISION_ID}} copy_compiler_files ${PREVIOUS_TARGET})
+    add_dependencies(prepare_test_kernels_for_ocl prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
     set_target_properties(prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}/${REVISION_ID}")
 
     if(NEO_SERIALIZED_BUILTINS_COMPILATION)
-      set(PREVIOUS_TARGET ${prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}})
+      set(PREVIOUS_TARGET "prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID}")
     endif()
 
   endforeach()
@@ -347,6 +299,8 @@ endmacro()
 macro(macro_for_each_core_type)
   apply_macro_for_each_platform("TESTED")
 endmacro()
+
+set(PREVIOUS_TARGET "")
 apply_macro_for_each_core_type("TESTED")
 add_subdirectories()
 create_project_source_tree(igdrcl_tests)

@@ -37,6 +37,7 @@ macro(macro_for_each_core_type)
   apply_macro_for_each_platform("TESTED")
 endmacro()
 
+set(PREVIOUS_KERNELS)
 apply_macro_for_each_core_type("TESTED")
 add_custom_target(l0_common_test_kernels DEPENDS ${l0_test_kernel_outputs} ${l0_bindless_test_kernel_outputs} copy_compiler_files)
 set_target_properties(l0_common_test_kernels PROPERTIES FOLDER ${TARGET_NAME_L0})

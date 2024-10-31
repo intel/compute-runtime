@@ -109,6 +109,10 @@ if(ENABLE_DYNAMIC_MEMORY_TRACKING)
   add_definitions(-DENABLE_DYNAMIC_MEMORY_TRACKING)
 endif()
 
+if(NEO_SERIALIZED_BUILTINS_COMPILATION)
+  message(STATUS "Enabling serialized builtins compilation")
+endif()
+
 if(DEFINED NEO_EXTRA_DEFINES)
   string(REPLACE "," ";" NEO_EXTRA_DEFINES "${NEO_EXTRA_DEFINES}")
   foreach(_tmp ${NEO_EXTRA_DEFINES})
