@@ -658,6 +658,16 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
 
     bufferFromPool = this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
     if (bufferFromPool != nullptr) {
+        for (const auto rootDeviceIndex : this->context->getRootDeviceIndices()) {
+            auto cmdQ = this->context->getSpecialQueue(rootDeviceIndex);
+            if (cmdQ->getDevice().getProductHelper().isDcFlushMitigated()) {
+                auto &csr = cmdQ->getGpgpuCommandStreamReceiver();
+                auto lock = csr.obtainUniqueOwnership();
+                csr.registerDcFlushForDcMitigation();
+                csr.flushTagUpdate();
+            }
+        }
+
         return bufferFromPool;
     }
 

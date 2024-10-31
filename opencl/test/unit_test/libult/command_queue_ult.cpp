@@ -20,7 +20,7 @@ bool CommandQueue::isTimestampWaitEnabled() {
 }
 
 bool checkIsGpuCopyRequiredForDcFlushMitigation(AllocationType type) {
-    return false;
+    return ultHwConfig.useGpuCopyForDcFlushMitigation;
 }
 
 } // namespace NEO
