@@ -128,39 +128,3 @@ PVCTEST_F(CommandEncodeStatesTestPvc, GivenVariousSlmTotalSizesWhenSetPreferredS
 
     verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
 }
-
-PVCTEST_F(EncodeKernelPvcTest, givenDefaultSettingForFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenDoNotGenerateFenceCommands) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
-
-    DebugManagerStateRestore restore;
-    debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
-
-    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = pDevice->getProductHelper();
-
-    hwInfo.platform.usDeviceID = pvcXlDeviceIds[0];
-    VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
-    hwRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-
-    uint32_t dims[] = {1, 1, 1};
-    std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    dispatchInterface->getCrossThreadDataSizeResult = 0u;
-
-    bool requiresUncachedMocs = false;
-    EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-    dispatchArgs.isKernelUsingSystemAllocation = true;
-    dispatchArgs.isHostScopeSignalEvent = true;
-
-    EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(*cmdContainer.get(), dispatchArgs);
-
-    GenCmdList commands;
-    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
-
-    auto itor = find<DefaultWalkerType *>(commands.begin(), commands.end());
-    ASSERT_NE(itor, commands.end());
-
-    auto walkerCmd = genCmdCast<DefaultWalkerType *>(*itor);
-    auto &postSyncData = walkerCmd->getPostSync();
-    EXPECT_FALSE(postSyncData.getSystemMemoryFenceRequest());
-}
