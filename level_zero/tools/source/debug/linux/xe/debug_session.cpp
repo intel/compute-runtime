@@ -180,7 +180,6 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
             DEBUG_BREAK_IF(clientHandleToConnection.find(clientEvent->client_handle) != clientHandleToConnection.end());
             clientHandleToConnection[clientEvent->client_handle].reset(new ClientConnectionXe);
             clientHandleToConnection[clientEvent->client_handle]->client = *clientEvent;
-            clientHandle = clientEvent->client_handle;
         }
 
         if (event->flags & DRM_XE_EUDEBUG_EVENT_DESTROY) {
@@ -327,6 +326,9 @@ void DebugSessionLinuxXe::handleEvent(drm_xe_eudebug_event *event) {
 
     case DRM_XE_EUDEBUG_EVENT_METADATA: {
         drm_xe_eudebug_event_metadata *metaData = reinterpret_cast<drm_xe_eudebug_event_metadata *>(event);
+        if (clientHandle == invalidClientHandle) {
+            clientHandle = metaData->client_handle;
+        }
 
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_METADATA client_handle = %llu metadata_handle = %llu type = %llu len = %llu\n",
                                 (uint64_t)metaData->client_handle, (uint64_t)metaData->metadata_handle, (uint64_t)metaData->type, (uint64_t)metaData->len);

@@ -529,7 +529,6 @@ TEST_F(DebugApiLinuxTestXe, GivenEuDebugOpenEventWithEventCreateFlagWhenHandleEv
     EXPECT_NE(session->clientHandleToConnection.find(client1.client_handle), session->clientHandleToConnection.end());
     EXPECT_NE(session->clientHandleToConnection.find(client2.client_handle), session->clientHandleToConnection.end());
 
-    EXPECT_EQ(session->clientHandle, 0x123456788u);
     uint64_t wrongClientHandle = 34;
     EXPECT_EQ(session->clientHandleToConnection.find(wrongClientHandle), session->clientHandleToConnection.end());
 }
@@ -902,6 +901,32 @@ TEST_F(DebugApiLinuxTestXe, whenHandleExecQueueEventThenProcessEnterAndProcessEx
     result = zetDebugReadEvent(session->toHandle(), 0, &event2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event2.type);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenMetadataEventWhenClientHandleIsInvalidThenClientHandleUpdated) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandle = session->invalidClientHandle;
+    drm_xe_eudebug_event_metadata metadata = {};
+    metadata.base.type = DRM_XE_EUDEBUG_EVENT_METADATA;
+    metadata.base.flags = DRM_XE_EUDEBUG_EVENT_CREATE;
+    metadata.base.len = sizeof(drm_xe_eudebug_event_metadata);
+    metadata.client_handle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadata_handle = 2;
+    metadata.len = 0;
+
+    auto handler = new MockIoctlHandlerXe;
+    handler->eventQueue.push({reinterpret_cast<char *>(&metadata), static_cast<uint64_t>(metadata.base.len)});
+    handler->pollRetVal = 1;
+
+    session->ioctlHandler.reset(handler);
+    session->handleEvent(&metadata.base);
+    EXPECT_EQ_VAL(session->clientHandle, metadata.client_handle);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenMetadataEventWhenHandlingAndMetadataLengthIsZeroThenMetadataIsInsertedToMap) {
