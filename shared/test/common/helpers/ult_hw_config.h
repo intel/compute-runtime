@@ -8,8 +8,6 @@
 #pragma once
 namespace NEO {
 struct UltHwConfig {
-    const char *aubTestName = nullptr;
-
     bool mockedPrepareDeviceEnvironmentsFuncResult = true;
     bool useHwCsr = false;
     bool useMockedPrepareDeviceEnvironmentsFunc = true;
@@ -18,7 +16,6 @@ struct UltHwConfig {
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
     bool useFirstSubmissionInitDevice = false;
-    bool useGpuCopyForDcFlushMitigation = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
@@ -29,6 +26,9 @@ struct UltHwConfig {
 
     bool csrBaseCallCreatePreemption = true;
     bool csrCreatePreemptionReturnValue = true;
+    bool reserved = false;
+
+    const char *aubTestName = nullptr;
 };
 
 extern UltHwConfig ultHwConfig;

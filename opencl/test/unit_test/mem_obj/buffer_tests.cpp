@@ -599,31 +599,26 @@ TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInS
     }
 }
 
-namespace CpuIntrinsicsTests {
-extern std::atomic<uint32_t> sfenceCounter;
-} // namespace CpuIntrinsicsTests
-
-TEST(Buffer, givenDcFlushMitigationWhenCreateBufferCopyHostptrThenUseMemcpy) {
+TEST(Buffer, givenDcFlushMitigationWhenCreateBufferCopyHostptrThenUseBlitterCopy) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(0);
     ExecutionEnvironment *executionEnvironment = MockClDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+
     auto productHelper = executionEnvironment->rootDeviceEnvironments[0]->productHelper.get();
-    if (!productHelper->isDcFlushMitigated()) {
+    if (!(productHelper->isBlitterFullySupported(*defaultHwInfo) && productHelper->isDcFlushMitigated())) {
         GTEST_SKIP();
     }
 
     auto blitterCalled = 0u;
     auto mockBlitMemoryToAllocation = [&](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                           Vec3<size_t> size) -> NEO::BlitOperationResult {
+        memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
         blitterCalled++;
         return BlitOperationResult::success;
     };
-
-    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(&NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useGpuCopyForDcFlushMitigation = true;
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.AllowDcFlush.set(0);
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
 
     auto *memoryManager = new MockMemoryManagerFailFirstAllocation(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
@@ -631,7 +626,6 @@ TEST(Buffer, givenDcFlushMitigationWhenCreateBufferCopyHostptrThenUseMemcpy) {
     auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
     MockContext ctx(device.get());
-    CpuIntrinsicsTests::sfenceCounter.store(0u);
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
@@ -640,10 +634,7 @@ TEST(Buffer, givenDcFlushMitigationWhenCreateBufferCopyHostptrThenUseMemcpy) {
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(blitterCalled, 0u);
-    EXPECT_EQ(ctx.getSpecialQueue(0)->taskCount, 0u);
-    EXPECT_EQ(1u, CpuIntrinsicsTests::sfenceCounter.load());
-    CpuIntrinsicsTests::sfenceCounter.store(0u);
+    EXPECT_EQ(blitterCalled, 1u);
 }
 
 TEST(Buffer, givenPropertiesWithClDeviceHandleListKHRWhenCreateBufferThenCorrectBufferIsSet) {
