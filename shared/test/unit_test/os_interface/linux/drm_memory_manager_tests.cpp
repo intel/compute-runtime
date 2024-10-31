@@ -2655,6 +2655,37 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocation
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragmentIsReusedThenOnlyUnmapSizeIsLargerWhileSizeStaysTheSame) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+
+    DebugManagerStateRestore dbgFlagsKeeper;
+    memoryManager->setForce32BitAllocations(true);
+
+    size_t allocationSize = 4 * MemoryConstants::pageSize;
+    auto ptr = memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocate(HeapIndex::heapExternal, allocationSize);
+    size_t smallAllocationSize = MemoryConstants::pageSize;
+    memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocate(HeapIndex::heapExternal, smallAllocationSize);
+
+    // now free first allocation , this will move it to chunks
+    memoryManager->getGfxPartition(rootDeviceIndex)->heapFree(HeapIndex::heapExternal, ptr, allocationSize);
+
+    // now ask for 3 pages, this will give ptr from chunks
+    size_t pages3size = 3 * MemoryConstants::pageSize;
+
+    void *hostPtr = reinterpret_cast<void *>(0x1000);
+    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, pages3size, hostPtr, AllocationType::buffer);
+
+    auto bo = graphicsAlloaction->getBO();
+    EXPECT_EQ(pages3size, bo->peekSize());
+
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->canonize(ptr), graphicsAlloaction->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(graphicsAlloaction);
+}
+
 TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCreateIsCalledThenRealSizeIsUsed) {
     unsigned int realSize = 64 * 1024;
     VariableBackup<decltype(SysCalls::lseekReturn)> lseekBackup(&SysCalls::lseekReturn, realSize);
@@ -7203,6 +7234,39 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenUnsuppor
 
         memoryManager->freeGraphicsMemory(allocation);
     }
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenOversizedAllocationWhenGraphicsAllocationInDevicePoolIsAllocatedThenAllocationAndBufferObjectHaveRequestedSize) {
+    auto heap = HeapIndex::heapStandard64KB;
+    if (memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapExtended)) {
+        heap = HeapIndex::heapExtended;
+    }
+    auto largerSize = 6 * MemoryConstants::megaByte;
+
+    auto gpuAddress0 = memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocateWithCustomAlignment(heap, largerSize, MemoryConstants::pageSize2M);
+    EXPECT_NE(0u, gpuAddress0);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);
+    auto gpuAddress1 = memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocate(heap, largerSize);
+    EXPECT_NE(0u, gpuAddress1);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);
+    auto gpuAddress2 = memoryManager->getGfxPartition(rootDeviceIndex)->heapAllocate(heap, largerSize);
+    EXPECT_NE(0u, gpuAddress2);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, largerSize);
+    memoryManager->getGfxPartition(rootDeviceIndex)->heapFree(heap, gpuAddress1, largerSize);
+
+    auto status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.size = 5 * MemoryConstants::megaByte;
+    allocData.type = AllocationType::buffer;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    memoryManager->getGfxPartition(rootDeviceIndex)->heapFree(heap, gpuAddress2, largerSize);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(largerSize, allocation->getReservedAddressSize());
+    EXPECT_EQ(allocData.size, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(allocData.size, static_cast<DrmAllocation *>(allocation)->getBO()->peekSize());
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocationsThatAreAlignedToPowerOf2InSizeAndAreGreaterThen8GBThenTheyAreAlignedToPreviousPowerOfTwoForGpuVirtualAddress) {
