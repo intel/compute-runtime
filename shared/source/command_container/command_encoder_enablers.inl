@@ -33,6 +33,7 @@ template void NEO::EncodeDispatchKernel<Family>::setWalkerRegionSettings<Family:
                                                                                                     uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder);
 template void NEO::EncodeDispatchKernel<Family>::overrideDefaultValues<Family::DefaultWalkerType, Family::INTERFACE_DESCRIPTOR_DATA>(Family::DefaultWalkerType &walkerCmd, Family::INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor);
 template void NEO::EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+template void NEO::EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker<Family::DefaultWalkerType>(Family::DefaultWalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
 template struct NEO::EncodeStates<Family>;
 template struct NEO::EncodeMath<Family>;

@@ -287,6 +287,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.device->getDeviceInfo().maxFrontEndThreads};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, cmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(cmd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(cmd, walkerArgs);
 
     memcpy_s(iddPtr, sizeof(idd), &idd, sizeof(idd));
 
@@ -415,7 +416,11 @@ inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const Roo
 
 template <typename Family>
 template <typename WalkerType>
-inline void NEO::EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+inline void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+
+template <typename Family>
+template <typename WalkerType>
+inline void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
 template <typename InterfaceDescriptorType>

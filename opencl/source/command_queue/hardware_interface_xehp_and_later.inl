@@ -149,6 +149,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::template encodeComputeDispatchAllWalker<WalkerType>(walkerCmd, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template overrideDefaultValues<WalkerType, InterfaceDescriptorType>(walkerCmd, *interfaceDescriptor);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();

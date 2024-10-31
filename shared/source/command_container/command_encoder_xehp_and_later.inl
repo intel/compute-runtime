@@ -413,6 +413,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.device->getDeviceInfo().maxFrontEndThreads};
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
 
     EncodeDispatchKernel<Family>::overrideDefaultValues(walkerCmd, idd);
 
@@ -1247,5 +1248,9 @@ void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walker
     auto &postSyncData = walkerCmd.getPostSync();
     postSyncData.setSystemMemoryFenceRequest(programGlobalFenceAsPostSyncOperationInComputeWalker);
 }
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
 
 } // namespace NEO

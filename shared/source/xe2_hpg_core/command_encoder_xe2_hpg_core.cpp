@@ -230,17 +230,6 @@ void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfac
 }
 
 template <>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    bool computeDispatchAllWalkerEnable = walkerArgs.kernelExecutionType == KernelExecutionType::concurrent;
-    int32_t overrideComputeDispatchAllWalkerEnable = debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
-    if (overrideComputeDispatchAllWalkerEnable != -1) {
-        computeDispatchAllWalkerEnable = !!overrideComputeDispatchAllWalkerEnable;
-    }
-    walkerCmd.setComputeDispatchAllWalkerEnable(computeDispatchAllWalkerEnable);
-}
-
-template <>
 template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,

@@ -22,19 +22,17 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManagerStateRestore debugRestorer;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{KernelExecutionType::defaultType, true, kernelDescriptor, NEO::RequiredDispatchWalkOrder::none, 0};
     {
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
     {
         debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 }

@@ -231,6 +231,8 @@ struct EncodeDispatchKernel {
     static void overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor);
     template <typename WalkerType>
     static void encodeWalkerPostSyncFields(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+    template <typename WalkerType>
+    static void encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 };
 
 template <typename GfxFamily>
