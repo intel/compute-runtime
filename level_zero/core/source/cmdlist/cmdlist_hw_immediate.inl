@@ -154,6 +154,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
     NEO::IndirectHeap *ssh = nullptr;
 
     const auto bindlessHeapsHelper = this->device->getNEODevice()->getBindlessHeapsHelper();
+    const bool useGlobalHeaps = bindlessHeapsHelper != nullptr;
     auto csr = getCsr(false);
 
     csr->makeResident(*ioh->getGraphicsAllocation());
@@ -170,8 +171,8 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
 
         if constexpr (streamStatesSupported) {
             if (this->requiredStreamState.stateBaseAddress.surfaceStateBaseAddress.value == NEO::StreamProperty64::initValue) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
-                                                                                     NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper));
+                this->requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps),
+                                                                                     NEO::getStateSizeForSsh(*ssh, useGlobalHeaps));
             }
         }
     } else if (this->immediateCmdListHeapSharing) {
@@ -180,10 +181,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
             csr->makeResident(*ssh->getGraphicsAllocation());
 
             if constexpr (streamStatesSupported) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
-                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper),
-                                                                                                 NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
-                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper));
+                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, useGlobalHeaps),
+                                                                                                 NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, useGlobalHeaps));
             }
         }
         if (this->dynamicHeapRequired) {
@@ -191,8 +192,8 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
             if (dsh->getGraphicsAllocation()) {
                 csr->makeResident(*dsh->getGraphicsAllocation());
                 if constexpr (streamStatesSupported) {
-                    this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper),
-                                                                                         NEO::getStateSize(*dsh, bindlessHeapsHelper));
+                    this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(NEO::getStateBaseAddress(*dsh, useGlobalHeaps),
+                                                                                         NEO::getStateSize(*dsh, useGlobalHeaps));
                 }
             }
         }
@@ -201,18 +202,18 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleHeapsAndResidencyForIm
             dsh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
             csr->makeResident(*dsh->getGraphicsAllocation());
             if constexpr (streamStatesSupported) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper),
-                                                                                     NEO::getStateSize(*dsh, bindlessHeapsHelper));
+                this->requiredStreamState.stateBaseAddress.setPropertiesDynamicState(NEO::getStateBaseAddress(*dsh, useGlobalHeaps),
+                                                                                     NEO::getStateSize(*dsh, useGlobalHeaps));
             }
         }
         ssh = this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
         if (ssh) {
             csr->makeResident(*ssh->getGraphicsAllocation());
             if constexpr (streamStatesSupported) {
-                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
-                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper),
-                                                                                                 NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper),
-                                                                                                 NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper));
+                this->requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, useGlobalHeaps),
+                                                                                                 NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps),
+                                                                                                 NEO::getStateSizeForSsh(*ssh, useGlobalHeaps));
             }
         }
     }
