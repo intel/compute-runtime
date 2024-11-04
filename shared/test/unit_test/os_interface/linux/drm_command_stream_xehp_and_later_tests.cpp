@@ -43,11 +43,15 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->initGmm();
 
         mock = DrmMockCustom::create(*executionEnvironment->rootDeviceEnvironments[0]).release();
+        mock->completionFenceSupported = true;
+        mock->isVmBindAvailableCall.callParent = false;
+        mock->isVmBindAvailableCall.returnValue = true;
+
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mock));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0, false);
 
-        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerActive,
+        memoryManager = new DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive,
                                              debugManager.flags.EnableForcePin.get(),
                                              true,
                                              *executionEnvironment);
@@ -55,20 +59,13 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
 
-        auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
-        auto heapless = compilerProductHelper.isHeaplessModeEnabled();
-        auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
-
-        if (heaplessStateInit) {
-            GTEST_SKIP();
-        }
-
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->calculateMaxOsContextCount();
 
         executionEnvironment->initializeMemoryManager();
 
+        VariableBackup<bool> backupSipData(&MockSipData::useMockSip, false);
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
         ultHwConfig.useHwCsr = true;
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
@@ -92,10 +89,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     auto *testCsr = new TestedDrmCommandStreamReceiver<FamilyType>(*executionEnvironment, 0, device->getDeviceBitfield());
     device->resetCommandStreamReceiver(testCsr);
     EXPECT_EQ(2u, testCsr->activePartitions);
-
-    mock->completionFenceSupported = true;
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = true;
 
     TestedBufferObject bo(0, mock, 128);
     MockDrmAllocation cmdBuffer(0u, AllocationType::commandBuffer, MemoryPool::system4KBPages);
@@ -135,17 +128,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     uint32_t postSyncOffset = defaultEngine.commandStreamReceiver->getImmWritePostSyncWriteOffset();
     EXPECT_NE(0u, postSyncOffset);
 
-    mock->completionFenceSupported = true;
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = true;
-
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto heapless = compilerProductHelper.isHeaplessModeEnabled();
     auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
-
-    if (heaplessStateInit) {
-        GTEST_SKIP();
-    }
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
     allocation->updateTaskCount(heaplessStateInit ? 3 : 2, defaultEngine.osContext->getContextId());
@@ -177,18 +162,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
 
     uint32_t postSyncOffset = defaultEngine.commandStreamReceiver->getImmWritePostSyncWriteOffset();
     EXPECT_NE(0u, postSyncOffset);
-
-    mock->completionFenceSupported = true;
-    mock->isVmBindAvailableCall.callParent = false;
-    mock->isVmBindAvailableCall.returnValue = true;
-
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto heapless = compilerProductHelper.isHeaplessModeEnabled();
-    auto heaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(heapless);
-
-    if (heaplessStateInit) {
-        GTEST_SKIP();
-    }
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::commandBuffer});
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
