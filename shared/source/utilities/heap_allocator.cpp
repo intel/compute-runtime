@@ -36,32 +36,34 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
     uint32_t defragmentCount = 0;
 
     for (;;) {
-        size_t sizeOfFreedChunk = 0;
-        uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk, alignment);
+        uint64_t ptrReturn = 0llu;
 
-        if (ptrReturn == 0llu) {
-            if (sizeToAllocate > sizeThreshold) {
-                const uint64_t misalignment = alignUp(pLeftBound, alignment) - pLeftBound;
-                if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
-                    if (misalignment) {
-                        storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunks);
-                        pLeftBound += misalignment;
-                    }
-                    ptrReturn = pLeftBound;
-                    pLeftBound += sizeToAllocate;
+        if (sizeToAllocate > sizeThreshold) {
+            const uint64_t misalignment = alignUp(pLeftBound, alignment) - pLeftBound;
+            if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
+                if (misalignment) {
+                    storeInFreedChunks(pLeftBound, static_cast<size_t>(misalignment), freedChunks);
+                    pLeftBound += misalignment;
                 }
-            } else {
-                const uint64_t pStart = pRightBound - sizeToAllocate;
-                const uint64_t misalignment = pStart - alignDown(pStart, alignment);
-                if (pLeftBound + sizeToAllocate + misalignment <= pRightBound) {
-                    if (misalignment) {
-                        pRightBound -= misalignment;
-                        storeInFreedChunks(pRightBound, static_cast<size_t>(misalignment), freedChunks);
-                    }
-                    pRightBound -= sizeToAllocate;
-                    ptrReturn = pRightBound;
-                }
+                ptrReturn = pLeftBound;
+                pLeftBound += sizeToAllocate;
             }
+        } else {
+            const uint64_t pStart = pRightBound - sizeToAllocate;
+            const uint64_t misalignment = pStart - alignDown(pStart, alignment);
+            if (pLeftBound + sizeToAllocate + misalignment <= pRightBound) {
+                if (misalignment) {
+                    pRightBound -= misalignment;
+                    storeInFreedChunks(pRightBound, static_cast<size_t>(misalignment), freedChunks);
+                }
+                pRightBound -= sizeToAllocate;
+                ptrReturn = pRightBound;
+            }
+        }
+
+        size_t sizeOfFreedChunk = 0;
+        if (ptrReturn == 0llu) {
+            ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk, alignment);
         }
 
         if (ptrReturn != 0llu) {
