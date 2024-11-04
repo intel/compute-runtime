@@ -7,6 +7,7 @@
 
 #include "level_zero/sysman/source/api/power/windows/sysman_os_power_imp.h"
 
+#include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
 #include "level_zero/sysman/source/shared/windows/sysman_kmd_sys_manager.h"
 #include "level_zero/sysman/source/shared/windows/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -14,114 +15,25 @@
 namespace L0 {
 namespace Sysman {
 
-static const std::map<zes_power_domain_t, KmdSysman::PowerDomainsType> powerGroupToDomainTypeMap = {
-    {ZES_POWER_DOMAIN_CARD, KmdSysman::PowerDomainsType::powerDomainCard},
-    {ZES_POWER_DOMAIN_PACKAGE, KmdSysman::PowerDomainsType::powerDomainPackage},
-};
-
 ze_result_t WddmPowerImp::getProperties(zes_power_properties_t *pProperties) {
-    pProperties->onSubdevice = false;
-    pProperties->subdeviceId = 0;
-
-    std::vector<KmdSysman::RequestProperty> vRequests = {};
-    std::vector<KmdSysman::ResponseProperty> vResponses = {};
-    KmdSysman::RequestProperty request = {};
-
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::PowerComponent;
-    request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
-    request.requestId = KmdSysman::Requests::Power::EnergyThresholdSupported;
-    vRequests.push_back(request);
-
-    request.requestId = KmdSysman::Requests::Power::TdpDefault;
-    vRequests.push_back(request);
-
-    request.requestId = KmdSysman::Requests::Power::MinPowerLimitDefault;
-    vRequests.push_back(request);
-
-    request.requestId = KmdSysman::Requests::Power::MaxPowerLimitDefault;
-    vRequests.push_back(request);
-
-    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
-
-    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
-        return status;
-    }
-
-    if (vResponses[0].returnCode == KmdSysman::Success) {
-        memcpy_s(&pProperties->canControl, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
-        memcpy_s(&pProperties->isEnergyThresholdSupported, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
-    }
-
-    pProperties->defaultLimit = -1;
-    if (vResponses[1].returnCode == KmdSysman::Success) {
-        memcpy_s(&pProperties->defaultLimit, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
-    }
-
-    pProperties->minLimit = -1;
-    if (vResponses[2].returnCode == KmdSysman::Success) {
-        memcpy_s(&pProperties->minLimit, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
-    }
-
-    pProperties->maxLimit = -1;
-    if (vResponses[3].returnCode == KmdSysman::Success) {
-        memcpy_s(&pProperties->maxLimit, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
-    }
-
-    return ZE_RESULT_SUCCESS;
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPowerProperties(pProperties, this->powerDomain, pWddmSysmanImp);
 }
 
 ze_result_t WddmPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
-    pExtPoperties->domain = powerDomain;
-    if (pExtPoperties->defaultLimit) {
-        KmdSysman::RequestProperty request;
-        KmdSysman::ResponseProperty response;
-
-        request.commandId = KmdSysman::Command::Get;
-        request.componentId = KmdSysman::Component::PowerComponent;
-        request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
-        request.requestId = KmdSysman::Requests::Power::TdpDefault;
-
-        ze_result_t status = pKmdSysManager->requestSingle(request, response);
-        pExtPoperties->defaultLimit->limit = -1;
-
-        if (status == ZE_RESULT_SUCCESS) {
-            memcpy_s(&pExtPoperties->defaultLimit->limit, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-        }
-
-        pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
-        pExtPoperties->defaultLimit->enabledStateLocked = true;
-        pExtPoperties->defaultLimit->intervalValueLocked = true;
-        pExtPoperties->defaultLimit->limitValueLocked = true;
-        pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
-        pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
-    }
-
-    return ZE_RESULT_SUCCESS;
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPowerPropertiesExt(pExtPoperties, this->powerDomain, pWddmSysmanImp);
 }
 
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-    uint64_t energyCounter64Bit = 0;
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
-
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::PowerComponent;
-    request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
-    request.requestId = KmdSysman::Requests::Power::CurrentEnergyCounter64Bit;
-
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    if (status == ZE_RESULT_SUCCESS) {
-        memcpy_s(&energyCounter64Bit, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
-        pEnergy->energy = energyCounter64Bit;
-        pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
-    }
-
-    return status;
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getPowerEnergyCounter(pEnergy, this->powerDomain, pWddmSysmanImp);
 }
 
 ze_result_t WddmPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) {
+    if (supportsEnergyCounterOnly) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t status = ZE_RESULT_SUCCESS;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
@@ -216,6 +128,9 @@ ze_result_t WddmPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, zes
 }
 
 ze_result_t WddmPowerImp::setLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) {
+    if (supportsEnergyCounterOnly) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t status = ZE_RESULT_SUCCESS;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
@@ -281,6 +196,9 @@ ze_result_t WddmPowerImp::setLimits(const zes_power_sustained_limit_t *pSustaine
 }
 
 ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
+    if (supportsEnergyCounterOnly) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -308,6 +226,9 @@ ze_result_t WddmPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold)
 }
 
 ze_result_t WddmPowerImp::setEnergyThreshold(double threshold) {
+    if (supportsEnergyCounterOnly) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
@@ -324,6 +245,9 @@ ze_result_t WddmPowerImp::setEnergyThreshold(double threshold) {
 }
 
 bool WddmPowerImp::isPowerModuleSupported() {
+    if (supportsEnergyCounterOnly) {
+        return true;
+    }
     powerLimitCount = 0;
     std::vector<KmdSysman::RequestProperty> vRequests(3);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
@@ -375,6 +299,9 @@ bool WddmPowerImp::isPowerModuleSupported() {
 }
 
 ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    if (supportsEnergyCounterOnly) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint8_t count = 0;
 
@@ -522,6 +449,9 @@ ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
 }
 
 ze_result_t WddmPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    if (supportsEnergyCounterOnly) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     ze_result_t status = ZE_RESULT_SUCCESS;
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
@@ -576,49 +506,27 @@ ze_result_t WddmPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_des
     return status;
 }
 
+void WddmPowerImp::isPowerHandleEnergyCounterOnly() {
+    switch (this->powerDomain) {
+    case ZES_POWER_DOMAIN_MEMORY:
+    case ZES_POWER_DOMAIN_GPU:
+        supportsEnergyCounterOnly = true;
+        break;
+    default:
+        break;
+    }
+}
+
 WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : powerDomain(powerDomain) {
-    WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
+    pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+    isPowerHandleEnergyCounterOnly();
 }
 
 std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
-    KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
-
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
-
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::PowerComponent;
-    request.requestId = KmdSysman::Requests::Power::NumPowerDomains;
-
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    std::vector<zes_power_domain_t> powerDomains;
-    if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "No power domains are supported, power handles will not be created.\n");
-        return powerDomains;
-    }
-
-    uint32_t supportedPowerDomains = 0;
-    memcpy_s(&supportedPowerDomains, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-
-    switch (supportedPowerDomains) {
-    case 1:
-        powerDomains.push_back(ZES_POWER_DOMAIN_PACKAGE);
-        break;
-    case 2:
-        powerDomains.push_back(ZES_POWER_DOMAIN_PACKAGE);
-        powerDomains.push_back(ZES_POWER_DOMAIN_CARD);
-        break;
-    default:
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Unexpected value returned by KMD, power handles will not be created.\n");
-        break;
-    }
-
-    return powerDomains;
+    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+    return pSysmanProductHelper->getNumberOfPowerDomainsSupported(pWddmSysmanImp);
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) {
