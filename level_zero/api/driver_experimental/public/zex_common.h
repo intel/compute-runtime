@@ -146,6 +146,20 @@ typedef struct _ze_intel_device_media_exp_properties_t {
     uint32_t numDecoderCores;                ///< [out] number of decoder cores
 } ze_intel_device_media_exp_properties_t;
 
+#ifndef ZEX_COUNTER_BASED_EVENT_NAME
+/// @brief Counter Based Event Extension Name
+#define ZEX_COUNTER_BASED_EVENT_NAME "ZEX_counter_based_event"
+#endif // ZEX_COUNTER_BASED_EVENT_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Counter Based Event Extension Version(s)
+typedef enum _zex_counter_based_event_version_t {
+    ZEX_COUNTER_BASED_EVENT_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZEX_COUNTER_BASED_EVENT_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZEX_COUNTER_BASED_EVENT_VERSION_FORCE_UINT32 = 0x7fffffff
+
+} zex_counter_based_event_version_t;
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief IPC handle to counter based event
 typedef struct _zex_ipc_counter_based_event_handle_t {
