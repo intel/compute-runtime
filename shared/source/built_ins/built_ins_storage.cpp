@@ -100,29 +100,27 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
     const auto deviceIp = createDeviceIdFilenameComponent(hwInfo.ipVersion);
     const auto builtinFilename = getBuiltinAsString(builtin);
     const auto extension = BuiltinCode::getExtension(type);
-    auto getAddressingModePrefix = [type, &productHelper, &device, builtin]() {
-        if (type == BuiltinCode::ECodeType::binary) {
-            const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
-            const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
-            const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
-            if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
-                return heaplessEnabled ? "stateless_heapless_" : "stateless_";
-            } else if (ApiSpecificConfig::getBindlessMode(device)) {
-                return "bindless_";
-            } else {
-                return "bindful_";
-            }
-        }
-        return "";
-    };
-    const auto addressingModePrefix = getAddressingModePrefix();
 
-    auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, ConstStringRef addressingModePrefix, ConstStringRef builtinFilename, ConstStringRef extension) {
+    std::string_view addressingModePrefix = "";
+    if (type == BuiltinCode::ECodeType::binary) {
+        const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
+        const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
+        const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
+        if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
+            addressingModePrefix = heaplessEnabled ? "stateless_heapless_" : "stateless_";
+        } else if (ApiSpecificConfig::getBindlessMode(device)) {
+            addressingModePrefix = "bindless_";
+        } else {
+            addressingModePrefix = "bindful_";
+        }
+    }
+
+    auto createBuiltinResourceName = [](ConstStringRef deviceIpPath, std::string_view addressingModePrefix, std::string_view builtinFilename, std::string_view extension) {
         std::ostringstream outResourceName;
         if (false == deviceIpPath.empty()) {
             outResourceName << deviceIpPath.str() << "_";
         }
-        outResourceName << addressingModePrefix.str() << builtinFilename.str() << extension.str();
+        outResourceName << addressingModePrefix << builtinFilename << extension;
         return outResourceName.str();
     };
     StackVec<std::string, 3> resourcesToLookup = {};
