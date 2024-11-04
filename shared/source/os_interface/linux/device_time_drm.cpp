@@ -26,7 +26,7 @@ bool DeviceTimeDrm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime
     return pDrm->getIoctlHelper()->setGpuCpuTimes(pGpuCpuTime, osTime);
 }
 
-double DeviceTimeDrm::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
+double DeviceTimeDrm::getDynamicDeviceTimerResolution() const {
     if (pDrm) {
         int frequency = 0;
 
@@ -35,10 +35,10 @@ double DeviceTimeDrm::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo
             return nanosecondsPerSecond / frequency;
         }
     }
-    return OSTime::getDeviceTimerResolution(hwInfo);
+    return OSTime::getDeviceTimerResolution();
 }
 
-uint64_t DeviceTimeDrm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
+uint64_t DeviceTimeDrm::getDynamicDeviceTimerClock() const {
 
     if (pDrm) {
         int frequency = 0;
@@ -48,7 +48,7 @@ uint64_t DeviceTimeDrm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) c
             return static_cast<uint64_t>(frequency);
         }
     }
-    return static_cast<uint64_t>(nanosecondsPerSecond / OSTime::getDeviceTimerResolution(hwInfo));
+    return static_cast<uint64_t>(nanosecondsPerSecond / OSTime::getDeviceTimerResolution());
 }
 
 bool DeviceTimeDrm::isTimestampsRefreshEnabled() const {

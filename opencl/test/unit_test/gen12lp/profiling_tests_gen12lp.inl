@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,11 +85,11 @@ struct MockTagNode : public TagNode<TagType> {
 };
 
 class MyDeviceTime : public DeviceTime {
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+    double getDynamicDeviceTimerResolution() const override {
         EXPECT_FALSE(true);
         return 1.0;
     }
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+    uint64_t getDynamicDeviceTimerClock() const override {
         EXPECT_FALSE(true);
         return 0;
     }

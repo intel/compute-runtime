@@ -75,9 +75,8 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
 
-        auto &hwInfo = pLinuxSysmanImp->getParentSysmanDeviceImp()->getHardwareInfo();
         pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
-        pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution(hwInfo);
+        pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
 
         pEngineHandleContextOld = pSysmanDeviceImp->pEngineHandleContext;
         pDiagnosticsHandleContextOld = pSysmanDeviceImp->pDiagnosticsHandleContext;
@@ -1244,8 +1243,7 @@ TEST_F(SysmanGlobalOperationsFixture, WhenGettingDevicePropertiesThenSubslicesPe
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetPropertiesThenCorrectTimerResolutionInCorePropertiesAreReturned) {
     pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime.reset(new NEO::MockOSTimeWithConstTimestamp());
-    auto pHwInfo = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    double mockedTimerResolution = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osTime->getDynamicDeviceTimerResolution(*pHwInfo);
+    double mockedTimerResolution = pLinuxSysmanImp->getParentSysmanDeviceImp()->getRootDeviceEnvironment().osTime->getDynamicDeviceTimerResolution();
     zes_device_properties_t properties = {};
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1339,9 +1337,8 @@ class SysmanDevicePropertiesExtensionTestMultiDevice : public SysmanMultiDeviceF
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
         for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
-            auto &hwInfo = *execEnv->rootDeviceEnvironments[i]->getMutableHardwareInfo();
             execEnv->rootDeviceEnvironments[i]->osTime = MockOSTime::create();
-            execEnv->rootDeviceEnvironments[i]->osTime->setDeviceTimerResolution(hwInfo);
+            execEnv->rootDeviceEnvironments[i]->osTime->setDeviceTimerResolution();
         }
     }
 };
@@ -1460,9 +1457,8 @@ class SysmanDeviceGetByUuidExperimentalTestMultiDevice : public SysmanMultiDevic
     void SetUp() override {
         SysmanMultiDeviceFixture::SetUp();
         for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
-            auto &hwInfo = *execEnv->rootDeviceEnvironments[i]->getMutableHardwareInfo();
             execEnv->rootDeviceEnvironments[i]->osTime = MockOSTime::create();
-            execEnv->rootDeviceEnvironments[i]->osTime->setDeviceTimerResolution(hwInfo);
+            execEnv->rootDeviceEnvironments[i]->osTime->setDeviceTimerResolution();
         }
     }
 };

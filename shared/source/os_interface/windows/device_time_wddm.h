@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,8 +20,8 @@ class DeviceTimeWddm : public DeviceTime {
   public:
     DeviceTimeWddm(Wddm *wddm);
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override;
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override;
+    double getDynamicDeviceTimerResolution() const override;
+    uint64_t getDynamicDeviceTimerClock() const override;
 
   protected:
     MOCKABLE_VIRTUAL bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo);

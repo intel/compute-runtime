@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/os_time.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 
@@ -15,8 +16,8 @@
 
 namespace NEO {
 
-double OSTime::getDeviceTimerResolution(HardwareInfo const &hwInfo) {
-    return hwInfo.capabilityTable.defaultProfilingTimerResolution;
+double OSTime::getDeviceTimerResolution() {
+    return CommonConstants::defaultProfilingTimerResolution;
 };
 
 bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
@@ -25,16 +26,16 @@ bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
 
     return true;
 }
-double DeviceTime::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
-    return OSTime::getDeviceTimerResolution(hwInfo);
+double DeviceTime::getDynamicDeviceTimerResolution() const {
+    return OSTime::getDeviceTimerResolution();
 }
 
-uint64_t DeviceTime::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
-    return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+uint64_t DeviceTime::getDynamicDeviceTimerClock() const {
+    return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution());
 }
 
-void DeviceTime::setDeviceTimerResolution(HardwareInfo const &hwInfo) {
-    deviceTimerResolution = getDynamicDeviceTimerResolution(hwInfo);
+void DeviceTime::setDeviceTimerResolution() {
+    deviceTimerResolution = getDynamicDeviceTimerResolution();
     if (debugManager.flags.OverrideProfilingTimerResolution.get() != -1) {
         deviceTimerResolution = static_cast<double>(debugManager.flags.OverrideProfilingTimerResolution.get());
     }

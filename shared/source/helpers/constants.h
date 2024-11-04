@@ -93,4 +93,5 @@ inline constexpr uint32_t maximalSizeOfAtomicType = 8;
 inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::maxEngineGroups);
 inline constexpr uint32_t maxWorkgroupSize = 1024u;
 inline constexpr uint32_t minimalSyncBufferSize = 12;
+inline constexpr double defaultProfilingTimerResolution = 83.333;
 } // namespace CommonConstants

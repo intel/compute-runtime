@@ -24,7 +24,6 @@ struct RuntimeCapabilityTable {
     KmdNotifyProperties kmdNotifyProperties;
     uint64_t gpuAddressSpace;
     uint64_t sharedSystemMemCapabilities;
-    double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;
     const char *deviceName;
     const char *preferredPlatformName;
@@ -94,7 +93,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits == rhs.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     result &= (lhs.gpuAddressSpace == rhs.gpuAddressSpace);
     result &= (lhs.sharedSystemMemCapabilities == rhs.sharedSystemMemCapabilities);
-    result &= (lhs.defaultProfilingTimerResolution == rhs.defaultProfilingTimerResolution);
     result &= (lhs.requiredPreemptionSurfaceSize == rhs.requiredPreemptionSurfaceSize);
     result &= (lhs.defaultPreemptionMode == rhs.defaultPreemptionMode);
     result &= (lhs.defaultEngineType == rhs.defaultEngineType);

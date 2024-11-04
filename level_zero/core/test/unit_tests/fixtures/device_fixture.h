@@ -214,11 +214,11 @@ class FalseGpuCpuDeviceTime : public NEO::DeviceTime {
     bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         return false;
     }
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
-        return NEO::OSTime::getDeviceTimerResolution(hwInfo);
+    double getDynamicDeviceTimerResolution() const override {
+        return NEO::OSTime::getDeviceTimerResolution();
     }
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
-        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+    uint64_t getDynamicDeviceTimerClock() const override {
+        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution());
     }
 };
 

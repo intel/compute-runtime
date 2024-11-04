@@ -618,11 +618,11 @@ const DeviceInfo &Device::getDeviceInfo() const {
 }
 
 double Device::getProfilingTimerResolution() {
-    return getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
+    return getOSTime()->getDynamicDeviceTimerResolution();
 }
 
 uint64_t Device::getProfilingTimerClock() {
-    return getOSTime()->getDynamicDeviceTimerClock(getHardwareInfo());
+    return getOSTime()->getDynamicDeviceTimerClock();
 }
 
 bool Device::isBcsSplitSupported() {
@@ -707,7 +707,7 @@ bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTime
     if (retVal) {
         *hostTimestamp = timeStamp.cpuTimeinNS;
         if (debugManager.flags.EnableDeviceBasedTimestamps.get()) {
-            auto resolution = getOSTime()->getDynamicDeviceTimerResolution(getHardwareInfo());
+            auto resolution = getOSTime()->getDynamicDeviceTimerResolution();
             *deviceTimestamp = getGfxCoreHelper().getGpuTimeStampInNS(timeStamp.gpuTimeStamp, resolution);
         } else
             *deviceTimestamp = *hostTimestamp;

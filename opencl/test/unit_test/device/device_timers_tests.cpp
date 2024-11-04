@@ -26,7 +26,7 @@ TEST(MockOSTime, WhenSleepingThenDeviceAndHostTimerAreIncreased) {
 
     auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     auto osTime = new MockOSTime();
-    osTime->setDeviceTimerResolution(mDev->getHardwareInfo());
+    osTime->setDeviceTimerResolution();
     mDev->setOSTime(osTime);
 
     mDev->getDeviceAndHostTimer(
@@ -166,12 +166,12 @@ class FailingMockDeviceTime : public DeviceTime {
         return false;
     }
 
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+    double getDynamicDeviceTimerResolution() const override {
         return 1.0;
     }
 
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
-        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+    uint64_t getDynamicDeviceTimerClock() const override {
+        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution());
     }
 };
 

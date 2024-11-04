@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ DeviceTimeWddm::DeviceTimeWddm(Wddm *wddm) {
     this->wddm = wddm;
 }
 
-double DeviceTimeWddm::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
+double DeviceTimeWddm::getDynamicDeviceTimerResolution() const {
     double retVal = 0u;
     if (wddm) {
         retVal = 1000000000.0 / static_cast<double>(wddm->getTimestampFrequency());
@@ -62,7 +62,7 @@ double DeviceTimeWddm::getDynamicDeviceTimerResolution(HardwareInfo const &hwInf
     return retVal;
 }
 
-uint64_t DeviceTimeWddm::getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
+uint64_t DeviceTimeWddm::getDynamicDeviceTimerClock() const {
     uint64_t retVal = 0u;
     if (wddm) {
         retVal = static_cast<uint64_t>(wddm->getTimestampFrequency());

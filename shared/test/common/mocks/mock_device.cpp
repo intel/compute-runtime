@@ -54,7 +54,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     auto &hwInfo = getHardwareInfo();
     if (!getOSTime()) {
         getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
-        getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution(hwInfo);
+        getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
     }
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
     UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);

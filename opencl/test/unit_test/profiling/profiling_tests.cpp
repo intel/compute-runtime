@@ -73,11 +73,11 @@ struct MockTagNode : public TagNode<TagType> {
 };
 
 class MyOSDeviceTime : public DeviceTime {
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+    double getDynamicDeviceTimerResolution() const override {
         EXPECT_FALSE(true);
         return 1.0;
     }
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+    uint64_t getDynamicDeviceTimerClock() const override {
         EXPECT_FALSE(true);
         return 0;
     }

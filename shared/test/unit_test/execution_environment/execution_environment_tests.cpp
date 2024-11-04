@@ -90,7 +90,7 @@ TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosti
     DebugManagerStateRestore dbgRestore;
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    auto profilingTimerResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
+    auto profilingTimerResolution = CommonConstants::defaultProfilingTimerResolution;
 
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
 
@@ -109,8 +109,8 @@ TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosti
     EXPECT_EQ(0u, tsData.cpuTimeinNS);
     EXPECT_EQ(0u, tsData.gpuTimeStamp);
 
-    EXPECT_EQ(profilingTimerResolution, rootDeviceEnvironment->osTime->getDynamicDeviceTimerResolution(*defaultHwInfo));
-    EXPECT_EQ(static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(*defaultHwInfo)), rootDeviceEnvironment->osTime->getDynamicDeviceTimerClock(*defaultHwInfo));
+    EXPECT_EQ(profilingTimerResolution, rootDeviceEnvironment->osTime->getDynamicDeviceTimerResolution());
+    EXPECT_EQ(static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution()), rootDeviceEnvironment->osTime->getDynamicDeviceTimerClock());
 
     struct MockOSTime : public OSTime {
         using OSTime::deviceTime;

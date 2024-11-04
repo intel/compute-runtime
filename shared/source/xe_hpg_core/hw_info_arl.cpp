@@ -35,7 +35,6 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     {0, 0, 0, 0, false, false, false, false},                  // kmdNotifyProperties
     MemoryConstants::max48BitAddress,                          // gpuAddressSpace
     0,                                                         // sharedSystemMemCapabilities
-    83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
     "",                                                        // deviceName
     nullptr,                                                   // preferredPlatformName

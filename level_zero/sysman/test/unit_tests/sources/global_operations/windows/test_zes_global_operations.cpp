@@ -29,9 +29,8 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
-        auto &hwInfo = pWddmSysmanImp->getSysmanDeviceImp()->getHardwareInfo();
         pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
-        pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution(hwInfo);
+        pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
     }
 
     void init(bool allowSetCalls) {
@@ -156,8 +155,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetProper
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetPropertiesThenCorrectTimerResolutionInCorePropertiesAreReturned) {
     init(true);
     pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime.reset(new NEO::MockOSTimeWithConstTimestamp());
-    auto pHwInfo = pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().getMutableHardwareInfo();
-    double mockedTimerResolution = pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().osTime->getDynamicDeviceTimerResolution(*pHwInfo);
+    double mockedTimerResolution = pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment().osTime->getDynamicDeviceTimerResolution();
 
     zes_device_properties_t properties = {};
     ze_result_t result = zesDeviceGetProperties(pSysmanDevice->toHandle(), &properties);
@@ -216,9 +214,8 @@ class SysmanGlobalOperationsUuidFixture : public SysmanDeviceFixture {
     L0::Sysman::SysmanDeviceImp *device = nullptr;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
-        auto &hwInfo = pWddmSysmanImp->getSysmanDeviceImp()->getHardwareInfo();
         pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
-        pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution(hwInfo);
+        pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef().osTime->setDeviceTimerResolution();
         pGlobalOperationsImp = static_cast<L0::Sysman::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
         device = pSysmanDeviceImp;
     }

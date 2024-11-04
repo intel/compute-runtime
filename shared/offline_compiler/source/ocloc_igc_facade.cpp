@@ -12,6 +12,7 @@
 #include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/compiler_interface/os_compiler_cache_helper.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -92,7 +93,7 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OCLOC_OUT_OF_HOST_MEMORY;
     }
 
-    igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo.capabilityTable.defaultProfilingTimerResolution));
+    igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(CommonConstants::defaultProfilingTimerResolution));
 
     const auto igcPlatform = getIgcPlatformHandle();
     const auto igcGtSystemInfo = getGTSystemInfoHandle();

@@ -28,11 +28,11 @@ class DeviceTime {
     virtual ~DeviceTime() = default;
     bool getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall);
     virtual bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime);
-    virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const;
-    virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const;
+    virtual double getDynamicDeviceTimerResolution() const;
+    virtual uint64_t getDynamicDeviceTimerClock() const;
     virtual bool isTimestampsRefreshEnabled() const;
     bool getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
-    void setDeviceTimerResolution(HardwareInfo const &hwInfo);
+    void setDeviceTimerResolution();
     void setRefreshTimestampsFlag() {
         refreshTimestamps = true;
     }
@@ -62,7 +62,7 @@ class OSTime {
     virtual double getHostTimerResolution() const;
     virtual uint64_t getCpuRawTimestamp();
 
-    static double getDeviceTimerResolution(HardwareInfo const &hwInfo);
+    static double getDeviceTimerResolution();
 
     bool getGpuCpuTime(TimeStampData *gpuCpuTime, bool forceKmdCall) {
         return deviceTime->getGpuCpuTime(gpuCpuTime, this, forceKmdCall);
@@ -72,18 +72,18 @@ class OSTime {
         return deviceTime->getGpuCpuTime(gpuCpuTime, this, false);
     }
 
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
-        return deviceTime->getDynamicDeviceTimerResolution(hwInfo);
+    double getDynamicDeviceTimerResolution() const {
+        return deviceTime->getDynamicDeviceTimerResolution();
     }
 
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const {
-        return deviceTime->getDynamicDeviceTimerClock(hwInfo);
+    uint64_t getDynamicDeviceTimerClock() const {
+        return deviceTime->getDynamicDeviceTimerClock();
     }
 
     uint64_t getMaxGpuTimeStamp() const { return maxGpuTimeStamp; }
 
-    void setDeviceTimerResolution(HardwareInfo const &hwInfo) const {
-        deviceTime->setDeviceTimerResolution(hwInfo);
+    void setDeviceTimerResolution() const {
+        deviceTime->setDeviceTimerResolution();
     }
 
     void setDeviceTimestampWidth(uint32_t timestampWidth) {

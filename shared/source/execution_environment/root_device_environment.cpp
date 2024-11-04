@@ -127,7 +127,7 @@ void RootDeviceEnvironment::initGmm() {
 void RootDeviceEnvironment::initOsTime() {
     if (!osTime) {
         osTime = OSTime::create(osInterface.get());
-        osTime->setDeviceTimerResolution(*hwInfo);
+        osTime->setDeviceTimerResolution();
         osTime->setDeviceTimestampWidth(gfxCoreHelper->getDeviceTimestampWidth());
     }
 }

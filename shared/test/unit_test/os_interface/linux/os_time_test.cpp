@@ -49,8 +49,7 @@ struct DrmTimeTest : public ::testing::Test {
         osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
         osTime->setResolutionFunc(resolutionFuncTrue);
         osTime->setGetTimeFunc(getTimeFuncTrue);
-        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-        osTime->setDeviceTimerResolution(*hwInfo);
+        osTime->setDeviceTimerResolution();
         deviceTime = osTime->getDeviceTime();
     }
 
@@ -198,7 +197,7 @@ TEST_F(DrmTimeTest, GivenInvalidFuncTimeWhenGettingGpuCpuTimeCpuThenFails) {
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultResolutionIsReturned) {
-    auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
+    auto defaultResolution = CommonConstants::defaultProfilingTimerResolution;
 
     auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
@@ -206,12 +205,12 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
     drm->getParamRetValue = 0;
     drm->ioctlRes = -1;
     deviceTime->callGetDynamicDeviceTimerResolution = true;
-    auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
+    auto result = osTime->getDynamicDeviceTimerResolution();
     EXPECT_DOUBLE_EQ(result, defaultResolution);
 }
 
 TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultClockIsReturned) {
-    auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
+    auto defaultResolution = CommonConstants::defaultProfilingTimerResolution;
 
     auto drm = DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]).release();
     osTime->updateDrm(drm);
@@ -219,7 +218,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlFailsThenDefaultCloc
     drm->getParamRetValue = 0;
     drm->ioctlRes = -1;
 
-    auto result = osTime->getDynamicDeviceTimerClock(*defaultHwInfo);
+    auto result = osTime->getDynamicDeviceTimerClock();
     auto expectedResult = static_cast<uint64_t>(1000000000.0 / defaultResolution);
     EXPECT_EQ(result, expectedResult);
 }
@@ -231,7 +230,7 @@ TEST_F(DrmTimeTest, givenGetDynamicDeviceTimerClockWhenIoctlSucceedsThenNonDefau
     uint64_t frequency = 1500;
     drm->getParamRetValue = static_cast<int>(frequency);
 
-    auto result = osTime->getDynamicDeviceTimerClock(*defaultHwInfo);
+    auto result = osTime->getDynamicDeviceTimerClock();
     EXPECT_EQ(result, frequency);
 }
 
@@ -243,7 +242,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectR
     drm->getParamRetValue = 19200000;
     drm->ioctlRes = 0;
     deviceTime->callGetDynamicDeviceTimerResolution = true;
-    auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
+    auto result = osTime->getDynamicDeviceTimerResolution();
     EXPECT_DOUBLE_EQ(result, 52.08333333333333);
 }
 
@@ -292,11 +291,10 @@ TEST_F(DrmTimeTest, whenGettingGpuTimeStampValueWithinIntervalThenReuseFromPrevi
 
     // Recreate mock to apply debug flag
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
     osTime->setResolutionFunc(resolutionFuncTrue);
     osTime->setGetTimeFunc(getTimeFuncTrue);
-    osTime->setDeviceTimerResolution(*hwInfo);
+    osTime->setDeviceTimerResolution();
     auto deviceTime = osTime->getDeviceTime();
 
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);
@@ -314,7 +312,7 @@ TEST_F(DrmTimeTest, whenGettingGpuTimeStampValueWithinIntervalThenReuseFromPrevi
     auto cpuTimeAfter = actualTime;
 
     auto cpuTimeDiff = cpuTimeAfter - cpuTimeBefore;
-    auto deviceTimerResolution = deviceTime->getDynamicDeviceTimerResolution(*hwInfo);
+    auto deviceTimerResolution = deviceTime->getDynamicDeviceTimerResolution();
     auto gpuTimestampDiff = static_cast<uint64_t>(cpuTimeDiff / deviceTimerResolution);
     EXPECT_EQ(gpuTimestampAfter, gpuTimestampBefore + gpuTimestampDiff);
 }
@@ -325,11 +323,10 @@ TEST_F(DrmTimeTest, whenGettingGpuTimeStampValueAfterIntervalThenCallToKmdAndAda
 
     // Recreate mock to apply debug flag
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
     osTime = MockOSTimeLinux::create(*rootDeviceEnvironment.osInterface);
     osTime->setResolutionFunc(resolutionFuncTrue);
     osTime->setGetTimeFunc(getTimeFuncTrue);
-    osTime->setDeviceTimerResolution(*hwInfo);
+    osTime->setDeviceTimerResolution();
     auto deviceTime = osTime->getDeviceTime();
     deviceTime->callBaseGetGpuCpuTimeImpl = false;
     EXPECT_EQ(deviceTime->getGpuCpuTimeImplCalled, 0u);

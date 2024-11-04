@@ -26,9 +26,9 @@ class MockDeviceTimeDrm : public DeviceTimeDrm {
         return getGpuCpuTimeImplResult;
     }
 
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+    double getDynamicDeviceTimerResolution() const override {
         if (callGetDynamicDeviceTimerResolution) {
-            return DeviceTimeDrm::getDynamicDeviceTimerResolution(hwInfo);
+            return DeviceTimeDrm::getDynamicDeviceTimerResolution();
         }
         return dynamicDeviceTimerResolutionValue;
     }

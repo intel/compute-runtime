@@ -37,7 +37,6 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     {0, 0, 0, 0, false, false, false, false},       // kmdNotifyProperties
     MemoryConstants::max64BitAppAddress,            // gpuAddressSpace
     0,                                              // sharedSystemMemCapabilities
-    83.333,                                         // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                      // requiredPreemptionSurfaceSize
     "",                                             // deviceName
     nullptr,                                        // preferredPlatformName
