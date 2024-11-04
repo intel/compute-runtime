@@ -1504,5 +1504,187 @@ TEST_F(GtPinInitTest, givenFailureWhenInitializingGtpinThenTheErrorIsNotExposedI
     EXPECT_EQ(globalDriverHandle, driverHandle);
 }
 
+TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeInitDriversWithoutDriverHandlesRequestedMultipleTimesThenGtPinIsNotInitialized) {
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    uint32_t driverCount = 0;
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
+    auto result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_TRUE(driver.gtPinInitializationNeeded.load());
+    driver.gtPinInitializationNeeded = false;
+    driverCount = 0;
+    result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
+}
+
+TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeInitDriversWithoutDriverHandlesRequestedAndCountZeroMultipleTimesThenGtPinIsNotInitialized) {
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    uint32_t driverCount = 0;
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
+    auto result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_TRUE(driver.gtPinInitializationNeeded.load());
+    driver.gtPinInitializationNeeded = false;
+    driverCount = 0;
+    ze_driver_handle_t driverHandle{};
+    result = zeInitDrivers(&driverCount, &driverHandle, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_FALSE(driver.gtPinInitializationNeeded.load());
+}
+
+TEST_F(GtPinInitTest, givenRequirementForGtpinWhenCallingZeInitDriversMultipleTimesThenGtPinIsInitializedOnlyOnce) {
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    uint32_t driverCount = 0;
+    ze_driver_handle_t driverHandle{};
+    auto result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(0u, gtpinInitTimesCalled);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    result = zeInitDrivers(&driverCount, &driverHandle, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    EXPECT_EQ(globalDriverHandle, driverHandle);
+
+    EXPECT_EQ(2u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    EXPECT_EQ(1u, gtpinInitTimesCalled);
+}
+
+TEST_F(GtPinInitTest, givenFailureWhenInitializingGtpinThenTheErrorIsNotExposedInZeInitDriversFunction) {
+
+    uint32_t (*gtPinInit)(void *) = [](void *arg) -> uint32_t {
+        return 1; // failure
+    };
+
+    auto osLibrary = static_cast<MockOsLibraryCustom *>(MockOsLibrary::loadLibraryNewObject);
+    osLibrary->procMap["OpenGTPin"] = reinterpret_cast<void *>(gtPinInit);
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    uint32_t driverCount = 0;
+    ze_driver_handle_t driverHandle{};
+    auto result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    EXPECT_EQ(1u, driver.initializeCalledCount);
+    ASSERT_EQ(1u, driverCount);
+    result = zeInitDrivers(&driverCount, &driverHandle, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(1u, driverCount);
+    EXPECT_EQ(globalDriverHandle, driverHandle);
+}
+
+TEST(InitDriversTest, givenZeInitDriversCalledWhenCallingZeInitDriversInForkedProcessThenNewDriverIsInitialized) {
+    Mock<Driver> driver;
+    uint32_t driverCount = 0;
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    driver.pid = NEO::SysCalls::getCurrentProcessId();
+
+    ze_result_t result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // change pid in driver
+    driver.pid = NEO::SysCalls::getCurrentProcessId() - 1;
+
+    result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(levelZeroDriverInitialized);
+    EXPECT_EQ(2u, driver.initCalledCount);
+
+    // pid updated to current pid
+    auto expectedPid = NEO::SysCalls::getCurrentProcessId();
+    EXPECT_EQ(expectedPid, driver.pid);
+}
+
+TEST(InitDriversTest, givenNullDriverHandlePointerWhenInitDriversIsCalledWithACountThenErrorInvalidNullPointerIsReturned) {
+    Mock<Driver> driver;
+    driver.driverGetCallBase = false;
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    uint32_t driverCount = 0;
+    auto result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+    ASSERT_EQ(1u, driverCount);
+    result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+}
+
+TEST(InitDriversTest, givennInitDriversIsCalledWhenDriverinitFailsThenUninitializedDriverIsReturned) {
+    Mock<Driver> driver;
+    driver.failInitDriver = true;
+    ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+    desc.flags = ZE_INIT_DRIVER_TYPE_FLAG_GPU;
+    desc.pNext = nullptr;
+    uint32_t driverCount = 0;
+    auto result = zeInitDrivers(&driverCount, nullptr, &desc);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+}
+
+TEST(InitDriversTest, givenAllPossibleFlagCombinationsWhenInitDriversIsCalledThenCorrectResultsAreReturned) {
+    struct TestCase {
+        uint32_t flags;
+        ze_result_t expectedResult;
+        bool expectDriverHandle;
+    };
+
+    std::vector<TestCase> testCases = {
+        {0, ZE_RESULT_ERROR_UNINITIALIZED, false},
+        {ZE_INIT_DRIVER_TYPE_FLAG_GPU, ZE_RESULT_SUCCESS, true},
+        {ZE_INIT_DRIVER_TYPE_FLAG_GPU | ZE_INIT_DRIVER_TYPE_FLAG_NPU, ZE_RESULT_SUCCESS, true},
+        {UINT32_MAX, ZE_RESULT_SUCCESS, true},
+        {ZE_INIT_DRIVER_TYPE_FLAG_NPU, ZE_RESULT_ERROR_UNINITIALIZED, false},
+        {UINT32_MAX & !ZE_INIT_DRIVER_TYPE_FLAG_GPU, ZE_RESULT_ERROR_UNINITIALIZED, false}};
+
+    for (const auto &testCase : testCases) {
+        Mock<Driver> driver;
+        driver.driverGetCallBase = false;
+        uint32_t count = 0;
+        ze_driver_handle_t driverHandle = nullptr;
+        ze_init_driver_type_desc_t desc = {ZE_STRUCTURE_TYPE_INIT_DRIVER_TYPE_DESC};
+        desc.flags = testCase.flags;
+        desc.pNext = nullptr;
+
+        ze_result_t result = zeInitDrivers(&count, nullptr, &desc);
+        EXPECT_EQ(testCase.expectedResult, result);
+        if (testCase.expectDriverHandle) {
+            EXPECT_GT(count, 0u);
+            result = zeInitDrivers(&count, &driverHandle, &desc);
+            EXPECT_EQ(testCase.expectedResult, result);
+            EXPECT_NE(nullptr, driverHandle);
+            EXPECT_TRUE(levelZeroDriverInitialized);
+        } else {
+            EXPECT_EQ(0U, count);
+            EXPECT_EQ(nullptr, driverHandle);
+        }
+    }
+}
+
 } // namespace ult
 } // namespace L0

@@ -17,13 +17,14 @@ namespace L0 {
 
 class DriverImp : public Driver {
   public:
-    ze_result_t driverInit(ze_init_flags_t flags) override;
+    ze_result_t driverInit() override;
 
     void initialize(ze_result_t *result) override;
     unsigned int getPid() const override {
         return pid;
     }
     void tryInitGtpin() override;
+    ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers) override;
 
   protected:
     uint32_t pid = 0;

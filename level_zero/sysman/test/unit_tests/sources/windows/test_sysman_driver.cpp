@@ -40,6 +40,17 @@ TEST(zesInit, whenCallingZesInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCal
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
+TEST(zesInit, whenCallingZesInitWhenDriverInitFailsThenUninitializedIsReturned) {
+    MockSysmanDriver driver;
+    driver.useBaseInit = false;
+    driver.useBaseDriverInit = true;
+    driver.sysmanInitFail = true;
+
+    auto result = zesInit(0);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+}
+
 TEST_F(SysmanDriverHandleTest,
        givenInitializedDriverWhenZesDriverGetPropertiesIsCalledThenUnsupportedIsReturned) {
     uint32_t pCount = 0;

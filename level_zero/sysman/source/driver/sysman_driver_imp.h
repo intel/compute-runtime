@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace Sysman {
 
 class SysmanDriverImp : public SysmanDriver {
   public:
-    ze_result_t driverInit(zes_init_flags_t flags) override;
+    ze_result_t driverInit() override;
 
     void initialize(ze_result_t *result) override;
 

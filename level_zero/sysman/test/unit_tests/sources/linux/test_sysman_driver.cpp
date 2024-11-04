@@ -52,6 +52,17 @@ TEST(zesInit, whenCallingZesInitWithoutGpuOnlyFlagThenInitializeOnDriverIsNotCal
     EXPECT_EQ(0u, driver.initCalledCount);
 }
 
+TEST(zesInit, whenCallingZesInitWhenDriverInitFailsThenUninitializedIsReturned) {
+    MockSysmanDriver driver;
+    driver.useBaseInit = false;
+    driver.useBaseDriverInit = true;
+    driver.sysmanInitFail = true;
+
+    auto result = zesInit(0);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+    EXPECT_EQ(1u, driver.initCalledCount);
+}
+
 TEST(zesInit, whenCallingZesDriverGetWithoutZesInitThenZesDriverGetCallNotSucceed) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverGet(&count, nullptr));
@@ -335,7 +346,7 @@ TEST_F(SysmanDriverHandleTest,
 TEST(SysmanDriverInit, GivenValidSysmanImpObjectWhenCallingInitWithSysmanInitFromCoreSetAsTrueThenSysmanInitFails) {
     L0::sysmanInitFromCore = true;
     std::unique_ptr<SysmanDriverImp> pSysmanDriverImp = std::make_unique<SysmanDriverImp>();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit(0));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, pSysmanDriverImp->driverInit());
     EXPECT_FALSE(L0::Sysman::sysmanOnlyInit);
     L0::sysmanInitFromCore = false;
 }

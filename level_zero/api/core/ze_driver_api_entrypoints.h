@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,15 @@ ze_result_t zeInit(
     return L0::init(flags);
 }
 
+ze_result_t zeInitDrivers(
+    uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc) {
+    return L0::initDrivers(pCount, phDrivers, desc);
+}
+
 ze_result_t zeDriverGet(
     uint32_t *pCount,
     ze_driver_handle_t *phDrivers) {
-    return L0::driverHandleGet(pCount, phDrivers);
+    return L0::Driver::get()->driverHandleGet(pCount, phDrivers);
 }
 
 ze_result_t zeDriverGetProperties(
@@ -68,6 +73,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeInit(
     ze_init_flags_t flags) {
     return L0::zeInit(
         flags);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeInitDrivers(
+    uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc) {
+    return L0::initDrivers(
+        pCount, phDrivers, desc);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeDriverGet(

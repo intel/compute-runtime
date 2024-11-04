@@ -30,17 +30,32 @@ struct Mock<Driver> : public Driver {
     Mock();
     ~Mock() override;
 
-    ze_result_t driverInit(ze_init_flags_t flag) override {
+    ze_result_t driverInit() override {
         initCalledCount++;
         if (initCalledCount == 1) {
             pid = NEO::SysCalls::getCurrentProcessId();
         }
         if (driverInitCallBase) {
-            return DriverImp::driverInit(flag);
+            return DriverImp::driverInit();
         }
         if (failInitDriver) {
             return ZE_RESULT_ERROR_UNINITIALIZED;
         }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) override {
+        if (driverGetCallBase) {
+            return DriverImp::driverHandleGet(pCount, phDriverHandles);
+        }
+        if (*pCount == 0) {
+            *pCount = 1;
+            return ZE_RESULT_SUCCESS;
+        }
+        if (phDriverHandles == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+        }
+        *phDriverHandles = reinterpret_cast<ze_driver_handle_t>(&mockDriverhandle);
         return ZE_RESULT_SUCCESS;
     }
 
@@ -63,7 +78,9 @@ struct Mock<Driver> : public Driver {
     uint32_t initializeCalledCount = 0;
     bool failInitDriver = false;
     bool driverInitCallBase = false;
+    bool driverGetCallBase = true;
     bool initializeCallBase = false;
+    uint64_t mockDriverhandle = 0xffff;
 };
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 namespace L0 {
 namespace Sysman {
 struct SysmanDriver {
-    virtual ze_result_t driverInit(zes_init_flags_t flags) = 0;
+    virtual ze_result_t driverInit() = 0;
     virtual void initialize(ze_result_t *result) = 0;
     static SysmanDriver *get() { return driver; }
     virtual ~SysmanDriver() = default;

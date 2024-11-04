@@ -100,7 +100,7 @@ void DriverImp::initialize(ze_result_t *result) {
 
 ze_result_t DriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
 
-ze_result_t DriverImp::driverInit(ze_init_flags_t flags) {
+ze_result_t DriverImp::driverInit() {
     std::call_once(initDriverOnce, [this]() {
         ze_result_t result;
         this->initialize(&result);
@@ -109,8 +109,11 @@ ze_result_t DriverImp::driverInit(ze_init_flags_t flags) {
     return initStatus;
 }
 
-ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {
-    Driver::get()->tryInitGtpin();
+ze_result_t DriverImp::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {
+    // Only attempt to Init GtPin when driverHandleGet is called requesting handles.
+    if (phDriverHandles != nullptr && *pCount > 0) {
+        Driver::get()->tryInitGtpin();
+    }
     if (*pCount == 0) {
         *pCount = driverCount;
         return ZE_RESULT_SUCCESS;
@@ -147,30 +150,46 @@ static DriverImp driverImp;
 Driver *Driver::driver = &driverImp;
 std::mutex driverInitMutex;
 
+ze_result_t initDriver() {
+    auto pid = NEO::SysCalls::getCurrentProcessId();
+
+    ze_result_t result = Driver::get()->driverInit();
+
+    if (Driver::get()->getPid() != pid) {
+        std::lock_guard<std::mutex> lock(driverInitMutex);
+
+        if (Driver::get()->getPid() != pid) {
+            ze_result_t result;
+            Driver::get()->initialize(&result);
+        }
+    }
+
+    if (result == ZE_RESULT_SUCCESS) {
+        L0::levelZeroDriverInitialized = true;
+    } else {
+        L0::levelZeroDriverInitialized = false;
+    }
+    return result;
+}
+
 ze_result_t init(ze_init_flags_t flags) {
     if (flags && !(flags & ZE_INIT_FLAG_GPU_ONLY)) {
         L0::levelZeroDriverInitialized = false;
         return ZE_RESULT_ERROR_UNINITIALIZED;
     } else {
-        auto pid = NEO::SysCalls::getCurrentProcessId();
-
-        ze_result_t result = Driver::get()->driverInit(flags);
-
-        if (Driver::get()->getPid() != pid) {
-            std::lock_guard<std::mutex> lock(driverInitMutex);
-
-            if (Driver::get()->getPid() != pid) {
-                ze_result_t result;
-                Driver::get()->initialize(&result);
-            }
-        }
-
-        if (result == ZE_RESULT_SUCCESS) {
-            L0::levelZeroDriverInitialized = true;
-        } else {
-            L0::levelZeroDriverInitialized = false;
-        }
-        return result;
+        return initDriver();
     }
 }
+
+ze_result_t initDrivers(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init_driver_type_desc_t *desc) {
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    if (desc->flags & ZE_INIT_DRIVER_TYPE_FLAG_GPU) {
+        result = initDriver();
+        if (result == ZE_RESULT_SUCCESS) {
+            result = Driver::get()->driverHandleGet(pCount, phDrivers);
+        }
+    }
+    return result;
+}
+
 } // namespace L0

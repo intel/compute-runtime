@@ -206,6 +206,7 @@ zeGetGlobalProcAddrTable(
     if (driverDdiTable.enableTracing) {
         fillDdiEntry(pDdiTable->pfnInit, zeInitTracing, version, ZE_API_VERSION_1_0);
     }
+    fillDdiEntry(pDdiTable->pfnInitDrivers, L0::zeInitDrivers, version, ZE_API_VERSION_1_10);
     return result;
 }
 
