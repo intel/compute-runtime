@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,11 @@ ze_result_t WddmSysmanDriverImp::eventsListen(uint64_t timeout, uint32_t count, 
     auto timeToExitLoop = L0::Sysman::SteadyClock::now() + std::chrono::duration<uint64_t, std::milli>(timeout);
     do {
         for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
-            gotSysmanEvent = L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex], timeout);
+            auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]);
+            if (pSysmanDevice == nullptr) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+            gotSysmanEvent = pSysmanDevice->deviceEventListen(pEvents[devIndex], timeout);
             if (gotSysmanEvent) {
                 *pNumDeviceEvents = 1;
                 break;

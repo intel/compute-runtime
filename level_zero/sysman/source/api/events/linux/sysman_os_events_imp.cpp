@@ -153,6 +153,9 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
     std::vector<zes_event_type_flags_t> registeredEvents(count);
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
+        if (device == nullptr) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
         eventsMutex.lock();
         if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
             registeredEvents[devIndex] = deviceEventsMap[device];

@@ -178,6 +178,43 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForRes
     delete pUdevLibLocal;
 }
 
+TEST_F(SysmanEventsFixture, GivenNullDeviceHandleWhenListeningForEventsThenEventListenReturnsErrorUninitialized) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockUdevFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = std::make_unique<PublicLinuxSysmanDriverImp>();
+    auto pOsSysmanDriverOriginal = driverHandle->pOsSysmanDriver;
+    driverHandle->pOsSysmanDriver = static_cast<L0::Sysman::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp.get());
+
+    auto pUdevLibLocal = std::make_unique<EventsUdevLibMock>();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+
+    auto pUdevLibOriginal = pPublicLinuxSysmanDriverImp->pUdevLib;
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal.get();
+
+    std::unique_ptr<zes_device_handle_t[]> phDevices(new zes_device_handle_t[1]);
+    phDevices[0] = nullptr;
+    uint32_t numDeviceEvents = 0;
+    std::unique_ptr<zes_event_type_flags_t[]> pDeviceEvents(new zes_event_type_flags_t[1]);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices.get(), &numDeviceEvents, pDeviceEvents.get()));
+
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibOriginal;
+    driverHandle->pOsSysmanDriver = pOsSysmanDriverOriginal;
+}
+
 TEST_F(SysmanEventsFixture, GivenPipeSystemCallReturnsFailureWhenlisteningForResetRequiredEventThenDeviceListenReturnsResetRequiredEvent) {
     VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
         return -1;

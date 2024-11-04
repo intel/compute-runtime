@@ -33,7 +33,7 @@ namespace L0 {
 namespace Sysman {
 
 struct SysmanDevice : _ze_device_handle_t {
-    static SysmanDevice *fromHandle(zes_device_handle_t handle) { return static_cast<SysmanDevice *>(handle); }
+    static SysmanDevice *fromHandle(zes_device_handle_t handle);
     inline zes_device_handle_t toHandle() { return this; }
     virtual ~SysmanDevice() = default;
     static SysmanDevice *create(NEO::ExecutionEnvironment &executionEnvironment, const uint32_t rootDeviceIndex);

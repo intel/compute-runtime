@@ -46,6 +46,7 @@ class SysmanDeviceFixture : public ::testing::Test {
         driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
         driverHandle->initialize(*execEnv);
         pSysmanDevice = driverHandle->sysmanDevices[0];
+        L0::Sysman::globalSysmanDriver = driverHandle.get();
 
         L0::Sysman::sysmanOnlyInit = true;
 
@@ -57,6 +58,7 @@ class SysmanDeviceFixture : public ::testing::Test {
 
     void TearDown() override {
         L0::Sysman::sysmanOnlyInit = false;
+        L0::Sysman::globalSysmanDriver = nullptr;
     }
 
     L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;
