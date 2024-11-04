@@ -1215,8 +1215,9 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsup
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext.metricGroupCreate(
                                                            name, description, samplingType, pMetricGroupHandle));
         uint32_t count = 0;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext.metricProgrammableGet(
-                                                           &count, nullptr));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, deviceContext.metricProgrammableGet(
+                                         &count, nullptr));
+        EXPECT_EQ(count, 0u);
     }
 }
 

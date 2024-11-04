@@ -22,6 +22,8 @@ namespace ult {
 
 void MetricContextFixture::setUp() {
 
+    debugManager.flags.DisableProgrammableMetricsSupport.set(1);
+
     // Call base class.
     DeviceFixture::setUp();
 
@@ -88,6 +90,7 @@ void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_
 }
 
 void MetricMultiDeviceFixture::setUp() {
+    debugManager.flags.DisableProgrammableMetricsSupport.set(1);
     debugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::setUp();

@@ -266,6 +266,7 @@ class MetricContextFixture : public DeviceFixture {
     void tearDown();
     void openMetricsAdapter();
     void openMetricsAdapterGroup();
+    DebugManagerStateRestore restorer;
 
   public:
     // Mocked objects.
@@ -296,6 +297,7 @@ class MetricMultiDeviceFixture : public MultiDeviceFixture {
     void openMetricsAdapterSubDevice(uint32_t subDeviceIndex);
     void openMetricsAdapterDeviceAndSubDeviceNoCountVerify(uint32_t subDeviceIndex);
     void openMetricsAdapterGroup();
+    DebugManagerStateRestore restorer;
 
   public:
     std::vector<L0::Device *> devices;

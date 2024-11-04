@@ -135,7 +135,7 @@ class MetricDeviceContext {
     ze_result_t getConcurrentMetricGroups(uint32_t metricGroupCount, zet_metric_group_handle_t *phMetricGroups,
                                           uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup);
 
-    bool isProgrammableMetricsEnabled = false;
+    bool isProgrammableMetricsEnabled = true;
     ze_result_t createMetricGroupsFromMetrics(uint32_t metricCount, zet_metric_handle_t *phMetrics,
                                               const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
                                               const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],

@@ -85,7 +85,6 @@ void OaMultiDeviceMetricProgrammableFixture::createMetricGroupFromMetric(zet_met
 
 void OaMultiDeviceMetricProgrammableFixture::SetUp() {
     debugManager.flags.EnableImplicitScaling.set(1);
-    debugManager.flags.EnableProgrammableMetricsSupport.set(1);
 
     MultiDeviceFixture::numRootDevices = 1;
     MultiDeviceFixture::numSubDevices = 3;
@@ -926,7 +925,6 @@ struct MultiDeviceCreatedMetricGroupManagerTest : public MultiDeviceFixture,
     void SetUp() override {
         MultiDeviceFixture::numRootDevices = 1;
         MultiDeviceFixture::numSubDevices = 2;
-        debugManager.flags.EnableProgrammableMetricsSupport.set(1);
         MultiDeviceFixture::setUp();
         rootDevice = driverHandle->devices[0];
         rootDeviceMetricContext = &(static_cast<DeviceImp *>(rootDevice)->getMetricDeviceContext());

@@ -27,6 +27,7 @@ class OaMetricProgrammableFixture : public DeviceFixture,
     MetricEnumeration *metricEnumeration = nullptr;
     MockIAdapterGroup1x13 mockAdapterGroup{};
     void disableProgrammableMetricsSupport();
+    DebugManagerStateRestore restorer;
 };
 
 void OaMetricProgrammableFixture::TearDown() {
@@ -37,8 +38,6 @@ void OaMetricProgrammableFixture::TearDown() {
 void OaMetricProgrammableFixture::SetUp() {
     DeviceFixture::setUp();
 
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableProgrammableMetricsSupport.set(1);
     mockAdapterGroup.mockParams.Version.MajorNumber = 1;
     mockAdapterGroup.mockParams.Version.MinorNumber = 13;
     deviceContext = std::make_unique<MetricDeviceContext>(*device);
@@ -53,9 +52,7 @@ void OaMetricProgrammableFixture::SetUp() {
 void OaMetricProgrammableFixture::disableProgrammableMetricsSupport() {
 
     deviceContext.reset();
-
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableProgrammableMetricsSupport.set(0);
+    debugManager.flags.DisableProgrammableMetricsSupport.set(1);
     mockAdapterGroup.mockParams.Version.MajorNumber = 1;
     mockAdapterGroup.mockParams.Version.MinorNumber = 13;
     deviceContext = std::make_unique<MetricDeviceContext>(*device);
@@ -108,7 +105,7 @@ TEST_F(OaMetricProgrammableTests, givenEnableProgrammableMetricsSupportIsNotSetW
 
     uint32_t count = 0;
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableProgrammableMetricsSupport.set(0);
+    debugManager.flags.DisableProgrammableMetricsSupport.set(1);
     auto deviceContextTest = std::make_unique<MetricDeviceContext>(*device);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContextTest->metricProgrammableGet(&count, nullptr));
 }
@@ -218,7 +215,7 @@ TEST_F(OaMetricProgrammableTests, givenMetricsProgrammableSupportIsDisabledWhenm
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));
     uint32_t count = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, L0::metricProgrammableGet(device, &count, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, deviceContext->metricProgrammableGet(&count, nullptr));
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
@@ -1452,7 +1449,7 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenCreatingLessThanAvail
 TEST_F(OaMetricProgrammableTests, givenEnableProgrammableMetricsSupportIsNotSetWhenMetricGroupCreateIsCalledThenErrorIsReturned) {
 
     DebugManagerStateRestore restorer;
-    debugManager.flags.EnableProgrammableMetricsSupport.set(0);
+    debugManager.flags.DisableProgrammableMetricsSupport.set(1);
     auto deviceContextTest = std::make_unique<MetricDeviceContext>(*device);
 
     uint32_t metricGroupCount = 0;
@@ -1594,8 +1591,6 @@ void MultiSourceOaMetricProgrammableFixture::TearDown() {
 void MultiSourceOaMetricProgrammableFixture::SetUp() {
     DeviceFixture::setUp();
 
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableProgrammableMetricsSupport.set(1);
     mockAdapterGroup.mockParams.Version.MajorNumber = 1;
     mockAdapterGroup.mockParams.Version.MinorNumber = 13;
     deviceContext = std::make_unique<MockMetricDeviceContext>(*device);

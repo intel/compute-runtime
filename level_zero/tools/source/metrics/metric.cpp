@@ -45,8 +45,8 @@ MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevi
     metricSources[MetricSource::metricSourceTypeOa] = OaMetricSourceImp::create(*this);
     metricSources[MetricSource::metricSourceTypeIpSampling] = IpSamplingMetricSourceImp::create(*this);
 
-    if (NEO::debugManager.flags.EnableProgrammableMetricsSupport.get()) {
-        isProgrammableMetricsEnabled = true;
+    if (NEO::debugManager.flags.DisableProgrammableMetricsSupport.get()) {
+        isProgrammableMetricsEnabled = false;
     }
 }
 
