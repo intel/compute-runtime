@@ -43,13 +43,30 @@ bool isZebin(ArrayRef<const uint8_t> binary) {
             fileHeader->type == Elf::ET_ZEBIN_EXE);
 }
 
+bool isTargetProductConfigCompatibleWithProductConfig(const AOT::PRODUCT_CONFIG &targetDeviceProductConfig,
+                                                      const AOT::PRODUCT_CONFIG &productConfig) {
+    auto compatProdConfPairItr = AOT::compatibilityMapping.find(productConfig);
+    if (compatProdConfPairItr != AOT::compatibilityMapping.end()) {
+        for (auto &compatibleConfig : compatProdConfPairItr->second)
+            if (targetDeviceProductConfig == compatibleConfig)
+                return true;
+    }
+    return false;
+}
+
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ElfIdentifierClass numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
     if (targetDevice.maxPointerSizeInBytes == 4 && static_cast<uint32_t>(numBits == Elf::EI_CLASS_64)) {
         return false;
     }
 
     if (productConfig != AOT::UNKNOWN_ISA) {
-        return targetDevice.aotConfig.value == productConfig;
+        auto targetDeviceProductConfig = static_cast<AOT::PRODUCT_CONFIG>(targetDevice.aotConfig.value);
+        if (targetDeviceProductConfig == productConfig)
+            return true;
+        else if (debugManager.flags.EnableCompatibilityMode.get() == true) {
+            return isTargetProductConfigCompatibleWithProductConfig(targetDeviceProductConfig, productConfig);
+        } else
+            return false;
     }
 
     if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN) {
