@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,13 +82,6 @@ class HeapAllocator {
             if (freedChunk.ptr + freedChunk.size == ptr) {
                 freedChunk.size += size;
                 return;
-            }
-            if ((freedChunk.ptr + freedChunk.size) == (ptr + size)) {
-                if (ptr < freedChunk.ptr) {
-                    freedChunk.ptr = ptr;
-                    freedChunk.size = size;
-                    return;
-                }
             }
         }
 
