@@ -1375,6 +1375,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
                                                                       size_t bytesPerPixel, const Vec3<size_t> &copySize,
                                                                       const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                                       Event *signalEvent) {
+    if (!handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dst, src,
@@ -1392,6 +1396,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     dummyBlitWa.isWaRequired = true;
 
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
+
+    if (this->isInOrderExecutionEnabled()) {
+        appendSignalInOrderDependencyCounter(signalEvent, false);
+    }
+    handleInOrderDependencyCounter(signalEvent, false, false);
+
     return ZE_RESULT_SUCCESS;
 }
 

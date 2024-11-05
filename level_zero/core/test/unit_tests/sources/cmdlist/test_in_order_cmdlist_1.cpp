@@ -24,6 +24,7 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 
 #include <type_traits>
 #include <variant>
@@ -1651,6 +1652,25 @@ HWTEST2_F(InOrderCmdListTests, givenNonInOrderCmdListWhenPassingCounterBasedEven
 
     immCmdList->copyThroughLockedPtrEnabled = true;
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, immCmdList->appendMemoryCopy(alloc, &copyData, 1, eventHandle, 0, nullptr, false, false));
+
+    {
+        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        zeDesc.type = ZE_IMAGE_TYPE_3D;
+        zeDesc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+        zeDesc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+        zeDesc.width = 11;
+        zeDesc.height = 13;
+        zeDesc.depth = 17;
+        zeDesc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+        zeDesc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+        zeDesc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+        zeDesc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+        image->initialize(device, &zeDesc);
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, copyOnlyCmdList->appendImageCopyFromMemoryExt(image->toHandle(), &copyData, &imgRegion, 0, 0, eventHandle, 0, nullptr, false));
+    }
 
     context->freeMem(alloc);
 }
@@ -3605,6 +3625,58 @@ HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingCopyRegion
 
     auto offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
+                                                      ptrOffset(cmdStream->getCpuBase(), offset),
+                                                      (cmdStream->getUsed() - offset)));
+
+    auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), copyItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(copyItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+    uint64_t syncVa = inOrderExecInfo->isHostStorageDuplicated() ? reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress()) : inOrderExecInfo->getBaseDeviceAddress();
+
+    EXPECT_EQ(syncVa, sdiCmd->getAddress());
+    EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+    EXPECT_EQ(2u, sdiCmd->getDataDword0());
+    EXPECT_EQ(0u, sdiCmd->getDataDword1());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingImageCopyFromMemoryExtThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
+    using XY_COPY_BLT = typename std::remove_const<decltype(FamilyType::cmdInitXyBlockCopyBlt)>::type;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto immCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+    image->initialize(device, &desc);
+
+    immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, false);
+    auto offset = cmdStream->getUsed();
+    immCmdList->appendImageCopyFromMemoryExt(image->toHandle(), srcPtr, nullptr, 0, 0, nullptr, 0, nullptr, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
