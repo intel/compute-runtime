@@ -5299,6 +5299,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     case CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL: {
         auto propertyValue = *static_cast<const uint32_t *>(paramValue);
         retVal = pMultiDeviceKernel->setKernelThreadArbitrationPolicy(propertyValue);
+        TRACING_EXIT(ClSetKernelExecInfo, &retVal);
         return retVal;
     }
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {
