@@ -198,35 +198,35 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenHeaplessImageBuiltinsWhenInitBuiltinK
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d16BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyBufferToImage3d16Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyBufferToImage3d16BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d2BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyBufferToImage3d2Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyBufferToImage3d2BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d4BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyBufferToImage3d4Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyBufferToImage3d4BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyBufferToImage3d8BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyBufferToImage3dHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyBufferToImage3d8Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyBufferToImage3d8BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer16BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyImage3dToBuffer16Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyImage3dToBuffer16BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer2BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyImage3dToBuffer2Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyImage3dToBuffer2BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBuffer4BytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyImage3dToBuffer4Bytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyImage3dToBuffer4BytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImage3dToBufferBytesHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyImage3dToBufferHeapless, lib.builtinPassed);
-    EXPECT_STREQ("CopyImage3dToBufferBytes", lib.kernelNamePassed.c_str());
+    EXPECT_STREQ("CopyImage3dToBufferBytesStateless", lib.kernelNamePassed.c_str());
 
     lib.initBuiltinImageKernel(L0::ImageBuiltin::copyImageRegionHeapless);
     EXPECT_EQ(NEO::EBuiltInOps::copyImageToImage3dHeapless, lib.builtinPassed);
