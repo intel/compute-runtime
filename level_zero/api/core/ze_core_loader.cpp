@@ -396,6 +396,8 @@ zeGetCommandListExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandsExp, L0::zeCommandListUpdateMutableCommandsExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandSignalEventExp, L0::zeCommandListUpdateMutableCommandSignalEventExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnUpdateMutableCommandWaitEventsExp, L0::zeCommandListUpdateMutableCommandWaitEventsExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnGetNextCommandIdWithKernelsExp, L0::zeCommandListGetNextCommandIdWithKernelsExp, version, ZE_API_VERSION_1_10);
+    fillDdiEntry(pDdiTable->pfnUpdateMutableCommandKernelsExp, L0::zeCommandListUpdateMutableCommandKernelsExp, version, ZE_API_VERSION_1_10);
     return result;
 }
 

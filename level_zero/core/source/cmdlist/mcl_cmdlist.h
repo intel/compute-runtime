@@ -37,6 +37,24 @@ ze_result_t zeCommandListUpdateMutableCommandWaitEventsExp(
     ze_event_handle_t *phWaitEvents) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
+
+ze_result_t zeCommandListGetNextCommandIdWithKernelsExp(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_exp_desc_t *desc,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
+    uint64_t *pCommandId) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t zeCommandListUpdateMutableCommandKernelsExp(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numKernels,
+    uint64_t *pCommandId,
+    ze_kernel_handle_t *phKernels) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
 
 extern "C" {
@@ -71,6 +89,24 @@ zeCommandListUpdateMutableCommandWaitEventsExp(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListUpdateMutableCommandWaitEventsExp(hCommandList, commandId, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListGetNextCommandIdWithKernelsExp(
+    ze_command_list_handle_t hCommandList,
+    const ze_mutable_command_id_exp_desc_t *desc,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
+    uint64_t *pCommandId) {
+    return L0::zeCommandListGetNextCommandIdWithKernelsExp(hCommandList, desc, numKernels, phKernels, pCommandId);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListUpdateMutableCommandKernelsExp(
+    ze_command_list_handle_t hCommandList,
+    uint32_t numKernels,
+    uint64_t *pCommandId,
+    ze_kernel_handle_t *phKernels) {
+    return L0::zeCommandListUpdateMutableCommandKernelsExp(hCommandList, numKernels, pCommandId, phKernels);
 }
 
 } // extern "C"
