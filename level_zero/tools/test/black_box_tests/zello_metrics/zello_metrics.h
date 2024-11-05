@@ -181,20 +181,27 @@ class AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
 
 class CopyBufferToBuffer : public Workload {
   public:
-    CopyBufferToBuffer(ExecutionContext *execCtxt) : Workload(execCtxt) { initialize(); }
+    CopyBufferToBuffer(ExecutionContext *execCtxt) : Workload(execCtxt) { initialize(nullptr, nullptr, 0); }
+    CopyBufferToBuffer(ExecutionContext *execCtxt, void *srcAddress, void *dstAddress, uint32_t size) : Workload(execCtxt) { initialize(srcAddress, dstAddress, size); }
     ~CopyBufferToBuffer() override { finalize(); };
     bool appendCommands() override;
     bool validate() override;
+    void setValidationStatus(bool status) {
+        isValidationEnabled = status;
+    }
 
   private:
-    void initialize();
+    void initialize(void *src, void *dst, uint32_t size);
     void finalize();
-    const uint32_t allocationSize = 4096;
+    uint32_t allocationSize = 4096;
     void *sourceBuffer = nullptr;
     void *destinationBuffer = nullptr;
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
     bool executeFromSpirv = false;
+    bool isSourceBufferAllocated = false;
+    bool isDestinationBufferAllocated = false;
+    bool isValidationEnabled = true;
 };
 
 class SingleMetricCollector : public Collector {

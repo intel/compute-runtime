@@ -69,7 +69,11 @@ void AppendMemoryCopyFromHeapToDeviceAndBackToHost::finalize() {
 ////////////////////////
 /////CopyBufferToBuffer
 ////////////////////////
-void CopyBufferToBuffer::initialize() {
+void CopyBufferToBuffer::initialize(void *src, void *dst, uint32_t size) {
+
+    sourceBuffer = src;
+    destinationBuffer = dst;
+    allocationSize = size != 0u ? size : allocationSize;
 
     ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
     deviceDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
@@ -78,16 +82,21 @@ void CopyBufferToBuffer::initialize() {
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     hostDesc.flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
-    VALIDATECALL(zeMemAllocShared(executionCtxt->getContextHandle(0), &deviceDesc, &hostDesc,
-                                  allocationSize, 1, executionCtxt->getDeviceHandle(0),
-                                  &sourceBuffer));
-    VALIDATECALL(zeMemAllocShared(executionCtxt->getContextHandle(0), &deviceDesc, &hostDesc,
-                                  allocationSize, 1, executionCtxt->getDeviceHandle(0),
-                                  &destinationBuffer));
+    if (sourceBuffer == nullptr) {
+        VALIDATECALL(zeMemAllocShared(executionCtxt->getContextHandle(0), &deviceDesc, &hostDesc,
+                                      allocationSize, 1, executionCtxt->getDeviceHandle(0),
+                                      &sourceBuffer));
+        isSourceBufferAllocated = true;
+        memset(sourceBuffer, 55, allocationSize);
+    }
 
-    // Initialize memory
-    memset(sourceBuffer, 55, allocationSize);
-    memset(destinationBuffer, 0, allocationSize);
+    if (destinationBuffer == nullptr) {
+        VALIDATECALL(zeMemAllocShared(executionCtxt->getContextHandle(0), &deviceDesc, &hostDesc,
+                                      allocationSize, 1, executionCtxt->getDeviceHandle(0),
+                                      &destinationBuffer));
+        isDestinationBufferAllocated = true;
+        memset(destinationBuffer, 0, allocationSize);
+    }
 
     std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
 
@@ -130,7 +139,8 @@ void CopyBufferToBuffer::initialize() {
 bool CopyBufferToBuffer::appendCommands() {
 
     if (executeFromSpirv) {
-        uint32_t groupSizeX = 32u;
+        LOG(zmu::LogLevel::DEBUG) << "Using copy_buffer_to_buffer.spv" << std::endl;
+        uint32_t groupSizeX = std::min<uint32_t>(32u, allocationSize);
         uint32_t groupSizeY = 1u;
         uint32_t groupSizeZ = 1u;
         VALIDATECALL(zeKernelSuggestGroupSize(kernel, allocationSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
@@ -160,6 +170,11 @@ bool CopyBufferToBuffer::appendCommands() {
 }
 
 bool CopyBufferToBuffer::validate() {
+
+    if (!isValidationEnabled) {
+        return true;
+    }
+
     // Validate.
     const bool outputValidationSuccessful = (memcmp(destinationBuffer, sourceBuffer, allocationSize) == 0);
 
@@ -185,8 +200,13 @@ bool CopyBufferToBuffer::validate() {
 
 void CopyBufferToBuffer::finalize() {
 
-    VALIDATECALL(zeMemFree(executionCtxt->getContextHandle(0), sourceBuffer));
-    VALIDATECALL(zeMemFree(executionCtxt->getContextHandle(0), destinationBuffer));
+    if (isSourceBufferAllocated) {
+        VALIDATECALL(zeMemFree(executionCtxt->getContextHandle(0), sourceBuffer));
+    }
+
+    if (isDestinationBufferAllocated) {
+        VALIDATECALL(zeMemFree(executionCtxt->getContextHandle(0), destinationBuffer));
+    }
 
     if (kernel) {
         zeKernelDestroy(kernel);
