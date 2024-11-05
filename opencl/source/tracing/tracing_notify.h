@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
 #include "opencl/source/tracing/tracing_handle.h"
@@ -29,9 +30,23 @@ namespace HostSideTracing {
 
 inline thread_local bool tracingInProgress = false;
 
+class CheckIfExitCalled : public NEO::NonCopyableOrMovableClass {
+  public:
+    ~CheckIfExitCalled() {
+        UNRECOVERABLE_IF(!tracingExited);
+    }
+    void exit() {
+        tracingExited = true;
+    }
+
+  private:
+    bool tracingExited = false;
+};
+
 #define TRACING_ENTER(name, ...)                                                                                                                   \
     bool isHostSideTracingEnabled_##name = false;                                                                                                  \
     bool currentlyTracedCall = false;                                                                                                              \
+    HostSideTracing::CheckIfExitCalled checkIfExited;                                                                                              \
     HostSideTracing::name##Tracer tracer_##name;                                                                                                   \
     if (TRACING_GET_ENABLED_BIT(HostSideTracing::tracingState.load(std::memory_order_acquire)) && (false == HostSideTracing::tracingInProgress)) { \
         HostSideTracing::tracingInProgress = true;                                                                                                 \
@@ -50,7 +65,8 @@ inline thread_local bool tracingInProgress = false;
         }                                           \
         HostSideTracing::tracingInProgress = false; \
         currentlyTracedCall = false;                \
-    }
+    }                                               \
+    checkIfExited.exit();
 
 enum TracingNotifyState {
     TRACING_NOTIFY_STATE_NOTHING_CALLED = 0,
