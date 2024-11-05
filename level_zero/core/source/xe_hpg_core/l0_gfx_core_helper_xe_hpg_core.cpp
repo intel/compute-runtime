@@ -20,6 +20,11 @@ namespace L0 {
 using Family = NEO::XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
+template <>
+ze_mutable_command_exp_flags_t L0GfxCoreHelperHw<Family>::getPlatformCmdListUpdateCapabilities() const {
+    return 0u;
+}
+
 #include "level_zero/core/source/helpers/l0_gfx_core_helper_factory_init.inl"
 
 template class L0GfxCoreHelperHw<Family>;
