@@ -85,10 +85,14 @@ inline constexpr uint32_t eventPackets = maxKernelSplit * NEO ::TimestampPacketC
 
 struct EventDescriptor {
     NEO::MultiGraphicsAllocation *eventPoolAllocation = nullptr;
+    const void *extensions = nullptr;
     uint32_t totalEventSize = 0;
     uint32_t maxKernelCount = 0;
     uint32_t maxPacketsCount = 0;
     uint32_t counterBasedFlags = 0;
+    uint32_t index = 0;
+    uint32_t signalScope = 0;
+    uint32_t waitScope = 0;
     bool timestampPool = false;
     bool kerneMappedTsPoolFlag = false;
     bool importedIpcPool = false;
@@ -132,7 +136,7 @@ struct Event : _ze_event_handle_t {
     static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
 
     template <typename TagSizeT>
-    static Event *create(const EventDescriptor &eventDescriptor, const ze_event_desc_t *desc, Device *device);
+    static Event *create(const EventDescriptor &eventDescriptor, Device *device, ze_result_t &result);
 
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
 
@@ -325,6 +329,8 @@ struct Event : _ze_event_handle_t {
 
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
+
+    ze_result_t enableExtensions(const EventDescriptor &eventDescriptor);
 
     void unsetCmdQueue();
     void releaseTempInOrderTimestampNodes();

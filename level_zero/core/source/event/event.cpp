@@ -38,8 +38,8 @@
 namespace L0 {
 template Event *Event::create<uint64_t>(EventPool *, const ze_event_desc_t *, Device *);
 template Event *Event::create<uint32_t>(EventPool *, const ze_event_desc_t *, Device *);
-template Event *Event::create<uint64_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
-template Event *Event::create<uint32_t>(const EventDescriptor &, const ze_event_desc_t *, Device *);
+template Event *Event::create<uint64_t>(const EventDescriptor &, Device *, ze_result_t &);
+template Event *Event::create<uint32_t>(const EventDescriptor &, Device *, ze_result_t &);
 
 bool Event::standaloneInOrderTimestampAllocationEnabled() {
     return (NEO::debugManager.flags.StandaloneInOrderTimestampAllocationEnabled.get() != 0);
@@ -302,26 +302,28 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 
     const EventDescriptor eventDescriptor = {
         nullptr,                           // eventPoolAllocation
+        nullptr,                           // extensions
         0,                                 // totalEventSize
         EventPacketsCount::maxKernelSplit, // maxKernelCount
         0,                                 // maxPacketsCount
         ipcData.counterBasedFlags,         // counterBasedFlags
+        0,                                 // index
+        ipcData.signalScopeFlags,          // signalScope
+        ipcData.waitScopeFlags,            // waitScope
         false,                             // timestampPool
         false,                             // kerneMappedTsPoolFlag
         true,                              // importedIpcPool
         false,                             // ipcPool
     };
 
-    ze_event_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
-    desc.signal = ipcData.signalScopeFlags;
-    desc.wait = ipcData.waitScopeFlags;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
-    auto event = Event::create<uint64_t>(eventDescriptor, &desc, device);
+    auto event = Event::create<uint64_t>(eventDescriptor, device, result);
     event->updateInOrderExecState(inOrderExecInfo, ipcData.counterValue, ipcData.counterOffset);
 
     *eventHandle = event;
 
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
@@ -657,6 +659,60 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
         inOrderExecInfo->pushTempTimestampNode(inOrderTimestampNode, inOrderExecSignalValue);
     }
     inOrderTimestampNode = newNode;
+}
+
+ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
+    bool interruptMode = false;
+    bool kmdWaitMode = false;
+    bool externalInterruptWait = false;
+
+    auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(eventDescriptor.extensions);
+
+    while (extendedDesc) {
+        if (extendedDesc->stype == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC) {
+            auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
+
+            interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
+            kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
+            externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
+
+            if (externalInterruptWait) {
+                setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
+                UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
+            }
+        } else if (extendedDesc->stype == ZEX_STRUCTURE_COUTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES) {
+            auto externalSyncAllocProperties = reinterpret_cast<const zex_counter_based_event_external_sync_alloc_properties_t *>(extendedDesc);
+
+            if (!externalSyncAllocProperties->deviceAddress || !externalSyncAllocProperties->hostAddress) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+
+            NEO::SvmAllocationData *externalHostAllocData = nullptr;
+            if (!device->getDriverHandle()->findAllocationDataForRange(externalSyncAllocProperties->hostAddress, sizeof(uint64_t), externalHostAllocData)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+
+            auto allocation = externalHostAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(externalSyncAllocProperties->deviceAddress),
+                                                                                      allocation, externalSyncAllocProperties->hostAddress, externalSyncAllocProperties->completionValue, 1, 1);
+            updateInOrderExecState(inOrderExecInfo, externalSyncAllocProperties->completionValue, 0);
+        }
+
+        extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);
+    }
+
+    interruptMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
+    kmdWaitMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
+
+    if (interruptMode) {
+        enableInterruptMode();
+    }
+
+    if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
+        enableKmdWaitMode();
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

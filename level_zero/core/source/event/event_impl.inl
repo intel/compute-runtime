@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/wait_util.h"
 
+#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
@@ -26,12 +27,12 @@
 
 namespace L0 {
 template <typename TagSizeT>
-Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc_t *desc, Device *device) {
+Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_result_t &result) {
     auto neoDevice = device->getNEODevice();
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto &hwInfo = neoDevice->getHardwareInfo();
 
-    auto event = std::make_unique<EventImp<TagSizeT>>(desc->index, device, csr->isTbxMode());
+    auto event = std::make_unique<EventImp<TagSizeT>>(eventDescriptor.index, device, csr->isTbxMode());
     UNRECOVERABLE_IF(!event.get());
 
     event->eventPoolAllocation = eventDescriptor.eventPoolAllocation;
@@ -50,10 +51,10 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
     }
 
     event->totalEventSize = eventDescriptor.totalEventSize;
-    event->eventPoolOffset = desc->index * event->totalEventSize;
+    event->eventPoolOffset = eventDescriptor.index * event->totalEventSize;
     event->hostAddressFromPool = ptrOffset(baseHostAddress, event->eventPoolOffset);
-    event->signalScope = desc->signal;
-    event->waitScope = desc->wait;
+    event->signalScope = eventDescriptor.signalScope;
+    event->waitScope = eventDescriptor.waitScope;
     event->csrs.push_back(csr);
     event->maxKernelCount = eventDescriptor.maxKernelCount;
     event->maxPacketCount = eventDescriptor.maxPacketsCount;
@@ -94,34 +95,10 @@ Event *Event::create(const EventDescriptor &eventDescriptor, const ze_event_desc
         event->resetDeviceCompletionData(true);
     }
 
-    auto extendedDesc = reinterpret_cast<const ze_base_desc_t *>(desc->pNext);
+    result = event->enableExtensions(eventDescriptor);
 
-    bool interruptMode = false;
-    bool kmdWaitMode = false;
-    bool externalInterruptWait = false;
-
-    if (extendedDesc && (extendedDesc->stype == ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC)) {
-        auto eventSyncModeDesc = reinterpret_cast<const zex_intel_event_sync_mode_exp_desc_t *>(extendedDesc);
-
-        interruptMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_SIGNAL_INTERRUPT);
-        kmdWaitMode = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_LOW_POWER_WAIT);
-        externalInterruptWait = (eventSyncModeDesc->syncModeFlags & ZEX_INTEL_EVENT_SYNC_MODE_EXP_FLAG_EXTERNAL_INTERRUPT_WAIT);
-
-        if (externalInterruptWait) {
-            event->setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
-            UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
-        }
-    }
-
-    interruptMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
-    kmdWaitMode |= (NEO::debugManager.flags.WaitForUserFenceOnEventHostSynchronize.get() == 1);
-
-    if (interruptMode) {
-        event->enableInterruptMode();
-    }
-
-    if (externalInterruptWait || (interruptMode && kmdWaitMode)) {
-        event->enableKmdWaitMode();
+    if (result != ZE_RESULT_SUCCESS) {
+        return nullptr;
     }
 
     return event.release();
@@ -131,10 +108,14 @@ template <typename TagSizeT>
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
     EventDescriptor eventDescriptor = {
         &eventPool->getAllocation(),                  // eventPoolAllocation
+        desc->pNext,                                  // extensions
         eventPool->getEventSize(),                    // totalEventSize
         eventPool->getMaxKernelCount(),               // maxKernelCount
         eventPool->getEventMaxPackets(),              // maxPacketsCount
         eventPool->getCounterBasedFlags(),            // counterBasedFlags
+        desc->index,                                  // index
+        desc->signal,                                 // signalScope
+        desc->wait,                                   // waitScope
         eventPool->isEventPoolTimestampFlagSet(),     // timestampPool
         eventPool->isEventPoolKerneMappedTsFlagSet(), // kerneMappedTsPoolFlag
         eventPool->getImportedIpcPool(),              // importedIpcPool
@@ -145,7 +126,9 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         eventDescriptor.eventPoolAllocation = nullptr;
     }
 
-    Event *event = Event::create<TagSizeT>(eventDescriptor, desc, device);
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    Event *event = Event::create<TagSizeT>(eventDescriptor, device, result);
     UNRECOVERABLE_IF(event == nullptr);
     event->setEventPool(eventPool);
     return event;
