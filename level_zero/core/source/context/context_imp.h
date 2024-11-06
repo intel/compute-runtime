@@ -20,6 +20,7 @@ namespace L0 {
 struct StructuresLookupTable;
 struct DriverHandleImp;
 struct Device;
+struct IpcCounterBasedEventData;
 
 struct ContextImp : Context {
     ContextImp(DriverHandle *driverHandle);
@@ -136,6 +137,9 @@ struct ContextImp : Context {
                                              size_t *outSize) override;
     ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle,
                                        ze_event_pool_handle_t *eventPoolHandle) override;
+
+    ze_result_t openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *phEvent);
+
     ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
                                 uint32_t numDevices,
                                 ze_device_handle_t *phDevices,

@@ -108,4 +108,31 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelReleaseNetworkInterrupt(ze_context_h
     return ZE_RESULT_SUCCESS;
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_counter_based_event_handle_t *phIpc) {
+    auto event = Event::fromHandle(hEvent);
+    if (!event || !phIpc || !event->isCounterBasedExplicitlyEnabled()) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto ipcData = reinterpret_cast<IpcCounterBasedEventData *>(phIpc->data);
+
+    return event->getCounterBasedIpcHandle(*ipcData);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
+    auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    if (!context || !phEvent) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    auto ipcData = reinterpret_cast<IpcCounterBasedEventData *>(hIpc.data);
+
+    return context->openCounterBasedIpcHandle(*ipcData, phEvent);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
+    return Event::fromHandle(hEvent)->destroy();
+}
+
 } // namespace L0

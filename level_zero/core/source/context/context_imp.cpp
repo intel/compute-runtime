@@ -801,6 +801,10 @@ ze_result_t ContextImp::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t 
     return EventPool::openEventPoolIpcHandle(ipcEventPoolHandle, eventPoolHandle, driverHandle, this, this->numDevices, this->deviceHandles.data());
 }
 
+ze_result_t ContextImp::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipcData, ze_event_handle_t *phEvent) {
+    return Event::openCounterBasedIpcHandle(ipcData, phEvent, driverHandle, this, this->numDevices, this->deviceHandles.data());
+}
+
 ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type, void *pNext, struct DriverHandleImp *driverHandle) {
     if (pNext != nullptr) {
         ze_base_properties_t *extendedProperties =
