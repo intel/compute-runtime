@@ -23,7 +23,6 @@ using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
 #include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
-#include "shared/source/command_container/command_encoder_xe_hpg_core_and_later.inl"
 
 namespace NEO {
 

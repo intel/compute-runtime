@@ -526,9 +526,6 @@ size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap
 }
 
 template <typename Family>
-inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {}
-
-template <typename Family>
 void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
     using AUXILIARY_SURFACE_MODE = typename Family::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
@@ -1131,9 +1128,6 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(LinearStream &command
 
 template <typename GfxFamily>
 void EncodeEnableRayTracing<GfxFamily>::append3dStateBtd(void *ptr3dStateBtd) {}
-
-template <typename GfxFamily>
-inline void EncodeWA<GfxFamily>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {}
 
 template <typename Family>
 size_t EncodeMemoryFence<Family>::getSystemMemoryFenceSize() {

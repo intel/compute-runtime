@@ -34,6 +34,8 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
+#include "encode_surface_state_args.h"
+
 #include <algorithm>
 #include <type_traits>
 
@@ -1253,5 +1255,32 @@ void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walker
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {
+    using L1_CACHE_POLICY = typename R_SURFACE_STATE::L1_CACHE_POLICY;
+    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    auto cachePolicy = static_cast<L1_CACHE_POLICY>(productHelper.getL1CachePolicy(args.isDebuggerActive));
+    if (debugManager.flags.OverrideL1CacheControlInSurfaceState.get() != -1 &&
+        debugManager.flags.ForceAllResourcesUncached.get() == false) {
+        cachePolicy = static_cast<L1_CACHE_POLICY>(debugManager.flags.OverrideL1CacheControlInSurfaceState.get());
+    }
+    surfaceState->setL1CachePolicyL1CacheControl(cachePolicy);
+}
+
+template <typename Family>
+void EncodeEnableRayTracing<Family>::programEnableRayTracing(LinearStream &commandStream, uint64_t backBuffer) {
+    auto cmd = Family::cmd3dStateBtd;
+    cmd.getBtdStateBody().setPerDssMemoryBackedBufferSize(static_cast<typename Family::_3DSTATE_BTD_BODY::PER_DSS_MEMORY_BACKED_BUFFER_SIZE>(RayTracingHelper::getMemoryBackedFifoSizeToPatch()));
+    cmd.getBtdStateBody().setMemoryBackedBufferBasePointer(backBuffer);
+    append3dStateBtd(&cmd);
+    *commandStream.getSpaceForCmd<typename Family::_3DSTATE_BTD>() = cmd;
+}
+
+template <typename Family>
+inline void EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {
+    args.unTypedDataPortCacheFlush = true;
+}
 
 } // namespace NEO

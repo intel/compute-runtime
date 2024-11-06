@@ -116,6 +116,12 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
                                                               GmmHelper *gmmHelper, bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane) {
 }
 
+template <>
+inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {}
+
+template <>
+inline void EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {}
+
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"
