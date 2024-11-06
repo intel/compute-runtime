@@ -2964,19 +2964,22 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             TRACING_EXIT(ClEnqueueWriteImage, &retVal);
             return retVal;
         }
-
-        retVal = pCommandQueue->enqueueWriteImage(
-            pImage,
-            blockingWrite,
-            origin,
-            region,
-            inputRowPitch,
-            inputSlicePitch,
-            ptr,
-            nullptr,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
+        if (pCommandQueue->isValidForStagingWriteImage(pImage, ptr, numEventsInWaitList > 0)) {
+            retVal = pCommandQueue->enqueueStagingWriteImage(pImage, blockingWrite, origin, region, inputRowPitch, inputSlicePitch, ptr, event);
+        } else {
+            retVal = pCommandQueue->enqueueWriteImage(
+                pImage,
+                blockingWrite,
+                origin,
+                region,
+                inputRowPitch,
+                inputSlicePitch,
+                ptr,
+                nullptr,
+                numEventsInWaitList,
+                eventWaitList,
+                event);
+        }
     }
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     TRACING_EXIT(ClEnqueueWriteImage, &retVal);

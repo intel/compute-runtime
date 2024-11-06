@@ -357,17 +357,20 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                              const cl_event *eventWaitList,
                              cl_event *event) override {
         enqueueWriteImageCounter++;
-        return BaseClass::enqueueWriteImage(dstImage,
-                                            blockingWrite,
-                                            origin,
-                                            region,
-                                            inputRowPitch,
-                                            inputSlicePitch,
-                                            ptr,
-                                            mapAllocation,
-                                            numEventsInWaitList,
-                                            eventWaitList,
-                                            event);
+        if (enqueueWriteImageCallBase) {
+            return BaseClass::enqueueWriteImage(dstImage,
+                                                blockingWrite,
+                                                origin,
+                                                region,
+                                                inputRowPitch,
+                                                inputSlicePitch,
+                                                ptr,
+                                                mapAllocation,
+                                                numEventsInWaitList,
+                                                eventWaitList,
+                                                event);
+        }
+        return CL_INVALID_OPERATION;
     }
     void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) override {
         cpuDataTransferHandlerCalled = true;
@@ -482,6 +485,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     std::vector<Kernel *> lastEnqueuedKernels;
     MultiDispatchInfo storedMultiDispatchInfo;
     size_t enqueueWriteImageCounter = 0;
+    bool enqueueWriteImageCallBase = true;
     size_t enqueueWriteBufferCounter = 0;
     size_t requestedCmdStreamSize = 0;
     bool blockingWriteBuffer = false;

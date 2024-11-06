@@ -2431,8 +2431,6 @@ HWTEST_F(StagingBufferTest, givenInOrderCmdQueueWhenEnqueueStagingBufferMemcpyNo
 }
 
 HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcpyNonBlockingThenCopySucessfull) {
-    constexpr cl_command_type expectedLastCmd = CL_COMMAND_BARRIER;
-
     cl_event event;
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     myCmdQ.setOoqEnabled();
@@ -2452,8 +2450,8 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
     EXPECT_EQ(1u, numOfStagingBuffers);
     EXPECT_EQ(expectedNumOfCopies, myCmdQ.enqueueSVMMemcpyCalledCount);
     EXPECT_EQ(0u, myCmdQ.finishCalledCount);
-    EXPECT_EQ(expectedLastCmd, myCmdQ.lastCommandType);
-    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_BARRIER), myCmdQ.lastCommandType);
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY), pEvent->getCommandType());
 
     clReleaseEvent(event);
 }

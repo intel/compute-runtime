@@ -21,7 +21,8 @@ class CommandStreamReceiver;
 class Device;
 class HeapAllocator;
 
-using ChunkCopyFunction = std::function<int32_t(void *, void *, const void *, size_t)>;
+using ChunkCopyFunction = std::function<int32_t(void *, size_t, void *, const void *)>;
+using ChunkWriteImageFunc = std::function<int32_t(void *, size_t, const void *, const size_t *, const size_t *)>;
 
 class StagingBuffer {
   public:
@@ -60,9 +61,11 @@ class StagingBufferManager {
     StagingBufferManager &operator=(const StagingBufferManager &other) = delete;
 
     bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
-    bool isValidForStagingWriteImage(const Device &device, size_t size) const;
+    bool isValidForStagingWriteImage(const Device &device, const void *ptr, bool hasDependencies) const;
 
     int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
+    int32_t performImageWrite(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkWriteImageFunc &chunkWriteImageFunc, CommandStreamReceiver *csr);
+
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size, CommandStreamReceiver *csr);
     void trackChunk(const StagingBufferTracker &tracker);
 
@@ -71,7 +74,8 @@ class StagingBufferManager {
     void *allocateStagingBuffer(size_t size);
     void clearTrackedChunks(CommandStreamReceiver *csr);
 
-    int32_t performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
+    template <class Func, class... Args>
+    int32_t performChunkTransfer(CommandStreamReceiver *csr, size_t size, Func &chunkCopyFunc, Args... args);
 
     size_t chunkSize = MemoryConstants::pageSize2M;
     std::mutex mtx;

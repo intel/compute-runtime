@@ -37,17 +37,18 @@ StagingBufferManager::~StagingBufferManager() {
 }
 
 /*
- * This method performs 4 steps for single chunk copy
+ * This method performs 4 steps for single chunk transfer
  * 1. Get existing chunk of staging buffer, if can't - allocate new one,
- * 2. Perform actual copy,
+ * 2. Perform actual transfer,
  * 3. Store used buffer to tracking container (with current task count)
  * 4. Update tag if required to reuse this buffer in next chunk copies
  */
-int32_t StagingBufferManager::performChunkCopy(void *chunkDst, const void *chunkSrc, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr) {
+template <class Func, class... Args>
+int32_t StagingBufferManager::performChunkTransfer(CommandStreamReceiver *csr, size_t size, Func &func, Args... args) {
     auto allocatedSize = size;
-    auto [allocator, chunkBuffer] = requestStagingBuffer(allocatedSize, csr);
-    auto ret = chunkCopyFunc(chunkDst, addrToPtr(chunkBuffer), chunkSrc, size);
-    trackChunk({allocator, chunkBuffer, allocatedSize, csr->peekTaskCount()});
+    auto [allocator, stagingBuffer] = requestStagingBuffer(allocatedSize, csr);
+    auto ret = func(addrToPtr(stagingBuffer), size, args...);
+    trackChunk({allocator, stagingBuffer, allocatedSize, csr->peekTaskCount()});
     if (csr->isAnyDirectSubmissionEnabled()) {
         csr->flushTagUpdate();
     }
@@ -66,7 +67,7 @@ int32_t StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size
     for (auto i = 0u; i < copiesNum; i++) {
         auto chunkDst = ptrOffset(dstPtr, i * chunkSize);
         auto chunkSrc = ptrOffset(srcPtr, i * chunkSize);
-        auto ret = performChunkCopy(chunkDst, chunkSrc, chunkSize, chunkCopyFunc, csr);
+        auto ret = performChunkTransfer(csr, chunkSize, chunkCopyFunc, chunkDst, chunkSrc);
         if (ret) {
             return ret;
         }
@@ -75,7 +76,50 @@ int32_t StagingBufferManager::performCopy(void *dstPtr, const void *srcPtr, size
     if (remainder != 0) {
         auto chunkDst = ptrOffset(dstPtr, copiesNum * chunkSize);
         auto chunkSrc = ptrOffset(srcPtr, copiesNum * chunkSize);
-        auto ret = performChunkCopy(chunkDst, chunkSrc, remainder, chunkCopyFunc, csr);
+        auto ret = performChunkTransfer(csr, remainder, chunkCopyFunc, chunkDst, chunkSrc);
+        if (ret) {
+            return ret;
+        }
+    }
+    return 0;
+}
+
+/*
+ * This method orchestrates write operation for images with given origin and region.
+ * Transfer is splitted into chunks, each chunk represents sub-region to transfer.
+ * Each chunk contains staging buffer which should be used instead of non-usm memory during transfers on GPU.
+ * Several rows are packed into single chunk unless size of single row exceeds maximum chunk size (2MB).
+ * Caller provides actual function to enqueue write operation for single chunk.
+ */
+int32_t StagingBufferManager::performImageWrite(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkWriteImageFunc &chunkWriteImageFunc, CommandStreamReceiver *csr) {
+    size_t origin[3] = {};
+    size_t region[3] = {};
+    origin[0] = globalOrigin[0];
+    origin[2] = globalOrigin[2];
+    region[0] = globalRegion[0];
+    region[2] = globalRegion[2];
+    auto rowsPerChunk = std::max<size_t>(1ul, chunkSize / rowPitch);
+    rowsPerChunk = std::min<size_t>(rowsPerChunk, globalRegion[1]);
+    auto numOfChunks = globalRegion[1] / rowsPerChunk;
+    auto remainder = globalRegion[1] % (rowsPerChunk * numOfChunks);
+
+    for (auto i = 0u; i < numOfChunks; i++) {
+        origin[1] = globalOrigin[1] + i * rowsPerChunk;
+        region[1] = rowsPerChunk;
+        auto size = region[1] * rowPitch;
+        auto chunkPtr = ptrOffset(ptr, i * rowsPerChunk * rowPitch);
+        auto ret = performChunkTransfer(csr, size, chunkWriteImageFunc, chunkPtr, origin, region);
+        if (ret) {
+            return ret;
+        }
+    }
+
+    if (remainder != 0) {
+        origin[1] = globalOrigin[1] + numOfChunks * rowsPerChunk;
+        region[1] = remainder;
+        auto size = region[1] * rowPitch;
+        auto chunkPtr = ptrOffset(ptr, numOfChunks * rowsPerChunk * rowPitch);
+        auto ret = performChunkTransfer(csr, size, chunkWriteImageFunc, chunkPtr, origin, region);
         if (ret) {
             return ret;
         }
@@ -152,13 +196,13 @@ bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, co
     return stagingCopyEnabled && hostToUsmCopy && !hasDependencies && (isUsedByOsContext || size <= chunkSize);
 }
 
-bool StagingBufferManager::isValidForStagingWriteImage(const Device &device, size_t size) const {
-    auto thresholdSizeForImages = 32 * MemoryConstants::megaByte;
-    auto stagingCopyEnabled = true;
+bool StagingBufferManager::isValidForStagingWriteImage(const Device &device, const void *ptr, bool hasDependencies) const {
+    auto stagingCopyEnabled = false;
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
-    return stagingCopyEnabled && (0 < size && size <= thresholdSizeForImages);
+    auto nonUsmPtr = ptr != nullptr && svmAllocsManager->getSVMAlloc(ptr) == nullptr;
+    return stagingCopyEnabled && !hasDependencies && nonUsmPtr;
 }
 
 void StagingBufferManager::clearTrackedChunks(CommandStreamReceiver *csr) {

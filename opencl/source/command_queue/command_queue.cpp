@@ -1569,7 +1569,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
 
     // If there was only one chunk copy, no barrier for OOQ is needed
     bool isSingleTransfer = false;
-    ChunkCopyFunction chunkCopy = [&](void *chunkDst, void *stagingBuffer, const void *chunkSrc, size_t chunkSize) -> int32_t {
+    ChunkCopyFunction chunkCopy = [&](void *stagingBuffer, size_t chunkSize, void *chunkDst, const void *chunkSrc) -> int32_t {
         auto isFirstTransfer = (chunkDst == dstPtr);
         auto isLastTransfer = ptrOffset(chunkDst, chunkSize) == ptrOffset(dstPtr, size);
         isSingleTransfer = isFirstTransfer && isLastTransfer;
@@ -1599,19 +1599,71 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     if (ret != CL_SUCCESS) {
         return ret;
     }
+    return postStagingTransferSync(event, profilingEvent, isSingleTransfer, blockingCopy);
+}
 
+cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
+                                              size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event) {
+    constexpr cl_command_type cmdType = CL_COMMAND_WRITE_IMAGE;
+    CsrSelectionArgs csrSelectionArgs{cmdType, nullptr, dstImage, this->getDevice().getRootDeviceIndex(), globalRegion, nullptr, globalOrigin};
+    auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
+
+    Event profilingEvent{this, CL_COMMAND_WRITE_IMAGE, CompletionStamp::notReady, CompletionStamp::notReady};
+    if (isProfilingEnabled()) {
+        profilingEvent.setQueueTimeStamp();
+    }
+
+    // If there was only one chunk write, no barrier for OOQ is needed
+    bool isSingleTransfer = false;
+    ChunkWriteImageFunc chunkWrite = [&](void *stagingBuffer, size_t bufferSize, const void *chunkPtr, const size_t *origin, const size_t *region) -> int32_t {
+        auto isFirstTransfer = (globalOrigin[1] == origin[1]);
+        auto isLastTransfer = (globalOrigin[1] + globalRegion[1] == origin[1] + region[1]);
+        isSingleTransfer = isFirstTransfer && isLastTransfer;
+
+        if (isFirstTransfer && isProfilingEnabled()) {
+            profilingEvent.setSubmitTimeStamp();
+        }
+        memcpy(stagingBuffer, chunkPtr, bufferSize);
+        if (isSingleTransfer) {
+            return this->enqueueWriteImage(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, event);
+        }
+
+        if (isFirstTransfer && isProfilingEnabled()) {
+            profilingEvent.setStartTimeStamp();
+        }
+
+        cl_event *outEvent = nullptr;
+        if (isLastTransfer && !this->isOOQEnabled()) {
+            outEvent = event;
+        }
+        auto ret = this->enqueueWriteImage(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent);
+        return ret;
+    };
+    auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
+    auto stagingBufferManager = this->context->getStagingBufferManager();
+    auto ret = stagingBufferManager->performImageWrite(ptr, globalOrigin, globalRegion, dstRowPitch, chunkWrite, csr);
+    if (ret != CL_SUCCESS) {
+        return ret;
+    }
+    return postStagingTransferSync(event, profilingEvent, isSingleTransfer, blockingCopy);
+}
+
+cl_int CommandQueue::postStagingTransferSync(cl_event *event, const Event &profilingEvent, bool isSingleTransfer, bool isBlocking) {
+    cl_int ret = CL_SUCCESS;
     if (event != nullptr) {
         if (!isSingleTransfer && this->isOOQEnabled()) {
             ret = this->enqueueBarrierWithWaitList(0, nullptr, event);
         }
+        auto pEvent = castToObjectOrAbort<Event>(*event);
         if (isProfilingEnabled()) {
-            auto pEvent = castToObjectOrAbort<Event>(*event);
             pEvent->copyTimestamps(profilingEvent, !isSingleTransfer);
             pEvent->setCPUProfilingPath(false);
         }
+        pEvent->setCmdType(profilingEvent.getCommandType());
     }
 
-    if (blockingCopy) {
+    if (isBlocking) {
         ret = this->finish();
     }
     return ret;
@@ -1633,12 +1685,18 @@ bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, con
     return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
 }
 
-bool CommandQueue::isValidForStagingWriteImage(size_t size) {
+bool CommandQueue::isValidForStagingWriteImage(Image *image, const void *ptr, bool hasDependencies) {
     auto stagingBufferManager = context->getStagingBufferManager();
     if (!stagingBufferManager) {
         return false;
     }
-    return stagingBufferManager->isValidForStagingWriteImage(this->getDevice(), size);
+    switch (image->getImageDesc().image_type) {
+    case CL_MEM_OBJECT_IMAGE1D:
+    case CL_MEM_OBJECT_IMAGE2D:
+        return stagingBufferManager->isValidForStagingWriteImage(this->getDevice(), ptr, hasDependencies);
+    default:
+        return false;
+    }
 }
 
 } // namespace NEO

@@ -243,7 +243,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return cmdQueue;
     }
 
-    cl_command_type getCommandType() {
+    cl_command_type getCommandType() const {
         return cmdType;
     }
 
