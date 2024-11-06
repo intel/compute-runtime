@@ -19,7 +19,7 @@
 namespace NEO {
 template <>
 uint32_t CompilerProductHelperHw<IGFX_BMG>::getDefaultHwIpVersion() const {
-    return AOT::BMG_G21_B0;
+    return AOT::BMG_G21_A0;
 }
 
 template <>

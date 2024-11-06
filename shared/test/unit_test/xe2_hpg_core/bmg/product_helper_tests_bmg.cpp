@@ -85,8 +85,8 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdditionalKernelExecInfoSuppor
     EXPECT_TRUE(fePropertiesSupport.disableOverdispatch);
 }
 
-BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionThenCorrectValueIsSet) {
-    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_B0);
+BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersonThenCorrectValueIsSet) {
+    EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_A0);
 }
 
 BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
