@@ -17,7 +17,7 @@ Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- intel-igc-core,
+ intel-igc-core-2,
  libigdgmm12
 Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero.
  Level Zero is the primary low-level interface for language and runtime

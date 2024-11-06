@@ -30,7 +30,7 @@ BuildRequires: intel-gmmlib-devel
 BuildRequires: intel-igc-opencl-devel
 
 Requires: intel-gmmlib
-Requires: intel-igc-opencl
+Requires: intel-igc-opencl-2
 
 %description
 Runtime library providing the ability to use Intel GPUs with the oneAPI Level

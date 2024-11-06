@@ -78,9 +78,9 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
         perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (>=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
 
-    IGC_VERSION=$(apt-cache policy intel-igc-opencl | grep Installed | cut -f2- -d ':' | xargs)
+    IGC_VERSION=$(apt-cache policy intel-igc-opencl-2 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl(?=,|$)/ intel-igc-opencl (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
     fi
     IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_DEVEL_VERSION}" ]; then

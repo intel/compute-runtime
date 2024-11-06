@@ -11,7 +11,7 @@
 %global NEO_I915_PRELIM_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
-%define igc_sover 1
+%define igc_sover 2
 
 %if !0%{?build_type:1}
 %define build_type Release

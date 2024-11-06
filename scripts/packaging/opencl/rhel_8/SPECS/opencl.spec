@@ -29,7 +29,7 @@ Source2: uapi.tar.xz
 %endif
 
 Requires:      intel-gmmlib
-Requires:      intel-igc-opencl
+Requires:      intel-igc-opencl-2
 
 BuildRequires: libva-devel gcc-c++ cmake ninja-build make
 BuildRequires: intel-gmmlib-devel
@@ -40,7 +40,7 @@ Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to con
 
 %package       -n intel-ocloc
 Summary:       ocloc package for opencl
-Requires:      intel-igc-opencl
+Requires:      intel-igc-opencl-2
 %description   -n intel-ocloc
 Intel(R) Graphics Compute Runtime for OpenCL(TM) is a open source project to converge Intel's development efforts on OpenCL(TM) compute stacks supporting the GEN graphics hardware architecture.
 

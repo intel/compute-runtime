@@ -90,13 +90,13 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
     if [ ! -z "${GMM_DEVEL_VERSION}" ]; then
         perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (>=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-    IGC_CORE_VERSION=$(apt-cache policy intel-igc-core | grep Installed | cut -f2- -d ':' | xargs)
+    IGC_CORE_VERSION=$(apt-cache policy intel-igc-core-2 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_CORE_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-core(?=,|$)/ intel-igc-core (=$IGC_CORE_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-core-2(?=,|$)/ intel-igc-core-2 (=$IGC_CORE_VERSION)/" "$BUILD_DIR/debian/control"
     fi
-    IGC_VERSION=$(apt-cache policy intel-igc-opencl | grep Installed | cut -f2- -d ':' | xargs)
+    IGC_VERSION=$(apt-cache policy intel-igc-opencl-2 | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl(?=,|$)/ intel-igc-opencl (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-opencl-2(?=,|$)/ intel-igc-opencl-2 (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
     fi
     IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_DEVEL_VERSION}" ]; then

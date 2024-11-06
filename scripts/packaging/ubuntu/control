@@ -18,7 +18,7 @@ Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- intel-igc-opencl,
+ intel-igc-opencl-2,
  libigdgmm12,
  ocl-icd-libopencl1
 Breaks:
@@ -61,7 +61,7 @@ Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
- intel-igc-core,
+ intel-igc-core-2,
  libigdgmm12
 Breaks:
  intel-level-zero-gpu,
