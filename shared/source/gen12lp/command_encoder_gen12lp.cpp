@@ -9,6 +9,7 @@
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
 #include "shared/source/command_container/command_encoder_from_gen12lp_to_xe2_hpg.inl"
+#include "shared/source/command_container/command_encoder_gen12lp_and_xe_hpg.inl"
 #include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"

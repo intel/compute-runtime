@@ -8,16 +8,15 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
 
 namespace NEO {
 
-template <>
+template <typename Family>
 size_t EncodeMemoryFence<Family>::getSystemMemoryFenceSize() {
     return sizeof(typename Family::STATE_SYSTEM_MEM_FENCE_ADDRESS);
 }
 
-template <>
+template <typename Family>
 void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation) {
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename Family::STATE_SYSTEM_MEM_FENCE_ADDRESS;
 
@@ -27,7 +26,7 @@ void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStr
     *stateSystemFenceAddressSpace = stateSystemFenceAddress;
 }
 
-template <>
+template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
     cmd.setIndirectAddressEnable(indirect);
     cmd.setPredicationEnable(predicate);

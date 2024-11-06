@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_from_gen12lp_to_xe2_hpg.inl"
+#include "shared/source/command_container/command_encoder_gen12lp_and_xe_hpg.inl"
 #include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_xe_hpc.inl"
@@ -171,11 +172,6 @@ void EncodeMiFlushDW<Family>::appendWa(LinearStream &commandStream, MiFlushArgs 
 template <>
 size_t EncodeMiFlushDW<Family>::getWaSize(const EncodeDummyBlitWaArgs &waArgs) {
     return sizeof(typename Family::MI_FLUSH_DW) + BlitCommandsHelper<Family>::getDummyBlitSize(waArgs);
-}
-
-template <>
-void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
-    cmd.setPredicationEnable(predicate);
 }
 
 } // namespace NEO

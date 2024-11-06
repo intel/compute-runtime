@@ -11,6 +11,7 @@
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe2_hpg_core_and_later.inl"
+#include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
@@ -20,8 +21,6 @@
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 
 using Family = NEO::Xe2HpgCoreFamily;
-
-#include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
 
 namespace NEO {
 

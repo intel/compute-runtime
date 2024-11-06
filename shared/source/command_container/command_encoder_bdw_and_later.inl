@@ -635,11 +635,6 @@ size_t EncodeStates<Family>::getSshHeapSize() {
 }
 
 template <typename Family>
-void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
-    cmd.setPredicationEnable(predicate);
-}
-
-template <typename Family>
 void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue) {
     UNRECOVERABLE_IF(true);
 }

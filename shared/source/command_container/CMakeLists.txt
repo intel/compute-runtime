@@ -40,6 +40,12 @@ if(SUPPORT_XE_HPG OR SUPPORT_XE_HPC)
   )
 endif()
 
+if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_gen12lp_and_xe_hpg.inl
+  )
+endif()
+
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe_hpc_core_and_later.inl
