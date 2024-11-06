@@ -57,8 +57,8 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupp
     EXPECT_FALSE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isPageFaultSupported());
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
 BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {

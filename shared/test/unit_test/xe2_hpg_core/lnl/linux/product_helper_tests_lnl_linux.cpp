@@ -52,8 +52,8 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isPageFaultSupported());
+LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSupportedThenReturnFalse) {

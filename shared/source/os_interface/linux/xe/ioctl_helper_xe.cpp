@@ -924,10 +924,10 @@ int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vecto
 }
 
 bool IoctlHelperXe::isPageFaultSupported() {
-    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, supportedFeatures.flags.pageFault == true);
+    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, false);
 
-    return supportedFeatures.flags.pageFault;
-}
+    return false;
+};
 
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
@@ -1721,7 +1721,6 @@ void IoctlHelperXe::querySupportedFeatures() {
         vmCreate.flags = flags;
 
         auto ret = IoctlHelper::ioctl(DrmIoctl::gemVmCreate, &vmCreate);
-        xeLog("gemVmCreate ret=%d flags=%u\n", ret, flags);
         if (ret == 0) {
             struct drm_xe_vm_destroy vmDestroy = {};
             vmDestroy.vm_id = vmCreate.vm_id;
@@ -1732,7 +1731,6 @@ void IoctlHelperXe::querySupportedFeatures() {
         return false;
     };
     supportedFeatures.flags.pageFault = checkVmCreateFlagsSupport(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE);
-    xeLog("supportedFeatures.flags.pageFault=%d\n", static_cast<int>(supportedFeatures.flags.pageFault));
 };
 bool IoctlHelperXe::isEuPerDssTopologyType(uint16_t topologyType) const {
     return topologyType == DRM_XE_TOPO_EU_PER_DSS;

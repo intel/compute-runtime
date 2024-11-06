@@ -35,10 +35,5 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     return 0;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO
