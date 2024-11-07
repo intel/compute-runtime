@@ -54,7 +54,7 @@ class SysmanProductHelperTemperatureTest : public SysmanDeviceFixture {
     }
 };
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds, IsAtMostDg2) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds, IsAtMostDg2) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, temperatureHandleComponentCount);
@@ -68,7 +68,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenTempDomainsAreEnumeratedWhenC
     EXPECT_EQ(true, pSysmanDeviceImp->pTempHandleContext->isTempInitDone());
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenInvalidComponentCountWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds, IsAtMostDg2) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenInvalidComponentCountWhenEnumeratingTemperatureSensorsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds, IsAtMostDg2) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, temperatureHandleComponentCount);
@@ -78,7 +78,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenInvalidComponentCountWhenEnum
     EXPECT_EQ(count, temperatureHandleComponentCount);
 }
 
-HWTEST2_F(SysmanProductHelperTemperatureTest, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidTemperatureHandlesIsReturned, IsAtMostDg2) {
+HWTEST2_F(SysmanProductHelperTemperatureTest, GivenComponentCountZeroWhenEnumeratingTemperatureSensorsThenValidPowerHandlesIsReturned, IsAtMostDg2) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumTemperatureSensors(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, temperatureHandleComponentCount);

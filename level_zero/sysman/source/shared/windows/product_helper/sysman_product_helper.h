@@ -27,10 +27,6 @@ class SysmanProductHelper;
 
 using SysmanProductHelperCreateFunctionType = std::unique_ptr<SysmanProductHelper> (*)();
 extern SysmanProductHelperCreateFunctionType sysmanProductHelperFactory[IGFX_MAX_PRODUCT];
-static const std::map<zes_power_domain_t, KmdSysman::PowerDomainsType> powerGroupToDomainTypeMap = {
-    {ZES_POWER_DOMAIN_CARD, KmdSysman::PowerDomainsType::powerDomainCard},
-    {ZES_POWER_DOMAIN_PACKAGE, KmdSysman::PowerDomainsType::powerDomainPackage},
-};
 
 class SysmanProductHelper {
   public:
@@ -54,12 +50,6 @@ class SysmanProductHelper {
 
     // Memory
     virtual ze_result_t getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) = 0;
-
-    // Power
-    virtual std::vector<zes_power_domain_t> getNumberOfPowerDomainsSupported(WddmSysmanImp *pWddmSysmanImp) = 0;
-    virtual ze_result_t getPowerProperties(zes_power_properties_t *pProperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
-    virtual ze_result_t getPowerPropertiesExt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
-    virtual ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
 
     // Pmt
     virtual std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() = 0;

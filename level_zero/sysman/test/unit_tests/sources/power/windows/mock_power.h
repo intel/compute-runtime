@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_kmd_sys_manager.h"
 
 namespace L0 {
@@ -224,12 +223,6 @@ struct PowerKmdSysManager : public MockKmdSysManager {
         } break;
         }
     }
-};
-
-class PublicPlatformMonitoringTech : public L0::Sysman::PlatformMonitoringTech {
-  public:
-    PublicPlatformMonitoringTech(std::vector<wchar_t> deviceInterfaceList, SysmanProductHelper *pSysmanProductHelper) : PlatformMonitoringTech(deviceInterfaceList, pSysmanProductHelper) {}
-    using PlatformMonitoringTech::keyOffsetMap;
 };
 
 } // namespace ult
