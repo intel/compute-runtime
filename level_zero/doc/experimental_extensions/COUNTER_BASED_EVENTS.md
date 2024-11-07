@@ -126,14 +126,14 @@ zeCommandListAppendLaunchKernel(cmdList1, kernel, &groupCount, &event1, 0, nullp
 zexCounterBasedEventGetIpcHandle(event1, &ipcHandle); // handle obtained after append call
 
 // process 2
-zeCounterBasedEventOpenIpcHandle(context2, ipcHandle, &event2); // event2 points to the same counter=X on memory CL1_alloc
+zexCounterBasedEventOpenIpcHandle(context2, ipcHandle, &event2); // event2 points to the same counter=X on memory CL1_alloc
 
 // process 1
 zeCommandListAppendLaunchKernel(cmdList2, kernel, &groupCount, &event1, 0, nullptr); // assigned counter=Y on memory CL2_alloc to event1. Event2 is not affected
 
 // process 2
 // event2 still points to counter=X on memory CL1_alloc. Can be used for waiting.
-zeCounterBasedEventCloseIpcHandle(event2); // Free if not needed
+zexCounterBasedEventCloseIpcHandle(event2); // Free if not needed
 ```
 
 ### IPC handle creation
@@ -147,13 +147,13 @@ ze_result_t zexCounterBasedEventGetIpcHandle(ze_event_handle_t hEvent, zex_ipc_c
 ### IPC handle opening
 In a different process, the IPC handle can be opened to create a new event object that points to the same counter memory location/value:
 ```cpp
-ze_result_t zeCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent);
+ze_result_t zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent);
 ```
 
 ### IPC handle closing
 Once the IPC handle is no longer needed, new Event can be closed:
 ```cpp
-ze_result_t zeCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent);
+ze_result_t zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent);
 ```
 
 # Regular command list

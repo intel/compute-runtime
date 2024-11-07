@@ -136,7 +136,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventGetIpcHandle(ze_event_ha
     return event->getCounterBasedIpcHandle(*ipcData);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventOpenIpcHandle(ze_context_handle_t hContext, zex_ipc_counter_based_event_handle_t hIpc, ze_event_handle_t *phEvent) {
     auto context = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
 
     if (!context || !phEvent) {
@@ -148,7 +148,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCounterBasedEventOpenIpcHandle(ze_context_
     return context->openCounterBasedIpcHandle(*ipcData, phEvent);
 }
 
-ZE_APIEXPORT ze_result_t ZE_APICALL zeCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
+ZE_APIEXPORT ze_result_t ZE_APICALL zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent) {
     return Event::fromHandle(hEvent)->destroy();
 }
 
