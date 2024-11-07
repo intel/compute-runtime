@@ -100,6 +100,7 @@ BMGTEST_F(BmgHwInfoTest, whenCheckDirectSubmissionEnginesThenProperValuesAreSetT
             EXPECT_FALSE(directSubmissionEngines.data[i].useLowPriority);
             break;
         case aub_stream::ENGINE_CCS1:
+        case aub_stream::ENGINE_BCS:
             EXPECT_TRUE(directSubmissionEngines.data[i].engineSupported);
             EXPECT_FALSE(directSubmissionEngines.data[i].submitOnInit);
             EXPECT_TRUE(directSubmissionEngines.data[i].useNonDefault);
