@@ -101,12 +101,12 @@ void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> 
 }
 
 template <typename T>
-std::vector<ConstStringRef> getProductsForTargetRange(T targetFrom, T targetTo, OclocArgHelper *argHelper) {
+std::vector<ConstStringRef> getProductsForTargetRange(T targetFrom, T targetTo, OclocArgHelper *argHelper, const T maxValue) {
     std::vector<ConstStringRef> ret{};
     if (targetFrom > targetTo) {
         std::swap(targetFrom, targetTo);
     }
-    while (targetFrom <= targetTo) {
+    while (targetFrom <= targetTo && targetFrom < maxValue) {
         getProductsAcronymsForTarget<T>(ret, targetFrom, argHelper);
         targetFrom = static_cast<T>(static_cast<unsigned int>(targetFrom) + 1);
     }
@@ -145,13 +145,13 @@ std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, C
     auto familyFrom = argHelper->productConfigHelper->getFamilyFromDeviceName(rangeFromStr);
     auto familyTo = argHelper->productConfigHelper->getFamilyFromDeviceName(rangeToStr);
     if (familyFrom != AOT::UNKNOWN_FAMILY && familyTo != AOT::UNKNOWN_FAMILY) {
-        return getProductsForTargetRange(familyFrom, familyTo, argHelper);
+        return getProductsForTargetRange(familyFrom, familyTo, argHelper, AOT::FAMILY_MAX);
     }
 
     auto releaseFrom = argHelper->productConfigHelper->getReleaseFromDeviceName(rangeFromStr);
     auto releaseTo = argHelper->productConfigHelper->getReleaseFromDeviceName(rangeToStr);
     if (releaseFrom != AOT::UNKNOWN_RELEASE && releaseTo != AOT::UNKNOWN_RELEASE) {
-        return getProductsForTargetRange(releaseFrom, releaseTo, argHelper);
+        return getProductsForTargetRange(releaseFrom, releaseTo, argHelper, AOT::RELEASE_MAX);
     }
 
     auto prodConfigFrom = argHelper->productConfigHelper->getProductConfigFromDeviceName(rangeFromStr);
@@ -178,11 +178,10 @@ std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, Ocl
         if (rangeTo) {
             unsigned int familyFrom = AOT::UNKNOWN_FAMILY;
             ++familyFrom;
-            return getProductsForTargetRange(static_cast<AOT::FAMILY>(familyFrom), family, argHelper);
+            return getProductsForTargetRange(static_cast<AOT::FAMILY>(familyFrom), family, argHelper, AOT::FAMILY_MAX);
         } else {
             unsigned int familyTo = AOT::FAMILY_MAX;
-            --familyTo;
-            return getProductsForTargetRange(family, static_cast<AOT::FAMILY>(familyTo), argHelper);
+            return getProductsForTargetRange(family, static_cast<AOT::FAMILY>(familyTo), argHelper, AOT::FAMILY_MAX);
         }
     }
 
@@ -191,11 +190,10 @@ std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, Ocl
         if (rangeTo) {
             unsigned int releaseFrom = AOT::UNKNOWN_FAMILY;
             ++releaseFrom;
-            return getProductsForTargetRange(static_cast<AOT::RELEASE>(releaseFrom), release, argHelper);
+            return getProductsForTargetRange(static_cast<AOT::RELEASE>(releaseFrom), release, argHelper, AOT::RELEASE_MAX);
         } else {
             unsigned int releaseTo = AOT::RELEASE_MAX;
-            --releaseTo;
-            return getProductsForTargetRange(release, static_cast<AOT::RELEASE>(releaseTo), argHelper);
+            return getProductsForTargetRange(release, static_cast<AOT::RELEASE>(releaseTo), argHelper, AOT::RELEASE_MAX);
         }
     }
 
