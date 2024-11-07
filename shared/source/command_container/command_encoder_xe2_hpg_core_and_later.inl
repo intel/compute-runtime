@@ -36,4 +36,8 @@ void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &wa
     walkerCmd.setComputeDispatchAllWalkerEnable(computeDispatchAllWalkerEnable);
 }
 
+template <typename Family>
+void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfaceState) {
+}
+
 } // namespace NEO

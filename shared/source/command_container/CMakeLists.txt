@@ -14,8 +14,6 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_enablers.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_alu_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/encode_compute_mode_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_surface_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling.h
@@ -58,6 +56,12 @@ endif()
 if(SUPPORT_XE_HPC_AND_BEFORE)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_pre_xe2_hpg_core.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPC_AND_BEFORE OR SUPPORT_XE2_HPG_CORE)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_gen12lp_to_xe2_hpg.inl
   )
 endif()
 

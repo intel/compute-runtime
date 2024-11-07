@@ -7,9 +7,10 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_from_gen12lp_to_xe2_hpg.inl"
 #include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
+#include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
-#include "shared/source/command_container/encode_compute_mode_tgllp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
@@ -20,7 +21,6 @@
 using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
-#include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_tgllp_and_later.inl"

@@ -13,7 +13,58 @@
 
 namespace NEO {
 
-template <>
+template <typename Family>
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
+    size_t size = 0;
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto *releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs, releaseHelper);
+    std::ignore = isExtendedWARequired;
+
+    if (isBasicWARequired) {
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+    }
+    size += sizeof(typename Family::STATE_COMPUTE_MODE);
+    if (hasSharedHandles) {
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
+    }
+    if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
+        size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(rootDeviceEnvironment));
+    }
+    return size;
+}
+
+template <typename GfxFamily>
+inline size_t EncodeComputeMode<GfxFamily>::getSizeForComputeMode() {
+    return sizeof(typename GfxFamily::STATE_COMPUTE_MODE);
+}
+
+template <typename Family>
+void EncodeSetMMIO<Family>::remapOffset(MI_LOAD_REGISTER_MEM *pMiLoadReg) {
+    if (isRemapApplicable(pMiLoadReg->getRegisterAddress())) {
+        pMiLoadReg->setMmioRemapEnable(true);
+    }
+}
+
+template <typename Family>
+void EncodeSetMMIO<Family>::remapOffset(MI_LOAD_REGISTER_REG *pMiLoadReg) {
+    if (isRemapApplicable(pMiLoadReg->getSourceRegisterAddress())) {
+        pMiLoadReg->setMmioRemapEnableSource(true);
+    }
+    if (isRemapApplicable(pMiLoadReg->getDestinationRegisterAddress())) {
+        pMiLoadReg->setMmioRemapEnableDestination(true);
+    }
+}
+
+template <typename Family>
+inline bool EncodeSetMMIO<Family>::isRemapApplicable(uint32_t offset) {
+    return (0x2000 <= offset && offset <= 0x27ff) ||
+           (0x4200 <= offset && offset <= 0x420f) ||
+           (0x4400 <= offset && offset <= 0x441f);
+}
+
+template <typename Family>
 void EncodeWA<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream,
                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlushRequired) {
     PipeControlArgs args;
@@ -24,7 +75,7 @@ void EncodeWA<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &comman
     NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, rootDeviceEnvironment, isRcs);
 }
 
-template <>
+template <typename Family>
 inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable) {
     if (debugManager.flags.ForcePreParserEnabledForMiArbCheck.get() != -1) {
         preParserDisable = !debugManager.flags.ForcePreParserEnabledForMiArbCheck.get();
@@ -34,7 +85,7 @@ inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::opti
     }
 }
 
-template <>
+template <typename Family>
 inline void EncodeStoreMemory<Family>::encodeForceCompletionCheck(MI_STORE_DATA_IMM &storeDataImmCmd) {
     storeDataImmCmd.setForceWriteCompletionCheck(true);
 }
