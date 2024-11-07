@@ -35,6 +35,12 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     // Memory
     ze_result_t getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) override;
 
+    // Power
+    std::vector<zes_power_domain_t> getNumberOfPowerDomainsSupported(WddmSysmanImp *pWddmSysmanImp) override;
+    ze_result_t getPowerProperties(zes_power_properties_t *pProperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) override;
+    ze_result_t getPowerPropertiesExt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) override;
+    ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) override;
+
     // Pmt
     std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() override;
 
