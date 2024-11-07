@@ -186,7 +186,8 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForImageWrite
     EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, nonUsmBuffer, false));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
-    EXPECT_FALSE(stagingBufferManager->isValidForStagingWriteImage(*pDevice, nonUsmBuffer, false));
+    auto isStaingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
+    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingWriteImage(*pDevice, nonUsmBuffer, false));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 

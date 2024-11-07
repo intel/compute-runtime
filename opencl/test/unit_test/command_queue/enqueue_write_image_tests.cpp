@@ -806,13 +806,14 @@ HWTEST_F(EnqueueWriteImageTest, whenIsValidForStagingWriteImageCalledThenReturnC
     if (!svmSupported) {
         GTEST_SKIP();
     }
+    auto isStagingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
     unsigned char ptr[16];
 
     std::unique_ptr<Image> image(Image1dHelper<>::create(context));
-    EXPECT_FALSE(pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
 
     image.reset(Image2dHelper<>::create(context));
-    EXPECT_FALSE(pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
 
     image.reset(Image3dHelper<>::create(context));
     EXPECT_FALSE(pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));

@@ -197,7 +197,7 @@ bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, co
 }
 
 bool StagingBufferManager::isValidForStagingWriteImage(const Device &device, const void *ptr, bool hasDependencies) const {
-    auto stagingCopyEnabled = false;
+    auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
