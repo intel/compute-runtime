@@ -35,6 +35,11 @@ L0::Event *L0GfxCoreHelperHw<Family>::createEvent(L0::EventPool *eventPool, cons
 }
 
 template <typename Family>
+L0::Event *L0GfxCoreHelperHw<Family>::createStandaloneEvent(const EventDescriptor &desc, L0::Device *device, ze_result_t &result) const {
+    return Event::create<typename Family::TimestampPacketType>(desc, device, result);
+}
+
+template <typename Family>
 bool L0GfxCoreHelperHw<Family>::alwaysAllocateEventInLocalMem() const {
     return false;
 }

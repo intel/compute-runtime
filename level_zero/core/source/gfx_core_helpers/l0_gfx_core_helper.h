@@ -54,6 +54,7 @@ constexpr int stallSamplingReportSubSliceAndFlagsOffset = 48;
 struct Event;
 struct Device;
 struct EventPool;
+struct EventDescriptor;
 
 class L0GfxCoreHelper;
 using createL0GfxCoreHelperFunctionType = std::unique_ptr<L0GfxCoreHelper> (*)();
@@ -79,6 +80,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
 
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
+    virtual L0::Event *createStandaloneEvent(const EventDescriptor &desc, L0::Device *device, ze_result_t &result) const = 0;
 
     virtual bool isResumeWARequired() = 0;
     virtual bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -133,6 +135,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
 
     void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const override;
     L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const override;
+    L0::Event *createStandaloneEvent(const EventDescriptor &desc, L0::Device *device, ze_result_t &result) const override;
 
     bool isResumeWARequired() override;
     bool imageCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;

@@ -15,6 +15,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 namespace L0 {
 
@@ -69,7 +70,8 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     };
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    *phEvent = Event::create<uint64_t>(eventDescriptor, device, result);
+
+    *phEvent = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
 
     return result;
 }
