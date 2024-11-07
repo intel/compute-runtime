@@ -35,6 +35,12 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_XE_HPG OR SUPPORT_XE_HPC)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe_hpg_core_and_xe_hpc.inl
+  )
+endif()
+
 if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe_hpg_core_and_later.inl

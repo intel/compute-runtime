@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+
 namespace NEO {
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getDefaultIOHAlignment() {
@@ -38,6 +41,30 @@ void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &wa
 
 template <typename Family>
 void EncodeSurfaceState<Family>::disableCompressionFlags(R_SURFACE_STATE *surfaceState) {
+}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation,
+                                                              GmmHelper *gmmHelper, bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane) {
+    if (!allocation->isCompressionEnabled()) {
+        return;
+    }
+
+    using COMPRESSION_FORMAT = typename R_SURFACE_STATE::COMPRESSION_FORMAT;
+
+    auto gmmResourceInfo = allocation->getDefaultGmm()->gmmResourceInfo.get();
+
+    auto compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
+
+    surfaceState->setCompressionFormat(static_cast<COMPRESSION_FORMAT>(compressionFormat));
+}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+}
+
+template <typename Family>
+inline void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
 }
 
 } // namespace NEO

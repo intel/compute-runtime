@@ -23,8 +23,6 @@
 using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
-#include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
-#include "shared/source/command_container/image_surface_state/compression_params_tgllp_and_later.inl"
 #include "shared/source/command_stream/command_stream_receiver.h"
 
 namespace NEO {
@@ -111,6 +109,11 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
     PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
                                                   pipelineSelectArgs,
                                                   container.getDevice()->getRootDeviceEnvironment());
+}
+
+template <>
+void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation,
+                                                              GmmHelper *gmmHelper, bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane) {
 }
 
 } // namespace NEO

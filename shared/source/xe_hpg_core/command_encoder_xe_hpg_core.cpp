@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder_from_gen12lp_to_xe2_hpg.inl"
 #include "shared/source/command_container/command_encoder_pre_xe2_hpg_core.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
+#include "shared/source/command_container/command_encoder_xe_hpg_core_and_xe_hpc.inl"
 #include "shared/source/command_container/command_encoder_xehp_and_later.inl"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
@@ -22,8 +23,6 @@ using Family = NEO::XeHpgCoreFamily;
 
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_later.inl"
-#include "shared/source/command_container/image_surface_state/compression_params_tgllp_and_later.inl"
-#include "shared/source/command_container/image_surface_state/compression_params_xehp_and_later.inl"
 
 namespace NEO {
 

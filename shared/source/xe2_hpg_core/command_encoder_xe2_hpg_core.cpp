@@ -23,7 +23,6 @@ using Family = NEO::Xe2HpgCoreFamily;
 
 #include "shared/source/command_container/command_encoder_xe_hpc_core_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe_hpg_core_and_later.inl"
-#include "shared/source/command_container/image_surface_state/compression_params_xehp_and_later.inl"
 
 namespace NEO {
 
@@ -196,33 +195,9 @@ bool EncodeSurfaceState<Family>::isAuxModeEnabled(R_SURFACE_STATE *surfaceState,
 }
 
 template <>
-void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation,
-                                                              GmmHelper *gmmHelper, bool imageFromBuffer, GMM_YUV_PLANE_ENUM plane) {
-    if (!allocation->isCompressionEnabled()) {
-        return;
-    }
-
-    using COMPRESSION_FORMAT = typename R_SURFACE_STATE::COMPRESSION_FORMAT;
-
-    auto gmmResourceInfo = allocation->getDefaultGmm()->gmmResourceInfo.get();
-
-    auto compressionFormat = gmmHelper->getClientContext()->getSurfaceStateCompressionFormat(gmmResourceInfo->getResourceFormat());
-
-    surfaceState->setCompressionFormat(static_cast<COMPRESSION_FORMAT>(compressionFormat));
-}
-
-template <>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper *releaseHelper) {
     if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired())
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
-}
-
-template <>
-void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
-}
-
-template <>
-inline void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
 }
 
 template <>
