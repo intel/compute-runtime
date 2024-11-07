@@ -16,18 +16,6 @@ namespace AOT {
 
 enum PRODUCT_CONFIG : uint32_t {
     UNKNOWN_ISA = 0,
-    BDW = 0x02000000,
-    SKL = 0x02400009,
-    KBL = 0x02404009,
-    CFL = 0x02408009,
-    APL = 0x0240c000,
-    GLK = 0x02410000,
-    WHL = 0x02414000,
-    AML = 0x02418000,
-    CML = 0x0241c000,
-    ICL = 0x02c00000,
-    LKF = 0x02c04000,
-    EHL = 0x02c08000,
     TGL = 0x03000000,
     RKL = 0x03004000,
     ADL_S = 0x03008000,
@@ -57,21 +45,20 @@ enum PRODUCT_CONFIG : uint32_t {
     ARL_H_A0 = 0x03128000,
     ARL_H_B0 = 0x03128004,
     BMG_G21_A0 = 0x05004000,
-    BMG_G21_A1 = 0x05004001,
-    BMG_G21_B0 = 0x05004004,
+    BMG_G21_A1_RESERVED = 0x05004001,
+    BMG_G21_B0_RESERVED = 0x05004004,
     LNL_A0 = 0x05010000,
     LNL_A1 = 0x05010001,
     LNL_B0 = 0x05010004,
     PTL_H_A0 = 0x07800000,
+    PTL_H_B0 = 0x07800004,
     PTL_U_A0 = 0x07804000,
+    PTL_U_A1 = 0x07804001,
     CONFIG_MAX_PLATFORM
 };
 
 enum RELEASE : uint32_t {
     UNKNOWN_RELEASE = 0,
-    GEN8_RELEASE,
-    GEN9_RELEASE,
-    GEN11_RELEASE,
     XE_LP_RELEASE,
     XE_HP_RELEASE,
     XE_HPG_RELEASE,
@@ -87,9 +74,6 @@ enum RELEASE : uint32_t {
 
 enum FAMILY : uint32_t {
     UNKNOWN_FAMILY = 0,
-    GEN8_FAMILY,
-    GEN9_FAMILY,
-    GEN11_FAMILY,
     XE_FAMILY,
     XE2_FAMILY,
     XE3_FAMILY,
@@ -97,15 +81,6 @@ enum FAMILY : uint32_t {
 };
 
 inline const std::map<std::string, FAMILY> familyAcronyms = {
-#ifdef SUPPORT_AOT_GEN8
-    {"gen8", GEN8_FAMILY},
-#endif
-#ifdef SUPPORT_AOT_GEN9
-    {"gen9", GEN9_FAMILY},
-#endif
-#ifdef SUPPORT_AOT_GEN11
-    {"gen11", GEN11_FAMILY},
-#endif
 #ifdef SUPPORT_AOT_XE
     {"xe", XE_FAMILY},
 #endif
@@ -118,15 +93,6 @@ inline const std::map<std::string, FAMILY> familyAcronyms = {
 };
 
 inline const std::map<std::string, RELEASE> releaseAcronyms = {
-#ifdef SUPPORT_AOT_GEN8
-    {"gen8", GEN8_RELEASE},
-#endif
-#ifdef SUPPORT_AOT_GEN9
-    {"gen9", GEN9_RELEASE},
-#endif
-#ifdef SUPPORT_AOT_GEN11
-    {"gen11", GEN11_RELEASE},
-#endif
 #ifdef SUPPORT_AOT_XE_LP
     {"xe-lp", XE_LP_RELEASE},
     {"gen12lp", XE_LP_RELEASE},
@@ -161,45 +127,6 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 };
 
 inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
-#ifdef SUPPORT_AOT_BDW
-    {"bdw", BDW},
-#endif
-#ifdef SUPPORT_AOT_SKL
-    {"skl", SKL},
-#endif
-#ifdef SUPPORT_AOT_KBL
-    {"kbl", KBL},
-#endif
-#ifdef SUPPORT_AOT_CFL
-    {"cfl", CFL},
-#endif
-#ifdef SUPPORT_AOT_BXT
-    {"apl", APL},
-    {"bxt", APL},
-#endif
-#ifdef SUPPORT_AOT_GLK
-    {"glk", GLK},
-#endif
-#ifdef SUPPORT_AOT_WHL
-    {"whl", WHL},
-#endif
-#ifdef SUPPORT_AOT_AML
-    {"aml", AML},
-#endif
-#ifdef SUPPORT_AOT_CML
-    {"cml", CML},
-#endif
-#ifdef SUPPORT_AOT_ICLLP
-    {"icllp", ICL},
-    {"icl", ICL},
-#endif
-#ifdef SUPPORT_AOT_LKF1
-    {"lkf", LKF},
-#endif
-#ifdef SUPPORT_AOT_JSL
-    {"ehl", EHL},
-    {"jsl", EHL},
-#endif
 #ifdef SUPPORT_AOT_TGLLP
     {"tgllp", TGL},
     {"tgl", TGL},
@@ -246,15 +173,12 @@ inline const std::map<std::string, PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_AOT_ARL
     {"arl-h", ARL_H_B0},
 #endif
-#ifdef SUPPORT_AOT_BMG
-    {"bmg-g21", BMG_G21_B0},
-#endif
 #ifdef SUPPORT_AOT_LNL
     {"lnl-m", LNL_B0},
 #endif
 #ifdef SUPPORT_AOT_PTL
-    {"ptl-h", PTL_H_A0},
-    {"ptl-u", PTL_U_A0},
+    {"ptl-h", PTL_H_B0},
+    {"ptl-u", PTL_U_A1},
 #endif
 };
 
@@ -290,8 +214,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_BMG
     {"bmg-g21-a0", BMG_G21_A0},
-    {"bmg-g21-a1", BMG_G21_A1},
-    {"bmg-g21-b0", BMG_G21_B0},
+    {"bmg-g21", BMG_G21_A0},
+    {"bmg-g21-a1", BMG_G21_A0},
+    {"bmg-g21-b0", BMG_G21_A0},
 #endif
 #ifdef SUPPORT_AOT_LNL
     {"lnl-a0", LNL_A0},
@@ -300,7 +225,9 @@ inline const std::map<std::string, PRODUCT_CONFIG> rtlIdAcronyms = {
 #endif
 #ifdef SUPPORT_AOT_PTL
     {"ptl-h-a0", PTL_H_A0},
+    {"ptl-h-b0", PTL_H_B0},
     {"ptl-u-a0", PTL_U_A0},
+    {"ptl-u-a1", PTL_U_A1},
 #endif
 };
 
@@ -311,10 +238,16 @@ inline const std::map<std::string, PRODUCT_CONFIG> genericIdAcronyms = {
 #ifdef SUPPORT_AOT_MTL
     {"mtl",  MTL_U_B0},
 #endif
+#ifdef SUPPORT_AOT_BMG
+    {"bmg",  BMG_G21_A0},
+#endif
 };
 
 inline const std::map<PRODUCT_CONFIG, std::vector<PRODUCT_CONFIG>> compatibilityMapping = {
     {DG2_G10_C0, {DG2_G11_B1, DG2_G12_A0}},
     {MTL_U_B0, {MTL_H_B0}},
+    {BMG_G21_A0, {LNL_B0}},
+    {BMG_G21_A1_RESERVED, {BMG_G21_A0, LNL_B0}},
+    {BMG_G21_B0_RESERVED, {BMG_G21_A0, LNL_B0}},
 };
 } // namespace AOT

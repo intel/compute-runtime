@@ -13,7 +13,7 @@
 struct ReleaseHelper2001Tests : public ReleaseHelperTests<20, 1> {
 
     std::vector<uint32_t> getRevisions() override {
-        return {0, 1, 4};
+        return {0};
     }
 };
 
