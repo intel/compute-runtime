@@ -4625,6 +4625,74 @@ HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEventThenRet
     context->freeMem(hostAddress);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenReturnSuccess, MatchAny) {
+    uint64_t counterValue = 2;
+
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+
+    *hostAddress = counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+
+    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    externalSyncAllocProperties.completionValue = counterValue;
+    externalSyncAllocProperties.deviceAddress = gpuAddress;
+    externalSyncAllocProperties.hostAddress = hostAddress;
+
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    counterBasedDesc.pNext = &externalSyncAllocProperties;
+    ze_event_handle_t handle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, device, nullptr, &handle));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, nullptr, &counterBasedDesc, &handle));
+    externalSyncAllocProperties.hostAddress = &counterValue;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    externalSyncAllocProperties.hostAddress = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    externalSyncAllocProperties.hostAddress = hostAddress;
+    externalSyncAllocProperties.deviceAddress = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    externalSyncAllocProperties.hostAddress = nullptr;
+    externalSyncAllocProperties.deviceAddress = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    counterBasedDesc.pNext = nullptr;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+    EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo());
+    zeEventDestroy(handle);
+
+    counterBasedDesc.pNext = &externalSyncAllocProperties;
+    externalSyncAllocProperties.hostAddress = hostAddress;
+    externalSyncAllocProperties.deviceAddress = gpuAddress;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    eventObj = Event::fromHandle(handle);
+
+    ASSERT_NE(nullptr, eventObj);
+    ASSERT_NE(nullptr, eventObj->getInOrderExecInfo().get());
+
+    EXPECT_EQ(counterValue, eventObj->getInOrderExecInfo()->getCounterValue());
+    EXPECT_EQ(hostAddress, eventObj->getInOrderExecInfo()->getBaseHostAddress());
+    EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+
+    uint64_t addresss = 0;
+    uint64_t value = 0;
+    zexEventGetDeviceAddress(handle, &value, &addresss);
+
+    EXPECT_EQ(addresss, eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+    EXPECT_EQ(value, counterValue);
+
+    zeEventDestroy(handle);
+
+    context->freeMem(hostAddress);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenReturnCorrectValue, MatchAny) {
     uint64_t counterValue = 2;
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));

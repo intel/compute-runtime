@@ -43,8 +43,8 @@ zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uin
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, uint64_t *deviceAddress, uint64_t *hostAddress, uint64_t completionValue, const ze_event_desc_t *desc, ze_event_handle_t *phEvent) {
-    constexpr uint32_t counterBasedFlags = (ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE | ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_NON_IMMEDIATE);
+zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
+    constexpr uint32_t counterBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
     auto device = Device::fromHandle(toInternalType(hDevice));
 
@@ -53,35 +53,52 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
     }
 
     EventDescriptor eventDescriptor = {
-        nullptr,                           // eventPoolAllocation
-        desc->pNext,                       // extensions
-        0,                                 // totalEventSize
-        EventPacketsCount::maxKernelSplit, // maxKernelCount
-        0,                                 // maxPacketsCount
-        counterBasedFlags,                 // counterBasedFlags
-        0,                                 // index
-        0,                                 // signalScope
-        0,                                 // waitScope
-        false,                             // timestampPool
-        false,                             // kerneMappedTsPoolFlag
-        false,                             // importedIpcPool
-        false,                             // ipcPool
+        nullptr,                                                                // eventPoolAllocation
+        desc->pNext,                                                            // extensions
+        0,                                                                      // totalEventSize
+        EventPacketsCount::maxKernelSplit,                                      // maxKernelCount
+        0,                                                                      // maxPacketsCount
+        desc->flags & counterBasedFlags,                                        // counterBasedFlags
+        0,                                                                      // index
+        desc->signalScope,                                                      // signalScope
+        desc->waitScope,                                                        // waitScope
+        !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP),        // timestampPool
+        !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP), // kerneMappedTsPoolFlag
+        false,                                                                  // importedIpcPool
+        !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC),                     // ipcPool
     };
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    *phEvent = Event::create<uint64_t>(eventDescriptor, device, result);
+
+    return result;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDevice, uint64_t *deviceAddress, uint64_t *hostAddress, uint64_t completionValue, const ze_event_desc_t *desc, ze_event_handle_t *phEvent) {
+    constexpr uint32_t counterBasedFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+
+    if (!desc) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
 
     zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     externalSyncAllocProperties.completionValue = completionValue;
     externalSyncAllocProperties.deviceAddress = deviceAddress;
     externalSyncAllocProperties.hostAddress = hostAddress;
 
-    if (externalSyncAllocProperties.deviceAddress && externalSyncAllocProperties.hostAddress) {
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    counterBasedDesc.flags = counterBasedFlags;
+    counterBasedDesc.signalScope = desc->signal;
+    counterBasedDesc.waitScope = desc->wait;
+    counterBasedDesc.pNext = desc->pNext;
+
+    if (deviceAddress && hostAddress) {
         externalSyncAllocProperties.pNext = desc->pNext;
-        eventDescriptor.extensions = &externalSyncAllocProperties;
+        counterBasedDesc.pNext = &externalSyncAllocProperties;
     }
 
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    *phEvent = Event::create<uint64_t>(eventDescriptor, device, result);
-
-    return result;
+    return zexCounterBasedEventCreate2(hContext, hDevice, &counterBasedDesc, phEvent);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zexIntelAllocateNetworkInterrupt(ze_context_handle_t hContext, uint32_t &networkInterruptId) {
