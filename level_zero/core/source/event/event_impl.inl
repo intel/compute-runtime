@@ -87,6 +87,9 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 
     if (eventDescriptor.counterBasedFlags != 0 || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
         event->enableCounterBasedMode(true, eventDescriptor.counterBasedFlags);
+        if (eventDescriptor.ipcPool) {
+            event->isSharableCouterBased = true;
+        }
     }
 
     // do not reset even if it has been imported, since event pool

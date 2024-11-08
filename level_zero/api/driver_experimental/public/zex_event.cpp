@@ -53,20 +53,28 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    const bool ipcFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC);
+    const bool timestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
+    const bool mappedTimestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
+
+    if (ipcFlag && (timestampFlag || mappedTimestampFlag)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     EventDescriptor eventDescriptor = {
-        nullptr,                                                                // eventPoolAllocation
-        desc->pNext,                                                            // extensions
-        0,                                                                      // totalEventSize
-        EventPacketsCount::maxKernelSplit,                                      // maxKernelCount
-        0,                                                                      // maxPacketsCount
-        desc->flags & counterBasedFlags,                                        // counterBasedFlags
-        0,                                                                      // index
-        desc->signalScope,                                                      // signalScope
-        desc->waitScope,                                                        // waitScope
-        !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP),        // timestampPool
-        !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP), // kerneMappedTsPoolFlag
-        false,                                                                  // importedIpcPool
-        !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_IPC),                     // ipcPool
+        nullptr,                           // eventPoolAllocation
+        desc->pNext,                       // extensions
+        0,                                 // totalEventSize
+        EventPacketsCount::maxKernelSplit, // maxKernelCount
+        0,                                 // maxPacketsCount
+        desc->flags & counterBasedFlags,   // counterBasedFlags
+        0,                                 // index
+        desc->signalScope,                 // signalScope
+        desc->waitScope,                   // waitScope
+        timestampFlag,                     // timestampPool
+        mappedTimestampFlag,               // kerneMappedTsPoolFlag
+        false,                             // importedIpcPool
+        ipcFlag,                           // ipcPool
     };
 
     ze_result_t result = ZE_RESULT_SUCCESS;
