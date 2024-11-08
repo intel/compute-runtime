@@ -11,6 +11,9 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
@@ -87,6 +90,29 @@ uint64_t *IoctlHelper::getPagingFenceAddress(uint32_t vmHandleId, OsContextLinux
     } else {
         return drm.getFenceAddr(vmHandleId);
     }
+}
+
+uint64_t IoctlHelper::acquireGpuRange(DrmMemoryManager &memoryManager, size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) {
+    if (heapIndex >= HeapIndex::totalHeaps) {
+        return 0;
+    }
+    return memoryManager.acquireGpuRange(size, rootDeviceIndex, heapIndex);
+}
+
+void IoctlHelper::releaseGpuRange(DrmMemoryManager &memoryManager, void *address, size_t size, uint32_t rootDeviceIndex) {
+    memoryManager.releaseGpuRange(address, size, rootDeviceIndex);
+}
+
+void *IoctlHelper::mmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size, int prot, int flags, int fd, off_t offset) {
+    return memoryManager.mmapFunction(ptr, size, prot, flags, fd, offset);
+}
+
+int IoctlHelper::munmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size) {
+    return memoryManager.munmapFunction(ptr, size);
+}
+
+void IoctlHelper::registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction) {
+    return allocation.registerMemoryToUnmap(pointer, size, unmapFunction);
 }
 
 } // namespace NEO

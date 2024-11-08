@@ -122,6 +122,12 @@ class DrmMemoryManager : public MemoryManager {
 
     void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override;
 
+    MOCKABLE_VIRTUAL uint64_t acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex);
+    MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
+
+    decltype(&mmap) mmapFunction = mmap;
+    decltype(&munmap) munmapFunction = munmap;
+
   protected:
     void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
     BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle, uint32_t rootDeviceIndex);
@@ -132,9 +138,7 @@ class DrmMemoryManager : public MemoryManager {
     void pushSharedBufferObject(BufferObject *bo);
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
-    MOCKABLE_VIRTUAL uint64_t acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex);
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment);
-    MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
@@ -191,8 +195,6 @@ class DrmMemoryManager : public MemoryManager {
     const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
     std::unique_ptr<OSMemory> osMemory;
-    decltype(&mmap) mmapFunction = mmap;
-    decltype(&munmap) munmapFunction = munmap;
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;

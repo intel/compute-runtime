@@ -1238,8 +1238,9 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         memoryOperationsInterface->evictWithinOsContext(engine.osContext, *gfxAllocation);
     }
 
+    auto ioctlHelper = getDrm(drmAlloc->getRootDeviceIndex()).getIoctlHelper();
     if (drmAlloc->getMmapPtr()) {
-        this->munmapFunction(drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
+        ioctlHelper->munmapFunction(*this, drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
     }
 
     for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
@@ -1258,7 +1259,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         }
     }
 
-    releaseGpuRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
+    ioctlHelper->releaseGpuRange(*this, gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
 
     drmAlloc->freeRegisteredBOBindExtHandles(&getDrm(drmAlloc->getRootDeviceIndex()));
@@ -2313,19 +2314,22 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
 
     if (useBooMmap) {
         const auto memoryPool = MemoryPool::system4KBPages;
+        auto ioctlHelper = drm.getIoctlHelper();
 
         auto totalSizeToAlloc = alignedSize + alignment;
         uint64_t preferredAddress = 0;
         auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
         auto canAllocateInHeapExtended = debugManager.flags.AllocateHostAllocationsInHeapExtendedHost.get();
         if (canAllocateInHeapExtended && allocationData.flags.isUSMHostAllocation && gfxPartition->getHeapLimit(HeapIndex::heapExtendedHost) > 0u) {
-
-            preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::heapExtendedHost);
+            preferredAddress = ioctlHelper->acquireGpuRange(*this, totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::heapExtendedHost);
+        }
+        if (0 == preferredAddress) {
+            preferredAddress = ioctlHelper->acquireGpuRange(*this, totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::totalHeaps);
         }
 
-        auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        auto cpuPointer = ioctlHelper->mmapFunction(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
         if (castToUint64(cpuPointer) != preferredAddress) {
-            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             preferredAddress = 0;
         }
 
@@ -2339,21 +2343,20 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
                                                                                                        MemoryPoolHelper::isSystemMemoryPool(memoryPool), allocationData.flags.isUSMHostAllocation));
 
         if (!bo) {
-            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
-            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
             return nullptr;
         }
 
         uint64_t offset = 0;
-        auto ioctlHelper = drm.getIoctlHelper();
         uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::mmapOffsetWb);
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
-            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
-            this->munmapFunction(cpuPointer, size);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            ioctlHelper->munmapFunction(*this, cpuPointer, size);
             return nullptr;
         }
 
-        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+        [[maybe_unused]] auto retPtr = ioctlHelper->mmapFunction(*this, cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
         DEBUG_BREAK_IF(retPtr != cpuPointer);
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
@@ -2365,9 +2368,9 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         allocation->setMmapPtr(cpuPointer);
         allocation->setMmapSize(alignedSize);
         if (pointerDiff != 0) {
-            allocation->registerMemoryToUnmap(cpuBasePointer, pointerDiff, this->munmapFunction);
+            ioctlHelper->registerMemoryToUnmap(*allocation.get(), cpuBasePointer, pointerDiff, this->munmapFunction);
         }
-        [[maybe_unused]] int retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
+        [[maybe_unused]] int retCode = ioctlHelper->munmapFunction(*this, ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
         DEBUG_BREAK_IF(retCode != 0);
         if (preferredAddress) {
             allocation->setReservedAddressRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc);
@@ -2376,7 +2379,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
         if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
             if (pointerDiff == 0) {
-                allocation->registerMemoryToUnmap(cpuBasePointer, totalSizeToAlloc, this->munmapFunction);
+                ioctlHelper->registerMemoryToUnmap(*allocation.get(), cpuBasePointer, pointerDiff, this->munmapFunction);
             }
             return nullptr;
         }

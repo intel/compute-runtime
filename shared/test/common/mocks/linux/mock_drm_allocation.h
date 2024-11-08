@@ -61,6 +61,7 @@ class MockDrmAllocation : public DrmAllocation {
     using DrmAllocation::bufferObjects;
     using DrmAllocation::enabledMemAdviseFlags;
     using DrmAllocation::memoryPool;
+    using DrmAllocation::memoryToUnmap;
     using DrmAllocation::registeredBoBindHandles;
 
     MockDrmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, MemoryPool pool)
