@@ -18,6 +18,7 @@
 
 #include "aubstream/product_family.h"
 #include "platforms.h"
+#include "wmtp_setup_bmg.inl"
 
 using namespace NEO;
 
@@ -93,7 +94,7 @@ BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
     hwInfo.featureTable.flags.ftrWalkerMTP = false;
     EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
+    EXPECT_EQ(wmtpSupported, compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
 
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
