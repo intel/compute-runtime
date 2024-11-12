@@ -123,16 +123,6 @@ bool ReleaseHelperHw<releaseType>::isRayTracingSupported() const {
 }
 
 template <ReleaseType releaseType>
-uint32_t ReleaseHelperHw<releaseType>::getL3BankCount() const {
-    return 0;
-}
-
-template <ReleaseType releaseType>
-uint64_t ReleaseHelperHw<releaseType>::getL3CacheBankSizeInKb() const {
-    return 0;
-}
-
-template <ReleaseType releaseType>
 uint32_t ReleaseHelperHw<releaseType>::getAdditionalFp16Caps() const {
     return 0u;
 }

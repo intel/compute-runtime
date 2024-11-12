@@ -55,8 +55,6 @@ class ReleaseHelper {
     virtual const ThreadsPerEUConfigs getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const = 0;
     virtual const std::string getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const = 0;
     virtual bool isRayTracingSupported() const = 0;
-    virtual uint32_t getL3BankCount() const = 0;
-    virtual uint64_t getL3CacheBankSizeInKb() const = 0;
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
     virtual uint32_t getStackSizePerRay() const = 0;
@@ -97,8 +95,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     const StackVec<uint32_t, 6> getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const override;
     const std::string getDeviceConfigString(uint32_t tileCount, uint32_t sliceCount, uint32_t subSliceCount, uint32_t euPerSubSliceCount) const override;
     bool isRayTracingSupported() const override;
-    uint32_t getL3BankCount() const override;
-    uint64_t getL3CacheBankSizeInKb() const override;
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
     uint32_t getStackSizePerRay() const override;
