@@ -44,6 +44,16 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(const SvmAllocationData
     allocations.erase(iter);
 }
 
+void SVMAllocsManager::MapBasedAllocationTracker::freeAllocations(NEO::MemoryManager &memoryManager) {
+    std::unique_lock<NEO::SpinLock> lock(mutex);
+
+    for (auto &allocation : allocations) {
+        for (auto &gpuAllocation : allocation.second.gpuAllocations.getGraphicsAllocations()) {
+            memoryManager.freeGraphicsMemory(gpuAllocation);
+        }
+    }
+}
+
 bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr) {
     if (false == sizeAllowed(size)) {
         return false;

@@ -1540,6 +1540,9 @@ void DeviceImp::releaseResources() {
     metricContext.reset();
     builtins.reset();
     cacheReservation.reset();
+
+    peerCounterAllocations.freeAllocations(*neoDevice->getMemoryManager());
+
     deviceInOrderCounterAllocator.reset();
     hostInOrderCounterAllocator.reset();
     inOrderTimestampAllocator.reset();

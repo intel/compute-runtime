@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/sorted_vector.h"
+#include "shared/source/utilities/spinlock.h"
 
 #include "memory_properties_flags.h"
 
@@ -20,7 +21,6 @@
 #include <cstdint>
 #include <map>
 #include <memory>
-#include <mutex>
 #include <shared_mutex>
 #include <type_traits>
 
@@ -100,7 +100,10 @@ class SVMAllocsManager {
         SvmAllocationData *get(const void *);
         size_t getNumAllocs() const { return allocations.size(); };
 
+        void freeAllocations(NEO::MemoryManager &memoryManager);
+
         SvmAllocationContainer allocations;
+        NEO::SpinLock mutex;
     };
 
     struct MapOperationsTracker {

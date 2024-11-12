@@ -103,6 +103,8 @@ struct DriverHandleImp : public DriverHandle {
                                                void *basePtr,
                                                uintptr_t *peerGpuAddress,
                                                NEO::SvmAllocationData **peerAllocData);
+
+    NEO::GraphicsAllocation *getCounterPeerAllocation(Device *device, NEO::GraphicsAllocation &graphicsAllocation);
     void initializeVertexes();
     ze_result_t fabricVertexGetExp(uint32_t *pCount, ze_fabric_vertex_handle_t *phDevices) override;
     void createHostPointerManager();
@@ -176,6 +178,14 @@ struct DriverHandleImp : public DriverHandle {
     int setErrorDescription(const std::string &str) override;
     ze_result_t getErrorDescription(const char **ppString) override;
     ze_result_t clearErrorDescription() override;
+
+  protected:
+    NEO::GraphicsAllocation *getPeerAllocation(Device *device,
+                                               NEO::SVMAllocsManager::MapBasedAllocationTracker &storage,
+                                               NEO::SvmAllocationData *allocData,
+                                               void *basePtr,
+                                               uintptr_t *peerGpuAddress,
+                                               NEO::SvmAllocationData **peerAllocData);
 };
 
 extern struct DriverHandleImp *globalDriver;

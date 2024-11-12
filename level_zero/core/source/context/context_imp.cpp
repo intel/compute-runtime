@@ -395,7 +395,7 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 void ContextImp::freePeerAllocations(const void *ptr, bool blocking, Device *device) {
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
-    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocationsMutex);
+    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerAllocations.mutex);
 
     auto iter = deviceImp->peerAllocations.allocations.find(ptr);
     if (iter != deviceImp->peerAllocations.allocations.end()) {

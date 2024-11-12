@@ -151,7 +151,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     void releaseResources();
 
     NEO::SVMAllocsManager::MapBasedAllocationTracker peerAllocations;
-    NEO::SpinLock peerAllocationsMutex;
+    NEO::SVMAllocsManager::MapBasedAllocationTracker peerCounterAllocations;
     std::unordered_map<const void *, L0::Image *> peerImageAllocations;
     NEO::SpinLock peerImageAllocationsMutex;
     std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;

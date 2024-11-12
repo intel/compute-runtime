@@ -144,6 +144,8 @@ class TagAllocatorBase {
 
     virtual TagNodeBase *getTag() = 0;
 
+    const std::vector<std::unique_ptr<MultiGraphicsAllocation>> &getGfxAllocations() const { return gfxAllocations; }
+
   protected:
     TagAllocatorBase() = delete;
 

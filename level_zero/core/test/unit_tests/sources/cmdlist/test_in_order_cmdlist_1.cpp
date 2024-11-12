@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -913,6 +914,90 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     }
 
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, immCmdList->isQwordInOrderCounter(), false));
+}
+
+HWTEST2_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCalledThenCreatePeerAllocation, MatchAny) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    NEO::UltDeviceFactory deviceFactory{2, 0};
+
+    NEO::DeviceVector devices;
+    for (auto &dev : deviceFactory.rootDevices) {
+        devices.push_back(std::unique_ptr<NEO::Device>(dev));
+    }
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device0 = driverHandle->devices[0];
+    auto device1 = driverHandle->devices[1];
+
+    auto ultCsr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(device1->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr1->storeMakeResidentAllocations = true;
+
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    ze_event_handle_t eventH = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device0, &counterBasedDesc, &eventH));
+
+    auto createCmdList = [&](L0::Device *inputDevice) {
+        auto cmdList = makeZeUniquePtr<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+
+        auto csr = inputDevice->getNEODevice()->getDefaultEngine().commandStreamReceiver;
+
+        ze_command_queue_desc_t desc = {};
+        desc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
+
+        mockCmdQs.emplace_back(std::make_unique<Mock<CommandQueue>>(inputDevice, csr, &desc));
+
+        cmdList->cmdQImmediate = mockCmdQs[createdCmdLists].get();
+        cmdList->isFlushTaskSubmissionEnabled = true;
+        cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
+        cmdList->initialize(inputDevice, NEO::EngineGroupType::renderCompute, 0u);
+        cmdList->commandContainer.setImmediateCmdListCsr(csr);
+        cmdList->enableInOrderExecution();
+
+        createdCmdLists++;
+
+        return cmdList;
+    };
+
+    auto immCmdList0 = createCmdList(device0);
+    auto immCmdList1 = createCmdList(device1);
+
+    immCmdList0->appendSignalEvent(eventH, false);
+
+    auto &cmdContainer1 = immCmdList1->getCmdContainer();
+    auto cmdStream = cmdContainer1.getCommandStream();
+    auto offset = cmdStream->getUsed();
+
+    zeCommandListAppendWaitOnEvents(immCmdList1->toHandle(), 1, &eventH);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), offset),
+        cmdStream->getUsed() - offset));
+
+    auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    if (immCmdList0->isQwordInOrderCounter()) {
+        std::advance(itor, -2); // verify 2x LRI before semaphore
+    }
+
+    ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList0->inOrderExecInfo->getBaseDeviceAddress(), immCmdList0->isQwordInOrderCounter(), false));
+
+    EXPECT_EQ(0u, ultCsr1->makeResidentAllocations[immCmdList0->inOrderExecInfo->getDeviceCounterAllocation()]);
+
+    auto peerData = static_cast<L0::DeviceImp *>(device1)->peerCounterAllocations.get(reinterpret_cast<void *>(immCmdList0->inOrderExecInfo->getBaseDeviceAddress()));
+    ASSERT_NE(nullptr, peerData);
+
+    auto peerAlloc = peerData->gpuAllocations.getDefaultGraphicsAllocation();
+    EXPECT_NE(immCmdList0->inOrderExecInfo->getDeviceCounterAllocation(), peerAlloc);
+
+    EXPECT_EQ(1u, ultCsr1->makeResidentAllocations[peerAlloc]);
+
+    zeEventDestroy(eventH);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenTimestmapEventWhenProgrammingBarrierThenDontAddPipeControl, MatchAny) {

@@ -2540,8 +2540,18 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
 
     UNRECOVERABLE_IF(waitValue > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) && !isQwordInOrderCounter());
 
+    auto deviceAllocForResidency = inOrderExecInfo->getDeviceCounterAllocation();
+
+    if (deviceAllocForResidency && (deviceAllocForResidency->getRootDeviceIndex() != device->getRootDeviceIndex())) {
+        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+
+        deviceAllocForResidency = driverHandle->getCounterPeerAllocation(device, *deviceAllocForResidency);
+        UNRECOVERABLE_IF(!deviceAllocForResidency);
+        UNRECOVERABLE_IF(deviceAllocForResidency->getGpuAddress() != inOrderExecInfo->getDeviceCounterAllocation()->getGpuAddress());
+    }
+
     if (!skipAddingWaitEventsToResidency) {
-        commandContainer.addToResidencyContainer(inOrderExecInfo->getDeviceCounterAllocation());
+        commandContainer.addToResidencyContainer(deviceAllocForResidency);
     }
 
     uint64_t gpuAddress = inOrderExecInfo->getBaseDeviceAddress() + offset;

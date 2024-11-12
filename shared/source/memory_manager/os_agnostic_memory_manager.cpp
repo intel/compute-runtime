@@ -280,7 +280,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
     if (mapPointer) {
         gpuPtr = mapPointer;
     }
-    auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, gpuPtr, 1,
+    auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, gpuPtr, castToUint64(gpuPtr),
                                                      4096u, static_cast<uint64_t>(osHandleData.handle), MemoryPool::systemCpuInaccessible, properties.rootDeviceIndex,
                                                      false, false, requireSpecificBitness);
     graphicsAllocation->setSharedHandle(osHandleData.handle);
