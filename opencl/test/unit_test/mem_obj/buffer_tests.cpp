@@ -1292,6 +1292,35 @@ TEST_P(ValidHostPtr, WhenValidateInputAndCreateBufferThenCorrectBufferIsSet) {
     clReleaseMemObject(buffer);
 }
 
+using SingleBufferTest = Test<ClDeviceFixture>;
+TEST_F(SingleBufferTest, givenUseHostPtrFlagWhenForceZeroCopyFlagIsSetThenAddForceHostMemoryFlag) {
+    auto context = std::make_unique<MockContext>(pClDevice);
+    cl_int retVal = CL_SUCCESS;
+    unsigned char pHostPtr[testBufferSizeInBytes];
+    {
+        cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+        auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, testBufferSizeInBytes, pHostPtr, retVal);
+        EXPECT_EQ(retVal, CL_SUCCESS);
+        EXPECT_NE(nullptr, buffer);
+        auto neoBuffer = castToObject<Buffer>(buffer);
+        EXPECT_FALSE(neoBuffer->getFlags() & CL_MEM_FORCE_HOST_MEMORY_INTEL);
+
+        clReleaseMemObject(buffer);
+    }
+    {
+        DebugManagerStateRestore restorer;
+        debugManager.flags.ForceZeroCopyForUseHostPtr.set(1);
+        cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+        auto buffer = BufferFunctions::validateInputAndCreateBuffer(context.get(), nullptr, flags, 0, testBufferSizeInBytes, pHostPtr, retVal);
+        EXPECT_EQ(retVal, CL_SUCCESS);
+        EXPECT_NE(nullptr, buffer);
+        auto neoBuffer = castToObject<Buffer>(buffer);
+        EXPECT_TRUE(neoBuffer->getFlags() & CL_MEM_FORCE_HOST_MEMORY_INTEL);
+
+        clReleaseMemObject(buffer);
+    }
+}
+
 // Parameterized test that tests buffer creation with all flags that should be
 // valid with a valid host ptr
 cl_mem_flags validHostPtrFlags[] = {

@@ -106,6 +106,10 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
         return nullptr;
     }
 
+    if ((flags & CL_MEM_USE_HOST_PTR) && !!debugManager.flags.ForceZeroCopyForUseHostPtr.get()) {
+        flags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
+    }
+
     MemoryProperties memoryProperties{};
     cl_mem_alloc_flags_intel allocflags = 0;
     cl_mem_flags_intel emptyFlagsIntel = 0;
