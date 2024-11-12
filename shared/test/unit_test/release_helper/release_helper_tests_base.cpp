@@ -52,7 +52,7 @@ void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThen4And8AreReturned(
         ipVersion.revision = revision;
         releaseHelper = ReleaseHelper::create(ipVersion);
         ASSERT_NE(nullptr, releaseHelper);
-        auto &configs = releaseHelper->getThreadsPerEUConfigs();
+        auto &configs = releaseHelper->getThreadsPerEUConfigs(8u);
 
         EXPECT_EQ(2U, configs.size());
         EXPECT_EQ(4U, configs[0]);

@@ -100,7 +100,7 @@ uint64_t ReleaseHelperHw<releaseType>::getTotalMemBankSize() const {
 }
 
 template <ReleaseType releaseType>
-const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs() const {
+const ThreadsPerEUConfigs ReleaseHelperHw<releaseType>::getThreadsPerEUConfigs(uint32_t numThreadsPerEu) const {
     return {4, 8};
 }
 

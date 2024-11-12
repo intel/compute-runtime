@@ -135,7 +135,7 @@ void Device::initializeCaps() {
     deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
 
     if (releaseHelper) {
-        deviceInfo.threadsPerEUConfigs = releaseHelper->getThreadsPerEUConfigs();
+        deviceInfo.threadsPerEUConfigs = releaseHelper->getThreadsPerEUConfigs(deviceInfo.numThreadsPerEU);
     }
     auto maxWS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) * simdSizeUsed;
 
