@@ -57,8 +57,8 @@ HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGui
 
 HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGuidToKeyOffsetMapIsCalledThenValidMapIsReturned, IsBMG) {
     const std::map<std::string, std::map<std::string, uint64_t>> mockBmgGuidToKeyOffsetMap = {{"0x5e2f8210",
-                                                                                               {{"reg_PCIESS_rx_bytecount_lsb", 70},
-                                                                                                {"reg_PCIESS_tx_bytecount_msb", 71}}}};
+                                                                                               {{"reg_PCIESS_rx_bytecount_lsb", 280},
+                                                                                                {"reg_PCIESS_tx_bytecount_msb", 284}}}};
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     auto pGuidToKeyOffsetMap = pSysmanProductHelper->getGuidToKeyOffsetMap();

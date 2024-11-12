@@ -27,15 +27,15 @@ const std::unordered_map<std::string, int> telem3FileAndFdMap = {{telem3GuidFile
                                                                  {telem3OffsetFile, 2},
                                                                  {telem3TelemFile, 3}};
 
-constexpr uint64_t telem3OffsetValue = 10;
-constexpr uint64_t mockRxCounterLsbOffset = telem3OffsetValue + 70;
-constexpr uint64_t mockRxCounterMsbOffset = telem3OffsetValue + 69;
-constexpr uint64_t mockTxCounterLsbOffset = telem3OffsetValue + 72;
-constexpr uint64_t mockTxCounterMsbOffset = telem3OffsetValue + 71;
-constexpr uint64_t mockRxPacketCounterLsbOffset = telem3OffsetValue + 74;
-constexpr uint64_t mockRxPacketCounterMsbOffset = telem3OffsetValue + 73;
-constexpr uint64_t mockTxPacketCounterLsbOffset = telem3OffsetValue + 76;
-constexpr uint64_t mockTxPacketCounterMsbOffset = telem3OffsetValue + 75;
+constexpr uint64_t telem3OffsetValue = 0;
+constexpr uint64_t mockRxCounterLsbOffset = telem3OffsetValue + 280;
+constexpr uint64_t mockRxCounterMsbOffset = telem3OffsetValue + 276;
+constexpr uint64_t mockTxCounterLsbOffset = telem3OffsetValue + 288;
+constexpr uint64_t mockTxCounterMsbOffset = telem3OffsetValue + 284;
+constexpr uint64_t mockRxPacketCounterLsbOffset = telem3OffsetValue + 296;
+constexpr uint64_t mockRxPacketCounterMsbOffset = telem3OffsetValue + 292;
+constexpr uint64_t mockTxPacketCounterLsbOffset = telem3OffsetValue + 304;
+constexpr uint64_t mockTxPacketCounterMsbOffset = telem3OffsetValue + 300;
 
 constexpr uint32_t mockRxCounterLsb = 0xA2u;
 constexpr uint32_t mockRxCounterMsb = 0xF5u;
@@ -128,22 +128,6 @@ HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPci
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         if (fd == telem3FileAndFdMap.at(telem3GuidFile)) {
             memcpy(buf, dummyGuid.data(), count);
-        }
-        return count;
-    });
-    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
-    zes_pci_stats_t stats = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPciStats(&stats, pLinuxSysmanImp));
-}
-
-HWTEST2_F(SysmanProductHelperPciTest, GivenSysmanProductHelperInstanceWhenGetPciStatsIsCalledAndReadOffsetFromPmtUtilFailsDueToPreadSysCallThenCallFails, IsBMG) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        if (fd == telem3FileAndFdMap.at(telem3GuidFile)) {
-            memcpy(buf, mockValidGuid.data(), count);
-        } else if (fd == telem3FileAndFdMap.at(telem3OffsetFile)) {
-            count = -1;
         }
         return count;
     });

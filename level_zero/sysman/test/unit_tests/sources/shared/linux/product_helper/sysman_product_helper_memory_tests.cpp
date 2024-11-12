@@ -1019,25 +1019,25 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6) {
             switch (offset) {
-            case 92:
+            case 368:
                 count = (readFailCount == 2) ? -1 : sizeof(uint32_t);
                 break;
-            case 93:
+            case 372:
                 count = (readFailCount == 3) ? -1 : sizeof(uint32_t);
                 break;
-            case 94:
+            case 376:
                 count = (readFailCount == 4) ? -1 : sizeof(uint32_t);
                 break;
-            case 95:
+            case 380:
                 count = (readFailCount == 5) ? -1 : sizeof(uint32_t);
                 break;
-            case 98:
+            case 392:
                 count = (readFailCount == 6) ? -1 : sizeof(uint32_t);
                 break;
-            case 99:
+            case 396:
                 count = (readFailCount == 7) ? -1 : sizeof(uint32_t);
                 break;
-            case 922:
+            case 3688:
                 memcpy(buf, &mockMsuBitMask, count);
                 if (readFailCount == 1) {
                     count = -1;
@@ -1115,25 +1115,25 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
             memcpy(buf, validOobmsmGuid.data(), count);
         } else if (fd == 6) {
             switch (offset) {
-            case 92:
+            case 368:
                 memcpy(buf, &timeStampUpper, count);
                 break;
-            case 93:
+            case 372:
                 memcpy(buf, &timeStampLower, count);
                 break;
-            case 94:
+            case 376:
                 memcpy(buf, &readCounterUpper, count);
                 break;
-            case 95:
+            case 380:
                 memcpy(buf, &readCounterLower, count);
                 break;
-            case 98:
+            case 392:
                 memcpy(buf, &writeCounterUpper, count);
                 break;
-            case 99:
+            case 396:
                 memcpy(buf, &writeCounterLower, count);
                 break;
-            case 922:
+            case 3688:
                 memcpy(buf, &mockMsuBitMask, count);
                 break;
             default:
