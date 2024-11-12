@@ -35,6 +35,9 @@ add_executable(igdrcl_${target_name}
 if(NEO__LIBVA_FOUND)
   target_sources(igdrcl_${target_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
 endif()
+if(NOT DISABLE_WDDM_LINUX)
+  target_sources(igdrcl_${target_name} PRIVATE ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp)
+endif()
 
 target_link_libraries(igdrcl_${target_name} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} igdrcl_mocks ${NEO_EXTRA_LIBS} gmock-gtest)
 

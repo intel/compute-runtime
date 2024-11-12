@@ -18,6 +18,7 @@ set(NEO_CORE_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}driver_info_windows_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm_stub.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
@@ -68,7 +69,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_logging.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_logging.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_profiling.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm.cpp
@@ -131,7 +131,6 @@ set(NEO_CORE_OS_INTERFACE_WDDM
 
 if(NOT WIN32 AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_WDDM
-       ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/wddm/adapter_factory_create_dxcore.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/power_settings_stub.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/trim_callback_stub.cpp

@@ -31,7 +31,6 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
-    ${NEO_SHARED_DIRECTORY}/compiler_interface/default_cache_config.cpp
     ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
     ${NEO_SOURCE_DIR}/opencl/source/dll/debug_manager.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
