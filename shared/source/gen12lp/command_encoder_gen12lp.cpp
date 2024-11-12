@@ -87,29 +87,12 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
 }
 
 template <>
-bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
-    return false;
-}
-
-template <>
 void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {
 }
 
 template <>
 void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
     storeRegMem->setMmioRemapEnable(true);
-}
-
-template <>
-void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
-
-    PipelineSelectArgs pipelineSelectArgs;
-    pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupportRef();
-
-    PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
-                                                  pipelineSelectArgs,
-                                                  container.getDevice()->getRootDeviceEnvironment());
 }
 
 template <>

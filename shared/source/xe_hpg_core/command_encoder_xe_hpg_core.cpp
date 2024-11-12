@@ -174,6 +174,12 @@ size_t EncodeMiFlushDW<Family>::getWaSize(const EncodeDummyBlitWaArgs &waArgs) {
     return sizeof(typename Family::MI_FLUSH_DW) + BlitCommandsHelper<Family>::getDummyBlitSize(waArgs);
 }
 
+template <typename Family>
+void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+    miFlushDwCmd->setFlushCcs(1);
+    miFlushDwCmd->setFlushLlc(1);
+}
+
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"

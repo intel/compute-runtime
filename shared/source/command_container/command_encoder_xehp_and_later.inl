@@ -791,30 +791,7 @@ size_t EncodeStateBaseAddress<Family>::getRequiredSizeForStateBaseAddress(Device
 }
 
 template <typename Family>
-void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
-
-    PipelineSelectArgs pipelineSelectArgs;
-    pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupportRef();
-
-    PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
-                                                  pipelineSelectArgs,
-                                                  container.getDevice()->getRootDeviceEnvironment());
-}
-
-template <typename Family>
 inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container, IndirectHeap *childDsh) {
-}
-
-template <typename Family>
-void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
-    miFlushDwCmd->setFlushCcs(1);
-    miFlushDwCmd->setFlushLlc(1);
-}
-
-template <typename Family>
-bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
-    return false;
 }
 
 template <typename Family>
@@ -857,11 +834,6 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
     }
 
     surfaceState->setCompressionFormat(compressionFormat);
-}
-
-template <typename Family>
-void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
-    surfaceState->setCoherencyType(R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 }
 
 template <typename Family>
@@ -925,16 +897,6 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
 }
 
 template <typename Family>
-void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
-    static_assert(sizeof(plane) == sizeof(GMM_YUV_PLANE_ENUM));
-    if (plane == GMM_PLANE_Y) {
-        compressionFormat &= 0xf;
-    } else if ((plane == GMM_PLANE_U) || (plane == GMM_PLANE_V)) {
-        compressionFormat |= 0x10;
-    }
-}
-
-template <typename Family>
 inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cmdBuffer,
                                                            uint64_t gpuAddress,
                                                            uint32_t dataDword0,
@@ -961,10 +923,6 @@ inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeReg
     storeRegMem->setMmioRemapEnable(true);
     storeRegMem->setWorkloadPartitionIdOffsetEnable(workloadPartition);
 }
-
-template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {

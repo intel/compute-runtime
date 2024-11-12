@@ -36,4 +36,20 @@ void EncodeSurfaceState<Family>::appendImageCompressionParams(R_SURFACE_STATE *s
         surfaceState->setCompressionFormat(compressionFormat);
     }
 }
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
+    surfaceState->setCoherencyType(R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+}
+
+template <typename Family>
+void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
+    static_assert(sizeof(plane) == sizeof(GMM_YUV_PLANE_ENUM));
+    if (plane == GMM_PLANE_Y) {
+        compressionFormat &= 0xf;
+    } else if ((plane == GMM_PLANE_U) || (plane == GMM_PLANE_V)) {
+        compressionFormat |= 0x10;
+    }
+}
+
 } // namespace NEO

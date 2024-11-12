@@ -32,4 +32,9 @@ void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER
     cmd.setPredicationEnable(predicate);
 }
 
+template <typename Family>
+inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
+    atomic.setMemoryAddress(writeAddress);
+}
+
 } // namespace NEO

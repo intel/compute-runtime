@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/hw_walk_order.h"
 
 namespace NEO {
 template <typename Family>
@@ -65,6 +66,61 @@ void EncodeSurfaceState<Family>::setClearColorParams(R_SURFACE_STATE *surfaceSta
 
 template <typename Family>
 inline void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState) {
+}
+
+template <typename Family>
+bool EncodeSurfaceState<Family>::isAuxModeEnabled(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    return gmm && gmm->isCompressionEnabled();
+}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER);
+    } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
+    }
+}
+
+template <typename Family>
+void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfaceState, COHERENCY_TYPE coherencyType) {
+}
+
+template <typename Family>
+void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
+}
+
+template <typename Family>
+size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (!productHelper.allowMemoryPrefetch(hwInfo)) {
+        return 0;
+    }
+
+    size = alignUp(size, MemoryConstants::pageSize64k);
+
+    size_t count = size / MemoryConstants::pageSize64k;
+
+    return (count * sizeof(typename Family::STATE_PREFETCH));
+}
+
+template <typename Family>
+inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+    miFlushDwCmd->setFlushLlc(1);
+
+    if (productHelper.isDcFlushAllowed()) {
+        miFlushDwCmd->setFlushCcs(1);
+    }
 }
 
 } // namespace NEO

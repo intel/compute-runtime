@@ -43,11 +43,6 @@ void EncodeEnableRayTracing<Family>::append3dStateBtd(void *ptr3dStateBtd) {
 }
 
 template <>
-inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
-    atomic.setMemoryAddress(writeAddress);
-}
-
-template <>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
 
@@ -87,10 +82,6 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
     auto buffer = csr.getSpaceForCmd<STATE_COMPUTE_MODE>();
     *buffer = stateComputeMode;
-}
-
-template <>
-void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
 }
 
 template <>
@@ -138,30 +129,6 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
 }
 
 template <>
-size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    if (!productHelper.allowMemoryPrefetch(hwInfo)) {
-        return 0;
-    }
-
-    size = alignUp(size, MemoryConstants::pageSize64k);
-
-    size_t count = size / MemoryConstants::pageSize64k;
-
-    return (count * sizeof(typename Family::STATE_PREFETCH));
-}
-
-template <>
-inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
-    miFlushDwCmd->setFlushLlc(1);
-
-    if (productHelper.isDcFlushAllowed()) {
-        miFlushDwCmd->setFlushCcs(1);
-    }
-}
-
-template <>
 template <>
 void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor,
                                                         uint32_t value,
@@ -180,19 +147,6 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
-}
-
-template <>
-void EncodeSurfaceState<Family>::setBufferAuxParamsForCCS(R_SURFACE_STATE *surfaceState) {
-}
-
-template <>
-bool EncodeSurfaceState<Family>::isAuxModeEnabled(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    return gmm && gmm->isCompressionEnabled();
-}
-
-template <>
 void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceState, const ReleaseHelper *releaseHelper) {
     if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired())
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
@@ -203,20 +157,6 @@ template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
                                               const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {}
-
-template <>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
-        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER);
-    } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
-        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
-    }
-}
-
-template <>
-void EncodeSurfaceState<Family>::setCoherencyType(Family::RENDER_SURFACE_STATE *surfaceState, Family::RENDER_SURFACE_STATE::COHERENCY_TYPE coherencyType) {
-}
 
 } // namespace NEO
 
