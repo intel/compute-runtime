@@ -25,18 +25,6 @@ struct CopyEnginesLnlFixture : public CopyEngineXeHPAndLater<numTiles, useLocalM
 
 using SingleTileSystemMemLnlCoreTests = CopyEnginesLnlFixture<1, Xe2HpgCoreFamily, false>;
 
-LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolve) {
-    givenNotCompressedBufferWhenBltExecutedThenCompressDataAndResolveImpl<FamilyType>();
-}
-
-LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValid) {
-    givenHostPtrWhenBlitCommandToCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
-}
-
-LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValid) {
-    givenDstHostPtrWhenBlitCommandFromCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
-}
-
 LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValid) {
     givenDstHostPtrWhenBlitCommandFromNotCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
@@ -55,10 +43,6 @@ LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenBufferWithOffsetWhenHostPtrBlitC
 
 LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenOffsetsWhenBltExecutedThenCopiedDataIsValid) {
     givenOffsetsWhenBltExecutedThenCopiedDataIsValidImpl<FamilyType>();
-}
-
-LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValid) {
-    givenSrcCompressedBufferWhenBlitCommandToDstCompressedBufferIsDispatchedThenCopiedDataIsValidImpl<FamilyType>();
 }
 
 LNLTEST_F(SingleTileSystemMemLnlCoreTests, givenCompressedBufferWhenAuxTranslationCalledThenResolveAndCompress) {

@@ -61,7 +61,7 @@ LNLTEST_F(LnlHwInfoTest, givenBoolWhenCallLnlHardwareInfoSetupThenFeatureTableAn
         EXPECT_EQ(setParamBool, featureTable.flags.ftrE2ECompression);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrIA32eGfxPTEs);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTile64Optimization);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2Compression);
+        EXPECT_EQ(false, featureTable.flags.ftrXe2Compression);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrXe2PlusTiling);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPml5Support);
         EXPECT_EQ(false, featureTable.flags.ftrTileY);

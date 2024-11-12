@@ -93,7 +93,6 @@ void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrTile64Optimization = true;
     featureTable->flags.ftrWalkerMTP = true;
-    featureTable->flags.ftrXe2Compression = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrPml5Support = true;
 
