@@ -352,6 +352,66 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGp
     memoryManager->freeGpuAddress(addressRange, 0);
 }
 
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressReservationIsAttemptedWithSizeEqualToHalfOfHeapLimitThenSuccessReturned) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto gfxPartition = memoryManager->getGfxPartition(0);
+
+    if (!gfxPartition->getHeapLimit(HeapIndex::heapExtended)) {
+        GTEST_SKIP();
+    }
+
+    gfxPartition->heapInitWithAllocationAlignment(HeapIndex::heapExtended, 0x0, 0x800000000000, MemoryConstants::pageSize);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    uint32_t rootDeviceIndexReserved = 1;
+
+    HeapIndex heap = HeapIndex::heapStandard;
+    size_t size = 64 * MemoryConstants::teraByte;
+    auto alignment = memoryManager->selectAlignmentAndHeap(size, &heap);
+    auto addressRange = memoryManager->reserveGpuAddressOnHeap(0ull, size, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
+    EXPECT_EQ(heap, HeapIndex::heapExtended);
+    EXPECT_EQ(size, alignment);
+    EXPECT_NE(addressRange.address, 0ull);
+    EXPECT_NE(addressRange.size, 0ull);
+
+    memoryManager->freeGpuAddress(addressRange, 0);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressReservationIsAttemptedWithDifferentSizesThenCorrectResultsReturned) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto gfxPartition = memoryManager->getGfxPartition(0);
+
+    if (!gfxPartition->getHeapLimit(HeapIndex::heapExtended)) {
+        GTEST_SKIP();
+    }
+
+    gfxPartition->heapInitWithAllocationAlignment(HeapIndex::heapExtended, 0x0, 0x800200400000, MemoryConstants::pageSize);
+
+    RootDeviceIndicesContainer rootDeviceIndices;
+    rootDeviceIndices.pushUnique(0);
+    uint32_t rootDeviceIndexReserved = 1;
+
+    HeapIndex heap = HeapIndex::heapStandard;
+    size_t size = 128 * MemoryConstants::teraByte;
+    auto alignment = memoryManager->selectAlignmentAndHeap(size, &heap);
+    auto addressRange = memoryManager->reserveGpuAddressOnHeap(0ull, size, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
+    EXPECT_EQ(heap, HeapIndex::heapExtended);
+    EXPECT_EQ(size, alignment);
+    EXPECT_NE(addressRange.address, 0ull);
+    EXPECT_NE(addressRange.size, 0ull);
+
+    heap = HeapIndex::heapStandard;
+    size = 8 * MemoryConstants::gigaByte;
+    alignment = memoryManager->selectAlignmentAndHeap(size, &heap);
+    auto addressRange2 = memoryManager->reserveGpuAddressOnHeap(0ull, size, rootDeviceIndices, &rootDeviceIndexReserved, heap, alignment);
+    EXPECT_EQ(heap, HeapIndex::heapExtended);
+    EXPECT_EQ(size, alignment);
+    EXPECT_EQ(addressRange2.address, 0ull);
+
+    memoryManager->freeGpuAddress(addressRange, 0);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressReservationIsAttemptedWithAnInvalidRequiredPtrThenDifferentRangeReturned) {
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
     RootDeviceIndicesContainer rootDeviceIndices;

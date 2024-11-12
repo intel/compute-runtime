@@ -77,10 +77,14 @@ uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size
             return ptrReturn;
         }
 
-        if (defragmentCount == 1)
+        if (defragmentCount == 0) {
+            defragment();
+            defragmentCount++;
+        } else if (alignment > 2 * MemoryConstants::megaByte && pRightBound - pLeftBound >= sizeToAllocate) {
+            alignment = Math::prevPowerOfTwo(static_cast<size_t>(pRightBound - pLeftBound - 1 - sizeToAllocate + 2 * MemoryConstants::pageSize64k));
+        } else {
             return 0llu;
-        defragment();
-        defragmentCount++;
+        }
     }
 }
 
