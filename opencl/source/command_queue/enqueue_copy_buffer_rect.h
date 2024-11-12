@@ -34,13 +34,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     CsrSelectionArgs csrSelectionArgs{cmdType, srcBuffer, dstBuffer, device->getRootDeviceIndex(), region};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
-    bool isStateless = isForceStateless;
-    if (std::max(srcBuffer->getSize(), dstBuffer->getSize()) >= 4ull * MemoryConstants::gigaByte) {
-        isStateless = true;
-    }
-
+    const bool useStateless = forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()));
     const bool useHeapless = this->getHeaplessModeEnabled();
-    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(isStateless, useHeapless);
+    auto builtInType = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyBufferRect>(useStateless, useHeapless);
 
     MemObjSurface srcBufferSurf(srcBuffer);
     MemObjSurface dstBufferSurf(dstBuffer);
