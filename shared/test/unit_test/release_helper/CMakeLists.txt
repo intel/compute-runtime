@@ -19,6 +19,8 @@ target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_12_74_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_01_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_20_04_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_00_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_30_01_tests.cpp
 )
 
 add_subdirectories()

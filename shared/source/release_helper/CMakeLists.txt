@@ -24,11 +24,18 @@ set(NEO_CORE_RELEASE_HELPER
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_1274.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2001.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_2004.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3000.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_3001.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe2_hpg.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/release_helper_common_xe3_lpg.inl
 )
 
-set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER ${CMAKE_CURRENT_SOURCE_DIR}/enable_release_helper_xe.cpp)
-set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_release_helper_xe2.cpp)
+set_property(GLOBAL APPEND PROPERTY NEO_CORE_ENABLE_RELEASE_HELPER
+             ${CMAKE_CURRENT_SOURCE_DIR}/enable_release_helper_xe.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_release_helper_xe2.cpp
+             ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}enable_release_helper_xe3.cpp
+)
 set_property(GLOBAL APPEND PROPERTY NEO_CORE_RELEASE_HELPER ${NEO_CORE_RELEASE_HELPER})
 
 add_subdirectories()

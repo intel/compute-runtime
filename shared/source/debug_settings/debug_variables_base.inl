@@ -549,6 +549,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideHostAllocationMemPolicyMode, -1, "Overri
 DECLARE_DEBUG_VARIABLE(int32_t, EnableFtrTile64Optimization, 0, "Control feature Tile64 Optimization flag passed to gmmlib. -1: pass as-is, 0: disable flag(default due to NEO-10623), 1: enable flag");
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTheMaximumNumberOfOutstandingRayqueriesPerSs, -1, "Set the maximum number of outstanding RayQueries per SS, -1: default, 0: 128, 1: 256, 2: 512, 3: 1024")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDispatchTimeoutCounter, -1, "Set timeout for Synchronous Ray Tracing, -1: default, 0: 64, 1: 128, 2: 192, 3: 256, 4: 512, 5: 1024, 6: 2048, 7: 4096")
+DECLARE_DEBUG_VARIABLE(int32_t, Enable10ThreadsPerEu, -1, "Enable 10 threads per EU  HSD-18022695913, -1: default, 0: disabled, 1: enabled")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

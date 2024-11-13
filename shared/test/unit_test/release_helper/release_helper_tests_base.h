@@ -31,6 +31,9 @@ struct ReleaseHelperTestsBase : public ::testing::Test {
     void whenIsLocalOnlyAllowedCalledThenTrueReturned();
     void whenIsLocalOnlyAllowedCalledThenFalseReturned();
     void whenGettingPreferredSlmSizeThenAllEntriesEmpty();
+    void whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
+    void whenGettingNumThreadsPerEuThenCorrectValueIsReturnedBasedOnDebugKey();
+    void whenGettingThreadsPerEuConfigsThenCorrectValueIsReturnedBasedOnNumThreadPerEu();
     virtual std::vector<uint32_t> getRevisions() = 0;
 
     std::unique_ptr<ReleaseHelper> releaseHelper;
