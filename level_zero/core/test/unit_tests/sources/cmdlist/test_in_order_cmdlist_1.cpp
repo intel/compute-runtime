@@ -50,6 +50,10 @@ HWTEST2_F(InOrderCmdListTests, givenDriverHandleWhenAskingForExtensionsThenRetur
     EXPECT_NE(it, extensionProperties.end());
     EXPECT_EQ((*it).version, ZE_EVENT_POOL_COUNTER_BASED_EXP_VERSION_CURRENT);
 
+    it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZEX_COUNTER_BASED_EVENT_EXT_NAME) == 0); });
+    EXPECT_NE(it, extensionProperties.end());
+    EXPECT_EQ((*it).version, ZEX_COUNTER_BASED_EVENT_VERSION_1_0);
+
     it = std::find_if(extensionProperties.begin(), extensionProperties.end(), [](const auto &extension) { return (strcmp(extension.name, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC) == 0); });
     EXPECT_NE(it, extensionProperties.end());
     EXPECT_EQ((*it).version, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_CURRENT);

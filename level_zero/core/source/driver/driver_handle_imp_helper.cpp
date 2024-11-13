@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/include/ze_intel_gpu.h"
 
@@ -35,6 +36,7 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsS
     // Driver experimental extensions
     {ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT},
     {ZE_EVENT_POOL_COUNTER_BASED_EXP_NAME, ZE_EVENT_POOL_COUNTER_BASED_EXP_VERSION_CURRENT},
+    {ZEX_COUNTER_BASED_EVENT_EXT_NAME, ZEX_COUNTER_BASED_EVENT_VERSION_1_0},
     {ZE_INTEL_COMMAND_LIST_MEMORY_SYNC, ZE_INTEL_COMMAND_LIST_MEMORY_SYNC_EXP_VERSION_CURRENT},
     {ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT},
     {ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME, ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_VERSION_CURRENT},

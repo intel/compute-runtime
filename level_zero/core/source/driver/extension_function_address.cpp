@@ -42,6 +42,11 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate);
     RETURN_FUNC_PTR_IF_EXIST(zexEventGetDeviceAddress);
 
+    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCreate2);
+    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventGetIpcHandle);
+    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventOpenIpcHandle);
+    RETURN_FUNC_PTR_IF_EXIST(zexCounterBasedEventCloseIpcHandle);
+
     RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);
     RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceGetConcurrentMetricGroupsExp);

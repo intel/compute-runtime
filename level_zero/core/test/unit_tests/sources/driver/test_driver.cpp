@@ -1328,6 +1328,11 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
     decltype(&zexIntelAllocateNetworkInterrupt) expectedIntelAllocateNetworkInterrupt = L0::zexIntelAllocateNetworkInterrupt;
     decltype(&zexIntelReleaseNetworkInterrupt) expectedIntelReleaseNetworkInterrupt = L0::zexIntelReleaseNetworkInterrupt;
 
+    decltype(&zexCounterBasedEventCreate2) expectedCounterBasedEventCreate2 = L0::zexCounterBasedEventCreate2;
+    decltype(&zexCounterBasedEventGetIpcHandle) expectedCounterBasedEventGetIpcHandle = L0::zexCounterBasedEventGetIpcHandle;
+    decltype(&zexCounterBasedEventOpenIpcHandle) expectedCounterBasedEventOpenIpcHandle = L0::zexCounterBasedEventOpenIpcHandle;
+    decltype(&zexCounterBasedEventCloseIpcHandle) expectedCounterBasedEventCloseIpcHandle = L0::zexCounterBasedEventCloseIpcHandle;
+
     void *funPtr = nullptr;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexDriverImportExternalPointer", &funPtr));
@@ -1356,6 +1361,18 @@ TEST_F(DriverExperimentalApiTest, whenRetrievingApiFunctionThenExpectProperPoint
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexIntelReleaseNetworkInterrupt", &funPtr));
     EXPECT_EQ(expectedIntelReleaseNetworkInterrupt, reinterpret_cast<decltype(&zexIntelReleaseNetworkInterrupt)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCreate2", &funPtr));
+    EXPECT_EQ(expectedCounterBasedEventCreate2, reinterpret_cast<decltype(&zexCounterBasedEventCreate2)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventGetIpcHandle", &funPtr));
+    EXPECT_EQ(expectedCounterBasedEventGetIpcHandle, reinterpret_cast<decltype(&zexCounterBasedEventGetIpcHandle)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventOpenIpcHandle", &funPtr));
+    EXPECT_EQ(expectedCounterBasedEventOpenIpcHandle, reinterpret_cast<decltype(&zexCounterBasedEventOpenIpcHandle)>(funPtr));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeDriverGetExtensionFunctionAddress(driverHandle, "zexCounterBasedEventCloseIpcHandle", &funPtr));
+    EXPECT_EQ(expectedCounterBasedEventCloseIpcHandle, reinterpret_cast<decltype(&zexCounterBasedEventCloseIpcHandle)>(funPtr));
 }
 
 TEST_F(DriverExperimentalApiTest, givenHostPointerApiExistWhenImportingPtrThenExpectProperBehavior) {

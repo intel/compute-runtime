@@ -146,10 +146,10 @@ typedef struct _ze_intel_device_media_exp_properties_t {
     uint32_t numDecoderCores;                ///< [out] number of decoder cores
 } ze_intel_device_media_exp_properties_t;
 
-#ifndef ZEX_COUNTER_BASED_EVENT_NAME
+#ifndef ZEX_COUNTER_BASED_EVENT_EXT_NAME
 /// @brief Counter Based Event Extension Name
-#define ZEX_COUNTER_BASED_EVENT_NAME "ZEX_counter_based_event"
-#endif // ZEX_COUNTER_BASED_EVENT_NAME
+#define ZEX_COUNTER_BASED_EVENT_EXT_NAME "ZEX_counter_based_event"
+#endif // ZEX_COUNTER_BASED_EVENT_EXT_NAME
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Counter Based Event Extension Version(s)
