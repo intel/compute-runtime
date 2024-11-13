@@ -150,6 +150,12 @@ ze_result_t OaMetricStreamerImp::initialize(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
+uint32_t OaMetricStreamerImp::getOaBufferSize(const uint32_t notifyEveryNReports) const {
+
+    // Notification is on half full buffer, hence multiplication by 2.
+    return notifyEveryNReports * rawReportSize * 2;
+}
+
 ze_result_t OaMetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports,
                                                    uint32_t &samplingPeriodNs) {
     auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(hMetricGroup));
