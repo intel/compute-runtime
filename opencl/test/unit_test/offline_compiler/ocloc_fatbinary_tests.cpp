@@ -1534,7 +1534,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
         auto familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(AOT::UNKNOWN_FAMILY) + 1);
         auto familyToId = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(family.str());
 
-        while (familyFromId <= familyToId) {
+        while (familyFromId <= familyToId && familyFromId < AOT::FAMILY_MAX) {
             getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
             familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(familyFromId) + 1);
         }
