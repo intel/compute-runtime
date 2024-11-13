@@ -45,7 +45,7 @@ zexEventGetDeviceAddress(ze_event_handle_t event, uint64_t *completionValue, uin
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent) {
-    constexpr uint32_t counterBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
+    constexpr uint32_t supportedBasedFlags = (ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE);
 
     auto device = Device::fromHandle(toInternalType(hDevice));
 
@@ -57,6 +57,11 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
     const bool timestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP);
     const bool mappedTimestampFlag = !!(desc->flags & ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_MAPPED_TIMESTAMP);
 
+    uint32_t inputCbFlags = desc->flags & supportedBasedFlags;
+    if (inputCbFlags == 0) {
+        inputCbFlags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
+    }
+
     if (ipcFlag && (timestampFlag || mappedTimestampFlag)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -67,7 +72,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         0,                                 // totalEventSize
         EventPacketsCount::maxKernelSplit, // maxKernelCount
         0,                                 // maxPacketsCount
-        desc->flags & counterBasedFlags,   // counterBasedFlags
+        inputCbFlags,                      // counterBasedFlags
         0,                                 // index
         desc->signalScope,                 // signalScope
         desc->waitScope,                   // waitScope

@@ -170,8 +170,8 @@ typedef struct _zex_ipc_counter_based_event_handle_t {
 /// @brief Supported event flags for defining counter-based event
 typedef uint32_t zex_counter_based_event_exp_flags_t;
 typedef enum _zex_counter_based_event_exp_flag_t {
-    ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE = ZE_BIT(0),               ///< Counter-based event is used for immediate command lists. Immediate and/or Non-immediate mode must be set
-    ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE = ZE_BIT(1),           ///< Counter-based event is used for non-immediate command lists. Immediate and/or Non-immediate mode must be set
+    ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE = ZE_BIT(0),               ///< Counter-based event is used for immediate command lists (default)
+    ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE = ZE_BIT(1),           ///< Counter-based event is used for non-immediate command lists
     ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE = ZE_BIT(2),            ///< Signals and waits are also visible to host
     ZEX_COUNTER_BASED_EVENT_FLAG_IPC = ZE_BIT(3),                     ///< Event can be shared across processes for waiting
     ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP = ZE_BIT(4),        ///< Event contains kernel timestamps
@@ -184,7 +184,8 @@ typedef enum _zex_counter_based_event_exp_flag_t {
 typedef struct _zex_counter_based_event_desc_t {
     ze_structure_type_t stype;                 ///< [in] type of this structure
     const void *pNext;                         ///< [in][optional] must be null or a pointer to an extension-specific
-    zex_counter_based_event_exp_flags_t flags; ///< [in] counter based event flags
+    zex_counter_based_event_exp_flags_t flags; ///< [in] counter based event flags.
+                                               ///< Must be 0 (default) or a valid combination of ::ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE and/or ::ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE
     ze_event_scope_flags_t signalScope;        ///< [in] defines the scope of relevant cache hierarchies to flush on a
                                                ///< signal action before the event is triggered.
                                                ///< must be 0 (default) or a valid combination of ::ze_event_scope_flag_t;
