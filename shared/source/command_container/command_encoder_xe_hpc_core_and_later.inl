@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/utilities/lookup_array.h"
 
 namespace NEO {
 
@@ -35,6 +36,24 @@ void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER
 template <typename Family>
 inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t writeAddress) {
     atomic.setMemoryAddress(writeAddress);
+}
+
+template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor,
+                                                        uint32_t value,
+                                                        const HardwareInfo &hwInfo) {
+    using BARRIERS = typename InterfaceDescriptorType::NUMBER_OF_BARRIERS;
+    static const LookupArray<uint32_t, BARRIERS, 8> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
+                                                                         {1, BARRIERS::NUMBER_OF_BARRIERS_B1},
+                                                                         {2, BARRIERS::NUMBER_OF_BARRIERS_B2},
+                                                                         {4, BARRIERS::NUMBER_OF_BARRIERS_B4},
+                                                                         {8, BARRIERS::NUMBER_OF_BARRIERS_B8},
+                                                                         {16, BARRIERS::NUMBER_OF_BARRIERS_B16},
+                                                                         {24, BARRIERS::NUMBER_OF_BARRIERS_B24},
+                                                                         {32, BARRIERS::NUMBER_OF_BARRIERS_B32}}});
+    BARRIERS numBarriers = barrierLookupArray.lookUp(value);
+    interfaceDescriptor.setNumberOfBarriers(numBarriers);
 }
 
 } // namespace NEO
