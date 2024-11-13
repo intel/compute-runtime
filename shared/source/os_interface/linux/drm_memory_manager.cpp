@@ -2478,12 +2478,15 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
     auto canAllocateInHeapExtended = debugManager.flags.AllocateSharedAllocationsInHeapExtendedHost.get();
     if (canAllocateInHeapExtended && gfxPartition->getHeapLimit(HeapIndex::heapExtendedHost) > 0u && !allocationData.flags.resource48Bit) {
-        preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::heapExtendedHost);
+        preferredAddress = ioctlHelper->acquireGpuRange(*this, totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::heapExtendedHost);
+    }
+    if (0 == preferredAddress) {
+        preferredAddress = ioctlHelper->acquireGpuRange(*this, totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::totalHeaps);
     }
 
-    auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    auto cpuPointer = ioctlHelper->mmapFunction(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     if (castToUint64(cpuPointer) != preferredAddress) {
-        releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+        ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
         preferredAddress = 0;
     }
 
@@ -2534,16 +2537,16 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, patIndex, {}, -1, useChunking, numOfChunks, allocationData.flags.isUSMHostAllocation);
 
         if (ret) {
-            this->munmapFunction(cpuPointer, totalSizeToAlloc);
-            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            ioctlHelper->munmapFunction(*this, cpuPointer, totalSizeToAlloc);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             return nullptr;
         }
 
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, currentSize, maxOsContextCount));
 
         if (vmAdviseAttribute.has_value() && !ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute.value(), nullptr)) {
-            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
-            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             return nullptr;
         }
 
@@ -2551,12 +2554,12 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         uint64_t offset = 0;
         bo->setBOType(getBOTypeFromPatIndex(patIndex, productHelper.isVmBindPatIndexProgrammingSupported()));
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
-            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
-            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
+            ioctlHelper->releaseGpuRange(*this, reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             return nullptr;
         }
 
-        this->mmapFunction(currentAddress, currentSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+        ioctlHelper->mmapFunction(*this, currentAddress, currentSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
 
         bo->setAddress(castToUint64(currentAddress));
 
@@ -2580,7 +2583,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     allocation->storageInfo.isChunked = useChunking;
     allocation->storageInfo.numOfChunks = numOfChunks;
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+        ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);
         for (auto bo : bos) {
             delete bo;
         }
