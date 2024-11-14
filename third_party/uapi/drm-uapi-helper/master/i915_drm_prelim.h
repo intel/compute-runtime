@@ -134,13 +134,14 @@ struct prelim_i915_user_extension {
  * Note that I915_PMU_SAMPLE_BITS is 4 so a max of 16 events can be sampled for
  * an engine. For the PRELIM version start at half of that value.
  */
-#define PRELIM_I915_SAMPLE_BUSY_TICKS 8
+#define PRELIM_I915_SAMPLE_BUSY_TICKS  8
+#define PRELIM_I915_SAMPLE_TOTAL_TICKS 9
 
 #define PRELIM_I915_PMU_ENGINE_BUSY_TICKS(class, instance) \
 	__I915_PMU_ENGINE(class, instance, PRELIM_I915_SAMPLE_BUSY_TICKS)
 
-#define  PRELIM_I915_SCHEDULER_CAP_ENGINE_BUSY_TICKS_STATS	(1ul << 16)
-
+#define PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(class, instance) \
+	__I915_PMU_ENGINE(class, instance, PRELIM_I915_SAMPLE_TOTAL_TICKS)
 /*
  * HW error counters.
  */
@@ -211,6 +212,16 @@ struct prelim_i915_user_extension {
 #define PRELIM_I915_PVC_PMU_SOC_ERROR_NONFATAL_CD0_MDFI         (125)
 #define PRELIM_I915_PVC_PMU_SOC_ERROR_NONFATAL_MDFI_EAST        (126)
 #define PRELIM_I915_PVC_PMU_SOC_ERROR_NONFATAL_MDFI_SOUTH       (127)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_IOSF_PCIAER		(128)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_IOSF_PCIEER		(129)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_UR_RESPONSE		(130)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_SERR_SPI		(131)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_HBM_PUNIT_MCA	(132)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_PCIAER		(133)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_PCIEER		(134)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_UR			(135)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_SERR_SRCS		(136)
+#define PRELIM_I915_PVC_PMU_SOC_ERROR_FATAL_HBM_MCA		(137)
 
 #define PRELIM_I915_PMU_HW_ERROR(gt, id) \
 	((__PRELIM_I915_PMU_HW_ERROR_EVENT_ID_OFFSET + (id)) | \
@@ -966,7 +977,7 @@ struct prelim_drm_i915_debug_event_vm_bind {
 	__u64 va_length;
 	__u32 num_uuids;
 	__u32 flags;
-	__u64 uuids[0];
+	__u64 uuids[];
 } __attribute__((packed));
 
 struct prelim_drm_i915_debug_event_eu_attention {
@@ -993,7 +1004,7 @@ struct prelim_drm_i915_debug_event_eu_attention {
 	 * 'pair' instead of individual EUs.
 	 */
 
-	__u8 bitmask[0];
+	__u8 bitmask[];
 } __attribute__((packed));
 
 struct prelim_drm_i915_debug_event_page_fault {
@@ -1021,7 +1032,7 @@ struct prelim_drm_i915_debug_event_page_fault {
 	 * The order of the bitmask array is before, after, resolved.
 	 */
 
-	__u8 bitmask[0];
+	__u8 bitmask[];
 } __attribute__((packed));
 
 struct prelim_drm_i915_debug_read_uuid {
@@ -1050,7 +1061,7 @@ struct prelim_drm_i915_debug_event_engines {
 	__u64 client_handle;
 	__u64 ctx_handle;
 	__u64 num_engines;
-	struct prelim_drm_i915_debug_engine_info engines[0];
+	struct prelim_drm_i915_debug_engine_info engines[];
 } __attribute__((packed));
 
 struct prelim_drm_i915_debug_vm_open {
