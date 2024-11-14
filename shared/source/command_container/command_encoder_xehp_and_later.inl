@@ -44,13 +44,6 @@ constexpr size_t timestampDestinationAddressAlignment = 16;
 constexpr size_t immWriteDestinationAddressAlignment = 8;
 
 template <typename Family>
-template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
-                                              const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
-                                              const RootDeviceEnvironment &rootDeviceEnvironment) {
-}
-
-template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
@@ -1019,11 +1012,6 @@ uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwIn
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_2K;
     }
     return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K;
-}
-
-template <typename Family>
-bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) {
-    return cooperativeKernel;
 }
 
 template <typename Family>

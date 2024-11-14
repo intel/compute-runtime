@@ -8,6 +8,8 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_from_gen12lp_to_xe2_hpg.inl"
+#include "shared/source/command_container/command_encoder_from_xe_hpg_core_to_xe2_hpg.inl"
+#include "shared/source/command_container/command_encoder_from_xe_hpg_core_to_xe3_core.inl"
 #include "shared/source/command_container/command_encoder_heap_addressing.inl"
 #include "shared/source/command_container/command_encoder_tgllp_and_later.inl"
 #include "shared/source/command_container/command_encoder_xe2_hpg_core_and_later.inl"
@@ -132,12 +134,6 @@ void EncodeSurfaceState<Family>::setAuxParamsForMCSCCS(R_SURFACE_STATE *surfaceS
     if (releaseHelper && releaseHelper->isAuxSurfaceModeOverrideRequired())
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
-
-template <>
-template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfaceDescriptor, uint32_t grfCount,
-                                              const size_t &sizeCrossThreadData, const size_t &sizePerThreadData,
-                                              const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 } // namespace NEO
 

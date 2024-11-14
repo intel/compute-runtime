@@ -40,6 +40,18 @@ if(SUPPORT_XE_HPG OR SUPPORT_XE_HPC)
   )
 endif()
 
+if(SUPPORT_XE_HPG OR SUPPORT_XE_HPC OR SUPPORT_XE2_HPG_CORE)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_xe_hpg_core_to_xe2_hpg.inl
+  )
+endif()
+
+if(SUPPORT_XE_HPG OR SUPPORT_XE_HPC OR SUPPORT_XE2_HPG_CORE OR SUPPORT_XE3_CORE)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_xe_hpg_core_to_xe3_core.inl
+  )
+endif()
+
 if(SUPPORT_GEN12LP OR SUPPORT_XE_HPG)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_gen12lp_and_xe_hpg.inl

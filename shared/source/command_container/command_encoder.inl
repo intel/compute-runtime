@@ -573,11 +573,6 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
 }
 
 template <typename Family>
-template <typename InterfaceDescriptorType>
-void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy) {
-}
-
-template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
 
@@ -712,16 +707,6 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch, const ProductHelper &productHelper) {
-    surfaceState->setSurfacePitch(pitch);
-}
-
-template <typename Family>
-uint32_t EncodeSurfaceState<Family>::getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState, const ProductHelper &productHelper) {
-    return surfaceState->getSurfacePitch();
-}
-
-template <typename Family>
 void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
 
@@ -776,16 +761,6 @@ size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
     return Family::cacheLineSize;
 }
 
-template <typename GfxFamily>
-size_t EncodeDispatchKernel<GfxFamily>::getScratchPtrOffsetOfImplicitArgs() {
-    return 0;
-}
-
-template <typename Family>
-template <bool isHeapless>
-void EncodeDispatchKernel<Family>::setScratchAddress(uint64_t &scratchAddress, uint32_t requiredScratchSlot0Size, uint32_t requiredScratchSlot1Size, IndirectHeap *ssh, CommandStreamReceiver &submissionCsr) {
-}
-
 template <typename Family>
 void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws) {
     for (int i = 0; i < 3; ++i) {
@@ -808,12 +783,6 @@ inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(con
         }
     }
     return requiredSize;
-}
-
-template <typename Family>
-void EncodeSemaphore<Family>::appendSemaphoreCommand(MI_SEMAPHORE_WAIT &cmd, uint64_t compareData, bool indirect, bool useQwordData, bool switchOnUnsuccessful) {
-    constexpr uint64_t upper32b = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) << 32;
-    UNRECOVERABLE_IF(useQwordData || (compareData & upper32b));
 }
 
 template <typename Family>
