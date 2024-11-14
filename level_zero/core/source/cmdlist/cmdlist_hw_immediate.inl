@@ -1529,16 +1529,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
         return ret;
     }
 
-    bool relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
+    bool relaxedOrderingDispatch = false;
     if (hSignalEvent) {
-        ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, false);
+        ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
     }
 
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
-    return flushImmediate(ret, true, hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch), relaxedOrderingDispatch, true, false, hSignalEvent, true);
+    bool hasStallingCmds = true;
+    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, true, false, hSignalEvent, true);
 }
 
 } // namespace L0

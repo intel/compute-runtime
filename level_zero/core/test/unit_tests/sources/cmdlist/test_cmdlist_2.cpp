@@ -22,6 +22,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
 
 #include "test_traits_common.h"
 
@@ -1849,6 +1850,40 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenRegularCmdListWhenFlushingThenPassS
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true, nullptr));
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+}
+
+HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAndSubmittedToImmediateWhenFlushingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    bool useImmediateFlushTask = getHelper<L0GfxCoreHelper>().platformSupportsImmediateComputeFlushTask();
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+    auto immCommandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    ASSERT_NE(nullptr, immCommandList);
+    auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
+    whiteBoxCmdList->enableInOrderExecution();
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+    ultCsr->recordFlushedBatchBuffer = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->close());
+
+    auto cmdListHandle = commandList->toHandle();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, immCommandList->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr));
+
+    if (useImmediateFlushTask) {
+        EXPECT_FALSE(ultCsr->recordedImmediateDispatchFlags.hasRelaxedOrderingDependencies);
+        EXPECT_TRUE(ultCsr->recordedImmediateDispatchFlags.hasStallingCmds);
+    } else {
+        EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
+        EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasStallingCmds);
+    }
 }
 
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenCmdListWhenCallingSynchronizeThenUnregisterCsrClient) {
