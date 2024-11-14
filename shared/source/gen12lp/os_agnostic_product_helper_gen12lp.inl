@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,5 +20,10 @@ bool ProductHelperHw<gfxProduct>::isPageTableManagerSupported(const HardwareInfo
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return getMaxThreadsForWorkgroup(hwInfo, maxNumEUsPerDualSubSlice);
+}
+
+template <>
+const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
+    return {};
 }
 } // namespace NEO
