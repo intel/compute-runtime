@@ -127,6 +127,14 @@ ze_result_t SysmanDevice::deviceGetProperties(zes_device_handle_t hDevice, zes_d
     return pSysmanDevice->deviceGetProperties(pProperties);
 }
 
+ze_result_t SysmanDevice::deviceEnumEnabledVF(zes_device_handle_t hDevice, uint32_t *pCount, zes_vf_handle_t *phVFhandle) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->deviceEnumEnabledVF(pCount, phVFhandle);
+}
+
 ze_result_t SysmanDevice::processesGetState(zes_device_handle_t hDevice, uint32_t *pCount, zes_process_state_t *pProcesses) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     if (pSysmanDevice == nullptr) {

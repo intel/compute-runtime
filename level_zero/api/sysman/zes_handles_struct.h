@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,4 +57,8 @@ struct _zes_perf_handle_t {
 
 struct _zes_fan_handle_t {
     virtual ~_zes_fan_handle_t() = default;
+};
+
+struct _zes_vf_handle_t {
+    virtual ~_zes_vf_handle_t() = default;
 };

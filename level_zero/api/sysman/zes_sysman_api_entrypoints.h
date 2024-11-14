@@ -892,6 +892,57 @@ ze_result_t zesVFManagementSetVFTelemetrySamplingIntervalExp(
     }
 }
 
+ze_result_t zesDeviceEnumEnabledVFExp(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_vf_handle_t *phVFhandle) {
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceEnumEnabledVF(hDevice, pCount, phVFhandle);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::SysmanDevice::deviceEnumEnabledVF(hDevice, pCount, phVFhandle);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFCapabilitiesExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_exp_capabilities_t *pCapability) {
+    if (L0::sysmanInitFromCore) {
+        return L0::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFMemoryUtilizationExp2(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_mem_exp2_t *pMemUtil) {
+    if (L0::sysmanInitFromCore) {
+        return L0::VfManagement::fromHandle(hVFhandle)->vfGetMemoryUtilization(pCount, pMemUtil);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetMemoryUtilization(pCount, pMemUtil);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFEngineUtilizationExp2(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_engine_exp2_t *pEngineUtil) {
+    if (L0::sysmanInitFromCore) {
+        return L0::VfManagement::fromHandle(hVFhandle)->vfGetEngineUtilization(pCount, pEngineUtil);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetEngineUtilization(pCount, pEngineUtil);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
 ze_result_t zesDeviceEnumMemoryModules(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
@@ -2049,6 +2100,33 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFEngineUtilizationExp(
     uint32_t *pCount,
     zes_vf_util_engine_exp_t *pEngineUtil) {
     return L0::zesVFManagementGetVFEngineUtilizationExp(hVFhandle, pCount, pEngineUtil);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesDeviceEnumEnabledVFExp(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_vf_handle_t *phVFhandle) {
+    return L0::zesDeviceEnumEnabledVFExp(hDevice, pCount, phVFhandle);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFCapabilitiesExp(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_exp_capabilities_t *pCapability) {
+    return L0::zesVFManagementGetVFCapabilitiesExp(hVFhandle, pCapability);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFMemoryUtilizationExp2(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_mem_exp2_t *pMemUtil) {
+    return L0::zesVFManagementGetVFMemoryUtilizationExp2(hVFhandle, pCount, pMemUtil);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFEngineUtilizationExp2(
+    zes_vf_handle_t hVFhandle,
+    uint32_t *pCount,
+    zes_vf_util_engine_exp2_t *pEngineUtil) {
+    return L0::zesVFManagementGetVFEngineUtilizationExp2(hVFhandle, pCount, pEngineUtil);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementSetVFTelemetryModeExp(

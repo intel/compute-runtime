@@ -101,6 +101,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::deviceSetEccState(invalidHandle, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::deviceResetExt(invalidHandle, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::fabricPortGetMultiPortThroughput(invalidHandle, count, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::deviceEnumEnabledVF(invalidHandle, &count, nullptr));
 }
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,6 +44,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     DiagnosticsHandleContext *pDiagnosticsHandleContext = nullptr;
     PerformanceHandleContext *pPerformanceHandleContext = nullptr;
     Ecc *pEcc = nullptr;
+    VfManagementHandleContext *pVfManagementHandleContext = nullptr;
 
     ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) override;
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
@@ -75,6 +76,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t deviceResetExt(zes_reset_properties_t *pProperties) override;
     bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) override;
+    ze_result_t deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) override;
 
     OsSysman *deviceGetOsInterface() override;
     static void getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice, ze_bool_t useMultiArchEnabled);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
+#include "level_zero/tools/source/sysman/vf_management/vf_management.h"
 
 #include <vector>
 
@@ -46,6 +47,7 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
     pPerformanceHandleContext = new PerformanceHandleContext(pOsSysman);
     pEcc = new EccImp(pOsSysman);
+    pVfManagementHandleContext = new VfManagementHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -66,6 +68,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pFrequencyHandleContext);
     freeResource(pPowerHandleContext);
     freeResource(pEcc);
+    freeResource(pVfManagementHandleContext);
     freeResource(pOsSysman);
 }
 
@@ -234,6 +237,10 @@ ze_result_t SysmanDeviceImp::deviceGetEccState(zes_device_ecc_properties_t *pSta
 }
 ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) {
     return pEcc->setEccState(newState, pState);
+}
+
+ze_result_t SysmanDeviceImp::deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) {
+    return pVfManagementHandleContext->vfManagementGet(pCount, phVFhandle);
 }
 
 } // namespace L0

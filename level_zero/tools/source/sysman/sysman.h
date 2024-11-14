@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,7 @@
 #include "level_zero/tools/source/sysman/scheduler/scheduler.h"
 #include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/source/sysman/temperature/temperature.h"
+#include "level_zero/tools/source/sysman/vf_management/vf_management.h"
 #include <level_zero/zes_api.h>
 
 struct _zet_sysman_handle_t {};
@@ -63,6 +64,7 @@ struct SysmanDevice : _ze_device_handle_t {
     static uint64_t getSysmanTimestamp();
     static ze_result_t deviceResetExt(zes_device_handle_t hDevice, zes_reset_properties_t *pProperties);
     static ze_result_t fabricPortGetMultiPortThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
+    static ze_result_t deviceEnumEnabledVF(zes_device_handle_t hDevice, uint32_t *pCount, zes_vf_handle_t *phVFhandle);
 
     virtual ze_result_t performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) = 0;
     virtual ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) = 0;
@@ -94,6 +96,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) = 0;
     virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
     virtual ze_result_t deviceResetExt(zes_reset_properties_t *pProperties) = 0;
+    virtual ze_result_t deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) = 0;
     virtual OsSysman *deviceGetOsInterface() = 0;
     virtual ~SysmanDevice() = default;
 };

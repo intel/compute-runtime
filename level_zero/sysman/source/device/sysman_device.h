@@ -26,6 +26,7 @@
 #include "level_zero/sysman/source/api/scheduler/sysman_scheduler.h"
 #include "level_zero/sysman/source/api/standby/sysman_standby.h"
 #include "level_zero/sysman/source/api/temperature/sysman_temperature.h"
+#include "level_zero/sysman/source/api/vf_management/sysman_vf_management.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -132,6 +133,9 @@ struct SysmanDevice : _ze_device_handle_t {
 
     virtual ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) = 0;
     static ze_result_t fabricPortGetMultiPortThroughput(zes_device_handle_t hDevice, uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput);
+
+    virtual ze_result_t deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) = 0;
+    static ze_result_t deviceEnumEnabledVF(zes_device_handle_t hDevice, uint32_t *pCount, zes_vf_handle_t *phVFhandle);
 
     virtual OsSysman *deviceGetOsInterface() = 0;
 };

@@ -134,7 +134,8 @@ void usage() {
                  "\n  -C,   --ecc                                                                       selectively run ecc black box test"
                  "\n  -a,   --fan                                                                       selectively run fan black box test"
                  "\n  -h,   --help                                                                      display help message"
-                 "\n  -re,   --rasexp                                                                    selectively run ras experimental API black box test"
+                 "\n  -re,  --rasexp                                                                    selectively run ras experimental API black box test"
+                 "\n  -v,   --vftelemetry                                                               selectively run vf telemetry API black box test"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
@@ -1585,6 +1586,54 @@ void testSysmanFan(ze_device_handle_t &device) {
     }
 }
 
+static std::string getMemoryModuleLocation(zes_mem_loc_t type) {
+    static const std::map<zes_mem_loc_t, std::string> memoryModuleLocationEnumToStringMap{
+        {ZES_MEM_LOC_SYSTEM, "ZES_MEM_LOC_SYSTEM"},
+        {ZES_MEM_LOC_DEVICE, "ZES_MEM_LOC_DEVICE"}};
+    if (memoryModuleLocationEnumToStringMap.find(type) != memoryModuleLocationEnumToStringMap.end()) {
+        return memoryModuleLocationEnumToStringMap.at(type);
+    } else {
+        return "NOT SUPPORTED MEMORY MODULE LOCATION";
+    }
+}
+
+void testSysmanVfTelemetry(ze_device_handle_t &device) {
+    std::cout << std::endl
+              << " ----  VF Telemetry tests ---- " << std::endl;
+    uint32_t count = 0;
+    VALIDATECALL(zesDeviceEnumEnabledVFExp(device, &count, nullptr));
+    if (count == 0) {
+        std::cout << "Could not retrieve Active VF handles" << std::endl;
+        return;
+    }
+    std::cout << "Enabled VF Handle count = " << count << std::endl;
+    std::vector<zes_vf_handle_t> handles(count, nullptr);
+    VALIDATECALL(zesDeviceEnumEnabledVFExp(device, &count, handles.data()));
+
+    for (const auto &handle : handles) {
+        zes_vf_exp_capabilities_t props = {};
+        VALIDATECALL(zesVFManagementGetVFCapabilitiesExp(handle, &props));
+        if (verbose) {
+            std::cout << "----- PCI BDF ------ " << std::endl;
+            std::cout << "Domain: Bus: Device: Function = " << props.address.domain << " : " << props.address.bus << " : " << props.address.device << " : " << props.address.function << std::endl;
+            std::cout << "Memory Size in KiloBytes = " << props.vfDeviceMemSize << std::endl;
+            std::cout << "VF Id = " << props.vfID << std::endl;
+        }
+
+        // Get Mem utilization
+        count = 0;
+        VALIDATECALL(zesVFManagementGetVFMemoryUtilizationExp2(handle, &count, nullptr));
+        std::vector<zes_vf_util_mem_exp2_t> memUtils(count);
+        VALIDATECALL(zesVFManagementGetVFMemoryUtilizationExp2(handle, &count, memUtils.data()));
+        for (uint32_t it = 0; it < count; it++) {
+            if (verbose) {
+                std::cout << "Location of the Memory = " << getMemoryModuleLocation(memUtils[it].vfMemLocation) << std::endl;
+                std::cout << "Memory Utilized in Bytes = " << memUtils[it].vfMemUtilized << std::endl;
+            }
+        }
+    }
+}
+
 bool checkpFactorArguments(std::vector<ze_device_handle_t> &devices, std::vector<std::string> &buf) {
     uint32_t deviceIndex = static_cast<uint32_t>(std::stoi(buf[1]));
     if (deviceIndex >= devices.size()) {
@@ -1856,6 +1905,12 @@ int main(int argc, char *argv[]) {
     if (isParamEnabled(argc, argv, "-a", "--fan", &optind)) {
         std::for_each(devices.begin(), devices.end(), [&](auto device) {
             testSysmanFan(device);
+        });
+    }
+
+    if (isParamEnabled(argc, argv, "-v", "--vftelemetry", &optind)) {
+        std::for_each(devices.begin(), devices.end(), [&](auto device) {
+            testSysmanVfTelemetry(device);
         });
     }
 

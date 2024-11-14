@@ -378,6 +378,7 @@ ZE_DLLEXPORT ze_result_t ZE_APICALL zesGetDeviceExpProcAddrTable(
 
     fillDdiEntry(pDdiTable->pfnGetSubDevicePropertiesExp, L0::zesDeviceGetSubDevicePropertiesExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnEnumActiveVFExp, L0::zesDeviceEnumActiveVFExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnEnumEnabledVFExp, L0::zesDeviceEnumEnabledVFExp, version, ZE_API_VERSION_1_11);
 
     return result;
 }
@@ -398,6 +399,9 @@ zesGetVFManagementExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp, L0::zesVFManagementGetVFEngineUtilizationExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnSetVFTelemetryModeExp, L0::zesVFManagementSetVFTelemetryModeExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnSetVFTelemetrySamplingIntervalExp, L0::zesVFManagementSetVFTelemetrySamplingIntervalExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnGetVFCapabilitiesExp, L0::zesVFManagementGetVFCapabilitiesExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnGetVFMemoryUtilizationExp2, L0::zesVFManagementGetVFMemoryUtilizationExp2, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp2, L0::zesVFManagementGetVFEngineUtilizationExp2, version, ZE_API_VERSION_1_11);
 
     return result;
 }

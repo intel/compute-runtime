@@ -331,4 +331,9 @@ ze_result_t SysmanDevice::fabricPortGetMultiPortThroughput(zes_device_handle_t h
     return pSysmanDevice->fabricPortGetMultiPortThroughput(numPorts, phPort, pThroughput);
 }
 
+ze_result_t SysmanDevice::deviceEnumEnabledVF(zes_device_handle_t hDevice, uint32_t *pCount, zes_vf_handle_t *phVFhandle) {
+    auto pSysmanDevice = L0::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceEnumEnabledVF(pCount, phVFhandle);
+}
+
 } // namespace L0
