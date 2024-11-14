@@ -305,7 +305,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         nullptr,                           // extensions
         0,                                 // totalEventSize
         EventPacketsCount::maxKernelSplit, // maxKernelCount
-        0,                                 // maxPacketsCount
+        1,                                 // maxPacketsCount
         ipcData.counterBasedFlags,         // counterBasedFlags
         0,                                 // index
         ipcData.signalScopeFlags,          // signalScope

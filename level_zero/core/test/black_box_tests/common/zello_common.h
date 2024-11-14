@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "level_zero/api/driver_experimental/public/zex_event.h"
 #include <level_zero/ze_api.h>
 
 #include <bitset>
@@ -28,6 +29,8 @@ inline void validate(ResulT result, const char *message);
 #define SUCCESS_OR_WARNING_BOOL(FLAG) LevelZeroBlackBoxTests::validate<false>(!(FLAG), #FLAG)
 
 namespace LevelZeroBlackBoxTests {
+
+using pfnZexCounterBasedEventCreate2 = decltype(&L0::zexCounterBasedEventCreate2);
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
@@ -109,7 +112,8 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_pool_handle_t &eventPool,
                               ze_event_pool_flags_t poolFlag,
                               bool counterEvents,
-                              ze_event_pool_counter_based_exp_flags_t poolCounterFlag,
+                              const zex_counter_based_event_desc_t *counterBasedDesc,
+                              pfnZexCounterBasedEventCreate2 zexCounterBasedEventCreate2Func,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,

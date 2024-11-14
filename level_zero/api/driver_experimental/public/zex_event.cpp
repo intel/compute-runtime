@@ -71,7 +71,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         desc->pNext,                       // extensions
         0,                                 // totalEventSize
         EventPacketsCount::maxKernelSplit, // maxKernelCount
-        0,                                 // maxPacketsCount
+        1,                                 // maxPacketsCount
         inputCbFlags,                      // counterBasedFlags
         0,                                 // index
         desc->signalScope,                 // signalScope

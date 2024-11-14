@@ -107,7 +107,7 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
 
     ze_event_pool_handle_t eventPool;
     ze_event_handle_t events[3];
-    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, 0, 3, events, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
+    LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool, ZE_EVENT_POOL_FLAG_HOST_VISIBLE, false, nullptr, nullptr, 3, events, ZE_EVENT_SCOPE_FLAG_HOST, ZE_EVENT_SCOPE_FLAG_HOST);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, deviceMemory, sourceSystemMemory.data(), regularCmdlistBufSize, events[1], 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, destSystemMemory.data(), deviceMemory, regularCmdlistBufSize, events[2], 1, &events[1]));
@@ -200,7 +200,7 @@ void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_ha
     std::vector<ze_event_handle_t> events(numEvents);
     ze_event_pool_flags_t eventPoolFlags = flags;
     LevelZeroBlackBoxTests::createEventPoolAndEvents(context, device, eventPool,
-                                                     eventPoolFlags, false, 0,
+                                                     eventPoolFlags, false, nullptr, nullptr,
                                                      numEvents, events.data(),
                                                      ZE_EVENT_SCOPE_FLAG_HOST,
                                                      ZE_EVENT_SCOPE_FLAG_HOST);

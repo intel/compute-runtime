@@ -367,27 +367,31 @@ void createEventPoolAndEvents(ze_context_handle_t &context,
                               ze_event_pool_handle_t &eventPool,
                               ze_event_pool_flags_t poolFlag,
                               bool counterEvents,
-                              ze_event_pool_counter_based_exp_flags_t poolCounterFlag,
+                              const zex_counter_based_event_desc_t *counterBasedDesc,
+                              pfnZexCounterBasedEventCreate2 zexCounterBasedEventCreate2Func,
                               uint32_t poolSize,
                               ze_event_handle_t *events,
                               ze_event_scope_flags_t signalScope,
                               ze_event_scope_flags_t waitScope) {
-    ze_event_pool_counter_based_exp_desc_t counterPoolDesc{ZE_STRUCTURE_TYPE_COUNTER_BASED_EVENT_POOL_EXP_DESC};
-    counterPoolDesc.flags = poolCounterFlag;
+
     ze_event_pool_desc_t eventPoolDesc{ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
     eventPoolDesc.count = poolSize;
     eventPoolDesc.flags = poolFlag;
-    if (counterEvents) {
-        eventPoolDesc.pNext = &counterPoolDesc;
+
+    if (!counterEvents) {
+        SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
     }
-    SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, 1, &device, &eventPool));
 
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
     for (uint32_t i = 0; i < poolSize; i++) {
-        eventDesc.index = i;
-        eventDesc.signal = signalScope;
-        eventDesc.wait = waitScope;
-        SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, events + i));
+        if (counterEvents) {
+            SUCCESS_OR_TERMINATE(zexCounterBasedEventCreate2Func(context, device, counterBasedDesc, events + i));
+        } else {
+            eventDesc.index = i;
+            eventDesc.signal = signalScope;
+            eventDesc.wait = waitScope;
+            SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, events + i));
+        }
     }
 }
 
