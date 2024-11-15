@@ -311,6 +311,15 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
 }
 
+TEST_F(DebugApiTest, givenSsaHeaderVersionGreaterThan3WhenGetRegisterSetPropertiesCalledThenUnknownIsReturned) {
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(3);
+    auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;
+    versionHeader->version.major = 4;
+    mockBuiltins->stateSaveAreaHeader = stateSaveAreaHeader;
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
+}
+
 TEST_F(DebugApiTest, givenSIPHeaderHasZeroSizeMMEThenNotExposedAsRegset) {
     mockBuiltins = new MockBuiltins();
     mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2, 128, 0);

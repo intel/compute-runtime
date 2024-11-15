@@ -705,10 +705,13 @@ void DebugSessionImp::sendInterrupts() {
 size_t DebugSessionImp::calculateSrMagicOffset(const NEO::StateSaveAreaHeader *stateSaveAreaHeader, EuThread *thread) {
     auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
     size_t srMagicOffset = 0;
-    if (stateSaveAreaHeader->versionHeader.version.major >= 3) {
+    if (stateSaveAreaHeader->versionHeader.version.major == 3) {
         srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeaderV3.sr_magic_offset;
-    } else {
+    } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
+    } else {
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
+        DEBUG_BREAK_IF(true);
     }
     return srMagicOffset;
 }
@@ -999,9 +1002,13 @@ void DebugSessionImp::validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint6
         if (pStateSaveArea->versionHeader.version.major == 3) {
             DEBUG_BREAK_IF(size != sizeof(NEO::StateSaveAreaHeader));
             regHeaderSize = sizeof(SIP::intelgt_state_save_area_V3);
-        } else {
+        } else if (pStateSaveArea->versionHeader.version.major < 3) {
             DEBUG_BREAK_IF(size != sizeof(NEO::StateSaveAreaHeader::regHeader) + sizeof(NEO::StateSaveAreaHeader::versionHeader));
             regHeaderSize = sizeof(SIP::intelgt_state_save_area);
+        } else {
+            PRINT_DEBUGGER_ERROR_LOG("Setting Context State Save Area: unsupported version == %d.%d.%d\n", (int)pStateSaveArea->versionHeader.version.major, (int)pStateSaveArea->versionHeader.version.minor, (int)pStateSaveArea->versionHeader.version.patch);
+            DEBUG_BREAK_IF(true);
+            return;
         }
         auto retVal = readGpuMemory(vmHandle, data.data() + sizeof(SIP::StateSaveArea), regHeaderSize, gpuVa + sizeof(SIP::StateSaveArea));
         if (retVal != ZE_RESULT_SUCCESS) {
@@ -1059,7 +1066,11 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc(const NEO::StateSaveAr
 
     static const SIP::regset_desc sbaHeapless = {0, 0, 0, 0};
     static const SIP::regset_desc sba = {0, ZET_DEBUG_SBA_COUNT_INTEL_GPU, 64, 8};
-    if (ssah.versionHeader.version.major >= 3 && isHeaplessMode(ssah.regHeaderV3)) {
+    if (ssah.versionHeader.version.major > 3) {
+        DEBUG_BREAK_IF(true);
+        PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
+        return nullptr;
+    } else if (ssah.versionHeader.version.major == 3 && isHeaplessMode(ssah.regHeaderV3)) {
         return &sbaHeapless;
     } else {
         return &sba;
@@ -1073,7 +1084,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
         return nullptr;
     }
-    if (pStateSaveAreaHeader->versionHeader.version.major >= 3) {
+    if (pStateSaveAreaHeader->versionHeader.version.major == 3) {
         switch (type) {
         case ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU:
             return &pStateSaveAreaHeader->regHeaderV3.grf;
@@ -1117,7 +1128,7 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         default:
             return nullptr;
         }
-    } else {
+    } else if (pStateSaveAreaHeader->versionHeader.version.major < 3) {
         switch (type) {
         case ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU:
             return &pStateSaveAreaHeader->regHeader.grf;
@@ -1151,6 +1162,10 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         default:
             return nullptr;
         }
+    } else {
+        PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
+        DEBUG_BREAK_IF(true);
+        return nullptr;
     }
 }
 
@@ -1193,7 +1208,11 @@ uint32_t DebugSessionImp::typeToRegsetFlags(uint32_t type) {
 
 size_t DebugSessionImp::calculateThreadSlotOffset(EuThread::ThreadId threadId) {
     auto pStateSaveAreaHeader = getStateSaveAreaHeader();
-    if (pStateSaveAreaHeader->versionHeader.version.major >= 3) {
+    if (pStateSaveAreaHeader->versionHeader.version.major > 3) {
+        DEBUG_BREAK_IF(true);
+        PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
+        return 0;
+    } else if (pStateSaveAreaHeader->versionHeader.version.major == 3) {
         return pStateSaveAreaHeader->versionHeader.size * 8 + pStateSaveAreaHeader->regHeaderV3.state_area_offset + ((((threadId.slice * pStateSaveAreaHeader->regHeaderV3.num_subslices_per_slice + threadId.subslice) * pStateSaveAreaHeader->regHeaderV3.num_eus_per_subslice + threadId.eu) * pStateSaveAreaHeader->regHeaderV3.num_threads_per_eu + threadId.thread) * pStateSaveAreaHeader->regHeaderV3.state_save_size);
     } else {
         return pStateSaveAreaHeader->versionHeader.size * 8 + pStateSaveAreaHeader->regHeader.state_area_offset + ((((threadId.slice * pStateSaveAreaHeader->regHeader.num_subslices_per_slice + threadId.subslice) * pStateSaveAreaHeader->regHeader.num_eus_per_subslice + threadId.eu) * pStateSaveAreaHeader->regHeader.num_threads_per_eu + threadId.thread) * pStateSaveAreaHeader->regHeader.state_save_size);
@@ -1407,7 +1426,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
 
     auto pStateSaveArea = reinterpret_cast<const NEO::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
 
-    if (pStateSaveArea->versionHeader.version.major >= 3) {
+    if (pStateSaveArea->versionHeader.version.major == 3) {
         parseRegsetDesc(pStateSaveArea->regHeaderV3.grf, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeaderV3.addr, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeaderV3.flag, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU);
@@ -1427,7 +1446,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
         parseRegsetDesc(*DebugSessionImp::getThreadScratchRegsetDesc(), ZET_DEBUG_REGSET_TYPE_THREAD_SCRATCH_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeaderV3.scalar, ZET_DEBUG_REGSET_TYPE_SCALAR_INTEL_GPU);
 
-    } else {
+    } else if (pStateSaveArea->versionHeader.version.major < 3) {
         parseRegsetDesc(pStateSaveArea->regHeader.grf, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeader.addr, ZET_DEBUG_REGSET_TYPE_ADDR_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeader.flag, ZET_DEBUG_REGSET_TYPE_FLAG_INTEL_GPU);
@@ -1441,6 +1460,10 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
         parseRegsetDesc(*DebugSessionImp::getSbaRegsetDesc(*pStateSaveArea), ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeader.dbg_reg, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU);
         parseRegsetDesc(pStateSaveArea->regHeader.fc, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU);
+    } else {
+        PRINT_DEBUGGER_ERROR_LOG("Unsupported version of State Save Area Header\n", "");
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     if (!*pCount || (*pCount > totalRegsetNum)) {
@@ -1486,7 +1509,9 @@ ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &t
     } else if (stateSaveAreaHeader->versionHeader.version.major < 3) {
         regdesc = &stateSaveAreaHeader->regHeader.cmd;
     } else {
-        UNRECOVERABLE_IF(true);
+        PRINT_DEBUGGER_ERROR_LOG("%s: Unsupported version of State Save Area Header\n", __func__);
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.command, EuThread::toString(threadId).c_str());
@@ -1655,7 +1680,7 @@ ze_result_t DebugSessionImp::isValidNode(uint64_t vmHandle, uint64_t gpuVa, SIP:
 
 ze_result_t DebugSessionImp::readFifo(uint64_t vmHandle, std::vector<EuThread::ThreadId> &threadsWithAttention) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
-    if (stateSaveAreaHeader->versionHeader.version.major < 3) {
+    if (stateSaveAreaHeader->versionHeader.version.major != 3) {
         return ZE_RESULT_SUCCESS;
     }
 
