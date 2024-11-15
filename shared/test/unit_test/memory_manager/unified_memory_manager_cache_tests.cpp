@@ -162,7 +162,7 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEn
         EXPECT_FALSE(svmManager->usmDeviceAllocationsCacheEnabled);
         svmManager->initUsmAllocationsCaches(*device);
         EXPECT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
-        const auto expectedMaxSize = static_cast<size_t>(0.02 * device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ullong())));
+        const auto expectedMaxSize = 0u;
         EXPECT_EQ(expectedMaxSize, svmManager->usmDeviceAllocationsCache.maxSize);
     }
 }

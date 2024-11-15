@@ -722,25 +722,29 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
 }
 
 void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
-    this->usmDeviceAllocationsCache.allocations.reserve(128u);
     const auto totalDeviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(device.getDeviceBitfield().to_ulong()));
     auto ailConfiguration = device.getAilConfigurationHelper();
     const bool limitDeviceMemoryForReuse = ailConfiguration && ailConfiguration->limitAmountOfDeviceMemoryForRecycling();
-    auto fractionOfTotalMemoryForRecycling = limitDeviceMemoryForReuse ? 0.02 : 0.08;
+    auto fractionOfTotalMemoryForRecycling = limitDeviceMemoryForReuse ? 0 : 0.08;
     if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
         fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
     }
     this->usmDeviceAllocationsCache.maxSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
+    if (this->usmDeviceAllocationsCache.maxSize > 0u) {
+        this->usmDeviceAllocationsCache.allocations.reserve(128u);
+    }
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {
-    this->usmHostAllocationsCache.allocations.reserve(128u);
     const auto totalSystemMemory = this->memoryManager->getSystemSharedMemory(0u);
     auto fractionOfTotalMemoryForRecycling = 0.02;
     if (debugManager.flags.ExperimentalEnableHostAllocationCache.get() != -1) {
         fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableHostAllocationCache.get());
     }
     this->usmHostAllocationsCache.maxSize = static_cast<size_t>(fractionOfTotalMemoryForRecycling * totalSystemMemory);
+    if (this->usmHostAllocationsCache.maxSize > 0u) {
+        this->usmHostAllocationsCache.allocations.reserve(128u);
+    }
 }
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
