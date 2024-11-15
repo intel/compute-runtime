@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
@@ -503,25 +504,14 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
     EXPECT_EQ(expectedOutput.str(), output);
 }
 
-template <PRODUCT_FAMILY gfxProduct>
-class TestDummyBlitMockProductHelper : public ProductHelperHw<gfxProduct> {
-  public:
-    bool isDummyBlitWaRequired() const override {
-        return dummyBlitRequired;
-    }
-    uint32_t dummyBlitRequired = true;
-};
-
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenDummyBlitIsProgrammedCorrectly, IsXeHPOrAbove) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(-1);
 
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
-
-    RAIIProductHelperFactory<TestDummyBlitMockProductHelper<productFamily>> raii{
-        rootDeviceEnvironment};
-    auto &productHelper = *raii.mockProductHelper;
-    productHelper.dummyBlitRequired = true;
+    auto releaseHelper = new MockReleaseHelper();
+    releaseHelper->isDummyBlitWaRequiredResult = true;
+    rootDeviceEnvironment.releaseHelper.reset(releaseHelper);
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -621,11 +611,7 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditio
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(-1);
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
-
-    RAIIProductHelperFactory<TestDummyBlitMockProductHelper<productFamily>> raii{
-        rootDeviceEnvironment};
-    auto &productHelper = *raii.mockProductHelper;
-    productHelper.dummyBlitRequired = false;
+    rootDeviceEnvironment.releaseHelper = std::make_unique<MockReleaseHelper>();
 
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));

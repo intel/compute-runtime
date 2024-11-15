@@ -181,7 +181,6 @@ class ProductHelper {
     virtual bool useLocalPreferredForCacheableBuffers() const = 0;
     virtual bool useGemCreateExtInAllocateMemoryByKMD() const = 0;
     virtual bool isTlbFlushRequired() const = 0;
-    virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const = 0;
     virtual uint32_t getRequiredDetectIndirectVersion() const = 0;
     virtual uint32_t getRequiredDetectIndirectVersionVC() const = 0;

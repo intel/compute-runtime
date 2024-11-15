@@ -124,7 +124,6 @@ class ProductHelperHw : public ProductHelper {
     bool useLocalPreferredForCacheableBuffers() const override;
     bool useGemCreateExtInAllocateMemoryByKMD() const override;
     bool isTlbFlushRequired() const override;
-    bool isDummyBlitWaRequired() const override;
     bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor, const bool isPrecompiled, const uint32_t precompiledKernelIndirectDetectionVersion) const override;
     uint32_t getRequiredDetectIndirectVersion() const override;
     uint32_t getRequiredDetectIndirectVersionVC() const override;

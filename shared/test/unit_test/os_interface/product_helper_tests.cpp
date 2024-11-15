@@ -841,10 +841,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNe
     EXPECT_FALSE(productHelper->isUnlockingLockedPtrNecessary(pInHwInfo));
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isDummyBlitWaRequired());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenCheckingIsDetectIndirectAccessInKernelSupportedThenCorrectValueIsReturned) {
     KernelDescriptor kernelDescriptor;
     const auto igcDetectIndirectVersion = INDIRECT_ACCESS_DETECTION_VERSION;

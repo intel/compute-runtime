@@ -44,8 +44,8 @@ bool UnitTestHelper<Family>::getComputeDispatchAllWalkerFromFrontEndCommand(cons
 
 template <>
 void UnitTestHelper<Family>::verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCmdList::iterator &cmdIterator) {
-    const auto &productHelper = rootDeviceEnvironment->getProductHelper();
-    if (productHelper.isDummyBlitWaRequired()) {
+    const auto releaseHelper = rootDeviceEnvironment->getReleaseHelper();
+    if (releaseHelper->isDummyBlitWaRequired()) {
         auto dummyBltCmd = genCmdCast<typename Family::MEM_SET *>(*(cmdIterator++));
         EXPECT_NE(nullptr, dummyBltCmd);
 

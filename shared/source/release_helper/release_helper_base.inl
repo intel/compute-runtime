@@ -148,6 +148,11 @@ bool ReleaseHelperHw<releaseType>::isDisablingMsaaRequired() const {
 }
 
 template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isDummyBlitWaRequired() const {
+    return false;
+}
+
+template <ReleaseType releaseType>
 const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPreferredSlmValue(bool isHeapless) const {
     static const SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
     return sizeToPreferredSlmValue;

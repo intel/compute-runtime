@@ -12,10 +12,6 @@
 #include "aubstream/product_family.h"
 
 namespace NEO {
-template <>
-bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
-    return true;
-}
 
 template <>
 bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {

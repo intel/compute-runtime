@@ -361,10 +361,6 @@ HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallDeferMOCSToPatThenF
     EXPECT_FALSE(productHelper.deferMOCSToPatIndex());
 }
 
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnTrue, IsXeLpg) {
-    EXPECT_TRUE(productHelper->isDummyBlitWaRequired());
-}
-
 HWTEST2_F(XeLpgProductHelperTests, givenPatIndexWhenCheckIsCoherentAllocationThenReturnProperValue, IsXeLpg) {
     std::array<uint64_t, 2> listOfCoherentPatIndexes = {3, 4};
     for (auto patIndex : listOfCoherentPatIndexes) {

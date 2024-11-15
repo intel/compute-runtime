@@ -810,11 +810,6 @@ bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeede
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
     return true;
 }

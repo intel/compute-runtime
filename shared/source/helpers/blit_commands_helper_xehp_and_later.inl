@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
 #include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 
@@ -363,8 +364,9 @@ bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaA
         if (debugManager.flags.ForceDummyBlitWa.get() != -1) {
             return debugManager.flags.ForceDummyBlitWa.get();
         }
-        auto &productHelper = waArgs.rootDeviceEnvironment->getProductHelper();
-        return productHelper.isDummyBlitWaRequired();
+        auto releaseHelper = waArgs.rootDeviceEnvironment->getReleaseHelper();
+        UNRECOVERABLE_IF(!releaseHelper);
+        return releaseHelper->isDummyBlitWaRequired();
     }
     return false;
 }

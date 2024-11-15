@@ -171,3 +171,21 @@ void ReleaseHelperTestsBase::whenGettingThreadsPerEuConfigsThenCorrectValueIsRet
         }
     }
 }
+
+void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenTrueReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_TRUE(releaseHelper->isDummyBlitWaRequired());
+    }
+}
+
+void ReleaseHelperTestsBase::whenIsDummyBlitWaRequiredCalledThenFalseReturned() {
+    for (auto &revision : getRevisions()) {
+        ipVersion.revision = revision;
+        releaseHelper = ReleaseHelper::create(ipVersion);
+        ASSERT_NE(nullptr, releaseHelper);
+        EXPECT_FALSE(releaseHelper->isDummyBlitWaRequired());
+    }
+}

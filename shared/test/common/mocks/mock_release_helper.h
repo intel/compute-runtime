@@ -40,6 +40,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(getStackSizePerRay, uint32_t, {}, ());
     ADDMETHOD_CONST_NOBASE(isLocalOnlyAllowed, bool, {}, ());
     ADDMETHOD_CONST_NOBASE(isDisablingMsaaRequired, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

@@ -289,10 +289,6 @@ PVCTEST_F(PvcProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
     EXPECT_EQ(0u, productHelper->getMaxNumSamplers());
 }
 
-PVCTEST_F(PvcProductHelper, whenCheckingIfDummyBlitWaIsRequiredThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDummyBlitWaRequired());
-}
-
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
     EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
 }

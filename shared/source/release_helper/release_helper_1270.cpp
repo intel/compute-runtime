@@ -60,6 +60,11 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
     return sizeToPreferredSlmValue;
 }
 
+template <>
+bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
+    return true;
+}
+
 } // namespace NEO
 #include "shared/source/release_helper/release_helper_common_xe_lpg.inl"
 

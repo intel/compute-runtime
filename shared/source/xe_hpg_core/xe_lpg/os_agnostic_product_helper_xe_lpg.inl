@@ -46,11 +46,6 @@ bool ProductHelperHw<gfxProduct>::blitEnqueuePreferred(bool isWriteToImageFromBu
 template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Mtl;
-};
-
-template <>
-bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
-    return true;
 }
 
 template <>

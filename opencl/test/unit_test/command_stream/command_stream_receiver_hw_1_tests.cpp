@@ -13,6 +13,7 @@
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
@@ -1259,7 +1260,8 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
             cmdIterator++;
         }
     }
-    if (pDevice->getProductHelper().isDummyBlitWaRequired()) {
+    auto releaseHelper = pDevice->getReleaseHelper();
+    if (releaseHelper && releaseHelper->isDummyBlitWaRequired()) {
         UnitTestHelper<FamilyType>::verifyDummyBlitWa(&(pDevice->getRootDeviceEnvironmentRef()), cmdIterator);
     }
     auto miFlushCmd = genCmdCast<MI_FLUSH_DW *>(*(cmdIterator++));

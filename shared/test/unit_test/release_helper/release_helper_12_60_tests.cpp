@@ -57,6 +57,10 @@ TEST_F(ReleaseHelper1260Tests, whenIsLocalOnlyAllowedCalledThenTrueReturned) {
     whenIsLocalOnlyAllowedCalledThenTrueReturned();
 }
 
+TEST_F(ReleaseHelper1260Tests, whenIsDummyBlitWaRequiredCalledThenTrueReturned) {
+    whenIsDummyBlitWaRequiredCalledThenTrueReturned();
+}
+
 TEST_F(ReleaseHelper1260Tests, whenGettingPreferredSlmSizeThenAllEntriesHaveCorrectValues) {
     for (auto &revision : getRevisions()) {
         ipVersion.revision = revision;
