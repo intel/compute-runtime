@@ -125,6 +125,8 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL uint64_t acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex);
     MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
 
+    BufferObject *allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex);
+
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
 
@@ -136,7 +138,6 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
-    BufferObject *allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex);
     bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
     MOCKABLE_VIRTUAL uint64_t acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;

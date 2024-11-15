@@ -602,7 +602,8 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     if (!gpuVirtualAddress) {
         return nullptr;
     }
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, rootDeviceIndex));
+    auto ioctlHelper = getDrm(rootDeviceIndex).getIoctlHelper();
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(ioctlHelper->allocUserptr(*this, reinterpret_cast<uintptr_t>(alignedPtr), realAllocationSize, rootDeviceIndex));
     if (!bo) {
         releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
         return nullptr;

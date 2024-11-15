@@ -115,4 +115,8 @@ void IoctlHelper::registerMemoryToUnmap(DrmAllocation &allocation, void *pointer
     return allocation.registerMemoryToUnmap(pointer, size, unmapFunction);
 }
 
+BufferObject *IoctlHelper::allocUserptr(DrmMemoryManager &memoryManager, uintptr_t address, size_t size, uint32_t rootDeviceIndex) {
+    return memoryManager.allocUserptr(address, size, rootDeviceIndex);
+}
+
 } // namespace NEO
