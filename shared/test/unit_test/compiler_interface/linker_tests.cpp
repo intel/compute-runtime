@@ -253,34 +253,39 @@ TEST(LinkerInputTests, givenRelocationTableThenNoneAsRelocationTypeIsNotAllowed)
 }
 
 TEST(LinkerInputTests, whenDataRelocationsAreAddedThenProperTraitsAreSet) {
-    NEO::LinkerInput linkerInput;
-    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
-    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
-
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 7U;
     relocInfo.relocationSegment = NEO::SegmentType::globalConstants;
     relocInfo.symbolName = "aaa";
     relocInfo.type = NEO::LinkerInput::RelocationInfo::Type::address;
-    linkerInput.addDataRelocationInfo(relocInfo);
-    ASSERT_EQ(1U, linkerInput.getDataRelocations().size());
-    EXPECT_EQ(relocInfo.offset, linkerInput.getDataRelocations()[0].offset);
-    EXPECT_EQ(relocInfo.relocationSegment, linkerInput.getDataRelocations()[0].relocationSegment);
-    EXPECT_EQ(relocInfo.symbolName, linkerInput.getDataRelocations()[0].symbolName);
-    EXPECT_EQ(relocInfo.type, linkerInput.getDataRelocations()[0].type);
-    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
-    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
-    EXPECT_TRUE(linkerInput.isValid());
 
-    linkerInput = {};
-    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
-    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
-    relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
-    linkerInput.addDataRelocationInfo(relocInfo);
-    ASSERT_EQ(1U, linkerInput.getDataRelocations().size());
-    EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
-    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
-    EXPECT_TRUE(linkerInput.isValid());
+    {
+        NEO::LinkerInput linkerInput;
+        EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
+        EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+
+        linkerInput.addDataRelocationInfo(relocInfo);
+        ASSERT_EQ(1U, linkerInput.getDataRelocations().size());
+        EXPECT_EQ(relocInfo.offset, linkerInput.getDataRelocations()[0].offset);
+        EXPECT_EQ(relocInfo.relocationSegment, linkerInput.getDataRelocations()[0].relocationSegment);
+        EXPECT_EQ(relocInfo.symbolName, linkerInput.getDataRelocations()[0].symbolName);
+        EXPECT_EQ(relocInfo.type, linkerInput.getDataRelocations()[0].type);
+        EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
+        EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+        EXPECT_TRUE(linkerInput.isValid());
+    }
+
+    {
+        NEO::LinkerInput linkerInput;
+        EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
+        EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+        relocInfo.relocationSegment = NEO::SegmentType::globalVariables;
+        linkerInput.addDataRelocationInfo(relocInfo);
+        ASSERT_EQ(1U, linkerInput.getDataRelocations().size());
+        EXPECT_FALSE(linkerInput.getTraits().requiresPatchingOfGlobalConstantsBuffer);
+        EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+        EXPECT_TRUE(linkerInput.isValid());
+    }
 }
 
 TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsReturned) {

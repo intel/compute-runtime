@@ -30,6 +30,7 @@
 
 namespace NEO {
 
+LinkerInput::LinkerInput() = default;
 LinkerInput::~LinkerInput() = default;
 
 SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {

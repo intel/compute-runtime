@@ -109,7 +109,12 @@ struct LinkerInput {
     using SymbolMap = std::unordered_map<std::string, SymbolInfo>;
     using RelocationsPerInstSegment = std::vector<Relocations>;
 
+    LinkerInput();
     virtual ~LinkerInput();
+    LinkerInput(LinkerInput &&other) noexcept = delete;
+    LinkerInput(const LinkerInput &other) = delete;
+    LinkerInput &operator=(LinkerInput &&other) noexcept = delete;
+    LinkerInput &operator=(const LinkerInput &other) = delete;
 
     static SegmentType getSegmentForSection(ConstStringRef name);
 
