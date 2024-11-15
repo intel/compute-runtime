@@ -2719,6 +2719,15 @@ HWTEST2_F(InOrderCmdListTests, givenSignalAllPacketsSetWhenProgrammingRemainingP
     immCmdList->dispatchEventRemainingPacketsPostSyncOperation(events[0].get(), true);
 
     EXPECT_EQ(offset, cmdStream->getUsed());
+
+    events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
+
+    offset = cmdStream->getUsed();
+
+    immCmdList->dispatchEventRemainingPacketsPostSyncOperation(events[0].get(), false);
+    immCmdList->dispatchEventRemainingPacketsPostSyncOperation(events[0].get(), true);
+
+    EXPECT_NE(offset, cmdStream->getUsed());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingWalkerThenProgramPipeControlWithSignalAllocation, IsGen12LP) {
