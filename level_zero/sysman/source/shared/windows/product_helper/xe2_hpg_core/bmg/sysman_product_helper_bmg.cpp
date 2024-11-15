@@ -713,7 +713,21 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     }
 
     pStats->packetCounter = packInto64Bit(txPacketCounterH, txPacketCounterL) + packInto64Bit(rxPacketCounterH, rxPacketCounterL);
-    pStats->timestamp = SysmanDevice::getSysmanTimestamp();
+
+    // timestamp calculation
+    uint32_t timeStampL = 0;
+    uint32_t timeStampH = 0;
+
+    status = pPmt->readValue("GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", timeStampH);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+    status = pPmt->readValue("GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", timeStampL);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+    // timestamp from PMT is in milli seconds
+    pStats->timestamp = packInto64Bit(timeStampH, timeStampL) * milliSecsToMicroSecs;
 
     return status;
 }
@@ -842,7 +856,8 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
         return status;
     }
 
-    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL);
+    // timestamp from PMT is in milli seconds
+    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL) * milliSecsToMicroSecs;
 
     return status;
 }

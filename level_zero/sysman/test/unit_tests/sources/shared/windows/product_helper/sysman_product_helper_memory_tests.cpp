@@ -124,7 +124,7 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
             return true;
         case 93:
             *lpBytesReturned = 8;
-            *static_cast<uint32_t *>(lpOutBuffer) = 1230000;
+            *static_cast<uint32_t *>(lpOutBuffer) = mockMemoryBandwidthTimestamp;
             return true;
         default:
             *lpBytesReturned = 8;
@@ -147,7 +147,7 @@ HWTEST2_F(SysmanDeviceMemoryHelperFixture, GivenValidMemoryHandleWhenGettingBand
         EXPECT_EQ(bandwidth.maxBandwidth, static_cast<uint64_t>(mockMemoryMaxBandwidth * megaBytesToBytes * 100));
         EXPECT_EQ(bandwidth.readCounter, (6 * mockPmtBandWidthVariableBackupValue * 32) + (6 * mockPmtBandWidthVariableBackupValue * 64));
         EXPECT_EQ(bandwidth.writeCounter, (4 * mockPmtBandWidthVariableBackupValue * 32) + (4 * mockPmtBandWidthVariableBackupValue * 64));
-        EXPECT_EQ(bandwidth.timestamp, mockMemoryBandwidthTimestamp);
+        EXPECT_EQ(bandwidth.timestamp, mockMemoryBandwidthTimestamp * milliSecsToMicroSecs);
     }
 }
 
