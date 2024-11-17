@@ -13,11 +13,6 @@
 namespace NEO {
 constexpr auto release = ReleaseType::release1257;
 
-template <>
-bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
-    return true;
-}
-
 } // namespace NEO
 #include "shared/source/release_helper/release_helper_common_xe_hpg.inl"
 
