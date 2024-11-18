@@ -1874,10 +1874,32 @@ HWTEST_F(GfxCoreHelperTest, givenGetDeviceTimestampWidthCalledThenReturnCorrectV
     EXPECT_EQ(64u, helper.getDeviceTimestampWidth());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenHwHelperWhenAligningThreadGroupCountToDssSizeThenThreadGroupCountDoesNotChange, IsAtMostXe2HpgCore) {
+HWTEST_F(GfxCoreHelperTest, givenHwHelperWhenAligningThreadGroupCountToDssSizeThenThreadGroupCountChanged) {
     auto &helper = getHelper<GfxCoreHelper>();
     uint32_t threadGroupCountBefore = 4096;
     uint32_t threadCount = threadGroupCountBefore;
     helper.alignThreadGroupCountToDssSize(threadCount, 1, 1, 1);
-    EXPECT_EQ(threadGroupCountBefore, threadCount);
+    EXPECT_NE(threadGroupCountBefore, threadCount);
+}
+
+HWTEST_F(GfxCoreHelperTest, givenHwHelperWhenThreadGroupCountIsAlignedToDssThenThreadCountNotChanged) {
+    auto &helper = getHelper<GfxCoreHelper>();
+    uint32_t dssCount = 16;
+    uint32_t threadGroupSize = 32;
+    uint32_t threadsPerDss = 2 * threadGroupSize;
+    uint32_t maxThreadCount = (dssCount * threadsPerDss) / threadGroupSize;
+    uint32_t threadCount = maxThreadCount;
+    helper.alignThreadGroupCountToDssSize(threadCount, dssCount, threadsPerDss, threadGroupSize);
+    EXPECT_EQ(2 * dssCount, threadCount);
+}
+
+HWTEST_F(GfxCoreHelperTest, givenHwHelperWhenThreadGroupCountIsAlignedToDssThenThreadCountChanged) {
+    auto &helper = getHelper<GfxCoreHelper>();
+    uint32_t dssCount = 16;
+    uint32_t threadGroupSize = 32;
+    uint32_t threadsPerDss = 2 * threadGroupSize - 1;
+    uint32_t maxThreadCount = (dssCount * threadsPerDss) / threadGroupSize;
+    uint32_t threadCount = maxThreadCount;
+    helper.alignThreadGroupCountToDssSize(threadCount, dssCount, threadsPerDss, threadGroupSize);
+    EXPECT_EQ(dssCount, threadCount);
 }

@@ -802,6 +802,8 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const Hardwar
 
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const {
+    uint32_t availableTreadCount = (threadsPerDss / threadGroupSize) * dssCount;
+    threadCount = std::min(threadCount, availableTreadCount);
 }
 
 template <typename GfxFamily>
