@@ -46,9 +46,9 @@ StagingBufferManager::~StagingBufferManager() {
 template <class Func, class... Args>
 int32_t StagingBufferManager::performChunkTransfer(CommandStreamReceiver *csr, size_t size, Func &func, Args... args) {
     auto allocatedSize = size;
-    auto [allocator, stagingBuffer] = requestStagingBuffer(allocatedSize, csr);
+    auto [allocator, stagingBuffer] = requestStagingBuffer(allocatedSize);
     auto ret = func(addrToPtr(stagingBuffer), size, args...);
-    trackChunk({allocator, stagingBuffer, allocatedSize, csr->peekTaskCount()});
+    trackChunk({allocator, stagingBuffer, allocatedSize, csr, csr->peekTaskCount()});
     if (csr->isAnyDirectSubmissionEnabled()) {
         csr->flushTagUpdate();
     }
@@ -131,7 +131,7 @@ int32_t StagingBufferManager::performImageWrite(const void *ptr, const size_t *g
  * This method returns allocator and chunk from staging buffer.
  * Creates new staging buffer if it failed to allocate chunk from existing buffers.
  */
-std::pair<HeapAllocator *, uint64_t> StagingBufferManager::requestStagingBuffer(size_t &size, CommandStreamReceiver *csr) {
+std::pair<HeapAllocator *, uint64_t> StagingBufferManager::requestStagingBuffer(size_t &size) {
     auto lock = std::lock_guard<std::mutex>(mtx);
 
     auto [allocator, chunkBuffer] = getExistingBuffer(size);
@@ -139,7 +139,7 @@ std::pair<HeapAllocator *, uint64_t> StagingBufferManager::requestStagingBuffer(
         return {allocator, chunkBuffer};
     }
 
-    clearTrackedChunks(csr);
+    clearTrackedChunks();
 
     auto [retriedAllocator, retriedChunkBuffer] = getExistingBuffer(size);
     if (retriedChunkBuffer != 0) {
@@ -205,8 +205,9 @@ bool StagingBufferManager::isValidForStagingWriteImage(const Device &device, con
     return stagingCopyEnabled && !hasDependencies && nonUsmPtr;
 }
 
-void StagingBufferManager::clearTrackedChunks(CommandStreamReceiver *csr) {
+void StagingBufferManager::clearTrackedChunks() {
     for (auto iterator = trackers.begin(); iterator != trackers.end();) {
+        auto csr = iterator->csr;
         if (csr->testTaskCountReady(csr->getTagAddress(), iterator->taskCountToWait)) {
             iterator->allocator->free(iterator->chunkAddress, iterator->size);
             iterator = trackers.erase(iterator);

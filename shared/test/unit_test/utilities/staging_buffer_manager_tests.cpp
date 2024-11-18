@@ -47,7 +47,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
         return svmAllocsManager->createHostUnifiedMemoryAllocation(size, unifiedMemoryProperties);
     }
 
-    void copyThroughStagingBuffers(size_t copySize, size_t expectedChunks, size_t expectedAllocations) {
+    void copyThroughStagingBuffers(size_t copySize, size_t expectedChunks, size_t expectedAllocations, CommandStreamReceiver *csr) {
         auto usmBuffer = allocateDeviceBuffer(copySize);
         auto nonUsmBuffer = new unsigned char[copySize];
 
@@ -195,13 +195,13 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyThenCopyData) 
     constexpr size_t numOfChunkCopies = 8;
     constexpr size_t remainder = 1024;
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1, csr);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyWithoutRemainderThenNoRemainderCalled) {
     constexpr size_t numOfChunkCopies = 8;
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1, csr);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenTaskCountNotReadyThenDontReuseBuffers) {
@@ -209,7 +209,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenTaskCountNotReadyThenDont
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
 
     *csr->getTagAddress() = csr->peekTaskCount();
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 8);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 8, csr);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenTaskCountNotReadyButSmallTransfersThenReuseBuffer) {
@@ -217,11 +217,11 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenTaskCountNotReadyButSmall
     constexpr size_t totalCopySize = MemoryConstants::pageSize;
     constexpr size_t availableTransfersWithinBuffer = stagingBufferSize / totalCopySize;
     *csr->getTagAddress() = csr->peekTaskCount();
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1, csr);
     for (auto i = 1u; i < availableTransfersWithinBuffer; i++) {
-        copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 0);
+        copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 0, csr);
     }
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 1, csr);
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenUpdatedTaskCountThenReuseBuffers) {
@@ -229,11 +229,19 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenUpdatedTaskCountThenReuse
     constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies;
 
     *csr->getTagAddress() = csr->peekTaskCount();
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 8);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 8, csr);
 
     *csr->getTagAddress() = csr->peekTaskCount() + numOfChunkCopies;
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 0);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies, 0, csr);
     EXPECT_EQ(numOfChunkCopies, svmAllocsManager->svmAllocs.getNumAllocs());
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyOnDifferentCsrThenReuseStagingBuffers) {
+    constexpr size_t numOfChunkCopies = 8;
+    constexpr size_t remainder = 1024;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1, csr);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 0, pDevice->commandStreamReceivers[1].get());
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkCopyThenEarlyReturnWithFailure) {
@@ -309,7 +317,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenChangedBufferSizeThenPerf
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields);
-    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1);
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1, csr);
 }
 
 HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenDirectSubmissionEnabledThenFlushTagCalled) {
@@ -346,7 +354,7 @@ HWTEST_F(StagingBufferManagerTest, givenFailedAllocationWhenRequestStagingBuffer
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->isMockHostMemoryManager = true;
     memoryManager->forceFailureInPrimaryAllocation = true;
-    auto [heapAllocator, stagingBuffer] = stagingBufferManager->requestStagingBuffer(size, csr);
+    auto [heapAllocator, stagingBuffer] = stagingBufferManager->requestStagingBuffer(size);
     EXPECT_EQ(stagingBuffer, 0u);
 }
 

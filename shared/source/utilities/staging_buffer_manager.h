@@ -48,6 +48,7 @@ struct StagingBufferTracker {
     HeapAllocator *allocator = nullptr;
     uint64_t chunkAddress = 0;
     size_t size = 0;
+    CommandStreamReceiver *csr = nullptr;
     uint64_t taskCountToWait = 0;
 };
 
@@ -66,13 +67,13 @@ class StagingBufferManager {
     int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
     int32_t performImageWrite(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkWriteImageFunc &chunkWriteImageFunc, CommandStreamReceiver *csr);
 
-    std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size, CommandStreamReceiver *csr);
+    std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size);
     void trackChunk(const StagingBufferTracker &tracker);
 
   private:
     std::pair<HeapAllocator *, uint64_t> getExistingBuffer(size_t &size);
     void *allocateStagingBuffer(size_t size);
-    void clearTrackedChunks(CommandStreamReceiver *csr);
+    void clearTrackedChunks();
 
     template <class Func, class... Args>
     int32_t performChunkTransfer(CommandStreamReceiver *csr, size_t size, Func &chunkCopyFunc, Args... args);
