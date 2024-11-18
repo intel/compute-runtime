@@ -33,6 +33,11 @@ class MockAILConfiguration : public AILConfiguration {
         return isBufferPoolEnabledReturn;
     }
 
+    bool isRunAloneContextRequiredReturn = false;
+    bool isRunAloneContextRequired() override {
+        return isRunAloneContextRequiredReturn;
+    }
+
     bool limitAmountOfDeviceMemoryForRecyclingReturn = false;
     bool limitAmountOfDeviceMemoryForRecycling() override {
         return limitAmountOfDeviceMemoryForRecyclingReturn;

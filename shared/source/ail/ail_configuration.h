@@ -84,6 +84,8 @@ class AILConfiguration {
 
     virtual bool limitAmountOfDeviceMemoryForRecycling() = 0;
 
+    virtual bool isRunAloneContextRequired() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -120,6 +122,7 @@ class AILConfigurationHw : public AILConfiguration {
     bool handleDivergentBarriers() override;
     bool disableBindlessAddressing() override;
     bool limitAmountOfDeviceMemoryForRecycling() override;
+    bool isRunAloneContextRequired() override;
 
     bool shouldForceRcs = false;
     bool shouldHandleDivergentBarriers = false;

@@ -25,6 +25,11 @@ inline bool AILConfigurationHw<product>::isContextSyncFlagRequired() {
 }
 
 template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::isRunAloneContextRequired() {
+    return false;
+}
+
+template <PRODUCT_FAMILY product>
 inline bool AILConfigurationHw<product>::is256BPrefetchDisableRequired() {
     return false;
 }
