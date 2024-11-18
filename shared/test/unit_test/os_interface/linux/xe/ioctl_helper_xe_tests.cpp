@@ -744,57 +744,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
     drm->reset();
 }
 
-TEST(IoctlHelperXeTest, givenGeomDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-
-    xeIoctlHelper->initialize();
-
-    uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 4u; gtId++) {
-        drm->addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0b11'1111, 0, 0, 0, 0, 0, 0, 0});
-        drm->addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm->addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0b1111'1111, 0, 0, 0, 0, 0, 0});
-    }
-    DrmQueryTopologyData topologyData{};
-    TopologyMap topologyMap{};
-
-    hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 6;
-    auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
-    ASSERT_TRUE(result);
-
-    // verify topology data
-    EXPECT_EQ(1, topologyData.sliceCount);
-    EXPECT_EQ(1, topologyData.maxSlices);
-
-    EXPECT_EQ(6, topologyData.subSliceCount);
-    EXPECT_EQ(6, topologyData.maxSubSlicesPerSlice);
-
-    EXPECT_EQ(96, topologyData.euCount);
-    EXPECT_EQ(16, topologyData.maxEusPerSubSlice);
-
-    // verify topology map
-    std::vector<int> expectedSliceIndices{0};
-    ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
-    ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
-
-    for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
-        EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
-    }
-
-    std::vector<int> expectedSubSliceIndices{0, 1, 2, 3, 4, 5};
-    ASSERT_EQ(expectedSubSliceIndices.size(), topologyMap[tileId].subsliceIndices.size());
-    ASSERT_TRUE(topologyMap[tileId].subsliceIndices.size() > 0);
-
-    for (auto i = 0u; i < expectedSubSliceIndices.size(); i++) {
-        EXPECT_EQ(expectedSubSliceIndices[i], topologyMap[tileId].subsliceIndices[i]);
-    }
-}
-
 TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNotRecognizedTopologyIsIgnored) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -848,7 +797,7 @@ TEST(IoctlHelperXeTest, givenUnknownTopologyTypeWhenGetTopologyDataAndMapThenNot
     }
 }
 
-TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCorrect) {
+TEST(IoctlHelperXeTest, givenVariousDssConfigInputsWhenGetTopologyDataAndMapThenResultsAreCorrect) {
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -856,41 +805,47 @@ TEST(IoctlHelperXeTest, givenComputeDssWhenGetTopologyDataAndMapThenResultsAreCo
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     xeIoctlHelper->initialize();
 
-    uint16_t tileId = 0;
-    for (auto gtId = 0u; gtId < 4u; gtId++) {
-        drm->addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_GEOMETRY, 8, {0, 0, 0, 0, 0, 0, 0, 0});
-        drm->addMockedQueryTopologyData(gtId, DRM_XE_TOPO_DSS_COMPUTE, 8, {0x0fu, 0xff, 0u, 0xff, 0u, 0u, 0xff, 0xff});
-        drm->addMockedQueryTopologyData(gtId, DRM_XE_TOPO_EU_PER_DSS, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
+    for (auto &dssConfigType : {DRM_XE_TOPO_DSS_GEOMETRY, DRM_XE_TOPO_DSS_COMPUTE}) {
+        for (auto &euPerDssConfigType : {DRM_XE_TOPO_EU_PER_DSS, DRM_XE_TOPO_SIMD16_EU_PER_DSS}) {
+
+            drm->queryTopology.clear();
+
+            uint16_t tileId = 0;
+            for (auto gtId = 0u; gtId < 4u; gtId++) {
+                drm->addMockedQueryTopologyData(gtId, dssConfigType, 8, {0x0fu, 0xff, 0u, 0xff, 0u, 0u, 0xff, 0xff});
+                drm->addMockedQueryTopologyData(gtId, euPerDssConfigType, 8, {0b1111'1111, 0, 0, 0, 0, 0, 0, 0});
+            }
+
+            DrmQueryTopologyData topologyData{};
+            TopologyMap topologyMap{};
+
+            hwInfo.gtSystemInfo.MaxSlicesSupported = 4u;
+            hwInfo.gtSystemInfo.MaxSubSlicesSupported = 32u;
+            auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
+            ASSERT_TRUE(result);
+
+            // verify topology data
+            EXPECT_EQ(3, topologyData.sliceCount);
+            EXPECT_EQ(4, topologyData.maxSlices);
+
+            EXPECT_EQ(20, topologyData.subSliceCount);
+            EXPECT_EQ(8, topologyData.maxSubSlicesPerSlice);
+
+            EXPECT_EQ(160, topologyData.euCount);
+            EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
+
+            // verify topology map
+            std::vector<int> expectedSliceIndices = {0, 1, 3};
+            ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
+            ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
+
+            for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
+                EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
+            }
+
+            EXPECT_EQ(0u, topologyMap[tileId].subsliceIndices.size());
+        }
     }
-
-    DrmQueryTopologyData topologyData{};
-    TopologyMap topologyMap{};
-
-    hwInfo.gtSystemInfo.MaxSlicesSupported = 4u;
-    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 32u;
-    auto result = xeIoctlHelper->getTopologyDataAndMap(hwInfo, topologyData, topologyMap);
-    ASSERT_TRUE(result);
-
-    // verify topology data
-    EXPECT_EQ(3, topologyData.sliceCount);
-    EXPECT_EQ(4, topologyData.maxSlices);
-
-    EXPECT_EQ(20, topologyData.subSliceCount);
-    EXPECT_EQ(8, topologyData.maxSubSlicesPerSlice);
-
-    EXPECT_EQ(160, topologyData.euCount);
-    EXPECT_EQ(8, topologyData.maxEusPerSubSlice);
-
-    // verify topology map
-    std::vector<int> expectedSliceIndices = {0, 1, 3};
-    ASSERT_EQ(expectedSliceIndices.size(), topologyMap[tileId].sliceIndices.size());
-    ASSERT_TRUE(topologyMap[tileId].sliceIndices.size() > 0);
-
-    for (auto i = 0u; i < expectedSliceIndices.size(); i++) {
-        EXPECT_EQ(expectedSliceIndices[i], topologyMap[tileId].sliceIndices[i]);
-    }
-
-    EXPECT_EQ(0u, topologyMap[tileId].subsliceIndices.size());
 }
 
 TEST(IoctlHelperXeTest, givenOnlyMediaTypeWhenGetTopologyDataAndMapThenSubsliceIndicesNotSet) {
@@ -2458,15 +2413,6 @@ TEST_F(IoctlHelperXeHwIpVersionTests, WhenSetupIpVersionIsCalledAndIoctlReturnsN
 
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);
-}
-
-TEST(IoctlHelperXeTest, givenCorrectEuPerDssTypeWhenCheckingIfTopologyIsEuPerDssThenSuccessIsReturned) {
-    MockExecutionEnvironment executionEnvironment{};
-    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
-    IoctlHelperXe ioctlHelper{*drm};
-    EXPECT_TRUE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_EU_PER_DSS));
-    EXPECT_FALSE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_DSS_GEOMETRY));
-    EXPECT_FALSE(ioctlHelper.isEuPerDssTopologyType(DRM_XE_TOPO_DSS_COMPUTE));
 }
 
 TEST(IoctlHelperXeTest, givenIoctlHelperWhenSettingExtContextThenCallExternalIoctlFunction) {

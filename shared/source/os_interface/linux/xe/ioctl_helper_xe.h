@@ -132,7 +132,6 @@ class IoctlHelperXe : public IoctlHelper {
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
-    virtual bool isEuPerDssTopologyType(uint16_t topologyType) const;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

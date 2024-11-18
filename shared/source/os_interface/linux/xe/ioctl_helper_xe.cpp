@@ -489,12 +489,12 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
             case DRM_XE_TOPO_L3_BANK:
                 fillMask(l3Banks[tileId], topo);
                 break;
+            case DRM_XE_TOPO_EU_PER_DSS:
+            case DRM_XE_TOPO_SIMD16_EU_PER_DSS:
+                fillMask(euDss[tileId], topo);
+                break;
             default:
-                if (isEuPerDssTopologyType(topo->type)) {
-                    fillMask(euDss[tileId], topo);
-                } else {
-                    xeLog("Unhandle GT Topo type: %d\n", topo->type);
-                }
+                xeLog("Unhandle GT Topo type: %d\n", topo->type);
             }
         }
 
@@ -1732,7 +1732,4 @@ void IoctlHelperXe::querySupportedFeatures() {
     };
     supportedFeatures.flags.pageFault = checkVmCreateFlagsSupport(DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_FAULT_MODE);
 };
-bool IoctlHelperXe::isEuPerDssTopologyType(uint16_t topologyType) const {
-    return topologyType == DRM_XE_TOPO_EU_PER_DSS;
-}
 } // namespace NEO
