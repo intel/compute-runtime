@@ -14,9 +14,9 @@ DEVICE(0xE20D, BmgHwConfig)
 DEVICE(0xE212, BmgHwConfig)
 #endif
 #ifdef SUPPORT_LNL
-DEVICE(0x6420, LnlHwConfig)
-DEVICE(0x64A0, LnlHwConfig)
-DEVICE(0x64B0, LnlHwConfig)
+NAMEDDEVICE(0x6420, LnlHwConfig, "Intel(R) Graphics")
+NAMEDDEVICE(0x64A0, LnlHwConfig, "Intel(R) Arc(TM) Graphics")
+NAMEDDEVICE(0x64B0, LnlHwConfig, "Intel(R) Graphics")
 #endif
 #endif
 
@@ -83,7 +83,7 @@ NAMEDDEVICE(0x7DD5, MtlHwConfig, "Intel(R) Graphics")
 NAMEDDEVICE(0x7D45, MtlHwConfig, "Intel(R) Graphics")
 #endif
 #ifdef SUPPORT_ARL
-DEVICE(0x7D67, ArlHwConfig)
+NAMEDDEVICE(0x7D67, ArlHwConfig, "Intel(R) Graphics")
 DEVICE(0x7D51, ArlHwConfig)
 DEVICE(0x7DD1, ArlHwConfig)
 DEVICE(0x7D41, ArlHwConfig)
