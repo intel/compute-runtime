@@ -809,7 +809,18 @@ struct drm_xe_gem_mmap_offset {
 	/** @handle: Handle for the object being mapped. */
 	__u32 handle;
 
-	/** @flags: Must be zero */
+/**
+ * For user to query special offset we are adding special flag in
+ * mmap_offset ioctl which needs to be passed as follows,
+ * struct drm_xe_gem_mmap_offset mmo = {
+ * 	.handle = 0, (this must be set to 0)
+ * 	.flags = DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER,
+ * };
+ * igt_ioctl(fd, DRM_IOCTL_XE_GEM_MMAP_OFFSET, &mmo);
+ * map = mmap(NULL, size, PROT_WRITE, MAP_SHARED, fd, mmo);
+*/
+#define DRM_XE_MMAP_OFFSET_FLAG_PCI_BARRIER     (1 << 0)
+	/** @flags: Flag to indicate if any special offset, zero otherwise */
 	__u32 flags;
 
 	/** @offset: The fake offset to use for subsequent mmap call */

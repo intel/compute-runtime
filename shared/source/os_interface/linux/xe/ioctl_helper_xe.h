@@ -133,6 +133,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
     virtual bool isEuPerDssTopologyType(uint16_t topologyType) const;
+    void *pciBarrierMmap() override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
