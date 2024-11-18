@@ -29,12 +29,12 @@ TEST_F(ZesVfFixture, GivenValidDeviceHandleWhenRetrievingVfHandlesThenZeroCountI
     WddmVfImp::numEnabledVfs = 1;
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, mockHandleCount);
     uint32_t testCount = count + 1;
     std::vector<zes_vf_handle_t> handles(testCount);
     result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &testCount, handles.data());
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(testCount, count);
     WddmVfImp::numEnabledVfs = 0;
 }
@@ -46,19 +46,20 @@ TEST_F(ZesVfFixture, GivenValidDeviceHandleAndOneVfIsEnabledAndLocalMemoryIsUsed
     uint32_t count = 0;
     uint32_t mockHandleCount = 1u;
     ze_result_t result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, mockHandleCount);
     result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, mockHandleCount);
     std::vector<zes_vf_handle_t> handles(count);
     result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, handles.data());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(handles.size(), mockHandleCount);
     WddmVfImp::localMemoryUsedStatus = false;
     WddmVfImp::numEnabledVfs = 0;
 }
 
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenThenZeroPciAddressIsReturned) {
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenZeroPciAddressIsReturned) {
 
     uint32_t vfId = 1;
     std::unique_ptr<VfManagement> pVfManagement = std::make_unique<VfImp>(pOsSysman, vfId);
@@ -80,7 +81,7 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingOsVfCapabilitiesThenErrorIsRe
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenWhenQueryingMemoryUtilizationThenErrorIsReturned) {
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationThenErrorIsReturned) {
 
     uint32_t vfId = 1;
     uint32_t count = 0;
@@ -89,10 +90,12 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenWhenQueryingMemoryUtilizationThenErro
     pSysmanDeviceImp->pVfManagementHandleContext->handleList.push_back(std::move(pVfManagement));
 
     ze_result_t result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, mockHandleCount);
 
     std::vector<zes_vf_handle_t> vfHandleList(count);
     result = zesDeviceEnumEnabledVFExp(pSysmanDevice->toHandle(), &count, vfHandleList.data());
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     for (auto vfHandle : vfHandleList) {
         EXPECT_NE(vfHandle, nullptr);
@@ -101,7 +104,7 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenWhenQueryingMemoryUtilizationThenErro
     }
 }
 
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenWhenQueryingEngineUtilizationThenErrorIsReturned) {
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingEngineUtilizationThenErrorIsReturned) {
 
     uint32_t vfId = 1;
     uint32_t count = 0;

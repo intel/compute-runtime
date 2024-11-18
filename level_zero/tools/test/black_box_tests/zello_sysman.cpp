@@ -1628,7 +1628,7 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
         for (uint32_t it = 0; it < count; it++) {
             if (verbose) {
                 std::cout << "Location of the Memory = " << getMemoryModuleLocation(memUtils[it].vfMemLocation) << std::endl;
-                std::cout << "Memory Utilized in Bytes = " << memUtils[it].vfMemUtilized << std::endl;
+                std::cout << "Memory Utilized in KiloBytes = " << memUtils[it].vfMemUtilized << std::endl;
             }
         }
     }
