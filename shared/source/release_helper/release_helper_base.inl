@@ -158,4 +158,9 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<releaseType>::getSizeToPrefe
     return sizeToPreferredSlmValue;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::isNumRtStacksPerDssFixedValue() const {
+    return true;
+}
+
 } // namespace NEO

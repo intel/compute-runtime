@@ -42,6 +42,7 @@ TEST_F(ReleaseHelper2004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_FALSE(releaseHelper->isDisablingMsaaRequired());
         EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
+        EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
     }
 }
 TEST_F(ReleaseHelper2004Tests, whenShouldAdjustCalledThenTrueReturned) {

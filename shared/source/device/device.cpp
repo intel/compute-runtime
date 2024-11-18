@@ -1120,7 +1120,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
         auto releaseHelper = getReleaseHelper();
         dispatchGlobals.stackSizePerRay = releaseHelper ? releaseHelper->getStackSizePerRay() : 0;
-        dispatchGlobals.numDSSRTStacks = getHardwareInfo().capabilityTable.syncNumRTStacksPerDSS;
+        dispatchGlobals.numDSSRTStacks = RayTracingHelper::getNumRtStacksPerDss(*this);
         dispatchGlobals.maxBVHLevels = maxBvhLevels;
 
         uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
