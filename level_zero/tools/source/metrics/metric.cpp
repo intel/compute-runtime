@@ -690,20 +690,6 @@ MetricImp *HomogeneousMultiDeviceMetricCreated::create(MetricSource &metricSourc
     return new (std::nothrow) HomogeneousMultiDeviceMetricCreated(metricSource, subDeviceMetrics);
 }
 
-void MetricProgrammable::setParamValueInfoDescription(zet_metric_programmable_param_value_info_exp_t *pValueInfo, const char *desc) {
-
-    auto pNext = const_cast<void *>(pValueInfo->pNext);
-    while (pNext != nullptr) {
-        auto baseProps = reinterpret_cast<zet_base_properties_t *>(pNext);
-        if (baseProps->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_PROGRAMMABLE_PARAM_VALUE_INFO_DESC_EXP) {
-            zet_intel_metric_programmable_param_value_info_exp_desc_t *infoDesc = reinterpret_cast<zet_intel_metric_programmable_param_value_info_exp_desc_t *>(baseProps);
-            snprintf(infoDesc->description, sizeof(infoDesc->description), "%s", desc);
-            break;
-        }
-        pNext = const_cast<void *>(baseProps->pNext);
-    }
-}
-
 ze_result_t metricProgrammableGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) {
     auto device = Device::fromHandle(hDevice);
     return static_cast<MetricDeviceContext &>(device->getMetricDeviceContext()).metricProgrammableGet(pCount, phMetricProgrammables);

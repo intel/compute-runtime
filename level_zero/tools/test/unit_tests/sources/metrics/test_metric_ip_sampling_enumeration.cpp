@@ -314,16 +314,16 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenQuery
         ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
         ASSERT_NE(metricGroups[0], nullptr);
 
-        zet_intel_metric_group_type_exp_t metricGroupType{};
-        metricGroupType.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        zet_metric_group_type_exp_t metricGroupType{};
+        metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
         metricGroupType.pNext = nullptr;
-        metricGroupType.type = static_cast<zet_intel_metric_group_type_exp_flags_t>(0xffffffff); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        metricGroupType.type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_FORCE_UINT32;
 
         zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricGroupType};
         EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
         EXPECT_EQ(strcmp(metricGroupProperties.description, "EU stall sampling"), 0);
         EXPECT_EQ(strcmp(metricGroupProperties.name, "EuStallSampling"), 0);
-        EXPECT_EQ(metricGroupType.type, ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER);
+        EXPECT_EQ(metricGroupType.type, ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER);
     }
 }
 

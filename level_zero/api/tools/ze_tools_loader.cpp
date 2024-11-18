@@ -263,3 +263,55 @@ zetGetMetricExpProcAddrTable(
 
     return result;
 }
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetMetricTracerExpProcAddrTable(
+    ze_api_version_t version,
+    zet_metric_tracer_exp_dditable_t *pDdiTable) {
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnCreateExp, L0::zetMetricTracerCreateExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnDestroyExp, L0::zetMetricTracerDestroyExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnEnableExp, L0::zetMetricTracerEnableExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnDisableExp, L0::zetMetricTracerDisableExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnReadDataExp, L0::zetMetricTracerReadDataExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnDecodeExp, L0::zetMetricTracerDecodeExp, version, ZE_API_VERSION_1_11);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetMetricDecoderExpProcAddrTable(
+    ze_api_version_t version,
+    zet_metric_decoder_exp_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnCreateExp, L0::zetMetricDecoderCreateExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnDestroyExp, L0::zetMetricDecoderDestroyExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnGetDecodableMetricsExp, L0::zetMetricDecoderGetDecodableMetricsExp, version, ZE_API_VERSION_1_11);
+
+    return result;
+}
+
+ZE_DLLEXPORT ze_result_t ZE_APICALL
+zetGetDeviceExpProcAddrTable(
+    ze_api_version_t version,
+    zet_device_exp_dditable_t *pDdiTable) {
+
+    if (nullptr == pDdiTable)
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    fillDdiEntry(pDdiTable->pfnGetConcurrentMetricGroupsExp, L0::zetDeviceGetConcurrentMetricGroupsExp, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnCreateMetricGroupsFromMetricsExp, L0::zetDeviceCreateMetricGroupsFromMetricsExp, version, ZE_API_VERSION_1_11);
+
+    return result;
+}

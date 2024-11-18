@@ -37,6 +37,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_concurrent_groups.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_metric.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_multidevice_metric_programmable.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}/test_metric_tracer.cpp
 )
 
 add_subdirectories()

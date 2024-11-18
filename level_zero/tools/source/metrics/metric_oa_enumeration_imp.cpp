@@ -655,16 +655,16 @@ ze_result_t MetricEnumeration::metricProgrammableGet(uint32_t *pCount, zet_metri
     return ZE_RESULT_SUCCESS;
 }
 
-zet_intel_metric_sampling_type_exp_flag_t MetricEnumeration::getSamplingTypeFromApiMask(const uint32_t apiMask) {
+zet_metric_group_sampling_type_flag_t MetricEnumeration::getSamplingTypeFromApiMask(const uint32_t apiMask) {
     const uint32_t checkMask = MetricsDiscovery::API_TYPE_IOSTREAM | MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
     if ((apiMask & checkMask) == checkMask) {
-        return ZET_INTEL_METRIC_SAMPLING_TYPE_EXP_FLAG_TIME_AND_EVENT_BASED;
+        return METRICS_SAMPLING_TYPE_TIME_EVENT_BASED;
     }
 
     if (apiMask & MetricsDiscovery::API_TYPE_IOSTREAM) {
-        return ZET_INTEL_METRIC_SAMPLING_TYPE_EXP_FLAG_TIME_BASED;
+        return ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
     } else {
-        return ZET_INTEL_METRIC_SAMPLING_TYPE_EXP_FLAG_EVENT_BASED;
+        return ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
     }
 }
 

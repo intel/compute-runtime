@@ -56,7 +56,7 @@ bool displayAllProgrammables() {
         case ZET_VALUE_INFO_TYPE_EXP_UINT64_RANGE:
             LOG(zmu::LogLevel::INFO) << "[" << valueInfo.ui64Range.ui64Min << "," << valueInfo.ui64Range.ui64Max << "]";
             break;
-        case ZET_INTEL_VALUE_INFO_TYPE_FLOAT64_RANGE_EXP: {
+        case ZET_VALUE_INFO_TYPE_EXP_FLOAT64_RANGE: {
             double minVal = 0;
             memcpy(&minVal, &valueInfo.ui64Range.ui64Min, sizeof(uint64_t));
             double maxVal = 0;
@@ -95,7 +95,7 @@ bool displayAllProgrammables() {
         case ZET_VALUE_INFO_TYPE_EXP_UINT64_RANGE:
             LOG(zmu::LogLevel::INFO) << value.ui64;
             break;
-        case ZET_INTEL_VALUE_INFO_TYPE_FLOAT64_RANGE_EXP:
+        case ZET_VALUE_INFO_TYPE_EXP_FLOAT64_RANGE:
             LOG(zmu::LogLevel::INFO) << value.fp64;
             break;
         default:
@@ -141,22 +141,13 @@ bool displayAllProgrammables() {
 
                 uint32_t paramValueInfoCount = parameterInfos[paramIndex].valueInfoCount;
                 std::vector<zet_metric_programmable_param_value_info_exp_t> paramValueInfos(paramValueInfoCount);
-                std::vector<zet_intel_metric_programmable_param_value_info_exp_desc_t> paramValueInfoDescList(paramValueInfoCount);
-                for (auto &desc : paramValueInfoDescList) {
-                    desc.stype = static_cast<zet_structure_type_t>(ZET_INTEL_STRUCTURE_TYPE_METRIC_PROGRAMMABLE_PARAM_VALUE_INFO_DESC_EXP); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-                    desc.pNext = nullptr;
-                }
-
-                for (uint32_t index = 0; index < paramValueInfos.size(); index++) {
-                    paramValueInfos[index].pNext = &paramValueInfoDescList[index];
-                }
                 VALIDATECALL(zetMetricProgrammableGetParamValueInfoExp(programmable, paramIndex, &paramValueInfoCount, paramValueInfos.data()));
 
                 // Print Parameter Value Information in the programmable
                 for (uint32_t valInfoIndex = 0; valInfoIndex < parameterInfos[paramIndex].valueInfoCount; valInfoIndex++) {
                     LOG(zmu::LogLevel::INFO) << "\n";
                     LOG(zmu::LogLevel::INFO) << "\t\t\t [" << valInfoIndex << "] "
-                                             << "desc:" << paramValueInfoDescList[valInfoIndex].description << " | value:";
+                                             << "desc:" << paramValueInfos[paramIndex].description << " | value:";
                     printValueInfo(parameterInfos[paramIndex].valueInfoType, paramValueInfos[valInfoIndex].valueInfo);
                 }
                 LOG(zmu::LogLevel::INFO) << "\n\n";
@@ -222,7 +213,7 @@ bool createMetricFromProgrammables() {
         case ZET_VALUE_INFO_TYPE_EXP_UINT64_RANGE:
             LOG(zmu::LogLevel::DEBUG) << value.ui64;
             break;
-        case ZET_INTEL_VALUE_INFO_TYPE_FLOAT64_RANGE_EXP:
+        case ZET_VALUE_INFO_TYPE_EXP_FLOAT64_RANGE:
             LOG(zmu::LogLevel::DEBUG) << value.fp64;
             break;
         default:
@@ -363,7 +354,7 @@ bool testProgrammableMetricGroupCreateDestroy() {
         case ZET_VALUE_INFO_TYPE_EXP_UINT64_RANGE:
             LOG(zmu::LogLevel::DEBUG) << value.ui64;
             break;
-        case ZET_INTEL_VALUE_INFO_TYPE_FLOAT64_RANGE_EXP:
+        case ZET_VALUE_INFO_TYPE_EXP_FLOAT64_RANGE:
             LOG(zmu::LogLevel::DEBUG) << value.fp64;
             break;
         default:
@@ -381,13 +372,6 @@ bool testProgrammableMetricGroupCreateDestroy() {
 
         std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-        typedef ze_result_t (*pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp)(
-            zet_device_handle_t hDevice, uint32_t metricCount, zet_metric_handle_t * phMetrics,
-            const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-            const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-            uint32_t *metricGroupCount, zet_metric_group_handle_t *phMetricGroups);
-        pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp zetIntelDeviceCreateMetricGroupsFromMetricsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceCreateMetricGroupsFromMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceCreateMetricGroupsFromMetricsExp)));
 
         uint32_t programmableCount = 0;
         VALIDATECALL(zetMetricProgrammableGetExp(executionCtxt->getDeviceHandle(0), &programmableCount, nullptr));
@@ -431,7 +415,7 @@ bool testProgrammableMetricGroupCreateDestroy() {
 
             zet_metric_group_handle_t metricGroup{};
             uint32_t metricGroupCount = 1;
-            VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0), 1, &metricHandles[0], "name", "desc", &metricGroupCount, &metricGroup));
+            VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0), 1, &metricHandles[0], "name", "desc", &metricGroupCount, &metricGroup));
             zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
             VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
             zmu::printMetricGroupProperties(metricGroupProperties);
@@ -502,22 +486,6 @@ bool testProgrammableMetricGroupAddRemoveMetric() {
 
         std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-        typedef ze_result_t (*pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp)(
-            zet_device_handle_t hDevice, uint32_t metricCount, zet_metric_handle_t * phMetrics,
-            const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-            const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-            uint32_t *metricGroupCount, zet_metric_group_handle_t *phMetricGroups);
-        pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp zetIntelDeviceCreateMetricGroupsFromMetricsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceCreateMetricGroupsFromMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceCreateMetricGroupsFromMetricsExp)));
-
-        typedef ze_result_t (*pFnzetIntelDeviceGetConcurrentMetricGroupsExp)(
-            zet_device_handle_t hDevice,
-            uint32_t metricGroupCount,
-            zet_metric_group_handle_t * phMetricGroups,
-            uint32_t * pConcurrentGroupCount,
-            uint32_t * pCountPerConcurrentGroup);
-        pFnzetIntelDeviceGetConcurrentMetricGroupsExp zetIntelDeviceGetConcurrentMetricGroupsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceGetConcurrentMetricGroupsExp", reinterpret_cast<void **>(&zetIntelDeviceGetConcurrentMetricGroupsExp)));
 
         uint32_t programmableCount = 0;
         VALIDATECALL(zetMetricProgrammableGetExp(executionCtxt->getDeviceHandle(0), &programmableCount, nullptr));
@@ -540,19 +508,19 @@ bool testProgrammableMetricGroupAddRemoveMetric() {
 
         // Create metric groups from metrics
         uint32_t metricGroupCount = 0;
-        VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
-                                                                    static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
-                                                                    metricHandlesFromProgrammables.data(),
-                                                                    "metricGroupName",
-                                                                    "metricGroupDesc",
-                                                                    &metricGroupCount, nullptr));
+        VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
+                                                               static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
+                                                               metricHandlesFromProgrammables.data(),
+                                                               "metricGroupName",
+                                                               "metricGroupDesc",
+                                                               &metricGroupCount, nullptr));
         std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-        VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
-                                                                    static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
-                                                                    metricHandlesFromProgrammables.data(),
-                                                                    "metricGroupName",
-                                                                    "metricGroupDesc",
-                                                                    &metricGroupCount, metricGroupHandles.data()));
+        VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
+                                                               static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
+                                                               metricHandlesFromProgrammables.data(),
+                                                               "metricGroupName",
+                                                               "metricGroupDesc",
+                                                               &metricGroupCount, metricGroupHandles.data()));
         metricGroupHandles.resize(metricGroupCount);
 
         // From each metric group remove half of the metrics and re-add them
@@ -655,22 +623,6 @@ bool testProgrammableMetricGroupStreamer() {
 
         std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-        typedef ze_result_t (*pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp)(
-            zet_device_handle_t hDevice, uint32_t metricCount, zet_metric_handle_t * phMetrics,
-            const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-            const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-            uint32_t *metricGroupCount, zet_metric_group_handle_t *phMetricGroups);
-        pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp zetIntelDeviceCreateMetricGroupsFromMetricsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceCreateMetricGroupsFromMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceCreateMetricGroupsFromMetricsExp)));
-
-        typedef ze_result_t (*pFnzetIntelDeviceGetConcurrentMetricGroupsExp)(
-            zet_device_handle_t hDevice,
-            uint32_t metricGroupCount,
-            zet_metric_group_handle_t * phMetricGroups,
-            uint32_t * pConcurrentGroupCount,
-            uint32_t * pCountPerConcurrentGroup);
-        pFnzetIntelDeviceGetConcurrentMetricGroupsExp zetIntelDeviceGetConcurrentMetricGroupsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceGetConcurrentMetricGroupsExp", reinterpret_cast<void **>(&zetIntelDeviceGetConcurrentMetricGroupsExp)));
 
         uint32_t programmableCount = 0;
         VALIDATECALL(zetMetricProgrammableGetExp(executionCtxt->getDeviceHandle(0), &programmableCount, nullptr));
@@ -693,19 +645,19 @@ bool testProgrammableMetricGroupStreamer() {
 
         // Create metric groups from metrics
         uint32_t metricGroupCount = 0;
-        VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
-                                                                    static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
-                                                                    metricHandlesFromProgrammables.data(),
-                                                                    "metricGroupName",
-                                                                    "metricGroupDesc",
-                                                                    &metricGroupCount, nullptr));
+        VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
+                                                               static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
+                                                               metricHandlesFromProgrammables.data(),
+                                                               "metricGroupName",
+                                                               "metricGroupDesc",
+                                                               &metricGroupCount, nullptr));
         std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-        VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
-                                                                    static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
-                                                                    metricHandlesFromProgrammables.data(),
-                                                                    "metricGroupName",
-                                                                    "metricGroupDesc",
-                                                                    &metricGroupCount, metricGroupHandles.data()));
+        VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
+                                                               static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
+                                                               metricHandlesFromProgrammables.data(),
+                                                               "metricGroupName",
+                                                               "metricGroupDesc",
+                                                               &metricGroupCount, metricGroupHandles.data()));
         metricGroupHandles.resize(metricGroupCount);
         // filter out non-streamer metric groups
         metricGroupHandles.erase(std::remove_if(metricGroupHandles.begin(), metricGroupHandles.end(),
@@ -729,15 +681,15 @@ bool testProgrammableMetricGroupStreamer() {
 
         // Create concurrent metric groups
         uint32_t concurrentGroupCount = 0;
-        VALIDATECALL(zetIntelDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
-                                                                static_cast<uint32_t>(metricGroupHandles.size()),
-                                                                metricGroupHandles.data(),
-                                                                &concurrentGroupCount, nullptr));
+        VALIDATECALL(zetDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
+                                                           static_cast<uint32_t>(metricGroupHandles.size()),
+                                                           metricGroupHandles.data(),
+                                                           nullptr, &concurrentGroupCount));
         std::vector<uint32_t> countPerConcurrentGroupList(concurrentGroupCount);
-        VALIDATECALL(zetIntelDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
-                                                                static_cast<uint32_t>(metricGroupHandles.size()),
-                                                                metricGroupHandles.data(),
-                                                                &concurrentGroupCount, countPerConcurrentGroupList.data()));
+        VALIDATECALL(zetDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
+                                                           static_cast<uint32_t>(metricGroupHandles.size()),
+                                                           metricGroupHandles.data(),
+                                                           countPerConcurrentGroupList.data(), &concurrentGroupCount));
         countPerConcurrentGroupList.resize(concurrentGroupCount);
         // Activate and collect
         // Streamer allows single metric group collection.
@@ -817,22 +769,6 @@ bool testProgrammableMetricGroupQuery() {
 
         std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
-        typedef ze_result_t (*pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp)(
-            zet_device_handle_t hDevice, uint32_t metricCount, zet_metric_handle_t * phMetrics,
-            const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
-            const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
-            uint32_t *metricGroupCount, zet_metric_group_handle_t *phMetricGroups);
-        pFnzetIntelDeviceCreateMetricGroupsFromMetricsExp zetIntelDeviceCreateMetricGroupsFromMetricsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceCreateMetricGroupsFromMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceCreateMetricGroupsFromMetricsExp)));
-
-        typedef ze_result_t (*pFnzetIntelDeviceGetConcurrentMetricGroupsExp)(
-            zet_device_handle_t hDevice,
-            uint32_t metricGroupCount,
-            zet_metric_group_handle_t * phMetricGroups,
-            uint32_t * pConcurrentGroupCount,
-            uint32_t * pCountPerConcurrentGroup);
-        pFnzetIntelDeviceGetConcurrentMetricGroupsExp zetIntelDeviceGetConcurrentMetricGroupsExp = nullptr;
-        VALIDATECALL(zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceGetConcurrentMetricGroupsExp", reinterpret_cast<void **>(&zetIntelDeviceGetConcurrentMetricGroupsExp)));
 
         uint32_t programmableCount = 0;
         VALIDATECALL(zetMetricProgrammableGetExp(executionCtxt->getDeviceHandle(0), &programmableCount, nullptr));
@@ -855,19 +791,19 @@ bool testProgrammableMetricGroupQuery() {
 
         // Create metric groups from metrics
         uint32_t metricGroupCount = 0;
-        VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
-                                                                    static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
-                                                                    metricHandlesFromProgrammables.data(),
-                                                                    "metricGroupName",
-                                                                    "metricGroupDesc",
-                                                                    &metricGroupCount, nullptr));
+        VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
+                                                               static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
+                                                               metricHandlesFromProgrammables.data(),
+                                                               "metricGroupName",
+                                                               "metricGroupDesc",
+                                                               &metricGroupCount, nullptr));
         std::vector<zet_metric_group_handle_t> metricGroupHandles(metricGroupCount);
-        VALIDATECALL(zetIntelDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
-                                                                    static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
-                                                                    metricHandlesFromProgrammables.data(),
-                                                                    "metricGroupName",
-                                                                    "metricGroupDesc",
-                                                                    &metricGroupCount, metricGroupHandles.data()));
+        VALIDATECALL(zetDeviceCreateMetricGroupsFromMetricsExp(executionCtxt->getDeviceHandle(0),
+                                                               static_cast<uint32_t>(metricHandlesFromProgrammables.size()),
+                                                               metricHandlesFromProgrammables.data(),
+                                                               "metricGroupName",
+                                                               "metricGroupDesc",
+                                                               &metricGroupCount, metricGroupHandles.data()));
         metricGroupHandles.resize(metricGroupCount);
         // filter out non-query metric groups
         metricGroupHandles.erase(std::remove_if(metricGroupHandles.begin(), metricGroupHandles.end(),
@@ -891,15 +827,15 @@ bool testProgrammableMetricGroupQuery() {
 
         // Create concurrent metric groups
         uint32_t concurrentGroupCount = 0;
-        VALIDATECALL(zetIntelDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
-                                                                static_cast<uint32_t>(metricGroupHandles.size()),
-                                                                metricGroupHandles.data(),
-                                                                &concurrentGroupCount, nullptr));
+        VALIDATECALL(zetDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
+                                                           static_cast<uint32_t>(metricGroupHandles.size()),
+                                                           metricGroupHandles.data(),
+                                                           nullptr, &concurrentGroupCount));
         std::vector<uint32_t> countPerConcurrentGroupList(concurrentGroupCount);
-        VALIDATECALL(zetIntelDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
-                                                                static_cast<uint32_t>(metricGroupHandles.size()),
-                                                                metricGroupHandles.data(),
-                                                                &concurrentGroupCount, countPerConcurrentGroupList.data()));
+        VALIDATECALL(zetDeviceGetConcurrentMetricGroupsExp(executionCtxt->getDeviceHandle(0),
+                                                           static_cast<uint32_t>(metricGroupHandles.size()),
+                                                           metricGroupHandles.data(),
+                                                           countPerConcurrentGroupList.data(), &concurrentGroupCount));
         countPerConcurrentGroupList.resize(concurrentGroupCount);
         // Activate and collect
         // Streamer allows single metric group collection.

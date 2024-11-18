@@ -49,8 +49,6 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
 
     RETURN_FUNC_PTR_IF_EXIST(zeMemGetPitchFor2dImage);
     RETURN_FUNC_PTR_IF_EXIST(zeImageGetDeviceOffsetExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceGetConcurrentMetricGroupsExp);
-    RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceCreateMetricGroupsFromMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zeIntelGetDriverVersionString);
 
     RETURN_FUNC_PTR_IF_EXIST(zeIntelMediaCommunicationCreate);

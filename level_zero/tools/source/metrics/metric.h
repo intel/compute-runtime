@@ -49,6 +49,8 @@ struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier
         METRICS_LOG(stdout, "L0Metrics[D][@fn:%s,ln:%d]: " str "\n", __FUNCTION__, __LINE__, __VA_ARGS__) \
     }
 
+#define METRICS_SAMPLING_TYPE_TIME_EVENT_BASED (static_cast<zet_metric_group_sampling_type_flag_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED)) // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+
 struct CommandList;
 struct MetricStreamer;
 struct MetricProgrammable;
@@ -333,7 +335,6 @@ struct MetricProgrammable : _zet_metric_programmable_exp_handle_t {
     static MetricProgrammable *fromHandle(zet_metric_programmable_exp_handle_t handle) {
         return static_cast<MetricProgrammable *>(handle);
     }
-    static void setParamValueInfoDescription(zet_metric_programmable_param_value_info_exp_t *pValueInfo, const char *desc);
     zet_metric_programmable_exp_handle_t toHandle() { return this; }
 };
 
@@ -416,5 +417,27 @@ ze_result_t metricCreateFromProgrammable(zet_metric_programmable_exp_handle_t hM
                                          zet_metric_programmable_param_value_exp_t *pParameterValues, uint32_t parameterCount,
                                          const char name[ZET_MAX_METRIC_NAME], const char description[ZET_MAX_METRIC_DESCRIPTION],
                                          uint32_t *pMetricHandleCount, zet_metric_handle_t *phMetricHandles);
+
+ze_result_t metricTracerCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, uint32_t metricGroupCount,
+                               zet_metric_group_handle_t *phMetricGroups, zet_metric_tracer_exp_desc_t *desc, ze_event_handle_t hNotificationEvent,
+                               zet_metric_tracer_exp_handle_t *phMetricTracer);
+
+ze_result_t metricTracerDestroy(zet_metric_tracer_exp_handle_t hMetricTracer);
+
+ze_result_t metricTracerEnable(zet_metric_tracer_exp_handle_t hMetricTracer, ze_bool_t synchronous);
+
+ze_result_t metricTracerDisable(zet_metric_tracer_exp_handle_t hMetricTracer, ze_bool_t synchronous);
+
+ze_result_t metricTracerReadData(zet_metric_tracer_exp_handle_t hMetricTracer, size_t *pRawDataSize, uint8_t *pRawData);
+
+ze_result_t metricDecoderCreate(zet_metric_tracer_exp_handle_t hMetricTracer, zet_metric_decoder_exp_handle_t *phMetricDecoder);
+
+ze_result_t metricDecoderDestroy(zet_metric_decoder_exp_handle_t hMetricDecoder);
+
+ze_result_t metricDecoderGetDecodableMetrics(zet_metric_decoder_exp_handle_t hMetricDecoder, uint32_t *pCount, zet_metric_handle_t *phMetrics);
+
+ze_result_t metricTracerDecode(zet_metric_decoder_exp_handle_t hMetricDecoder, size_t *pRawDataSize, uint8_t *pRawData,
+                               uint32_t metricsCount, zet_metric_handle_t *phMetrics, uint32_t *pSetCount, uint32_t *pMetricEntriesCountPerSet,
+                               uint32_t *pMetricEntriesCount, zet_metric_entry_exp_t *pMetricEntries);
 
 } // namespace L0

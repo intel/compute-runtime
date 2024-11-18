@@ -228,9 +228,9 @@ ze_result_t OaMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_gr
             }
         }
 
-        if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP) { // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-            zet_intel_metric_group_type_exp_t *groupType = reinterpret_cast<zet_intel_metric_group_type_exp_t *>(extendedProperties);
-            groupType->type = ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER;
+        if (extendedProperties->stype == ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP) {
+            zet_metric_group_type_exp_t *groupType = reinterpret_cast<zet_metric_group_type_exp_t *>(extendedProperties);
+            groupType->type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
             retVal = ZE_RESULT_SUCCESS;
         }
         pNext = extendedProperties->pNext;
@@ -311,7 +311,7 @@ ze_result_t OaMetricSourceImp::createMetricGroupsFromMetrics(std::vector<zet_met
         auto metricFromProgrammable = static_cast<OaMetricFromProgrammable *>(metricImp);
         auto samplingType = metricFromProgrammable->getSupportedSamplingType();
         // Different metric groups based on sampling type
-        if (samplingType == ZET_INTEL_METRIC_SAMPLING_TYPE_EXP_FLAG_TIME_AND_EVENT_BASED) {
+        if (samplingType == METRICS_SAMPLING_TYPE_TIME_EVENT_BASED) {
             samplingTypeToMeticMap[ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED].push_back(metric);
             samplingTypeToMeticMap[ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED].push_back(metric);
         } else {

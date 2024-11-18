@@ -24,7 +24,7 @@ static const std::map<MetricsDiscovery::TOptionDescriptorType, zet_metric_progra
     {MetricsDiscovery::OPTION_DESCRIPTOR_TYPE_NORMALIZATION_UTILIZATION, ZET_METRIC_PROGRAMMABLE_PARAM_TYPE_EXP_NORMALIZATION_UTILIZATION},
     {MetricsDiscovery::OPTION_DESCRIPTOR_TYPE_NORMALIZATION_AVERAGE, ZET_METRIC_PROGRAMMABLE_PARAM_TYPE_EXP_NORMALIZATION_AVERAGE},
     {MetricsDiscovery::OPTION_DESCRIPTOR_TYPE_NORMALIZATION_RATE, ZET_METRIC_PROGRAMMABLE_PARAM_TYPE_EXP_NORMALIZATION_RATE},
-    {MetricsDiscovery::OPTION_DESCRIPTOR_TYPE_NORMALIZATION_BYTE, static_cast<zet_metric_programmable_param_type_exp_t>(ZET_INTEL_METRIC_PROGRAMMABLE_PARAM_TYPE_NORMALIZATION_BYTE_EXP)}};
+    {MetricsDiscovery::OPTION_DESCRIPTOR_TYPE_NORMALIZATION_BYTE, ZET_METRIC_PROGRAMMABLE_PARAM_TYPE_EXP_NORMALIZATION_BYTES}};
 
 static const std::map<MetricsDiscovery::TOptionDescriptorType, uint64_t> optionTypeToDefaultValueMap{
     // Default value for disaggregation is disabled (which means aggregated).
@@ -134,7 +134,7 @@ ze_result_t OaMetricProgrammableImp::getParamValueInfo(uint32_t parameterOrdinal
             *pValueInfoCount = 0;
             return status;
         }
-        setParamValueInfoDescription(&pValueInfo[i], properties.name);
+        snprintf(pValueInfo[i].description, sizeof(pValueInfo[i].description), "%s", properties.name);
     }
 
     return ZE_RESULT_SUCCESS;

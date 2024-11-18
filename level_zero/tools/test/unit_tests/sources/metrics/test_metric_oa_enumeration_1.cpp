@@ -13,6 +13,7 @@
 #include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
+#include <level_zero/zet_api.h>
 
 #include "gtest/gtest.h"
 
@@ -3347,10 +3348,10 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
-    zet_intel_metric_group_type_exp_t metricGroupType{};
-    metricGroupType.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zet_metric_group_type_exp_t metricGroupType{};
+    metricGroupType.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_TYPE_EXP;
     metricGroupType.pNext = nullptr;
-    metricGroupType.type = static_cast<zet_intel_metric_group_type_exp_flags_t>(0xffffffff); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    metricGroupType.type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_FORCE_UINT32;
 
     metricGroupProperties.pNext = &metricGroupType;
 
@@ -3362,7 +3363,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
 
-    EXPECT_EQ(metricGroupType.type, ZET_INTEL_METRIC_GROUP_TYPE_EXP_OTHER);
+    EXPECT_EQ(metricGroupType.type, ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER);
 }
 
 } // namespace ult

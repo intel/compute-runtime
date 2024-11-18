@@ -113,7 +113,7 @@ struct MetricEnumeration {
     uint32_t getMetricTierNumber(const uint32_t sourceUsageFlagsMask) const;
     zet_metric_type_t
     getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
-    zet_intel_metric_sampling_type_exp_flag_t getSamplingTypeFromApiMask(const uint32_t apiMask);
+    zet_metric_group_sampling_type_flag_t getSamplingTypeFromApiMask(const uint32_t apiMask);
     std::vector<MetricProgrammable *> &getProgrammables() {
         return metricProgrammables;
     }
