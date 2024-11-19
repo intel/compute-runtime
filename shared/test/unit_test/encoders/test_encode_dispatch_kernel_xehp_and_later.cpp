@@ -372,7 +372,7 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDispatchingKernelThenPostSyncIsAdded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA = typename DefaultWalkerType::PostSyncType;
+    using POSTSYNC_DATA = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -1370,7 +1370,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImp
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenNonTimestampEventWhenTimestampPostSyncRequiredThenTimestampPostSyncIsAdded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA = typename DefaultWalkerType::PostSyncType;
+    using POSTSYNC_DATA = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
     uint64_t eventAddress = MemoryConstants::cacheLineSize * 123;
@@ -1627,7 +1627,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenEncodeDispatchKernelWhenRequestingExtraP
 HWTEST2_F(CommandEncodeStatesTest, givenForceComputeWalkerPostSyncFlushWithWriteWhenEncodeIsCalledThenPostSyncIsProgrammedCorrectly, IsAtLeastXeHpCore) {
 
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using OPERATION = typename PostSyncType::OPERATION;
 
     DebugManagerStateRestore restore;

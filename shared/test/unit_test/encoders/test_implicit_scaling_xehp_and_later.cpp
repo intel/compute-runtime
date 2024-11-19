@@ -19,7 +19,7 @@
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCmdBufferThenConsumedSizeMatchEstimatedAndCmdBufferHasCorrectCmds) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -63,7 +63,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCm
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndNoPartitionHintWhenDispatchingCmdBufferThenPartitionCountOneAndPartitionTypeDisabled) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -108,7 +108,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndNoPartiti
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndPartitionHintWhenDispatchingCmdBufferThenPartitionCountOneAndPartitionTypeFromHint) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
@@ -153,7 +153,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenWorkgroupOneAndPartition
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDispatchingCmdBufferThenCorrectStaticPartitioningCommandsAreProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
@@ -205,7 +205,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPartitionRegisterIsRequiredThenCorrectStaticPartitioningCommandsAreProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
@@ -261,7 +261,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPa
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPreferredAndPartitionCountIsOneWhenDispatchingCmdBufferThenCorrectStaticPartitioningCommandsAreProgrammed) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
@@ -313,7 +313,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPreferredWhenForceDisabledWparidRegisterThenExpectNoCommandFound) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
@@ -351,7 +351,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPreferredWhenForceDisabledPipeControlThenExpectNoCommandFound) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -389,7 +389,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPreferredWhenForceDisabledPipeControlThenExpectNoCommandFound) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -1593,7 +1593,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenStaticPartitioningWhenBlockDispatchFlagIsTrueThenDoNotDispatchAnyCommands) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
 
     uint64_t postSyncAddress = (1ull << 48) | (1ull << 24);
 

@@ -179,6 +179,12 @@ struct Xe2HpgCoreFamily : public Xe2HpgCore {
     static constexpr bool isInterfaceDescriptorHeaplessMode() {
         return false;
     }
+
+    template <typename WalkerType>
+    static constexpr auto getPostSyncType() {
+        return std::decay_t<POSTSYNC_DATA>{};
+    }
+
     using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 

@@ -101,7 +101,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
                                                         WalkerType *walkerCmd,
                                                         TagNodeBase *timestampPacketNode,
                                                         const RootDeviceEnvironment &rootDeviceEnvironment) {
-    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
+    using POSTSYNC_DATA = decltype(GfxFamily::template getPostSyncType<WalkerType>());
 
     auto &postSyncData = walkerCmd->getPostSync();
     postSyncData.setDataportPipelineFlush(true);

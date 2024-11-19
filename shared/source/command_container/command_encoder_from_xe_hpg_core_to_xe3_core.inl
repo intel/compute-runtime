@@ -50,7 +50,7 @@ bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool co
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
+    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<WalkerType>());
 
     auto &postSync = walkerCmd.getPostSync();
 

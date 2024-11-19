@@ -141,7 +141,7 @@ void testSingleTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpect
         WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walker);
         std::visit([&arg, &kernelEventAddresses, i](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
             using OPERATION = typename PostSyncType::OPERATION;
             auto &postSync = walker->getPostSync();
 
@@ -231,7 +231,7 @@ void testSingleTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, 
         WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walker);
         std::visit([&arg, &kernelEventAddresses, i](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
             using OPERATION = typename PostSyncType::OPERATION;
             auto &postSync = walker->getPostSync();
 
@@ -333,7 +333,7 @@ void testSingleTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpect
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
     std::visit([&arg, firstKernelEventAddress](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         using OPERATION = typename PostSyncType::OPERATION;
         auto &postSync = walker->getPostSync();
 
@@ -413,7 +413,7 @@ void testSingleTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
     std::visit([&arg, firstKernelEventAddress](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         using OPERATION = typename PostSyncType::OPERATION;
         auto &postSync = walker->getPostSync();
 
@@ -579,7 +579,7 @@ void testMultiTileAppendMemoryCopyThreeKernels(CopyTestInput &input, TestExpecte
 
         std::visit([&arg, i, expectedKernelEventAddress = expectedKernelEventAddress](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
             using OPERATION = typename PostSyncType::OPERATION;
             auto &postSync = walker->getPostSync();
 
@@ -680,7 +680,7 @@ void testMultiTileAppendMemoryCopyThreeKernelsAndL3Flush(CopyTestInput &input, T
 
         std::visit([&arg, i, expectedKernelEventAddress = expectedKernelEventAddress](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
             using OPERATION = typename PostSyncType::OPERATION;
             auto &postSync = walker->getPostSync();
 
@@ -794,7 +794,7 @@ void testMultiTileAppendMemoryCopySingleKernel(CopyTestInput &input, TestExpecte
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
     std::visit([&arg, firstKernelEventAddress](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         using OPERATION = typename PostSyncType::OPERATION;
         auto &postSync = walker->getPostSync();
 
@@ -882,7 +882,7 @@ void testMultiTileAppendMemoryCopySingleKernelAndL3Flush(CopyTestInput &input, T
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
     std::visit([&arg, firstKernelEventAddress](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         using OPERATION = typename PostSyncType::OPERATION;
         auto &postSync = walker->getPostSync();
 

@@ -102,7 +102,7 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
 
         std::visit([&](auto &&walkerCmd) {
             using WalkerType = std::decay_t<decltype(*walkerCmd)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
             EXPECT_EQ(0u, walkerCmd->getPartitionId());
 
@@ -992,7 +992,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenNonBlockingAtomicO
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandBufferWhenItIsExecutedThenAtomicIsIncrementedEquallyToPartitionCountPlusOne) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
 
     auto streamCpuPointer = taskStream->getSpace(0);
     auto postSyncAddress = helperSurface->getGpuAddress();

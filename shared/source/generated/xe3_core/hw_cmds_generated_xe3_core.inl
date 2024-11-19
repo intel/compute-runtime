@@ -5981,7 +5981,6 @@ typedef struct tagCOMPUTE_WALKER {
         return sizeof(TheStructure.Common.InlineData);
     }
     using InterfaceDescriptorType = std::decay_t<decltype(TheStructure.Common.InterfaceDescriptor)>; // patched
-    using PostSyncType = std::decay_t<decltype(TheStructure.Common.PostSync)>;                       // patched
 } COMPUTE_WALKER;
 STATIC_ASSERT(160 == sizeof(COMPUTE_WALKER));
 

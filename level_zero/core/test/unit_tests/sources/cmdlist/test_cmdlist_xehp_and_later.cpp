@@ -412,7 +412,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
         WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
         std::visit([&arg, firstKernelEventAddress](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
             using OPERATION = typename PostSyncType::OPERATION;
             auto &postSync = walker->getPostSync();
 
@@ -667,7 +667,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*firstWalker);
         std::visit([expectedWalkerPostSyncOp](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
             using OPERATION = typename PostSyncType::OPERATION;
             auto &postSync = walker->getPostSync();
 
@@ -3132,7 +3132,7 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(launchParams.cmdWalkerBuffer);
     std::visit([eventBaseAddress](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         auto &postSync = walker->getPostSync();
 
         EXPECT_NE(eventBaseAddress, postSync.getDestinationAddress());

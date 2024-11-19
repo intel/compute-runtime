@@ -184,6 +184,11 @@ struct Xe3CoreFamily : public Xe3Core {
         return false;
     }
 
+    template <typename WalkerType>
+    static constexpr auto getPostSyncType() {
+        return std::decay_t<POSTSYNC_DATA>{};
+    }
+
     using WalkerVariant = std::variant<COMPUTE_WALKER *>;
 };
 

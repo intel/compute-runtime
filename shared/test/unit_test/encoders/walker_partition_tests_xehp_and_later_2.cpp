@@ -912,7 +912,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename WalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
     MockExecutionEnvironment mockExecutionEnvironment{};
     mockExecutionEnvironment.incRefInternal();
 
@@ -1124,7 +1124,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUsedForCleanupWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename WalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     mockExecutionEnvironment.incRefInternal();
@@ -1345,7 +1345,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenPipeControlProgrammingDisabledThenExpectNoPipeControlCommand) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename WalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;

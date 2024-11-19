@@ -23,7 +23,7 @@ struct WalkerPartitionTests : public ::testing::Test {
     template <typename GfxFamily>
     auto createWalker(uint64_t postSyncAddress) {
         using WalkerType = typename GfxFamily::DefaultWalkerType;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(GfxFamily::template getPostSyncType<WalkerType>());
 
         WalkerType walker;
         walker = GfxFamily::template getInitGpuWalker<WalkerType>();

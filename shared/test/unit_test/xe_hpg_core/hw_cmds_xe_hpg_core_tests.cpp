@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,12 @@
 using namespace NEO;
 
 using XeHpgCoreHwCmdTest = ::testing::Test;
+
+XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenComputeWalkerThenPostSyncTypeIsPostSyncData) {
+    auto postSyncType = FamilyType::template getPostSyncType<typename FamilyType::DefaultWalkerType>();
+    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
+    EXPECT_TRUE((std::is_same<POSTSYNC_DATA, decltype(postSyncType)>::value));
+}
 
 XE_HPG_CORETEST_F(XeHpgCoreHwCmdTest, givenMediaSurfaceStateWhenProgrammingMocsThenMocsIndexIsSetProperly) {
     auto mediaSurfaceState = FamilyType::cmdInitMediaSurfaceState;

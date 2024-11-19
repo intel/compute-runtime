@@ -452,7 +452,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenWorkDimTh
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename DefaultWalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
 
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
@@ -525,7 +525,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
     std::visit([expectedMocs](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
         auto &postSyncData = walker->getPostSync();
         EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSyncData.getOperation());
@@ -611,7 +611,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVari
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*hwParser.itorWalker);
     std::visit([contextEndAddress](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
         ASSERT_NE(nullptr, walker);
 
         auto &postSyncData = walker->getPostSync();

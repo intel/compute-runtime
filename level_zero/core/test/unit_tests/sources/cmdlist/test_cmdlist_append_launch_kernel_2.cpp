@@ -1440,7 +1440,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
 
     std::visit([](auto &&walker) {
         using WalkerType = std::decay_t<decltype(*walker)>;
-        using PostSyncType = typename WalkerType::PostSyncType;
+        using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
         EXPECT_TRUE(walker->getWorkloadPartitionEnable());
         auto &postSync = walker->getPostSync();

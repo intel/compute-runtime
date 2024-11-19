@@ -465,7 +465,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
+    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<WalkerType>());
 
     auto &postSync = walkerCmd.getPostSync();
 
@@ -903,8 +903,8 @@ inline size_t EncodeDispatchKernel<Family>::getInlineDataOffset(EncodeDispatchKe
 template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd) {
-    using PostSyncType = typename WalkerType::PostSyncType;
-    using OperationType = typename PostSyncType::OPERATION;
+    using POSTSYNC_DATA = decltype(Family::template getPostSyncType<WalkerType>());
+    using OperationType = typename POSTSYNC_DATA::OPERATION;
 
     if (debugManager.flags.ForceComputeWalkerPostSyncFlushWithWrite.get() != -1) {
         auto &postSync = walkerCmd.getPostSync();

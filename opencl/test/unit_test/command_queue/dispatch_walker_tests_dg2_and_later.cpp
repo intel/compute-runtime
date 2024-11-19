@@ -92,7 +92,7 @@ HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramCompute
 
 HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchingThenProgramPostSyncData, matcherDG2AndLater) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using POSTSYNC_DATA = typename DefaultWalkerType::PostSyncType;
+    using POSTSYNC_DATA = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
 
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);

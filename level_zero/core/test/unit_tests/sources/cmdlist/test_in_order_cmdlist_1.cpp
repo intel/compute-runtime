@@ -3381,7 +3381,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingKernelSplitThenDon
 
         std::visit([](auto &&walker) {
             using WalkerType = std::decay_t<decltype(*walker)>;
-            using PostSyncType = typename WalkerType::PostSyncType;
+            using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
             auto &postSync = walker->getPostSync();
             EXPECT_EQ(PostSyncType::OPERATION_NO_WRITE, postSync.getOperation());

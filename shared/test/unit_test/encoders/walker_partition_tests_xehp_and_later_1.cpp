@@ -15,7 +15,7 @@
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename WalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     mockExecutionEnvironment.incRefInternal();
@@ -1097,7 +1097,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     using WalkerType = typename FamilyType::DefaultWalkerType;
-    using PostSyncType = typename WalkerType::PostSyncType;
+    using PostSyncType = decltype(FamilyType::template getPostSyncType<WalkerType>());
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     mockExecutionEnvironment.incRefInternal();
