@@ -227,7 +227,8 @@ void LinuxEngineImpPrelim::init() {
         checkErrorNumberAndUpdateStatus();
         return;
     }
-    fd[1] = pPmuInterface->pmuInterfaceOpen(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    auto i915EngineClass = engineToI915MapPrelim.find(engineGroup);
+    fd[1] = pPmuInterface->pmuInterfaceOpen(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
 
     if (fd[1] < 0) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
@@ -248,7 +249,7 @@ void LinuxEngineImpPrelim::init() {
     // Delay fd opening till actually needed
     for (uint64_t i = 0; i < numberOfVfs + 1; i++) {
         const uint64_t busyConfig = ___PRELIM_I915_PMU_FN_EVENT(config, i);
-        const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(__PRELIM_I915_PMU_TOTAL_ACTIVE_TICKS(subDeviceId), i);
+        const uint64_t totalConfig = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), i);
         vfConfigs.push_back(std::make_pair(busyConfig, totalConfig));
     }
 }

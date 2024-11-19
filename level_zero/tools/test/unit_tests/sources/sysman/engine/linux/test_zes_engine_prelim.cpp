@@ -18,6 +18,9 @@ namespace L0 {
 namespace ult {
 constexpr uint32_t handleComponentCount = 13u;
 constexpr uint32_t handleCountForMultiDeviceFixture = 7u;
+
+bool MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance = false;
+
 class ZesEngineFixturePrelim : public SysmanDeviceFixture {
   protected:
     std::vector<ze_device_handle_t> deviceHandles;
@@ -91,6 +94,17 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(ZesEngineFixturePrelim, GivenDeviceHandleAndSingleEngineInstanceIsQueriedWhenCallingzesDeviceEnumEngineGroupsThenSingleHandleCountIsReturned) {
+    uint32_t numHandles = 3u;
+    uint32_t count = 0;
+    MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance = true;
+    pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
+    pSysmanDeviceImp->pEngineHandleContext->init(deviceHandles);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
+    EXPECT_EQ(count, numHandles);
+    MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance = false;
+}
 
 TEST_F(ZesEngineFixturePrelim, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
     uint32_t count = 0;

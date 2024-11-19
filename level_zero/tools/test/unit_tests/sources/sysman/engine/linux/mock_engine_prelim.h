@@ -25,6 +25,8 @@ const std::string deviceDir("device");
 constexpr uint32_t numberOfMockedEnginesForSingleTileDevice = 7u;
 constexpr uint32_t numberOfTiles = 2u;
 constexpr uint32_t numberOfMockedEnginesForMultiTileDevice = 2u;
+constexpr uint32_t singleEngineInstanceCount = 1u;
+
 struct MockMemoryManagerInEngineSysman : public MemoryManagerMock {
     MockMemoryManagerInEngineSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
@@ -37,6 +39,7 @@ struct MockEngineNeoDrmPrelim : public Drm {
 
     bool mockReadSysmanQueryEngineInfo = false;
     bool mockReadSysmanQueryEngineInfoMultiDevice = false;
+    static bool mockQuerySingleEngineInstance;
 
     bool sysmanQueryEngineInfo() override {
 
@@ -63,6 +66,10 @@ struct MockEngineNeoDrmPrelim : public Drm {
         i915QueryEngineInfo[5].engine.engineInstance = 0;
         i915QueryEngineInfo[6].engine.engineClass = invalidEngineClass;
         i915QueryEngineInfo[6].engine.engineInstance = 0;
+
+        if (mockQuerySingleEngineInstance == true) {
+            i915QueryEngineInfo.resize(singleEngineInstanceCount);
+        }
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{i915QueryEngineInfo};
 
@@ -145,6 +152,15 @@ struct MockEnginePmuInterfaceImpPrelim : public PmuInterfaceImp {
 
     int mockedPmuReadAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
         return -1;
+    }
+
+    int64_t pmuInterfaceOpen(uint64_t config, int group, uint32_t format) override {
+
+        if (group > -1 && MockEngineNeoDrmPrelim::mockQuerySingleEngineInstance == true) {
+            uint64_t testConfig = PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 0);
+            EXPECT_EQ(config, testConfig);
+        }
+        return PmuInterfaceImp::pmuInterfaceOpen(config, group, format);
     }
 };
 
