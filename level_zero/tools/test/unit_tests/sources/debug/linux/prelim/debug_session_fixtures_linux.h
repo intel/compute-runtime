@@ -432,6 +432,7 @@ struct MockTileDebugSessionLinuxi915 : TileDebugSessionLinuxi915 {
     using DebugSessionImp::checkTriggerEventsForAttention;
     using DebugSessionImp::expectedAttentionEvents;
     using DebugSessionImp::interruptImp;
+    using DebugSessionImp::interruptSent;
     using DebugSessionImp::newlyStoppedThreads;
     using DebugSessionImp::resumeImp;
     using DebugSessionImp::sendInterrupts;
@@ -440,6 +441,7 @@ struct MockTileDebugSessionLinuxi915 : TileDebugSessionLinuxi915 {
     using DebugSessionImp::triggerEvents;
     using DebugSessionLinuxi915::detached;
     using DebugSessionLinuxi915::ioctl;
+    using DebugSessionLinuxi915::pendingInterrupts;
     using DebugSessionLinuxi915::pushApiEvent;
     using TileDebugSessionLinuxi915::cleanRootSessionAfterDetach;
     using TileDebugSessionLinuxi915::getAllMemoryHandles;

@@ -52,6 +52,7 @@ struct DebugSessionImp : DebugSession {
     DebugSession *attachTileDebugSession(Device *device) override;
     void detachTileDebugSession(DebugSession *tileSession) override;
     bool areAllTileDebugSessionDetached() override;
+    bool isInterruptSent() { return interruptSent; }
 
     void setAttachMode(bool isRootAttach) override {
         if (isRootAttach) {

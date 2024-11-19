@@ -8101,6 +8101,77 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     EXPECT_EQ(1u, deviceIndex);
 }
 
+TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceAndInterruptSentForTileWhenHandlingAttentionEventThenEventIsNotProcessed) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ExperimentalEnableTileAttach.set(1);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxi915>(config, deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinuxi915::mockClientHandle;
+    sessionMock->createTileSessionsIfEnabled();
+    EXPECT_TRUE(sessionMock->tileSessionsEnabled);
+
+    MockTileDebugSessionLinuxi915 *tileSessions[2];
+    tileSessions[0] = static_cast<MockTileDebugSessionLinuxi915 *>(sessionMock->tileSessions[0].first);
+    tileSessions[1] = static_cast<MockTileDebugSessionLinuxi915 *>(sessionMock->tileSessions[1].first);
+
+    uint8_t data[sizeof(prelim_drm_i915_debug_event_eu_attention) + 128];
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+
+    ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
+    tileSessions[1]->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+    sessionMock->interruptSent = false;
+    tileSessions[1]->interruptSent = true;
+    sessionMock->euControlInterruptSeqno[1] = 3;
+    sessionMock->expectedAttentionEvents = 1;
+    tileSessions[0]->expectedAttentionEvents = 1;
+    tileSessions[1]->expectedAttentionEvents = 1;
+
+    auto engineInfo = mockDrm->getEngineInfo();
+    auto engineInstance = engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType);
+
+    prelim_drm_i915_debug_event_eu_attention attention = {};
+    attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
+    attention.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    attention.base.seqno = 2;
+    attention.base.size = sizeof(prelim_drm_i915_debug_event_eu_attention) + std::min(uint32_t(128), static_cast<uint32_t>(bitmaskSize));
+    attention.client_handle = MockDebugSessionLinuxi915::mockClientHandle;
+    attention.flags = 0;
+    attention.ci.engine_class = engineInstance->engineClass;
+    attention.ci.engine_instance = engineInstance->engineInstance;
+    attention.bitmask_size = std::min(uint32_t(128), static_cast<uint32_t>(bitmaskSize));
+
+    memcpy(data, &attention, sizeof(prelim_drm_i915_debug_event_eu_attention));
+    memcpy(ptrOffset(data, offsetof(prelim_drm_i915_debug_event_eu_attention, bitmask)), bitmask.get(), std::min(size_t(128), bitmaskSize));
+
+    sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
+
+    EXPECT_EQ(0u, tileSessions[0]->newlyStoppedThreads.size());
+    EXPECT_EQ(0u, tileSessions[1]->newlyStoppedThreads.size());
+    EXPECT_EQ(1u, tileSessions[1]->pendingInterrupts.size());
+    EXPECT_FALSE(tileSessions[1]->pendingInterrupts[0].second);
+    EXPECT_FALSE(tileSessions[1]->triggerEvents);
+    EXPECT_EQ(1u, sessionMock->expectedAttentionEvents);
+    EXPECT_EQ(1u, tileSessions[0]->expectedAttentionEvents);
+    EXPECT_EQ(1u, tileSessions[1]->expectedAttentionEvents);
+}
 template <bool blockOnFence = false>
 struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxi915Helper {
     void setUp() {
