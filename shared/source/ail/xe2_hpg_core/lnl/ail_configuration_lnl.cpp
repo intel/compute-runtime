@@ -30,5 +30,11 @@ bool AILConfigurationHw<IGFX_LUNARLAKE>::is256BPrefetchDisableRequired() {
     return iterator != applicationsOverfetchDisabled.end();
 }
 
+template <>
+bool AILConfigurationHw<IGFX_LUNARLAKE>::drainHostptrs() {
+    auto iterator = applicationsDrainHostptrsDisabled.find(processName);
+    return iterator == applicationsDrainHostptrsDisabled.end();
+}
+
 template class AILConfigurationHw<IGFX_LUNARLAKE>;
 } // namespace NEO

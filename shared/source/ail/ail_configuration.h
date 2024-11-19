@@ -70,6 +70,8 @@ class AILConfiguration {
 
     virtual bool is256BPrefetchDisableRequired() = 0;
 
+    virtual bool drainHostptrs() = 0;
+
     virtual bool isBufferPoolEnabled() = 0;
 
     virtual ~AILConfiguration() = default;
@@ -101,6 +103,7 @@ extern const std::set<std::string_view> applicationsForceRcsDg2;
 extern const std::set<std::string_view> applicationsBufferPoolDisabled;
 extern const std::set<std::string_view> applicationsBufferPoolDisabledDg2;
 extern const std::set<std::string_view> applicationsOverfetchDisabled;
+extern const std::set<std::string_view> applicationsDrainHostptrsDisabled;
 extern const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited;
 
 template <PRODUCT_FAMILY product>
@@ -116,6 +119,7 @@ class AILConfigurationHw : public AILConfiguration {
     void modifyKernelIfRequired(std::string &kernel) override;
     bool isContextSyncFlagRequired() override;
     bool is256BPrefetchDisableRequired() override;
+    bool drainHostptrs() override;
     bool isBufferPoolEnabled() override;
     bool useLegacyValidationLogic() override;
     bool forceRcs() override;

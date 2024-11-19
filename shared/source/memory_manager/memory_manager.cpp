@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
@@ -744,9 +745,12 @@ bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {
+    auto ail = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getAILConfigurationHelper();
+
     if (allocationData.type == AllocationType::externalHostPtr &&
         allocationData.hostPtr &&
-        this->getDeferredDeleter()) {
+        this->getDeferredDeleter() &&
+        (!ail || ail->drainHostptrs())) {
         this->getDeferredDeleter()->drain(true, true);
     }
 

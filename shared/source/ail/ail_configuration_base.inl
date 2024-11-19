@@ -35,6 +35,11 @@ inline bool AILConfigurationHw<product>::is256BPrefetchDisableRequired() {
 }
 
 template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::drainHostptrs() {
+    return true;
+}
+
+template <PRODUCT_FAMILY product>
 inline bool AILConfigurationHw<product>::isBufferPoolEnabled() {
     return true;
 }

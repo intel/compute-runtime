@@ -124,4 +124,10 @@ HWTEST2_F(AILTests, GivenAilWhenCheckingOverfetchDisableRequiredThenExpectFalse,
     EXPECT_FALSE(ail.is256BPrefetchDisableRequired());
 }
 
+HWTEST2_F(AILTests, GivenAilWhenCheckingDrainHostptrsRequiredThenExpectTrue, MatchAny) {
+    AILWhitebox<productFamily> ail;
+    ail.processName = "other";
+    EXPECT_TRUE(ail.drainHostptrs());
+}
+
 } // namespace NEO

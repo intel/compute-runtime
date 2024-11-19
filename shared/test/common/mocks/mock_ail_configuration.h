@@ -68,6 +68,10 @@ class MockAILConfiguration : public AILConfiguration {
     }
     bool disableBindlessAddressingValue = false;
 
+    bool drainHostptrs() override {
+        return true;
+    }
+
   protected:
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
 };
