@@ -45,10 +45,6 @@ TEST_F(ReleaseHelper1255Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper1255Tests, whenShouldAdjustCalledThenFalseReturned) {
-    whenShouldAdjustCalledThenFalseReturned();
-}
-
 TEST_F(ReleaseHelper1255Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();
 }

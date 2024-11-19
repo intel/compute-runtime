@@ -60,11 +60,6 @@ bool ReleaseHelperHw<releaseType>::isResolvingSubDeviceIDNeeded() const {
 }
 
 template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::shouldAdjustDepth() const {
-    return false;
-}
-
-template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isDirectSubmissionSupported() const {
     return false;
 }

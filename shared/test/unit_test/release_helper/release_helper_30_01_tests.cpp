@@ -43,10 +43,6 @@ TEST_F(ReleaseHelper3001Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
     }
 }
 
-TEST_F(ReleaseHelper3001Tests, whenShouldAdjustCalledThenTrueReturned) {
-    whenShouldAdjustCalledThenTrueReturned();
-}
-
 TEST_F(ReleaseHelper3001Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValuesUpTo256Returned();
 }

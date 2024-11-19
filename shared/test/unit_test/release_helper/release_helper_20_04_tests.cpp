@@ -45,9 +45,6 @@ TEST_F(ReleaseHelper2004Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
     }
 }
-TEST_F(ReleaseHelper2004Tests, whenShouldAdjustCalledThenTrueReturned) {
-    whenShouldAdjustCalledThenTrueReturned();
-}
 
 TEST_F(ReleaseHelper2004Tests, whenGettingSupportedNumGrfsThenCorrectValuesAreReturned) {
     whenGettingSupportedNumGrfsThenValues128And256Returned();

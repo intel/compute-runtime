@@ -24,7 +24,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isBFloat16ConversionSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isAuxSurfaceModeOverrideRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isResolvingSubDeviceIDNeeded, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(shouldAdjustDepth, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isRcsExposureDisabled, bool, false, ());
     ADDMETHOD_CONST_NOBASE(getSupportedNumGrfs, std::vector<uint32_t>, {128}, ());

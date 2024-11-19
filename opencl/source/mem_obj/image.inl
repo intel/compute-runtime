@@ -100,9 +100,8 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     appendSurfaceStateDepthParams(surfaceState, gmm);
     EncodeSurfaceState<GfxFamily>::appendImageCompressionParams(surfaceState, graphicsAllocation, gmmHelper, isImageFromBuffer(),
                                                                 this->plane);
-    auto releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
 
-    adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV, releaseHelper);
+    adjustDepthLimitations(surfaceState, minArrayElement, renderTargetViewExtent, depth, mipCount, is3DUAVOrRTV);
     appendSurfaceStateParams(surfaceState, rootDeviceIndex);
     appendSurfaceStateExt(surfaceState);
 }
@@ -212,11 +211,7 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::adjustDepthLimitations(RENDER_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv, ReleaseHelper *releaseHelper) {
-    if (is3DUavOrRtv && releaseHelper && releaseHelper->shouldAdjustDepth()) {
-        auto newDepth = std::min(depth, (renderTargetViewExtent + minArrayElement) << mipCount);
-        surfaceState->setDepth(newDepth);
-    }
+void ImageHw<GfxFamily>::adjustDepthLimitations(RENDER_SURFACE_STATE *surfaceState, uint32_t minArrayElement, uint32_t renderTargetViewExtent, uint32_t depth, uint32_t mipCount, bool is3DUavOrRtv) {
 }
 
 template <typename GfxFamily>

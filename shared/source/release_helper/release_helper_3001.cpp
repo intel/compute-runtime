@@ -43,7 +43,6 @@ bool ReleaseHelperHw<release>::isDisablingMsaaRequired() const {
 }
 } // namespace NEO
 
-#include "shared/source/release_helper/release_helper_common_xe2_and_later.inl"
 #include "shared/source/release_helper/release_helper_common_xe3_and_later.inl"
 #include "shared/source/release_helper/release_helper_common_xe3_lpg.inl"
 template class NEO::ReleaseHelperHw<NEO::release>;

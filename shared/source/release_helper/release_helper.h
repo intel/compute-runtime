@@ -44,7 +44,6 @@ class ReleaseHelper {
     virtual bool isBFloat16ConversionSupported() const = 0;
     virtual bool isAuxSurfaceModeOverrideRequired() const = 0;
     virtual bool isResolvingSubDeviceIDNeeded() const = 0;
-    virtual bool shouldAdjustDepth() const = 0;
     virtual bool isDirectSubmissionSupported() const = 0;
     virtual bool isRcsExposureDisabled() const = 0;
     virtual std::vector<uint32_t> getSupportedNumGrfs() const = 0;
@@ -86,7 +85,6 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isBFloat16ConversionSupported() const override;
     bool isAuxSurfaceModeOverrideRequired() const override;
     bool isResolvingSubDeviceIDNeeded() const override;
-    bool shouldAdjustDepth() const override;
     bool isDirectSubmissionSupported() const override;
     bool isRcsExposureDisabled() const override;
     std::vector<uint32_t> getSupportedNumGrfs() const override;
