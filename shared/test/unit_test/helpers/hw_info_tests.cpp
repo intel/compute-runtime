@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -38,4 +39,12 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
 
     EXPECT_EQ(expectedFeatureTable.asHash(), hwInfo.featureTable.asHash());
     EXPECT_EQ(expectedWorkaroundTable.asHash(), hwInfo.workaroundTable.asHash());
+}
+
+TEST(HwInfoTest, givenHwInfoWhenQueryNumSubSlicesPerSliceThenCorrectNumberIsReturned) {
+    HardwareInfo hwInfo{};
+    hwInfo.gtSystemInfo.SliceCount = 2;
+    hwInfo.gtSystemInfo.SubSliceCount = 7;
+    auto expectedNumSubSlicesPerSlice = static_cast<uint32_t>(Math::divideAndRoundUp(hwInfo.gtSystemInfo.SubSliceCount, hwInfo.gtSystemInfo.SliceCount));
+    EXPECT_EQ(getNumSubSlicesPerSlice(hwInfo), expectedNumSubSlicesPerSlice);
 }

@@ -7,11 +7,9 @@
 
 #include "opencl/source/cl_device/cl_device_info.h"
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -277,8 +275,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = sizeof(cl_uint);
         break;
     case CL_DEVICE_NUM_SUB_SLICES_PER_SLICE_INTEL: {
-        const auto &gtSysInfo = getHardwareInfo().gtSystemInfo;
-        param.uint = static_cast<cl_uint>(Math::divideAndRoundUp(gtSysInfo.SubSliceCount, gtSysInfo.SliceCount));
+        param.uint = static_cast<cl_uint>(getNumSubSlicesPerSlice(getHardwareInfo()));
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
         break;

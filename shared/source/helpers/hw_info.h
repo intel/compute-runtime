@@ -169,5 +169,6 @@ bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInf
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHelper);
 void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo);
+uint32_t getNumSubSlicesPerSlice(const HardwareInfo &hwInfo);
 
 } // namespace NEO
