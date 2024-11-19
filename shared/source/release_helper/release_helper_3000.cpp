@@ -20,11 +20,6 @@ bool ReleaseHelperHw<release>::isBFloat16ConversionSupported() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::shouldAdjustDepth() const {
-    return true;
-}
-
-template <>
 std::vector<uint32_t> ReleaseHelperHw<release>::getSupportedNumGrfs() const {
     return {32u, 64u, 96u, 128u, 160u, 192u, 256u};
 }
@@ -54,6 +49,7 @@ uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
 
 } // namespace NEO
 
+#include "shared/source/release_helper/release_helper_common_xe2_and_later.inl"
 #include "shared/source/release_helper/release_helper_common_xe3_and_later.inl"
 #include "shared/source/release_helper/release_helper_common_xe3_lpg.inl"
 template class NEO::ReleaseHelperHw<NEO::release>;
