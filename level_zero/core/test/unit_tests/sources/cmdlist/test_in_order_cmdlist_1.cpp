@@ -455,12 +455,13 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
 
         uint32_t assignKernelEventCompletionDataCalled = 0;
         uint32_t assignKernelEventCompletionDataFailCounter = 0;
+        uint64_t notReadyData = Event::STATE_CLEARED;
 
         void assignKernelEventCompletionData(void *address) override {
             auto completionAddress = reinterpret_cast<uint64_t *>(getCompletionFieldHostAddress());
             assignKernelEventCompletionDataCalled++;
             if (assignKernelEventCompletionDataCalled <= assignKernelEventCompletionDataFailCounter) {
-                *completionAddress = Event::STATE_CLEARED;
+                *completionAddress = notReadyData;
             } else {
                 *completionAddress = 0x123;
             }
@@ -472,24 +473,38 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
     auto cmdList = createImmCmdList<gfxCoreFamily>();
 
     auto eventPool = createEvents<FamilyType>(1, true);
-    auto event = std::make_unique<MyMockEvent>(eventPool.get(), device);
-    event->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
-    event->assignKernelEventCompletionDataFailCounter = 2;
-    event->setUsingContextEndOffset(true);
+    auto event1 = std::make_unique<MyMockEvent>(eventPool.get(), device);
+    auto event2 = std::make_unique<MyMockEvent>(eventPool.get(), device);
 
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event->toHandle(), 0, nullptr, launchParams, false);
+    event1->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event1->assignKernelEventCompletionDataFailCounter = 2;
+    event1->setUsingContextEndOffset(true);
 
-    *reinterpret_cast<uint64_t *>(event->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
-    event->getInOrderExecInfo()->setLastWaitedCounterValue(2);
+    event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
+    event2->assignKernelEventCompletionDataFailCounter = 2;
+    event2->setUsingContextEndOffset(true);
+    event2->notReadyData = 0;
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, event->queryStatus());
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event1->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event2->toHandle(), 0, nullptr, launchParams, false);
+
+    *reinterpret_cast<uint64_t *>(event1->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
+    *reinterpret_cast<uint64_t *>(event2->getCompletionFieldHostAddress()) = 0;
+    event1->getInOrderExecInfo()->setLastWaitedCounterValue(2);
+    event2->getInOrderExecInfo()->setLastWaitedCounterValue(2);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event1->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event2->queryStatus());
 
     ze_kernel_timestamp_result_t kernelTimestamps = {};
 
-    EXPECT_EQ(0u, event->assignKernelEventCompletionDataCalled);
-    event->queryKernelTimestamp(&kernelTimestamps);
+    EXPECT_EQ(0u, event1->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event2->assignKernelEventCompletionDataCalled);
+    event1->queryKernelTimestamp(&kernelTimestamps);
+    event2->queryKernelTimestamp(&kernelTimestamps);
 
-    EXPECT_EQ(event->assignKernelEventCompletionDataFailCounter + 1, event->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(event1->assignKernelEventCompletionDataFailCounter + 1, event1->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(event2->assignKernelEventCompletionDataFailCounter + 1, event2->assignKernelEventCompletionDataCalled);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInterruptableEventsWhenExecutingOnDifferentCsrThenAssignItToEventOnExecute, IsAtLeastXeHpCore) {
