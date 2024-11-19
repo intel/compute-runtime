@@ -270,3 +270,21 @@ TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironments
     EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.slmSize);
     EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.SLMSizeInKb);
 }
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideRegionCount) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideRegionCount.set(123);
+
+    EXPECT_TRUE(DeviceFactory::prepareDeviceEnvironments(executionEnvironment));
+
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.regionCount);
+}
+
+TEST_F(DeviceFactoryOverrideTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideRegionCount) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.OverrideRegionCount.set(123);
+
+    EXPECT_TRUE(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
+
+    EXPECT_EQ(123u, executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->featureTable.regionCount);
+}
