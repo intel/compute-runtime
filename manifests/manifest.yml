@@ -24,9 +24,9 @@ components:
     dest_dir: igsc
     type: git
     branch: master
-    revision: V0.9.4
+    revision: V0.9.5
     repository: https://github.com/intel/igsc.git
-    component_version: 291
+    component_version: 292
   internal:
     branch: master
     dest_dir: internal
