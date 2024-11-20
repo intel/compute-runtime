@@ -19,6 +19,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     using BaseCSR::osContext;
 
   public:
+    using BaseCSR::pollForCompletion;
     using BaseCSR::writeMemory;
 
     CommandStreamReceiverWithAUBDump(const std::string &baseName,
@@ -49,7 +50,8 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
     void addAubComment(const char *comment) override;
 
-    void pollForCompletion() override;
+    void pollForCompletion(bool skipTaskCountCheck) override;
+    void pollForAubCompletion() override;
 
     bool expectMemory(const void *gfxAddress, const void *srcAddress,
                       size_t length, uint32_t compareOperation) override;

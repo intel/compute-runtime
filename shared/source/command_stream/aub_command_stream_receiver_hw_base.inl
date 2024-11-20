@@ -585,9 +585,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitBatchBufferAub(uint64_t batchB
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
+void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(bool skipTaskCountCheck) {
     const auto lock = std::unique_lock<decltype(pollForCompletionLock)>{pollForCompletionLock};
-    if (this->pollForCompletionTaskCount == this->latestSentTaskCount) {
+    if (!skipTaskCountCheck && (this->pollForCompletionTaskCount == this->latestSentTaskCount)) {
         return;
     }
     pollForCompletionImpl();

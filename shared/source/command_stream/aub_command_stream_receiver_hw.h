@@ -23,6 +23,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using ExternalAllocationsContainer = std::vector<AllocationView>;
     using BaseClass::getParametersForMemory;
     using BaseClass::osContext;
+    using BaseClass::pollForCompletion;
 
   public:
     using BaseClass::peekExecutionEnvironment;
@@ -56,8 +57,9 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBufferAub(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
-    void pollForCompletion() override;
+    void pollForCompletion(bool skipTaskCountCheck) override;
     void pollForCompletionImpl() override;
+    void pollForAubCompletion() override { pollForCompletion(true); };
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override;
 
     uint32_t getDumpHandle();

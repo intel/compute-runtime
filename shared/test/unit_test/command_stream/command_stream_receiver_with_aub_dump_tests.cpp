@@ -253,6 +253,30 @@ HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenWait
     csrWithAubDump.waitForTaskCountWithKmdNotifyFallback(1, 0, false, QueueThrottle::MEDIUM);
 }
 
+HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, whenPollForAubCompletionCalledThenDontInsertPoll) {
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    executionEnvironment->initializeMemoryManager();
+
+    MockAubCenter *mockAubCenter = new MockAubCenter(pDevice->getRootDeviceEnvironment(), false, "file_name.aub", CommandStreamReceiverType::hardwareWithAub);
+    mockAubCenter->aubManager = std::unique_ptr<MockAubManager>(new MockAubManager());
+
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::unique_ptr<MockAubCenter>(mockAubCenter);
+    DeviceBitfield deviceBitfield(1);
+    CommandStreamReceiverWithAUBDump<UltCommandStreamReceiver<FamilyType>> csrWithAubDump("file_name.aub", *executionEnvironment, 0, deviceBitfield);
+    csrWithAubDump.initializeTagAllocation();
+
+    auto mockAubCsr = new MockAubCsr<FamilyType>("file_name.aub", false, *executionEnvironment, 0, deviceBitfield);
+    mockAubCsr->initializeTagAllocation();
+    csrWithAubDump.aubCSR.reset(mockAubCsr);
+    csrWithAubDump.setupContext(osContext);
+
+    csrWithAubDump.pollForAubCompletion();
+    EXPECT_FALSE(csrWithAubDump.pollForCompletionCalled);
+    EXPECT_TRUE(mockAubCsr->pollForCompletionCalled);
+}
+
 HWTEST_F(CommandStreamReceiverWithAubDumpSimpleTest, givenCsrWithAubDumpWhenPollForCompletionCalledThenAubCsrPollForCompletionCalled) {
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();

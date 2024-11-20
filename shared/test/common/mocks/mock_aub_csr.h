@@ -60,6 +60,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionTaskCount;
     using AUBCommandStreamReceiverHw<GfxFamily>::getParametersForMemory;
     using AUBCommandStreamReceiverHw<GfxFamily>::writeMemory;
+    using AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion;
     using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
@@ -120,10 +121,12 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         writeMemoryWithAubManagerCalled = true;
     }
 
-    void pollForCompletion() override {
-        AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
+    void pollForCompletion(bool skipTaskCountCheck) override {
+        AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(skipTaskCountCheck);
         pollForCompletionCalled = true;
+        skipTaskCountCheckForCompletionPoll = skipTaskCountCheck;
     }
+
     bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length) override {
         expectMemoryEqualCalled = true;
         return AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryEqual(gfxAddress, srcAddress, length);
@@ -168,6 +171,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool expectMemoryCompressedCalled = false;
     bool addAubCommentCalled = false;
     bool dumpAllocationCalled = false;
+    bool skipTaskCountCheckForCompletionPoll = false;
 
     void initFile(const std::string &fileName) override {
         fileIsOpen = true;

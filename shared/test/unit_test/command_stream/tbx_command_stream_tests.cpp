@@ -633,6 +633,17 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     pDevice->executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_F(TbxCommandStreamTests, whenPollForAubCompletionCalledThenDontInsertPoll) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment, pDevice->getDeviceBitfield());
+    MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(pDevice->getDeviceBitfield()));
+    tbxCsr.setupContext(osContext);
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+
+    tbxCsr.pollForAubCompletion();
+    EXPECT_FALSE(tbxCsr.pollForCompletionCalled);
+    EXPECT_FALSE(mockHardwareContext->pollForCompletionCalled);
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverInBatchedModeWhenFlushIsCalledThenItShouldMakeCommandBufferResident) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::batchedDispatch));

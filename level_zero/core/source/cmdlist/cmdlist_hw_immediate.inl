@@ -1465,6 +1465,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
         }
 
         if (signaled) {
+            csr->pollForAubCompletion();
             status = ZE_RESULT_SUCCESS;
             break;
         }

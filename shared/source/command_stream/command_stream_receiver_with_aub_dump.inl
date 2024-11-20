@@ -99,11 +99,18 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::addAubComment(const char *commen
 }
 
 template <typename BaseCSR>
-void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForCompletion() {
+void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForCompletion(bool skipTaskCountCheck) {
     if (aubCSR) {
-        aubCSR->pollForCompletion();
+        aubCSR->pollForCompletion(skipTaskCountCheck);
     }
-    BaseCSR::pollForCompletion();
+    BaseCSR::pollForCompletion(skipTaskCountCheck);
+}
+
+template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::pollForAubCompletion() {
+    if (aubCSR) {
+        aubCSR->pollForCompletion(true);
+    }
 }
 
 template <typename BaseCSR>

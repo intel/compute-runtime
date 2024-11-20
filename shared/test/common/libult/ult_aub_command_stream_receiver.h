@@ -53,9 +53,9 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
         return BaseClass::flushBcsTask(blitPropertiesContainer, blocking, profilingEnabled, device);
     }
 
-    void pollForCompletion() override {
+    void pollForCompletion(bool skipTaskCountCheck) override {
         pollForCompletionCalled++;
-        BaseClass::pollForCompletion();
+        BaseClass::pollForCompletion(skipTaskCountCheck);
     }
 
     uint32_t blitBufferCalled = 0;

@@ -52,8 +52,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         overrideRingHeadPassed = overrideRingHead;
         submitBatchBufferCalled = true;
     }
-    void pollForCompletion() override {
-        TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion();
+    void pollForCompletion(bool skipTaskCountCheck) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(skipTaskCountCheck);
         pollForCompletionCalled = true;
     }
     void downloadAllocationTbxMock(GraphicsAllocation &gfxAllocation) {

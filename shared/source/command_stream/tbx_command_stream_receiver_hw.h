@@ -27,6 +27,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using BaseClass::forceSkipResourceCleanupRequired;
     using BaseClass::getParametersForMemory;
     using BaseClass::osContext;
+    using BaseClass::pollForCompletion;
 
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
@@ -63,7 +64,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     // Family specific version
     MOCKABLE_VIRTUAL void submitBatchBufferTbx(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
-    void pollForCompletion() override;
+    void pollForCompletion(bool skipTaskCountCheck) override;
 
     void dumpAllocation(GraphicsAllocation &gfxAllocation) override;
 

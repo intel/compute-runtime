@@ -78,6 +78,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::makeResident;
     using BaseClass::pageTableManagerInitialized;
     using BaseClass::perDssBackedBuffer;
+    using BaseClass::pollForCompletion;
     using BaseClass::postInitFlagsSetup;
     using BaseClass::primaryCsr;
     using BaseClass::programActivePartitionConfig;
@@ -479,8 +480,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return commandStreamReceiverType;
     }
 
-    void pollForCompletion() override {
+    void pollForCompletion(bool skipTaskCountCheck) override {
         pollForCompletionCalled++;
+    }
+
+    void pollForAubCompletion() override {
+        pollForAubCompletionCalled++;
     }
 
     bool checkGpuHangDetected(CommandStreamReceiver::TimeType currentTime, CommandStreamReceiver::TimeType &lastHangCheckTime) const override {
@@ -566,6 +571,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t initDirectSubmissionCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
     uint32_t pollForCompletionCalled = 0;
+    uint32_t pollForAubCompletionCalled = 0;
     uint32_t initializeDeviceWithFirstSubmissionCalled = 0;
     uint32_t drainPagingFenceQueueCalled = 0;
     uint32_t flushHandlerCalled = 0;

@@ -4616,6 +4616,39 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDoingCpuCopyThenPassInfo
     context->freeMem(deviceAlloc);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenAubModeWhenSyncCalledAlwaysPollForCompletion, IsAtLeastXeHpCore) {
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    ultCsr->commandStreamReceiverType = CommandStreamReceiverType::aub;
+    auto eventPool = createEvents<FamilyType>(1, false);
+
+    if (immCmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+        uint64_t *hostAddress = immCmdList->inOrderExecInfo->getBaseHostAddress();
+        *hostAddress = 3;
+    } else {
+        auto deviceAlloc = immCmdList->inOrderExecInfo->getDeviceCounterAllocation();
+        auto hostAddress = static_cast<uint64_t *>(deviceAlloc->getUnderlyingBuffer());
+        *hostAddress = 3;
+    }
+
+    *ultCsr->getTagAddress() = 3;
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    immCmdList->hostSynchronize(0, false);
+
+    EXPECT_EQ(1u, ultCsr->pollForAubCompletionCalled);
+
+    events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(2u, ultCsr->pollForAubCompletionCalled);
+
+    ultCsr->commandStreamReceiverType = CommandStreamReceiverType::hardwareWithAub;
+
+    events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(3u, ultCsr->pollForAubCompletionCalled);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenProfilingEventWhenDoingCpuCopyThenSetProfilingData, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;

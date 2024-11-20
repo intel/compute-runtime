@@ -35,6 +35,7 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
   public:
     using CommandStreamReceiverHw<GfxFamily>::peekExecutionEnvironment;
     using CommandStreamReceiverHw<GfxFamily>::writeMemory;
+    using CommandStreamReceiverHw<GfxFamily>::pollForCompletion;
 
     CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment,
                                            uint32_t rootDeviceIndex,

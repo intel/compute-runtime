@@ -282,6 +282,8 @@ void EventImp<TagSizeT>::downloadAllTbxAllocations() {
 
 template <typename TagSizeT>
 void EventImp<TagSizeT>::handleSuccessfulHostSynchronization() {
+    csrs[0]->pollForAubCompletion();
+
     if (this->tbxMode) {
         downloadAllTbxAllocations();
     }
@@ -633,6 +635,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
     if (this->csrs[0]->getType() == NEO::CommandStreamReceiverType::aub) {
+        this->csrs[0]->pollForAubCompletion();
         return ZE_RESULT_SUCCESS;
     }
 

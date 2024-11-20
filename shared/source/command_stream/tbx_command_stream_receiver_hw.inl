@@ -395,7 +395,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::submitBatchBufferTbx(uint64_t batchB
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion() {
+void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(bool skipTaskCountCheck) {
     if (hardwareContextController) {
         hardwareContextController->pollForCompletion();
         return;

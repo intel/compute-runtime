@@ -2371,7 +2371,7 @@ template <typename FamilyType>
 struct MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> {
     using CommandStreamReceiverSimulatedHw<FamilyType>::CommandStreamReceiverSimulatedHw;
     using CommandStreamReceiverSimulatedHw<FamilyType>::getDeviceIndex;
-    void pollForCompletion() override {}
+    void pollForCompletion(bool skipTaskCountCheck) override {}
     void initializeEngine() override {}
     bool writeMemory(GraphicsAllocation &gfxAllocation) override { return true; }
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {}

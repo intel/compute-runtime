@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
     using CommandStreamReceiverSimulatedHw<GfxFamily>::writeMemory;
     void writeMemory(uint64_t gpuAddress, void *cpuAddress, size_t size, uint32_t memoryBank, uint64_t entryBits) override {
     }
-    void pollForCompletion() override {
+    void pollForCompletion(bool skipTaskCountCheck) override {
     }
     void initializeEngine() override {
     }
