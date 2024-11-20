@@ -189,6 +189,9 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
             const std::pair<uint64_t, uint64_t> currentContext(eventCompletion.getContextStartValue(packetId),
                                                                eventCompletion.getContextEndValue(packetId));
 
+            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintTimestampPacketContents.get(), stdout, "kernel id: %d, packet: %d, globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
+                               kernelId, packetId, currentGlobal.first, getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS), currentContext.first, getEndTS(isContextTsOverflowed, currentContext, contextEndTS));
+
             globalStartTS = std::min(globalStartTS, currentGlobal.first);
             contextStartTS = std::min(contextStartTS, currentContext.first);
             globalEndTS = getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS);
@@ -780,6 +783,9 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
         eventTsSetFunc(globalEndTS, result.context.kernelEnd);
         eventTsSetFunc(globalEndTS, result.global.kernelEnd);
     }
+    PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintCalculatedTimestamps.get(), stdout, "globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
+                       result.global.kernelStart, result.global.kernelEnd, result.context.kernelStart, result.context.kernelEnd);
+
     return ZE_RESULT_SUCCESS;
 }
 

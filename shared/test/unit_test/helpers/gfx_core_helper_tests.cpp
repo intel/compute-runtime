@@ -1903,3 +1903,11 @@ HWTEST_F(GfxCoreHelperTest, givenHwHelperWhenThreadGroupCountIsAlignedToDssThenT
     helper.alignThreadGroupCountToDssSize(threadCount, dssCount, threadsPerDss, threadGroupSize);
     EXPECT_EQ(dssCount, threadCount);
 }
+
+HWTEST_F(GfxCoreHelperTest, givenDebugFlagForceUseOnlyGlobalTimestampsSetWhenCallUseOnlyGlobalTimestampsThenTrueIsReturned) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.ForceUseOnlyGlobalTimestamps.set(1);
+
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_TRUE(gfxCoreHelper.useOnlyGlobalTimestamps());
+}

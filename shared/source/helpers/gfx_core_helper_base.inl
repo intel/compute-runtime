@@ -550,7 +550,7 @@ int32_t GfxCoreHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::useOnlyGlobalTimestamps() const {
-    return false;
+    return debugManager.flags.ForceUseOnlyGlobalTimestamps.get();
 }
 
 template <typename GfxFamily>

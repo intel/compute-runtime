@@ -2465,6 +2465,123 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, TimestampEventCreate, givenEventTimestampsWhenQue
     EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
 }
 
+HWTEST_F(TimestampEventCreate, givenFlagPrintCalculatedTimestampsWhenCallQueryKernelTimestampThenProperLogIsPrinted) {
+    debugManager.flags.PrintCalculatedTimestamps.set(1);
+    typename MockTimestampPackets32::Packet data = {};
+    data.contextStart = 1u;
+    data.contextEnd = 2u;
+    data.globalStart = 3u;
+    data.globalEnd = 4u;
+
+    event->hostAddressFromPool = &data;
+    ze_kernel_timestamp_result_t result = {};
+    testing::internal::CaptureStdout();
+    event->queryKernelTimestamp(&result);
+    std::string output = testing::internal::GetCapturedStdout();
+    std::stringstream expected;
+    expected << "globalStartTS: " << result.global.kernelStart << ", "
+             << "globalEndTS: " << result.global.kernelEnd << ", "
+             << "contextStartTS: " << result.context.kernelStart << ", "
+             << "contextEndTS: " << result.context.kernelEnd << std::endl;
+
+    EXPECT_EQ(0, output.compare(expected.str().c_str()));
+}
+
+TEST_F(TimestampEventUsedPacketSignalCreate, givenFlagPrintTimestampPacketContentsWhenMultiPacketAndCallQueryKernelTimestampThenProperLogIsPrinted) {
+    debugManager.flags.PrintTimestampPacketContents.set(1);
+    typename MockTimestampPackets32::Packet packetData[2];
+
+    packetData[0].contextStart = 1u;
+    packetData[0].contextEnd = 2u;
+    packetData[0].globalStart = 3u;
+    packetData[0].globalEnd = 4u;
+
+    packetData[1].contextStart = 5u;
+    packetData[1].contextEnd = 6u;
+    packetData[1].globalStart = 7u;
+    packetData[1].globalEnd = 8u;
+
+    event->hostAddressFromPool = packetData;
+
+    ze_kernel_timestamp_result_t results;
+    auto packedCount = 2u;
+    event->setPacketsInUse(packedCount);
+
+    testing::internal::CaptureStdout();
+    event->queryKernelTimestamp(&results);
+    std::string output = testing::internal::GetCapturedStdout();
+    std::stringstream expected;
+
+    for (uint32_t i = 0; i < packedCount; i++) {
+        expected << "kernel id: 0, "
+                 << "packet: " << i << ", "
+                 << "globalStartTS: " << packetData[i].globalStart << ", "
+                 << "globalEndTS: " << packetData[i].globalEnd << ", "
+                 << "contextStartTS: " << packetData[i].contextStart << ", "
+                 << "contextEndTS: " << packetData[i].contextEnd << std::endl;
+    }
+    EXPECT_EQ(0, output.compare(expected.str().c_str()));
+}
+
+HWTEST2_F(TimestampEventCreateMultiKernel, givenFlagPrintTimestampPacketContentsWhenMultiKernelsAndMultiPacketsAndCallQueryKernelTimestampThenProperLogIsPrinted, IsAtLeastXeHpCore) {
+    debugManager.flags.PrintTimestampPacketContents.set(1);
+    typename MockTimestampPackets32::Packet packetData[4];
+
+    event->hostAddressFromPool = packetData;
+
+    // 1st kernel 1st packet
+    packetData[0].contextStart = 1;
+    packetData[0].contextEnd = 2;
+    packetData[0].globalStart = 3;
+    packetData[0].globalEnd = 4;
+
+    // 1st kernel 2nd packet
+    packetData[1].contextStart = 5;
+    packetData[1].contextEnd = 6;
+    packetData[1].globalStart = 7;
+    packetData[1].globalEnd = 8;
+
+    // 2nd kernel 1st packet
+    packetData[2].contextStart = 9;
+    packetData[2].contextEnd = 10;
+    packetData[2].globalStart = 11;
+    packetData[2].globalEnd = 12;
+
+    // 2nd kernel 2st packet
+    packetData[3].contextStart = 13;
+    packetData[3].contextEnd = 14;
+    packetData[3].globalStart = 15;
+    packetData[3].globalEnd = 16;
+
+    auto packedCount = 2u;
+    auto kernelCount = 2u;
+
+    // set packet for first kernel
+    event->setPacketsInUse(packedCount);
+    event->setKernelCount(kernelCount);
+    // set packet for second kernel
+    event->setPacketsInUse(packedCount);
+
+    ze_kernel_timestamp_result_t results;
+    testing::internal::CaptureStdout();
+    event->queryKernelTimestamp(&results);
+    std::string output = testing::internal::GetCapturedStdout();
+    std::stringstream expected;
+    auto i = 0u;
+    for (uint32_t kernelId = 0u; kernelId < kernelCount; kernelId++) {
+        for (uint32_t packet = 0; packet < packedCount; packet++) {
+            expected << "kernel id: " << kernelId << ", "
+                     << "packet: " << packet << ", "
+                     << "globalStartTS: " << packetData[i].globalStart << ", "
+                     << "globalEndTS: " << packetData[i].globalEnd << ", "
+                     << "contextStartTS: " << packetData[i].contextStart << ", "
+                     << "contextEndTS: " << packetData[i].contextEnd << std::endl;
+            i++;
+        }
+    }
+    EXPECT_EQ(0, output.compare(expected.str().c_str()));
+}
+
 TEST_F(TimestampEventUsedPacketSignalCreate, givenEventWhenQueryingTimestampExpThenCorrectDataSet) {
     typename MockTimestampPackets32::Packet packetData[2];
     event->setPacketsInUse(2u);

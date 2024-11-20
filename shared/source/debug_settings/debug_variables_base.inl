@@ -300,6 +300,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampWidth, -1, "-1: default from KM
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdFifoPollInterval, -1, "-1: default , > 0: Fifo will be polled based on input in milliseconds.")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdInterruptTimeout, -1, "-1: default , > 0: interruptTimeout based on input in milliseconds. Default is 2000 milliseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdMaxReadWriteRetry, -1, "-1: default , > 0: max pread/pwrite retry attempts in read/writeGpuMemory calls based on input in milliseconds. Default is 3")
+DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0- default disabled, 1: enable use only global timestamp")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
@@ -331,6 +332,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintDispatchParameters, false, "prints dispatch pa
 DECLARE_DEBUG_VARIABLE(bool, PrintProgramBinaryProcessingTime, false, "prints execution time of Program::processGenBinary() method during program building")
 DECLARE_DEBUG_VARIABLE(bool, PrintRelocations, false, "prints relocations debug information")
 DECLARE_DEBUG_VARIABLE(bool, PrintTimestampPacketContents, false, "prints all timestamps values during profiling data calculation")
+DECLARE_DEBUG_VARIABLE(bool, PrintCalculatedTimestamps, false, "prints final l0 timestamps values for profiling data calculation")
 DECLARE_DEBUG_VARIABLE(bool, PrintGlobalTimestampInNs, false, "prints host and device timestamp in nanoseconds")
 DECLARE_DEBUG_VARIABLE(bool, WddmResidencyLogger, false, "gather Wddm residency statistics to file")
 DECLARE_DEBUG_VARIABLE(bool, PrintBOCreateDestroyResult, false, "tracks the result of creation and destruction of BOs")
