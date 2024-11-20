@@ -10,8 +10,8 @@
 ze_result_t ZE_APICALL
 zeIntelDeviceImportExternalSemaphoreExp(
     ze_device_handle_t device,
-    ze_intel_external_semaphore_exp_handle_t *phSemaphore,
-    const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc) {
+    const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc,
+    ze_intel_external_semaphore_exp_handle_t *phSemaphore) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
