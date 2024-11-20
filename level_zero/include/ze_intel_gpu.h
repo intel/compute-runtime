@@ -274,6 +274,92 @@ zeIntelKernelGetBinaryExp(
     char *pKernelBinary         ///< [in,out] pointer to storage area for GEN ISA binary function
 );
 
+#ifndef ZE_INTEL_EXTERNAL_SEMAPHORE_EXP_NAME
+/// @brief Event sync mode extension name
+#define ZE_INTEL_EXTERNAL_SEMAPHORE_EXP_NAME "ZE_intel_experimental_external_semaphore"
+#endif // ZE_INTEL_EXTERNAL_SEMAPHORE_EXP_NAME
+
+typedef enum _ze_intel_external_semaphore_exp_version_t {
+    ZE_EXTERNAL_SEMAPHORE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZE_EXTERNAL_SEMAPHORE_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZE_EXTERNAL_SEMAPHORE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} ze_intel_external_semaphore_exp_version_t;
+
+typedef enum _ze_intel_external_semaphore_exp_flags_t {
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_FD,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32_KMT,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_D3D12_FENCE,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_D3D11_FENCE,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_KEYED_MUTEX,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_KEYED_MUTEX_KMT,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_TIMELINE_SEMAPHORE_FD,
+    ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_TIMELINE_SEMAPHORE_WIN32
+} ze_intel_external_semaphore_exp_flags_t;
+
+typedef struct _ze_intel_external_semaphore_exp_desc_t {
+    ze_structure_type_t stype;
+    const void *pNext;
+    ze_intel_external_semaphore_exp_flags_t flags;
+} ze_intel_external_semaphore_exp_desc_t;
+
+typedef struct _ze_intel_external_semaphore_win32_exp_desc_t {
+    ze_structure_type_t stype;
+    const void *pNext;
+    const char *name;
+} ze_intel_external_semaphore_win32_exp_desc_t;
+
+typedef struct _ze_intel_external_semaphore_fd_exp_desc_t {
+    ze_structure_type_t stype;
+    const void *pNext;
+    int fd;
+} ze_intel_external_semaphore_desc_fd_exp_desc_t;
+
+typedef struct _ze_intel_external_semaphore_signal_exp_params_t {
+    ze_structure_type_t stype;
+    const void *pNext;
+    uint64_t value;
+} ze_intel_external_semaphore_signal_exp_params_t;
+
+typedef struct _ze_intel_external_semaphore_wait_exp_params_t {
+    ze_structure_type_t stype;
+    const void *pNext;
+
+    uint64_t value;
+} ze_intel_external_semaphore_wait_exp_params_t;
+
+typedef struct _ze_intel_external_semaphore_exp_handle_t *ze_intel_external_semaphore_exp_handle_t;
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelDeviceImportExternalSemaphoreExp(
+    ze_device_handle_t device,
+    ze_intel_external_semaphore_exp_handle_t *phSemaphore,
+    const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelCommandListAppendWaitExternalSemaphoresExp(
+    ze_command_list_handle_t hCmdList,
+    const ze_intel_external_semaphore_exp_handle_t *phSemaphores,
+    const ze_intel_external_semaphore_wait_exp_params_t *params,
+    unsigned int numExternalSemaphores,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelCommandListAppendSignalExternalSemaphoresExp(
+    ze_command_list_handle_t hCmdList,
+    const ze_intel_external_semaphore_exp_handle_t *phSemaphores,
+    const ze_intel_external_semaphore_signal_exp_params_t *params,
+    size_t numExternalSemaphores,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeIntelDeviceReleaseExternalSemaphoreExp(
+    ze_intel_external_semaphore_exp_handle_t hSemaphore);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

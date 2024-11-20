@@ -14,6 +14,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_context.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_context.h
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_common.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/zex_device.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_driver.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_driver.h
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_event.cpp

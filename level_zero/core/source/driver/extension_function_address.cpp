@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/extension_function_address.h"
 
 #include "level_zero/api/driver_experimental/public/zex_api.h"
+#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
 #include "level_zero/api/driver_experimental/public/zex_context.h"
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/include/ze_intel_gpu.h"
@@ -56,6 +57,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
 
     RETURN_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
     RETURN_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
+
 #undef RETURN_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);
