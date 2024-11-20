@@ -18,10 +18,6 @@ zexKernelGetBaseAddress(
     ze_kernel_handle_t hKernel,
     uint64_t *baseAddress);
 
-ze_result_t ZE_APICALL
-zeIntelKernelGetBinaryExp(
-    ze_kernel_handle_t hKernel, size_t *pSize, char *pKernelBinary);
-
 } // namespace L0
 
 ///////////////////////////////////////////////////////////////////////////////
