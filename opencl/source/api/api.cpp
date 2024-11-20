@@ -259,7 +259,8 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
 
         cl_uint retNum = 0;
         for (auto platformDeviceIndex = 0u; platformDeviceIndex < numDev; platformDeviceIndex++) {
-            bool exposeSubDevices = pPlatform->peekExecutionEnvironment()->isExposingSubDevicesAsDevices();
+            bool exposeSubDevices = pPlatform->peekExecutionEnvironment()->isExposingSubDevicesAsDevices() ||
+                                    pPlatform->peekExecutionEnvironment()->isCombinedDeviceHierarchy();
 
             ClDevice *device = pPlatform->getClDevice(platformDeviceIndex);
             UNRECOVERABLE_IF(device == nullptr);
