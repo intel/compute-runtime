@@ -88,6 +88,8 @@ class AILConfiguration {
 
     virtual bool isRunAloneContextRequired() = 0;
 
+    virtual bool isFallbackToPatchtokensRequired() = 0;
+
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
     std::string processName;
@@ -105,6 +107,7 @@ extern const std::set<std::string_view> applicationsBufferPoolDisabledDg2;
 extern const std::set<std::string_view> applicationsOverfetchDisabled;
 extern const std::set<std::string_view> applicationsDrainHostptrsDisabled;
 extern const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited;
+extern const std::set<std::string_view> applicationsFallbackToPatchtokensRequiredDg2;
 
 template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
@@ -127,6 +130,7 @@ class AILConfigurationHw : public AILConfiguration {
     bool disableBindlessAddressing() override;
     bool limitAmountOfDeviceMemoryForRecycling() override;
     bool isRunAloneContextRequired() override;
+    bool isFallbackToPatchtokensRequired() override;
 
     bool shouldForceRcs = false;
     bool shouldHandleDivergentBarriers = false;

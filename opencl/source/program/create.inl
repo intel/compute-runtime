@@ -78,6 +78,9 @@ T *Program::create(
         }
 
         program = new T(pContext, false, pContext->getDevices());
+        if (ail && ail->isFallbackToPatchtokensRequired()) {
+            pContext->setContextAsNonZebin();
+        }
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::source;
     }

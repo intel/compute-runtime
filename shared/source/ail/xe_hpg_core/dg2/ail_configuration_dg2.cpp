@@ -70,6 +70,12 @@ bool AILConfigurationHw<IGFX_DG2>::isBufferPoolEnabled() {
     return iterator == applicationsBufferPoolDisabledDg2.end();
 }
 
+template <>
+inline bool AILConfigurationHw<IGFX_DG2>::isFallbackToPatchtokensRequired() {
+    auto iterator = applicationsFallbackToPatchtokensRequiredDg2.find(processName);
+    return iterator != applicationsFallbackToPatchtokensRequiredDg2.end();
+}
+
 template class AILConfigurationHw<IGFX_DG2>;
 
 } // namespace NEO

@@ -76,4 +76,9 @@ inline bool AILConfigurationHw<product>::limitAmountOfDeviceMemoryForRecycling()
     return false;
 }
 
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::isFallbackToPatchtokensRequired() {
+    return false;
+}
+
 } // namespace NEO

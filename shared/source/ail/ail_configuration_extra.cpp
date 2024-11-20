@@ -42,6 +42,8 @@ const std::set<std::string_view> applicationsDrainHostptrsDisabled = {};
 
 const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited = {};
 
+const std::set<std::string_view> applicationsFallbackToPatchtokensRequiredDg2 = {};
+
 AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
 
 void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {

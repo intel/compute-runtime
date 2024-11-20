@@ -72,6 +72,10 @@ class MockAILConfiguration : public AILConfiguration {
         return true;
     }
 
+    bool isFallbackToPatchtokensRequired() override {
+        return false;
+    }
+
   protected:
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
 };
