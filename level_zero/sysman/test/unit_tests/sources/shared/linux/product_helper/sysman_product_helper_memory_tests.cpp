@@ -911,8 +911,6 @@ TEST(SysmanProductHelperTest, GivenInvalidProductFamilyWhenCallingProductHelperC
     EXPECT_EQ(nullptr, pSysmanProductHelper);
 }
 
-using IsNotDG1 = IsNotWithinProducts<IGFX_DG1, IGFX_DG1>;
-
 HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCallingGetMemoryPropertiesThenVerifyCallSucceeds, IsNotDG1) {
     std::unique_ptr<MockMemoryNeoDrm> pDrm = std::make_unique<MockMemoryNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
     pDrm->setMemoryType(NEO::DeviceBlobConstants::MemoryType::hbm3);

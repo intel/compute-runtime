@@ -62,6 +62,7 @@ using IsLNL = IsProduct<IGFX_LUNARLAKE>;
 using IsAtLeastMtl = IsAtLeastProduct<IGFX_METEORLAKE>;
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
 
+using IsNotDG1 = IsNotWithinProducts<IGFX_DG1, IGFX_DG1>;
 using IsAtLeastPVC = IsAtLeastProduct<IGFX_PVC>;
 using IsAtMostPVC = IsAtMostProduct<IGFX_PVC>;
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;
