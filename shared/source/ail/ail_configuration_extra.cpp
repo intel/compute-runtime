@@ -34,7 +34,7 @@ const std::set<std::string_view> applicationsContextSyncFlag = {};
 
 const std::set<std::string_view> applicationsBufferPoolDisabled = {};
 
-const std::set<std::string_view> applicationsBufferPoolDisabledDg2 = {};
+const std::set<std::string_view> applicationsBufferPoolDisabledXe = {};
 
 const std::set<std::string_view> applicationsOverfetchDisabled = {};
 

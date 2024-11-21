@@ -36,6 +36,12 @@ void AILConfigurationHw<IGFX_ARROWLAKE>::applyExt(RuntimeCapabilityTable &runtim
     }
 }
 
+template <>
+bool AILConfigurationHw<IGFX_ARROWLAKE>::isBufferPoolEnabled() {
+    auto iterator = applicationsBufferPoolDisabledXe.find(processName);
+    return iterator == applicationsBufferPoolDisabledXe.end();
+}
+
 template class AILConfigurationHw<IGFX_ARROWLAKE>;
 
 } // namespace NEO
