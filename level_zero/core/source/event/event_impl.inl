@@ -189,13 +189,15 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
             const std::pair<uint64_t, uint64_t> currentContext(eventCompletion.getContextStartValue(packetId),
                                                                eventCompletion.getContextEndValue(packetId));
 
+            auto calculatedGlobalEndTs = getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS);
+            auto calculatedContextEndTs = getEndTS(isContextTsOverflowed, currentContext, contextEndTS);
             PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintTimestampPacketContents.get(), stdout, "kernel id: %d, packet: %d, globalStartTS: %llu, globalEndTS: %llu, contextStartTS: %llu, contextEndTS: %llu\n",
-                               kernelId, packetId, currentGlobal.first, getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS), currentContext.first, getEndTS(isContextTsOverflowed, currentContext, contextEndTS));
+                               kernelId, packetId, currentGlobal.first, calculatedGlobalEndTs, currentContext.first, calculatedContextEndTs);
 
             globalStartTS = std::min(globalStartTS, currentGlobal.first);
             contextStartTS = std::min(contextStartTS, currentContext.first);
-            globalEndTS = getEndTS(isGlobalTsOverflowed, currentGlobal, globalEndTS);
-            contextEndTS = getEndTS(isContextTsOverflowed, currentContext, contextEndTS);
+            globalEndTS = calculatedGlobalEndTs;
+            contextEndTS = calculatedContextEndTs;
         }
     }
     return ZE_RESULT_SUCCESS;
