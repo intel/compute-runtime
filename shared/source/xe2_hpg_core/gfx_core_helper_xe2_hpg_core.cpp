@@ -58,7 +58,11 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
         }
     }
 
-    engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
+    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
+        hwInfo.featureTable.flags.ftrRcsNode) {
+        engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
+    }
+
     engines.push_back({defaultEngine, EngineUsage::lowPriority});
     engines.push_back({defaultEngine, EngineUsage::internal});
 
