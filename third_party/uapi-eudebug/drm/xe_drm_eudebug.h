@@ -3,8 +3,8 @@
  * Copyright © 2023 Intel Corporation
  */
 
-#ifndef _UAPI_XE_DRM_EUDEBUG_H_
-#define _UAPI_XE_DRM_EUDEBUG_H_
+#ifndef _XE_DRM_EUDEBUG_H_
+#define _XE_DRM_EUDEBUG_H_
 
 #if defined(__cplusplus)
 extern "C" {
@@ -31,12 +31,14 @@ struct drm_xe_eudebug_event {
 #define DRM_XE_EUDEBUG_EVENT_OPEN		2
 #define DRM_XE_EUDEBUG_EVENT_VM			3
 #define DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE		4
-#define DRM_XE_EUDEBUG_EVENT_EU_ATTENTION	5
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND		6
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP		7
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE	8
-#define DRM_XE_EUDEBUG_EVENT_METADATA		9
-#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA 10
+#define DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE_PLACEMENTS 5
+#define DRM_XE_EUDEBUG_EVENT_EU_ATTENTION	6
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND		7
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP		8
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE	9
+#define DRM_XE_EUDEBUG_EVENT_METADATA		10
+#define DRM_XE_EUDEBUG_EVENT_VM_BIND_OP_METADATA 11
+#define DRM_XE_EUDEBUG_EVENT_PAGEFAULT		12
 
 	__u16 flags;
 #define DRM_XE_EUDEBUG_EVENT_CREATE		(1 << 0)
@@ -70,6 +72,22 @@ struct drm_xe_eudebug_event_exec_queue {
 	__u32 engine_class;
 	__u32 width;
 	__u64 lrc_handle[];
+};
+
+struct drm_xe_eudebug_event_exec_queue_placements {
+	struct drm_xe_eudebug_event base;
+
+	__u64 client_handle;
+	__u64 vm_handle;
+	__u64 exec_queue_handle;
+	__u64 lrc_handle;
+	__u32 num_placements;
+	__u32 pad;
+	/**
+	 * @instances: user pointer to num_placements sized array of struct
+	 * drm_xe_engine_class_instance
+	 */
+	__u64 instances[];
 };
 
 struct drm_xe_eudebug_event_eu_attention {
@@ -187,6 +205,7 @@ struct drm_xe_eudebug_vm_open {
 	/** @flags: flags */
 	__u64 flags;
 
+#define DRM_XE_EUDEBUG_VM_SYNC_MAX_TIMEOUT_NSECS (10ULL * NSEC_PER_SEC)
 	/** @timeout_ns: Timeout value in nanoseconds operations (fsync) */
 	__u64 timeout_ns;
 };
@@ -216,6 +235,18 @@ struct drm_xe_eudebug_event_vm_bind_op_metadata {
 
 	__u64 metadata_handle;
 	__u64 metadata_cookie;
+};
+
+struct drm_xe_eudebug_event_pagefault {
+	struct drm_xe_eudebug_event base;
+
+	__u64 client_handle;
+	__u64 exec_queue_handle;
+	__u64 lrc_handle;
+	__u32 flags;
+	__u32 bitmask_size;
+	__u64 pagefault_address;
+	__u8 bitmask[];
 };
 
 #if defined(__cplusplus)
