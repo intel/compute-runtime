@@ -73,9 +73,6 @@ void SystemInfo::parseDeviceBlob(const std::vector<uint32_t> &inputData) {
         if (DeviceBlobConstants::numChannelsPerHbmStack == data[i]) {
             numChannelsPerHbmStack = data[i + 2];
         }
-        if (DeviceBlobConstants::syncNumRtStacksPerDss == data[i]) {
-            syncNumRtStacksPerDss = data[i + 2];
-        }
         if (DeviceBlobConstants::numRegions == data[i]) {
             numRegions = data[i + 2];
         }

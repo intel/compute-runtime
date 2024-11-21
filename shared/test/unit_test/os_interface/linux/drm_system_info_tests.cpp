@@ -46,7 +46,6 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedWhenQueryingSpecificAtrributesThen
     EXPECT_EQ(0u, systemInfo.getL3BankSizeInKb());
     EXPECT_EQ(0u, systemInfo.getSlmSizePerDss());
     EXPECT_EQ(0u, systemInfo.getCsrSizeInMb());
-    EXPECT_EQ(0u, systemInfo.getSyncNumRtStacksPerDss());
     EXPECT_EQ(0u, systemInfo.getNumRegions());
 }
 
@@ -165,7 +164,6 @@ TEST(DrmSystemInfoTest, whenQueryingSystemInfoThenSystemInfoIsCreatedAndReturnsN
     EXPECT_NE(0u, systemInfo->getL3BankSizeInKb());
     EXPECT_NE(0u, systemInfo->getSlmSizePerDss());
     EXPECT_NE(0u, systemInfo->getCsrSizeInMb());
-    EXPECT_NE(0u, systemInfo->getSyncNumRtStacksPerDss());
     EXPECT_NE(0u, systemInfo->getNumRegions());
 
     EXPECT_EQ(2u + drm.getBaseIoctlCalls(), drm.ioctlCallsCount);
@@ -186,7 +184,6 @@ TEST(DrmSystemInfoTest, givenSystemInfoCreatedFromDeviceBlobWhenQueryingSpecific
     EXPECT_EQ(0x25u, systemInfo.getCsrSizeInMb());
     EXPECT_EQ(0x04u, systemInfo.getNumHbmStacksPerTile());
     EXPECT_EQ(0x08u, systemInfo.getNumChannlesPerHbmStack());
-    EXPECT_EQ(0x06u, systemInfo.getSyncNumRtStacksPerDss());
     EXPECT_EQ(0x02u, systemInfo.getNumRegions());
 }
 
@@ -285,7 +282,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsThenSys
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, drm.getSystemInfo()->getCsrSizeInMb());
     EXPECT_EQ(gtSystemInfo.SLMSizeInKb, drm.getSystemInfo()->getSlmSizePerDss());
     EXPECT_EQ(newHwInfo.capabilityTable.slmSize, hwInfo.capabilityTable.slmSize);
-    EXPECT_EQ(newHwInfo.capabilityTable.syncNumRTStacksPerDSS, drm.getSystemInfo()->getSyncNumRtStacksPerDss());
     EXPECT_NE(newHwInfo.capabilityTable.slmSize, drm.getSystemInfo()->getSlmSizePerDss());
 }
 
@@ -340,7 +336,6 @@ TEST(DrmSystemInfoTest, givenSetupHardwareInfoWhenQuerySystemInfoSucceedsAndBlob
     EXPECT_NE(nullptr, drm.getSystemInfo());
     const auto &newHwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
-    EXPECT_EQ(newHwInfo.capabilityTable.syncNumRTStacksPerDSS, 2048u);
     EXPECT_EQ(newHwInfo.featureTable.regionCount, 1u);
 }
 

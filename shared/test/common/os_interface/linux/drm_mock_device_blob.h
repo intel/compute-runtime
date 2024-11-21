@@ -58,9 +58,6 @@ static constexpr uint32_t dummyDeviceBlobData[] = {
     NEO::DeviceBlobConstants::numChannelsPerHbmStack,
     1,
     0x08,
-    NEO::DeviceBlobConstants::syncNumRtStacksPerDss,
-    1,
-    0x06,
     NEO::DeviceBlobConstants::numRegions,
     1,
     0x02,
@@ -70,9 +67,6 @@ const std::vector<uint32_t> inputBlobData(reinterpret_cast<const uint32_t *>(dum
                                           reinterpret_cast<const uint32_t *>(ptrOffset(dummyDeviceBlobData, sizeof(dummyDeviceBlobData))));
 
 static constexpr uint32_t dummyDeviceBlobDataZeros[] = {
-    NEO::DeviceBlobConstants::syncNumRtStacksPerDss,
-    1,
-    0x00,
     NEO::DeviceBlobConstants::numRegions,
     1,
     0x00,

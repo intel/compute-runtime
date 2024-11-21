@@ -81,8 +81,7 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     false,                                                     // fusedEuEnabled
     true,                                                      // l0DebuggerSupported;
     true,                                                      // supportsFloatAtomics
-    0,                                                         // cxlType
-    2048                                                       // syncNumRTStacksPerDSS
+    0                                                          // cxlType
 };
 
 void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

@@ -495,11 +495,6 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
         systemInfo->checkSysInfoMismatch(hwInfo);
         setupSystemInfo(hwInfo, systemInfo.get());
 
-        auto numRtStacks = systemInfo->getSyncNumRtStacksPerDss();
-        if (numRtStacks > 0) {
-            hwInfo->capabilityTable.syncNumRTStacksPerDSS = numRtStacks;
-        }
-
         auto numRegions = systemInfo->getNumRegions();
         if (numRegions > 0) {
             hwInfo->featureTable.regionCount = numRegions;

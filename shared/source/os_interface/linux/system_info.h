@@ -29,7 +29,6 @@ constexpr uint32_t maxEuPerSubSlice = 71;
 constexpr uint32_t slmSizePerSs = 73;
 constexpr uint32_t numHbmStacksPerTile = 74;
 constexpr uint32_t numChannelsPerHbmStack = 75;
-constexpr uint32_t syncNumRtStacksPerDss = 82;
 constexpr uint32_t numRegions = 83;
 
 enum MemoryType {
@@ -61,7 +60,6 @@ struct SystemInfo {
     uint32_t getSlmSizePerDss() const { return slmSizePerDss; }
     uint32_t getNumHbmStacksPerTile() const { return numHbmStacksPerTile; }
     uint32_t getNumChannlesPerHbmStack() const { return numChannelsPerHbmStack; }
-    uint32_t getSyncNumRtStacksPerDss() const { return syncNumRtStacksPerDss; }
     uint32_t getNumRegions() const { return numRegions; }
 
     void checkSysInfoMismatch(HardwareInfo *hwInfo);
@@ -82,7 +80,6 @@ struct SystemInfo {
     uint32_t csrSizeInMb = 0;
     uint32_t numHbmStacksPerTile = 0;
     uint32_t numChannelsPerHbmStack = 0;
-    uint32_t syncNumRtStacksPerDss = 0;
     uint32_t numRegions = 0;
 };
 

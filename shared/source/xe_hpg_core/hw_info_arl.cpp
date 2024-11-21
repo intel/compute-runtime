@@ -78,8 +78,7 @@ const RuntimeCapabilityTable ARL::capabilityTable{
     true,                                                      // fusedEuEnabled
     true,                                                      // l0DebuggerSupported
     true,                                                      // supportsFloatAtomics
-    0,                                                         // cxlType
-    2048                                                       // syncNumRTStacksPerDSS
+    0                                                          // cxlType
 };
 
 WorkaroundTable ARL::workaroundTable = {};

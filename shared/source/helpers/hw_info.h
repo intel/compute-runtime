@@ -68,7 +68,6 @@ struct RuntimeCapabilityTable {
     bool l0DebuggerSupported;
     bool supportsFloatAtomics;
     uint32_t cxlType;
-    uint32_t syncNumRTStacksPerDSS;
 };
 
 inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilityTable &rhs) {
