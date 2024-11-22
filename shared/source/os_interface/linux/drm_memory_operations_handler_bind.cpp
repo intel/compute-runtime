@@ -67,6 +67,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
 
             if (!bo->getBindInfo()[bo->getOsContextId(osContext)][drmIterator]) {
                 bo->requireExplicitLockedMemory(drmAllocation->isLockedMemory());
+                bo->requireImmediateBinding(true);
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
                 if (result) {
                     return MemoryOperationsStatus::outOfMemory;
@@ -111,6 +112,11 @@ int DrmMemoryOperationsHandlerBind::evictImpl(OsContext *osContext, GraphicsAllo
             if (retVal) {
                 return retVal;
             }
+            auto bo = drmAllocation->storageInfo.getNumBanks() > 1 ? drmAllocation->getBOs()[drmIterator] : drmAllocation->getBO();
+            if (drmAllocation->storageInfo.isChunked) {
+                bo = drmAllocation->getBO();
+            }
+            bo->requireImmediateBinding(false);
         }
     }
     drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, osContext->getContextId());
