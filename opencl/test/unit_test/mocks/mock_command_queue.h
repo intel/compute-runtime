@@ -159,7 +159,7 @@ class MockCommandQueue : public CommandQueue {
                           cl_event *event) override { return CL_SUCCESS; }
 
     cl_int enqueueSVMMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size,
-                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
+                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver *csrParam) override { return CL_SUCCESS; }
 
     cl_int enqueueSVMMemFill(void *svmPtr, const void *pattern, size_t patternSize, size_t size, cl_uint numEventsInWaitList,
                              const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
@@ -471,9 +471,9 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     }
 
     cl_int enqueueSVMMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size,
-                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+                            cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver *csrParam) override {
         enqueueSVMMemcpyCalledCount++;
-        return BaseClass::enqueueSVMMemcpy(blockingCopy, dstPtr, srcPtr, size, numEventsInWaitList, eventWaitList, event);
+        return BaseClass::enqueueSVMMemcpy(blockingCopy, dstPtr, srcPtr, size, numEventsInWaitList, eventWaitList, event, csrParam);
     }
 
     cl_int finish() override {

@@ -122,7 +122,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                   void *userData, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
 
     virtual cl_int enqueueSVMMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_uint numEventsInWaitList,
-                                    const cl_event *eventWaitList, cl_event *event) = 0;
+                                    const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver *csrParam) = 0;
 
     virtual cl_int enqueueSVMMemFill(void *svmPtr, const void *pattern, size_t patternSize,
                                      size_t size, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;

@@ -388,7 +388,8 @@ TEST_F(EnqueueSvmTest, GivenNullDstPtrWhenCopyingMemoryThenInvalidVaueErrorIsRet
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
@@ -404,7 +405,8 @@ TEST_F(EnqueueSvmTest, GivenNullSrcPtrWhenCopyingMemoryThenInvalidVaueErrorIsRet
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
@@ -421,7 +423,8 @@ TEST_F(EnqueueSvmTest, givenSrcHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        &event   // cL_event *event
+        &event,  // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MEMCPY;
@@ -441,7 +444,8 @@ TEST_F(EnqueueSvmTest, givenSrcHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnS
         0,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -458,7 +462,8 @@ HWTEST_F(EnqueueSvmTest, givenSrcHostPtrWhenEnqueueSVMMemcpyThenEnqueuWriteBuffe
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
@@ -489,7 +494,8 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrWhenEnqueueSVMMemcpyThenEnqueuReadBuffer
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER));
@@ -520,7 +526,8 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndEventWhenEnqueueSVMMemcpyThenEventComma
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        &event   // cL_event *event
+        &event,  // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     constexpr cl_command_type expectedCmd = CL_COMMAND_SVM_MEMCPY;
@@ -540,7 +547,8 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndSizeZeroWhenEnqueueSVMMemcpyThenReturnS
         0,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -558,7 +566,8 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueNonBlockingSVMMe
         3,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
@@ -591,7 +600,8 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenEnqueueBlockingSVMMemcp
         3,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER));
@@ -618,7 +628,8 @@ TEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrAndSizeZeroWhenEnqueueSVMMemc
         0,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -634,7 +645,8 @@ HWTEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThe
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(myCmdQ.lastCommandType, static_cast<cl_command_type>(CL_COMMAND_SVM_MEMCPY));
@@ -663,7 +675,8 @@ TEST_F(EnqueueSvmTest, givenSvmToSvmCopyTypeWhenEnqueueBlockingSVMMemcpyThenSucc
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
@@ -681,7 +694,8 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenCopyingMemoryWithBlockingThenSuccessi
         256,           // size_t size
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // cl_evebt *event_wait_list
-        nullptr        // cL_event *event
+        nullptr,       // cL_event *event
+        nullptr        // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
@@ -700,7 +714,8 @@ TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryThenSuccessIsReturned) {
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
@@ -720,7 +735,8 @@ TEST_F(EnqueueSvmTest, GivenCoherencyWhenCopyingMemoryWithBlockingThenSuccessIsR
         256,           // size_t size
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // cl_evebt *event_wait_list
-        nullptr        // cL_event *event
+        nullptr,       // cL_event *event
+        nullptr        // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
@@ -738,7 +754,8 @@ HWTEST_F(EnqueueSvmTest, givenUnalignedAddressWhenEnqueueMemcpyThenDispatchInfoH
         0,       // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2152,7 +2169,8 @@ HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenRe
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
     cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
@@ -2173,7 +2191,8 @@ HWTEST_F(EnqueueSvmTest, GivenSrcHostPtrAndSizeZeroWhenHostPtrAllocationCreation
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
     cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
@@ -2195,7 +2214,8 @@ HWTEST_F(EnqueueSvmTest, givenDstHostPtrAndSrcHostPtrWhenHostPtrAllocationCreati
         256,     // size_t size
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
-        nullptr  // cL_event *event
+        nullptr, // cL_event *event
+        nullptr  // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
     cmdQ.gpgpuEngine->commandStreamReceiver = oldCommandStreamReceiver;
@@ -2211,7 +2231,7 @@ TEST_F(EnqueueSvmTest, givenPageFaultManagerWhenEnqueueMemcpyThenAllocIsDecommit
     mockMemoryManager->getPageFaultManager()->insertAllocation(ptrSVM, 256, context->getSVMAllocsManager(), context->getSpecialQueue(pDevice->getRootDeviceIndex()), {});
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->transferToCpuCalled, 0);
 
-    this->pCmdQ->enqueueSVMMemcpy(false, ptrSVM, srcSvm, 256, 0, nullptr, nullptr);
+    this->pCmdQ->enqueueSVMMemcpy(false, ptrSVM, srcSvm, 256, 0, nullptr, nullptr, nullptr);
 
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->allowMemoryAccessCalled, 0);
     EXPECT_EQ(static_cast<MockPageFaultManager *>(mockMemoryManager->getPageFaultManager())->protectMemoryCalled, 2);
@@ -2257,7 +2277,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToSvmAllocWhenCallingSvmMemcpyThe
             size,      // size_t size
             0,         // cl_uint num_events_in_wait_list
             nullptr,   // cl_evebt *event_wait_list
-            nullptr    // cL_event *event
+            nullptr,   // cL_event *event
+            nullptr    // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
@@ -2272,7 +2293,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToSvmAllocWhenCallingSvmMemcpyThe
             size,               // size_t size
             0,                  // cl_uint num_events_in_wait_list
             nullptr,            // cl_evebt *event_wait_list
-            nullptr             // cL_event *event
+            nullptr,            // cL_event *event
+            nullptr             // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
@@ -2294,7 +2316,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromSvmAllocToMappedPtrWhenCallingSvmMemcpyThe
             size,      // size_t size
             0,         // cl_uint num_events_in_wait_list
             nullptr,   // cl_evebt *event_wait_list
-            nullptr    // cL_event *event
+            nullptr,   // cL_event *event
+            nullptr    // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
@@ -2309,7 +2332,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromSvmAllocToMappedPtrWhenCallingSvmMemcpyThe
             size,               // size_t size
             0,                  // cl_uint num_events_in_wait_list
             nullptr,            // cl_evebt *event_wait_list
-            nullptr             // cL_event *event
+            nullptr,            // cL_event *event
+            nullptr             // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
@@ -2333,7 +2357,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyTh
             size,       // size_t size
             0,          // cl_uint num_events_in_wait_list
             nullptr,    // cl_evebt *event_wait_list
-            nullptr     // cL_event *event
+            nullptr,    // cL_event *event
+            nullptr     // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
@@ -2350,7 +2375,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyTh
             size,               // size_t size
             0,                  // cl_uint num_events_in_wait_list
             nullptr,            // cl_evebt *event_wait_list
-            nullptr             // cL_event *event
+            nullptr,            // cL_event *event
+            nullptr             // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
@@ -2367,7 +2393,8 @@ HWTEST_F(EnqueueSvmTest, givenCopyFromMappedPtrToMappedPtrWhenCallingSvmMemcpyTh
             size,               // size_t size
             0,                  // cl_uint num_events_in_wait_list
             nullptr,            // cl_evebt *event_wait_list
-            nullptr             // cL_event *event
+            nullptr,            // cL_event *event
+            nullptr             // CommandStreamReceiver* csrParam
         );
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(2u, csr.createAllocationForHostSurfaceCalled);

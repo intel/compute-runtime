@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -766,7 +766,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
     void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
     void *pDstSVM = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
     size_t zeroSize = 0;
-    mockCmdQ->enqueueSVMMemcpy(false, pSrcSVM, pDstSVM, zeroSize, 0, nullptr, nullptr);
+    mockCmdQ->enqueueSVMMemcpy(false, pSrcSVM, pDstSVM, zeroSize, 0, nullptr, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     context.getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
@@ -781,7 +781,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
     void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
     void *pDstSVM = context.getSVMAllocsManager()->createSVMAlloc(256, {}, context.getRootDeviceIndices(), context.getDeviceBitfields());
     size_t zeroSize = 0;
-    mockCmdQ->enqueueSVMMemcpy(false, pSrcSVM, pDstSVM, zeroSize, 0, nullptr, &event);
+    mockCmdQ->enqueueSVMMemcpy(false, pSrcSVM, pDstSVM, zeroSize, 0, nullptr, &event, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
 
     auto pEvent = (Event *)event;

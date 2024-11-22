@@ -1579,7 +1579,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
         }
         memcpy(stagingBuffer, chunkSrc, chunkSize);
         if (isSingleTransfer) {
-            return this->enqueueSVMMemcpy(false, chunkDst, stagingBuffer, chunkSize, 0, nullptr, event);
+            return this->enqueueSVMMemcpy(false, chunkDst, stagingBuffer, chunkSize, 0, nullptr, event, csr);
         }
 
         if (isFirstTransfer && isProfilingEnabled()) {
@@ -1590,7 +1590,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
         if (isLastTransfer && !this->isOOQEnabled()) {
             outEvent = event;
         }
-        auto ret = this->enqueueSVMMemcpy(false, chunkDst, stagingBuffer, chunkSize, 0, nullptr, outEvent);
+        auto ret = this->enqueueSVMMemcpy(false, chunkDst, stagingBuffer, chunkSize, 0, nullptr, outEvent, csr);
         return ret;
     };
 

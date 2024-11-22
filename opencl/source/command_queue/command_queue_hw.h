@@ -204,7 +204,7 @@ class CommandQueueHw : public CommandQueue {
                             size_t size,
                             cl_uint numEventsInWaitList,
                             const cl_event *eventWaitList,
-                            cl_event *event) override;
+                            cl_event *event, CommandStreamReceiver *csrParam) override;
 
     cl_int enqueueSVMMemFill(void *svmPtr,
                              const void *pattern,

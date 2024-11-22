@@ -4947,7 +4947,8 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
                 size,
                 numEventsInWaitList,
                 eventWaitList,
-                event);
+                event,
+                nullptr);
         }
     } else {
         retVal = pCommandQueue->enqueueMarkerWithWaitList(numEventsInWaitList, eventWaitList, event);

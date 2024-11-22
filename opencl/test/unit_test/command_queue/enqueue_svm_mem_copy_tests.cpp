@@ -111,7 +111,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         256,       // size_t size
         0,         // cl_uint num_events_in_wait_list
         nullptr,   // cl_event *event_wait_list
-        nullptr    // cL_event *event
+        nullptr,   // cL_event *event
+        nullptr    // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -188,7 +189,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         256,                                  // size_t size
         0,                                    // cl_uint num_events_in_wait_list
         nullptr,                              // cl_event *event_wait_list
-        nullptr                               // cL_event *event
+        nullptr,                              // cL_event *event
+        nullptr                               // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -270,7 +272,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
         256,                                  // size_t size
         0,                                    // cl_uint num_events_in_wait_list
         nullptr,                              // cl_event *event_wait_list
-        nullptr                               // cL_event *event
+        nullptr,                              // cL_event *event
+        nullptr                               // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -339,7 +342,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
         256,        // size_t size
         0,          // cl_uint num_events_in_wait_list
         nullptr,    // cl_event *event_wait_list
-        nullptr     // cL_event *event
+        nullptr,    // cL_event *event
+        nullptr     // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -363,7 +367,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThe
         256,        // size_t size
         0,          // cl_uint num_events_in_wait_list
         nullptr,    // cl_event *event_wait_list
-        nullptr     // cL_event *event
+        nullptr,    // cL_event *event
+        nullptr     // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(mockCmdQ->notifyEnqueueSVMMemcpyCalled);
@@ -391,7 +396,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenCsrSelectionArgsCalledWithRootDeviceIndexGr
         256,        // size_t size
         0,          // cl_uint num_events_in_wait_list
         nullptr,    // cl_event *event_wait_list
-        nullptr     // cL_event *event
+        nullptr,    // cL_event *event
+        nullptr     // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(mockCmdQ->notifyEnqueueSVMMemcpyCalled);
@@ -419,7 +425,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenConstHostMemoryAsSourceWhenEnqueueSVMMemcpy
         sizeof(double),  // size_t size
         0,               // cl_uint num_events_in_wait_list
         nullptr,         // cl_event *event_wait_list
-        nullptr          // cL_event *event
+        nullptr,         // cL_event *event
+        nullptr          // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -472,7 +479,8 @@ HWTEST_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBuf
         static_cast<size_t>(bigSize), // size_t size
         0,                            // cl_uint num_events_in_wait_list
         nullptr,                      // cl_event *event_wait_list
-        nullptr                       // cL_event *event
+        nullptr,                      // cL_event *event
+        nullptr                       // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -490,7 +498,8 @@ HWTEST_F(EnqueueSvmMemCopyHwTest, givenEnqueueSVMMemCopyWhenUsingCopyBufferToBuf
         static_cast<size_t>(smallSize), // size_t size
         0,                              // cl_uint num_events_in_wait_list
         nullptr,                        // cl_event *event_wait_list
-        nullptr                         // cL_event *event
+        nullptr,                        // cL_event *event
+        nullptr                         // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -528,7 +537,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmZeroCopyThenBuiltinK
         256,       // size_t size
         0,         // cl_uint num_events_in_wait_list
         nullptr,   // cl_event *event_wait_list
-        nullptr    // cL_event *event
+        nullptr,   // cL_event *event
+        nullptr    // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -605,7 +615,8 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSvmMemcpyWhenSvmGpuThenBuiltinKernel
         256,       // size_t size
         0,         // cl_uint num_events_in_wait_list
         nullptr,   // cl_event *event_wait_list
-        nullptr    // cL_event *event
+        nullptr,   // cL_event *event
+        nullptr    // CommandStreamReceiver* csrParam
     );
     EXPECT_EQ(CL_SUCCESS, retVal);
 

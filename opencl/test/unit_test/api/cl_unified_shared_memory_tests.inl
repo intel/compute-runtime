@@ -1017,7 +1017,7 @@ TEST(clUnifiedSharedMemoryTests, givenTwoUnifiedMemoryAllocationsWhenTheyAreCopi
                                 size_t size,
                                 cl_uint numEventsInWaitList,
                                 const cl_event *eventWaitList,
-                                cl_event *event) override {
+                                cl_event *event, CommandStreamReceiver *csrParam) override {
             EXPECT_EQ(0u, blockingCopy);
             EXPECT_EQ(expectedDstPtr, dstPtr);
             EXPECT_EQ(expectedSrcPtr, srcPtr);
