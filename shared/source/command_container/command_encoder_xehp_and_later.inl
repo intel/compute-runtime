@@ -40,8 +40,6 @@
 #include <type_traits>
 
 namespace NEO {
-constexpr size_t timestampDestinationAddressAlignment = 16;
-constexpr size_t immWriteDestinationAddressAlignment = 8;
 
 template <typename Family>
 template <typename WalkerType>
@@ -494,32 +492,6 @@ void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walk
 
     postSync.setOperation(operationType);
     postSync.setImmediateData(immData);
-    postSync.setDestinationAddress(gpuVa);
-
-    EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
-    EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
-}
-
-template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
-    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
-
-    auto &postSync = walkerCmd.getPostSync();
-
-    postSync.setDataportPipelineFlush(true);
-    postSync.setDataportSubsliceCacheFlush(true);
-    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
-        postSync.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
-        postSync.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
-    }
-
-    uint64_t gpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
-
-    UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
-
-    postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
-    postSync.setImmediateData(args.inOrderCounterValue);
     postSync.setDestinationAddress(gpuVa);
 
     EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
@@ -1062,13 +1034,6 @@ size_t EncodeStates<Family>::getSshHeapSize() {
 }
 
 template <typename Family>
-void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue) {
-    auto walkerCmd = reinterpret_cast<typename Family::DefaultWalkerType *>(cmd1);
-    auto &postSync = walkerCmd->getPostSync();
-    postSync.setImmediateData(baseCounterValue + appendCounterValue);
-}
-
-template <typename Family>
 template <typename WalkerType, typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::overrideDefaultValues(WalkerType &walkerCmd, InterfaceDescriptorType &interfaceDescriptor) {
     int32_t forceL3PrefetchForComputeWalker = debugManager.flags.ForceL3PrefetchForComputeWalker.get();
@@ -1197,10 +1162,6 @@ void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walker
     auto &postSyncData = walkerCmd.getPostSync();
     postSyncData.setSystemMemoryFenceRequest(programGlobalFenceAsPostSyncOperationInComputeWalker);
 }
-
-template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
 
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {

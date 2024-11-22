@@ -573,14 +573,6 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
 }
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
-
-template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const HardwareInfo &hwInfo, uint32_t partitionCount, uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder) {}
-
-template <typename Family>
 void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t crossThreadDataGpuVa, DispatchKernelEncoderI *dispatchInterface, uint64_t implicitArgsGpuPtr) {
     const auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
     setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, crossThreadDataGpuVa);

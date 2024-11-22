@@ -682,4 +682,11 @@ template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy) {
 }
 
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const HardwareInfo &hwInfo, uint32_t partitionCount, uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder) {}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
 } // namespace NEO

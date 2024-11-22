@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/helpers/in_order_cmd_helpers.h"
 
 namespace NEO {
 
@@ -45,5 +46,50 @@ template <typename Family>
 bool EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) {
     return cooperativeKernel;
 }
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {
+    using POSTSYNC_DATA = typename WalkerType::PostSyncType;
+
+    auto &postSync = walkerCmd.getPostSync();
+
+    postSync.setDataportPipelineFlush(true);
+    postSync.setDataportSubsliceCacheFlush(true);
+    if (NEO::debugManager.flags.ForcePostSyncL1Flush.get() != -1) {
+        postSync.setDataportPipelineFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+        postSync.setDataportSubsliceCacheFlush(!!NEO::debugManager.flags.ForcePostSyncL1Flush.get());
+    }
+
+    uint64_t gpuVa = args.inOrderExecInfo->getBaseDeviceAddress() + args.inOrderExecInfo->getAllocationOffset();
+
+    UNRECOVERABLE_IF(!(isAligned<immWriteDestinationAddressAlignment>(gpuVa)));
+
+    postSync.setOperation(POSTSYNC_DATA::OPERATION_WRITE_IMMEDIATE_DATA);
+    postSync.setImmediateData(args.inOrderCounterValue);
+    postSync.setDestinationAddress(gpuVa);
+
+    EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
+    EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
+}
+
+template <typename Family>
+void InOrderPatchCommandHelpers::PatchCmd<Family>::patchComputeWalker(uint64_t appendCounterValue) {
+    auto walkerCmd = reinterpret_cast<typename Family::DefaultWalkerType *>(cmd1);
+    auto &postSync = walkerCmd->getPostSync();
+    postSync.setImmediateData(baseCounterValue + appendCounterValue);
+}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args) {}
+
+template <typename Family>
+template <typename WalkerType>
+void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const HardwareInfo &hwInfo, uint32_t partitionCount, uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder) {}
 
 } // namespace NEO
