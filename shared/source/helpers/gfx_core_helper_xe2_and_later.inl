@@ -22,6 +22,52 @@ void GfxCoreHelperHw<Family>::applyAdditionalCompressionSettings(Gmm &gmm, bool 
     }
 }
 
+template <typename GfxFamily>
+const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto defaultEngine = getChosenEngineType(hwInfo);
+    EngineInstancesContainer engines;
+
+    uint32_t numCcs = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+
+    if (hwInfo.featureTable.flags.ftrCCSNode) {
+        for (uint32_t i = 0; i < numCcs; i++) {
+            auto engineType = static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS);
+
+            engines.push_back({engineType, EngineUsage::regular});
+        }
+    }
+
+    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
+        hwInfo.featureTable.flags.ftrRcsNode) {
+        engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
+    }
+
+    engines.push_back({defaultEngine, EngineUsage::lowPriority});
+    engines.push_back({defaultEngine, EngineUsage::internal});
+
+    if (hwInfo.capabilityTable.blitterOperationsSupported) {
+
+        if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
+            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular});  // Main copy engine
+            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}); // Internal usage
+        }
+
+        uint32_t internalIndex = getInternalCopyEngineIndex(hwInfo);
+        for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
+            if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
+                auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
+                engines.push_back({engineType, EngineUsage::regular});
+                if (i == internalIndex) {
+                    engines.push_back({engineType, EngineUsage::internal});
+                }
+            }
+        }
+    }
+
+    return engines;
+};
+
 template <>
 void GfxCoreHelperHw<Family>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {}
 

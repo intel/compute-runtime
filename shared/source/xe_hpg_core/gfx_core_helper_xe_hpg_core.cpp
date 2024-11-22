@@ -164,6 +164,37 @@ bool MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequ
     return rootDeviceEnvironment.getReleaseHelper()->isPipeControlPriorToPipelineSelectWaRequired();
 }
 
+template <>
+const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto defaultEngine = getChosenEngineType(hwInfo);
+
+    EngineInstancesContainer engines;
+    auto ailHelper = rootDeviceEnvironment.getAILConfigurationHelper();
+    auto forceRcs = ailHelper && ailHelper->forceRcs();
+    if (hwInfo.featureTable.flags.ftrCCSNode && !forceRcs) {
+        for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
+            engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::regular});
+        }
+    }
+
+    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS)) ||
+        hwInfo.featureTable.flags.ftrRcsNode ||
+        forceRcs) {
+        engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
+    }
+
+    engines.push_back({defaultEngine, EngineUsage::lowPriority});
+    engines.push_back({defaultEngine, EngineUsage::internal});
+
+    if (hwInfo.capabilityTable.blitterOperationsSupported && hwInfo.featureTable.ftrBcsInfo.test(0)) {
+        engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::regular});
+        engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::internal}); // internal usage
+    }
+
+    return engines;
+};
+
 template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

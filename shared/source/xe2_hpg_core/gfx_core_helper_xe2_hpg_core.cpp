@@ -47,46 +47,6 @@ uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarr
 }
 
 template <>
-const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto defaultEngine = getChosenEngineType(hwInfo);
-    EngineInstancesContainer engines;
-
-    if (hwInfo.featureTable.flags.ftrCCSNode) {
-        for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
-            engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::regular});
-        }
-    }
-
-    if ((debugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) ||
-        hwInfo.featureTable.flags.ftrRcsNode) {
-        engines.push_back({aub_stream::ENGINE_CCCS, EngineUsage::regular});
-    }
-    engines.push_back({defaultEngine, EngineUsage::lowPriority});
-    engines.push_back({defaultEngine, EngineUsage::internal});
-
-    if (hwInfo.capabilityTable.blitterOperationsSupported) {
-        if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
-            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular});  // Main copy engine
-            engines.push_back({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal}); // Internal usage
-        }
-
-        uint32_t internalIndex = getInternalCopyEngineIndex(hwInfo);
-        for (uint32_t i = 1; i < hwInfo.featureTable.ftrBcsInfo.size(); i++) {
-            if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
-                auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
-                engines.push_back({engineType, EngineUsage::regular});
-                if (i == internalIndex) {
-                    engines.push_back({engineType, EngineUsage::internal});
-                }
-            }
-        }
-    }
-
-    return engines;
-};
-
-template <>
 EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_CCCS) {
         return EngineGroupType::renderCompute;
