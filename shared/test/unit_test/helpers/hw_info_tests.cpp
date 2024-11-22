@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -45,6 +44,6 @@ TEST(HwInfoTest, givenHwInfoWhenQueryNumSubSlicesPerSliceThenCorrectNumberIsRetu
     HardwareInfo hwInfo{};
     hwInfo.gtSystemInfo.SliceCount = 2;
     hwInfo.gtSystemInfo.SubSliceCount = 7;
-    auto expectedNumSubSlicesPerSlice = static_cast<uint32_t>(Math::divideAndRoundUp(hwInfo.gtSystemInfo.SubSliceCount, hwInfo.gtSystemInfo.SliceCount));
+    uint32_t expectedNumSubSlicesPerSlice = 4;
     EXPECT_EQ(getNumSubSlicesPerSlice(hwInfo), expectedNumSubSlicesPerSlice);
 }
