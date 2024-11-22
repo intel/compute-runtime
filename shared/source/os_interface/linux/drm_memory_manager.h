@@ -126,6 +126,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
 
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex);
+    size_t getUserptrAlignment();
 
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
@@ -143,7 +144,6 @@ class DrmMemoryManager : public MemoryManager {
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId(uint32_t rootDeviceIndex) const;
     OsContextLinux *getDefaultOsContext(uint32_t rootDeviceIndex) const;
-    size_t getUserptrAlignment();
 
     StorageInfo createStorageInfoFromProperties(const AllocationProperties &properties) override;
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

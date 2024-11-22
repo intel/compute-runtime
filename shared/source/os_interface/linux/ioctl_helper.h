@@ -229,7 +229,8 @@ class IoctlHelper {
     virtual void *mmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size, int prot, int flags, int fd, off_t offset);
     virtual int munmapFunction(DrmMemoryManager &memoryManager, void *ptr, size_t size);
     virtual void registerMemoryToUnmap(DrmAllocation &allocation, void *pointer, size_t size, DrmAllocation::MemoryUnmapFunction unmapFunction);
-    virtual BufferObject *allocUserptr(DrmMemoryManager &memoryManager, uintptr_t address, size_t size, uint32_t rootDeviceIndex);
+    virtual BufferObject *allocUserptr(DrmMemoryManager &memoryManager, const AllocationData &allocData, uintptr_t address, size_t size, uint32_t rootDeviceIndex);
+    virtual void syncUserptrAllocs(DrmMemoryManager &memoryManager) { return; };
 
     virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
 
