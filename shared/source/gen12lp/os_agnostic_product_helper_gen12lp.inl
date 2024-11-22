@@ -26,4 +26,9 @@ template <>
 const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
     return {};
 }
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getMaxLocalRegionSize(const HardwareInfo &hwInfo) const {
+    return 0;
+}
 } // namespace NEO

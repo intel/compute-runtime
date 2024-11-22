@@ -25,6 +25,10 @@ template <>
 const std::vector<uint32_t> ProductHelperHw<IGFX_UNKNOWN>::getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const {
     return {};
 }
+template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxLocalRegionSize(const HardwareInfo &hwInfo) const {
+    return 0;
+}
 
 template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {

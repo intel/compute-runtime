@@ -236,6 +236,7 @@ class ProductHelper {
     virtual bool isNewCoherencyModelSupported() const = 0;
     virtual bool deferMOCSToPatIndex() const = 0;
     virtual const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getMaxLocalRegionSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool localDispatchSizeQuerySupported() const = 0;
     virtual bool supportReadOnlyAllocations() const = 0;
     virtual bool isDeviceToHostCopySignalingFenceRequired() const = 0;

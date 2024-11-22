@@ -21,6 +21,11 @@ const std::vector<uint32_t> ProductHelperHw<gfxProduct>::getSupportedLocalDispat
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+uint32_t ProductHelperHw<gfxProduct>::getMaxLocalRegionSize(const HardwareInfo &hwInfo) const {
+    return 0;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
     return (UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess);
 }
