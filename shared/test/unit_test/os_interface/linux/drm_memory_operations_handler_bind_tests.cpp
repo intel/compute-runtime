@@ -1408,6 +1408,29 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenLockedAndResidentAllocationsWhen
     memoryManager->freeGraphicsMemory(allocation1);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, whenCallingMakeResidentThenVerifyImmediateBindingIsRequired) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::success);
+
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    EXPECT_TRUE(bo->isImmediateBindingRequired());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenCallingEvictAfterCallingResidentThenVerifyImmediateBindingIsNotRequired) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    EXPECT_EQ(operationHandler->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::success);
+
+    auto bo = static_cast<DrmAllocation *>(allocation)->getBO();
+    EXPECT_TRUE(bo->isImmediateBindingRequired());
+
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::success);
+    EXPECT_FALSE(bo->isImmediateBindingRequired());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 using DrmResidencyHandlerTests = ::testing::Test;
 
 HWTEST2_F(DrmResidencyHandlerTests, givenClosIndexAndMemoryTypeWhenAskingForPatIndexThenReturnCorrectValue, IsWithinXeGfxFamily) {
