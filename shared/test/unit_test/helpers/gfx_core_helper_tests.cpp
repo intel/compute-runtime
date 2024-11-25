@@ -219,7 +219,7 @@ using LriHelperTests = ::testing::Test;
 
 HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStream) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint32_t address = 0x8888;
@@ -240,7 +240,7 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
 
 HWTEST_F(LriHelperTests, givenAddressAndOffsetAndRemapAndNotBlitterWhenHelperIsUsedThenProgramCmdStream) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint32_t address = 0x8888;
@@ -261,7 +261,7 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetAndRemapAndNotBlitterWhenHelperIsU
 
 HWTEST_F(LriHelperTests, givenAddressAndOffsetAndNotRemapAndBlitterWhenHelperIsUsedThenProgramCmdStream) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint32_t address = 0x8888;
@@ -282,7 +282,7 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetAndNotRemapAndBlitterWhenHelperIsU
 
 HWTEST_F(LriHelperTests, givenAddressAndOffsetAndRemapAndBlitterWhenHelperIsUsedThenProgramCmdStream) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint32_t address = 0x8888;
@@ -305,7 +305,7 @@ using PipeControlHelperTests = ::testing::Test;
 
 HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsedThenProperFieldsAreProgrammed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint64_t address = 0x1234567887654321;
@@ -347,7 +347,7 @@ HWTEST_F(PipeControlHelperTests, givenGfxCoreHelperwhenAskingForDcFlushThenRetur
 
 HWTEST_F(PipeControlHelperTests, givenDcFlushNotAllowedWhenProgrammingPipeControlThenDontSetDcFlush) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
 
@@ -364,7 +364,7 @@ HWTEST_F(PipeControlHelperTests, givenDcFlushNotAllowedWhenProgrammingPipeContro
 
 HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIsUsedThenProperFieldsAreProgrammed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint64_t address = 0x1234567887654321;
@@ -402,7 +402,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
 
 HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsedThenNotifyEnableFlagIsTrue) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint64_t address = 0x1234567887654321;
@@ -455,7 +455,7 @@ HWTEST_F(PipeControlHelperTests, WhenIsDcFlushAllowedIsCalledThenCorrectResultIs
 
 HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrectPostSyncUsed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint64_t address = 0x1234567887654320;
@@ -473,7 +473,7 @@ HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncTimestampUsedThenCorrect
 
 HWTEST_F(PipeControlHelperTests, WhenPipeControlPostSyncWriteImmediateDataUsedThenCorrectPostSyncUsed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     uint64_t address = 0x1234567887654320;
@@ -1079,7 +1079,7 @@ HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForCacheFlushThenRetur
 
 HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     MockExecutionEnvironment mockExecutionEnvironment{};
@@ -1106,7 +1106,7 @@ HWTEST_F(PipeControlHelperTests, WhenGettingPipeControSizeForInstructionCacheFlu
 
 HWTEST_F(PipeControlHelperTests, WhenProgrammingInstructionCacheFlushThenExpectInstructionCacheInvalidateEnableFieldSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+    auto buffer = std::make_unique<uint8_t[]>(128);
 
     LinearStream stream(buffer.get(), 128);
     MockExecutionEnvironment mockExecutionEnvironment{};

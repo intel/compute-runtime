@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ TEST(FileLogger, GivenDebugFunctionalityWhenDebugFlagIsDisabledThenDoNotDumpKern
     kernelInfo->addArgImmediate(0, 32, 32);
 
     size_t crossThreadDataSize = 64;
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     std::string testFile = "testfile";
@@ -144,7 +144,7 @@ TEST(FileLogger, GivenMdiWhenDumpingKernelArgsThenFileIsCreated) {
     kernelInfo->addArgImmediate(0, 32, 32);
 
     size_t crossThreadDataSize = 64;
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     std::string testFile = "testfile";
@@ -208,7 +208,7 @@ TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
     kernelInfo->addArgImmediate(0, 32, 32);
 
     size_t crossThreadDataSize = 64;
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     std::string testFile = "testfile";
@@ -237,7 +237,7 @@ TEST(FileLogger, GivenImmediateZeroSizeWhenDumpingKernelArgsThenFileIsNotCreated
     kernelInfo->addArgImmediate(0, 0, 32);
 
     size_t crossThreadDataSize = sizeof(64);
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     std::string testFile = "testfile";
@@ -288,7 +288,7 @@ TEST(FileLogger, GivenBufferNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     kernel->initialize();
 
     size_t crossThreadDataSize = sizeof(void *);
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     std::string testFile = "testfile";
@@ -321,7 +321,7 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     kernel->initialize();
 
     size_t crossThreadDataSize = sizeof(void *);
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     kernel->setArg(0, clObj);
@@ -389,7 +389,7 @@ TEST(FileLogger, GivenImageNotSetWhenDumpingKernelArgsThenFileIsNotCreated) {
     kernel->initialize();
 
     size_t crossThreadDataSize = sizeof(void *);
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     std::string testFile = "testfile";
@@ -474,7 +474,7 @@ TEST(FileLogger, GivenDisabledDebugFunctionalityWhenLoggingThenDumpingDoesNotOcc
     kernel->initialize();
 
     size_t crossThreadDataSize = sizeof(void *);
-    auto crossThreadData = std::unique_ptr<uint8_t>(new uint8_t[crossThreadDataSize]);
+    auto crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
     kernel->setCrossThreadData(crossThreadData.get(), static_cast<uint32_t>(crossThreadDataSize));
 
     kernel->setArg(0, nullptr);

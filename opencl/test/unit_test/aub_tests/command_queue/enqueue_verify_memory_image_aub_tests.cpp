@@ -85,7 +85,7 @@ HWTEST_P(VerifyMemoryImageHw, givenDifferentImagesWhenValidatingMemoryThenSucces
     auto sizeMemory = image->getSize();
     EXPECT_GT(sizeMemory, 0u);
 
-    std::unique_ptr<uint8_t> srcMemory(new uint8_t[elementSize]);
+    std::unique_ptr<uint8_t[]> srcMemory(new uint8_t[elementSize]);
     memset(srcMemory.get(), 0xAB, elementSize);
     memset(image->getCpuAddress(), 0xAB, sizeMemory);
 

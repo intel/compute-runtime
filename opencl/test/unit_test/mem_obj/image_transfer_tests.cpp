@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,7 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferToHostPtr
     std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_depth / 2}};
     std::array<size_t, 3> copyRegion = copyOrigin;
 
-    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_depth]);
+    auto expectedHostPtr = std::make_unique<uint8_t[]>(hostPtrSlicePitch * imgDesc->image_depth);
     memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_depth);
     memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_depth);
     memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_depth);
@@ -97,7 +97,7 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferFromHostP
     std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_depth / 2}};
     std::array<size_t, 3> copyRegion = copyOrigin;
 
-    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_depth]);
+    auto expectedImageData = std::make_unique<uint8_t[]>(imageSlicePitch * imgDesc->image_depth);
     memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_depth);
     memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_depth);
     memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_depth);
@@ -121,7 +121,7 @@ TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferToHo
     std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_array_size / 2}};
     std::array<size_t, 3> copyRegion = copyOrigin;
 
-    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_array_size]);
+    auto expectedHostPtr = std::make_unique<uint8_t[]>(hostPtrSlicePitch * imgDesc->image_array_size);
     memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
     memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
     memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_array_size);
@@ -145,7 +145,7 @@ TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferFrom
     std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_array_size / 2}};
     std::array<size_t, 3> copyRegion = copyOrigin;
 
-    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_array_size]);
+    auto expectedImageData = std::make_unique<uint8_t[]>(imageSlicePitch * imgDesc->image_array_size);
     memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_array_size);
     memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_array_size);
     memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_array_size);
@@ -162,7 +162,7 @@ TEST_F(ImageHostPtrTransferTests, given1dArrayImageWhenTransferToHostPtrCalledTh
     std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 0}};
     std::array<size_t, 3> copyRegion = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 1}};
 
-    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_array_size]);
+    auto expectedHostPtr = std::make_unique<uint8_t[]>(hostPtrSlicePitch * imgDesc->image_array_size);
     memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
     memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
     memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_array_size);
@@ -179,7 +179,7 @@ TEST_F(ImageHostPtrTransferTests, given1dArrayImageWhenTransferFromHostPtrCalled
     std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 0}};
     std::array<size_t, 3> copyRegion = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 1}};
 
-    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_array_size]);
+    auto expectedImageData = std::make_unique<uint8_t[]>(imageSlicePitch * imgDesc->image_array_size);
     memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_array_size);
     memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_array_size);
     memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_array_size);
