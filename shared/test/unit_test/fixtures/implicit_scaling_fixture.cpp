@@ -43,7 +43,7 @@ void ImplicitScalingFixture::tearDown() {
 ImplicitScalingDispatchCommandArgs ImplicitScalingFixture::createDispatchCommandArgs(uint64_t workPartitionAllocationAddress, uint32_t partitionCount) {
     ImplicitScalingDispatchCommandArgs args{
         workPartitionAllocationAddress,  // workPartitionAllocationGpuVa
-        defaultHwInfo.get(),             // hwInfo
+        this->pDevice,                   // device
         nullptr,                         // outWalkerPtr
         NEO::RequiredPartitionDim::none, // requiredPartitionDim
         partitionCount,                  // partitionCount

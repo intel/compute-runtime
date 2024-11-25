@@ -95,7 +95,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-    const auto &hwInfo = device.getHardwareInfo();
+
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
 
     if constexpr (heaplessModeEnabled == false) {
@@ -181,7 +181,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
         ImplicitScalingDispatchCommandArgs implicitScalingArgs{
             workPartitionAllocationGpuVa,        // workPartitionAllocationGpuVa
-            &hwInfo,                             // hwInfo
+            &device,                             // device
             nullptr,                             // outWalkerPtr
             requiredPartitionDim,                // requiredPartitionDim
             partitionCount,                      // partitionCount
@@ -207,7 +207,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             timestampPacketNode->setPacketsUsed(implicitScalingArgs.partitionCount);
         }
     } else {
-        EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(walkerCmd, hwInfo, 1, workgroupSize, maxWgCountPerTile, requiredWalkOrder != 0);
+        EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(walkerCmd, device, 1, workgroupSize, maxWgCountPerTile, requiredWalkOrder != 0);
         auto computeWalkerOnStream = commandStream.getSpaceForCmd<WalkerType>();
         *computeWalkerOnStream = walkerCmd;
     }

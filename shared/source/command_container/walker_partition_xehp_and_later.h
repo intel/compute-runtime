@@ -495,7 +495,7 @@ template <typename GfxFamily, typename WalkerType>
 void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgrammed,
                                WalkerType *inputWalker,
                                WalkerPartitionArgs &args,
-                               const NEO::HardwareInfo &hwInfo) {
+                               const NEO::Device &device) {
     WalkerType *computeWalker = nullptr;
     if (!args.blockDispatchToCommandBuffer) {
         computeWalker = putCommand<WalkerType>(inputAddress, totalBytesProgrammed);
@@ -527,7 +527,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
         }
 
         NEO::EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*inputWalker,
-                                                                      hwInfo,
+                                                                      device,
                                                                       args.partitionCount,
                                                                       args.workgroupSize,
                                                                       args.maxWgCountPerTile,
@@ -580,7 +580,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
                                                   WalkerType *inputWalker,
                                                   uint32_t &totalBytesProgrammed,
                                                   WalkerPartitionArgs &args,
-                                                  const NEO::HardwareInfo &hwInfo) {
+                                                  const NEO::Device &device) {
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
@@ -650,7 +650,7 @@ void constructDynamicallyPartitionedCommandBuffer(void *cpuPointer,
         args.secondaryBatchBuffer);
 
     // Walker section
-    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args, hwInfo);
+    auto walkerPtr = programPartitionedWalker<GfxFamily, WalkerType>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args, device);
     if (outWalkerPtr) {
         *outWalkerPtr = walkerPtr;
     }
@@ -726,7 +726,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
                                                  WalkerType *inputWalker,
                                                  uint32_t &totalBytesProgrammed,
                                                  WalkerPartitionArgs &args,
-                                                 const NEO::HardwareInfo &hwInfo) {
+                                                 const NEO::Device &device) {
     totalBytesProgrammed = 0u;
     void *currentBatchBufferPointer = cpuPointer;
 
@@ -747,7 +747,7 @@ void constructStaticallyPartitionedCommandBuffer(void *cpuPointer,
         }
     }
 
-    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args, hwInfo);
+    auto walkerPtr = programPartitionedWalker<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, inputWalker, args, device);
 
     if (!args.blockDispatchToCommandBuffer) {
         if (outWalkerPtr) {

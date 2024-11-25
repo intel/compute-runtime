@@ -126,7 +126,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                             &walkerCmd,
                                                                                             totalProgrammedSize,
                                                                                             walkerPartitionArgs,
-                                                                                            *dispatchCommandArgs.hwInfo);
+                                                                                            *dispatchCommandArgs.device);
     } else {
         if (debugManager.flags.ExperimentalSetWalkerPartitionCount.get()) {
             dispatchCommandArgs.partitionCount = debugManager.flags.ExperimentalSetWalkerPartitionCount.get();
@@ -142,7 +142,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchCommands(LinearStream &commandS
                                                                                              &walkerCmd,
                                                                                              totalProgrammedSize,
                                                                                              walkerPartitionArgs,
-                                                                                             *dispatchCommandArgs.hwInfo);
+                                                                                             *dispatchCommandArgs.device);
     }
     UNRECOVERABLE_IF(totalProgrammedSize != dispatchCommandsSize);
 }

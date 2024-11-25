@@ -821,6 +821,7 @@ HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysRetur
     using WalkerType = typename FamilyType::DefaultWalkerType;
 
     MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.incRefInternal();
     auto rootExecEnv = executionEnvironment.rootDeviceEnvironments[0].get();
 
     uint8_t buffer[128] = {};
@@ -837,9 +838,11 @@ HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysRetur
 
     void *ptr = nullptr;
 
+    auto device = std::make_unique<MockDevice>(&executionEnvironment, 0);
+
     ImplicitScalingDispatchCommandArgs args{
         0,                       // workPartitionAllocationGpuVa
-        defaultHwInfo.get(),     // hwInfo
+        device.get(),            // device
         &ptr,                    // outWalkerPtr
         RequiredPartitionDim::x, // requiredPartitionDim
         partitionCount,          // partitionCount

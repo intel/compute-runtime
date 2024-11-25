@@ -463,7 +463,7 @@ HWTEST2_F(StaticWalkerPartitionFourTilesTests, givenPreWalkerSyncWhenStaticWalke
         &walkerCmd,
         totalBytesProgrammed,
         testArgs,
-        *defaultHwInfo);
+        this->rootDevice->getDevice());
     taskStream->getSpace(totalBytesProgrammed);
     flushTaskStream(*taskStream);
 
@@ -509,7 +509,7 @@ HWTEST2_F(StaticWalkerPartitionFourTilesTests, whenNoPreWalkerSyncThenAtomicsAre
         &walkerCmd,
         totalBytesProgrammed,
         testArgs,
-        *defaultHwInfo);
+        this->rootDevice->getDevice());
     taskStream->getSpace(totalBytesProgrammed);
     flushTaskStream(*taskStream);
 

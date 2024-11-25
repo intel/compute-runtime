@@ -418,7 +418,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
         ImplicitScalingDispatchCommandArgs implicitScalingArgs{
             workPartitionAllocationGpuVa,                                                            // workPartitionAllocationGpuVa
-            &hwInfo,                                                                                 // hwInfo
+            args.device,                                                                             // device
             &args.outWalkerPtr,                                                                      // outWalkerPtr
             args.requiredPartitionDim,                                                               // requiredPartitionDim
             args.partitionCount,                                                                     // partitionCount
@@ -438,7 +438,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.partitionCount = implicitScalingArgs.partitionCount;
     } else {
         args.partitionCount = 1;
-        EncodeDispatchKernel<Family>::setWalkerRegionSettings(walkerCmd, hwInfo, args.partitionCount, workgroupSize, args.maxWgCountPerTile, isRequiredWorkGroupOrder);
+        EncodeDispatchKernel<Family>::setWalkerRegionSettings(walkerCmd, *args.device, args.partitionCount, workgroupSize, args.maxWgCountPerTile, isRequiredWorkGroupOrder);
 
         if (!args.makeCommandView) {
             auto buffer = listCmdBufferStream->getSpaceForCmd<WalkerType>();

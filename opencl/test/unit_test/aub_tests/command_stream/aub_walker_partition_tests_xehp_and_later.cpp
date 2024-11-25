@@ -1022,7 +1022,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
         &walkerCmd,
         totalBytesProgrammed,
         testArgs,
-        *defaultHwInfo);
+        this->device->getDevice());
     taskStream->getSpace(totalBytesProgrammed);
     flushStream();
     auto expectedGpuAddress = taskStream->getGraphicsAllocation()->getGpuAddress() +

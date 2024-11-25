@@ -17,6 +17,7 @@ struct WalkerPartitionArgs;
 
 namespace NEO {
 struct HardwareInfo;
+class Device;
 class LinearStream;
 struct PipeControlArgs;
 struct RootDeviceEnvironment;
@@ -39,7 +40,7 @@ struct ImplicitScalingHelper {
 
 struct ImplicitScalingDispatchCommandArgs {
     uint64_t workPartitionAllocationGpuVa = 0;
-    const HardwareInfo *hwInfo = nullptr;
+    const NEO::Device *device = nullptr;
     void **outWalkerPtr = nullptr;
 
     RequiredPartitionDim requiredPartitionDim = RequiredPartitionDim::none;
