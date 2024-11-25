@@ -725,6 +725,10 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
     DEBUG_BREAK_IF(!validateAllocation(input));
 
+    if (gfxAllocation->isExplicitlyMadeResident()) {
+        freeAssociatedResourceImpl(*gfxAllocation);
+    }
+
     auto &registeredEngines = getRegisteredEngines(gfxAllocation->getRootDeviceIndex());
     for (auto &engine : registeredEngines) {
         auto &residencyController = static_cast<OsContextWin *>(engine.osContext)->getResidencyController();
@@ -1237,6 +1241,7 @@ bool WddmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphics
         memcpy_s(ptrOffset(ptr, destinationOffset), graphicsAllocation->getUnderlyingBufferSize() - destinationOffset, memoryToCopy, sizeToCopy);
         wddm.unlockResource(wddmAllocation->getHandles()[handleId]);
     }
+    wddmAllocation->setExplicitlyMadeResident(wddmAllocation->needsMakeResidentBeforeLock());
     return true;
 }
 

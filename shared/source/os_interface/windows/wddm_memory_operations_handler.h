@@ -36,6 +36,7 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {
         return evict(nullptr, gfxAllocation);
     }
+    MemoryOperationsStatus free(Device *device, GraphicsAllocation &gfxAllocation) override;
 
   protected:
     Wddm *wddm;

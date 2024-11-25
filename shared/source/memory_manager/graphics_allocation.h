@@ -339,6 +339,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
 
+    bool isExplicitlyMadeResident() const {
+        return this->explicitlyMadeResident;
+    }
+    void setExplicitlyMadeResident(bool explicitlyMadeResident) {
+        this->explicitlyMadeResident = explicitlyMadeResident;
+    }
+
   protected:
     struct UsageInfo {
         TaskCountType taskCount = objectNotUsed;
@@ -404,5 +411,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     std::atomic<uint32_t> registeredContextsNum{0};
     bool shareableHostMemory = false;
     bool cantBeReadOnly = false;
+    bool explicitlyMadeResident = false;
 };
 } // namespace NEO
