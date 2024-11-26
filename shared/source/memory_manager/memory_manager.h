@@ -326,6 +326,22 @@ class MemoryManager {
 
     virtual void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) { return; }
 
+    std::unique_lock<std::mutex> obtainHostAllocationsReuseLock() const {
+        return std::unique_lock<std::mutex>(hostAllocationsReuseMtx);
+    }
+
+    void recordHostAllocationSaveForReuse(size_t size) {
+        hostAllocationsSavedForReuseSize += size;
+    }
+
+    void recordHostAllocationGetFromReuse(size_t size) {
+        hostAllocationsSavedForReuseSize -= size;
+    }
+
+    size_t getHostAllocationsSavedForReuseSize() const {
+        return hostAllocationsSavedForReuseSize;
+    }
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
@@ -398,6 +414,8 @@ class MemoryManager {
     std::mutex physicalMemoryAllocationMapMutex;
     std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
     std::atomic<size_t> sysMemAllocsSize;
+    size_t hostAllocationsSavedForReuseSize = 0u;
+    mutable std::mutex hostAllocationsReuseMtx;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

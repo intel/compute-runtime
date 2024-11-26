@@ -216,6 +216,22 @@ class Device : public ReferenceTrackedObject<Device> {
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
+    std::unique_lock<std::mutex> obtainAllocationsReuseLock() const {
+        return std::unique_lock<std::mutex>(allocationsReuseMtx);
+    }
+
+    void recordAllocationSaveForReuse(size_t size) {
+        allocationsSavedForReuseSize += size;
+    }
+
+    void recordAllocationGetFromReuse(size_t size) {
+        allocationsSavedForReuseSize -= size;
+    }
+
+    size_t getAllocationsSavedForReuseSize() const {
+        return allocationsSavedForReuseSize;
+    }
+
   protected:
     Device() = delete;
     Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);
@@ -291,6 +307,9 @@ class Device : public ReferenceTrackedObject<Device> {
 
     ISAPoolAllocator isaPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
+
+    size_t allocationsSavedForReuseSize = 0u;
+    mutable std::mutex allocationsReuseMtx;
 
     struct {
         bool isValid = false;
