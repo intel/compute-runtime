@@ -493,6 +493,9 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
 }
 
 bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded) {
+    if (numOfHandles == 0) {
+        return true;
+    }
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_EVICT evict = {};
     evict.AllocationList = handleList;

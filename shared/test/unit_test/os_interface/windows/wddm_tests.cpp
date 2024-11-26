@@ -571,6 +571,14 @@ TEST_F(WddmTests, GivenPlatformNotSupportEvictIfNecessaryWhenAdjustingEvictNeede
     EXPECT_TRUE(value);
 }
 
+TEST_F(WddmTests, whenCallingEvictWithNoAllocationsThenDontCallGdi) {
+    uint64_t sizeToTrim = 0;
+    wddm->callBaseEvict = true;
+    EXPECT_TRUE(wddm->evict(nullptr, 0, sizeToTrim, false));
+    bool value = wddm->adjustEvictNeededParameter(false);
+    EXPECT_TRUE(value);
+}
+
 TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
     NEO::AllocationData allocData = {};
     allocData.type = NEO::AllocationType::buffer;

@@ -681,7 +681,10 @@ NTSTATUS __stdcall mockD3DKMTSubmitCommand(IN CONST D3DKMT_SUBMITCOMMAND *) {
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall mockD3DKMTEvict(IN OUT D3DKMT_EVICT *) {
+NTSTATUS __stdcall mockD3DKMTEvict(IN OUT D3DKMT_EVICT *evict) {
+    if (evict->NumAllocations == 0) {
+        return STATUS_INVALID_PARAMETER;
+    }
     return STATUS_SUCCESS;
 }
 
