@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@ struct CommandStreamReceiverFixture : public NEO::DeviceFixture {
     void setUp();
     void tearDown();
 
+    static constexpr uint64_t cmdBufferGpuAddress = 0x10000;
     static constexpr size_t bufferSize = 1024;
     uint8_t cmdBuffer[bufferSize];
     uint8_t dshBuffer[bufferSize];

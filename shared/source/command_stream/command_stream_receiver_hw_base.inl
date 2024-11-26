@@ -329,8 +329,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
     handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData, device);
 
-    handleImmediateFlushJumpToImmediate(flushData);
-
     bool stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
     if (stateCacheFlushRequired) {
         flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
@@ -339,6 +337,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     if (requiresInstructionCacheFlush) {
         flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
     }
+
+    // this must be the last call after all estimate size operations
+    handleImmediateFlushJumpToImmediate(flushData);
 
     auto &csrCommandStream = getCS(flushData.estimatedSize);
     flushData.csrStartOffset = csrCommandStream.getUsed();

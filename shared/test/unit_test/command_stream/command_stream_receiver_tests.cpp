@@ -5111,8 +5111,6 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWh
 
     bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
 
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
-
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
     HardwareParse hwParserCsr;
@@ -5128,6 +5126,51 @@ HWTEST_F(CommandStreamReceiverHwTest, GivenDirtyFlagForContextInBindlessHelperWh
     EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, GivenContextInitializedAndDirtyFlagForContextInBindlessHelperWhenFlushImmediateTaskCalledThenStateCacheInvalidateIsSentBeforeBbStartJumpingToImmediateBuffer) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    // 1st flush, dispatch all required n-p state commands
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    auto usedAfterFirstFlush = commandStreamReceiver.commandStream.getUsed();
+
+    auto bindlessHeapsHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice, pDevice->getNumGenericSubDevices() > 1);
+    MockBindlesHeapsHelper *bindlessHeapsHelperPtr = bindlessHeapsHelper.get();
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(bindlessHeapsHelper.release());
+
+    bindlessHeapsHelperPtr->stateCacheDirtyForContext.set(commandStreamReceiver.getOsContext().getContextId());
+
+    // only state cache flush is dispatched in dynamic preamble
+    auto immediateBufferStartOffset = commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, immediateBufferStartOffset, immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedAfterFirstFlush);
+
+    auto cmdPtrIt = hwParserCsr.cmdList.begin();
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdPtrIt);
+
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdPtrIt);
+    ASSERT_NE(nullptr, pipeControl);
+
+    EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
+    EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+    EXPECT_TRUE(pipeControl->getRenderTargetCacheFlushEnable());
+
+    EXPECT_FALSE(bindlessHeapsHelperPtr->getStateDirtyForContext(commandStreamReceiver.getOsContext().getContextId()));
+
+    cmdPtrIt++;
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdPtrIt);
+
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmdPtrIt);
+    ASSERT_NE(nullptr, bbStart);
+
+    EXPECT_EQ(cmdBufferGpuAddress + immediateBufferStartOffset, bbStart->getBatchBufferStartAddress());
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, givenRequiresInstructionCacheFlushWhenFlushImmediateThenInstructionCacheInvalidateEnableIsSent) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -5136,8 +5179,6 @@ HWTEST_F(CommandStreamReceiverHwTest, givenRequiresInstructionCacheFlushWhenFlus
         GTEST_SKIP();
     }
     commandStreamReceiver.registerInstructionCacheFlush();
-
-    this->requiredStreamProperties.stateComputeMode.setPropertiesAll(false, GrfConfig::defaultGrfNumber, ThreadArbitrationPolicy::AgeBased, NEO::PreemptionMode::ThreadGroup);
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 
@@ -5148,6 +5189,46 @@ HWTEST_F(CommandStreamReceiverHwTest, givenRequiresInstructionCacheFlushWhenFlus
 
     EXPECT_TRUE(pcCmd->getInstructionCacheInvalidateEnable());
     EXPECT_FALSE(commandStreamReceiver.requiresInstructionCacheFlush);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenContextInitializedAndRequiresInstructionCacheFlushWhenFlushImmediateThenInstructionCacheInvalidateEnableIsSentBeforeBbStartJumpingToImmediateBuffer) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (commandStreamReceiver.heaplessStateInitialized) {
+        GTEST_SKIP();
+    }
+
+    // 1st flush, dispatch all required n-p state commands
+    commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
+    auto usedAfterFirstFlush = commandStreamReceiver.commandStream.getUsed();
+
+    commandStreamReceiver.registerInstructionCacheFlush();
+
+    // only instruction cache flush is dispatched in dynamic preamble
+    auto immediateBufferStartOffset = commandStream.getUsed();
+    commandStreamReceiver.flushImmediateTask(commandStream, immediateBufferStartOffset, immediateFlushTaskFlags, *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedAfterFirstFlush);
+
+    auto cmdPtrIt = hwParserCsr.cmdList.begin();
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdPtrIt);
+
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdPtrIt);
+    ASSERT_NE(nullptr, pipeControl);
+
+    EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
+    EXPECT_FALSE(commandStreamReceiver.requiresInstructionCacheFlush);
+
+    cmdPtrIt++;
+    ASSERT_NE(hwParserCsr.cmdList.end(), cmdPtrIt);
+
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*cmdPtrIt);
+    ASSERT_NE(nullptr, bbStart);
+
+    EXPECT_EQ(cmdBufferGpuAddress + immediateBufferStartOffset, bbStart->getBatchBufferStartAddress());
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, GivenFlushIsBlockingWhenFlushTaskCalledThenExpectMonitorFenceFlagTrue) {

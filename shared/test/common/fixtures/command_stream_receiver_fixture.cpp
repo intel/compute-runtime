@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ void CommandStreamReceiverFixture::setUp() {
     DeviceFixture::setUp();
 
     commandStream.replaceBuffer(cmdBuffer, bufferSize);
-    auto graphicsAllocation = new MockGraphicsAllocation(cmdBuffer, bufferSize);
+    auto graphicsAllocation = new MockGraphicsAllocation(cmdBuffer, cmdBufferGpuAddress, bufferSize);
     commandStream.replaceGraphicsAllocation(graphicsAllocation);
 
     dsh.replaceBuffer(dshBuffer, bufferSize);
