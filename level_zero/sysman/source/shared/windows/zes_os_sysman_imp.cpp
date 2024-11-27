@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
 #include "level_zero/sysman/source/shared/windows/pmt/sysman_pmt.h"
 #include "level_zero/sysman/source/shared/windows/product_helper/sysman_product_helper.h"
@@ -40,6 +41,16 @@ ze_result_t WddmSysmanImp::init() {
 
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
     DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
+    if (sysmanInitFromCore) {
+        if (pSysmanProductHelper->isZesInitSupported()) {
+            sysmanInitFromCore = false;
+        } else {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Sysman Initialization already happened via zeInit\n");
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
 
     pPmt = PlatformMonitoringTech::create(pSysmanProductHelper.get());
 

@@ -64,6 +64,9 @@ class SysmanProductHelper {
     // Pmt
     virtual std::map<unsigned long, std::map<std::string, uint32_t>> *getGuidToKeyOffsetMap() = 0;
 
+    // init
+    virtual bool isZesInitSupported() = 0;
+
   protected:
     SysmanProductHelper() = default;
 };

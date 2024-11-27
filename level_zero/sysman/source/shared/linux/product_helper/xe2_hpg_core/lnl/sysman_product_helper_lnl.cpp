@@ -24,6 +24,11 @@ RasInterfaceType SysmanProductHelperHw<gfxProduct>::getHbmRasUtilInterface() {
     return RasInterfaceType::netlink;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

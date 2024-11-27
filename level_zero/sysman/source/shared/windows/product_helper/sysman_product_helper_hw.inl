@@ -301,5 +301,10 @@ std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<
     return nullptr;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

@@ -315,5 +315,10 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getPciStats(zes_pci_stats_t *pSta
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 };
 
+template <PRODUCT_FAMILY gfxProduct>
+bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+    return false;
+}
+
 } // namespace Sysman
 } // namespace L0

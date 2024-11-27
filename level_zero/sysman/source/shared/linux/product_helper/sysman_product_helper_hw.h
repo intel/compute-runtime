@@ -70,6 +70,7 @@ class SysmanProductHelperHw : public SysmanProductHelper {
 
     // Device
     bool isUpstreamPortConnected() override;
+    bool isZesInitSupported() override;
 
     // Pci
     ze_result_t getPciProperties(zes_pci_properties_t *pProperties) override;

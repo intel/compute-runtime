@@ -655,6 +655,11 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
     return ZE_RESULT_SUCCESS;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

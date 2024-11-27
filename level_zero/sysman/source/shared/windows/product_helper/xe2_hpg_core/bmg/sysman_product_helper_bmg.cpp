@@ -1089,6 +1089,11 @@ std::map<unsigned long, std::map<std::string, uint32_t>> *SysmanProductHelperHw<
     return &guidToKeyOffsetMap;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/linux/system_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/api/pci/linux/sysman_os_pci_imp.h"
 #include "level_zero/sysman/source/api/pci/sysman_pci_utils.h"
 #include "level_zero/sysman/source/shared/firmware_util/sysman_firmware_util.h"
@@ -44,6 +45,16 @@ ze_result_t LinuxSysmanImp::init() {
 
     pSysmanProductHelper = SysmanProductHelper::create(getProductFamily());
     DEBUG_BREAK_IF(nullptr == pSysmanProductHelper);
+
+    if (sysmanInitFromCore) {
+        if (pSysmanProductHelper->isZesInitSupported()) {
+            sysmanInitFromCore = false;
+        } else {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Sysman Initialization already happened via zeInit\n");
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
 
     pSysmanKmdInterface = SysmanKmdInterface::create(*getDrm(), pSysmanProductHelper.get());
     auto result = pSysmanKmdInterface->initFsAccessInterface(*getDrm());

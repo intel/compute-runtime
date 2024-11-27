@@ -12,6 +12,11 @@ namespace L0 {
 namespace Sysman {
 constexpr static auto gfxProduct = IGFX_LUNARLAKE;
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
+    return true;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

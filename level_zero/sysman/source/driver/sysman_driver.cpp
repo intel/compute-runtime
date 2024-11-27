@@ -28,12 +28,6 @@ bool sysmanOnlyInit = false;
 void SysmanDriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    if (sysmanInitFromCore) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "%s", "Sysman Initialization already happened via zeInit\n");
-        return;
-    }
-
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
     executionEnvironment->incRefInternal();

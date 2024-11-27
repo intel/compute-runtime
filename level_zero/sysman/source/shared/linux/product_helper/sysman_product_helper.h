@@ -95,6 +95,7 @@ class SysmanProductHelper {
 
     // Device
     virtual bool isUpstreamPortConnected() = 0;
+    virtual bool isZesInitSupported() = 0;
 
     // Pci
     virtual ze_result_t getPciProperties(zes_pci_properties_t *pProperties) = 0;
