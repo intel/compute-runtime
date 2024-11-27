@@ -42,12 +42,12 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
     LinearStream *commandStream,
     CommandQueue &commandQueue) {
 
+    if (hwPerfCounter != nullptr) {
+        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
+    }
     // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream, commandQueue.getDevice().getRootDeviceEnvironment());
-    }
-    if (hwPerfCounter != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
     }
 }
 
