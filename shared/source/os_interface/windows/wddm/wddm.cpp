@@ -505,6 +505,7 @@ bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_
     evict.Flags.EvictOnlyIfNecessary = adjustEvictNeededParameter(evictNeeded) ? 0 : 1;
 
     status = getGdi()->evict(&evict);
+    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
     sizeToTrim = evict.NumBytesToTrim;
 
