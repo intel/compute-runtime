@@ -51,7 +51,7 @@ WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(ImplicitScalingD
 
     args.workgroupSize = dispatchCommandArgs.workgroupSize;
     args.maxWgCountPerTile = dispatchCommandArgs.maxWgCountPerTile;
-    args.isRequiredWorkGroupOrder = dispatchCommandArgs.isRequiredWorkGroupOrder;
+    args.isRequiredDispatchWorkGroupOrder = dispatchCommandArgs.isRequiredDispatchWorkGroupOrder;
 
     return args;
 }

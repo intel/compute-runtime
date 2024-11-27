@@ -65,13 +65,13 @@ HWTEST2_F(MultiTileImmediateCommandListTest, givenMultipleTilesWhenAllocatingBar
 
     size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
 
-    size_t additionalSizeParam = 4;
+    size_t localRegionSize = 4;
 
-    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, additionalSizeParam);
+    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, localRegionSize);
 
     auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(1);
 
-    size_t expectedOffset = alignUp((requestedNumberOfWorkgroups / additionalSizeParam) * (additionalSizeParam + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
+    size_t expectedOffset = alignUp((requestedNumberOfWorkgroups / localRegionSize) * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(patchData.second, expectedOffset);
 }

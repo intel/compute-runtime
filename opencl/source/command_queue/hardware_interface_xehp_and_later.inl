@@ -146,12 +146,12 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads;
 
     EncodeWalkerArgs encodeWalkerArgs{
-        kernelInfo.kernelDescriptor,     // kernelDescriptor
-        kernel.getExecutionType(),       // kernelExecutionType
-        kernelAttributes.walkOrder,      // requiredDispatchWalkOrder
-        kernelAttributes.additionalSize, // additionalSizeParam
-        maxFrontEndThreads,              // maxFrontEndThreads
-        requiredSystemFence};            // requiredSystemFence
+        kernelInfo.kernelDescriptor,        // kernelDescriptor
+        kernel.getExecutionType(),          // kernelExecutionType
+        kernelAttributes.dispatchWalkOrder, // requiredDispatchWalkOrder
+        kernelAttributes.localRegionSize,   // localRegionSize
+        maxFrontEndThreads,                 // maxFrontEndThreads
+        requiredSystemFence};               // requiredSystemFence
 
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, encodeWalkerArgs);
@@ -192,7 +192,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             queueCsr.getDcFlushSupport(),        // dcFlush
             kernel.isSingleSubdevicePreferred(), // forceExecutionOnSingleTile
             false,                               // blockDispatchToCommandBuffer
-            requiredWalkOrder != 0};             // isRequiredWorkGroupOrder
+            requiredWalkOrder != 0};             // isRequiredDispatchWorkGroupOrder
 
         ImplicitScalingDispatch<GfxFamily>::template dispatchCommands<WalkerType>(commandStream,
                                                                                   walkerCmd,

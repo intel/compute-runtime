@@ -35,7 +35,7 @@ struct WalkerPartitionArgs {
     bool dcFlushEnable = false;
     bool forceExecutionOnSingleTile = false;
     bool blockDispatchToCommandBuffer = false;
-    bool isRequiredWorkGroupOrder = false;
+    bool isRequiredDispatchWorkGroupOrder = false;
 };
 
 inline constexpr uint32_t wparidCCSOffset = 0x221C;

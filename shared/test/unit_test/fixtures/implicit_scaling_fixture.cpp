@@ -54,7 +54,7 @@ ImplicitScalingDispatchCommandArgs ImplicitScalingFixture::createDispatchCommand
         dcFlushFlag,                     // dcFlush
         forceExecutionOnSingleTileFlag,  // forceExecutionOnSingleTile
         false,                           // blockDispatchToCommandBuffer
-        false};                          // isRequiredWorkGroupOrder
+        false};                          // isRequiredDispatchWorkGroupOrder
 
     return args;
 }

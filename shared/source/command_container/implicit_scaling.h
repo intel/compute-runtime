@@ -53,7 +53,7 @@ struct ImplicitScalingDispatchCommandArgs {
     bool dcFlush = false;
     bool forceExecutionOnSingleTile = false;
     bool blockDispatchToCommandBuffer = false;
-    bool isRequiredWorkGroupOrder = false;
+    bool isRequiredDispatchWorkGroupOrder = false;
 };
 
 template <typename GfxFamily>

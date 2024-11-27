@@ -402,7 +402,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         kernelDescriptor,                                // kernelDescriptor
         kernelExecutionType,                             // kernelExecutionType
         args.requiredDispatchWalkOrder,                  // requiredDispatchWalkOrder
-        args.additionalSizeParam,                        // additionalSizeParam
+        args.localRegionSize,                            // localRegionSize
         args.device->getDeviceInfo().maxFrontEndThreads, // maxFrontEndThreads
         args.requiresSystemMemoryFence()};               // requiresMemoryFence
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
@@ -412,7 +412,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::overrideDefaultValues(walkerCmd, idd);
 
     uint32_t workgroupSize = args.dispatchInterface->getGroupSize()[0] * args.dispatchInterface->getGroupSize()[1] * args.dispatchInterface->getGroupSize()[2];
-    bool isRequiredWorkGroupOrder = args.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none;
+    bool isRequiredDispatchWorkGroupOrder = args.requiredDispatchWalkOrder != NEO::RequiredDispatchWalkOrder::none;
     if (args.partitionCount > 1 && !args.isInternal) {
         const uint64_t workPartitionAllocationGpuVa = args.device->getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
 
@@ -429,7 +429,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.dcFlushEnable,                                                                      // dcFlush
             EncodeDispatchKernel<Family>::singleTileExecImplicitScalingRequired(args.isCooperative), // forceExecutionOnSingleTile
             args.makeCommandView,                                                                    // blockDispatchToCommandBuffer
-            isRequiredWorkGroupOrder};                                                               // isRequiredWorkGroupOrder
+            isRequiredDispatchWorkGroupOrder};                                                       // isRequiredDispatchWorkGroupOrder
 
         ImplicitScalingDispatch<Family>::dispatchCommands(*listCmdBufferStream,
                                                           walkerCmd,
@@ -438,7 +438,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.partitionCount = implicitScalingArgs.partitionCount;
     } else {
         args.partitionCount = 1;
-        EncodeDispatchKernel<Family>::setWalkerRegionSettings(walkerCmd, *args.device, args.partitionCount, workgroupSize, args.maxWgCountPerTile, isRequiredWorkGroupOrder);
+        EncodeDispatchKernel<Family>::setWalkerRegionSettings(walkerCmd, *args.device, args.partitionCount, workgroupSize, args.maxWgCountPerTile, isRequiredDispatchWorkGroupOrder);
 
         if (!args.makeCommandView) {
             auto buffer = listCmdBufferStream->getSpaceForCmd<WalkerType>();

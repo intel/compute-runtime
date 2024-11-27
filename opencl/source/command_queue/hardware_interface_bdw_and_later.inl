@@ -87,7 +87,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         kernel.getKernelInfo().kernelDescriptor, // kernelDescriptor
         kernel.getExecutionType(),               // kernelExecutionType
         RequiredDispatchWalkOrder::none,         // requiredDispatchWalkOrder
-        0,                                       // additionalSizeParam
+        0,                                       // localRegionSize
         0,                                       // maxFrontEndThreads
         false};                                  // requiredSystemFence
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);

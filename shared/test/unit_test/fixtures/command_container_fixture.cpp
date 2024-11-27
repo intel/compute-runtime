@@ -39,44 +39,44 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
                                                                                      bool requiresUncachedMocs) {
 
     EncodeDispatchKernelArgs args{
-        0,                                          // eventAddress
-        0,                                          // postSyncImmValue
-        0,                                          // inOrderCounterValue
-        device,                                     // device
-        nullptr,                                    // inOrderExecInfo
-        dispatchInterface,                          // dispatchInterface
-        nullptr,                                    // surfaceStateHeap
-        nullptr,                                    // dynamicStateHeap
-        threadGroupDimensions,                      // threadGroupDimensions
-        nullptr,                                    // outWalkerPtr
-        nullptr,                                    // cpuWalkerBuffer
-        nullptr,                                    // cpuPayloadBuffer
-        nullptr,                                    // outImplicitArgsPtr
-        nullptr,                                    // additionalCommands
-        PreemptionMode::Disabled,                   // preemptionMode
-        NEO::RequiredPartitionDim::none,            // requiredPartitionDim
-        NEO::RequiredDispatchWalkOrder::none,       // requiredDispatchWalkOrder
-        NEO::additionalKernelLaunchSizeParamNotSet, // additionalSizeParam
-        1,                                          // partitionCount
-        0,                                          // reserveExtraPayloadSpace
-        1,                                          // maxWgCountPerTile
-        NEO::ThreadArbitrationPolicy::NotPresent,   // defaultPipelinedThreadArbitrationPolicy
-        false,                                      // isIndirect
-        false,                                      // isPredicate
-        false,                                      // isTimestampEvent
-        requiresUncachedMocs,                       // requiresUncachedMocs
-        false,                                      // isInternal
-        false,                                      // isCooperative
-        false,                                      // isHostScopeSignalEvent
-        false,                                      // isKernelUsingSystemAllocation
-        false,                                      // isKernelDispatchedFromImmediateCmdList
-        false,                                      // isRcs
-        false,                                      // dcFlushEnable
-        false,                                      // isHeaplessModeEnabled
-        false,                                      // isHeaplessStateInitEnabled
-        false,                                      // interruptEvent
-        false,                                      // immediateScratchAddressPatching
-        false,                                      // makeCommandView
+        0,                                        // eventAddress
+        0,                                        // postSyncImmValue
+        0,                                        // inOrderCounterValue
+        device,                                   // device
+        nullptr,                                  // inOrderExecInfo
+        dispatchInterface,                        // dispatchInterface
+        nullptr,                                  // surfaceStateHeap
+        nullptr,                                  // dynamicStateHeap
+        threadGroupDimensions,                    // threadGroupDimensions
+        nullptr,                                  // outWalkerPtr
+        nullptr,                                  // cpuWalkerBuffer
+        nullptr,                                  // cpuPayloadBuffer
+        nullptr,                                  // outImplicitArgsPtr
+        nullptr,                                  // additionalCommands
+        PreemptionMode::Disabled,                 // preemptionMode
+        NEO::RequiredPartitionDim::none,          // requiredPartitionDim
+        NEO::RequiredDispatchWalkOrder::none,     // requiredDispatchWalkOrder
+        NEO::localRegionSizeParamNotSet,          // localRegionSize
+        1,                                        // partitionCount
+        0,                                        // reserveExtraPayloadSpace
+        1,                                        // maxWgCountPerTile
+        NEO::ThreadArbitrationPolicy::NotPresent, // defaultPipelinedThreadArbitrationPolicy
+        false,                                    // isIndirect
+        false,                                    // isPredicate
+        false,                                    // isTimestampEvent
+        requiresUncachedMocs,                     // requiresUncachedMocs
+        false,                                    // isInternal
+        false,                                    // isCooperative
+        false,                                    // isHostScopeSignalEvent
+        false,                                    // isKernelUsingSystemAllocation
+        false,                                    // isKernelDispatchedFromImmediateCmdList
+        false,                                    // isRcs
+        false,                                    // dcFlushEnable
+        false,                                    // isHeaplessModeEnabled
+        false,                                    // isHeaplessStateInitEnabled
+        false,                                    // interruptEvent
+        false,                                    // immediateScratchAddressPatching
+        false,                                    // makeCommandView
     };
 
     return args;
@@ -87,7 +87,7 @@ EncodeWalkerArgs CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(const
         kernelDescriptor,                      // kernelDescriptor
         NEO::KernelExecutionType::defaultType, // kernelExecutionType
         NEO::RequiredDispatchWalkOrder::none,  // requiredDispatchWalkOrder
-        0,                                     // additionalSizeParam
+        0,                                     // localRegionSize
         0,                                     // maxFrontEndThreads
         false};                                // requiredSystemFence
 

@@ -256,7 +256,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (kernel->usesRegionGroupBarrier()) {
-        programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.additionalSizeParam);
+        programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize);
     }
 
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
@@ -331,7 +331,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         kernelPreemptionMode,                                   // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim
         launchParams.requiredDispatchWalkOrder,                 // requiredDispatchWalkOrder
-        launchParams.additionalSizeParam,                       // additionalSizeParam
+        launchParams.localRegionSize,                           // localRegionSize
         this->partitionCount,                                   // partitionCount
         launchParams.reserveExtraPayloadSpace,                  // reserveExtraPayloadSpace
         maxWgCountPerTile,                                      // maxWgCountPerTile

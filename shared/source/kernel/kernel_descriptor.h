@@ -57,8 +57,8 @@ struct KernelDescriptor {
         uint32_t numThreadsRequired = 0u;
         uint32_t spillFillScratchMemorySize = 0u;
         uint32_t privateScratchMemorySize = 0u;
-        uint32_t additionalSize = NEO::additionalKernelLaunchSizeParamNotSet;
-        NEO::RequiredDispatchWalkOrder walkOrder = NEO::RequiredDispatchWalkOrder::none;
+        uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
+        NEO::RequiredDispatchWalkOrder dispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
         NEO::RequiredPartitionDim partitionDim = NEO::RequiredPartitionDim::none;
         ThreadArbitrationPolicy threadArbitrationPolicy = NotPresent;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};

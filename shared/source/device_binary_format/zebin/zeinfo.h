@@ -350,7 +350,7 @@ using IndirectStatelessCountT = int32_t;
 using HasSampleT = bool;
 using PrivateSizeT = int32_t;
 using SpillSizeT = int32_t;
-using AdditionalSizeT = int32_t;
+using LocalRegionSizeT = int32_t;
 using WalkOrderT = int32_t;
 using PartitionDimT = int32_t;
 
@@ -384,8 +384,8 @@ inline constexpr IndirectStatelessCountT indirectStatelessCount = 0;
 inline constexpr HasSampleT hasSample = false;
 inline constexpr PrivateSizeT privateSize = 0;
 inline constexpr SpillSizeT spillSize = 0;
-inline constexpr AdditionalSizeT additionalSize = -1;
-inline constexpr WalkOrderT walkOrder = -1;
+inline constexpr LocalRegionSizeT localRegionSize = -1;
+inline constexpr WalkOrderT dispatchWalkOrder = -1;
 inline constexpr PartitionDimT partitionDim = -1;
 } // namespace Defaults
 
@@ -422,8 +422,8 @@ struct ExecutionEnvBaseT {
     HasSampleT hasSample = Defaults::hasSample;
     PrivateSizeT privateSize = Defaults::privateSize;
     SpillSizeT spillSize = Defaults::spillSize;
-    AdditionalSizeT additionalSize = Defaults::additionalSize;
-    WalkOrderT walkOrder = Defaults::walkOrder;
+    LocalRegionSizeT localRegionSize = Defaults::localRegionSize;
+    WalkOrderT dispatchWalkOrder = Defaults::dispatchWalkOrder;
     PartitionDimT partitionDim = Defaults::partitionDim;
 };
 

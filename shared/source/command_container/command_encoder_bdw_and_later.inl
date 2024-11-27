@@ -283,7 +283,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         kernelDescriptor,                                // kernelDescriptor
         KernelExecutionType::defaultType,                // kernelExecutionType
         args.requiredDispatchWalkOrder,                  // requiredDispatchWalkOrder
-        args.additionalSizeParam,                        // additionalSizeParam
+        args.localRegionSize,                            // localRegionSize
         args.device->getDeviceInfo().maxFrontEndThreads, // maxFrontEndThreads
         args.requiresSystemMemoryFence()};               // requiredSystemFence
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, cmd, walkerArgs);
@@ -684,7 +684,7 @@ void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorT
 
 template <typename Family>
 template <typename WalkerType>
-void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredWalkOrder) {}
+void EncodeDispatchKernel<Family>::setWalkerRegionSettings(WalkerType &walkerCmd, const NEO::Device &device, uint32_t partitionCount, uint32_t workgroupSize, uint32_t maxWgCountPerTile, bool requiredDispatchWalkOrder) {}
 
 template <typename Family>
 template <typename WalkerType>

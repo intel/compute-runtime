@@ -531,7 +531,7 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
                                                                       args.partitionCount,
                                                                       args.workgroupSize,
                                                                       args.maxWgCountPerTile,
-                                                                      args.isRequiredWorkGroupOrder);
+                                                                      args.isRequiredDispatchWorkGroupOrder);
 
         appendWalkerFields<GfxFamily, WalkerType>(*inputWalker, args.tileCount, workgroupCount);
     }

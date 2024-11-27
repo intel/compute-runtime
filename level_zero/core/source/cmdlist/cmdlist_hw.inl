@@ -2821,14 +2821,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t additionalSizeParam) {
+void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize) {
     auto neoDevice = device->getNEODevice();
 
     neoDevice->allocateSyncBufferHandler();
 
     const size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
 
-    size_t size = alignUp((requestedNumberOfWorkgroups / additionalSizeParam) * (additionalSizeParam + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
+    size_t size = alignUp((requestedNumberOfWorkgroups / localRegionSize) * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(size);
 
@@ -4279,11 +4279,11 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const {
     auto &kernelDescriptor = kernel.getImmutableData()->getDescriptor();
 
-    if (launchParams.additionalSizeParam == NEO::additionalKernelLaunchSizeParamNotSet) {
-        launchParams.additionalSizeParam = kernelDescriptor.kernelAttributes.additionalSize;
+    if (launchParams.localRegionSize == NEO::localRegionSizeParamNotSet) {
+        launchParams.localRegionSize = kernelDescriptor.kernelAttributes.localRegionSize;
     }
     if (launchParams.requiredDispatchWalkOrder == NEO::RequiredDispatchWalkOrder::none) {
-        launchParams.requiredDispatchWalkOrder = kernelDescriptor.kernelAttributes.walkOrder;
+        launchParams.requiredDispatchWalkOrder = kernelDescriptor.kernelAttributes.dispatchWalkOrder;
     }
     if (launchParams.requiredPartitionDim == NEO::RequiredPartitionDim::none) {
         launchParams.requiredPartitionDim = kernelDescriptor.kernelAttributes.partitionDim;
