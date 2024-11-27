@@ -90,10 +90,6 @@ ze_result_t LinuxVfImp::vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_m
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
     std::string pathForLmemUsed = "/telemetry/lmem_alloc_size";
     std::string pathForDeviceMemUsed = pathForVfTelemetryPrefix + std::to_string(vfId) + pathForLmemUsed;
@@ -126,11 +122,33 @@ bool LinuxVfImp::vfOsGetLocalMemoryQuota(uint64_t &lMemQuota) {
     return true;
 }
 
+ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
+
+    if (pLinuxSysmanImp->isUsingPrelimEnabledKmd == false) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return getEngineUtilization(pCount, pEngineUtil);
+}
+
 LinuxVfImp::LinuxVfImp(
     OsSysman *pOsSysman, uint32_t vfId) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     this->vfId = vfId;
+}
+
+void LinuxVfImp::cleanup() {
+    for (auto pEngineUtilsData : pEngineUtils) {
+        DEBUG_BREAK_IF(pEngineUtilsData.busyTicksFd < 0);
+        close(static_cast<int>(pEngineUtilsData.busyTicksFd));
+        DEBUG_BREAK_IF(pEngineUtilsData.totalTicksFd < 0);
+        close(static_cast<int>(pEngineUtilsData.totalTicksFd));
+    }
+    pEngineUtils.clear();
+}
+
+LinuxVfImp::~LinuxVfImp() {
+    cleanup();
 }
 
 std::unique_ptr<OsVf> OsVf::create(

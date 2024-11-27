@@ -1614,7 +1614,8 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
         zes_vf_exp_capabilities_t props = {};
         VALIDATECALL(zesVFManagementGetVFCapabilitiesExp(handle, &props));
         if (verbose) {
-            std::cout << "----- PCI BDF ------ " << std::endl;
+            std::cout << std::endl
+                      << "----- PCI BDF ------ " << std::endl;
             std::cout << "Domain: Bus: Device: Function = " << props.address.domain << " : " << props.address.bus << " : " << props.address.device << " : " << props.address.function << std::endl;
             std::cout << "Memory Size in KiloBytes = " << props.vfDeviceMemSize << std::endl;
             std::cout << "VF Id = " << props.vfID << std::endl;
@@ -1625,10 +1626,26 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
         VALIDATECALL(zesVFManagementGetVFMemoryUtilizationExp2(handle, &count, nullptr));
         std::vector<zes_vf_util_mem_exp2_t> memUtils(count);
         VALIDATECALL(zesVFManagementGetVFMemoryUtilizationExp2(handle, &count, memUtils.data()));
+        std::cout << std::endl
+                  << "----- Memory Activity Stats ----- " << std::endl;
         for (uint32_t it = 0; it < count; it++) {
             if (verbose) {
                 std::cout << "Location of the Memory = " << getMemoryModuleLocation(memUtils[it].vfMemLocation) << std::endl;
                 std::cout << "Memory Utilized in KiloBytes = " << memUtils[it].vfMemUtilized << std::endl;
+            }
+        }
+
+        count = 0;
+        VALIDATECALL(zesVFManagementGetVFEngineUtilizationExp2(handle, &count, nullptr));
+        std::vector<zes_vf_util_engine_exp2_t> engineUtils(count);
+        VALIDATECALL(zesVFManagementGetVFEngineUtilizationExp2(handle, &count, engineUtils.data()));
+        std::cout << std::endl
+                  << "----- Engine Activity Stats ----- " << std::endl;
+        for (uint32_t it = 0; it < count; it++) {
+            if (verbose) {
+                std::cout << "Engine Type = " << getEngineType(engineUtils[it].vfEngineType) << std::endl;
+                std::cout << "Active Counter Value = " << engineUtils[it].activeCounterValue << std::endl;
+                std::cout << "Sampling Counter Value = " << engineUtils[it].samplingCounterValue << std::endl;
             }
         }
     }

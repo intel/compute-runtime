@@ -12,7 +12,6 @@ namespace L0 {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 1u;
-bool mockUuidForVfTest = true;
 
 class ZesVfFixture : public SysmanDeviceFixture {
   protected:

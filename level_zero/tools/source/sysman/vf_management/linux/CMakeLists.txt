@@ -10,5 +10,6 @@ if(UNIX)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_vf_imp.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_vf_imp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/os_vf_imp_prelim.cpp
   )
 endif()
