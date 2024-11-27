@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 namespace NEO {
-bool DeviceTimeWddm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
-    bool retVal = false;
+TimeQueryStatus DeviceTimeWddm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+    TimeQueryStatus retVal = TimeQueryStatus::deviceLost;
 
     pGpuCpuTime->cpuTimeinNS = 0;
     pGpuCpuTime->gpuTimeStamp = 0;
@@ -26,7 +26,7 @@ bool DeviceTimeWddm::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTim
 
         osTime->getCpuTime(&pGpuCpuTime->cpuTimeinNS);
         pGpuCpuTime->gpuTimeStamp = (unsigned long long)escapeInfo.data.out.gpuPerfTicks;
-        retVal = true;
+        retVal = TimeQueryStatus::success;
     }
 
     return retVal;

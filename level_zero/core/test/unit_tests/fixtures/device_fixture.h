@@ -211,8 +211,8 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public SingleRootMul
 
 class FalseGpuCpuDeviceTime : public NEO::DeviceTime {
   public:
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        return false;
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        return TimeQueryStatus::deviceLost;
     }
     double getDynamicDeviceTimerResolution() const override {
         return NEO::OSTime::getDeviceTimerResolution();
@@ -226,6 +226,39 @@ class FalseGpuCpuTime : public NEO::OSTime {
   public:
     FalseGpuCpuTime() {
         this->deviceTime = std::make_unique<FalseGpuCpuDeviceTime>();
+    }
+
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return true;
+    };
+    double getHostTimerResolution() const override {
+        return 0;
+    }
+    uint64_t getCpuRawTimestamp() override {
+        return 0;
+    }
+    static std::unique_ptr<OSTime> create() {
+        return std::unique_ptr<OSTime>(new FalseGpuCpuTime());
+    }
+};
+
+class FalseUnSupportedFeatureGpuCpuDeviceTime : public NEO::DeviceTime {
+  public:
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        return TimeQueryStatus::unsupportedFeature;
+    }
+    double getDynamicDeviceTimerResolution() const override {
+        return NEO::OSTime::getDeviceTimerResolution();
+    }
+    uint64_t getDynamicDeviceTimerClock() const override {
+        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution());
+    }
+};
+
+class FalseUnSupportedFeatureGpuCpuTime : public NEO::OSTime {
+  public:
+    FalseUnSupportedFeatureGpuCpuTime() {
+        this->deviceTime = std::make_unique<FalseUnSupportedFeatureGpuCpuDeviceTime>();
     }
 
     bool getCpuTime(uint64_t *timeStamp) override {

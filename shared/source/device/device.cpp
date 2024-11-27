@@ -704,15 +704,17 @@ EngineControl &Device::getEngine(uint32_t index) {
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
     TimeStampData timeStamp;
     auto retVal = getOSTime()->getGpuCpuTime(&timeStamp, true);
-    if (retVal) {
+    if (retVal == TimeQueryStatus::success) {
         *hostTimestamp = timeStamp.cpuTimeinNS;
         if (debugManager.flags.EnableDeviceBasedTimestamps.get()) {
             auto resolution = getOSTime()->getDynamicDeviceTimerResolution();
             *deviceTimestamp = getGfxCoreHelper().getGpuTimeStampInNS(timeStamp.gpuTimeStamp, resolution);
-        } else
+        } else {
             *deviceTimestamp = *hostTimestamp;
+        }
+        return true;
     }
-    return retVal;
+    return false;
 }
 
 bool Device::getHostTimer(uint64_t *hostTimestamp) const {

@@ -1097,10 +1097,90 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 }
 
 ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
-    NEO::TimeStampData queueTimeStamp;
-    bool retVal = this->neoDevice->getOSTime()->getGpuCpuTime(&queueTimeStamp, true);
-    if (!retVal)
+    if (NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get()) {
+        return getGlobalTimestampsUsingSubmission(hostTimestamp, deviceTimestamp);
+    }
+
+    auto ret = getGlobalTimestampsUsingOsInterface(hostTimestamp, deviceTimestamp);
+    if (ret == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+        return getGlobalTimestampsUsingSubmission(hostTimestamp, deviceTimestamp);
+    }
+
+    return ret;
+}
+
+ze_result_t DeviceImp::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
+
+    if (this->globalTimestampAllocation == nullptr) {
+
+        ze_command_queue_desc_t queueDescriptor = {};
+        queueDescriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+        queueDescriptor.pNext = nullptr;
+        queueDescriptor.flags = 0;
+        queueDescriptor.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        queueDescriptor.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
+        queueDescriptor.ordinal = 0;
+        queueDescriptor.index = 0;
+
+        this->createCommandListImmediate(&queueDescriptor, &this->globalTimestampCommandList);
+
+        if (globalTimestampContext == nullptr) {
+            auto driverHandle = this->getDriverHandle();
+            DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+
+            ze_context_handle_t context;
+            ze_context_desc_t contextDesc = {};
+            contextDesc.stype = ZE_STRUCTURE_TYPE_CONTEXT_DESC;
+            auto ret = driverHandleImp->createContext(&contextDesc, 0u, nullptr, &context);
+            if (ret != ZE_RESULT_SUCCESS) {
+                return ZE_RESULT_ERROR_DEVICE_LOST;
+            }
+
+            this->globalTimestampContext = context;
+        }
+
+        ze_device_mem_alloc_desc_t deviceDesc = {};
+        deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+        deviceDesc.ordinal = 0;
+        deviceDesc.flags = 0;
+        deviceDesc.pNext = nullptr;
+
+        auto ret = L0::Context::fromHandle(this->globalTimestampContext)->allocDeviceMem(this->toHandle(), &deviceDesc, sizeof(uint64_t), sizeof(uint64_t), &this->globalTimestampAllocation);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+    }
+
+    auto ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendWriteGlobalTimestamp((uint64_t *)this->globalTimestampAllocation, nullptr, 0, nullptr);
+    if (ret != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    // Copy back timestamp data
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendMemoryCopy(deviceTimestamp, this->globalTimestampAllocation, sizeof(uint64_t), nullptr, 0, nullptr, memoryCopyParams);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    // get CPU time
+    bool retVal = this->neoDevice->getOSTime()->getCpuTimeHost(hostTimestamp);
+    if (retVal) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DeviceImp::getGlobalTimestampsUsingOsInterface(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
+
+    NEO::TimeStampData queueTimeStamp;
+    NEO::TimeQueryStatus retVal = this->neoDevice->getOSTime()->getGpuCpuTime(&queueTimeStamp, true);
+    if (retVal == NEO::TimeQueryStatus::deviceLost) {
+        return ZE_RESULT_ERROR_DEVICE_LOST;
+    } else if (retVal == NEO::TimeQueryStatus::unsupportedFeature) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
     *deviceTimestamp = queueTimeStamp.gpuTimeStamp;
     *hostTimestamp = queueTimeStamp.cpuTimeinNS;
@@ -1116,6 +1196,7 @@ ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *de
         NEO::printDebugString(true, stdout,
                               "Host timestamp in ns : %llu | Device timestamp in ns : %llu\n", *hostTimestamp, deviceTsinNs);
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1506,6 +1587,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->populateSubDeviceCopyEngineGroups();
     auto &productHelper = device->getProductHelper();
     device->calculationForDisablingEuFusionWithDpasNeeded = productHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo);
+
     return device;
 }
 
@@ -1515,6 +1597,16 @@ void DeviceImp::releaseResources() {
     }
 
     UNRECOVERABLE_IF(neoDevice == nullptr);
+
+    if (this->globalTimestampAllocation) {
+        L0::Context::fromHandle(this->globalTimestampContext)->freeMem(this->globalTimestampAllocation);
+    }
+    if (this->globalTimestampContext) {
+        L0::Context::fromHandle(this->globalTimestampContext)->destroy();
+    }
+    if (this->globalTimestampCommandList) {
+        L0::CommandList::fromHandle(this->globalTimestampCommandList)->destroy();
+    }
 
     getNEODevice()->getMemoryManager()->freeGraphicsMemory(syncDispatchTokenAllocation);
 

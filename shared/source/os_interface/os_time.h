@@ -21,17 +21,23 @@ struct TimeStampData {
     uint64_t cpuTimeinNS;  // CPU time in ns
 };
 
+enum class TimeQueryStatus : uint32_t {
+    success,
+    unsupportedFeature,
+    deviceLost
+};
+
 class OSTime;
 
 class DeviceTime {
   public:
     virtual ~DeviceTime() = default;
-    bool getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall);
-    virtual bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime);
+    TimeQueryStatus getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall);
+    virtual TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime);
     virtual double getDynamicDeviceTimerResolution() const;
     virtual uint64_t getDynamicDeviceTimerClock() const;
     virtual bool isTimestampsRefreshEnabled() const;
-    bool getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
+    TimeQueryStatus getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall);
     void setDeviceTimerResolution();
     void setRefreshTimestampsFlag() {
         refreshTimestamps = true;
@@ -59,16 +65,17 @@ class OSTime {
 
     virtual ~OSTime() = default;
     virtual bool getCpuTime(uint64_t *timeStamp);
+    virtual bool getCpuTimeHost(uint64_t *timeStamp);
     virtual double getHostTimerResolution() const;
     virtual uint64_t getCpuRawTimestamp();
 
     static double getDeviceTimerResolution();
 
-    bool getGpuCpuTime(TimeStampData *gpuCpuTime, bool forceKmdCall) {
+    TimeQueryStatus getGpuCpuTime(TimeStampData *gpuCpuTime, bool forceKmdCall) {
         return deviceTime->getGpuCpuTime(gpuCpuTime, this, forceKmdCall);
     }
 
-    bool getGpuCpuTime(TimeStampData *gpuCpuTime) {
+    TimeQueryStatus getGpuCpuTime(TimeStampData *gpuCpuTime) {
         return deviceTime->getGpuCpuTime(gpuCpuTime, this, false);
     }
 

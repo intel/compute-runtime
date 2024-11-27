@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,16 @@ bool OSTimeLinux::getCpuTime(uint64_t *timestamp) {
     *timestamp = (uint64_t)ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 
     return true;
+}
+
+bool OSTime::getCpuTimeHost(uint64_t *timestamp) {
+    struct timespec ts;
+
+    auto ret = clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+
+    *timestamp = (uint64_t)ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+
+    return ret;
 }
 
 double OSTimeLinux::getHostTimerResolution() const {

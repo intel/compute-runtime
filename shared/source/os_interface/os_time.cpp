@@ -20,11 +20,11 @@ double OSTime::getDeviceTimerResolution() {
     return CommonConstants::defaultProfilingTimerResolution;
 };
 
-bool DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
+TimeQueryStatus DeviceTime::getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) {
     pGpuCpuTime->cpuTimeinNS = 0;
     pGpuCpuTime->gpuTimeStamp = 0;
 
-    return true;
+    return TimeQueryStatus::success;
 }
 double DeviceTime::getDynamicDeviceTimerResolution() const {
     return OSTime::getDeviceTimerResolution();
@@ -55,9 +55,9 @@ bool DeviceTime::isTimestampsRefreshEnabled() const {
  * to reduce amount of internal KMD calls. Interval is selected
  * adaptively, based on misalignment between calculated ticks and actual ticks.
  *
- * @return returns false if internal call to KMD failed. True otherwise.
+ * @return returns appropriate error if internal call to KMD failed. SUCCESS otherwise.
  */
-bool DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall) {
+TimeQueryStatus DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, bool forceKmdCall) {
     uint64_t cpuTimeinNS;
     osTime->getCpuTime(&cpuTimeinNS);
 
@@ -67,11 +67,12 @@ bool DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, b
     }
     bool reusingTimestampsEnabled = isTimestampsRefreshEnabled();
     if (!reusingTimestampsEnabled || refreshTimestamps) {
-        if (!getGpuCpuTimeImpl(timeStamp, osTime)) {
-            return false;
+        TimeQueryStatus retVal = getGpuCpuTimeImpl(timeStamp, osTime);
+        if (retVal != TimeQueryStatus::success) {
+            return retVal;
         }
         if (!reusingTimestampsEnabled) {
-            return true;
+            return TimeQueryStatus::success;
         }
         if (initialGpuTimeStamp) {
             UNRECOVERABLE_IF(deviceTimerResolution == 0);
@@ -94,12 +95,13 @@ bool DeviceTime::getGpuCpuTimestamps(TimeStampData *timeStamp, OSTime *osTime, b
         timeStamp->gpuTimeStamp = fetchedTimestamps.gpuTimeStamp + static_cast<uint64_t>(cpuTimeDiffInNS / deviceTimerResolution);
     }
 
-    return true;
+    return TimeQueryStatus::success;
 }
 
-bool DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall) {
-    if (!getGpuCpuTimestamps(pGpuCpuTime, osTime, forceKmdCall)) {
-        return false;
+TimeQueryStatus DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool forceKmdCall) {
+    TimeQueryStatus retVal = getGpuCpuTimestamps(pGpuCpuTime, osTime, forceKmdCall);
+    if (retVal != TimeQueryStatus::success) {
+        return retVal;
     }
 
     auto maxGpuTimeStampValue = osTime->getMaxGpuTimeStamp();
@@ -121,7 +123,7 @@ bool DeviceTime::getGpuCpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime, bool 
 
         pGpuCpuTime->gpuTimeStamp += gpuTimeStampOverflowCounter * maxGpuTimeStampValue;
     }
-    return true;
+    return retVal;
 }
 
 bool OSTime::getCpuTime(uint64_t *timeStamp) {

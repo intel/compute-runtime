@@ -105,8 +105,8 @@ TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosti
     EXPECT_EQ(0u, rootDeviceEnvironment->osTime->getCpuRawTimestamp());
 
     TimeStampData tsData{1, 2};
-    EXPECT_TRUE(rootDeviceEnvironment->osTime->getGpuCpuTime(&tsData));
-    EXPECT_EQ(0u, tsData.cpuTimeinNS);
+    TimeQueryStatus error = rootDeviceEnvironment->osTime->getGpuCpuTime(&tsData);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(0u, tsData.gpuTimeStamp);
 
     EXPECT_EQ(profilingTimerResolution, rootDeviceEnvironment->osTime->getDynamicDeviceTimerResolution());

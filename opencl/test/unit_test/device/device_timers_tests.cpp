@@ -162,8 +162,8 @@ class FailingMockOSTime : public OSTime {
 
 class FailingMockDeviceTime : public DeviceTime {
   public:
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        return false;
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        return TimeQueryStatus::deviceLost;
     }
 
     double getDynamicDeviceTimerResolution() const override {

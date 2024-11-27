@@ -29,7 +29,7 @@ BOOL WINAPI queryPerformanceCounterMock(
 
 class MockDeviceTimeWin : public MockDeviceTime {
   public:
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         getGpuCpuTimeImplCalled++;
         *pGpuCpuTime = gpuCpuTimeValue;
         return getGpuCpuTimeImplResult;
@@ -39,7 +39,7 @@ class MockDeviceTimeWin : public MockDeviceTime {
         return deviceTimerResolution;
     }
 
-    bool getGpuCpuTimeImplResult = true;
+    TimeQueryStatus getGpuCpuTimeImplResult = TimeQueryStatus::success;
     TimeStampData gpuCpuTimeValue{};
     uint32_t getGpuCpuTimeImplCalled = 0;
     double deviceTimerResolution = 1;
@@ -70,29 +70,30 @@ TEST_F(OSTimeWinTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeD
     TimeStampData gpuCpuTime = {0ull, 0ull};
 
     deviceTime->gpuCpuTimeValue = {100ull, 100ull};
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    TimeQueryStatus error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(100ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ll;
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
 
     osTime->maxGpuTimeStamp = 1ull << 36;
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(osTime->maxGpuTimeStamp + 10ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull; // second read below initial value
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(osTime->maxGpuTimeStamp + 30ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(osTime->maxGpuTimeStamp + 110ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull; // second overflow
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
     EXPECT_EQ(2ull * osTime->maxGpuTimeStamp + 70ull, gpuCpuTime.gpuTimeStamp);
 }
 
@@ -104,29 +105,35 @@ TEST_F(OSTimeWinTest, given64BitGpuTimeStampWhenGpuTimeStampOverflowThenOverflow
     TimeStampData gpuCpuTime = {0ull, 0ull};
 
     deviceTime->gpuCpuTimeValue = {100ull, 100ull};
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    TimeQueryStatus error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(100ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ull;
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
 
     osTime->maxGpuTimeStamp = 0ull;
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(10ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull;
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(30ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(110ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull;
-    EXPECT_TRUE(osTime->getGpuCpuTime(&gpuCpuTime));
+    error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(70ull, gpuCpuTime.gpuTimeStamp);
 }
 
@@ -163,6 +170,13 @@ TEST_F(OSTimeWinTest, givenHighValueOfCpuTimestampWhenItIsObtainedThenItHasPrope
     EXPECT_EQ(expectedTimestamp, timeStamp);
 }
 
+TEST_F(OSTimeWinTest, WhenGettingCpuTimeHostThenSucceeds) {
+    uint64_t time = 0;
+    auto error = osTime->getCpuTimeHost(&time);
+    EXPECT_FALSE(error);
+    EXPECT_NE(0ULL, time);
+}
+
 TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
     uint64_t time = 0;
     auto osTime(OSTime::create(nullptr));
@@ -175,7 +189,7 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
     TimeStampData gpuCpuTime = {};
     auto osTime(OSTime::create(nullptr));
     auto success = osTime->getGpuCpuTime(&gpuCpuTime);
-    EXPECT_TRUE(success);
+    EXPECT_EQ(success, TimeQueryStatus::success);
     EXPECT_EQ(0u, gpuCpuTime.cpuTimeinNS);
     EXPECT_EQ(0u, gpuCpuTime.gpuTimeStamp);
 }
@@ -191,12 +205,12 @@ TEST(OSTimeWinTests, givenOSInterfaceWhenGetGpuCpuTimeThenReturnsSuccess) {
     wddm->init();
     auto osTime = OSTime::create(rootDeviceEnvironment.osInterface.get());
     osTime->setDeviceTimerResolution();
-    auto success = osTime->getGpuCpuTime(&gpuCpuTime01);
-    EXPECT_TRUE(success);
+    TimeQueryStatus success = osTime->getGpuCpuTime(&gpuCpuTime01);
+    EXPECT_EQ(success, TimeQueryStatus::success);
     EXPECT_NE(0u, gpuCpuTime01.cpuTimeinNS);
     EXPECT_NE(0u, gpuCpuTime01.gpuTimeStamp);
     success = osTime->getGpuCpuTime(&gpuCpuTime02);
-    EXPECT_TRUE(success);
+    EXPECT_EQ(success, TimeQueryStatus::success);
     EXPECT_NE(0u, gpuCpuTime02.cpuTimeinNS);
     EXPECT_NE(0u, gpuCpuTime02.gpuTimeStamp);
     EXPECT_GT(gpuCpuTime02.gpuTimeStamp, gpuCpuTime01.gpuTimeStamp);
@@ -296,8 +310,8 @@ TEST_F(OSTimeWinTest, whenGetGpuCpuTimeFailedThenReturnFalse) {
     TimeStampData gpuCpuTime;
     auto deviceTime = new MockDeviceTimeWin();
     osTime->deviceTime.reset(deviceTime);
-    deviceTime->getGpuCpuTimeImplResult = false;
-    EXPECT_FALSE(osTime->getGpuCpuTime(&gpuCpuTime));
+    deviceTime->getGpuCpuTimeImplResult = TimeQueryStatus::deviceLost;
+    EXPECT_EQ(osTime->getGpuCpuTime(&gpuCpuTime), TimeQueryStatus::deviceLost);
 }
 
 TEST_F(OSTimeWinTest, whenGettingMaxGpuTimeStampValueAfterFlagSetThenCallToKmd) {

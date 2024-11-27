@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,16 @@ bool OSTimeWin::getCpuTime(uint64_t *timeStamp) {
 
     *timeStamp = static_cast<uint64_t>((static_cast<double>(time) * NSEC_PER_SEC / frequency.QuadPart));
     return true;
+};
+
+bool OSTime::getCpuTimeHost(uint64_t *timeStamp) {
+    uint64_t time;
+    QueryPerformanceCounter((LARGE_INTEGER *)&time);
+
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
+    *timeStamp = static_cast<uint64_t>((static_cast<double>(time) * NSEC_PER_SEC / frequency.QuadPart));
+    return false;
 };
 
 std::unique_ptr<OSTime> OSTimeWin::create(OSInterface &osInterface) {

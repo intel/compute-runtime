@@ -146,6 +146,10 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
 
     BcsSplit bcsSplit;
 
+    ze_command_list_handle_t globalTimestampCommandList = nullptr;
+    ze_context_handle_t globalTimestampContext = nullptr;
+    void *globalTimestampAllocation = nullptr;
+
     bool resourcesReleased = false;
     bool calculationForDisablingEuFusionWithDpasNeeded = false;
     void releaseResources();
@@ -178,6 +182,8 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     uint32_t getCopyEngineOrdinal() const;
 
   protected:
+    ze_result_t getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
+    ze_result_t getGlobalTimestampsUsingOsInterface(uint64_t *hostTimestamp, uint64_t *deviceTimestamp);
     const char *getDeviceMemoryName();
     void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);
     NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;

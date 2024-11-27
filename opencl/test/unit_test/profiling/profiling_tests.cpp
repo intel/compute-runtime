@@ -81,9 +81,9 @@ class MyOSDeviceTime : public DeviceTime {
         EXPECT_FALSE(true);
         return 0;
     }
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
         EXPECT_FALSE(true);
-        return false;
+        return TimeQueryStatus::deviceLost;
     }
 };
 

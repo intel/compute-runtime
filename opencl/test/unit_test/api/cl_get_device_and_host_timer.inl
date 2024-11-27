@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,8 @@
 using namespace NEO;
 
 struct FailDeviceTime : public MockDeviceTime {
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
-        return false;
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *) override {
+        return TimeQueryStatus::deviceLost;
     }
 };
 

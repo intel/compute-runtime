@@ -17,7 +17,7 @@ class MockDeviceTimeDrm : public DeviceTimeDrm {
     using DeviceTimeDrm::DeviceTimeDrm;
     using DeviceTimeDrm::pDrm;
 
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         getGpuCpuTimeImplCalled++;
         if (callBaseGetGpuCpuTimeImpl) {
             return DeviceTimeDrm::getGpuCpuTimeImpl(pGpuCpuTime, osTime);
@@ -34,7 +34,7 @@ class MockDeviceTimeDrm : public DeviceTimeDrm {
     }
 
     bool callBaseGetGpuCpuTimeImpl = true;
-    bool getGpuCpuTimeImplResult = true;
+    TimeQueryStatus getGpuCpuTimeImplResult = TimeQueryStatus::success;
     TimeStampData gpuCpuTimeValue{};
     uint32_t getGpuCpuTimeImplCalled = 0;
 

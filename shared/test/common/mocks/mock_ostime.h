@@ -16,7 +16,7 @@ constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
   public:
     ~MockDeviceTime() override = default;
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         if (gpuTimeStampResult) {
             pGpuCpuTime->gpuTimeStamp = *gpuTimeStampResult;
         } else {
@@ -27,7 +27,7 @@ class MockDeviceTime : public DeviceTime {
         } else {
             pGpuCpuTime->cpuTimeinNS = perfTicks * convertToNs;
         }
-        return true;
+        return TimeQueryStatus::success;
     }
 
     double getDynamicDeviceTimerResolution() const override {
@@ -75,10 +75,10 @@ class MockDeviceTimeWithConstTimestamp : public DeviceTime {
     static constexpr uint64_t cpuTimeInNs = 1u;
     static constexpr uint64_t gpuTimestamp = 2u;
 
-    bool getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+    TimeQueryStatus getGpuCpuTimeImpl(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         pGpuCpuTime->gpuTimeStamp = gpuTimestamp;
         pGpuCpuTime->cpuTimeinNS = cpuTimeInNs;
-        return true;
+        return TimeQueryStatus::success;
     }
 
     double getDynamicDeviceTimerResolution() const override {
