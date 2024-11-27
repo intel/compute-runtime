@@ -440,7 +440,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
-    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.syncBufferIndex);
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
+    EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -467,11 +468,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     auto mockSyncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(device->getNEODevice()->syncBufferHandler.get());
     auto syncBufferAllocation = mockSyncBufferHandler->graphicsAllocation;
 
-    EXPECT_NE(std::numeric_limits<size_t>::max(), kernel.syncBufferIndex);
+    EXPECT_NE(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
     auto syncBufferAllocationIt = std::find(kernel.internalResidencyContainer.begin(), kernel.internalResidencyContainer.end(), syncBufferAllocation);
     ASSERT_NE(kernel.internalResidencyContainer.end(), syncBufferAllocationIt);
     auto expectedIndex = static_cast<size_t>(std::distance(kernel.internalResidencyContainer.begin(), syncBufferAllocationIt));
-    EXPECT_EQ(expectedIndex, kernel.syncBufferIndex);
+    EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
+
+    EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     pCommandList->initialize(device, engineGroupType, 0u);
@@ -481,7 +484,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // sync buffer index once set should not change
-    EXPECT_EQ(expectedIndex, kernel.syncBufferIndex);
+    EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
     syncBufferAllocationIt = std::find(kernel.internalResidencyContainer.begin(), kernel.internalResidencyContainer.end(), syncBufferAllocation);
     ASSERT_NE(kernel.internalResidencyContainer.end(), syncBufferAllocationIt);
     // verify syncBufferAllocation is added only once
@@ -520,7 +523,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     kernel.module = pMockModule.get();
-    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.regionGroupBarrierIndex);
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getRegionGroupBarrierIndex());
+    EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 
     kernel.crossThreadData = std::make_unique<uint8_t[]>(64);
     kernel.crossThreadDataSize = 64;
@@ -556,12 +560,14 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     auto regionGroupBarrierAllocIt = std::find(kernel.internalResidencyContainer.begin(), kernel.internalResidencyContainer.end(), regionGroupBarrierAllocation);
     ASSERT_NE(kernel.internalResidencyContainer.end(), regionGroupBarrierAllocIt);
     auto expectedIndex = static_cast<size_t>(std::distance(kernel.internalResidencyContainer.begin(), regionGroupBarrierAllocIt));
-    EXPECT_EQ(expectedIndex, kernel.regionGroupBarrierIndex);
+    EXPECT_EQ(expectedIndex, kernel.getRegionGroupBarrierIndex());
+
+    EXPECT_EQ(regionGroupBarrierAllocation, kernel.getRegionGroupBarrierAllocation());
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
 
     // region group barrier index once set should not change
-    EXPECT_EQ(expectedIndex, kernel.regionGroupBarrierIndex);
+    EXPECT_EQ(expectedIndex, kernel.getRegionGroupBarrierIndex());
     regionGroupBarrierAllocIt = std::find(kernel.internalResidencyContainer.begin(), kernel.internalResidencyContainer.end(), regionGroupBarrierAllocation);
     ASSERT_NE(kernel.internalResidencyContainer.end(), regionGroupBarrierAllocIt);
     // verify regionGroupBarrierAllocation is added only once

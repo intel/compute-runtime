@@ -203,6 +203,28 @@ struct KernelImp : Kernel {
 
     bool checkKernelContainsStatefulAccess();
 
+    size_t getSyncBufferIndex() const {
+        return syncBufferIndex;
+    }
+
+    NEO::GraphicsAllocation *getSyncBufferAllocation() const {
+        if (std::numeric_limits<size_t>::max() == syncBufferIndex) {
+            return nullptr;
+        }
+        return internalResidencyContainer[syncBufferIndex];
+    }
+
+    size_t getRegionGroupBarrierIndex() const {
+        return regionGroupBarrierIndex;
+    }
+
+    NEO::GraphicsAllocation *getRegionGroupBarrierAllocation() const {
+        if (std::numeric_limits<size_t>::max() == regionGroupBarrierIndex) {
+            return nullptr;
+        }
+        return internalResidencyContainer[regionGroupBarrierIndex];
+    }
+
   protected:
     KernelImp() = default;
 
