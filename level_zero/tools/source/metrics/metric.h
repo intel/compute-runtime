@@ -143,6 +143,7 @@ class MetricDeviceContext {
                                               const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
                                               uint32_t *pMetricGroupCount,
                                               zet_metric_group_handle_t *phMetricGroups);
+    bool areMetricGroupsFromSameDeviceHierarchy(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
 
   protected:
     std::map<uint32_t, std::unique_ptr<MetricSource>> metricSources;
@@ -258,10 +259,12 @@ struct MetricGroupImp : public MetricGroup {
     ~MetricGroupImp() override = default;
     MetricGroupImp(MetricSource &metricSource) : metricSource(metricSource) {}
     bool isImmutable() { return isPredefined; }
+    bool isRootDevice() { return isMultiDevice; }
 
   protected:
     MetricSource &metricSource;
     bool isPredefined = true;
+    bool isMultiDevice = false;
 };
 
 struct MetricGroupCalculateHeader {

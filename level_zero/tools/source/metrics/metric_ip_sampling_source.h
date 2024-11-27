@@ -134,7 +134,9 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
 
 struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
 
-    MultiDeviceIpSamplingMetricGroupImp(MetricSource &metricSource, std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup) : IpSamplingMetricGroupBase(metricSource), subDeviceMetricGroup(subDeviceMetricGroup){};
+    MultiDeviceIpSamplingMetricGroupImp(MetricSource &metricSource, std::vector<IpSamplingMetricGroupImp *> &subDeviceMetricGroup) : IpSamplingMetricGroupBase(metricSource), subDeviceMetricGroup(subDeviceMetricGroup) {
+        isMultiDevice = true;
+    };
     ~MultiDeviceIpSamplingMetricGroupImp() override = default;
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t metricGet(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;

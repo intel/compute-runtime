@@ -1295,6 +1295,11 @@ ze_result_t DeviceImp::systemBarrier() { return ZE_RESULT_ERROR_UNSUPPORTED_FEAT
 
 ze_result_t DeviceImp::activateMetricGroupsDeferred(uint32_t count,
                                                     zet_metric_group_handle_t *phMetricGroups) {
+
+    if (!metricContext->areMetricGroupsFromSameDeviceHierarchy(count, phMetricGroups)) {
+        METRICS_LOG_ERR("%s", "Mix of root device and sub-device metric group handle is not allowed");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
     auto status = ZE_RESULT_SUCCESS;
     if (!this->isSubdevice && this->isImplicitScalingCapable()) {
         for (auto &subDevice : this->subDevices) {

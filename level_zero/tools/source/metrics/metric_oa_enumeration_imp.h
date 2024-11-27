@@ -186,6 +186,9 @@ struct OaMetricGroupImp : public MetricGroupImp {
 
     bool activateMetricSet();
     bool deactivateMetricSet();
+    void setRootDeviceFlag() {
+        isMultiDevice = true;
+    }
 
     static uint32_t getApiMask(const zet_metric_group_sampling_type_flags_t samplingType);
     zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override;

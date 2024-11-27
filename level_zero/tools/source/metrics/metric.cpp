@@ -210,6 +210,11 @@ ze_result_t MetricDeviceContext::getConcurrentMetricGroups(uint32_t metricGroupC
                                                            zet_metric_group_handle_t *phMetricGroups,
                                                            uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup) {
 
+    if (!areMetricGroupsFromSameDeviceHierarchy(metricGroupCount, phMetricGroups)) {
+        METRICS_LOG_ERR("%s", "Mix of root device and sub-device metric group handle is not allowed");
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
     std::map<MetricSource *, std::vector<zet_metric_group_handle_t>> metricGroupsPerMetricSourceMap{};
     for (auto index = 0u; index < metricGroupCount; index++) {
         auto &metricGroupSource =
@@ -407,6 +412,19 @@ ze_result_t MetricDeviceContext::createMetricGroupsFromMetrics(uint32_t metricCo
 
     *pMetricGroupCount = *pMetricGroupCount - remainingMetricGroupCount;
     return ZE_RESULT_SUCCESS;
+}
+
+bool MetricDeviceContext::areMetricGroupsFromSameDeviceHierarchy(uint32_t count, zet_metric_group_handle_t *phMetricGroups) {
+    bool isRootDevice = isImplicitScalingCapable();
+
+    // Verify whether all metricgroups have the same device heirarchy
+    for (uint32_t index = 0; index < count; index++) {
+        auto metricGroupImp = static_cast<MetricGroupImp *>(MetricGroup::fromHandle(phMetricGroups[index]));
+        if (isRootDevice != metricGroupImp->isRootDevice()) {
+            return false;
+        }
+    }
+    return true;
 }
 
 ze_result_t MetricDeviceContext::metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],

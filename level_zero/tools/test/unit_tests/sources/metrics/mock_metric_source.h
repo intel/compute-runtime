@@ -48,6 +48,8 @@ class MockMetricSource : public L0::MetricSource {
 class MockMetricGroup : public L0::MetricGroupImp {
 
   public:
+    using L0::MetricGroupImp::isMultiDevice;
+
     ~MockMetricGroup() override = default;
     MockMetricGroup(MetricSource &metricSource) : L0::MetricGroupImp(metricSource) {}
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override {

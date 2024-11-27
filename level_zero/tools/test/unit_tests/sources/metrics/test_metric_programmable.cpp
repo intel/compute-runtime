@@ -679,7 +679,7 @@ TEST_F(OaMetricProgrammableTests, givenInvalidMeticWhenMetricGroupIsCreatedThenE
     metricEnumeration->cleanupExtendedMetricInformation();
 }
 
-TEST_F(OaMetricProgrammableTests, givenCreateMetrifGroupsFromMetricsIsCalledWhenMetricCountIsZeroThenErrorIsReturned) {
+TEST_F(OaMetricProgrammableTests, givenCreateMetricGroupsFromMetricsIsCalledWhenMetricCountIsZeroThenErrorIsReturned) {
     MockIConcurrentGroup1x13 mockConcurrentGroup;
     MetricsDiscovery::IConcurrentGroup_1_13 &concurrentGroup1x13 = mockConcurrentGroup;
     EXPECT_EQ(ZE_RESULT_SUCCESS, metricEnumeration->cacheExtendedMetricInformation(concurrentGroup1x13, 1));

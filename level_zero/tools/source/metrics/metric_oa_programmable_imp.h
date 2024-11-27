@@ -90,7 +90,9 @@ struct OaMetricGroupUserDefined : OaMetricGroupImp {
 
 struct OaMultiDeviceMetricGroupUserDefined : OaMetricGroupImp {
 
-    OaMultiDeviceMetricGroupUserDefined(MetricSource &metricSource) : OaMetricGroupImp(metricSource) {}
+    OaMultiDeviceMetricGroupUserDefined(MetricSource &metricSource) : OaMetricGroupImp(metricSource) {
+        isMultiDevice = true;
+    }
     static OaMultiDeviceMetricGroupUserDefined *create(MetricSource &metricSource,
                                                        std::vector<MetricGroupImp *> &subDeviceMetricGroups,
                                                        std::vector<MultiDeviceMetricImp *> &multiDeviceMetrics);

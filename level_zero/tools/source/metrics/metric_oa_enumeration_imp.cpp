@@ -275,6 +275,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         // Cache and aggregate all metric groups from all sub devices.
         for (uint32_t i = 0; i < metricGroupCount; i++) {
             auto metricGroupRootDevice = new OaMetricGroupImp(metricSource);
+            metricGroupRootDevice->setRootDeviceFlag();
 
             for (auto subDevice : deviceImp.subDevices) {
                 MetricGroup *metricGroupSubDevice = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupByIndex(i);
