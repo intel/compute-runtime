@@ -1231,4 +1231,20 @@ EngineControl *SecondaryContexts::getEngine(EngineUsage usage) {
     return &engines[secondaryEngineIndex];
 }
 
+void Device::stopDirectSubmissionForCopyEngine() {
+    auto internalBcsEngine = getInternalCopyEngine();
+    if (internalBcsEngine == nullptr || getHardwareInfo().featureTable.ftrBcsInfo.count() > 1) {
+        return;
+    }
+    auto regularBcsEngine = tryGetEngine(internalBcsEngine->osContext->getEngineType(), EngineUsage::regular);
+    if (regularBcsEngine == nullptr) {
+        return;
+    }
+    auto regularBcs = regularBcsEngine->commandStreamReceiver;
+    if (regularBcs->isAnyDirectSubmissionEnabled()) {
+        auto lock = regularBcs->obtainUniqueOwnership();
+        regularBcs->stopDirectSubmission(true);
+    }
+}
+
 } // namespace NEO
