@@ -20,7 +20,6 @@ struct AllocationProperties {
             uint32_t forcePin : 1;
             uint32_t uncacheable : 1;
             uint32_t multiOsContextCapable : 1;
-            uint32_t readOnlyMultiStorage : 1;
             uint32_t shareable : 1;
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
@@ -29,7 +28,7 @@ struct AllocationProperties {
             uint32_t forceSystemMemory : 1;
             uint32_t preferCompressed : 1;
             uint32_t cantBeReadOnly : 1;
-            uint32_t reserved : 17;
+            uint32_t reserved : 18;
         } flags;
         uint32_t allFlags = 0;
     };

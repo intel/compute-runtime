@@ -423,16 +423,6 @@ TEST_F(MultiDeviceStorageInfoTest, givenReleaseWhichDoesNotAllowLocalOnlyWhenCre
     EXPECT_FALSE(storageInfo.isLockable);
 }
 
-TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenCreatingStorageInfoThenCorrectValuesAreSet) {
-    AllocationProperties properties{mockRootDeviceIndex, false, 1u, AllocationType::buffer, false, singleTileMask};
-    properties.flags.readOnlyMultiStorage = true;
-    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
-    EXPECT_EQ(allTilesMask, storageInfo.memoryBanks);
-    EXPECT_FALSE(storageInfo.cloningOfPageTables);
-    EXPECT_TRUE(storageInfo.readOnlyMultiStorage);
-    EXPECT_TRUE(storageInfo.tileInstanced);
-}
-
 TEST_F(MultiDeviceStorageInfoTest, givenReadOnlyBufferToBeCopiedAcrossTilesWhenDebugVariableIsSetThenOnlyCertainBanksAreUsed) {
     DebugManagerStateRestore restorer;
     auto proposedTiles = allTilesMask;

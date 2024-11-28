@@ -128,11 +128,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             storageInfo.colouringPolicy = colouringPolicy;
             storageInfo.colouringGranularity = granularity;
         }
-        if (properties.flags.readOnlyMultiStorage) {
-            storageInfo.readOnlyMultiStorage = true;
-            storageInfo.cloningOfPageTables = false;
-            storageInfo.tileInstanced = true;
-        }
         if (!releaseHelper || releaseHelper->isLocalOnlyAllowed()) {
             storageInfo.localOnlyRequired = true;
         }
@@ -222,7 +217,6 @@ DeviceBitfield MemoryManager::computeStorageInfoMemoryBanks(const AllocationProp
 
             memoryBanks = (forcedMultiStoragePlacement == -1 ? allBanks : forcedMultiStoragePlacement);
         }
-        memoryBanks = (properties.flags.readOnlyMultiStorage ? allBanks : memoryBanks);
         break;
     }
     case AllocationType::unifiedSharedMemory:

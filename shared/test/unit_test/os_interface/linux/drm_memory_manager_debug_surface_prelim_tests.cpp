@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,7 +84,6 @@ TEST_F(DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest, givenCreateDebugSurf
     EXPECT_EQ(0b1011u, storageInfo.pageTablesVisibility.to_ulong());
     EXPECT_FALSE(storageInfo.cloningOfPageTables);
     EXPECT_FALSE(storageInfo.multiStorage);
-    EXPECT_FALSE(storageInfo.readOnlyMultiStorage);
     EXPECT_TRUE(storageInfo.tileInstanced);
     EXPECT_TRUE(storageInfo.cpuVisibleSegment);
     EXPECT_TRUE(storageInfo.isLockable);

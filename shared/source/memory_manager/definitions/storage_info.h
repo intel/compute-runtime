@@ -28,7 +28,6 @@ struct StorageInfo {
     bool cloningOfPageTables = true;
     bool tileInstanced = false;
     bool multiStorage = false;
-    bool readOnlyMultiStorage = false;
     bool cpuVisibleSegment = false;
     bool isLockable = false;
     bool localOnlyRequired = false;

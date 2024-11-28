@@ -832,7 +832,6 @@ auto compareStorageInfo = [](const StorageInfo &left, const StorageInfo &right) 
     EXPECT_EQ(left.multiStorage, right.multiStorage);
     EXPECT_EQ(left.colouringPolicy, right.colouringPolicy);
     EXPECT_EQ(left.colouringGranularity, right.colouringGranularity);
-    EXPECT_EQ(left.readOnlyMultiStorage, right.readOnlyMultiStorage);
     EXPECT_EQ(left.cpuVisibleSegment, right.cpuVisibleSegment);
     EXPECT_EQ(left.isLockable, right.isLockable);
     EXPECT_EQ(left.localOnlyRequired, right.localOnlyRequired);
