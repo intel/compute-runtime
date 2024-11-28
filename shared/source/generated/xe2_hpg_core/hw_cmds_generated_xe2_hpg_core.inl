@@ -2909,9 +2909,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
             uint64_t Reserved_43 : BITFIELD_RANGE(11, 11);
             uint64_t GeneralStateBaseAddress : BITFIELD_RANGE(12, 63);
             // DWORD 3
-            uint32_t Reserved_96 : BITFIELD_RANGE(0, 13);
-            uint32_t DisableSupportForMultiGpuAtomicsForStatelessAccesses : BITFIELD_RANGE(14, 14);
-            uint32_t DisableSupportForMultiGpuPartialWritesForStatelessMessages : BITFIELD_RANGE(15, 15);
+            uint32_t Reserved_96 : BITFIELD_RANGE(0, 15);
             uint32_t StatelessDataPortAccessMemoryObjectControlStateEncryptedData : BITFIELD_RANGE(16, 16);
             uint32_t StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables : BITFIELD_RANGE(17, 22);
             uint32_t L1CacheControlCachePolicy : BITFIELD_RANGE(23, 25);
@@ -3060,18 +3058,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline uint64_t getGeneralStateBaseAddress() const {
         return TheStructure.Common.GeneralStateBaseAddress << GENERALSTATEBASEADDRESS_BIT_SHIFT;
-    }
-    inline void setDisableSupportForMultiGpuAtomicsForStatelessAccesses(const bool value) {
-        TheStructure.Common.DisableSupportForMultiGpuAtomicsForStatelessAccesses = value;
-    }
-    inline bool getDisableSupportForMultiGpuAtomicsForStatelessAccesses() const {
-        return TheStructure.Common.DisableSupportForMultiGpuAtomicsForStatelessAccesses;
-    }
-    inline void setDisableSupportForMultiGpuPartialWritesForStatelessMessages(const bool value) {
-        TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages = value;
-    }
-    inline bool getDisableSupportForMultiGpuPartialWritesForStatelessMessages() const {
-        return TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages;
     }
     inline void setStatelessDataPortAccessMemoryObjectControlStateEncryptedData(const bool value) {
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateEncryptedData = value;

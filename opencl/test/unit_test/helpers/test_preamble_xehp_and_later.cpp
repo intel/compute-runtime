@@ -358,23 +358,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, whenFlushi
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebugKeysThatOverrideMultiGpuSettingWhenStateBaseAddressIsProgrammedThenValuesMatch) {
     DebugManagerStateRestore restorer;
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessStateInitialized) {
         GTEST_SKIP();
     }
 
-    debugManager.flags.ForceMultiGpuAtomics.set(0);
-    debugManager.flags.ForceMultiGpuPartialWrites.set(0);
     flushTask(commandStreamReceiver);
     HardwareParse hwParserCsr;
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-    EXPECT_EQ(0u, stateBaseAddress->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-    EXPECT_EQ(0u, stateBaseAddress->getDisableSupportForMultiGpuPartialWritesForStatelessMessages());
 }
 
 using StateBaseAddressXeHPAndLaterTests = XeHpCommandStreamReceiverFlushTaskTests;

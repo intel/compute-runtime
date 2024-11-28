@@ -83,16 +83,6 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(heapMocsValue);
     args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(heapMocsValue);
 
-    args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!args.isMultiOsContextCapable);
-
-    if (debugManager.flags.ForceMultiGpuAtomics.get() != -1) {
-        args.stateBaseAddressCmd->setDisableSupportForMultiGpuAtomicsForStatelessAccesses(!!debugManager.flags.ForceMultiGpuAtomics.get());
-    }
-
-    if (debugManager.flags.ForceMultiGpuPartialWrites.get() != -1) {
-        args.stateBaseAddressCmd->setDisableSupportForMultiGpuPartialWritesForStatelessMessages(!!debugManager.flags.ForceMultiGpuPartialWrites.get());
-    }
-
     if (args.memoryCompressionState != MemoryCompressionState::notApplicable) {
         setSbaStatelessCompressionParams<GfxFamily>(args.stateBaseAddressCmd, args.memoryCompressionState);
     }

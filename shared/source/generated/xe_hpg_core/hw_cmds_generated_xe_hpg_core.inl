@@ -2661,8 +2661,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
             // DWORD 3
             uint32_t Reserved_96 : BITFIELD_RANGE(0, 12);
             uint32_t EnableMemoryCompressionForAllStatelessAccesses : BITFIELD_RANGE(13, 13);
-            uint32_t DisableSupportForMultiGpuAtomicsForStatelessAccesses : BITFIELD_RANGE(14, 14);
-            uint32_t DisableSupportForMultiGpuPartialWritesForStatelessMessages : BITFIELD_RANGE(15, 15);
+            uint32_t Reserved_110 : BITFIELD_RANGE(14, 15);
             uint32_t StatelessDataPortAccessMemoryObjectControlState_Reserved : BITFIELD_RANGE(16, 16);
             uint32_t StatelessDataPortAccessMemoryObjectControlState_IndexToMocsTables : BITFIELD_RANGE(17, 22);
             uint32_t L1CachePolicyL1CacheControl : BITFIELD_RANGE(23, 25);
@@ -2820,18 +2819,6 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES getEnableMemoryCompressionForAllStatelessAccesses() const {
         return static_cast<ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES>(TheStructure.Common.EnableMemoryCompressionForAllStatelessAccesses);
-    }
-    inline void setDisableSupportForMultiGpuAtomicsForStatelessAccesses(const bool value) {
-        TheStructure.Common.DisableSupportForMultiGpuAtomicsForStatelessAccesses = value;
-    }
-    inline bool getDisableSupportForMultiGpuAtomicsForStatelessAccesses() const {
-        return (TheStructure.Common.DisableSupportForMultiGpuAtomicsForStatelessAccesses);
-    }
-    inline void setDisableSupportForMultiGpuPartialWritesForStatelessMessages(const bool value) {
-        TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages = value;
-    }
-    inline bool getDisableSupportForMultiGpuPartialWritesForStatelessMessages() const {
-        return (TheStructure.Common.DisableSupportForMultiGpuPartialWritesForStatelessMessages);
     }
     inline void setStatelessDataPortAccessMemoryObjectControlStateReserved(const uint32_t value) {
         TheStructure.Common.StatelessDataPortAccessMemoryObjectControlState_Reserved = value;
