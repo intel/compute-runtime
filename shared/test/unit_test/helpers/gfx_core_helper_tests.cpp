@@ -117,12 +117,12 @@ HWTEST2_F(GfxCoreHelperTest, WhenSettingRenderSurfaceStateForBufferThenL1CachePo
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
                                                           false);
 
-    EXPECT_NE(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState->getL1CachePolicyL1CacheControl());
+    EXPECT_NE(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState->getL1CacheControlCachePolicy());
 
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(rootDeviceEnvironment, stateBuffer, size, addr, offset, pitch, nullptr, false, type, false,
                                                           true);
 
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState->getL1CacheControlCachePolicy());
 
     alignedFree(stateBuffer);
 }

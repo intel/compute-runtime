@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 template <>
-void setMipTailStartLod<Family>(Family::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    surfaceState->setMipTailStartLod(0);
+void setMipTailStartLOD<Family>(Family::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    surfaceState->setMipTailStartLOD(0);
 
     if (gmm != nullptr) {
-        surfaceState->setMipTailStartLod(gmm->gmmResourceInfo->getMipTailStartLodSurfaceState());
+        surfaceState->setMipTailStartLOD(gmm->gmmResourceInfo->getMipTailStartLODSurfaceState());
     }
 }

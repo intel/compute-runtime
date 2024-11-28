@@ -65,9 +65,9 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     }
 
     uint32_t mipCount = this->mipCount > 0 ? this->mipCount - 1 : 0;
-    surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);
-    surfaceState->setMipCountLod(mipCount);
-    setMipTailStartLod<GfxFamily>(surfaceState, gmm);
+    surfaceState->setSurfaceMinLOD(this->baseMipLevel + mipLevel);
+    surfaceState->setMIPCountLOD(mipCount);
+    setMipTailStartLOD<GfxFamily>(surfaceState, gmm);
 
     cl_channel_order imgChannelOrder = getSurfaceFormatInfo().oclImageFormat.image_channel_order;
     int shaderChannelValue = ImageHw<GfxFamily>::getShaderChannelValue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, imgChannelOrder);
@@ -117,7 +117,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
             DEBUG_BREAK_IF(releaseHelper == nullptr);
             EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
-            surfaceState->setAuxiliarySurfaceQpitch(mcsGmm->getAuxQPitch());
+            surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
             EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
             setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {
@@ -125,7 +125,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
         } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
             surfaceState->setAuxiliarySurfacePitch(mcsSurfaceInfo.pitch);
-            surfaceState->setAuxiliarySurfaceQpitch(mcsSurfaceInfo.qPitch);
+            surfaceState->setAuxiliarySurfaceQPitch(mcsSurfaceInfo.qPitch);
             surfaceState->setAuxiliarySurfaceBaseAddress(mcsAllocation->getGpuAddress());
         }
     } else if (isDepthFormat(imageFormat) && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {

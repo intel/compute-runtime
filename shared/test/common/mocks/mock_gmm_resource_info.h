@@ -55,7 +55,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getAuxQPitch() override { return auxQPitch; }
 
-    uint32_t getMipTailStartLodSurfaceState() override { return mipTailStartLod; }
+    uint32_t getMipTailStartLODSurfaceState() override { return mipTailStartLod; }
 
     GMM_RESOURCE_FORMAT getResourceFormat() override { return mockResourceCreateParams.Format; }
 
@@ -104,7 +104,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     void setUnifiedAuxPitchTiles(uint32_t value);
     void setAuxQPitch(uint32_t value);
-    void setMipTailStartLod(uint32_t newMipTailStartLod) { mipTailStartLod = newMipTailStartLod; }
+    void setMipTailStartLOD(uint32_t newMipTailStartLod) { mipTailStartLod = newMipTailStartLod; }
 
     void refreshHandle() override {
         refreshHandleCalled++;

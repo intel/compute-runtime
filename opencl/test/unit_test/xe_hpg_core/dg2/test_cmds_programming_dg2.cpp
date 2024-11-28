@@ -45,7 +45,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagWhenStatelessMocsIsProgra
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    EXPECT_EQ(stateBaseAddress->getL1CachePolicyL1CacheControl(), STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB);
+    EXPECT_EQ(stateBaseAddress->getL1CacheControlCachePolicy(), STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
 }
 
 DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerInitializedWhenStatelessMocsIsProgrammedThenItHasCorrectL1CachingOn) {
@@ -66,7 +66,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenL3ToL1DebugFlagAndDebuggerInitializedWhe
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    EXPECT_EQ(stateBaseAddress->getL1CachePolicyL1CacheControl(), STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP);
+    EXPECT_EQ(stateBaseAddress->getL1CacheControlCachePolicy(), STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
 }
 
 DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWBL1CachePolicyUnlessDebuggerIsActive) {
@@ -95,11 +95,11 @@ DG2TEST_F(CmdsProgrammingTestsDg2, whenAppendingRssThenProgramWBL1CachePolicyUnl
     args.areMultipleSubDevicesInContext = true;
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, rssCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, rssCmd.getL1CacheControlCachePolicy());
 
     args.isDebuggerActive = true;
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, rssCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, rssCmd.getL1CacheControlCachePolicy());
 }
 
 DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
@@ -124,7 +124,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferThenChoseO
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
-    EXPECT_EQ(surfaceState.getL1CachePolicyL1CacheControl(), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB);
+    EXPECT_EQ(surfaceState.getL1CacheControlCachePolicy(), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB);
 
     alignedFree(ptr);
 }
@@ -154,7 +154,7 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenAlignedCacheableReadOnlyBufferAndDebugge
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
-    EXPECT_EQ(surfaceState.getL1CachePolicyL1CacheControl(), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP);
+    EXPECT_EQ(surfaceState.getL1CacheControlCachePolicy(), FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
 
     alignedFree(ptr);
 }

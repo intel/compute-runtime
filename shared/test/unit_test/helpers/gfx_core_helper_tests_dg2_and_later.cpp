@@ -33,7 +33,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CacheP
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = true;
     helper.setL1CachePolicy(useL1Cache, &surfaceState, defaultHwInfo.get());
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState.getL1CacheControlCachePolicy());
 }
 
 HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStateForScratchSpaceWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
@@ -49,7 +49,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStat
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = true;
     helper.setL1CachePolicy(useL1Cache, &surfaceState, defaultHwInfo.get());
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_UC, surfaceState.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_UC, surfaceState.getL1CacheControlCachePolicy());
 }
 
 HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeHpgCore) {
@@ -61,7 +61,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1Cache
     RENDER_SURFACE_STATE surfaceState = FamilyType::cmdInitRenderSurfaceState;
     bool useL1Cache = false;
     helper.setL1CachePolicy(useL1Cache, &surfaceState, defaultHwInfo.get());
-    EXPECT_NE(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState.getL1CachePolicyL1CacheControl());
+    EXPECT_NE(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, surfaceState.getL1CacheControlCachePolicy());
 }
 
 using GfxCoreHelperWithLargeGrf = ::testing::Test;

@@ -762,8 +762,8 @@ HWTEST2_P(TestImageFormats, givenValidLayoutAndTypeWhenCreateImageCoreFamilyThen
         EXPECT_EQ(rss.getXOffsetForUOrUvPlane(), 0u);
     }
 
-    EXPECT_EQ(rss.getSurfaceMinLod(), 0u);
-    EXPECT_EQ(rss.getMipCountLod(), 0u);
+    EXPECT_EQ(rss.getSurfaceMinLOD(), 0u);
+    EXPECT_EQ(rss.getMIPCountLOD(), 0u);
 
     if (!isMediaFormatLayout) {
         EXPECT_EQ(rss.getShaderChannelSelectRed(), FamilyType::RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT::SHADER_CHANNEL_SELECT_RED);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,8 +17,8 @@ using namespace NEO;
 
 DG2TEST_F(ProductHelperTest, givenDG2WhenGetL1CachePolicyThenReturnWbPolicyUnlessDebuggerIsActive) {
     using GfxFamily = typename HwMapper<IGFX_DG2>::GfxFamily;
-    EXPECT_EQ(L1CachePolicyHelper<IGFX_DG2>::getL1CachePolicy(false), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB);
-    EXPECT_EQ(L1CachePolicyHelper<IGFX_DG2>::getL1CachePolicy(true), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP);
+    EXPECT_EQ(L1CachePolicyHelper<IGFX_DG2>::getL1CachePolicy(false), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB);
+    EXPECT_EQ(L1CachePolicyHelper<IGFX_DG2>::getL1CachePolicy(true), GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP);
 }
 
 DG2TEST_F(ProductHelperTest, givenDG2WhenGetCachingPolicyOptionsThenReturnCorrectValue) {

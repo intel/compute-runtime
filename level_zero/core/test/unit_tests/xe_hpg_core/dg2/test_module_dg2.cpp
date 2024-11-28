@@ -78,7 +78,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, debugSurfaceState->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, debugSurfaceState->getL1CacheControlCachePolicy());
 }
 
 HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurfaceCalledThenCachePolicyIsWB, IsDG2) {
@@ -138,7 +138,7 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
     auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(kernel.surfaceStateHeapData.get());
     debugSurfaceState = ptrOffset(debugSurfaceState, sizeof(RENDER_SURFACE_STATE));
 
-    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, debugSurfaceState->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB, debugSurfaceState->getL1CacheControlCachePolicy());
 }
 
 } // namespace ult

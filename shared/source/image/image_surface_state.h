@@ -51,13 +51,13 @@ inline void setImageSurfaceState(typename GfxFamily::RENDER_SURFACE_STATE *surfa
 
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     surfaceState->setAuxiliarySurfacePitch(1u);
-    surfaceState->setAuxiliarySurfaceQpitch(0u);
+    surfaceState->setAuxiliarySurfaceQPitch(0u);
     surfaceState->setAuxiliarySurfaceBaseAddress(0u);
     surfaceState->setRenderTargetViewExtent(renderTargetViewExtent);
     surfaceState->setMinimumArrayElement(minimumArrayElement);
 
     // SurfaceQpitch is in rows but must be a multiple of VALIGN
-    surfaceState->setSurfaceQpitch(imageInfo.qPitch);
+    surfaceState->setSurfaceQPitch(imageInfo.qPitch);
 
     surfaceState->setSurfaceArray(isImageArray);
 
@@ -136,6 +136,6 @@ inline void setUnifiedAuxBaseAddress(typename GfxFamily::RENDER_SURFACE_STATE *s
 }
 
 template <typename GfxFamily>
-void setMipTailStartLod(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
+void setMipTailStartLOD(typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
 
 } // namespace NEO

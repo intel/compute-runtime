@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerWhenSetStateBaseAddre
 
     auto cmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, cmd->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, cmd->getL1CacheControlCachePolicy());
 }
 
 HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerWhenSetStateBaseAddressCalledThenCachePolicyIsWBP, IsDG2) {
@@ -64,5 +64,5 @@ HWTEST2_F(CommandEncodeStatesDG2Test, givenCommandContainerAndDebuggerWhenSetSta
 
     auto cmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, cmd->getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, cmd->getL1CacheControlCachePolicy());
 }

@@ -134,11 +134,11 @@ uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {
     auto cachePolicy = args.isDebuggerActive ? args.l1CachePolicyDebuggerActive : args.l1CachePolicy;
-    args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(cachePolicy));
+    args.stateBaseAddressCmd->setL1CacheControlCachePolicy(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(cachePolicy));
 
     if (debugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&
         debugManager.flags.ForceAllResourcesUncached.get() == false) {
-        args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(debugManager.flags.ForceStatelessL1CachingPolicy.get()));
+        args.stateBaseAddressCmd->setL1CacheControlCachePolicy(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_CONTROL>(debugManager.flags.ForceStatelessL1CachingPolicy.get()));
     }
 }
 

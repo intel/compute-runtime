@@ -301,7 +301,7 @@ struct MyMockResourecInfo : public GmmResourceInfo {
     GMM_RESOURCE_FLAG *getResourceFlags() override {
         return &flags;
     }
-    uint32_t getMipTailStartLodSurfaceState() override {
+    uint32_t getMipTailStartLODSurfaceState() override {
         return 0;
     }
     size_t pitch = 0;

@@ -291,31 +291,31 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(2);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(3);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(4);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceAllResourcesUncached.set(true);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, stateBaseAddress.getL1CacheControlCachePolicy());
     }
     args.isDebuggerActive = true;
     {
@@ -323,31 +323,31 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(2);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(3);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceStatelessL1CachingPolicy.set(4);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, stateBaseAddress.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceAllResourcesUncached.set(true);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, stateBaseAddress.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, stateBaseAddress.getL1CacheControlCachePolicy());
     }
 }
 
@@ -356,12 +356,12 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
 
     struct {
         uint32_t option;
-        typename FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY cachePolicy;
+        typename FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL cachePolicy;
     } testInputs[] = {
-        {0, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP},
-        {2, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB},
-        {3, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT},
-        {4, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS}};
+        {0, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP},
+        {2, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB},
+        {3, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT},
+        {4, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS}};
 
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
     args.setGeneralStateBaseAddress = true;
@@ -375,13 +375,13 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
 
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-        EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CacheControlCachePolicy());
 
         debugManager.flags.ForceAllResourcesUncached.set(true);
         updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
-        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, sbaCmd.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, sbaCmd.getL1CacheControlCachePolicy());
     }
 }
 
@@ -408,18 +408,18 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingRssThenProgramCorrectL1CachePol
 
     struct {
         uint32_t option;
-        typename FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY cachePolicy;
+        typename FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL cachePolicy;
     } testInputs[] = {
-        {0, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP},
-        {2, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB},
-        {3, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WT},
-        {4, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WS}};
+        {0, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP},
+        {2, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB},
+        {3, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WT},
+        {4, FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WS}};
 
     for (const auto &input : testInputs) {
         DebugManagerStateRestore restore;
         debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
         EncodeSurfaceState<FamilyType>::encodeBuffer(args);
-        EXPECT_EQ(input.cachePolicy, rssCmd.getL1CachePolicyL1CacheControl());
+        EXPECT_EQ(input.cachePolicy, rssCmd.getL1CacheControlCachePolicy());
     }
     memoryManager->freeGraphicsMemory(allocation);
 }

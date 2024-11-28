@@ -1165,15 +1165,15 @@ void EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(WalkerType &walker
 
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {
-    using L1_CACHE_POLICY = typename R_SURFACE_STATE::L1_CACHE_POLICY;
+    using L1_CACHE_CONTROL = typename R_SURFACE_STATE::L1_CACHE_CONTROL;
     auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
-    auto cachePolicy = static_cast<L1_CACHE_POLICY>(productHelper.getL1CachePolicy(args.isDebuggerActive));
+    auto cachePolicy = static_cast<L1_CACHE_CONTROL>(productHelper.getL1CachePolicy(args.isDebuggerActive));
     if (debugManager.flags.OverrideL1CacheControlInSurfaceState.get() != -1 &&
         debugManager.flags.ForceAllResourcesUncached.get() == false) {
-        cachePolicy = static_cast<L1_CACHE_POLICY>(debugManager.flags.OverrideL1CacheControlInSurfaceState.get());
+        cachePolicy = static_cast<L1_CACHE_CONTROL>(debugManager.flags.OverrideL1CacheControlInSurfaceState.get());
     }
-    surfaceState->setL1CachePolicyL1CacheControl(cachePolicy);
+    surfaceState->setL1CacheControlCachePolicy(cachePolicy);
 }
 
 template <typename Family>

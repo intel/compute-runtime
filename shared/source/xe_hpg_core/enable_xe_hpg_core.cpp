@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,9 @@ template <>
 uint32_t L1CachePolicyHelper<IGFX_DG2>::getDefaultL1CachePolicy(bool isDebuggerActive) {
     using GfxFamily = HwMapper<IGFX_DG2>::GfxFamily;
     if (isDebuggerActive) {
-        return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
+        return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;
     }
-    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB;
+    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB;
 }
 
 template struct L1CachePolicyHelper<IGFX_DG2>;

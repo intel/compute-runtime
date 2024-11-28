@@ -45,7 +45,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenL3ToL1DebugFlagWhenStatele
 
     auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
 
-    auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CachePolicyL1CacheControl());
+    auto actualL1CachePolocy = static_cast<uint8_t>(stateBaseAddress->getL1CacheControlCachePolicy());
 
     const uint8_t expectedL1CachePolicy = 0;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);
@@ -78,7 +78,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, whenAppendingRssThenProgramWBPL
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(args);
 
-    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP, rssCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP, rssCmd.getL1CacheControlCachePolicy());
 }
 
 XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenAlignedCacheableReadOnlyBufferThenChoseOclBufferConstPolicy) {
@@ -103,7 +103,7 @@ XE_HPG_CORETEST_F(CmdsProgrammingTestsXeHpgCore, givenAlignedCacheableReadOnlyBu
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 
-    auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CachePolicyL1CacheControl());
+    auto actualL1CachePolocy = static_cast<uint8_t>(surfaceState.getL1CacheControlCachePolicy());
 
     const uint8_t expectedL1CachePolicy = 0;
     EXPECT_EQ(expectedL1CachePolicy, actualL1CachePolocy);

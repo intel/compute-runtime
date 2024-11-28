@@ -192,7 +192,7 @@ void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAl
                                                                 const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
     if (allocation.getDefaultGmm()) {
         auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
-        mipTailLod = gmmResourceInfo->getMipTailStartLodSurfaceState();
+        mipTailLod = gmmResourceInfo->getMipTailStartLODSurfaceState();
         auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
         if (resInfo.Tile4) {
             tileType = GMM_TILED_4;

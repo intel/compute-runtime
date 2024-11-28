@@ -20,11 +20,11 @@ const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebu
     static constexpr const char *uncachedCachingPolicy = "-cl-store-cache-default=2 -cl-load-cache-default=2";
 
     switch (L1CachePolicyHelper<gfxProduct>::getL1CachePolicy(isDebuggerActive)) {
-    case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP:
+    case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP:
         return writeByPassCachingPolicy;
-    case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB:
+    case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB:
         return writeBackCachingPolicy;
-    case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC:
+    case GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC:
         return uncachedCachingPolicy;
     default:
         return nullptr;
@@ -34,13 +34,13 @@ const char *L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(bool isDebu
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t L1CachePolicyHelper<gfxProduct>::getDefaultL1CachePolicy(bool isDebuggerActive) {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
-    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
+    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t L1CachePolicyHelper<gfxProduct>::getUncachedL1CachePolicy() {
     using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
-    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC;
+    return GfxFamily::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC;
 }
 
 } // namespace NEO

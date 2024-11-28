@@ -657,8 +657,8 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     auto bindlessHeapsHelper = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getNEODevice()->getRootDeviceIndex()]->bindlessHeapsHelper.get();
 
     NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
-    raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
-    raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
+    raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WB;
+    raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP;
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;
@@ -684,7 +684,7 @@ HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThe
     auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
     ASSERT_NE(debugSurface, nullptr);
     ASSERT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
-    EXPECT_EQ(debugSurfaceState->getL1CachePolicyL1CacheControl(), RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP);
+    EXPECT_EQ(debugSurfaceState->getL1CacheControlCachePolicy(), RENDER_SURFACE_STATE::L1_CACHE_CONTROL_WBP);
 }
 
 HWTEST2_F(L0DebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, IsNotXeHpOrXeHpgCore) {

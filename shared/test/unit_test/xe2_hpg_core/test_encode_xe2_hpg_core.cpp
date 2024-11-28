@@ -654,7 +654,7 @@ XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThen
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, sbaCmd.getL1CacheControlCachePolicy());
 }
 
 XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThenItMatchesTheOverrideValue) {
@@ -669,19 +669,19 @@ XE2_HPG_CORETEST_F(Xe2HpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsPr
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(0u, sbaCmd.getL1CacheControlCachePolicy());
 
     debugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
 
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(2u, sbaCmd.getL1CacheControlCachePolicy());
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
 
     updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
-    EXPECT_EQ(1u, sbaCmd.getL1CachePolicyL1CacheControl());
+    EXPECT_EQ(1u, sbaCmd.getL1CacheControlCachePolicy());
 }

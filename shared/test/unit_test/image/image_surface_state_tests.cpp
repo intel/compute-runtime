@@ -48,7 +48,7 @@ HWTEST2_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProp
 
     EXPECT_EQ(castSurfaceState->getRenderTargetViewExtent(), 1u);
     EXPECT_EQ(castSurfaceState->getMinimumArrayElement(), cubeFaceIndex);
-    EXPECT_EQ(castSurfaceState->getSurfaceQpitch(), imageInfo.qPitch >> RENDER_SURFACE_STATE::tagSURFACEQPITCH::SURFACEQPITCH_BIT_SHIFT);
+    EXPECT_EQ(castSurfaceState->getSurfaceQPitch(), imageInfo.qPitch >> RENDER_SURFACE_STATE::tagSURFACEQPITCH::SURFACEQPITCH_BIT_SHIFT);
     EXPECT_EQ(castSurfaceState->getSurfaceArray(), true);
     EXPECT_EQ(castSurfaceState->getSurfaceHorizontalAlignment(), static_cast<typename RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT>(mockGmm->gmmResourceInfo->getHAlignSurfaceState()));
     EXPECT_EQ(castSurfaceState->getSurfaceVerticalAlignment(), static_cast<typename RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(mockGmm->gmmResourceInfo->getVAlignSurfaceState()));
@@ -87,7 +87,7 @@ HWTEST2_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProp
 
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfacePitch(), 1u);
-    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceQpitch(), 0u);
+    EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceQPitch(), 0u);
     EXPECT_EQ(castSurfaceState->getAuxiliarySurfaceBaseAddress(), 0u);
 
     surfaceState = std::make_unique<char[]>(size);

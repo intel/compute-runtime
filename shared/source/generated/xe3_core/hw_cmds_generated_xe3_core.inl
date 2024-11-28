@@ -1947,13 +1947,13 @@ typedef struct tagRENDER_SURFACE_STATE {
         COHERENCY_TYPE_IA_COHERENT = 0x1,  // patched from COHERENCY_TYPE_SYSTEM_COHERENT
         COHERENCY_TYPE_MULTI_GPU_COHERENT = 0x2,
     } COHERENCY_TYPE;
-    typedef enum tagL1_CACHE_POLICY {
-        L1_CACHE_POLICY_WBP = 0x0,
-        L1_CACHE_POLICY_UC = 0x1,
-        L1_CACHE_POLICY_WB = 0x2,
-        L1_CACHE_POLICY_WT = 0x3,
-        L1_CACHE_POLICY_WS = 0x4,
-    } L1_CACHE_POLICY;
+    typedef enum tagL1_CACHE_CONTROL {
+        L1_CACHE_CONTROL_WBP = 0x0,
+        L1_CACHE_CONTROL_UC = 0x1,
+        L1_CACHE_CONTROL_WB = 0x2,
+        L1_CACHE_CONTROL_WT = 0x3,
+        L1_CACHE_CONTROL_WS = 0x4,
+    } L1_CACHE_CONTROL;
     typedef enum tagAUXILIARY_SURFACE_MODE {
         AUXILIARY_SURFACE_MODE_AUX_NONE = 0x0,
         AUXILIARY_SURFACE_MODE_AUX_APPEND = 0x1,
@@ -1998,7 +1998,7 @@ typedef struct tagRENDER_SURFACE_STATE {
         TheStructure.Common.NumberOfMultisamples = NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1;
         TheStructure.Common.MultisampledSurfaceStorageFormat = MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS;
         TheStructure.Common.RenderTargetAndSampleUnormRotation = RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION_0DEG;
-        TheStructure.Common.L1CacheControlCachePolicy = L1_CACHE_POLICY_WBP;
+        TheStructure.Common.L1CacheControlCachePolicy = L1_CACHE_CONTROL_WBP;
         TheStructure.Common.AuxiliarySurfaceMode = AUXILIARY_SURFACE_MODE_AUX_NONE;
         TheStructure.Common.CompressionFormat = COMPRESSION_FORMAT_CMF_R8;
         TheStructure._SurfaceFormatIsPlanar.HalfPitchForChroma = HALF_PITCH_FOR_CHROMA_DISABLE;
@@ -2118,11 +2118,11 @@ typedef struct tagRENDER_SURFACE_STATE {
         SURFACEQPITCH_BIT_SHIFT = 0x2,
         SURFACEQPITCH_ALIGN_SIZE = 0x4,
     } SURFACEQPITCH;
-    inline void setSurfaceQpitch(const uint32_t value) {
+    inline void setSurfaceQPitch(const uint32_t value) {
         UNRECOVERABLE_IF((value >> SURFACEQPITCH_BIT_SHIFT) > 0x1ffff);
         TheStructure.Common.SurfaceQpitch = value >> SURFACEQPITCH_BIT_SHIFT;
     }
-    inline uint32_t getSurfaceQpitch() const {
+    inline uint32_t getSurfaceQPitch() const {
         return TheStructure.Common.SurfaceQpitch << SURFACEQPITCH_BIT_SHIFT;
     }
     inline void setBaseMipLevel(const uint32_t value) {
@@ -2219,32 +2219,32 @@ typedef struct tagRENDER_SURFACE_STATE {
     inline RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION getRenderTargetAndSampleUnormRotation() const {
         return static_cast<RENDER_TARGET_AND_SAMPLE_UNORM_ROTATION>(TheStructure.Common.RenderTargetAndSampleUnormRotation);
     }
-    inline void setMipCountLod(const uint32_t value) {
+    inline void setMIPCountLOD(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.MipCountLod = value;
     }
-    inline uint32_t getMipCountLod() const {
+    inline uint32_t getMIPCountLOD() const {
         return TheStructure.Common.MipCountLod;
     }
-    inline void setSurfaceMinLod(const uint32_t value) {
+    inline void setSurfaceMinLOD(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.SurfaceMinLod = value;
     }
-    inline uint32_t getSurfaceMinLod() const {
+    inline uint32_t getSurfaceMinLOD() const {
         return TheStructure.Common.SurfaceMinLod;
     }
-    inline void setMipTailStartLod(const uint32_t value) {
+    inline void setMipTailStartLOD(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xf);
         TheStructure.Common.MipTailStartLod = value;
     }
-    inline uint32_t getMipTailStartLod() const {
+    inline uint32_t getMipTailStartLOD() const {
         return TheStructure.Common.MipTailStartLod;
     }
-    inline void setL1CachePolicyL1CacheControl(const L1_CACHE_POLICY value) {
+    inline void setL1CacheControlCachePolicy(const L1_CACHE_CONTROL value) {
         TheStructure.Common.L1CacheControlCachePolicy = value;
     }
-    inline L1_CACHE_POLICY getL1CachePolicyL1CacheControl() const {
-        return static_cast<L1_CACHE_POLICY>(TheStructure.Common.L1CacheControlCachePolicy);
+    inline L1_CACHE_CONTROL getL1CacheControlCachePolicy() const {
+        return static_cast<L1_CACHE_CONTROL>(TheStructure.Common.L1CacheControlCachePolicy);
     }
     inline void setEwaDisableForCube(const bool value) {
         TheStructure.Common.EwaDisableForCube = value;
@@ -2399,11 +2399,11 @@ typedef struct tagRENDER_SURFACE_STATE {
         AUXILIARYSURFACEQPITCH_BIT_SHIFT = 0x2,
         AUXILIARYSURFACEQPITCH_ALIGN_SIZE = 0x4,
     } AUXILIARYSURFACEQPITCH;
-    inline void setAuxiliarySurfaceQpitch(const uint32_t value) {
+    inline void setAuxiliarySurfaceQPitch(const uint32_t value) {
         UNRECOVERABLE_IF((value >> AUXILIARYSURFACEQPITCH_BIT_SHIFT) > 0x1ffff);
         TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch = value >> AUXILIARYSURFACEQPITCH_BIT_SHIFT;
     }
-    inline uint32_t getAuxiliarySurfaceQpitch() const {
+    inline uint32_t getAuxiliarySurfaceQPitch() const {
         return TheStructure._SurfaceFormatIsnotPlanar.AuxiliarySurfaceQpitch << AUXILIARYSURFACEQPITCH_BIT_SHIFT;
     }
     typedef enum tagAUXILIARYSURFACEBASEADDRESS {
@@ -2980,13 +2980,13 @@ typedef struct tagSTATE_BASE_ADDRESS {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
-    typedef enum tagL1_CACHE_POLICY {
-        L1_CACHE_POLICY_WBP = 0x0,
-        L1_CACHE_POLICY_UC = 0x1,
-        L1_CACHE_POLICY_WB = 0x2,
-        L1_CACHE_POLICY_WT = 0x3,
-        L1_CACHE_POLICY_WS = 0x4,
-    } L1_CACHE_POLICY;
+    typedef enum tagL1_CACHE_CONTROL {
+        L1_CACHE_CONTROL_WBP = 0x0,
+        L1_CACHE_CONTROL_UC = 0x1,
+        L1_CACHE_CONTROL_WB = 0x2,
+        L1_CACHE_CONTROL_WT = 0x3,
+        L1_CACHE_CONTROL_WS = 0x4,
+    } L1_CACHE_CONTROL;
     typedef enum tagPATCH_CONSTANTS { // patched
         GENERALSTATEBASEADDRESS_BYTEOFFSET = 0x4,
         GENERALSTATEBASEADDRESS_INDEX = 0x1,
@@ -3008,7 +3008,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
         TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
         TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.L1CacheControlCachePolicy = L1_CACHE_POLICY_WBP;
+        TheStructure.Common.L1CacheControlCachePolicy = L1_CACHE_CONTROL_WBP;
     }
     static tagSTATE_BASE_ADDRESS sInit() {
         STATE_BASE_ADDRESS state;
@@ -3077,11 +3077,11 @@ typedef struct tagSTATE_BASE_ADDRESS {
         uint32_t mocs = getStatelessDataPortAccessMemoryObjectControlStateEncryptedData();
         return (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables << 1) | mocs;
     }
-    inline void setL1CachePolicyL1CacheControl(const L1_CACHE_POLICY value) {
+    inline void setL1CacheControlCachePolicy(const L1_CACHE_CONTROL value) {
         TheStructure.Common.L1CacheControlCachePolicy = value;
     }
-    inline L1_CACHE_POLICY getL1CachePolicyL1CacheControl() const {
-        return static_cast<L1_CACHE_POLICY>(TheStructure.Common.L1CacheControlCachePolicy);
+    inline L1_CACHE_CONTROL getL1CacheControlCachePolicy() const {
+        return static_cast<L1_CACHE_CONTROL>(TheStructure.Common.L1CacheControlCachePolicy);
     }
     inline void setSurfaceStateBaseAddressModifyEnable(const bool value) {
         TheStructure.Common.SurfaceStateBaseAddressModifyEnable = value;

@@ -695,29 +695,29 @@ HWTEST2_F(ProductHelperTest, givenProductHelperAndDebugFlagWhenGetL1CachePolicyT
     DebugManagerStateRestore restorer;
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(0);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(2);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WB, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(3);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WT, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WS, productHelper->getL1CachePolicy(true));
 
     debugManager.flags.ForceAllResourcesUncached.set(true);
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_UC, productHelper->getL1CachePolicy(true));
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetL1CachePolicyThenReturnWriteByPass, IsAtLeastXeHpgCore) {
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, productHelper->getL1CachePolicy(false));
-    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, productHelper->getL1CachePolicy(true));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(false));
+    EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_CONTROL_WBP, productHelper->getL1CachePolicy(true));
 }
 
 HWTEST2_F(ProductHelperTest, givenPlatformWithUnsupportedL1CachePoliciesWhenGetL1CachePolicyThenReturnZero, IsAtMostXeHpCore) {
