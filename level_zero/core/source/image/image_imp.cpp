@@ -193,9 +193,6 @@ size_t ImageImp::getRowPitchFor2dImage(Device *device, const NEO::ImageInfo &img
     NEO::StorageInfo storageInfo = {};
     NEO::ImageInfo info = imgInfo;
 
-    NEO::GmmRequirements gmmRequirements{};
-    gmmRequirements.allowLargePages = true;
-
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
 
     NEO::Gmm gmm(deviceImp->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[deviceImp->getRootDeviceIndex()]->getGmmHelper(),

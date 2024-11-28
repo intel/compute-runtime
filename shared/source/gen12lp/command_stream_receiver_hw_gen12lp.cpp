@@ -76,7 +76,6 @@ void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAlloc
 
 template <>
 void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
-    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
     auto srcAddress = blitProperties.srcGpuAddress;
     auto dstAddress = blitProperties.dstGpuAddress;
 

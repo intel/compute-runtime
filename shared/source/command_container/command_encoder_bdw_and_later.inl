@@ -53,7 +53,6 @@ template <typename WalkerType>
 void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDispatchKernelArgs &args) {
 
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
-    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
     auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();

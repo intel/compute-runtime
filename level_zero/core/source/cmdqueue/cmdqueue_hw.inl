@@ -238,8 +238,6 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
                                                                                               ze_command_list_handle_t *commandListHandles,
                                                                                               bool instructionCacheFlushRequired,
                                                                                               bool stateCacheFlushRequired) {
-    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
     size_t linearStreamSizeEstimate = 0u;
     if (ctx.isDirectSubmissionEnabled) {
@@ -848,9 +846,6 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
     CommandListExecutionContext &ctx) {
-
-    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-    using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
     size_t linearStreamSizeEstimate = 0u;
 

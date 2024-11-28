@@ -50,7 +50,6 @@ template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredIOH(const Kernel &kernel,
                                                              const size_t localWorkSizes[3], const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto localWorkSize = Math::computeTotalElementsCount(localWorkSizes);
-    typedef typename GfxFamily::DefaultWalkerType DefaultWalkerType;
     const auto &kernelDescriptor = kernel.getDescriptor();
     const auto &hwInfo = kernel.getHardwareInfo();
 

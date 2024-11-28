@@ -26,7 +26,6 @@ namespace NEO {
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) {
-    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
@@ -217,7 +216,6 @@ void ImageHw<GfxFamily>::adjustDepthLimitations(RENDER_SURFACE_STATE *surfaceSta
 template <typename GfxFamily>
 inline void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
     using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
-    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
 
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
 
@@ -229,7 +227,6 @@ inline void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
 template <typename GfxFamily>
 inline void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlState(void *memory, uint32_t value) {
     using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
-    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
 
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
 

@@ -17,10 +17,6 @@ namespace NEO {
 
 template <typename GfxFamily>
 void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) {
-    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
-    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-
     const auto gmmHelper = device->getGmmHelper();
     const auto gpuAddress = gmmHelper->decanonize(sbaTrackingGpuVa.address);
     SbaAddresses sbaCanonized = sba;

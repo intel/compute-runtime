@@ -16,8 +16,6 @@ bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return t
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
-    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
-
     size_t size = 0;
     const auto &productHelper = getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {

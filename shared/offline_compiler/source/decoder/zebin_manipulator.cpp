@@ -167,8 +167,6 @@ template ErrorCode ZebinDecoder<Elf::EI_CLASS_64>::decode();
 template <Elf::ElfIdentifierClass numBits>
 ErrorCode ZebinDecoder<numBits>::decode() {
     auto zebinBinary = argHelper->readBinaryFile(this->arguments.binaryFile);
-    ArrayRef<const uint8_t> zebinBinaryRef = {reinterpret_cast<const uint8_t *>(zebinBinary.data()),
-                                              zebinBinary.size()};
 
     ElfT elf;
     ErrorCode retVal = decodeZebin(ArrayRef<const uint8_t>::fromAny(zebinBinary.data(), zebinBinary.size()), elf);

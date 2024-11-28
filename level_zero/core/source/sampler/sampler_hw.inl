@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,6 @@ void SamplerCoreFamily<gfxCoreFamily>::copySamplerStateToDSH(void *dynamicStateH
                                                              const uint32_t samplerOffset) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-    using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     auto destSamplerState = ptrOffset(dynamicStateHeap, samplerOffset);
     auto freeSpace = dynamicStateHeapSize - samplerOffset;

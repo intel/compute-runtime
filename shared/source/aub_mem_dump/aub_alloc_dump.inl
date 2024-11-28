@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -163,7 +163,6 @@ void dumpBufferInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFil
 
 template <typename GfxFamily>
 void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFileStream *stream, uint32_t context) {
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto gmm = gfxAllocation.getDefaultGmm();
     if ((gmm->gmmResourceInfo->getNumSamples() > 1) || (gfxAllocation.isCompressionEnabled())) {
         DEBUG_BREAK_IF(true); // unsupported

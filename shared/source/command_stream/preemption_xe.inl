@@ -12,7 +12,6 @@ void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCm
 template <>
 void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device, OsContext *context) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
 

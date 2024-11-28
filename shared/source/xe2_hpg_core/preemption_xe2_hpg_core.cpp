@@ -16,7 +16,6 @@ using GfxFamily = Xe2HpgCoreFamily;
 
 template <>
 void PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode) {
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     if (preemptionMode == PreemptionMode::MidThread) {
         idd->setThreadPreemption(true);
     } else {

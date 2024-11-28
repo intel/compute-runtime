@@ -41,7 +41,6 @@ void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream,
 
 template <typename GfxFamily>
 void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, OsContext *context) {
-    using STATE_SIP = typename GfxFamily::STATE_SIP;
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 

@@ -26,7 +26,6 @@ void HardwareInterface<Family>::dispatchWorkarounds(
     Kernel &kernel,
     const bool &enable) {
 
-    using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     if (kernel.requiresWaDisableRccRhwoOptimization()) {

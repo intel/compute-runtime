@@ -28,7 +28,6 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     StateBaseAddressHelperArgs<GfxFamily> &args) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     if (args.sbaProperties) {
         if (args.sbaProperties->indirectObjectBaseAddress.value != StreamProperty64::initValue) {
