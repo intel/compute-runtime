@@ -53,6 +53,9 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     RELEASE="${NEO_L0_VERSION_HOTFIX}${API_VERSION_SRC}${API_RPM_MODEL_LINK}"
 
     RELEASE_WITH_REGKEYS="${RELEASE_WITH_REGKEYS:-FALSE}"
+    NEO_ENABLE_I915_PRELIM_DETECTION="${NEO_ENABLE_I915_PRELIM_DETECTION:-FALSE}"
+    NEO_ENABLE_XE_PRELIM_DETECTION="${NEO_ENABLE_XE_PRELIM_DETECTION:-FALSE}"
+    NEO_ENABLE_XE_EU_DEBUG_SUPPORT="${NEO_ENABLE_XE_EU_DEBUG_SUPPORT:-FALSE}"
 
     #setup rpm build tree
     rm -rf $BUILD_DIR
@@ -76,6 +79,9 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $SPEC
+    perl -pi -e "s/^%global NEO_ENABLE_I915_PRELIM_DETECTION .*/%global NEO_ENABLE_I915_PRELIM_DETECTION ${NEO_ENABLE_I915_PRELIM_DETECTION}/" $SPEC
+    perl -pi -e "s/^%global NEO_ENABLE_XE_PRELIM_DETECTION .*/%global NEO_ENABLE_XE_PRELIM_DETECTION ${NEO_ENABLE_XE_PRELIM_DETECTION}/" $SPEC
+    perl -pi -e "s/^%global NEO_ENABLE_XE_EU_DEBUG_SUPPORT .*/%global NEO_ENABLE_XE_EU_DEBUG_SUPPORT ${NEO_ENABLE_XE_EU_DEBUG_SUPPORT}/" $SPEC
     perl -pi -e "s/^%global build_id .*/%global build_id ${NEO_L0_VERSION_PATCH}/" $SPEC
 
     rpmbuild --define "_topdir $BUILD_DIR" -bs $SPEC --define 'build_type ${CMAKE_BUILD_TYPE}' "${build_args[@]}"
