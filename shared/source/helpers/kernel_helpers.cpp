@@ -11,12 +11,10 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-
-#include <algorithm>
+#include "shared/source/program/sync_buffer_handler.h"
 
 namespace NEO {
 
@@ -123,6 +121,22 @@ bool KernelHelper::isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescrip
         }
     }
     return false;
+}
+
+std::pair<GraphicsAllocation *, size_t> KernelHelper::getRegionGroupBarrierAllocationOffset(Device &device, const size_t threadGroupCount, const size_t localRegionSize) {
+    device.allocateSyncBufferHandler();
+
+    size_t size = KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);
+
+    return device.syncBufferHandler->obtainAllocationAndOffset(size);
+}
+
+std::pair<GraphicsAllocation *, size_t> KernelHelper::getSyncBufferAllocationOffset(Device &device, const size_t requestedNumberOfWorkgroups) {
+    device.allocateSyncBufferHandler();
+
+    size_t requiredSize = KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
+
+    return device.syncBufferHandler->obtainAllocationAndOffset(requiredSize);
 }
 
 } // namespace NEO

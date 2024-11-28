@@ -7,14 +7,18 @@
 
 #pragma once
 
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
 namespace NEO {
 class Device;
+class GraphicsAllocation;
 struct RootDeviceEnvironment;
 
 struct KernelHelper {
@@ -39,6 +43,17 @@ struct KernelHelper {
     static ErrorCode checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device);
 
     static bool isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor);
+
+    static inline size_t getRegionGroupBarrierSize(const size_t threadGroupCount, const size_t localRegionSize) {
+        return alignUp((threadGroupCount / localRegionSize) * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
+    }
+
+    static std::pair<GraphicsAllocation *, size_t> getRegionGroupBarrierAllocationOffset(Device &device, const size_t threadGroupCount, const size_t localRegionSize);
+
+    static inline size_t getSyncBufferSize(const size_t requestedNumberOfWorkgroups) {
+        return alignUp(std::max(requestedNumberOfWorkgroups, static_cast<size_t>(CommonConstants::minimalSyncBufferSize)), static_cast<size_t>(CommonConstants::maximalSizeOfAtomicType));
+    }
+    static std::pair<GraphicsAllocation *, size_t> getSyncBufferAllocationOffset(Device &device, const size_t requestedNumberOfWorkgroups);
 };
 
 } // namespace NEO

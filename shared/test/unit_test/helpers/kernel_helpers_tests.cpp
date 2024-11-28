@@ -283,3 +283,34 @@ TEST_F(KernelHelperTest, GivenPtrByValueWhenCheckingIsAnyArgumentPtrByValueThenT
     kernelDescriptor.payloadMappings.explicitArgs.push_back(valueArg);
     EXPECT_TRUE(KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor));
 }
+
+TEST_F(KernelHelperTest, GivenThreadGroupCountWhenSyncBufferCreatedThenAllocationIsRetrieved) {
+    const size_t requestedNumberOfWorkgroups = 4;
+    auto offset = KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
+
+    auto pair = KernelHelper::getSyncBufferAllocationOffset(*pDevice, requestedNumberOfWorkgroups);
+    auto allocation = pair.first;
+
+    EXPECT_EQ(0u, pair.second);
+    EXPECT_NE(nullptr, allocation);
+
+    pair = KernelHelper::getSyncBufferAllocationOffset(*pDevice, requestedNumberOfWorkgroups);
+    EXPECT_EQ(offset, pair.second);
+    EXPECT_EQ(allocation, pair.first);
+}
+
+TEST_F(KernelHelperTest, GivenThreadGroupCountAndRegionSizeWhenRegionBarrierCreatedThenAllocationIsRetrieved) {
+    const size_t requestedNumberOfWorkgroups = 4;
+    const size_t localRegionSize = 2;
+    auto offset = KernelHelper::getRegionGroupBarrierSize(requestedNumberOfWorkgroups, localRegionSize);
+
+    auto pair = KernelHelper::getRegionGroupBarrierAllocationOffset(*pDevice, requestedNumberOfWorkgroups, localRegionSize);
+    auto allocation = pair.first;
+
+    EXPECT_EQ(0u, pair.second);
+    EXPECT_NE(nullptr, allocation);
+
+    pair = KernelHelper::getRegionGroupBarrierAllocationOffset(*pDevice, requestedNumberOfWorkgroups, localRegionSize);
+    EXPECT_EQ(offset, pair.second);
+    EXPECT_EQ(allocation, pair.first);
+}

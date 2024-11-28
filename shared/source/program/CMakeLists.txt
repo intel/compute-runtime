@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,7 +21,6 @@ set(NEO_CORE_PROGRAM
     ${CMAKE_CURRENT_SOURCE_DIR}/program_initialization.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sync_buffer_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sync_buffer_handler.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/sync_buffer_handler.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/work_size_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/work_size_info.h
 )

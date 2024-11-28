@@ -13,6 +13,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -20,7 +21,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/program/sync_buffer_handler.inl"
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -534,7 +534,8 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
         size_t workGroupsCount = (gws.x * gws.y * gws.z) /
                                  (lws.x * lws.y * lws.z);
-        device->getDevice().syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel());
+        auto patchData = KernelHelper::getSyncBufferAllocationOffset(device->getDevice(), workGroupsCount);
+        multiDispatchInfo.peekMainKernel()->patchSyncBuffer(patchData.first, patchData.second);
     }
 
     if (event && this->isProfilingEnabled()) {

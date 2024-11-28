@@ -36,7 +36,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/sync_buffer_handler.h"
-#include "shared/source/program/sync_buffer_handler.inl"
 #include "shared/source/utilities/software_tags_manager.h"
 
 #include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
@@ -2814,8 +2813,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    device.allocateSyncBufferHandler();
-    device.syncBufferHandler->prepareForEnqueue(requestedNumberOfWorkgroups, kernel);
+    auto patchData = NEO::KernelHelper::getSyncBufferAllocationOffset(device, requestedNumberOfWorkgroups);
+    kernel.patchSyncBuffer(patchData.first, patchData.second);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -2824,13 +2823,8 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize) {
     auto neoDevice = device->getNEODevice();
 
-    neoDevice->allocateSyncBufferHandler();
-
-    const size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
-
-    size_t size = alignUp((requestedNumberOfWorkgroups / localRegionSize) * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
-
-    auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(size);
+    auto threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
+    auto patchData = NEO::KernelHelper::getRegionGroupBarrierAllocationOffset(*neoDevice, threadGroupCount, localRegionSize);
 
     kernel.patchRegionGroupBarrier(patchData.first, patchData.second);
 }

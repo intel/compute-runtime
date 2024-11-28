@@ -25,8 +25,6 @@ class SyncBufferHandler : NonCopyableOrMovableClass {
 
     SyncBufferHandler(Device &device);
 
-    template <typename KernelT>
-    void prepareForEnqueue(size_t workGroupsCount, KernelT &kernel);
     void makeResident(CommandStreamReceiver &csr);
 
     std::pair<GraphicsAllocation *, size_t> obtainAllocationAndOffset(size_t requiredSize);
