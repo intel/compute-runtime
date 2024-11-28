@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,9 +49,6 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
   protected:
     template <typename FamilyType>
     void enqueueReadBufferRect2D(cl_bool blocking = CL_FALSE) {
-        typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
-        typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
         size_t bufferOrigin[] = {0, 0, 0};
         size_t hostOrigin[] = {0, 0, 0};
         size_t region[] = {50, 50, 1};

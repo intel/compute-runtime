@@ -65,7 +65,6 @@ HWTEST2_F(XeHPAndLaterBufferTests, givenBufferAllocationInDeviceMemoryWhenStatel
     debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     MockContext context;
     size_t size = 0x1000;

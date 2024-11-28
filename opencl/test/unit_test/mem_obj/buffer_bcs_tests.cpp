@@ -907,7 +907,6 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenStallingCommandsOnNextFlushWhenReleasing
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlockedBlitEnqueueThenWaitPipeControlOnBcsEngine) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     resetCopyEngineSelector();

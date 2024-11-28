@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,8 +138,6 @@ TEST(clGetPlatformIDsNegativeTests, whenFailToInitializePlatformThenClGetPlatfom
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
@@ -164,8 +162,6 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebug
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
@@ -190,8 +186,6 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebugg
 TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
@@ -216,8 +210,6 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingW
 TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
@@ -242,8 +234,6 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWi
 TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndZeroProgramDebuggingWhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "0"}};

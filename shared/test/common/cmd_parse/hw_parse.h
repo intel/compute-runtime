@@ -195,7 +195,6 @@ struct HardwareParse {
     template <typename FamilyType>
     uint32_t getCommandWalkerCount() {
 
-        using WalkerType = typename FamilyType::DefaultWalkerType;
         GenCmdList::iterator cmdItor = cmdList.begin();
         uint32_t cmdCount = 0;
 

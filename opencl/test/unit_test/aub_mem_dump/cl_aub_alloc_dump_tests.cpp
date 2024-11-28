@@ -209,7 +209,6 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     EXPECT_EQ(0x2eu, cmd.instructionOpcode);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     EXPECT_EQ(gfxAllocation->getGpuAddress(), cmd.getSurfaceAddress());
     auto gmm = gfxAllocation->getDefaultGmm();
     EXPECT_EQ(static_cast<uint32_t>(gmm->gmmResourceInfo->getBaseWidth()), cmd.surfaceWidth);

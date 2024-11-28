@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,9 +72,6 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
   protected:
     template <typename FamilyType>
     void enqueueCopyBufferRect2D() {
-        typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
-        typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
         size_t srcOrigin[] = {0, 0, 0};
         size_t dstOrigin[] = {0, 0, 0};
         size_t region[] = {50, 50, 1};
@@ -99,9 +96,6 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
 
     template <typename FamilyType>
     void enqueueCopyBufferRect3D() {
-        typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
-        typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
         size_t srcOrigin[] = {0, 0, 0};
         size_t dstOrigin[] = {0, 0, 0};
         size_t region[] = {50, 50, 50};

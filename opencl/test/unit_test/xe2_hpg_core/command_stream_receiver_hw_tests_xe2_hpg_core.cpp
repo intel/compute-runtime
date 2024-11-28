@@ -592,7 +592,6 @@ XE2_HPG_CORETEST_F(Xe2MidThreadCommandStreamReceiverTest, givenMidThreadPreempti
 
 using Xe2CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
-    using STATE_COMPUTE_MODE = typename Xe2HpgCoreFamily::STATE_COMPUTE_MODE;
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -606,7 +605,6 @@ XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenOverrideThreadAr
 }
 
 XE2_HPG_CORETEST_F(Xe2CommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed) {
-    using STATE_COMPUTE_MODE = typename Xe2HpgCoreFamily::STATE_COMPUTE_MODE;
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
 

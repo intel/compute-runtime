@@ -57,9 +57,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
     debugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     debugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);

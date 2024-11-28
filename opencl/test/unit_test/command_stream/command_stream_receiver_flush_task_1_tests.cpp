@@ -612,7 +612,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDebugVariableSetWhenProgrammi
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequiredThenThereIsPipeControlPriorToItWithTextureCacheFlush) {
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     if (commandStreamReceiver.heaplessStateInitialized) {
         GTEST_SKIP();
@@ -879,7 +878,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockingWhenFlushingTaskThenP
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockingWithNoPreviousDependenciesWhenFlushingTaskThenTaskLevelIsIncremented) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     taskLevel = 5;
     commandStreamReceiver.taskLevel = 6;
@@ -892,7 +890,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockingWithNoPreviousDepende
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingWithNoPreviousDependenciesWhenFlushingTaskThenTaskLevelIsNotIncremented) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     taskLevel = 5;
     commandStreamReceiver.taskLevel = 6;
@@ -984,9 +981,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAn
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenEnoughMemoryOnlyForPreambleAndSbaAndPipeControlWhenFlushingTaskThenOnlyAvailableMemoryIsUsed) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     commandStream.getSpace(sizeof(PIPE_CONTROL));
 

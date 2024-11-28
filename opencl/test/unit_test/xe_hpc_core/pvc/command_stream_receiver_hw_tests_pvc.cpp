@@ -39,7 +39,6 @@ using namespace NEO;
 
 using PvcCommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetForPvcWhenFlushingThenRequestRequiredMode) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -53,7 +52,6 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitration
 }
 
 PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushingThenDefaultPolicyIsProgrammed) {
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
 

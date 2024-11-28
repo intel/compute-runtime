@@ -339,7 +339,6 @@ class KernelImageArgTestBindless : public KernelImageArgTest {
 };
 
 HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArgThenOffsetInCrossThreadDataIsNotPatched) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
     *patchLocation = 0xdead;
 
@@ -350,8 +349,6 @@ HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArg
 }
 
 HWTEST_F(KernelImageArgTestBindless, givenUsedBindlessImagesWhenSettingKernelArgThenSurfaceStateIsSet) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
-
     cl_mem memObj = image.get();
     pKernel->setArg(0, sizeof(memObj), &memObj);
 

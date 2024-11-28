@@ -32,7 +32,6 @@ struct ProfilingTestsGen12LP : public CommandEnqueueFixture,
 
 GEN12LPTEST_F(ProfilingTestsGen12LP, GivenCommandQueueWithProflingWhenWalkerIsDispatchedThenTwoPIPECONTROLSWithOPERATION_WRITE_TIMESTAMPArePresentInCS) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};

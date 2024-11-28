@@ -137,7 +137,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingTests, GivenCommandQueueWithProfilingAnd
 HWTEST_F(ProfilingTests, GivenCommandQueueWithProfilingAndForWorkloadWithNoKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
 
     uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM);
 
@@ -924,7 +923,6 @@ struct ProfilingWithPerfCountersOnCCSTests : ProfilingWithPerfCountersTests {
 HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCounterAndForWorkloadWithNoKernelWhenGetCSFromCmdQueueThenEnoughSpaceInCS) {
     typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::DefaultWalkerType GPGPU_WALKER;
 
     pCmdQ->setPerfCountersEnabled();
 

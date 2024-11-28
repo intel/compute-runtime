@@ -648,7 +648,6 @@ HWTEST2_F(XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqu
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocalIdsGenerationEnabledWhenDispatchMeetCriteriaThenExpectNoLocalIdsAndProperIsaAddress) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     debugManager.flags.EnableHwGenerationLocalIds.set(1);
@@ -1191,8 +1190,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsRequiredWhenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
     debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
     UltClDeviceFactory deviceFactory{1, 2};
@@ -1252,8 +1249,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsNotRequiredWhenWalkerPartitionIsOnThenSizeIsProperlyEstimated) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
     debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
     UltClDeviceFactory deviceFactory{1, 2};
@@ -1347,8 +1342,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsRequiredWhenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
     debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
@@ -1380,8 +1373,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeControlIsNotRequiredWhenQueueIsMultiEngineCapableThenWalkerPartitionsAreEstimated) {
-    using WalkerType = typename FamilyType::DefaultWalkerType;
-
     debugManager.flags.EnableWalkerPartition.set(1u);
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 

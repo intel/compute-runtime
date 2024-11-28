@@ -1874,13 +1874,10 @@ TEST_F(CsrSelectionCommandQueueWithoutBlitterTests, givenBlitterNotPresentWhenSe
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
@@ -1912,13 +1909,10 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentButDisabledW
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
@@ -1954,13 +1948,10 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLo
     const bool hwPreference = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
     const auto &hwPreferenceCsr = hwPreference ? *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS) : queue->getGpgpuCommandStreamReceiver();
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
@@ -1980,13 +1971,10 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndNotLocalT
 
     const auto &bcsCsr = *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
@@ -2027,13 +2015,10 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenInvalidTransferDirectionWh
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
     args.direction = static_cast<TransferDirection>(0xFF); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
@@ -2045,13 +2030,10 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndAssignBCSAtEnque
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     debugManager.flags.AssignBCSAtEnqueue.set(0);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
     args.direction = TransferDirection::localToHost;
@@ -2064,13 +2046,10 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndAssignBCSAtEnque
 TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelectedWithQueueFamiliesWhenSelectingBlitterThenSelectBlitter) {
     DebugManagerStateRestore restore{};
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
@@ -2102,13 +2081,10 @@ TEST_F(CsrSelectionCommandQueueWithQueueFamiliesBlitterTests, givenBlitterSelect
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     {
         srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;

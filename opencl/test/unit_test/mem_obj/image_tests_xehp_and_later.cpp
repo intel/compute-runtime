@@ -75,7 +75,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterImageTests, givenCompressionEnabledWhen
 }
 
 HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferThenTwoIsSetAsCompressionFormat, IsXeHpcCore) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
 
     uint32_t compressionFormat = context.getDevice(0)->getGmmHelper()->getClientContext()->getSurfaceStateCompressionFormat(GMM_RESOURCE_FORMAT::GMM_FORMAT_GENERIC_8BIT);
@@ -116,7 +115,6 @@ HWTEST2_F(XeHPAndLaterImageTests, givenCompressionWhenAppendingImageFromBufferTh
 }
 
 HWTEST2_F(XeHPAndLaterImageTests, givenImageFromBufferWhenSettingSurfaceStateThenPickCompressionFormatFromDebugVariable, IsXeHpcCore) {
-    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     DebugManagerStateRestore restorer;
 
     uint32_t bufferCompressionFormat = 3;
@@ -170,7 +168,6 @@ struct CompressionParamsSupportedMatcher {
 HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapabilityAndMCSThenProgramAuxFieldsForCcs, CompressionParamsSupportedMatcher) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
     MockContext context;
     McsSurfaceInfo msi = {10, 20, 3};

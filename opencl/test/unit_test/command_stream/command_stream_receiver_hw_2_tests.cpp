@@ -389,7 +389,6 @@ HWTEST_F(BcsTests, givenDebugFlagSetToForceTlbAfterCopyWhenDispatchingThenFlushT
     debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.set(1);
 
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -431,8 +430,6 @@ HWTEST_F(BcsTests, givenDebugFlagSetToForceTlbAfterCopyWhenDispatchingThenFlushT
 }
 
 HWTEST_F(BcsTests, givenDebugFlagSetWhenAskingForStreamSizeThenAddMiFlushDw) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     DispatchBcsFlags flags(false, false, false);

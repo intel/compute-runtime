@@ -302,8 +302,6 @@ struct CrossDeviceDependenciesTests : public ::testing::Test {
 };
 
 HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnvironmentWhenTheyArePassedToMarkerThenMiSemaphoreWaitCommandSizeIsIncluded) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
     Event event1(pCmdQ1, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
     event1.getMultiRootTimestampSyncNode();
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, 6, 16);

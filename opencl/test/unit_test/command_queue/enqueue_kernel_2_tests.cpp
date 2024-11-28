@@ -536,8 +536,6 @@ TestParam testParamPrintf[] = {
 typedef EnqueueKernelTypeTest<TestParam> EnqueueKernelPrintfTest;
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossThreadData) {
-    typedef typename FamilyType::Parse Parse;
-
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.crossThreadData[64] = 0;
     mockKernel.kernelInfo.setPrintfSurface(sizeof(uintptr_t), 64);
@@ -548,8 +546,6 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfThenPatchCrossThreadData)
 }
 
 HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3CacheIsFlushed) {
-    typedef typename FamilyType::Parse Parse;
-
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
     MockKernelWithInternals mockKernel(*pClDevice);
@@ -590,8 +586,6 @@ HWTEST_P(EnqueueKernelPrintfTest, GivenKernelWithPrintfWhenBeingDispatchedThenL3
 }
 
 HWCMDTEST_P(IGFX_GEN12LP_CORE, EnqueueKernelPrintfTest, GivenKernelWithPrintfBlockedByEventWhenEventUnblockedThenL3CacheIsFlushed) {
-    typedef typename FamilyType::Parse Parse;
-
     UserEvent userEvent(context);
     MockCommandQueueHw<FamilyType> mockCommandQueue(context, pClDevice, nullptr);
 
@@ -1134,7 +1128,6 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDependenciesThenUseConditionalBbStarts, IsAtLeastXeHpcCore) {
     debugManager.flags.OptimizeIoqBarriersHandling.set(0);
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
-    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);

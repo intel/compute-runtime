@@ -99,7 +99,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -129,7 +128,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTaskStreamWhenFlushingThenSto
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndTwoRecordedCommandBuffersWhenFlushTaskIsCalledThenBatchBuffersAreCombined) {
 
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
@@ -201,7 +199,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushSmallTaskThenCommandStrea
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeRecordedCommandBuffersWhenFlushTaskIsCalledThenBatchBuffersAreCombined) {
 
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
@@ -334,7 +331,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTaskIsCalledTwiceThenNothingIsSubmittedToTheHwAndTwoSubmissionAreRecorded) {
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -1672,7 +1668,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToLowWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -1705,7 +1700,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToMediumWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -1755,7 +1749,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandQueueWithThrottleHintW
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToHighWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
-    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
 

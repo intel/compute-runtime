@@ -147,9 +147,6 @@ HWTEST_F(BufferSetArgTest, givenSetKernelArgOnReadOnlyBufferThatIsMisalingedWhen
 }
 
 HWTEST_F(BufferSetArgTest, givenSetArgBufferWithNullArgStatelessThenDontProgramNullSurfaceState) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
-
     char sshOriginal[sizeof(surfaceStateHeap)];
     memcpy(sshOriginal, surfaceStateHeap, sizeof(surfaceStateHeap));
 

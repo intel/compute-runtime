@@ -608,13 +608,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesWhe
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
     constexpr auto linkBcsIndex = 5;
@@ -657,13 +654,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithForceBcsEngineIn
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS5;
     constexpr auto linkBcsIndex = 5;
@@ -706,13 +700,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenBcsSelectedWithQueueFamiliesAnd
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
     constexpr auto linkBcsIndex = 5;
@@ -756,13 +747,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenOneBcsEngineInQueueWhenSelectin
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
 
     constexpr auto linkBcsType = aub_stream::ENGINE_BCS6;
     auto queue = createQueueWithEngines({linkBcsType});
@@ -803,13 +791,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
     srcGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
@@ -853,13 +838,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
     srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
@@ -898,13 +880,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenHighPriorityQueueAndNoHpCopyEng
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
     srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
@@ -968,13 +947,10 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndHpQueueWhenSelec
         GTEST_SKIP();
     }
 
-    BuiltinOpParams builtinOpParams{};
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
     MockBuffer srcMemObj{srcGraphicsAllocation};
     MockBuffer dstMemObj{dstGraphicsAllocation};
-    builtinOpParams.srcMemObj = &srcMemObj;
-    builtinOpParams.dstMemObj = &dstMemObj;
     srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
@@ -1008,7 +984,6 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenContextGroupAndHpQueueWhenSelec
 }
 
 HWTEST2_F(OoqCommandQueueHwBlitTest, givenBarrierBeforeFirstKernelWhenEnqueueNDRangeThenProgramBarrierBeforeGlobalAllocation, IsPVC) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 

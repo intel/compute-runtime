@@ -667,7 +667,6 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
 typedef Test<KernelArgBufferFixtureBindless> KernelArgBufferTestBindless;
 
 HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenSettingKernelArgThenOffsetInCrossThreadDataIsNotPatched) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
     *patchLocation = 0xdead;
 
@@ -678,8 +677,6 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenSettingKernelA
 }
 
 HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferWhenSettingKernelArgThenSurfaceStateIsEncodedAtProperOffset) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
-
     const auto &gfxCoreHelper = pKernel->getGfxCoreHelper();
     const auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     const auto surfaceStateHeapSize = pKernel->getSurfaceStateHeapSize();
@@ -701,8 +698,6 @@ HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferWhenSettingKernelArg
 }
 
 HWTEST_F(KernelArgBufferTestBindless, givenBindlessArgBufferAndNotInitializedBindlessOffsetToSurfaceStateWhenSettingKernelArgThenSurfaceStateIsNotEncoded) {
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
-
     const auto surfaceStateHeap = pKernel->getSurfaceStateHeap();
     const auto surfaceStateHeapSize = pKernel->getSurfaceStateHeapSize();
 
@@ -722,7 +717,6 @@ HWTEST_F(KernelArgBufferTestBindless, givenBindlessBuffersWhenPatchBindlessOffse
     pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice,
                                                                                                                              pClDevice->getNumGenericSubDevices() > 1);
 
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), bindlessOffset));
     *patchLocation = 0xdead;
 

@@ -1283,7 +1283,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCo
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsNotTakenThenTimeStampAddressIsProgrammedCorrectly) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto &cmdStream = pCmdQ->getCS(0);
     MockTagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10,
