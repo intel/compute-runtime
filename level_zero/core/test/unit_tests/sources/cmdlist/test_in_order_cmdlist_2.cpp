@@ -172,12 +172,18 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
     EXPECT_FALSE(immCmdList->isCopyOnly(false));
     EXPECT_TRUE(immCmdList->isCopyOnly(true));
 
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto initialMainTaskCount = mainQueueCsr->taskCount.load();
+    auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
 
     {
         auto offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -186,13 +192,16 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_NE(cmdList.end(), copyItor);
+
+        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 1, copyQueueCsr->taskCount);
     }
 
     {
         auto offset = cmdStream->getUsed();
 
         ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-        immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -201,6 +210,9 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledWhenProgrammingHwCmdsT
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), copyItor);
+
+        EXPECT_EQ(initialMainTaskCount, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount + 2, copyQueueCsr->taskCount);
     }
 }
 
@@ -217,10 +229,16 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
     void *deviceMem = nullptr;
     EXPECT_EQ(ZE_RESULT_SUCCESS, context->allocDeviceMem(device->toHandle(), &deviceDesc, 1, 1, &deviceMem));
 
+    auto mainQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(false));
+    auto copyQueueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(immCmdList->getCsr(true));
+
+    auto initialMainTaskCount = mainQueueCsr->taskCount.load();
+    auto initialCopyTaskCount = copyQueueCsr->taskCount.load();
+
     {
         auto offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(deviceMem, deviceMem, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(deviceMem, deviceMem, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -229,13 +247,16 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(cmdList.end(), copyItor);
+
+        EXPECT_EQ(initialMainTaskCount + 1, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
     }
 
     {
         auto offset = cmdStream->getUsed();
 
         ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-        immCmdList->appendMemoryCopyRegion(deviceMem, &region, 1, 1, deviceMem, &region, 1, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopyRegion(deviceMem, &region, 1, 1, deviceMem, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
@@ -244,6 +265,9 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOffloadEnabledAndD2DAllocWhenProgram
 
         auto copyItor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
         EXPECT_EQ(cmdList.end(), copyItor);
+
+        EXPECT_EQ(initialMainTaskCount + 2, mainQueueCsr->taskCount);
+        EXPECT_EQ(initialCopyTaskCount, copyQueueCsr->taskCount);
     }
 
     context->freeMem(deviceMem);
@@ -263,10 +287,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWhenAppendingThenUseBcsCom
 
     auto eventHandle = events[0]->toHandle();
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, copyParams);
 
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, copyParams);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -329,10 +353,10 @@ HWTEST2_F(CopyOffloadInOrderTests, givenProfilingEventWithRelaxedOrderingWhenApp
 
     auto eventHandle = events[0]->toHandle();
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, eventHandle, 0, nullptr, copyParams);
 
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopyRegion(&copyData1, &region, 1, 1, &copyData2, &region, 1, 1, eventHandle, 0, nullptr, copyParams);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -379,7 +403,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         size_t offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -408,7 +432,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         size_t offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -437,7 +461,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenAtomicSignalingModeWhenUpdatingCounterTh
 
         size_t offset = cmdStream->getUsed();
 
-        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+        immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
 
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -493,7 +517,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDeviceToHostCopyWhenProgrammingThenAddFe
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
     size_t offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopyRegion(hostBuffer, &dstRegion, 1, 1, deviceBuffer, &srcRegion, 1, 1, hostVisibleEvent->toHandle(), 0, nullptr, copyParams);
 
     bool expected = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
 
@@ -538,7 +562,7 @@ HWTEST2_F(CopyOffloadInOrderTests, whenDispatchingSelectCorrectQueueAndCsr, IsAt
     EXPECT_EQ(regularCsr, events[0]->csrs[0]);
     EXPECT_EQ(immCmdList->cmdQImmediate, events[0]->latestUsedCmdQueue);
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, copyParams);
     expectedCopyCsrTaskCount++;
     expectedCopyOffloadTaskCount = expectedCopyCsrTaskCount;
 
@@ -571,7 +595,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenCopyOperationWithHostVisibleEventThenMar
 
     EXPECT_TRUE(immCmdList->latestFlushIsHostVisible);
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, hostVisibleEvent.get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, hostVisibleEvent.get(), 0, nullptr, copyParams);
 
     EXPECT_EQ(!immCmdList->dcFlushSupport, immCmdList->latestFlushIsHostVisible);
 }
@@ -616,7 +640,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_TRUE(immCmdList->latestRelaxedOrderingMode);
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
     EXPECT_FALSE(immCmdList->latestRelaxedOrderingMode);
 
     // offload CSR
@@ -631,7 +655,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_FALSE(immCmdList->latestRelaxedOrderingMode);
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(immCmdList->latestRelaxedOrderingMode);
 }
 
@@ -687,7 +711,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
     EXPECT_EQ(1u, mainQueueCsr->checkGpuHangDetectedCalled);
     EXPECT_EQ(0u, offloadCsr->checkGpuHangDetectedCalled);
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, copyParams);
 
     EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
@@ -743,7 +767,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAlloc
     EXPECT_EQ(1u, mainQueueCsr->downloadAllocationsCalledCount);
     EXPECT_EQ(1u, offloadCsr->downloadAllocationsCalledCount);
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, copyParams);
 
     immCmdList->hostSynchronize(0, false);
 
@@ -784,7 +808,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0].get(), 0, nullptr, copyParams);
 
     immCmdList->hostSynchronize(0, true);
     EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
@@ -828,7 +852,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
     EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
 
     EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
     EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty()); // temp allocation created on offload csr
@@ -840,7 +864,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
     EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
 
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
     EXPECT_FALSE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
 
@@ -874,7 +898,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramU
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     auto offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0]->toHandle(), 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData1, &copyData2, 1, events[0]->toHandle(), 0, nullptr, copyParams);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
@@ -914,7 +938,7 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
 
     uint32_t copyData = 0;
 
-    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
 
     EXPECT_EQ(1u, regularCmdList->inOrderPatchCmds.size()); // SDI
 
@@ -935,7 +959,7 @@ HWTEST2_F(InOrderRegularCmdListTests, whenUsingRegularCmdListThenAddCmdsToPatch,
     }
 
     offset = cmdStream->getUsed();
-    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(3u, regularCmdList->inOrderPatchCmds.size()); // SDI + Semaphore/2xLRI + SDI
 
     MI_SEMAPHORE_WAIT *semaphoreFromParser2 = nullptr;
@@ -1211,7 +1235,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenDebugFlagSetWhenUsingRegularCmdListTh
 
     uint32_t copyData = 0;
 
-    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, false, false);
+    regularCmdList->appendMemoryCopy(&copyData, &copyData, 1, nullptr, 0, nullptr, copyParams);
 
     EXPECT_EQ(0u, regularCmdList->inOrderPatchCmds.size());
 }
@@ -1401,7 +1425,7 @@ HWTEST2_F(InOrderRegularCmdListTests, givenInOrderModeWhenDispatchingRegularCmdL
 
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
 
-    regularCmdList->appendMemoryCopyRegion(data, &region, 1, 1, data, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    regularCmdList->appendMemoryCopyRegion(data, &region, 1, 1, data, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
     regularCmdList->appendMemoryFill(data, data, 1, size, nullptr, 0, nullptr, false);
 
@@ -1450,7 +1474,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
 
     auto alignedPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
 
-    regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false, false);
+    regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, copyParams);
 
     {
         GenCmdList cmdList;
@@ -1475,7 +1499,7 @@ HWTEST2_F(InOrderRegularCopyOnlyCmdListTests, givenInOrderModeWhenDispatchingReg
 
     offset = cmdStream->getUsed();
 
-    regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false, false);
+    regularCmdList->appendMemoryCopy(alignedPtr, alignedPtr, MemoryConstants::cacheLineSize, nullptr, 0, nullptr, copyParams);
 
     {
         GenCmdList cmdList;
@@ -2262,12 +2286,14 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
-    immCmdList->appendMemoryCopy(alloc, alloc, 1, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+
+    immCmdList->appendMemoryCopy(alloc, alloc, 1, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
     ze_copy_region_t region = {0, 0, 0, 1, 1, 1};
-    immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, nullptr, 0, nullptr, copyParams);
     EXPECT_TRUE(verifyTokenCheck(1));
 
     offset = cmdStream->getUsed();
@@ -2611,8 +2637,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventAndKernelSplitWhenCa
 
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
-    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eHandle1, 0, nullptr, false, false);
-    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 1, &eHandle2, false, false);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, eHandle1, 0, nullptr, copyParams);
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - offset, nullptr, 1, &eHandle2, copyParams);
 
     alignedFree(alignedPtr);
     zeEventDestroy(eHandle1);
@@ -3407,7 +3433,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
 
     EXPECT_TRUE(verifySplit(0));
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     EXPECT_TRUE(verifySplit(1));
 
@@ -3457,7 +3483,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     // no implicit dependencies
     verifySplitCmds<FamilyType, gfxCoreFamily>(*cmdStream, offset, device, 0, *immCmdList, 0);
@@ -3474,13 +3500,13 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
     immCmdList->getCsr(false)->getNextBarrierCount();
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     size_t offset = cmdStream->getUsed();
 
     *immCmdList->getCsr(false)->getBarrierCountTagAddress() = 0u;
     immCmdList->getCsr(false)->getNextBarrierCount();
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     // implicit dependencies
     verifySplitCmds<FamilyType, gfxCoreFamily>(*cmdStream, offset, device, 1, *immCmdList, 0);
@@ -3498,11 +3524,11 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenAppendingMemoryCo
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     auto eventHandle = events[0]->toHandle();
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
     size_t offset = cmdStream->getUsed();
 
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 1, &eventHandle, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 1, &eventHandle, copyParams);
 
     verifySplitCmds<FamilyType, gfxCoreFamily>(*cmdStream, offset, device, 1, *immCmdList, events[0]->getCompletionFieldGpuAddress(device));
 }
@@ -3522,7 +3548,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 
     ze_copy_region_t region = {0, 0, 0, copySize, 1, 1};
 
-    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
     EXPECT_TRUE(verifySplit(1));
 
@@ -3558,7 +3584,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
     uint32_t copyData[64] = {};
 
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
-    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, eventHandle, 0, nullptr, false, false);
+    immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, eventHandle, 0, nullptr, copyParams);
 
     if (immCmdList->getDcFlushRequired(true)) {
         EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);

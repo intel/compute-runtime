@@ -4714,7 +4714,8 @@ HWTEST2_F(EventTimestampTest, givenAppendMemoryCopyIsCalledWhenCpuCopyIsUsedAndC
     ze_device_mem_alloc_desc_t deviceDesc = {};
     void *devicePtr;
     context->allocDeviceMem(device->toHandle(), &deviceDesc, copySize, 1u, &devicePtr);
-    cmdList.appendMemoryCopy(devicePtr, hostPtr, copySize, event->toHandle(), 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    cmdList.appendMemoryCopy(devicePtr, hostPtr, copySize, event->toHandle(), 0, nullptr, copyParams);
 
     ze_kernel_timestamp_result_t result = {};
     event->queryKernelTimestamp(&result);

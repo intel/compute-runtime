@@ -416,5 +416,13 @@ struct CommandListScratchPatchFixture : public CommandListScratchPatchFixtureIni
     }
 };
 
+struct CommandListCreateFixture : public DeviceFixture {
+    CmdListMemoryCopyParams copyParams = {};
+};
+
+struct AppendMemoryCopyFixture : public DeviceFixture {
+    CmdListMemoryCopyParams copyParams = {};
+};
+
 } // namespace ult
 } // namespace L0

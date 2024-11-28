@@ -77,7 +77,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                  size_t size,
                                  ze_event_handle_t hSignalEvent,
                                  uint32_t numWaitEvents,
-                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) override;
+                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                        const ze_copy_region_t *dstRegion,
@@ -89,7 +89,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                        uint32_t srcSlicePitch,
                                        ze_event_handle_t hSignalEvent,
                                        uint32_t numWaitEvents,
-                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) override;
+                                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
 
     ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                  size_t patternSize, size_t size,

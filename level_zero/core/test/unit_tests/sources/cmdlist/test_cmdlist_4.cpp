@@ -31,10 +31,8 @@
 
 namespace L0 {
 namespace ult {
-
-using CommandListCreate = Test<DeviceFixture>;
-
-HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, MatchAny) {
+using CommandListCreateTests = Test<CommandListCreateFixture>;
+HWTEST2_F(CommandListCreateTests, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, MatchAny) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
@@ -76,7 +74,7 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimest
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
@@ -110,7 +108,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     EXPECT_TRUE(foundTimestampPipeControl);
 }
 
-HWTEST2_F(CommandListCreate, givenMovedDstptrWhenAppendWriteGlobalTimestampCalledThenPipeControlWithProperTimestampEncoded, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenMovedDstptrWhenAppendWriteGlobalTimestampCalledThenPipeControlWithProperTimestampEncoded, MatchAny) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     ze_result_t returnValue;
@@ -144,7 +142,7 @@ HWTEST2_F(CommandListCreate, givenMovedDstptrWhenAppendWriteGlobalTimestampCalle
     EXPECT_TRUE(foundTimestampPipeControl);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenAppendWriteGlobalTimestampCalledThenTimestampAllocationIsInsideResidencyContainer, MatchAny) {
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     uint64_t timestampAddress = 0x123456785500;
@@ -159,7 +157,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     EXPECT_TRUE(addressIsInContainer);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenImmediateCommandListWhenAppendWriteGlobalTimestampThenReturnsSuccess, MatchAny) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
@@ -183,7 +181,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimes
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
     const ze_command_queue_desc_t queueDesc = {};
@@ -226,7 +224,7 @@ HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmedia
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionDisabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
+HWTEST2_F(CommandListCreateTests, givenUseCsrImmediateSubmissionDisabledForCopyImmediateCommandListThenAppendImageCopyRegionReturnsSuccess, IsAtLeastXeHpCore) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(false);
 
@@ -271,7 +269,7 @@ HWTEST2_F(CommandListCreate, givenUseCsrImmediateSubmissionDisabledForCopyImmedi
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendMemoryCopyRegionReturnsSuccess) {
+HWTEST_F(CommandListCreateTests, givenUseCsrImmediateSubmissionEnabledForCopyImmediateCommandListThenAppendMemoryCopyRegionReturnsSuccess) {
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -285,8 +283,8 @@ HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediat
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue);
-
-    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryCopyRegion(dstPtr, &dr, 0, 0, srcPtr, &sr, 0, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     commandList->destroy();
@@ -757,7 +755,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     context->destroy();
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -786,7 +784,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenI
     EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsThenIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsThenIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -828,7 +826,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
-HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsWithTrackDependenciesSetToFalseThenDoNotIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsWithTrackDependenciesSetToFalseThenDoNotIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
     ze_command_queue_desc_t queueDesc = {};
@@ -856,7 +854,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEvents
     EXPECT_EQ(whiteBoxCmdList->getCsr(false)->getNextBarrierCount(), 1u);
 }
 
-HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded) {
+HWTEST_F(CommandListCreateTests, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
@@ -866,7 +864,8 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded)
 
     void *srcPtr = reinterpret_cast<void *>(0x4321);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 2 * MemoryConstants::cacheLineSize, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 2 * MemoryConstants::cacheLineSize, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     GenCmdList cmdList;
 
@@ -880,7 +879,7 @@ HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenSingleCopyAdded)
     EXPECT_EQ(cmdList.end(), itor);
 }
 
-HWTEST2_F(CommandListCreate, whenCommandListIsCreatedThenFlagsAreCorrectlySet, MatchAny) {
+HWTEST2_F(CommandListCreateTests, whenCommandListIsCreatedThenFlagsAreCorrectlySet, MatchAny) {
     ze_command_list_flags_t flags[] = {0b0, 0b1, 0b10, 0b11};
 
     ze_result_t returnValue;
@@ -1183,7 +1182,7 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPoin
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed, MatchAny) {
+HWTEST2_F(CommandListCreateTests, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed, MatchAny) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(0);
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset();
@@ -1382,8 +1381,8 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingCopy
 
     void *srcPtr = reinterpret_cast<void *>(0x12000);
     void *dstPtr = reinterpret_cast<void *>(0x23000);
-
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_FALSE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
@@ -1404,14 +1403,14 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
 
     void *srcPtr = reinterpret_cast<void *>(0x12000);
     void *dstPtr = reinterpret_cast<void *>(0x23000);
-
-    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    returnValue = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
 }
 
-HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForInternalUsageThenInternalEngineGroupIsUsed) {
+HWTEST_F(CommandListCreateTests, givenDeviceWhenCreatingCommandListForInternalUsageThenInternalEngineGroupIsUsed) {
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     reinterpret_cast<L0::DeviceImp *>(device)->createInternalCommandList(&desc, &commandList);
@@ -1420,7 +1419,7 @@ HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForInternalUsageTh
     whiteboxCommandList->destroy();
 }
 
-HWTEST_F(CommandListCreate, givenDeviceWhenCreatingCommandListForNotInternalUsageThenInternalEngineGroupIsNotUsed) {
+HWTEST_F(CommandListCreateTests, givenDeviceWhenCreatingCommandListForNotInternalUsageThenInternalEngineGroupIsNotUsed) {
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     device->createCommandList(&desc, &commandList);

@@ -253,6 +253,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};
+    CmdListMemoryCopyParams copyParams = {};
 };
 
 template <typename GfxFamily>

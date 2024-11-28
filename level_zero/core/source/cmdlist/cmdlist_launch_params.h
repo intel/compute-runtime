@@ -74,4 +74,10 @@ struct CmdListKernelLaunchParams {
     bool omitAddingWaitEventsResidency = false;
     bool makeKernelCommandView = false;
 };
+
+struct CmdListMemoryCopyParams {
+    bool relaxedOrderingDispatch = false;
+    bool forceDisableCopyOnlyInOrderSignaling = false;
+    bool copyOffloadAllowed = false;
+};
 } // namespace L0

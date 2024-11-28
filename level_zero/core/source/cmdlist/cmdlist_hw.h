@@ -137,7 +137,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                 ze_memory_advice_t advice) override;
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) override;
+                                 ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstAllocation,
                                     NEO::GraphicsAllocation *srcAllocation,
                                     size_t size,
@@ -152,7 +152,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                        uint32_t srcSlicePitch,
                                        ze_event_handle_t hSignalEvent,
                                        uint32_t numWaitEvents,
-                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) override;
+                                       ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;
     ze_result_t appendMemoryPrefetch(const void *ptr, size_t count) override;
     ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                  size_t patternSize, size_t size,

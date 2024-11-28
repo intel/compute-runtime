@@ -607,7 +607,8 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
     auto prefetchManager = static_cast<MockPrefetchManager *>(memoryManager->prefetchManager.get());
     EXPECT_EQ(2u, commandList->getPrefetchContext().allocations.size());
 
-    result = commandList->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    result = commandList->appendMemoryCopy(dstPtr, srcPtr, size, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList->close();
@@ -1257,7 +1258,8 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
 
         constexpr size_t offset = 32;
         void *copyPtr = reinterpret_cast<uint8_t *>(ptr) + offset;
-        result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr, false, false);
+        CmdListMemoryCopyParams copyParams = {};
+        result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr, copyParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList commands;
@@ -1317,7 +1319,8 @@ struct CommandListAppendLaunchMultiKernelEventFixture : public LocalMemoryModule
 
         constexpr size_t offset = 32;
         void *copyPtr = reinterpret_cast<uint8_t *>(ptr) + offset;
-        result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr, false, false);
+        CmdListMemoryCopyParams copyParams = {};
+        result = commandList->appendMemoryCopy(copyPtr, srcPtr, size - offset, event.get(), 0, nullptr, copyParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         GenCmdList commands;

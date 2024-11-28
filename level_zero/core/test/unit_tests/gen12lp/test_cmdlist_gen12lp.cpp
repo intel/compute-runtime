@@ -23,7 +23,7 @@
 namespace L0 {
 namespace ult {
 
-using CommandListCreate = Test<DeviceFixture>;
+using CommandListCreateGen12Lp = Test<DeviceFixture>;
 
 template <PRODUCT_FAMILY productFamily>
 struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {
@@ -32,7 +32,7 @@ struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProd
     using ::L0::CommandListProductFamily<productFamily>::commandContainer;
 };
 
-HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhetherL3ControlIsProgrammed, IsGen12LP) {
+HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierThenCheckWhetherL3ControlIsProgrammed, IsGen12LP) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
     auto &hardwareInfo = this->neoDevice->getHardwareInfo();
@@ -61,7 +61,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhet
     }
 }
 
-HWTEST2_F(CommandListCreate, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroWhenAppendingMemoryBarrierThenInvalidArgumentErrorIsReturned,
+HWTEST2_F(CommandListCreateGen12Lp, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroWhenAppendingMemoryBarrierThenInvalidArgumentErrorIsReturned,
           IsDG1) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
@@ -84,7 +84,7 @@ HWTEST2_F(CommandListCreate, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroW
     commandList->destroy();
 }
 
-HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndSuccessReturned,
+HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndExecutionSuccessWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndSuccessReturned,
           IsDG1) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
@@ -110,7 +110,7 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingM
     cmdList->destroy();
 }
 
-HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndDeviceLostReturned,
+HWTEST2_F(CommandListCreateGen12Lp, GivenImmediateListAndGpuFailureWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndDeviceLostReturned,
           IsDG1) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
@@ -136,7 +136,7 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryB
     cmdList->destroy();
 }
 
-HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBarrierThenAdditionalCommandsNotAdded,
+HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBarrierThenAdditionalCommandsNotAdded,
           IsDG1) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
@@ -163,7 +163,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBa
     commandList->destroy();
 }
 
-HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarrierThenL3CommandsAdded,
+HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarrierThenL3CommandsAdded,
           IsDG1) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
@@ -222,7 +222,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     context->freeMem(ranges);
 }
 
-HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddressMisalignmentCorrected,
+HWTEST2_F(CommandListCreateGen12Lp, GivenHostMemoryWhenAppendingMemoryBarrierThenAddressMisalignmentCorrected,
           IsDG1) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
@@ -286,7 +286,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     context->freeMem(ranges);
 }
 
-HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressSizeThenL3ControlIsNotProgrammed, IsDG1) {
+HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressSizeThenL3ControlIsNotProgrammed, IsDG1) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
 
@@ -319,7 +319,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     context->freeMem(ranges);
 }
 
-HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressThenL3ControlIsNotProgrammed, IsDG1) {
+HWTEST2_F(CommandListCreateGen12Lp, givenAllocationsWhenApplyRangesBarrierWithInvalidAddressThenL3ControlIsNotProgrammed, IsDG1) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
 

@@ -116,7 +116,7 @@ struct CommandList : _ze_command_list_handle_t {
                                         ze_memory_advice_t advice) = 0;
     virtual ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                          ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) = 0;
+                                         ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
     virtual ze_result_t appendPageFaultCopy(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr, size_t size, bool flushHost) = 0;
     virtual ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                                const ze_copy_region_t *dstRegion,
@@ -128,7 +128,7 @@ struct CommandList : _ze_command_list_handle_t {
                                                uint32_t srcSlicePitch,
                                                ze_event_handle_t hSignalEvent,
                                                uint32_t numWaitEvents,
-                                               ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch, bool forceDisableCopyOnlyInOrderSignaling) = 0;
+                                               ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) = 0;
     virtual ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                          size_t patternSize, size_t size, ze_event_handle_t hSignalEvent,
                                          uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) = 0;

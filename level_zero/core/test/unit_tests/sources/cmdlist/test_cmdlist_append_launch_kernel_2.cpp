@@ -706,7 +706,8 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     void *srcBuffer = reinterpret_cast<void *>(0x0F000000);
     void *dstBuffer = reinterpret_cast<void *>(0x0FF00000);
     size_t size = 1024;
-    auto result = commandList->appendMemoryCopy(dstBuffer, srcBuffer, size, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams copyParams = {};
+    auto result = commandList->appendMemoryCopy(dstBuffer, srcBuffer, size, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();
@@ -766,8 +767,9 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
     uint32_t height = 16;
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
+    CmdListMemoryCopyParams copyParams = {};
     ze_result_t result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                             srcBuffer, &sr, width, 0, nullptr, 0, nullptr, false, false);
+                                                             srcBuffer, &sr, width, 0, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();

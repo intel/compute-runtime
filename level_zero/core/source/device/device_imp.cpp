@@ -150,7 +150,8 @@ ze_result_t DeviceImp::submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_
     contextImp->allocDeviceMem(this->toHandle(), &deviceDesc, 8, 1, &memory);
     contextImp->allocDeviceMem(hPeerDevice, &peerDeviceDesc, 8, 1, &peerMemory);
 
-    ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr, false, false);
+    CmdListMemoryCopyParams memoryCopyParams = {};
+    ret = L0::CommandList::fromHandle(commandList)->appendMemoryCopy(peerMemory, memory, 8, nullptr, 0, nullptr, memoryCopyParams);
     L0::CommandList::fromHandle(commandList)->close();
 
     if (ret == ZE_RESULT_SUCCESS) {

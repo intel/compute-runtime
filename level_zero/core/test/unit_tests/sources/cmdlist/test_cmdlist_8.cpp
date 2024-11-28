@@ -55,6 +55,7 @@ struct AppendMemoryLockedCopyFixture : public DeviceFixture {
     }
 
     DebugManagerStateRestore restore;
+    CmdListMemoryCopyParams copyParams = {};
     char *nonUsmHostPtr;
     void *hostPtr;
     void *devicePtr;
@@ -721,7 +722,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
 }
@@ -741,7 +742,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     auto dstAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
-    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
 }
@@ -772,7 +773,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledThenBothAllo
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
     EXPECT_EQ(nullptr, dstAlloc2->getLockedPtr());
-    cmdList.appendMemoryCopy(devicePtr2, devicePtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr2, devicePtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(2u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
     EXPECT_NE(nullptr, dstAlloc2->getLockedPtr());
@@ -805,7 +806,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenForceModeWhenCopyIsCalledFromHostUsmT
 
     EXPECT_EQ(nullptr, dstAlloc->getLockedPtr());
     EXPECT_EQ(nullptr, hostAlloction->getLockedPtr());
-    cmdList.appendMemoryCopy(hostPtr, devicePtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(hostPtr, devicePtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
     EXPECT_NE(nullptr, dstAlloc->getLockedPtr());
     EXPECT_EQ(nullptr, hostAlloction->getLockedPtr());
@@ -828,7 +829,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
     device->getDriverHandle()->getMemoryManager()->lockResource(dstAlloc);
 
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(1u, reinterpret_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager())->lockResourceCalled);
 }
 
@@ -843,7 +844,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrW
 
     memset(nonUsmHostPtr, 1, 1024);
 
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     NEO::SvmAllocationData *allocData;
@@ -875,7 +876,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_SUCCESS);
@@ -907,7 +908,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndSignalEventAnd
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
     cmdList.appendBarrier(nullptr, 0, nullptr, false);
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, event->toHandle(), 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_ERROR_DEVICE_LOST);
 
     EXPECT_EQ(event->queryStatus(), ZE_RESULT_NOT_READY);
@@ -922,7 +923,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->waitForCompletionWithTimeoutTaskCountCalled;
@@ -941,7 +942,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenCpuMemcpyWith
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     cmdList.appendBarrier(nullptr, 0, nullptr, false);
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     uint32_t waitForFlushTagUpdateCalled = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(cmdList.getCsr(false))->waitForCompletionWithTimeoutTaskCountCalled;
@@ -965,7 +966,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendBarrier
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
@@ -997,7 +998,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenAppendWaitOnE
 
     EXPECT_TRUE(cmdList.dependenciesPresent);
 
-    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    auto res = cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
     EXPECT_FALSE(cmdList.dependenciesPresent);
@@ -1046,7 +1047,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrW
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 1024, 1u, &usmSrcPtr);
 
-    cmdList.appendMemoryCopy(devicePtr, usmSrcPtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, usmSrcPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
     context->freeMem(usmSrcPtr);
 }
@@ -1062,7 +1063,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmDstHostPtrW
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 1024, 1u, &usmHostDstPtr);
 
-    cmdList.appendMemoryCopy(usmHostDstPtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(usmHostDstPtr, nonUsmHostPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
     context->freeMem(usmHostDstPtr);
 }
@@ -1078,7 +1079,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndUsmSrcHostPtrW
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, 1024, 1u, &usmHostSrcPtr);
 
-    cmdList.appendMemoryCopy(nonUsmHostPtr, usmHostSrcPtr, 1024, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(nonUsmHostPtr, usmHostSrcPtr, 1024, nullptr, 0, nullptr, copyParams);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
     context->freeMem(usmHostSrcPtr);
 }
@@ -1090,7 +1091,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmSrcHostP
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 5 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 5 * MemoryConstants::megaByte, nullptr, 0, nullptr, copyParams);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
@@ -1101,7 +1102,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmDstHostP
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, copyParams);
     EXPECT_GE(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
@@ -1113,7 +1114,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPt
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr, copyParams);
     ASSERT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 
     NEO::SvmAllocationData *dstAllocData;
@@ -1125,7 +1126,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndFailedToLockPt
     mockMemoryManager->failLockResource = true;
     ASSERT_FALSE(graphicsAllocation->isLocked());
 
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 1 * MemoryConstants::megaByte, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 1u);
 }
 
@@ -1138,7 +1139,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndD2HCopyWhenSiz
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(nonUsmHostPtr, devicePtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 }
 
@@ -1150,7 +1151,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndH2DCopyWhenSiz
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 3 * MemoryConstants::megaByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 3 * MemoryConstants::megaByte, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendMemoryCopyKernelWithGACalled, 0u);
 }
 
@@ -1183,7 +1184,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
         waitlist[i] = events[i]->toHandle();
     }
 
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, copyParams);
     EXPECT_EQ(cmdList.appendBarrierCalled, 1u);
     EXPECT_EQ(cmdList.synchronizeEventListCalled, 0u);
 }
@@ -1220,13 +1221,13 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
         waitlist[i] = events[i]->toHandle();
     }
 
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, copyParams);
     EXPECT_EQ(cmdList.appendBarrierCalled, 0u);
     EXPECT_EQ(cmdList.synchronizeEventListCalled, 1u);
 
     debugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.set(numEvents - 1);
 
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, copyParams);
     EXPECT_EQ(cmdList.appendBarrierCalled, 1u);
     EXPECT_EQ(cmdList.synchronizeEventListCalled, 1u);
 }
@@ -1238,7 +1239,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWitho
     cmdList.cmdQImmediate = queue.get();
 
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(cmdList.appendBarrierCalled, 0u);
 }
 
@@ -1264,7 +1265,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagS
 
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     auto phEvent = event->toHandle();
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, phEvent, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, phEvent, 0, nullptr, copyParams);
     ze_kernel_timestamp_result_t resultTimestamp = {};
     auto result = event->queryKernelTimestamp(&resultTimestamp);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1299,7 +1300,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndTimestampFlagN
 
     auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     auto phEvent = event->toHandle();
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, phEvent, 0, nullptr, false, false);
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, phEvent, 0, nullptr, copyParams);
     ze_kernel_timestamp_result_t resultTimestamp = {};
     auto result = event->queryKernelTimestamp(&resultTimestamp);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
