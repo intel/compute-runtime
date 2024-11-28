@@ -305,6 +305,11 @@ class CommandQueueHw : public CommandQueue {
                              const cl_event *eventWaitList,
                              cl_event *event) override;
 
+    cl_int enqueueWriteImageImpl(Image *dstImage, cl_bool blockingWrite, const size_t *origin,
+                                 const size_t *region, size_t inputRowPitch, size_t inputSlicePitch,
+                                 const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                 const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) override;
+
     cl_int enqueueCopyBufferToImage(Buffer *srcBuffer,
                                     Image *dstImage,
                                     size_t srcOffset,

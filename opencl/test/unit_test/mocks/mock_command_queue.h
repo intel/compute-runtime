@@ -193,6 +193,11 @@ class MockCommandQueue : public CommandQueue {
                              cl_uint numEventsInWaitList, const cl_event *eventWaitList,
                              cl_event *event) override { return CL_SUCCESS; }
 
+    cl_int enqueueWriteImageImpl(Image *dstImage, cl_bool blockingWrite, const size_t *origin, const size_t *region,
+                                 size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, GraphicsAllocation *mapAllocation,
+                                 cl_uint numEventsInWaitList, const cl_event *eventWaitList,
+                                 cl_event *event, CommandStreamReceiver &csr) override { return CL_SUCCESS; }
+
     cl_int enqueueCopyBufferRect(Buffer *srcBuffer, Buffer *dstBuffer, const size_t *srcOrigin, const size_t *dstOrigin,
                                  const size_t *region, size_t srcRowPitch, size_t srcSlicePitch, size_t dstRowPitch,
                                  size_t dstSlicePitch, cl_uint numEventsInWaitList,
@@ -345,30 +350,32 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(BaseClass::getGpgpuCommandStreamReceiver());
     }
 
-    cl_int enqueueWriteImage(Image *dstImage,
-                             cl_bool blockingWrite,
-                             const size_t *origin,
-                             const size_t *region,
-                             size_t inputRowPitch,
-                             size_t inputSlicePitch,
-                             const void *ptr,
-                             GraphicsAllocation *mapAllocation,
-                             cl_uint numEventsInWaitList,
-                             const cl_event *eventWaitList,
-                             cl_event *event) override {
+    cl_int enqueueWriteImageImpl(Image *dstImage,
+                                 cl_bool blockingWrite,
+                                 const size_t *origin,
+                                 const size_t *region,
+                                 size_t inputRowPitch,
+                                 size_t inputSlicePitch,
+                                 const void *ptr,
+                                 GraphicsAllocation *mapAllocation,
+                                 cl_uint numEventsInWaitList,
+                                 const cl_event *eventWaitList,
+                                 cl_event *event,
+                                 CommandStreamReceiver &csr) override {
         enqueueWriteImageCounter++;
         if (enqueueWriteImageCallBase) {
-            return BaseClass::enqueueWriteImage(dstImage,
-                                                blockingWrite,
-                                                origin,
-                                                region,
-                                                inputRowPitch,
-                                                inputSlicePitch,
-                                                ptr,
-                                                mapAllocation,
-                                                numEventsInWaitList,
-                                                eventWaitList,
-                                                event);
+            return BaseClass::enqueueWriteImageImpl(dstImage,
+                                                    blockingWrite,
+                                                    origin,
+                                                    region,
+                                                    inputRowPitch,
+                                                    inputSlicePitch,
+                                                    ptr,
+                                                    mapAllocation,
+                                                    numEventsInWaitList,
+                                                    eventWaitList,
+                                                    event,
+                                                    csr);
         }
         return CL_INVALID_OPERATION;
     }

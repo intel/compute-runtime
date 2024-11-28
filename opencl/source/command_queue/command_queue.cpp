@@ -1606,7 +1606,7 @@ cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingC
                                               size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event) {
     constexpr cl_command_type cmdType = CL_COMMAND_WRITE_IMAGE;
     CsrSelectionArgs csrSelectionArgs{cmdType, nullptr, dstImage, this->getDevice().getRootDeviceIndex(), globalRegion, nullptr, globalOrigin};
-    auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
+    auto &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
 
     Event profilingEvent{this, CL_COMMAND_WRITE_IMAGE, CompletionStamp::notReady, CompletionStamp::notReady};
     if (isProfilingEnabled()) {
@@ -1625,7 +1625,7 @@ cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingC
         }
         memcpy(stagingBuffer, chunkPtr, bufferSize);
         if (isSingleTransfer) {
-            return this->enqueueWriteImage(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, event);
+            return this->enqueueWriteImageImpl(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, event, csr);
         }
 
         if (isFirstTransfer && isProfilingEnabled()) {
@@ -1636,13 +1636,13 @@ cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingC
         if (isLastTransfer && !this->isOOQEnabled()) {
             outEvent = event;
         }
-        auto ret = this->enqueueWriteImage(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent);
+        auto ret = this->enqueueWriteImageImpl(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
         return ret;
     };
     auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performImageWrite(ptr, globalOrigin, globalRegion, dstRowPitch, chunkWrite, csr);
+    auto ret = stagingBufferManager->performImageWrite(ptr, globalOrigin, globalRegion, dstRowPitch, chunkWrite, &csr);
     if (ret != CL_SUCCESS) {
         return ret;
     }

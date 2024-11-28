@@ -39,6 +39,25 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     CsrSelectionArgs csrSelectionArgs{cmdType, nullptr, dstImage, device->getRootDeviceIndex(), region, nullptr, origin};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+    return enqueueWriteImageImpl(dstImage, blockingWrite, origin, region, inputRowPitch, inputSlicePitch, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event, csr);
+}
+
+template <typename GfxFamily>
+cl_int CommandQueueHw<GfxFamily>::enqueueWriteImageImpl(
+    Image *dstImage,
+    cl_bool blockingWrite,
+    const size_t *origin,
+    const size_t *region,
+    size_t inputRowPitch,
+    size_t inputSlicePitch,
+    const void *ptr,
+    GraphicsAllocation *mapAllocation,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event,
+    CommandStreamReceiver &csr) {
+    constexpr cl_command_type cmdType = CL_COMMAND_WRITE_IMAGE;
+    CsrSelectionArgs csrSelectionArgs{cmdType, nullptr, dstImage, device->getRootDeviceIndex(), region, nullptr, origin};
 
     auto isMemTransferNeeded = true;
 
