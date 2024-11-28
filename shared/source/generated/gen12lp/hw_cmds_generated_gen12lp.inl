@@ -5572,7 +5572,7 @@ struct L3_CONTROL {
 };
 
 STATIC_ASSERT(28 == sizeof(L3_CONTROL));
-STATIC_ASSERT(std::is_pod<L3_CONTROL>::value);
+STATIC_ASSERT(NEO::TypeTraits::isPodV<L3_CONTROL>);
 
 typedef struct tagXY_BLOCK_COPY_BLT {
     union tagTheStructure {

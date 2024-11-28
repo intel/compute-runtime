@@ -4827,7 +4827,7 @@ typedef struct tag_3DSTATE_BTD {
     }
 } _3DSTATE_BTD;
 STATIC_ASSERT(24 == sizeof(_3DSTATE_BTD));
-STATIC_ASSERT(std::is_pod<_3DSTATE_BTD>::value);
+STATIC_ASSERT(NEO::TypeTraits::isPodV<_3DSTATE_BTD>);
 
 typedef struct tagGRF {
     union tagTheStructure {
@@ -7149,7 +7149,7 @@ struct L3_CONTROL {
     }
 };
 STATIC_ASSERT(20 == sizeof(L3_CONTROL));
-STATIC_ASSERT(std::is_pod<L3_CONTROL>::value);
+STATIC_ASSERT(NEO::TypeTraits::isPodV<L3_CONTROL>);
 
 typedef struct tagSTATE_SIP {
     union tagTheStructure {

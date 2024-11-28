@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/get_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 

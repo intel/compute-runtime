@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_base.h"
+
 using GenStruct = NEO::Gen12Lp;
 using GenGfxFamily = NEO::Gen12LpFamily;
 
@@ -127,6 +128,7 @@ const char *CmdParse<GenGfxFamily>::getCommandNameHwSpecific(void *cmd) {
 template struct CmdParse<GenGfxFamily>;
 
 namespace NEO {
+
 template void HardwareParse::findHardwareCommands<Gen12LpFamily>();
 template void HardwareParse::findHardwareCommands<Gen12LpFamily>(IndirectHeap *);
 template const void *HardwareParse::getStatelessArgumentPointer<Gen12LpFamily>(const KernelInfo &kernelInfo, uint32_t indexArg, IndirectHeap &ioh, uint32_t rootDeviceIndex);

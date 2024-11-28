@@ -36,7 +36,7 @@ struct DeviceAotInfo {
     std::vector<NEO::ConstStringRef> deviceAcronyms{};
     std::vector<NEO::ConstStringRef> rtlIdAcronyms{};
 
-    bool operator==(const DeviceAotInfo &rhs) {
+    bool operator==(const DeviceAotInfo &rhs) const {
         return aotConfig.value == rhs.aotConfig.value && family == rhs.family && release == rhs.release && hwInfo == rhs.hwInfo;
     }
 };

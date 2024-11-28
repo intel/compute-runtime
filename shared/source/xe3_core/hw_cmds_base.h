@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/commands/bxml_generator_glue.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cstdint>

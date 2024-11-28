@@ -361,11 +361,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    rootDeviceEnvironment);
 
     if (args.inOrderExecInfo) {
-        EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec<WalkerType>(walkerCmd, args);
+        EncodeDispatchKernel<Family>::setupPostSyncForInOrderExec(walkerCmd, args);
     } else if (args.eventAddress) {
-        EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent<WalkerType>(walkerCmd, args);
+        EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(walkerCmd, args);
     } else {
-        EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite<WalkerType>(walkerCmd);
+        EncodeDispatchKernel<Family>::forceComputeWalkerPostSyncFlushWithWrite(walkerCmd);
     }
 
     if (debugManager.flags.ForceComputeWalkerPostSyncFlush.get() == 1) {

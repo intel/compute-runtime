@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "opencl/source/context/context.h"
 #include "opencl/source/sharings/sharing.h"
 
 #if __clang__

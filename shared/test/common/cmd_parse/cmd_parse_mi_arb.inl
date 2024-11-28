@@ -1,10 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+using namespace NEO;
+using MI_ARB_CHECK = GenStruct::MI_ARB_CHECK;
 template <>
 MI_ARB_CHECK *genCmdCast<MI_ARB_CHECK *>(void *buffer) {
     auto pCmd = reinterpret_cast<MI_ARB_CHECK *>(buffer);

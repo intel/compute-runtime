@@ -7,7 +7,6 @@
 
 #include "shared/test/common/cmd_parse/cmd_parse_3d_state_btd.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
-#include "shared/test/common/cmd_parse/cmd_parse_compute_mi_arb.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_walker.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_sip.inl"

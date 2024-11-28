@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 namespace NEO {
@@ -98,4 +99,8 @@ namespace InterruptId {
 static constexpr uint32_t notUsed = std::numeric_limits<uint32_t>::max();
 }
 
+namespace TypeTraits {
+template <typename T>
+constexpr bool isPodV = std::is_standard_layout_v<T> && std::is_trivial_v<T> && std::is_trivially_copyable_v<T>;
+}
 } // namespace NEO

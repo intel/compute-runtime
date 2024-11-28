@@ -74,7 +74,7 @@ const char *CmdParse<GenGfxFamily>::getAdditionalCommandName(void *cmd) {
 
     return "UNKNOWN";
 }
-
+#include "shared/test/common/cmd_parse/cmd_parse_compute_mi_arb.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_xe_hpg_and_later.inl"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse_base.inl"

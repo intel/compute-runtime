@@ -8,7 +8,6 @@ target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_3d_state_btd.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_base.inl
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_base_mi_arb.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mi_arb.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mode.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_walker.inl
