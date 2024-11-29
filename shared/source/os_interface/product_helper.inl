@@ -15,6 +15,7 @@
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_mapper.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -26,6 +27,7 @@
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
+#include "shared/source/utilities/logger.h"
 
 #include "aubstream/engine_node.h"
 #include "ocl_igc_shared/indirect_access_detection/version.h"
@@ -76,6 +78,30 @@ bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const 
     const bool isZebin = kernelDescriptor.kernelAttributes.binaryFormat == DeviceBinaryFormat::zebin;
     const auto currentIndirectDetectionVersion = isPrecompiled ? precompiledKernelIndirectDetectionVersion : INDIRECT_ACCESS_DETECTION_VERSION;
     bool indirectDetectionValid = false;
+    NEO::fileLoggerInstance().log(!!debugManager.flags.LogIndirectDetectionKernelDetails.get(),
+                                  "kernelName,", kernelDescriptor.kernelMetadata.kernelName,
+                                  "isPrecompiled,", isPrecompiled,
+                                  "isZebin,", isZebin,
+                                  "isCMKernelHeuristic,", isCMKernelHeuristic,
+                                  "driver indirect detection version,", INDIRECT_ACCESS_DETECTION_VERSION,
+                                  "precompiled kernel indirect detection version,", precompiledKernelIndirectDetectionVersion,
+                                  "hasNonKernelArgLoad,", kernelDescriptor.kernelAttributes.hasNonKernelArgLoad,
+                                  "hasNonKernelArgStore,", kernelDescriptor.kernelAttributes.hasNonKernelArgStore,
+                                  "hasNonKernelArgAtomic,", kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic,
+                                  "hasIndirectStatelessAccess,", kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess,
+                                  "hasIndirectAccessInImplicitArg,", kernelDescriptor.kernelAttributes.hasIndirectAccessInImplicitArg,
+                                  "useStackCalls,", kernelDescriptor.kernelAttributes.flags.useStackCalls,
+                                  "isAnyArgumentPtrByValue,", KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor),
+                                  "\n");
+    if (debugManager.flags.DisableIndirectDetectionForKernelNames.get() != "unk") {
+        if (kernelDescriptor.kernelMetadata.kernelName.find(debugManager.flags.DisableIndirectDetectionForKernelNames.get()) != std::string::npos ||
+            debugManager.flags.DisableIndirectDetectionForKernelNames.get().find(kernelDescriptor.kernelMetadata.kernelName) != std::string::npos) {
+            return false;
+        }
+    }
+    if (isCMKernelHeuristic && debugManager.flags.ForceIndirectDetectionForCMKernels.get() != -1) {
+        return debugManager.flags.ForceIndirectDetectionForCMKernels.get() == 1;
+    }
     if (isCMKernelHeuristic) {
         if (IndirectDetectionVersions::disabled == getRequiredDetectIndirectVersionVC()) {
             return false;

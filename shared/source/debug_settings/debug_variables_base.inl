@@ -99,6 +99,7 @@ DECLARE_DEBUG_VARIABLE(std::string, OverrideDeviceName, std::string("unk"), "Ove
 DECLARE_DEBUG_VARIABLE(std::string, OverridePlatformName, std::string("unk"), "Override platform name to provided string; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, WddmResidencyLoggerOutputDirectory, std::string("unk"), "Selects non-default output directory for Wddm Residency logger file")
 DECLARE_DEBUG_VARIABLE(std::string, ToggleBitIn57GpuVa, std::string("unk"), "Toggles specific bit in GPU VA for given allocation type from heap extended. Format <allocation type 1>:<bit number 1>,<allocation type 2>:<bit number 2>")
+DECLARE_DEBUG_VARIABLE(std::string, DisableIndirectDetectionForKernelNames, std::string("unk"), "If kernel name contains flag value (pass part of kernel name) OR flag value contains kernel name (pass list of exact names), disable indirect detection for it; ignored when unk")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideMultiStoragePlacement, -1, "Place memory only in selected tiles indicated by bit mask; ignore when -1")
 DECLARE_DEBUG_VARIABLE(int64_t, ForceCompressionDisabledForCompressedBlitCopies, -1, "If compression is required, set AUX_CCS_E, but force CompressionEnable filed; 0 should result in uncompressed read/write; values = -1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int64_t, WddmPagingFenceCpuWaitDelayTime, 0, "Amount of microseconds after waitng for paging fence on CPU")
@@ -300,6 +301,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampWidth, -1, "-1: default from KM
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdFifoPollInterval, -1, "-1: default , > 0: Fifo will be polled based on input in milliseconds.")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdInterruptTimeout, -1, "-1: default , > 0: interruptTimeout based on input in milliseconds. Default is 2000 milliseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdMaxReadWriteRetry, -1, "-1: default , > 0: max pread/pwrite retry attempts in read/writeGpuMemory calls based on input in milliseconds. Default is 3")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceIndirectDetectionForCMKernels, -1, "-1: default , 0 : disable indirect detection for CM kernels, 1 : enable indirect detection for CM kernels")
 DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0- default disabled, 1: enable use only global timestamp")
 
 /*LOGGING FLAGS*/
@@ -353,6 +355,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintGmmCompressionParams, false, "Print Gmm compre
 DECLARE_DEBUG_VARIABLE(bool, PrintCpuFlags, false, "Print CPU Flags and properties upon detection")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintL0MetricLogs, 0, "L0 Metrics logs mask. 0 - Disabled, 1 - ERROR, 3 - INFO, 7 - DEBUG")
 DECLARE_DEBUG_VARIABLE(bool, PrintL0SetKernelArg, false, "Print L0 Set Kernel Arg data")
+DECLARE_DEBUG_VARIABLE(bool, LogIndirectDetectionKernelDetails, false, "Log information for indirect detection for each kernel")
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
