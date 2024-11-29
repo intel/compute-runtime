@@ -877,8 +877,6 @@ HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenDeviceIsCrea
 }
 
 HWTEST_F(DebuggerWithGlobalBindlessTest, GivenGlobalBindlessHeapWhenAppendingKernelToCmdListThenCmdContainerSshIsNotUsedForDebugSurface) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     DebugManagerStateRestore restore;
     debugManager.flags.SelectCmdListHeapAddressModel.set(0);
 

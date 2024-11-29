@@ -375,10 +375,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedDeviceMemoryThenDontCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -426,10 +422,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallSetMemPrefetchOnTheAssociatedDevice, IsXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -479,10 +471,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledOnUnifiedSharedMemoryThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -551,9 +539,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 }
 
 HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigratedSharedAllocationsSetWhenPrefetchApiIsCalledForUnifiedSharedMemoryOnCmdListCopyOnlyThenCallMigrateAllocationsToGpu, IsXeHpcCore) {
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
     DebugManagerStateRestore restore;
     debugManager.flags.UseKmdMigration.set(1);
 
@@ -637,7 +622,6 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenAppendMemoryPrefetchForKmdMigr
 using CommandListEventFenceTestsXeHpcCore = Test<ModuleFixture>;
 
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -668,7 +652,6 @@ HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithProfilingEven
 }
 
 HWTEST2_F(CommandListEventFenceTestsXeHpcCore, givenCommandListWithRegularEventAfterCommandWhenRevId03ThenMiFenceIsAdded, IsXeHpcCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();

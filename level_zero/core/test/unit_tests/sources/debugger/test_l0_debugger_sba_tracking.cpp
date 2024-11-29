@@ -515,7 +515,6 @@ struct L0DebuggerSingleAddressSpace : public Test<L0DebuggerHwFixture> {
 
 HWTEST2_F(L0DebuggerSingleAddressSpace, givenDebuggingEnabledWhenCommandListIsExecutedThenValidKernelDebugCommandsAreAdded, MatchAny) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using STATE_SIP = typename FamilyType::STATE_SIP;
 
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;

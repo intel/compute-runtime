@@ -738,7 +738,6 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenForcingTlbFlushBeforeCo
 
     NEO::debugManager.flags.FlushTlbBeforeCopy.set(1);
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     MockCommandListCoreFamily<gfxCoreFamily> commandList;

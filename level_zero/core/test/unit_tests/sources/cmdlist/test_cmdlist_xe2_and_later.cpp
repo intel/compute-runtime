@@ -285,7 +285,6 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagWhenPostSyncWithInOrderExecInfoIsCr
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
     using WalkerVariant = typename FamilyType::WalkerVariant;
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();

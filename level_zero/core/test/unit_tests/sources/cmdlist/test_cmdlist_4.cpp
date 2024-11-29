@@ -827,8 +827,6 @@ HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnE
 }
 
 HWTEST2_F(CommandListCreateTests, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsWithTrackDependenciesSetToFalseThenDoNotIncrementBarrierCountAndDispatchBarrierTagUpdate, MatchAny) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::copy, returnValue));

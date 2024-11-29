@@ -3235,11 +3235,9 @@ TEST_F(MemoryExportImportTest,
         }
     };
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_external_memory_export_fd_t extendedProperties = {};
     extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
     extendedProperties.fd = std::numeric_limits<int>::max();
-    memoryProperties.pNext = &extendedProperties;
 
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
     ExportImportMockGraphicsAllocation alloc;
@@ -3258,12 +3256,10 @@ TEST_F(MemoryExportImportTest,
         }
     };
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_external_memory_export_fd_t extendedProperties = {};
     extendedProperties.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_WIN32;
     extendedProperties.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
     extendedProperties.fd = std::numeric_limits<int>::max();
-    memoryProperties.pNext = &extendedProperties;
 
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
     ExportImportMockGraphicsAllocation alloc;
@@ -3383,12 +3379,10 @@ TEST_F(MemoryExportImportTest,
     char buffer[256];
     auto alloc = new SingleSubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
     uint32_t numberOfSubAllocations = 0;
     subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
     subAllocationDesc.pCount = &numberOfSubAllocations;
-    memoryProperties.pNext = &subAllocationDesc;
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
 
     ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
@@ -3410,12 +3404,10 @@ TEST_F(MemoryExportImportTest,
     char buffer[256];
     auto alloc = new SingleSubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
     uint32_t numberOfSubAllocations = 7;
     subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
     subAllocationDesc.pCount = &numberOfSubAllocations;
-    memoryProperties.pNext = &subAllocationDesc;
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
 
     ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
@@ -3453,12 +3445,10 @@ TEST_F(MemoryExportImportTest,
     char buffer[256];
     auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
     uint32_t numberOfSubAllocations = 0;
     subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
     subAllocationDesc.pCount = &numberOfSubAllocations;
-    memoryProperties.pNext = &subAllocationDesc;
 
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
 
@@ -3484,12 +3474,10 @@ TEST_F(MemoryExportImportTest,
     char buffer[256];
     auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
     uint32_t numberOfSubAllocations = 2;
     subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
     subAllocationDesc.pCount = &numberOfSubAllocations;
-    memoryProperties.pNext = &subAllocationDesc;
 
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
 
@@ -3531,12 +3519,10 @@ TEST_F(MemoryExportImportTest,
     char buffer[256];
     auto alloc = new NoSubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
     uint32_t numberOfSubAllocations = 0;
     subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
     subAllocationDesc.pCount = &numberOfSubAllocations;
-    memoryProperties.pNext = &subAllocationDesc;
 
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
 
@@ -3551,10 +3537,8 @@ TEST_F(MemoryExportImportTest,
     char buffer[256];
     auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
 
-    ze_memory_allocation_properties_t memoryProperties = {};
     ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
     subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
-    memoryProperties.pNext = &subAllocationDesc;
 
     ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
 

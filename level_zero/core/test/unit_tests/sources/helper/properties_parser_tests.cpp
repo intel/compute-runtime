@@ -281,11 +281,6 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsuportedOptionsWhenPre
     EXPECT_TRUE(l0LookupTable.isSharedHandle);
     EXPECT_FALSE(l0LookupTable.sharedHandleType.isSupportedHandle);
 
-    ze_external_memory_import_fd_t fdStructure = {};
-    fdStructure.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
-    fdStructure.fd = 1;
-    fdStructure.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_FD;
-
     l0LookupTable = {};
     result = prepareL0StructuresLookupTable(l0LookupTable, &importNTHandle);
 
@@ -296,8 +291,6 @@ TEST(L0StructuresLookupTableTests, givenL0StructuresWithUnsuportedOptionsWhenPre
 
     l0LookupTable = {};
 
-    ze_device_module_properties_t moduleProperties = {};
-    moduleProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
     result = prepareL0StructuresLookupTable(l0LookupTable, &importNTHandle);
 
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION);

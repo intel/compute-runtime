@@ -28,8 +28,6 @@ using CommandListAppendSignalEvent = Test<CommandListFixture>;
 using CommandListAppendUsedPacketSignalEvent = Test<CommandListEventUsedPacketSignalFixture>;
 
 HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenMiStoreImmIsGenerated) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -349,7 +347,6 @@ HWTEST2_F(CommandListAppendSignalEvent, givenImmediateCmdListWithCopyQueueAndApp
 }
 
 HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeControlAppendedCorrectly, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();

@@ -654,7 +654,6 @@ HWTEST2_F(CommandListAppend, givenCommandListWhenAppendMemoryFillCalledThenAppen
 
 HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventsThenSemaphoreWaitAndPipeControlAreFound, MatchAny) {
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, result, false));
@@ -1322,7 +1321,6 @@ using DirectSubmissionCommandListTest = Test<DirectSubmissionCommandListFixture>
 HWTEST2_F(DirectSubmissionCommandListTest, givenComputeCommandListWhenCopyImageToMemoryThenTextureCacheFlushIsAddedPriorToWalker, IsAtLeastDg2AndSupportsImages) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using DefaultWalkerType = typename GfxFamily::DefaultWalkerType;
 
     if (!neoDevice->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -1612,8 +1610,6 @@ HWTEST2_F(CommandListCreateTests, givenCommandListThenSshCorrectlyReserved, Supp
 using CommandListAppendMemoryCopyBlit = Test<CommandListFixture>;
 
 HWTEST2_F(CommandListAppendMemoryCopyBlit, whenAppendMemoryCopyBlitIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated, MatchAny) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restorer;
@@ -2022,7 +2018,6 @@ using PrimaryBatchBufferPreamblelessCmdListTest = Test<PrimaryBatchBufferPreambl
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
           givenPrimaryBatchBufferWhenExecutingSingleCommandListTwiceInSingleCallAndFirstTimeNotExpectsPreambleThenProperlyDispatchPreambleForSecondInstance,
           IsAtLeastXeHpCore) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     if (device->getProductHelper().isNewCoherencyModelSupported()) {

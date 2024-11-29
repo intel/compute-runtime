@@ -31,7 +31,6 @@ struct CommandQueueCommandsXeHpc : Test<DeviceFixture> {
 };
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenCommandQueueWhenExecutingCommandListsThenGlobalFenceAllocationIsResident, IsXeHpcCore) {
-    using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
     ze_command_queue_desc_t desc = {};
     MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr.initializeTagAllocation();
@@ -522,8 +521,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopySetZeroWhenCreateImmediate
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyWithSizeLessThanFourMBThenDoNotSplit, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -574,8 +571,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromHostToHostThenDoNotSplit, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -806,8 +801,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyFromDeviceToDeviceThenDoNotSplit, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -859,8 +852,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -921,8 +912,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -985,8 +974,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSyncCmdListAndSplitBcsCopyAndImmediate
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsCopyAndImmediateCommandListWithRelaxedOrderingWhenAppendingMemoryCopyThenSuccessIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
@@ -1064,8 +1051,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchSplitThenUseSemaphores, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
 
@@ -1135,8 +1120,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyD2HThenSuccessIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -1187,8 +1170,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyH2DThenSuccessIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -1360,7 +1341,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyAfterBarrierThenSuccessIsReturnedAndMiSemaphoresProgrammed, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     DebugManagerStateRestore restorer;
@@ -1500,8 +1480,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAllocateNewEventsForSplitThenEventsAreManagedProperly, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -1561,8 +1539,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenObtainEventsForSplitThenReuseEventsIfMarkerIsSignaled, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -1640,8 +1616,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenOOMAndObtainEventsForSplitThenNulloptIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);
@@ -1691,8 +1665,6 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
 }
 
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingPageFaultCopyThenSuccessIsReturned, IsXeHpcCore) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
     DebugManagerStateRestore restorer;
     debugManager.flags.SplitBcsCopy.set(1);
     debugManager.flags.EnableFlushTaskSubmission.set(0);

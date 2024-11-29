@@ -40,11 +40,6 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenDebuggerWhenPatchWithImplicitSurfaceCa
          device->getNEODevice()->getDeviceBitfield()});
     static_cast<L0::DeviceImp *>(device)->setDebugSurface(debugSurface);
 
-    uint8_t binary[10];
-    ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = binary;
-    moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,
@@ -99,11 +94,6 @@ HWTEST2_F(KernelDebugSurfaceDG2Test, givenNoDebuggerWhenPatchWithImplicitSurface
          device->getNEODevice()->getDeviceBitfield()});
     static_cast<L0::DeviceImp *>(device)->setDebugSurface(debugSurface);
 
-    uint8_t binary[10];
-    ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
-    moduleDesc.pInputModule = binary;
-    moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
     std::unique_ptr<MockModule> module = std::make_unique<MockModule>(device,

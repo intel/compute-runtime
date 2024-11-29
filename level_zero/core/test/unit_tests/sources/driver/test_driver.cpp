@@ -409,8 +409,6 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, givenNTHandleWhenCreatingHostMemor
 }
 
 HWTEST_F(ImportNTHandleWithMockMemoryManager, whenCallingCreateGraphicsAllocationFromMultipleSharedHandlesFromOsAgnosticMemoryManagerThenNullptrIsReturned) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     delete driverHandle->svmAllocsManager;
     driverHandle->setMemoryManager(execEnv->memoryManager.get());
     driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
@@ -431,8 +429,6 @@ HWTEST_F(ImportNTHandleWithMockMemoryManager, whenCallingCreateGraphicsAllocatio
 constexpr size_t invalidHandle = 0xffffffff;
 
 HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErrorIsReturned) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_device_mem_alloc_desc_t devDesc = {};
     devDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
 
@@ -450,8 +446,6 @@ HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingDeviceMemoryThenErr
 }
 
 HWTEST_F(ImportNTHandle, givenNotExistingNTHandleWhenCreatingHostMemoryThenErrorIsReturned) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_host_mem_alloc_desc_t hostDesc = {};
     hostDesc.stype = ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC;
 
@@ -524,9 +518,6 @@ struct DriverImpTest : public ::testing::Test {
 
 TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
 
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -566,9 +557,6 @@ TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImp
 
 TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
@@ -587,9 +575,6 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironme
 }
 
 TEST_F(DriverImpTest, whenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnabled) {
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
@@ -611,9 +596,6 @@ TEST_F(DriverImpTest, whenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnab
 
 TEST_F(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentThenFlatHierarchyIsEnabled) {
 
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "FLAT"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
@@ -632,9 +614,6 @@ TEST_F(DriverImpTest, givenFlatDeviceHierarchyWhenCreatingExecutionEnvironmentTh
 }
 
 TEST_F(DriverImpTest, givenCompositeDeviceHierarchyWhenCreatingExecutionEnvironmentThenCompositeHierarchyIsEnabled) {
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMPOSITE"}};
@@ -655,9 +634,6 @@ TEST_F(DriverImpTest, givenCompositeDeviceHierarchyWhenCreatingExecutionEnvironm
 
 TEST_F(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironmentThenCombinedHierarchyIsEnabled) {
 
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "COMBINED"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
@@ -676,9 +652,6 @@ TEST_F(DriverImpTest, givenCombinedDeviceHierarchyWhenCreatingExecutionEnvironme
 }
 
 TEST_F(DriverImpTest, givenErrantDeviceHierarchyWhenCreatingExecutionEnvironmentThenDefaultHierarchyIsEnabled) {
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", "Flat"}};
@@ -704,9 +677,6 @@ TEST_F(DriverImpTest, givenErrantDeviceHierarchyWhenCreatingExecutionEnvironment
 
 TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecutionEnvironmentThenDebuggingEnabledIsTrue) {
 
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
@@ -725,9 +695,6 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2WhenCreatingExecution
 }
 
 TEST_F(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentThenFP64EmulationIsEnabled) {
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "1"}};
@@ -751,9 +718,6 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
 
     VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
     VariableBackup<uint32_t> driverCountBackup{&driverCount};
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
@@ -775,9 +739,6 @@ TEST_F(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWh
 
 TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     NEO::debugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(true);
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
@@ -798,10 +759,6 @@ TEST_F(DriverImpTest, givenEnableProgramDebuggingWithValue2AndEnabledExperimenta
 }
 
 TEST_F(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
-
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
-
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     driverImp.initialize(&result);
@@ -895,8 +852,6 @@ TEST(DriverTest, givenBuiltinsAsyncInitEnabledWhenCreatingDriverThenMakeSureBuil
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "1"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
@@ -917,8 +872,6 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentThenDependencyUnavailableErrorIs
 
 TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithValue2ThenDependencyUnavailableErrorIsReturned) {
     VariableBackup<bool> backupUseMockSip{&MockSipData::useMockSip};
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);

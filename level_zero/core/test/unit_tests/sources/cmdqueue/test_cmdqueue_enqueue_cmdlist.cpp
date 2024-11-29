@@ -116,10 +116,6 @@ struct MultiDeviceCommandQueueExecuteCommandListsFixture : public MultiDeviceFix
 using MultiDeviceCommandQueueExecuteCommandLists = Test<MultiDeviceCommandQueueExecuteCommandListsFixture>;
 
 HWTEST_F(CommandQueueExecuteCommandLists, whenACommandListExecutedRequiresUncachedMOCSThenSuccessisReturned) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using Parse = typename FamilyType::Parse;
-
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -629,7 +625,6 @@ void CommandQueueExecuteCommandListsFixture::twoCommandListCommandPreemptionTest
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
     auto preemptionMode = neoDevice->getPreemptionMode();
     GenCmdList::iterator itor = cmdList.begin();
@@ -878,7 +873,6 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     }
 
     using STATE_SIP = typename FamilyType::STATE_SIP;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     constexpr uint32_t preemptionRegisterOffset = 0x2580;
 

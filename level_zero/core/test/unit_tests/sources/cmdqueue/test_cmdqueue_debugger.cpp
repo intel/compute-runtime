@@ -180,10 +180,6 @@ HWTEST2_F(L0CmdQueueDebuggerTest, givenDebugEnabledWhenCommandsAreExecutedTwoTim
         GTEST_SKIP();
     }
 
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
     bool internalQueueMode[] = {false, true};
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);

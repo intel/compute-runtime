@@ -704,17 +704,6 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAl
     commandQueue->initialize(false, false, false);
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
-    auto cmdListHandle = commandList.get()->toHandle();
-    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
-                                                                                                         1,
-                                                                                                         csr->getPreemptionMode(),
-                                                                                                         device,
-                                                                                                         csr->getScratchSpaceController(),
-                                                                                                         csr->getGlobalStatelessHeapAllocation(),
-                                                                                                         false,
-                                                                                                         csr->isProgramActivePartitionConfigRequired(),
-                                                                                                         false,
-                                                                                                         false};
     std::unique_lock<std::mutex> lock;
 
     commandQueue->handleIndirectAllocationResidency({true, true, true}, lock, false);

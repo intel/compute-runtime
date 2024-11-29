@@ -2424,8 +2424,6 @@ TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledTh
 }
 
 HWTEST2_F(KernelImpPatchBindlessTest, GivenBindlessKernelAndNoGlobalBindlessAllocatorWhenInitializedThenBindlessOffsetSetAndUsingSurfaceStateAreFalse, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ModuleBuildLog *moduleBuildLog = nullptr;
     this->module.reset(new WhiteBox<::L0::Module>{this->device, moduleBuildLog, ModuleType::user});
     this->createModuleFromMockBinary(ModuleType::user);
@@ -2623,7 +2621,6 @@ HWTEST2_F(KernelImpPatchBindlessTest, GivenKernelImpWhenSetSurfaceStateBindfulTh
 using KernelImpL3CachingTests = Test<ModuleFixture>;
 
 HWTEST2_F(KernelImpL3CachingTests, GivenKernelImpWhenSetSurfaceStateWithUnalignedMemoryThenL3CachingIsDisabled, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();
 
@@ -3660,8 +3657,6 @@ TEST_F(PrintfTest, givenKernelWithPrintfThenPrintfBufferIsCreated) {
 
     EXPECT_TRUE(mockKernel.getImmutableData()->getDescriptor().kernelAttributes.flags.usesPrintf);
 
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "mock";
     mockKernel.createPrintfBuffer();
     EXPECT_NE(nullptr, mockKernel.getPrintfBufferAllocation());
 }
@@ -3672,8 +3667,6 @@ TEST_F(PrintfTest, GivenKernelNotUsingPrintfWhenCreatingPrintfBufferThenAllocati
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = false;
     mockKernel.module = &mockModule;
 
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "mock";
     mockKernel.createPrintfBuffer();
     EXPECT_EQ(nullptr, mockKernel.getPrintfBufferAllocation());
 }
@@ -3684,8 +3677,6 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenAllocationAddedToResidencyContain
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.module = &mockModule;
 
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "mock";
     mockKernel.createPrintfBuffer();
 
     auto printfBufferAllocation = mockKernel.getPrintfBufferAllocation();
@@ -3700,9 +3691,6 @@ TEST_F(PrintfTest, WhenCreatingPrintfBufferThenCrossThreadDataIsPatched) {
     Mock<KernelImp> mockKernel;
     mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
     mockKernel.module = &mockModule;
-
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.pKernelName = "mock";
 
     auto crossThreadData = std::make_unique<uint32_t[]>(4);
 

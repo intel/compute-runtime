@@ -218,8 +218,6 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
         using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-        using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
         uint64_t eventGpuAddress = event->getCompletionFieldGpuAddress(device);
         ze_event_handle_t eventHandle = event->toHandle();
@@ -297,15 +295,11 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
     template <typename FamilyType>
     void testBodyTimestampEventSignal() {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-        using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
         using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
         using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
         using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-        using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-        using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
         using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-        using MI_MATH = typename FamilyType::MI_MATH;
         using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
         auto &rootDeviceEnv = device->getNEODevice()->getRootDeviceEnvironment();
@@ -436,7 +430,6 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
     EXPECT_EQ(2u, commandList->partitionCount);
@@ -489,7 +482,6 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
@@ -571,10 +563,8 @@ using MultiTileImmediateCommandListAppendBarrier = Test<MultiTileCommandListFixt
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
           givenMultiTileImmediateCommandListWhenAppendingBarrierThenExpectCrossTileSyncAndNoCleanupSection, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -676,7 +666,6 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
 HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
           givenMultiTileImmediateCommandListNotUsingFlushTaskWhenAppendingBarrierThenExpectSecondaryBufferStart, IsAtLeastXeHpCore) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     ze_command_queue_desc_t queueDesc = {};

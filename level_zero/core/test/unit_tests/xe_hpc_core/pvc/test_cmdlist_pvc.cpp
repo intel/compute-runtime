@@ -40,7 +40,6 @@ PVCTEST_F(CommandListStatePrefetchPvcXt, givenDebugFlagSetWhenPrefetchApiCalledA
 using CommandListEventFenceTestsPvc = Test<ModuleFixture>;
 
 PVCTEST_F(CommandListEventFenceTestsPvc, givenCommandListWithProfilingEventAfterCommandOnPvcRev00ThenMiFenceIsNotAdded) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<IGFX_XE_HPC_CORE>::GfxFamily;
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();

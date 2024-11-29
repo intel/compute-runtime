@@ -708,7 +708,6 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWith
 }
 
 HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithDCFlush, PlatformSupport) {
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -764,8 +763,6 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWith
 }
 
 HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, MatchAny) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, result, false));
 
@@ -797,8 +794,6 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyRegionWithSignal
 }
 
 HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyRegionWithSignalAndInvalidWaitHandleUsingCopyEngineThenErrorIsReturned, MatchAny) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, result, false));
 
@@ -830,8 +825,6 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyRegionWithSignal
 }
 
 HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyRegionHasEmptyRegionWithSignalAndWaitEventsUsingCopyEngineThenSuccessIsReturned, MatchAny) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, result, false));
 

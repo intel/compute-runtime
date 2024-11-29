@@ -1053,8 +1053,6 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
 }
 
 HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateCommandListWhenAppendWaitEventsReturnsSuccess) {
-    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
     ze_result_t returnValue;
@@ -2931,7 +2929,6 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsAtLeastXeHpCore) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     constexpr uint64_t bindingTablePoolBaseAddress = 0x32000;

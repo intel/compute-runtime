@@ -239,8 +239,6 @@ HWTEST2_F(ImageCreate, givenBindlessModeDisabledWhenImageInitializeThenImageImpl
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.UseBindlessMode.set(0);
 
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -268,7 +266,6 @@ HWTEST2_F(ImageCreate, givenBindlessModeDisabledWhenImageInitializeThenImageImpl
 }
 
 HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -350,7 +347,6 @@ HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageViewThenProperPlaneIsCreated
 }
 
 HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageWithInvalidStructViewThenProperErrorIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -395,8 +391,6 @@ HWTEST2_F(ImageView, givenPlanarImageWhenCreateImageWithInvalidStructViewThenPro
 }
 
 HWTEST2_F(ImageCreate, givenFDWhenCreatingImageThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -425,8 +419,6 @@ HWTEST2_F(ImageCreate, givenFDWhenCreatingImageThenSuccessIsReturned, MatchAny) 
 }
 
 HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -454,8 +446,6 @@ HWTEST2_F(ImageCreate, givenOpaqueFdWhenCreatingImageThenSuccessIsReturned, Matc
 }
 
 HWTEST2_F(ImageCreate, givenExportStructWhenCreatingImageThenUnsupportedErrorIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -530,8 +520,6 @@ class ImageCreateExternalMemory : public DeviceFixtureWithCustomMemoryManager<Me
 using ImageCreateExternalMemoryTest = Test<ImageCreateExternalMemory>;
 
 HWTEST2_F(ImageCreateExternalMemoryTest, givenNTHandleWhenCreatingImageThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32;
@@ -551,8 +539,6 @@ HWTEST2_F(ImageCreateExternalMemoryTest, givenNTHandleWhenCreatingImageThenSucce
 }
 
 HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12HeapHandleWhenCreatingImageThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP;
@@ -572,8 +558,6 @@ HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12HeapHandleWhenCreatingImageTh
 }
 
 HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12ResourceHandleWhenCreatingImageThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-
     ze_external_memory_import_win32_handle_t importNTHandle = {};
     importNTHandle.handle = &imageHandle;
     importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE;
@@ -595,7 +579,6 @@ HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12ResourceHandleWhenCreatingIma
 using ImageCreateWithMemoryManagerNTHandleMock = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
 
 HWTEST2_F(ImageCreateWithMemoryManagerNTHandleMock, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr uint32_t yOffsetForUVPlane = 8u; // mock sets reqOffsetInfo.Lock.Offset to 16 and reqOffsetInfo.Lock.Pitch to 2
 
     ze_image_desc_t desc = {};
@@ -647,7 +630,6 @@ class FailMemoryManagerMock : public NEO::OsAgnosticMemoryManager {
 using ImageCreateWithFailMemoryManagerMock = Test<DeviceFixtureWithCustomMemoryManager<FailMemoryManagerMock>>;
 
 HWTEST2_F(ImageCreateWithFailMemoryManagerMock, givenImageDescWhenFailImageAllocationThenProperErrorIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     VariableBackup<bool> backupSipInitType{&MockSipData::useMockSip};
 
     ze_image_desc_t desc = {};
@@ -1498,7 +1480,6 @@ HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMos
 }
 
 HWTEST2_F(ImageCreate, WhenImageViewCreateExpThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;
@@ -1553,7 +1534,6 @@ HWTEST2_F(ImageCreate, WhenImageViewCreateExpThenSuccessIsReturned, MatchAny) {
 }
 
 HWTEST2_F(ImageCreate, WhenImageViewCreateExtThenSuccessIsReturned, MatchAny) {
-    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
     const size_t depth = 1;

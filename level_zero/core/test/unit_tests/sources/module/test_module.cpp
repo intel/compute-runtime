@@ -4326,11 +4326,6 @@ TEST_F(ModuleDebugDataTest, GivenDebugDataWithRelocationsWhenCreatingRelocatedDe
     auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
-    uint8_t binary[10];
-    ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = binary;
-    moduleDesc.inputSize = 10;
     ModuleBuildLog *moduleBuildLog = nullptr;
 
     auto module = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::user);

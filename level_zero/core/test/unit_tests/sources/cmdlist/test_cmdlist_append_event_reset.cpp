@@ -28,8 +28,6 @@ using CommandListAppendUsedPacketSignalEvent = Test<CommandListEventUsedPacketSi
 using CommandListAppendEventResetSecondaryBatchBuffer = Test<CommandListSecondaryBatchBufferFixture>;
 
 HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStoreDataImmIsGenerated) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
@@ -128,8 +126,6 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
 }
 
 HWTEST_F(CommandListAppendEventResetSecondaryBatchBuffer, whenResetEventIsAppendedAndNoSpaceIsAvailableThenNextCommandBufferIsCreated) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
     auto firstBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
@@ -267,7 +263,6 @@ HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventRe
 }
 
 HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInResetThenPipeControlAppendedCorrectly, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
@@ -322,7 +317,6 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInReset
 }
 
 HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPipeControlWithDcFlushAppended, MatchAny) {
-    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->getCmdContainer();
