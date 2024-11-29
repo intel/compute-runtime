@@ -54,7 +54,6 @@ struct L3ControlSupportedMatcher {
 HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCachesThenExpectFlushedCaches, L3ControlSupportedMatcher) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using WALKER = typename FamilyType::DefaultWalkerType;
     using L3_CONTROL = typename FamilyType::L3_CONTROL;
     using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
 
@@ -140,7 +139,6 @@ HWTEST2_F(RangeBasedFlushTest, givenNoDcFlushInPipeControlWhenL3ControlFlushesCa
 
 HWTEST2_F(RangeBasedFlushTest, givenL3ControlWhenPostSyncIsSetThenExpectPostSyncWrite, L3ControlSupportedMatcher) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using WALKER = typename FamilyType::DefaultWalkerType;
     using L3_CONTROL = typename FamilyType::L3_CONTROL;
     using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
 

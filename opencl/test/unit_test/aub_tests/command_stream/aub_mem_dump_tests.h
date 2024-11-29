@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,6 @@ void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     uint32_t noopId = 0xbaadd;
     auto cur = (uint32_t *)pRing;
 
-    using MI_NOOP = typename FamilyType::MI_NOOP;
     auto noop = FamilyType::cmdInitNoop;
     *cur++ = noop.TheStructure.RawData[0];
     *cur++ = noop.TheStructure.RawData[0];

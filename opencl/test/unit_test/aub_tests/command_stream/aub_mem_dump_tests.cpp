@@ -59,7 +59,6 @@ HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileName
 }
 
 HWTEST_F(AubMemDumpTests, GivenHeaderThenExpectationsAreMet) {
-    typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);
     std::string filenameWithPrefix = ApiSpecificConfig::getAubPrefixForSpecificApi();
     filePath.append(Os::fileSeparator);

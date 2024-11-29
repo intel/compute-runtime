@@ -76,7 +76,6 @@ struct AubWalkerPartitionFixture : public KernelAUBFixture<SimpleKernelFixture> 
     }
     template <typename FamilyType>
     void validatePartitionProgramming(uint64_t postSyncAddress, int32_t partitionCount) {
-        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
         using WalkerVariant = typename FamilyType::WalkerVariant;
         uint32_t totalWorkgroupCount = 1u;
         uint32_t totalWorkItemsInWorkgroup = 1u;
@@ -395,7 +394,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenAtomicOperationInc
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenVariousCompareModesWhenConditionalBatchBufferEndIsEmittedItThenHandlesCompareCorrectly) {
     using CONDITIONAL_BATCH_BUFFER_END = typename FamilyType::MI_CONDITIONAL_BATCH_BUFFER_END;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto writeAddress = helperSurface->getGpuAddress();
     auto compareAddress = reinterpret_cast<int *>(helperSurface->getUnderlyingBuffer());
 
@@ -676,7 +674,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
 
     using CONDITIONAL_BATCH_BUFFER_END = typename FamilyType::MI_CONDITIONAL_BATCH_BUFFER_END;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     getSimulatedCsr<FamilyType>()->initializeEngine();
     writeMMIO<FamilyType>(0x1A09C, 0x10001000);
@@ -739,7 +736,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiLevelBatchTestsWithNesting, givenConditionalBa
 
     using CONDITIONAL_BATCH_BUFFER_END = typename FamilyType::MI_CONDITIONAL_BATCH_BUFFER_END;
     using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     // nest to second level
     auto batchBufferStart = reinterpret_cast<BATCH_BUFFER_START *>(taskStream->getSpace(sizeof(BATCH_BUFFER_START)));
@@ -1117,8 +1113,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItI
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicationWhenItIsOnThenPipeControlInWparidIsNotExecuted) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
     auto streamCpuPointer = taskStream->getSpace(0);
     uint32_t totalBytesProgrammed = 0u;
     auto writeValue = 1u;
