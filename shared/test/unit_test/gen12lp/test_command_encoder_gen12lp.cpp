@@ -80,7 +80,6 @@ struct MockOsContext : public OsContext {
 
 GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenAdditionalPipelineSelectWAIsAppliedOnlyToRcs) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     CommandContainer cmdContainer;

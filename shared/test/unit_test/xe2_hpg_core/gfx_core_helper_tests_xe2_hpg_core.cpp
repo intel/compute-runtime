@@ -781,8 +781,6 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgWhenCallIsMatrixMult
 }
 
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenCorrectWorkGroupSizeIsReturned) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using SIMD_SIZE = typename FamilyType::DefaultWalkerType::SIMD_SIZE;
     auto defaultMaxWorkGroupSize = 2048u;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     const auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();

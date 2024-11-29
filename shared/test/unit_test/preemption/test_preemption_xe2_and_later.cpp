@@ -119,8 +119,6 @@ HWTEST2_F(Xe2MidThreadPreemptionTests, givenMidThreadPreemptionWhenProgrammingPr
 }
 
 HWTEST2_F(Xe2ThreadGroupPreemptionTests, givenThreadGroupPreemptionWhenProgrammingPreemptionPreambleThenExpectNoCsrCommandDispatched, IsAtLeastXe2HpgCore) {
-    using STATE_CONTEXT_DATA_BASE_ADDRESS = typename FamilyType::STATE_CONTEXT_DATA_BASE_ADDRESS;
-
     size_t cmdSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
     EXPECT_EQ(0u, cmdSize);
 

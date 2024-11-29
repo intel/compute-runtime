@@ -19,7 +19,6 @@ using TglLpSlm = PreambleFixture;
 HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitrationPolicyIsIgnored, IsTGLLP) {
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
-    typedef Gen12LpFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<Gen12LpFamily>::getL3Config(pDevice->getHardwareInfo(), true);
     MockDevice mockDevice;

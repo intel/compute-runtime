@@ -179,7 +179,6 @@ HWTEST_F(SoftwareTagsManagerTests, givenSoftwareManagerWithMaxTagsReachedWhenTag
 }
 
 HWTEST_F(SoftwareTagsManagerTests, givenSoftwareManagerWithMaxHeapReachedWhenTagIsInsertedThenItIsNotSuccessful) {
-    using MI_NOOP = typename FamilyType::MI_NOOP;
 
     initializeTestCmdStream<FamilyType>();
 

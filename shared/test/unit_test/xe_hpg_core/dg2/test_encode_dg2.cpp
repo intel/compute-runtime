@@ -27,8 +27,6 @@ using CommandEncodeDG2Test = ::testing::Test;
 
 DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsAreSet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using PIXEL_ASYNC_COMPUTE_THREAD_LIMIT = typename STATE_COMPUTE_MODE::PIXEL_ASYNC_COMPUTE_THREAD_LIMIT;
-    using Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT = typename STATE_COMPUTE_MODE::Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT;
     uint8_t buffer[64]{};
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
@@ -60,7 +58,6 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgrammingStateComputeModeThenProperFieldsA
 }
 
 DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenSetL3PrefetchDefaultValue) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     auto idd = FamilyType::cmdInitInterfaceDescriptorData;
 

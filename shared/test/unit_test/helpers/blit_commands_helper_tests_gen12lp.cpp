@@ -71,7 +71,6 @@ HWTEST2_F(BlitTests, givenSixteenBytePerPixelWhenAppendColorDepthThenCorrectDept
 }
 
 HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsThrown, IsGen12LP) {
-    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
     BlitProperties properties = {};
     properties.bytesPerPixel = 48;
@@ -79,7 +78,6 @@ HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsTh
 }
 
 HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddressAreCorectOffseted, IsGen12LP) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -117,7 +115,6 @@ HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAddre
 }
 
 HWTEST2_F(BlitTests, givenInputAndDefaultSlicePitchWhenAppendBlitCommandsForImagesThenSlicePitchesAreCorrect, IsGen12LP) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
     MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
@@ -176,7 +173,6 @@ struct MyMockResourecInfo : public GmmResourceInfo {
 };
 
 HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromGmm, IsGen12LP) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
@@ -207,7 +203,6 @@ HWTEST2_F(BlitTests, givenTiledSrcAndDestinationImagesWhenAppendImageCommandsThe
 }
 
 HWTEST2_F(BlitTests, givenLinearSrcAndDestinationImagesWhenAppendImageCommandsThenPitchIsValueFromProperties, IsGen12LP) {
-    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
     GMM_RESCREATE_PARAMS gmmParams = {};
     auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
@@ -250,7 +245,6 @@ HWTEST2_F(BlitTests, givenGen12LpPlatformWhenPreBlitCommandWARequiredThenReturns
 }
 
 HWTEST2_F(BlitTests, givenGen12LpPlatformWhenEstimatePreBlitCommandSizeThenSizeOfFlushIsReturned, IsGen12LP) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
     EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize());
 }

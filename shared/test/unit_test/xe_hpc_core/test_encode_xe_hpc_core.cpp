@@ -308,7 +308,6 @@ using EncodeKernelXeHpcCoreTest = Test<CommandEncodeStatesFixture>;
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenDoNotGenerateFenceCommands) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(0);
 
@@ -334,7 +333,6 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNoFenceAsPostSyncOperationInCo
 
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenFenceAsPostSyncOperationInComputeWalkerWhenEnqueueKernelIsCalledThenGenerateFenceCommands) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
     DebugManagerStateRestore restore;
     debugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(1);
 

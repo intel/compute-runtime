@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -124,7 +124,6 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     getCsrHw<FamilyType>()->setupContext(ccsOsContext);
 
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,6 @@ using namespace NEO;
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCommandContainerWhenNumGrfRequiredIsDefaultThenLargeGrfModeDisabled) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     StreamProperties streamProperties{};
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();

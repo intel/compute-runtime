@@ -135,7 +135,6 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
 }
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocationSizePerDssWhenDispatchingKernelThenCorrectValueIsSet, IsAtLeastXeHpgCore) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);

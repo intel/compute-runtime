@@ -77,7 +77,6 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
 HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-    using WAIT_MODE = typename FamilyType::MI_SEMAPHORE_WAIT::WAIT_MODE;
 
     auto buffer = std::make_unique<uint8_t[]>(128);
     LinearStream stream(buffer.get(), 128);
@@ -104,7 +103,6 @@ HWTEST2_F(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreTh
 }
 
 HWTEST_F(CommandEncodeSemaphore, whenGettingMiSemaphoreCommandSizeThenExpectSingleMiSemaphoreCommandSize) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     size_t expectedSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     size_t actualSize = EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     EXPECT_EQ(expectedSize, actualSize);

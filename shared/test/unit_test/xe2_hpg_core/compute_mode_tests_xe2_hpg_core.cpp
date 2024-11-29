@@ -202,7 +202,6 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, giventhreadArbitrationPoli
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammingWhenLargeGrfModeChangeIsRequiredThenCorrectCommandsAreAdded) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024];
@@ -258,7 +257,6 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammingWhenRequiredGRFNumberIsGreaterThan128ThenLargeGRFModeIsProgrammed) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024];
@@ -280,8 +278,6 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
 
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenPcAndSCMAreNotProgrammed) {
     setUpImpl<FamilyType>();
-    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap stream(graphicAlloc);
@@ -305,7 +301,6 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenFlushWithoutSharedHan
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeCmdSizeWhenLargeGrfModeChangeIsRequiredThenSCMCommandSizeIsCalculated) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto cmdSize = sizeof(STATE_COMPUTE_MODE);
 

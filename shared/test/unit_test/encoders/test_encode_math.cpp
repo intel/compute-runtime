@@ -222,7 +222,6 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
 
 HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorrect) {
     using MI_MATH = typename FamilyType::MI_MATH;
-    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
@@ -247,8 +246,6 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorr
 }
 
 HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCorrect) {
-    using MI_MATH = typename FamilyType::MI_MATH;
-    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
 
     CommandContainer cmdContainer;
