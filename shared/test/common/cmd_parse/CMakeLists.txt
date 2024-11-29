@@ -8,13 +8,11 @@ target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_3d_state_btd.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_base.inl
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mi_arb.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_mode.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_compute_walker.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_csr_base_address.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_gpgpu_walker.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_l3_control.inl
-               ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_mi_arb.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_sip.inl
                ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h
                ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.h

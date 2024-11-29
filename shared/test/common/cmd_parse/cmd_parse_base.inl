@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,6 +224,16 @@ MI_USER_INTERRUPT *genCmdCast<MI_USER_INTERRUPT *>(void *buffer) {
 
     return 0 == pCmd->TheStructure.Common.CommandType &&
                    MI_USER_INTERRUPT::MI_COMMAND_OPCODE_MI_USER_INTERRUPT == pCmd->TheStructure.Common.MICommandOpcode
+               ? pCmd
+               : nullptr;
+}
+
+template <>
+MI_ARB_CHECK *genCmdCast<MI_ARB_CHECK *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_ARB_CHECK *>(buffer);
+
+    return MI_ARB_CHECK::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
+                   MI_ARB_CHECK::MI_COMMAND_OPCODE_MI_ARB_CHECK == pCmd->TheStructure.Common.MiCommandOpcode
                ? pCmd
                : nullptr;
 }
