@@ -91,7 +91,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpAndLaterWhenDispa
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpDebuggingEnabledAndAssertInKernelWhenDispatchingKernelThenSwExceptionsAreEnabled) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto debugger = new MockDebuggerL0(pDevice);
     pDevice->getRootDeviceEnvironmentRef().debugger.reset(debugger);
@@ -117,7 +116,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenXeHpDebuggingEnabledA
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSimdSizeWhenDispatchingKernelThenSimdMessageIsSet) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -166,7 +164,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZero
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeDebugVariableWhenDispatchingKernelThenSharedMemorySizeIsSetCorrectly) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore restorer;
     uint32_t dims[] = {2, 1, 1};
@@ -198,7 +195,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndImageWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
@@ -237,7 +233,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndIma
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhenDispatchingKernelThenBTOffsetIsCorrect) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
@@ -274,7 +269,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBTOffsetIsZero) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     uint32_t numBindingTable = 0;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
@@ -321,7 +315,6 @@ struct SamplerSupportedMatcher {
 
 HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensamplerStateWasCopied, SamplerSupportedMatcher) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
 
     if (!pDevice->getDeviceInfo().imageSupport) {
@@ -395,7 +388,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAllocationWhenDi
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenEventAddressWhenEncodeThenMocsFromGmmHelperIsSet) {
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1070,7 +1062,6 @@ using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScali
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling, givenCooperativeKernelWhenEncodingDispatchKernelThenExpectPartitionSizeEqualWorkgroupSize) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1341,8 +1332,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesDynamicImplicitScaling, givenImplicitScalingWhenEncodingDispatchKernelOnInternalEngineThenExpectNoWalkerPartitioning) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     uint32_t dims[] = {16, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

@@ -324,7 +324,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenCopyCommandBufferIntoRingWhenD
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutRelaxingDependenciesThenCopyIntoRing) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
@@ -335,7 +334,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenMetricsDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutRelaxingDependenciesThenNotCopyIntoRing) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
@@ -347,7 +345,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenMetricsDefaultDirectSubmission
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemBatchBufferWithoutCommandBufferRelaxingAndForcedFlatRingDisabledDependenciesThenNotCopyIntoRing) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
@@ -360,7 +357,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutCommandBufferRelaxingDependenciesThenNotCopyIntoRing) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     DebugManagerStateRestore restorer;
@@ -1118,7 +1114,6 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_MATH = typename FamilyType::MI_MATH;
-    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     uint64_t schedulerStartGpuAddress = schedulerAllocation.getGpuAddress();
     void *schedulerCmds = schedulerAllocation.getUnderlyingBuffer();
@@ -1481,8 +1476,6 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
-    using MI_MATH = typename FamilyType::MI_MATH;
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cs, offset);
@@ -2288,7 +2281,6 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSet
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDependencieswhenProgrammingEndingCmdsThenDontSetReturnRegisters, IsAtLeastXeHpcCore) {
-    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);

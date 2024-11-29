@@ -748,10 +748,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenXDimensionIsNotLargetAnd
     walker.setThreadGroupIdZDimension(16u);
 
     bool staticPartitioning = false;
-    auto partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
+    computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::none, 4u, false, &staticPartitioning);
     EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_Y, walker.getPartitionType());
 
-    partitionCount = computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::x, 4u, false, &staticPartitioning);
+    computePartitionCountAndSetPartitionType<FamilyType>(&walker, NEO::RequiredPartitionDim::x, 4u, false, &staticPartitioning);
     EXPECT_EQ(WalkerType::PARTITION_TYPE::PARTITION_TYPE_X, walker.getPartitionType());
 }
 

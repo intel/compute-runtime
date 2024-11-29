@@ -766,7 +766,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmCha
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelThenMediaInterfaceDescriptorEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -793,7 +792,6 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWh
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelAndDynamicStateHeapDirtyThenStateBaseAddressEncodedAndMediaInterfaceDescriptorEncoded) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -966,7 +964,6 @@ using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, MatchAny) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
@@ -998,7 +995,6 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
 
 HWTEST2_F(EncodeDispatchKernelTest, givenBindlessKernelWhenDispatchingKernelThenSshFromContainerIsUsed, MatchAny) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     alignas(64) uint8_t data[2 * sizeof(RENDER_SURFACE_STATE)];
     RENDER_SURFACE_STATE state = FamilyType::cmdInitRenderSurfaceState;
@@ -1132,7 +1128,6 @@ HWTEST2_F(EncodeDispatchKernelTest, givenPrintKernelDispatchParametersWhenEncodi
 HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatchingKernelThenSurfaceStateOffsetInCrossThreadDataIsNotPatched) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     uint32_t numBindingTable = 1;
     BINDING_TABLE_STATE bindingTableState = FamilyType::cmdInitBindingTableState;
 
@@ -1418,8 +1413,6 @@ using BindlessCommandEncodeStatesTest = Test<BindlessCommandEncodeStatesFixture>
 using BindlessCommandEncodeStatesContainerTest = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindlessModeEnabledWhenEncodingKernelThenCmdContainerHasNullptrSSH) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(1);
@@ -1452,7 +1445,6 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
 
 HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindlessModeEnabledThenCmdContainerHasSsh) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.UseBindlessMode.set(1);
@@ -1577,7 +1569,6 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredSshSpaceThenReturnCorrectValues) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     // no surface states
@@ -1594,7 +1585,6 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredSshSpaceThen
 }
 
 HWTEST_F(CommandEncodeStatesTest, givenKernelInfoOfBindlessKernelWhenGettingRequiredSshSpaceThenReturnCorrectValues) {
-    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;

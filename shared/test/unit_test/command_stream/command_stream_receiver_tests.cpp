@@ -325,8 +325,6 @@ HWTEST_F(CommandStreamReceiverTest, whenRegisterClientThenIncrementClientNum) {
 }
 
 HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenTimestampTypeIs32b) {
-    using ExpectedType = TimestampPackets<typename FamilyType::TimestampPacketType, FamilyType::timestampPacketCount>;
-
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto allocator = csr.getTimestampPacketAllocator();
@@ -3436,9 +3434,6 @@ HWTEST_F(CommandStreamReceiverHwTest, givenCreateGlobalStatelessHeapAllocationWh
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenCreateGlobalStatelessHeapAllocationWhenFlushingTaskThenGlobalStatelessHeapAllocationIsResidentAndNoBindingTableCommandDispatched,
           IsAtLeastXeHpCore) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
-
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     if (commandStreamReceiver.heaplessStateInitialized) {
@@ -3569,7 +3564,6 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           givenRayTracingAllocationPresentWhenFlushingTaskThenDispatchBtdStateCommandOnceAndResidentAlways,
           IsAtLeastXeHpCore) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
-    using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -4377,7 +4371,6 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heapless = commandStreamReceiver.heaplessModeEnabled;
@@ -4473,7 +4466,6 @@ HWTEST2_F(CommandStreamReceiverHwTest,
           IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto heapless = commandStreamReceiver.heaplessModeEnabled;
@@ -4622,8 +4614,6 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 HWTEST2_F(CommandStreamReceiverHwTest,
           givenImmediateFlushTaskWhenFlushOperationFailsThenExpectNoBatchBufferSentAndCorrectFailCompletionReturned,
           IsAtLeastXeHpCore) {
-    using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     bool heapless = commandStreamReceiver.heaplessModeEnabled;
     bool heaplessStateInit = commandStreamReceiver.heaplessStateInitialized;
@@ -5691,7 +5681,6 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenMakeResidentCalledThenUpdateTask
 
     csr.makeResident(graphicsAllocation);
     auto initialAllocTaskCount = graphicsAllocation.getTaskCount(contextId);
-    auto csrTaskCount = csr.peekTaskCount();
     EXPECT_EQ(initialAllocTaskCount, csr.peekTaskCount() + 1);
 
     graphicsAllocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, contextId);
@@ -5699,7 +5688,6 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenMakeResidentCalledThenUpdateTask
 
     csr.makeResident(graphicsAllocation);
     auto updatedTaskCount = graphicsAllocation.getTaskCount(contextId);
-    csrTaskCount = csr.peekTaskCount();
     EXPECT_EQ(updatedTaskCount, csr.peekTaskCount() + 1);
     EXPECT_NE(updatedTaskCount, initialAllocTaskCount);
 }
