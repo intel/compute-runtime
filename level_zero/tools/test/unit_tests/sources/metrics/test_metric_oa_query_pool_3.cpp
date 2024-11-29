@@ -43,9 +43,6 @@ TEST_F(MetricQueryPoolTest, givenMetricQueryIsActiveWhenMetricQueryPoolDestroyIs
     QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
 
-    CommandBufferSize_1_0 commandBufferSize = {};
-    commandBufferSize.GpuMemorySize = 100;
-
     metricGroup.getPropertiesOutProperties = &metricGroupProperties;
 
     mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
@@ -118,9 +115,6 @@ TEST_F(MetricQueryPoolTest, givenMetricQueryIsActiveWhenMetricGroupDeactivateIsC
 
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
-
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
@@ -134,7 +128,6 @@ TEST_F(MetricQueryPoolTest, givenMetricQueryIsActiveWhenMetricGroupDeactivateIsC
 
     QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
-    ConfigurationHandle_1_0 metricsLibraryConfigurationHandle = {&value};
 
     openMetricsAdapter();
 
@@ -226,9 +219,6 @@ TEST_F(MetricQueryPoolTest, givenMetricGroupIsActiveWhenQueryPoolDestroyIsCalled
 
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
-
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
@@ -242,7 +232,6 @@ TEST_F(MetricQueryPoolTest, givenMetricGroupIsActiveWhenQueryPoolDestroyIsCalled
 
     QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
-    ConfigurationHandle_1_0 metricsLibraryConfigurationHandle = {&value};
 
     openMetricsAdapter();
 
@@ -399,9 +388,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPo
 
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
-
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
@@ -504,15 +490,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenImplicitScalingIsEnabledWhenMetricsA
     metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
     metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
 
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
-    TypedValue_1_0 value = {};
-    value.Type = ValueType::Uint32;
-    value.ValueUInt32 = 64;
-
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
-    ContextHandle_1_0 metricsLibraryContextHandle = {&value};
-
     openMetricsAdapter();
 
     setupDefaultMocksForMetricDevice(metricsDevice);
@@ -605,9 +582,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetComm
 
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
-
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
@@ -679,7 +653,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenEnableWalkerPartitionIsOnWhenZetComm
     value.Type = ValueType::Uint32;
     value.ValueUInt32 = 64;
 
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
 
     CommandBufferSize_1_0 commandBufferSize = {};
@@ -735,9 +708,6 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenFailedMetricsLibraryContextWhenZetMe
     metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
 
     zet_metric_group_handle_t metricGroupHandle = {};
-
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};

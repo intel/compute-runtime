@@ -444,10 +444,6 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
     zet_metric_global_timestamps_resolution_exp_t metricTimestampProperties = {ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP, nullptr};
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricTimestampProperties};
 
-    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
-    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
-    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
-
     openMetricsAdapter();
 
     setupDefaultMocksForMetricDevice(metricsDevice);
@@ -520,10 +516,6 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingPropertiesAndIncor
 
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricProperties};
 
-    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
-    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
-    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
-
     openMetricsAdapter();
 
     setupDefaultMocksForMetricDevice(metricsDevice);
@@ -591,10 +583,6 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
     zet_metric_group_handle_t metricGroupHandle = {};
     zet_metric_global_timestamps_resolution_exp_t metricTimestampProperties = {ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP, nullptr};
     zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricTimestampProperties};
-
-    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
-    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
-    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
 
     openMetricsAdapter();
 
@@ -704,10 +692,6 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
 
-    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
-    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
-    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
-
     openMetricsAdapter();
 
     setupDefaultMocksForMetricDevice(metricsDevice);
@@ -783,10 +767,6 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetri
 
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
-
-    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
-    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
-    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
 
     openMetricsAdapter();
 

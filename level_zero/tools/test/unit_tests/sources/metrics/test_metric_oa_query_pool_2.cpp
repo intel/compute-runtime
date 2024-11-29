@@ -71,13 +71,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
     poolDesc.count = 1;
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
 
-    TypedValue_1_0 value = {};
-    value.Type = ValueType::Uint32;
-    value.ValueUInt32 = 64;
-
-    QueryHandle_1_0 queryHandle = {&value};
-    ContextHandle_1_0 contextHandle = {&value};
-
     openMetricsAdapter();
 
     setupDefaultMocksForMetricDevice(metricsDevice);
@@ -150,7 +143,6 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWhenAppendMetricQueryBeginAnd
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
     value.ValueUInt32 = 64;
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
 
     CommandBufferSize_1_0 commandBufferSize = {};
@@ -190,7 +182,6 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndCompletionEventWhenAppendM
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
     value.ValueUInt32 = 64;
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
 
     CommandBufferSize_1_0 commandBufferSize = {};
@@ -265,7 +256,6 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
     value.ValueUInt32 = 64;
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
 
     CommandBufferSize_1_0 commandBufferSize = {};
@@ -338,7 +328,6 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWithImmediateCommandListDefau
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
     value.ValueUInt32 = 64;
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
 
     CommandBufferSize_1_0 commandBufferSize = {};
@@ -397,11 +386,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhen
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
     value.ValueUInt32 = 64;
-    QueryHandle_1_0 metricsLibraryQueryHandle = {&value};
     ContextHandle_1_0 metricsLibraryContextHandle = {&value};
-
-    CommandBufferSize_1_0 commandBufferSize = {};
-    commandBufferSize.GpuMemorySize = 100;
 
     mockMetricsLibrary->g_mockApi->contextCreateOutHandle = metricsLibraryContextHandle;
     mockMetricsLibrary->g_mockApi->commandBufferGetSizeResult = StatusCode::Failed;
@@ -518,9 +503,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGroupsIsCalle
     metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
 
     zet_metric_group_handle_t metricGroupHandle = {};
-
-    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;

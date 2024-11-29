@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,12 +66,6 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
     poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
-
-    TypedValue_1_0 value = {};
-    value.Type = ValueType::Uint32;
-    value.ValueUInt32 = 64;
-
-    ContextHandle_1_0 contextHandle = {&value};
 
     metricGroup.getPropertiesOutProperties = &metricGroupProperties;
 

@@ -43,8 +43,6 @@ class SysmanNewPlatformInitTest : public ::testing::Test {
 
 HWTEST2_F(SysmanNewPlatformInitTest, GivenLegacySysmanVariableSetWhenSysmanInitOnLinuxIsCalledThenUnSupportedErrorIsReturned, IsPVC) {
     L0::sysmanInitFromCore = true;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
     auto execEnv = new NEO::ExecutionEnvironment();
     execEnv->prepareRootDeviceEnvironments(1);
     execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
@@ -70,8 +68,6 @@ HWTEST2_F(SysmanNewPlatformInitTest, GivenLegacySysmanVariableSetWhenSysmanInitO
     });
 
     L0::sysmanInitFromCore = true;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
     auto execEnv = new NEO::ExecutionEnvironment();
     execEnv->prepareRootDeviceEnvironments(1);
     execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());

@@ -61,8 +61,6 @@ class SysmanDeviceFixture : public ::testing::Test {
             std::memcpy(buf, str.c_str(), str.size());
             return static_cast<int>(str.size());
         });
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.capabilityTable.levelZeroSupported = true;
         execEnv = new NEO::ExecutionEnvironment();
         execEnv->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
@@ -112,8 +110,6 @@ class SysmanMultiDeviceFixture : public ::testing::Test {
             return static_cast<int>(str.size());
         });
 
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.capabilityTable.levelZeroSupported = true;
         execEnv = new NEO::ExecutionEnvironment();
         execEnv->prepareRootDeviceEnvironments(numRootDevices);
         debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);

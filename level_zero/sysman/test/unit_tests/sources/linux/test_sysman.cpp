@@ -444,8 +444,6 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermission
 }
 
 TEST(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
     auto execEnv = new NEO::ExecutionEnvironment();
     execEnv->prepareRootDeviceEnvironments(1);
     execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());

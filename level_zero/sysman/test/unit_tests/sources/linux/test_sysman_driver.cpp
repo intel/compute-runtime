@@ -202,8 +202,6 @@ struct SysmanDriverHandleTest : public ::testing::Test {
             return static_cast<int>(str.size());
         });
         ze_result_t returnValue;
-        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.capabilityTable.levelZeroSupported = true;
 
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
