@@ -281,7 +281,6 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
 }
 
 HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSettingsThenProgramCorrectL1CachePolicy, IsAtLeastXeHpgCore) {
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
 
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);

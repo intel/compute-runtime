@@ -22,7 +22,6 @@ struct PreferredSlmTestValues {
 template <typename FamilyType>
 void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;

@@ -314,7 +314,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPreferredWhenForceDisabledWparidRegisterThenExpectNoCommandFound) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
-    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
 
     debugManager.flags.WparidRegisterProgramming.set(0);
@@ -352,7 +351,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPreferredWhenForceDisabledPipeControlThenExpectNoCommandFound) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
-    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     debugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
@@ -390,7 +388,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningPrefer
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPreferredWhenForceDisabledPipeControlThenExpectNoCommandFound) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     using PostSyncType = decltype(FamilyType::template getPostSyncType<DefaultWalkerType>());
-    using BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     debugManager.flags.UsePipeControlAfterPartitionedWalker.set(0);
@@ -566,7 +563,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndPartitionRegisterProgrammingForcedWhenApiRequiresCleanupSectionThenDoNotAddPipeControlCrossTileSyncAndCleanupSection) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -628,7 +624,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndForcePartitionRegisterProgrammingWhenApiRequiresCleanupSectionThenDoNotAddPipeControlCrossTileSyncAndCleanupSection) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -690,7 +685,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndForcedCrossTileSyncWhenApiRequiresCleanupSectionThenDoNotAddPipeControlAndAddCrossTileSyncAndCleanupSection) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -759,7 +753,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndForcedCrossTileSyncWhenApiRequiresNoCleanupSectionThenDoNotAddPipeControlAndCleanupSectionAndAddCrossTileSync) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -823,7 +816,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndForcedCrossTileSyncAndPartitionRegisterWhenApiRequiresNoCleanupSectionThenDoNotAddPipeControlAndCleanupSectionAndAddCrossTileSync) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -889,7 +881,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndForcedCrossTileSyncBeforeExecWhenApiRequiresCleanupSectionThenDoNotAddPipeControlAndAddCrossTileSyncAndCleanupSection) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
@@ -959,7 +950,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPipeControlIsNotRequiredAndForcedCleanupSectionWhenApiNotRequiresCleanupSectionThenDoNotAddPipeControlAndCrossTileSyncAndAddCleanupSection) {
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

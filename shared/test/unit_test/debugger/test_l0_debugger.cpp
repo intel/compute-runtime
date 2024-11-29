@@ -579,7 +579,6 @@ struct L0DebuggerSimpleParameterizedTest : public ::testing::TestWithParam<int>,
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
 
 HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed, Gen12Plus) {
-    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
     debugger->initialize();
 

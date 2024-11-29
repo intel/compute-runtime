@@ -247,7 +247,6 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
 
 HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -264,7 +263,6 @@ HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
 
 HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
     uint32_t pattern[4] = {1, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -286,7 +284,6 @@ HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhe
 
 HWTEST_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
     uint32_t pattern[4] = {5, 0, 0, 0};
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -307,7 +304,6 @@ HWTEST_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress)
 
 HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBlitThenHeightIsTwo) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
 
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -335,7 +331,6 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
 
 HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
 
     HardwareInfo *hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -373,7 +368,6 @@ using BlitColor = IsWithinProducts<IGFX_SKYLAKE, IGFX_ICELAKE_LP>;
 
 HWTEST2_F(BlitTests, givenMemoryWhenFillPatternSizeIs4BytesThen32BitMaskISSetCorrectly, BlitColor) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
-    using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
     uint32_t pattern = 1;
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
@@ -507,7 +501,6 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
 }
 
 HWTEST2_F(BlitTests, whenPrintImageBlitBlockCopyCommandIsCalledThenCmdDetailsAreNotPrintedToStdOutput, BlitPlatforms) {
-    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
     auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
 
     testing::internal::CaptureStdout();
@@ -625,7 +618,6 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingPreBlitCommandWARequiredThenReturns
 }
 
 HWTEST2_F(BlitTests, givenPlatformWhenCallingEstimatePreBlitCommandSizeThenZeroIsReturned, WithoutGen12Lp) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize());
 }
 

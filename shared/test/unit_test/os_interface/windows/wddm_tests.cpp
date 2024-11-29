@@ -580,8 +580,6 @@ TEST_F(WddmTests, whenCallingEvictWithNoAllocationsThenDontCallGdi) {
 }
 
 TEST_F(WddmTests, GivenWddmWhenMapGpuVaCalledThenGmmClientCallsMapGpuVa) {
-    NEO::AllocationData allocData = {};
-    allocData.type = NEO::AllocationType::buffer;
     wddm->callBaseDestroyAllocations = false;
     wddm->pagingQueue = PAGINGQUEUE_HANDLE;
     auto memoryManager = std::make_unique<MockWddmMemoryManager>(*executionEnvironment);

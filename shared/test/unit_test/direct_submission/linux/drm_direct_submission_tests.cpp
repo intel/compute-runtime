@@ -693,7 +693,6 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRin
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenUpdateTagValueThenTagIsNotUpdated) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using Dispatcher = RenderDispatcher<FamilyType>;
 
     MockDrmDirectSubmission<FamilyType, Dispatcher> directSubmission(*device->getDefaultEngine().commandStreamReceiver);

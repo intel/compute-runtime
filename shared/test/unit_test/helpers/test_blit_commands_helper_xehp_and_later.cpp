@@ -87,7 +87,6 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
 }
 
 HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillBufferThenSetCompressionFormat, BlitPlatforms) {
-    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
 
     auto gmmContext = pDevice->getGmmHelper();
@@ -105,7 +104,6 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionWhenAppendBlitCommandsForFillB
 
 HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitCommandsForFillBufferThenSetCompressionFormat, BlitPlatforms) {
     DebugManagerStateRestore dbgRestore;
-    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     auto blitCmd = FamilyType::cmdInitXyColorBlt;
 
     uint32_t newCompressionFormat = 1;
@@ -122,7 +120,6 @@ HWTEST2_F(BlitTests, givenGmmWithEnabledCompresionAndDebugFlagSetWhenAppendBlitC
 }
 
 HWTEST2_F(BlitTests, givenOverridedMocksValueWhenAppendBlitCommandsForFillBufferThenDebugMocksValueIsSet, BlitPlatforms) {
-    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     uint32_t mockValue = pDevice->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) + 1;
 
@@ -641,7 +638,6 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditio
 }
 
 HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaDisabledThenAdditionalCommandsAreNotProgrammed, IsXeHPOrAbove) {
-    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.ForceDummyBlitWa.set(0);
     auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());

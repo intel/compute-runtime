@@ -4607,7 +4607,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenBufferPointerArgWhenAddressSpaceIsKnown
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAddressSpaceIsImageThenPopulatesArgDescriptorAccordingly) {
-    using AddressSpace = NEO::KernelArgMetadata::AddressSpaceQualifier;
     using namespace NEO::Zebin::ZeInfo::Tags::Kernel::PayloadArgument::AddrSpace;
 
     ConstStringRef zeinfo = R"===(
@@ -4665,7 +4664,6 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenPointerArgWhenAccessQualifierIsKnownThe
 }
 
 TEST_F(decodeZeInfoKernelEntryTest, GivenNonPointerArgWhenAddressSpaceIsStatelessThenFails) {
-    using AccessQualifier = NEO::KernelArgMetadata::AddressSpaceQualifier;
     using namespace NEO::Zebin::ZeInfo::Tags::Kernel::PayloadArgument::AddrSpace;
     NEO::ConstStringRef nonPtrAddrSpace[] = {image, sampler};
 

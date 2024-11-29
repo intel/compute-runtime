@@ -26,7 +26,6 @@ using namespace NEO;
 using CommandEncodeStatesTestDg2AndLater = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCAndDG2ThenSetDataportSubsliceCacheFlushIstSet, IsAtLeastXeHpgCore) {
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -52,7 +51,6 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeAndPVCA
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenDebugVariableToForceL1FlushWhenWalkerIsProgramedThenCacheFlushIsDisabled, IsAtLeastXeHpgCore) {
     DebugManagerStateRestore restore;
     NEO::debugManager.flags.ForcePostSyncL1Flush.set(0);
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -77,7 +75,6 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenDebugVariableToForceL1FlushWh
 }
 
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenEventAddressWhenEncodeThenMocsIndex2IsSet, IsXeHpgCore) {
-    using POSTSYNC_DATA = typename FamilyType::POSTSYNC_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -140,7 +137,6 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenDebugOverrideWhenSetAdditiona
 HWTEST2_F(CommandEncodeStatesTestDg2AndLater, givenOverridePreferredSlmAllocationSizePerDssWhenDispatchingKernelThenCorrectValueIsSet, IsAtLeastXeHpgCore) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-    using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
     DebugManagerStateRestore restorer;
     debugManager.flags.OverridePreferredSlmAllocationSizePerDss.set(5);
     uint32_t dims[] = {2, 1, 1};

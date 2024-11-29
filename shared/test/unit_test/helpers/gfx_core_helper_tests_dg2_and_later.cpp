@@ -24,7 +24,6 @@ using GfxCoreHelperDg2AndLaterTest = ::testing::Test;
 
 HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsTrueWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsSetProperly, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
@@ -41,7 +40,6 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStat
     debugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.set(1);
 
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(gfxCoreHelper);
@@ -54,7 +52,6 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenOverrideL1CacheControlInSurfaceStat
 
 HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1CachePolicyThenL1CachePolicyL1CacheControlIsNotSet, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto &helper = reinterpret_cast<GfxCoreHelperHw<FamilyType> &>(gfxCoreHelper);
@@ -142,7 +139,6 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
 }
 
 HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenSettingExtraPipeControlPropertiesThenCorrectValuesAreSet, IsAtLeastXeHpgCore) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     PipeControlArgs args{};
     MemorySynchronizationCommands<FamilyType>::setPostSyncExtraProperties(args);
 

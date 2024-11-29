@@ -561,11 +561,6 @@ TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     error = wddm->evict(&allocation.getHandles()[0], allocation.getNumGmms(), sizeToTrim, true);
     EXPECT_TRUE(error);
 
-    auto monitoredFence = osContext->getResidencyController().getMonitoredFence();
-    UINT64 fenceValue = 100;
-    monitoredFence.cpuAddress = &fenceValue;
-    monitoredFence.currentFenceValue = 101;
-
     error = wddm->destroyAllocation(&allocation, osContext.get());
 
     EXPECT_TRUE(error);

@@ -171,7 +171,6 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsRe
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice,
                                                                pDevice->getNumGenericSubDevices() > 1);
@@ -191,7 +190,6 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsGr
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice,
                                                                pDevice->getNumGenericSubDevices() > 1);
@@ -211,7 +209,6 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsBl
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice,
                                                                pDevice->getNumGenericSubDevices() > 1);
@@ -231,7 +228,6 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     uint32_t numSamplers = 1;
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice,
                                                                pDevice->getNumGenericSubDevices() > 1);
@@ -249,8 +245,6 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorsAl
 
 HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationProvidedThenUseAllocationAsInput) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     void *stateBuffer = alignedMalloc(sizeof(RENDER_SURFACE_STATE), sizeof(RENDER_SURFACE_STATE));
     ASSERT_NE(nullptr, stateBuffer);
@@ -296,11 +290,9 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationN
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
 
     size_t size = 0x1000;
-    SurfaceStateBufferLength length;
 
     uint64_t gpuAddr = 0;
     size_t allocSize = size;
-    length.length = static_cast<uint32_t>(allocSize - 1);
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = stateBuffer;
@@ -331,11 +323,9 @@ HWTEST2_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherenc
     memset(stateBuffer, 0, sizeof(RENDER_SURFACE_STATE));
 
     size_t size = 0x1000;
-    SurfaceStateBufferLength length;
 
     uint64_t gpuAddr = 0;
     size_t allocSize = size;
-    length.length = static_cast<uint32_t>(allocSize - 1);
 
     NEO::EncodeSurfaceStateArgs args;
     args.outMemory = stateBuffer;
@@ -443,7 +433,6 @@ HWTEST_F(CommandEncodeStatesTest, givenAnUnalignedDstPtrThenCorrectAlignedPtrAnd
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncodeStatesTest, whenAdjustPipelineSelectIsCalledThenNothingHappens) {
-    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     auto initialUsed = cmdContainer->getCommandStream()->getUsed();
     NEO::EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer, descriptor);
     EXPECT_EQ(initialUsed, cmdContainer->getCommandStream()->getUsed());

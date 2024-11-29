@@ -108,7 +108,6 @@ TEST(YamlIsNameBeginningCharacter, GivenCharThenReturnsTrueOnlyWhenCharIsLetterO
 
 TEST(YamlIsSign, GivenCharThenReturnsTrueOnlyWhenCharIsPlusOrMinus) {
     std::set<char> validChars{};
-    using It = IteratorAsValue<char>;
     validChars.insert('+');
     validChars.insert('-');
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {

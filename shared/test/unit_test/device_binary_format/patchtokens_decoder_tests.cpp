@@ -376,9 +376,6 @@ TEST(KernelDecoder, GivenKernelWithValidStringPatchtokensThenDecodingSucceedsAnd
     storage.reserve(512);
     auto kernelToEncode = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
-    iOpenCL::SPatchString stringTok = {};
-    stringTok.Token = iOpenCL::PATCH_TOKEN::PATCH_TOKEN_STRING;
-
     auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
     auto string1Off = PatchTokensTestData::pushBackStringToken("str1", 1, storage);
     auto string2Off = PatchTokensTestData::pushBackStringToken("str2", 2, storage);
