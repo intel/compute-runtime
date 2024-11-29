@@ -216,8 +216,6 @@ class Device : public ReferenceTrackedObject<Device> {
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 
-    void stopDirectSubmissionForCopyEngine();
-
     std::unique_lock<std::mutex> obtainAllocationsReuseLock() const {
         return std::unique_lock<std::mutex>(allocationsReuseMtx);
     }

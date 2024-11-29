@@ -25,7 +25,6 @@
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
@@ -1918,32 +1917,4 @@ TEST(DeviceWithoutAILTest, givenNoAILWhenCreateDeviceThenDeviceIsCreated) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     EXPECT_NE(nullptr, device.get());
-}
-
-HWTEST_F(DeviceTests, givenCopyInternalEngineWhenStopDirectSubmissionForCopyEngineCalledThenStopDirectSubmission) {
-    DebugManagerStateRestore dbgRestorer;
-    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    debugManager.flags.ForceBCSForInternalCopyEngine.set(0);
-    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = false;
-
-    UltDeviceFactory factory{1, 0};
-    factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular});
-
-    auto device = factory.rootDevices[0];
-    auto regularCsr = device->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular).commandStreamReceiver;
-    auto regularUltCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(regularCsr);
-    regularUltCsr->callBaseStopDirectSubmission = false;
-
-    device->stopDirectSubmissionForCopyEngine();
-    EXPECT_FALSE(regularUltCsr->stopDirectSubmissionCalled);
-
-    factory.rootDevices[0]->createEngine({aub_stream::EngineType::ENGINE_BCS, EngineUsage::internal});
-    device->stopDirectSubmissionForCopyEngine();
-    EXPECT_FALSE(regularUltCsr->stopDirectSubmissionCalled);
-
-    regularUltCsr->blitterDirectSubmissionAvailable = true;
-    device->stopDirectSubmissionForCopyEngine();
-    EXPECT_TRUE(regularUltCsr->stopDirectSubmissionCalled);
 }
