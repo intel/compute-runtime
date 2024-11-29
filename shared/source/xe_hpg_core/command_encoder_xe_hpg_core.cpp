@@ -125,9 +125,9 @@ void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32
     auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
     if (productHelper.isAdjustWalkOrderAvailable(rootDeviceEnvironment.getReleaseHelper())) {
         if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
-            walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER);
+            walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK);
         } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
-            walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
+            walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK);
         }
     }
 }

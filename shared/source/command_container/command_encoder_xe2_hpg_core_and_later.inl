@@ -85,9 +85,9 @@ template <typename Family>
 template <typename WalkerType>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WalkerType &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::linearWalk) {
-        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER);
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK);
     } else if (HwWalkOrderHelper::compatibleDimensionOrders[requiredWorkGroupOrder] == HwWalkOrderHelper::yOrderWalk) {
-        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER);
+        walkerCmd.setDispatchWalkOrder(WalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK);
     }
 }
 

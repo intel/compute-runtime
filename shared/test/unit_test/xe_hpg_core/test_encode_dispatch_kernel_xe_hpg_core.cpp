@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,11 +56,11 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenRequiredWorkGroupOrderAndIsAdju
 
     uint32_t yOrder = 2u;
     EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, rootDeviceEnvironment);
-    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER, walkerCmd.getDispatchWalkOrder());
+    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK, walkerCmd.getDispatchWalkOrder());
 
     uint32_t linearOrder = 0u;
     EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, rootDeviceEnvironment);
-    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER, walkerCmd.getDispatchWalkOrder());
+    EXPECT_EQ(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK, walkerCmd.getDispatchWalkOrder());
 }
 
 using EncodeKernelXeHpgCoreTest = Test<CommandEncodeStatesFixture>;
@@ -85,14 +85,14 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     EXPECT_EQ(dispatchWalkOrderBeforeAdjust, walkerCmd.getDispatchWalkOrder()); // no change
 
     EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, yOrder, rootDeviceEnvironment);
-    auto expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER : dispatchWalkOrderBeforeAdjust;
+    auto expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK : dispatchWalkOrderBeforeAdjust;
     EXPECT_EQ(expectedWalkOrder, walkerCmd.getDispatchWalkOrder());
 
     uint32_t linearOrder = 0u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[linearOrder], HwWalkOrderHelper::linearWalk);
 
     EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, linearOrder, rootDeviceEnvironment);
-    expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER : dispatchWalkOrderBeforeAdjust;
+    expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK : dispatchWalkOrderBeforeAdjust;
     EXPECT_EQ(expectedWalkOrder, walkerCmd.getDispatchWalkOrder());
 }
 
@@ -114,7 +114,7 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     uint32_t yOrder = 2u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[yOrder], HwWalkOrderHelper::yOrderWalk);
 
-    auto expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::Y_ORDER_WALKER : dispatchWalkOrderBeforeAdjust;
+    auto expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_Y_ORDER_WALK : dispatchWalkOrderBeforeAdjust;
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
                                                        0, 1, false, false, true, yOrder, rootDeviceEnvironment);
     EXPECT_EQ(expectedWalkOrder, walkerCmd.getDispatchWalkOrder());
@@ -126,7 +126,7 @@ XE_HPG_CORETEST_F(EncodeKernelXeHpgCoreTest, givenRequiredWorkGroupOrderWhenCall
     uint32_t linearOrder = 0u;
     EXPECT_EQ(HwWalkOrderHelper::compatibleDimensionOrders[linearOrder], HwWalkOrderHelper::linearWalk);
 
-    expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::LINERAR_WALKER : dispatchWalkOrderBeforeAdjust;
+    expectedWalkOrder = isExpectedNewWalkOrderApplied ? DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_LINEAR_WALK : dispatchWalkOrderBeforeAdjust;
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, 0, 3,
                                                        0, 1, false, false, true, linearOrder, rootDeviceEnvironment);
     EXPECT_EQ(expectedWalkOrder, walkerCmd.getDispatchWalkOrder());

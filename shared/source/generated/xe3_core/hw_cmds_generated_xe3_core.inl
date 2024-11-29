@@ -5728,10 +5728,10 @@ typedef struct tagCOMPUTE_WALKER {
         PARTITION_ID_SUPPORTED_MIN = 0x0,
         PARTITION_ID_SUPPORTED_MAX = 0xf,
     } PARTITION_ID;
-    typedef enum tagDISPATCH_WALK_ORDER { // patched
-        LINERAR_WALKER = 0x0,
-        Y_ORDER_WALKER = 0x1,
-        MORTON_WALKER = 0x2,
+    typedef enum tagDISPATCH_WALK_ORDER {
+        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
+        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
+        DISPATCH_WALK_ORDER_MORTON_WALK = 0x2,
     } DISPATCH_WALK_ORDER;
     typedef enum tagTG_BATCH_SIZE { // patched
         TG_BATCH_1 = 0x0,
