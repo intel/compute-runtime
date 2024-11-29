@@ -18,10 +18,16 @@
 
 namespace NEO {
 
-uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, const KernelDescriptor &kernelDescriptor, uint32_t numSubDevices,
-                                            uint32_t usedSlmSize, uint32_t workDim, const size_t *localWorkSize, EngineGroupType engineGroupType) {
-    return KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment, kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, kernelDescriptor.kernelAttributes.barrierCount,
-                                              numSubDevices, usedSlmSize, workDim, localWorkSize, engineGroupType);
+uint32_t KernelHelper::getMaxWorkGroupCount(Device &device, uint16_t numGrfRequired, uint8_t simdSize, uint8_t barrierCount, uint32_t alignedSlmSize, uint32_t workDim, const size_t *localWorkSize,
+                                            EngineGroupType engineGroupType, bool implicitScalingEnabled, bool forceSingleTileQuery) {
+    uint32_t numSubDevicesForExecution = 1;
+
+    auto deviceBitfield = device.getDeviceBitfield();
+    if (!forceSingleTileQuery && implicitScalingEnabled) {
+        numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
+    }
+
+    return KernelHelper::getMaxWorkGroupCount(device.getRootDeviceEnvironment(), numGrfRequired, simdSize, barrierCount, numSubDevicesForExecution, alignedSlmSize, workDim, localWorkSize, engineGroupType);
 }
 
 uint32_t KernelHelper::getMaxWorkGroupCount(const RootDeviceEnvironment &rootDeviceEnvironment, uint16_t numGrfRequired, uint8_t simdSize, uint8_t barrierCount,

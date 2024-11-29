@@ -1177,30 +1177,27 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue, bool forceSingleTileQuery) const {
     auto &hardwareInfo = getHardwareInfo();
-    auto &rootDeviceEnvironment = this->getDevice().getRootDeviceEnvironment();
-    auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &device = this->getDevice();
+    auto &helper = device.getGfxCoreHelper();
 
     auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                      commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
 
     auto usedSlmSize = helper.alignSlmSize(slmTotalSize);
 
-    uint32_t numSubDevicesForExecution = 1;
+    bool platformImplicitScaling = helper.platformSupportsImplicitScaling(device.getRootDeviceEnvironment());
+    bool isImplicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(device.getDeviceBitfield(), platformImplicitScaling);
 
-    bool platformImplicitScaling = helper.platformSupportsImplicitScaling(rootDeviceEnvironment);
-    auto deviceBitfield = commandQueue->getClDevice().getDeviceBitfield();
-
-    if (!forceSingleTileQuery && NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling)) {
-        numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
-    }
-
-    auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment,
-                                                                kernelInfo.kernelDescriptor,
-                                                                numSubDevicesForExecution,
+    auto maxWorkGroupCount = KernelHelper::getMaxWorkGroupCount(device.getDevice(),
+                                                                kernelInfo.kernelDescriptor.kernelAttributes.numGrfRequired,
+                                                                kernelInfo.kernelDescriptor.kernelAttributes.simdSize,
+                                                                kernelInfo.kernelDescriptor.kernelAttributes.barrierCount,
                                                                 usedSlmSize,
                                                                 workDim,
                                                                 localWorkSize,
-                                                                engineGroupType);
+                                                                engineGroupType,
+                                                                isImplicitScalingEnabled,
+                                                                forceSingleTileQuery);
 
     return maxWorkGroupCount;
 }

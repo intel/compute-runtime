@@ -24,39 +24,49 @@
 
 using namespace NEO;
 
-struct KernelHelperMaxWorkGroupsTests : ::testing::Test {
+struct KernelHelperMaxWorkGroupsFixture : public DeviceFixture {
+    size_t lws[3] = {10, 10, 10};
+
     EngineGroupType engineType = EngineGroupType::compute;
-    uint32_t simd = 8;
     uint32_t dssCount = 16;
     uint32_t availableSlm = 64 * MemoryConstants::kiloByte;
     uint32_t usedSlm = 0;
-    uint32_t numberOfBarriers = 0;
     uint32_t workDim = 3;
-    uint32_t grf = 128;
     uint32_t numSubdevices = 1;
-    size_t lws[3] = {10, 10, 10};
 
-    void SetUp() override {
-        executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get(), false, 1u);
-        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    uint16_t grf = 128;
+
+    uint8_t simd = 8;
+    uint8_t numberOfBarriers = 0;
+
+    bool implicitScalingEnabled = false;
+    bool forceSingleTileQuery = true;
+
+    void setUp() {
+        DeviceFixture::setUp();
+        rootDeviceEnvironment = &pDevice->getRootDeviceEnvironmentRef();
     }
 
     uint32_t getMaxWorkGroupCount() {
-        KernelDescriptor descriptor = {};
-        descriptor.kernelAttributes.simdSize = simd;
-        descriptor.kernelAttributes.barrierCount = numberOfBarriers;
-        descriptor.kernelAttributes.numGrfRequired = grf;
-
         auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
         hwInfo->gtSystemInfo.DualSubSliceCount = dssCount;
         hwInfo->capabilityTable.slmSize = (availableSlm / MemoryConstants::kiloByte) / dssCount;
 
-        return KernelHelper::getMaxWorkGroupCount(*rootDeviceEnvironment, descriptor, numSubdevices, usedSlm, workDim, lws, engineType);
+        if (numSubdevices > 1) {
+            forceSingleTileQuery = false;
+            implicitScalingEnabled = true;
+            for (uint32_t pos = 0; pos < numSubdevices; pos++) {
+                pDevice->deviceBitfield.set(pos);
+            }
+        }
+
+        return KernelHelper::getMaxWorkGroupCount(*pDevice, grf, simd, numberOfBarriers, usedSlm, workDim, lws, engineType, implicitScalingEnabled, forceSingleTileQuery);
     }
 
-    std::unique_ptr<MockExecutionEnvironment> executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
+
+using KernelHelperMaxWorkGroupsTests = Test<KernelHelperMaxWorkGroupsFixture>;
 
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMaxWorkGroupsCountThenResultIsCalculatedWithSimd) {
     auto &helper = rootDeviceEnvironment->getHelper<NEO::GfxCoreHelper>();
@@ -71,6 +81,8 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenNoBarriersOrSlmUsedWhenCalculatingMa
 TEST_F(KernelHelperMaxWorkGroupsTests, GivenDebugFlagSetWhenGetMaxWorkGroupCountCalledThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     debugManager.flags.OverrideMaxWorkGroupCount.set(123);
+
+    forceSingleTileQuery = false;
 
     EXPECT_EQ(123u, getMaxWorkGroupCount());
 }
@@ -160,7 +172,7 @@ TEST_F(KernelHelperMaxWorkGroupsTests, GivenVariousValuesWhenCalculatingMaxWorkG
     hwInfo->gtSystemInfo.ThreadCount = 1024;
     EXPECT_NE(1u, getMaxWorkGroupCount());
 
-    numberOfBarriers = static_cast<uint32_t>(helper.getMaxBarrierRegisterPerSlice());
+    numberOfBarriers = static_cast<uint8_t>(helper.getMaxBarrierRegisterPerSlice());
     EXPECT_EQ(1u, getMaxWorkGroupCount());
 
     numberOfBarriers = 1;

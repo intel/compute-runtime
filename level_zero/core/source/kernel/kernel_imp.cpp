@@ -503,28 +503,24 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
 }
 
 uint32_t KernelImp::suggestMaxCooperativeGroupCount(NEO::EngineGroupType engineGroupType, uint32_t *groupSize, bool forceSingleTileQuery) {
-    auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
-    auto &helper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+    auto &neoDevice = *module->getDevice()->getNEODevice();
+    auto &helper = neoDevice.getGfxCoreHelper();
     auto &descriptor = kernelImmData->getDescriptor();
 
     auto usedSlmSize = helper.alignSlmSize(slmArgsTotalSize + descriptor.kernelAttributes.slmInlineSize);
     const uint32_t workDim = 3;
     const size_t localWorkSize[] = {groupSize[0], groupSize[1], groupSize[2]};
 
-    uint32_t numSubDevicesForExecution = 1;
-
-    auto deviceBitfield = module->getDevice()->getNEODevice()->getDeviceBitfield();
-    if (!forceSingleTileQuery && this->implicitScalingEnabled) {
-        numSubDevicesForExecution = static_cast<uint32_t>(deviceBitfield.count());
-    }
-
-    return NEO::KernelHelper::getMaxWorkGroupCount(rootDeviceEnvironment,
-                                                   descriptor,
-                                                   numSubDevicesForExecution,
+    return NEO::KernelHelper::getMaxWorkGroupCount(neoDevice,
+                                                   descriptor.kernelAttributes.numGrfRequired,
+                                                   descriptor.kernelAttributes.simdSize,
+                                                   descriptor.kernelAttributes.barrierCount,
                                                    usedSlmSize,
                                                    workDim,
                                                    localWorkSize,
-                                                   engineGroupType);
+                                                   engineGroupType,
+                                                   this->implicitScalingEnabled,
+                                                   forceSingleTileQuery);
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {
