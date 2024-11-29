@@ -189,9 +189,10 @@ template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence() {
     if (this->directSubmission.get()) {
         this->directSubmission->flushMonitorFence();
+    } else if (this->blitterDirectSubmission.get()) {
+        this->blitterDirectSubmission->flushMonitorFence();
     }
 }
-
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer &allocationsForResidency) {
     for (auto &graphicsAllocation : allocationsForResidency) {
