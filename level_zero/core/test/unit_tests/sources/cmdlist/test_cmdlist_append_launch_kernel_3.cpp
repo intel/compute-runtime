@@ -450,7 +450,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     kernelAttributes.flags.usesSyncBuffer = true;
     kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
 
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto &productHelper = device->getProductHelper();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto engineGroupType = NEO::EngineGroupType::compute;
@@ -461,8 +461,8 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     CmdListKernelLaunchParams cooperativeParams = {};
     cooperativeParams.isCooperative = true;
 
-    pCommandList->initialize(device, engineGroupType, 0u);
-    auto result = pCommandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
+    commandList->initialize(device, engineGroupType, 0u);
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockSyncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(device->getNEODevice()->syncBufferHandler.get());
@@ -476,11 +476,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
 
     EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
 
-    pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, engineGroupType, 0u);
+    commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, engineGroupType, 0u);
     CmdListKernelLaunchParams launchParams = {};
     launchParams.isCooperative = true;
-    result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
+    result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     // sync buffer index once set should not change
@@ -494,26 +494,76 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     {
         VariableBackup<std::array<bool, 4>> usesSyncBuffer{&kernelAttributes.flags.packed};
         usesSyncBuffer = {};
-        pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        pCommandList->initialize(device, NEO::EngineGroupType::compute, 0u);
-        result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
+        commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+        result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     }
     {
         VariableBackup<uint32_t> groupCountX{&groupCount.groupCountX};
         uint32_t maximalNumberOfWorkgroupsAllowed = kernel.suggestMaxCooperativeGroupCount(engineGroupType, false);
         groupCountX = maximalNumberOfWorkgroupsAllowed + 1;
-        pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-        pCommandList->initialize(device, engineGroupType, 0u);
-        result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
+        commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        commandList->initialize(device, engineGroupType, 0u);
+        result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
     {
         VariableBackup<bool> cooperative{&launchParams.isCooperative};
         cooperative = false;
-        result = pCommandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
+        result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
+}
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelWithMakeViewIsCalledThenNoAllocationCreated, IsAtLeastXeHpCore) {
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
+    EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
+
+    constexpr uint32_t crossThreadDataSize = 64;
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
+    kernel.crossThreadDataSize = crossThreadDataSize;
+    memset(kernel.crossThreadData.get(), 0, crossThreadDataSize);
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesSyncBuffer = true;
+    kernelAttributes.numGrfRequired = GrfConfig::defaultGrfNumber;
+
+    auto &syncBufferAddress = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.syncBufferAddress;
+    syncBufferAddress.stateless = 0x8;
+    syncBufferAddress.pointerSize = 8;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto &productHelper = device->getProductHelper();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto engineGroupType = NEO::EngineGroupType::compute;
+    if (productHelper.isCooperativeEngineSupported(*defaultHwInfo)) {
+        engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::cooperative, *defaultHwInfo);
+    }
+
+    auto commandBufferViewPtr = std::make_unique<uint8_t[]>(512);
+    auto heapBufferViewPtr = std::make_unique<uint8_t[]>(512);
+
+    CmdListKernelLaunchParams cooperativeParams = {};
+    cooperativeParams.isCooperative = true;
+    cooperativeParams.makeKernelCommandView = true;
+    cooperativeParams.cmdWalkerBuffer = commandBufferViewPtr.get();
+    cooperativeParams.hostPayloadBuffer = heapBufferViewPtr.get();
+
+    commandList->initialize(device, engineGroupType, 0u);
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), syncBufferAddress.stateless));
+    EXPECT_EQ(0u, patchPtr);
+
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getSyncBufferIndex());
+    EXPECT_EQ(nullptr, kernel.getSyncBufferAllocation());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelIsCalledThenPatchBuffer, IsAtLeastXeHpCore) {
@@ -526,8 +576,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getRegionGroupBarrierIndex());
     EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 
-    kernel.crossThreadData = std::make_unique<uint8_t[]>(64);
-    kernel.crossThreadDataSize = 64;
+    constexpr uint32_t crossThreadDataSize = 64;
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
+    kernel.crossThreadDataSize = crossThreadDataSize;
+    memset(kernel.crossThreadData.get(), 0, crossThreadDataSize);
 
     kernel.setGroupSize(4, 1, 1);
     ze_group_count_t groupCount{8, 1, 1};
@@ -581,6 +633,51 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     auto offset = alignUp((requestedNumberOfWorkgroups / launchParams.localRegionSize) * (launchParams.localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(patchPtr2, patchPtr + offset);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelWithMakeViewIsCalledThenNoPatchBuffer, IsAtLeastXeHpCore) {
+    Mock<::L0::KernelImp> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getRegionGroupBarrierIndex());
+    EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
+
+    constexpr uint32_t crossThreadDataSize = 64;
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(crossThreadDataSize);
+    kernel.crossThreadDataSize = crossThreadDataSize;
+    memset(kernel.crossThreadData.get(), 0, crossThreadDataSize);
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto &kernelAttributes = kernel.immutableData.kernelDescriptor->kernelAttributes;
+    kernelAttributes.flags.usesRegionGroupBarrier = true;
+
+    auto &regionGroupBarrier = kernel.immutableData.kernelDescriptor->payloadMappings.implicitArgs.regionGroupBarrierBuffer;
+    regionGroupBarrier.stateless = 0x8;
+    regionGroupBarrier.pointerSize = 8;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    ze_command_list_flags_t flags = 0;
+
+    std::unique_ptr<L0::CommandList> cmdList(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, flags, result, false));
+
+    auto commandBufferViewPtr = std::make_unique<uint8_t[]>(512);
+    auto heapBufferViewPtr = std::make_unique<uint8_t[]>(512);
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.localRegionSize = 4;
+    launchParams.makeKernelCommandView = true;
+    launchParams.cmdWalkerBuffer = commandBufferViewPtr.get();
+    launchParams.hostPayloadBuffer = heapBufferViewPtr.get();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
+
+    auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
+    EXPECT_EQ(0u, patchPtr);
+
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), kernel.getRegionGroupBarrierIndex());
+    EXPECT_EQ(nullptr, kernel.getRegionGroupBarrierAllocation());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, whenAppendLaunchCooperativeKernelAndQueryKernelTimestampsToTheSameCmdlistThenFronEndStateIsNotChanged, MatchAny) {

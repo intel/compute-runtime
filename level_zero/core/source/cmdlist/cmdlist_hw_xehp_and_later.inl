@@ -246,17 +246,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     containsCooperativeKernelsFlag |= launchParams.isCooperative;
-    if (kernel->usesSyncBuffer()) {
-        auto retVal = (launchParams.isCooperative
-                           ? programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions)
-                           : ZE_RESULT_ERROR_INVALID_ARGUMENT);
-        if (retVal) {
-            return retVal;
-        }
-    }
 
-    if (kernel->usesRegionGroupBarrier()) {
-        programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize);
+    if (!launchParams.makeKernelCommandView) {
+        if (kernel->usesSyncBuffer()) {
+            auto retVal = (launchParams.isCooperative
+                               ? programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions)
+                               : ZE_RESULT_ERROR_INVALID_ARGUMENT);
+            if (retVal) {
+                return retVal;
+            }
+        }
+
+        if (kernel->usesRegionGroupBarrier()) {
+            programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize);
+        }
     }
 
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
