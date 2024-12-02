@@ -17,4 +17,9 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
+template <typename Family>
+bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
+    return true;
+}
+
 } // namespace NEO

@@ -106,6 +106,11 @@ inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE
 template <>
 inline void EncodeWA<Family>::setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args) {}
 
+template <>
+bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/command_container/command_encoder_enablers.inl"

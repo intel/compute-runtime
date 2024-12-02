@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
@@ -837,7 +838,8 @@ bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeede
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
-    return true;
+    using GfxFamily = typename HwMapper<gfxProduct>::GfxFamily;
+    return EncodeEnableRayTracing<GfxFamily>::is48bResourceNeededForRayTracing();
 }
 
 template <PRODUCT_FAMILY gfxProduct>

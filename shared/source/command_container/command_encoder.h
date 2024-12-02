@@ -628,6 +628,7 @@ template <typename GfxFamily>
 struct EncodeEnableRayTracing {
     static void programEnableRayTracing(LinearStream &commandStream, uint64_t backBuffer);
     static void append3dStateBtd(void *ptr3dStateBtd);
+    static bool is48bResourceNeededForRayTracing();
 };
 
 template <typename GfxFamily>
