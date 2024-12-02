@@ -40,14 +40,13 @@ enum class RequiredDispatchWalkOrder : uint32_t {
     none = 0,
     x,
     y,
-    additional
 };
 
 static constexpr uint32_t localRegionSizeParamNotSet = 0;
 
 namespace EncodeParamsApiMappings {
 static constexpr std::array<NEO::RequiredPartitionDim, 3> partitionDim = {{RequiredPartitionDim::x, NEO::RequiredPartitionDim::y, NEO::RequiredPartitionDim::z}};
-static constexpr std::array<NEO::RequiredDispatchWalkOrder, 3> dispatchWalkOrder = {{NEO::RequiredDispatchWalkOrder::x, NEO::RequiredDispatchWalkOrder::y, NEO::RequiredDispatchWalkOrder::additional}};
+static constexpr std::array<NEO::RequiredDispatchWalkOrder, 2> dispatchWalkOrder = {{NEO::RequiredDispatchWalkOrder::x, NEO::RequiredDispatchWalkOrder::y}};
 } // namespace EncodeParamsApiMappings
 
 } // namespace NEO
