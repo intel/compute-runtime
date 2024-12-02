@@ -24,8 +24,8 @@ class CacheReservationImpl : public CacheReservation {
 
   protected:
     Device &device;
-    NEO::CacheRegion reservedCacheRegion = NEO::CacheRegion::none;
-    size_t reservedCacheSize = 0;
+    NEO::CacheRegion reservedL3CacheRegion = NEO::CacheRegion::none;
+    size_t reservedL3CacheSize = 0;
 };
 
 } // namespace L0

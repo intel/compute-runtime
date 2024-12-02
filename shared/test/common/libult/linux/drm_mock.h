@@ -26,7 +26,6 @@ class DrmMock : public Drm {
   public:
     using Drm::adapterBDF;
     using Drm::bindAvailable;
-    using Drm::cacheInfo;
     using Drm::checkQueueSliceSupport;
     using Drm::chunkingAvailable;
     using Drm::chunkingMode;
@@ -39,6 +38,7 @@ class DrmMock : public Drm {
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
     using Drm::ioctlHelper;
+    using Drm::l3CacheInfo;
     using Drm::memoryInfo;
     using Drm::memoryInfoQueried;
     using Drm::minimalChunkingSize;

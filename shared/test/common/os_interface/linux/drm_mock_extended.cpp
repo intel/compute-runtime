@@ -124,7 +124,7 @@ int DrmMockExtended::handleRemainingRequests(DrmIoctl request, void *arg) {
         if (cacheReserveArg->clos_index > closIndex) {
             return EINVAL;
         }
-        auto cacheInfo = this->getCacheInfo();
+        auto cacheInfo = this->getL3CacheInfo();
         auto maxReservationNumWays = cacheInfo ? cacheInfo->getMaxReservationNumWays() : maxNumWays;
         if (cacheReserveArg->num_ways > maxReservationNumWays) {
             return EINVAL;

@@ -24,12 +24,12 @@ std::unique_ptr<CacheReservation> CacheReservation::create(Device &device) {
 bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
     auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
 
-    auto cacheInfo = drm->getCacheInfo();
+    auto cacheInfo = drm->getL3CacheInfo();
 
     if (cacheReservationSize == 0) {
-        cacheInfo->freeCacheRegion(this->reservedCacheRegion);
-        this->reservedCacheRegion = NEO::CacheRegion::none;
-        this->reservedCacheSize = 0;
+        cacheInfo->freeCacheRegion(this->reservedL3CacheRegion);
+        this->reservedL3CacheRegion = NEO::CacheRegion::none;
+        this->reservedL3CacheSize = 0;
         return true;
     }
 
@@ -38,8 +38,8 @@ bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservati
         return false;
     }
 
-    this->reservedCacheRegion = cacheRegion;
-    this->reservedCacheSize = cacheReservationSize;
+    this->reservedL3CacheRegion = cacheRegion;
+    this->reservedL3CacheSize = cacheReservationSize;
 
     return true;
 }
@@ -49,8 +49,8 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t reg
     size_t cacheRegionSize = 0;
 
     if (cacheRegion == ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_RESERVE_REGION) {
-        cacheRegionIdx = this->reservedCacheRegion;
-        cacheRegionSize = this->reservedCacheSize;
+        cacheRegionIdx = this->reservedL3CacheRegion;
+        cacheRegionSize = this->reservedL3CacheSize;
     }
 
     auto allocData = device.getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
@@ -69,7 +69,7 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t reg
 size_t CacheReservationImpl::getMaxCacheReservationSize() {
     auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
 
-    auto cacheInfo = drm->getCacheInfo();
+    auto cacheInfo = drm->getL3CacheInfo();
     return cacheInfo->getMaxReservationCacheSize();
 }
 

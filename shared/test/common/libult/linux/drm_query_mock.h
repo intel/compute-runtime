@@ -27,7 +27,7 @@ class DrmQueryMock : public DrmMock {
     DrmMockPrelimContext context{
         nullptr,
         rootDeviceEnvironment,
-        getCacheInfo(),
+        getL3CacheInfo(),
         failRetTopology,
         supportedCopyEnginesMask,
         contextDebugSupported,

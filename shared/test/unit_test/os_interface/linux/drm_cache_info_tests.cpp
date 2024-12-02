@@ -26,7 +26,7 @@ TEST(DrmCacheInfoTest, givenCacheRegionsExistsWhenCallingSetUpCacheInfoThenCache
 
     drm.setupCacheInfo(*defaultHwInfo.get());
 
-    auto cacheInfo = drm.getCacheInfo();
+    auto cacheInfo = drm.getL3CacheInfo();
     EXPECT_NE(nullptr, cacheInfo);
 
     if (productHelper.getNumCacheRegions() == 0) {
@@ -56,8 +56,8 @@ TEST(DrmCacheInfoTest, givenDebugFlagSetWhenCallingSetUpCacheInfoThenCacheInfoIs
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     drm.setupCacheInfo(*defaultHwInfo.get());
-    EXPECT_NE(nullptr, drm.getCacheInfo());
-    auto cacheInfo = drm.getCacheInfo();
+    EXPECT_NE(nullptr, drm.getL3CacheInfo());
+    auto cacheInfo = drm.getL3CacheInfo();
 
     EXPECT_EQ(0u, cacheInfo->getMaxReservationCacheSize());
     EXPECT_EQ(0u, cacheInfo->getMaxReservationNumCacheRegions());

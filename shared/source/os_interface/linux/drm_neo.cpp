@@ -1017,21 +1017,23 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
     if (debugManager.flags.ClosEnabled.get() == 0 || productHelper.getNumCacheRegions() == 0) {
-        this->cacheInfo.reset(new CacheInfo{*ioctlHelper, 0, 0, 0});
+        this->l3CacheInfo.reset(new CacheInfo{*ioctlHelper, 0, 0, 0});
         return;
     }
 
-    const GT_SYSTEM_INFO *gtSysInfo = &hwInfo.gtSystemInfo;
+    auto allocateL3CacheInfo{[&productHelper, &hwInfo, &ioctlHelper = *(this->ioctlHelper)]() {
+        constexpr uint16_t maxNumWays = 32;
+        constexpr uint16_t globalReservationLimit = 16;
+        constexpr uint16_t clientReservationLimit = 8;
+        constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
+        const size_t totalCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte;
+        const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
+        const uint32_t maxReservationNumCacheRegions = productHelper.getNumCacheRegions() - 1;
 
-    constexpr uint16_t maxNumWays = 32;
-    constexpr uint16_t globalReservationLimit = 16;
-    constexpr uint16_t clientReservationLimit = 8;
-    constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
-    const size_t totalCacheSize = gtSysInfo->L3CacheSizeInKb * MemoryConstants::kiloByte;
-    const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
-    const uint32_t maxReservationNumCacheRegions = productHelper.getNumCacheRegions() - 1;
+        return new CacheInfo(ioctlHelper, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays);
+    }};
 
-    this->cacheInfo.reset(new CacheInfo(*ioctlHelper, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays));
+    this->l3CacheInfo.reset(allocateL3CacheInfo());
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {
