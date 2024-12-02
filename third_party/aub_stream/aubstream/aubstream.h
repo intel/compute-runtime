@@ -107,7 +107,7 @@ struct CreateHardwareContext2Params {
     uint32_t primaryContextId = hardwareContextId::invalidContextId;
 };
 
-static_assert(std::is_pod<SurfaceInfo>::value, "SurfaceInfo is not POD type");
+static_assert(std::is_standard_layout_v<SurfaceInfo> && std::is_trivial_v<SurfaceInfo> && std::is_trivially_copyable_v<SurfaceInfo>, "SurfaceInfo is not POD type");
 static_assert(std::is_standard_layout_v<CreateHardwareContext2Params>, "CreateHardwareContext2Params is not standard layout type");
 
 } // namespace aub_stream

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,6 @@ struct PhysicalAllocationInfo {
     size_t pageSize;
 };
 
-static_assert(std::is_pod<PhysicalAllocationInfo>::value, "PhysicalAllocationInfo is not POD type");
+static_assert(std::is_standard_layout_v<PhysicalAllocationInfo> && std::is_trivial_v<PhysicalAllocationInfo> && std::is_trivially_copyable_v<PhysicalAllocationInfo>, "PhysicalAllocationInfo is not POD type");
 
 } // namespace aub_stream
