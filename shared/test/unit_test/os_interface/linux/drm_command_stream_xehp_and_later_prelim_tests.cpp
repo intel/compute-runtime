@@ -233,6 +233,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenExternalInterrupt
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->activePartitions = 2u;
     EXPECT_NE(0u, testDrmCsr->immWritePostSyncWriteOffset);
+    EXPECT_TRUE(testDrmCsr->waitUserFenceSupported());
 
     auto rootExecEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     auto &gfxCoreHelper = rootExecEnvironment->getHelper<GfxCoreHelper>();

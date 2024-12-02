@@ -519,6 +519,7 @@ class CommandStreamReceiver {
 
     bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
 
+    virtual bool waitUserFenceSupported() { return false; }
     virtual bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) { return false; }
     void setPrimaryCsr(CommandStreamReceiver *primaryCsr) {
         this->primaryCsr = primaryCsr;

@@ -370,6 +370,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallW
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
+    ultCsr->isUserFenceWaitSupported = true;
     ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
     ultCsr->waitUserFenceParams.forceRetStatusValue = false;
     EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);
@@ -581,7 +582,7 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenWaitForUser
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
+    ultCsr->isUserFenceWaitSupported = true;
     ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
 
     EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);
@@ -605,6 +606,8 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventAndTbxModeWhenWaitingThenD
 
     ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
     ultCsr->commandStreamReceiverType = CommandStreamReceiverType::tbx;
+
+    EXPECT_FALSE(ultCsr->waitUserFenceSupported());
 
     auto eventPool = createEvents<FamilyType>(2, false);
     events[0]->enableKmdWaitMode();
@@ -642,7 +645,7 @@ HWTEST2_F(InOrderCmdListTests, givenUserInterruptEventWhenWaitingThenPassCorrect
     duplicatedStorageImmCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
+    ultCsr->isUserFenceWaitSupported = true;
     ultCsr->waitUserFenceParams.forceRetStatusEnabled = true;
 
     EXPECT_EQ(0u, ultCsr->waitUserFenceParams.callCount);

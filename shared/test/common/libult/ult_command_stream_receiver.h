@@ -530,6 +530,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::waitUserFence(waitValue, hostAddress, timeout, userInterrupt, externalInterruptId, allocForInterruptWait);
     }
 
+    bool waitUserFenceSupported() override { return isUserFenceWaitSupported; }
+
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override {
         this->pagingFenceValueToUnblock = pagingFenceValue;
         BaseClass::unblockPagingFenceSemaphore(pagingFenceValue);
@@ -619,6 +621,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool stopDirectSubmissionCalled = false;
     bool stopDirectSubmissionCalledBlocking = false;
     bool registeredDcFlushForDcFlushMitigation = false;
+    bool isUserFenceWaitSupported = false;
 };
 
 } // namespace NEO
