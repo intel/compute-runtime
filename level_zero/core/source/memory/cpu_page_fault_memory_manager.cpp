@@ -18,6 +18,7 @@
 namespace NEO {
 void PageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
+    deviceImp->getNEODevice()->stopDirectSubmissionForCopyEngine();
 
     NEO::SvmAllocationData *allocData = deviceImp->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     UNRECOVERABLE_IF(allocData == nullptr);
@@ -30,6 +31,7 @@ void PageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
 }
 void PageFaultManager::transferToGpu(void *ptr, void *device) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
+    deviceImp->getNEODevice()->stopDirectSubmissionForCopyEngine();
 
     NEO::SvmAllocationData *allocData = deviceImp->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     UNRECOVERABLE_IF(allocData == nullptr);
