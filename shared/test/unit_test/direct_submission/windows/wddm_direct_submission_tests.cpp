@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
@@ -24,6 +25,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/direct_submission/direct_submission_controller_mock.h"
 #include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
+
 extern uint64_t cpuFence;
 namespace NEO {
 
@@ -82,6 +84,9 @@ struct WddmDirectSubmissionWithMockGdiDllFixture : public WddmFixtureWithMockGdi
 using WddmDirectSubmissionWithMockGdiDllTest = Test<WddmDirectSubmissionWithMockGdiDllFixture>;
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThenExpectProperCommandsDispatched) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(0);
+
     std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
         std::make_unique<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device->getDefaultEngine().commandStreamReceiver);
 
@@ -107,6 +112,33 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
 
     EXPECT_NE(0u, wddmDirectSubmission->ringCommandStream.getUsed());
 
+    *wddmDirectSubmission->ringFence.cpuAddress = 1ull;
+    wddmDirectSubmission->ringBuffers[wddmDirectSubmission->currentRingBuffer].completionFence = 2ull;
+
+    wddmDirectSubmission.reset(nullptr);
+    EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
+    EXPECT_EQ(1u, wddmMockInterface->destroyMonitorFenceCalled);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedWithMiMemFenceSupportedThenMakeGlobalFenceResident) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.set(1);
+    std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
+        std::make_unique<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device->getDefaultEngine().commandStreamReceiver);
+
+    EXPECT_EQ(1u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
+
+    bool ret = wddmDirectSubmission->initialize(true, false);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(wddmDirectSubmission->ringStart);
+
+    auto isFenceRequired = device->getGfxCoreHelper().isFenceAllocationRequired(device->getHardwareInfo());
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
+    if (isFenceRequired && !isHeaplessStateInit) {
+        EXPECT_EQ(1u, wddm->makeResidentResult.handleCount);
+        EXPECT_TRUE(device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation()->isExplicitlyMadeResident());
+    }
     *wddmDirectSubmission->ringFence.cpuAddress = 1ull;
     wddmDirectSubmission->ringBuffers[wddmDirectSubmission->currentRingBuffer].completionFence = 2ull;
 

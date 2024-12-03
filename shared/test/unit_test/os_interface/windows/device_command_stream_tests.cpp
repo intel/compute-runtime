@@ -1103,10 +1103,10 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
-template <typename GfxFamily>
-struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
-    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily>(const CommandStreamReceiver &commandStreamReceiver)
-        : MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>(commandStreamReceiver) {
+template <typename GfxFamily, typename Dispatcher>
+struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectSubmission<GfxFamily, Dispatcher> {
+    MockWddmDrmDirectSubmissionDispatchCommandBuffer<GfxFamily, Dispatcher>(const CommandStreamReceiver &commandStreamReceiver)
+        : MockWddmDirectSubmission<GfxFamily, Dispatcher>(commandStreamReceiver) {
     }
 
     bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) override {
@@ -1123,7 +1123,8 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
 };
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceThenFlushMonitorFenceOnDirectSubmission) {
-    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     debugManager.flags.EnableDirectSubmission.set(1);
@@ -1156,8 +1157,34 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceTh
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
 }
 
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenCsrFlushMonitorFenceCalledThenFlushCalled) {
+    using Dispatcher = BlitterDispatcher<FamilyType>;
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
+
+    auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
+    OsContextWin bcsOsContext(*wddm, 0, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}));
+    bcsOsContext.ensureContextInitialized(false);
+    mockCsr->setupContext(bcsOsContext);
+
+    debugManager.flags.EnableDirectSubmission.set(1);
+    debugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
+
+    mockCsr->blitterDirectSubmission = std::make_unique<MockSubmission>(*device->getDefaultEngine().commandStreamReceiver);
+    auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->blitterDirectSubmission.get());
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
+
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
+    csr->flushMonitorFence();
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
+}
+
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFence) {
-    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     debugManager.flags.EnableDirectSubmission.set(1);
@@ -1197,7 +1224,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {
-    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType>;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     bool renderStreamerFound = false;

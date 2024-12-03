@@ -67,7 +67,7 @@ struct DirectSubmissionInputParams : NonCopyableClass {
     OsContext &osContext;
     const RootDeviceEnvironment &rootDeviceEnvironment;
     MemoryManager *memoryManager = nullptr;
-    const GraphicsAllocation *globalFenceAllocation = nullptr;
+    GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *completionFenceAllocation = nullptr;
     TaskCountType initialCompletionFenceValue = 0;
@@ -192,6 +192,7 @@ class DirectSubmissionHw {
 
     void updateRelaxedOrderingQueueSize(uint32_t newSize);
 
+    virtual void makeGlobalFenceAlwaysResident(){};
     struct RingBufferUse {
         RingBufferUse() = default;
         RingBufferUse(FlushStamp completionFence, GraphicsAllocation *ringBuffer) : completionFence(completionFence), ringBuffer(ringBuffer){};
@@ -223,7 +224,7 @@ class DirectSubmissionHw {
     MemoryOperationsHandler *memoryOperationHandler = nullptr;
     const HardwareInfo *hwInfo = nullptr;
     const RootDeviceEnvironment &rootDeviceEnvironment;
-    const GraphicsAllocation *globalFenceAllocation = nullptr;
+    GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *completionFenceAllocation = nullptr;
     GraphicsAllocation *semaphores = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
