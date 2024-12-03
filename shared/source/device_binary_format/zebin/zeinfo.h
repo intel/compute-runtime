@@ -60,6 +60,7 @@ inline constexpr ConstStringRef subgroupIndependentForwardProgress("subgroup_ind
 inline constexpr ConstStringRef workGroupWalkOrderDimensions("work_group_walk_order_dimensions");
 inline constexpr ConstStringRef threadSchedulingMode("thread_scheduling_mode");
 inline constexpr ConstStringRef hasSample("has_sample");
+inline constexpr ConstStringRef actualKernelStartOffset("actual_kernel_start_offset");
 namespace ThreadSchedulingMode {
 inline constexpr ConstStringRef ageBased("age_based");
 inline constexpr ConstStringRef roundRobin("round_robin");

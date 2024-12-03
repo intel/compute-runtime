@@ -1983,6 +1983,31 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::zebin::.ze_info : Unknown entry \"something_new\" in context of some_kernel\n", errors.c_str());
 }
 
+TEST(ReadZeInfoExecutionEnvironment, GivenActualKernelStartOffsetThenDontTreatItAsInvalidEntry) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    execution_env:
+        simd_size : 8
+        actual_kernel_start_offset: 240
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &argsNode = *parser.findNodeWithKeyDfs("execution_env");
+    std::string errors;
+    std::string warnings;
+    NEO::Zebin::ZeInfo::Types::Kernel::ExecutionEnv::ExecutionEnvBaseT execEnv;
+    auto err = NEO::Zebin::ZeInfo::readZeInfoExecutionEnvironment(parser, argsNode, execEnv, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
 TEST(ReadZeInfoExecutionEnvironment, GivenInvalidValueForKnownEntryThenFails) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
