@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2020 Intel Corporation
+# Copyright (C) 2019-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,8 @@ set(NEO_CORE_PAGE_FAULT_MANAGER_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_windows.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_windows.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_page_fault_manager_windows.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tbx_page_fault_manager_windows.h
 )
 
 if(WIN32)

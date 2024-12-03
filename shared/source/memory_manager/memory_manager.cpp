@@ -83,9 +83,11 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         localMemAllocsSize[rootDeviceIndex].store(0u);
     }
 
-    if (anyLocalMemorySupported) {
-        pageFaultManager = PageFaultManager::create();
-        prefetchManager = PrefetchManager::create();
+    if (anyLocalMemorySupported || debugManager.isTbxMode()) {
+        pageFaultManager = CpuPageFaultManager::create();
+        if (anyLocalMemorySupported) {
+            prefetchManager = PrefetchManager::create();
+        }
     }
 
     if (debugManager.flags.EnableMultiStorageResources.get() != -1) {

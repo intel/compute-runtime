@@ -29,11 +29,11 @@ const char *neoMockSettingsFileName = "neo_mock.config";
 bool CompressionSelector::preferCompressedAllocation(const AllocationProperties &properties) {
     return false;
 }
-void PageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {
+void CpuPageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {
 }
-void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
+void CpuPageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
 }
-void PageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
+void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
 }
 
 void RootDeviceEnvironment::initApiGfxCoreHelper() {
