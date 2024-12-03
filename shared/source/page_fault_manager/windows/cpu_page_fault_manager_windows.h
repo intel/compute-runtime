@@ -13,7 +13,8 @@
 #include <functional>
 
 namespace NEO {
-class PageFaultManagerWindows : public PageFaultManager {
+
+class PageFaultManagerWindows : public virtual CpuPageFaultManager {
   public:
     PageFaultManagerWindows();
     ~PageFaultManagerWindows() override;
@@ -23,6 +24,7 @@ class PageFaultManagerWindows : public PageFaultManager {
   protected:
     void allowCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
+    void protectCpuMemoryFromWrites(void *ptr, size_t size) override;
 
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
@@ -33,5 +35,7 @@ class PageFaultManagerWindows : public PageFaultManager {
     static std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> pageFaultHandler;
     PVOID previousHandler;
 };
+
+class CpuPageFaultManagerWindows final : public PageFaultManagerWindows {};
 
 } // namespace NEO

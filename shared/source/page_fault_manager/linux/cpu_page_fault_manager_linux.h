@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace NEO {
-class PageFaultManagerLinux : public PageFaultManager {
+class PageFaultManagerLinux : public virtual CpuPageFaultManager {
   public:
     PageFaultManagerLinux();
     ~PageFaultManagerLinux() override;
@@ -24,6 +24,7 @@ class PageFaultManagerLinux : public PageFaultManager {
   protected:
     void allowCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
+    void protectCpuMemoryFromWrites(void *ptr, size_t size) override;
 
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) override;
@@ -41,4 +42,7 @@ class PageFaultManagerLinux : public PageFaultManager {
     bool evictMemoryAfterCopy = false;
     int handlerIndex = 0;
 };
+
+class CpuPageFaultManagerLinux final : public PageFaultManagerLinux {};
+
 } // namespace NEO
