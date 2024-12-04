@@ -140,5 +140,9 @@ void SysmanKmdInterfaceI915Upstream::getDriverVersion(char (&driverVersion)[ZES_
     return;
 }
 
+ze_result_t SysmanKmdInterfaceI915Upstream::getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) {
+    return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+}
+
 } // namespace Sysman
 } // namespace L0

@@ -147,6 +147,8 @@ class SysmanKmdInterface {
     virtual bool isSettingTimeoutModeSupported() const = 0;
     virtual bool isSettingExclusiveModeSupported() const = 0;
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
+    virtual bool isVfEngineUtilizationSupported() const = 0;
+    virtual ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -199,6 +201,8 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     bool isSettingTimeoutModeSupported() const override { return true; }
     bool isSettingExclusiveModeSupported() const override { return true; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    bool isVfEngineUtilizationSupported() const override { return false; }
+    ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -242,6 +246,8 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     bool isSettingTimeoutModeSupported() const override { return true; }
     bool isSettingExclusiveModeSupported() const override { return true; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    bool isVfEngineUtilizationSupported() const override { return true; }
+    ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -287,6 +293,8 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isSettingTimeoutModeSupported() const override { return false; }
     bool isSettingExclusiveModeSupported() const override { return false; }
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    bool isVfEngineUtilizationSupported() const override { return false; }
+    ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

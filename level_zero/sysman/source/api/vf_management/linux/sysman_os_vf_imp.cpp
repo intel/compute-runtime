@@ -8,8 +8,11 @@
 #include "level_zero/sysman/source/api/vf_management/linux/sysman_os_vf_imp.h"
 
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/utilities/directory.h"
 
+#include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
+#include "level_zero/sysman/source/shared/linux/pmu/sysman_pmu_imp.h"
 #include "level_zero/sysman/source/shared/linux/sysman_fs_access_interface.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_const.h"
@@ -93,8 +96,118 @@ ze_result_t LinuxVfImp::vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_m
     return ZE_RESULT_SUCCESS;
 }
 
+void LinuxVfImp::vfGetInstancesFromEngineInfo(NEO::EngineInfo *engineInfo, std::set<std::pair<zes_engine_group_t, uint32_t>> &engineGroupAndInstance) {
+
+    auto engineTileMap = engineInfo->getEngineTileInfo();
+    for (const auto &engine : engineTileMap) {
+        auto engineClassToEngineGroupRange = engineClassToEngineGroup.equal_range(static_cast<uint16_t>(engine.second.engineClass));
+        for (auto l0EngineEntryInMap = engineClassToEngineGroupRange.first; l0EngineEntryInMap != engineClassToEngineGroupRange.second; l0EngineEntryInMap++) {
+            auto l0EngineType = l0EngineEntryInMap->second;
+            engineGroupAndInstance.insert({l0EngineType, static_cast<uint32_t>(engine.second.engineInstance)});
+        }
+    }
+}
+
+ze_result_t LinuxVfImp::vfEngineDataInit() {
+
+    const auto pDrm = pLinuxSysmanImp->getDrm();
+    const auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+    const auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+
+    auto hwDeviceId = pLinuxSysmanImp->getSysmanHwDeviceIdInstance();
+    if (hwDeviceId.getFileDescriptor() < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not get Device Id Fd and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (pDrm->sysmanQueryEngineInfo() == false) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():sysmanQueryEngineInfo is returning false and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    const auto engineInfo = pDrm->getEngineInfo();
+    vfGetInstancesFromEngineInfo(engineInfo, engineGroupAndInstance);
+    for (const auto &engine : engineGroupAndInstance) {
+        auto engineClass = engineGroupToEngineClass.find(engine.first);
+        std::pair<uint64_t, uint64_t> configPair{UINT64_MAX, UINT64_MAX};
+        auto result = pSysmanKmdInterface->getBusyAndTotalTicksConfigs(vfId, engine.second, engineClass->second, configPair);
+        if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get the busy config and total ticks config and returning error:0x%x \n", __FUNCTION__, result);
+            cleanup();
+            return result;
+        }
+
+        uint64_t busyTicksConfig = configPair.first;
+        int64_t busyTicksFd = pPmuInterface->pmuInterfaceOpen(busyTicksConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        if (busyTicksFd < 0) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            cleanup();
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
+        uint64_t totalTicksConfig = configPair.second;
+        int64_t totalTicksFd = pPmuInterface->pmuInterfaceOpen(totalTicksConfig, static_cast<int32_t>(busyTicksFd), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+        if (totalTicksFd < 0) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Ticks Handle and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+            close(static_cast<int>(busyTicksFd));
+            cleanup();
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
+        EngineUtilsData pEngineUtilsData;
+        pEngineUtilsData.engineType = engine.first;
+        pEngineUtilsData.busyTicksFd = busyTicksFd;
+        pEngineUtilsData.totalTicksFd = totalTicksFd;
+        pEngineUtils.push_back(pEngineUtilsData);
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t LinuxVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    const auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    if (!pSysmanKmdInterface->isVfEngineUtilizationSupported()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::call_once(initEngineDataOnce, [this]() {
+        this->vfEngineDataInit();
+    });
+
+    uint32_t engineCount = static_cast<uint32_t>(pEngineUtils.size());
+    if (engineCount == 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): The Total Engine Count Is Zero and hence returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    if (*pCount == 0) {
+        *pCount = engineCount;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (*pCount > engineCount) {
+        *pCount = engineCount;
+    }
+
+    if (pEngineUtil != nullptr) {
+        const auto pPmuInterface = pLinuxSysmanImp->getPmuInterface();
+        uint32_t index = 0;
+        for (const auto &pEngineUtilsData : pEngineUtils) {
+            uint64_t pmuData[4] = {};
+            auto ret = pPmuInterface->pmuRead(static_cast<int>(pEngineUtilsData.busyTicksFd), pmuData, sizeof(pmuData));
+            if (ret < 0) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+
+            pEngineUtil[index].vfEngineType = pEngineUtilsData.engineType;
+            pEngineUtil[index].activeCounterValue = pmuData[2];
+            pEngineUtil[index].samplingCounterValue = pmuData[3];
+            index++;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
@@ -136,6 +249,20 @@ LinuxVfImp::LinuxVfImp(
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     this->vfId = vfId;
+}
+
+void LinuxVfImp::cleanup() {
+    for (const auto &pEngineUtilsData : pEngineUtils) {
+        DEBUG_BREAK_IF(pEngineUtilsData.busyTicksFd < 0);
+        close(static_cast<int>(pEngineUtilsData.busyTicksFd));
+        DEBUG_BREAK_IF(pEngineUtilsData.totalTicksFd < 0);
+        close(static_cast<int>(pEngineUtilsData.totalTicksFd));
+    }
+    pEngineUtils.clear();
+}
+
+LinuxVfImp::~LinuxVfImp() {
+    cleanup();
 }
 
 std::unique_ptr<OsVf> OsVf::create(

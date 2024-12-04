@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_i915.h"
 #include "level_zero/sysman/test/unit_tests/sources/vf_management/linux/mock_sysfs_vf_management.h"
 
 namespace L0 {
@@ -232,6 +233,17 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationAndAndZeroLo
     std::vector<zes_vf_util_mem_exp2_t> memUtils(mockCount);
     auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
     EXPECT_EQ(pVfImp->vfOsGetMemoryUtilization(&mockCount, memUtils.data()), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
+TEST_F(ZesVfFixture, GivenValidVfHandleWhenBusyAndTotalTicksConfigNotAvailableAndCallingVfEngineDataInitThenErrorIsReturned) {
+
+    auto pDrm = new MockVfNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
+    pDrm->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
+    auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
+    osInterface->setDriverModel(std::unique_ptr<MockVfNeoDrm>(pDrm));
+
+    auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
+    EXPECT_EQ(pVfImp->vfEngineDataInit(), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 } // namespace ult

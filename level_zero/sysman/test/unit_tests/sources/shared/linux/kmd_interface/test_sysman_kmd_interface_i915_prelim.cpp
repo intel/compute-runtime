@@ -231,6 +231,11 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenCheckingWhether
     EXPECT_FALSE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
 }
 
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForVfEngineUtilizationThenTrueValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isVfEngineUtilizationSupported());
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

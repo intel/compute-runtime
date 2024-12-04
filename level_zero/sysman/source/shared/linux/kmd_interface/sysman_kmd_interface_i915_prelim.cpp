@@ -173,5 +173,12 @@ void SysmanKmdInterfaceI915Prelim::getDriverVersion(char (&driverVersion)[ZES_ST
     return;
 }
 
+ze_result_t SysmanKmdInterfaceI915Prelim::getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) {
+
+    configPair.first = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_BUSY_TICKS(engineClass, engineInstance), fnNumber);
+    configPair.second = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(engineClass, engineInstance), fnNumber);
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace Sysman
 } // namespace L0

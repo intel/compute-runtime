@@ -13,6 +13,7 @@
 #include "level_zero/sysman/source/api/vf_management/sysman_vf_imp.h"
 #include "level_zero/sysman/source/shared/linux/zes_os_sysman_imp.h"
 
+#include <set>
 #include <string>
 
 namespace L0 {
@@ -21,9 +22,14 @@ class SysFsAccessInterface;
 
 class LinuxVfImp : public OsVf, NEO::NonCopyableOrMovableClass {
   public:
-    LinuxVfImp() = default;
+    struct EngineUtilsData {
+        zes_engine_group_t engineType{};
+        int64_t busyTicksFd = -1;
+        int64_t totalTicksFd = -1;
+    };
+
     LinuxVfImp(OsSysman *pOsSysman, uint32_t vfId);
-    ~LinuxVfImp() override = default;
+    ~LinuxVfImp() override;
 
     ze_result_t vfOsGetCapabilities(zes_vf_exp_capabilities_t *pCapability) override;
     ze_result_t vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) override;
@@ -32,11 +38,19 @@ class LinuxVfImp : public OsVf, NEO::NonCopyableOrMovableClass {
     bool vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) override;
 
   protected:
+    ze_result_t vfEngineDataInit();
     ze_result_t getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t *address);
+    void vfGetInstancesFromEngineInfo(NEO::EngineInfo *engineInfo, std::set<std::pair<zes_engine_group_t, uint32_t>> &engineGroupAndInstance);
+    void cleanup();
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     SysFsAccessInterface *pSysfsAccess = nullptr;
     uint32_t vfId = 0;
     static const uint32_t maxMemoryTypes = 1; // Since only the Device Memory Utilization is Supported and not for the Host Memory, this value is 1
+
+  private:
+    std::set<std::pair<zes_engine_group_t, uint32_t>> engineGroupAndInstance = {};
+    std::vector<EngineUtilsData> pEngineUtils = {};
+    std::once_flag initEngineDataOnce;
 };
 
 } // namespace Sysman

@@ -188,6 +188,17 @@ TEST_F(SysmanFixtureDeviceXe, GivenSingleEngineTypeAndSysmanKmdInterfaceInstance
     EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get()), 0);
 }
 
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForVfEngineUtilizationThenFalseValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_FALSE(pSysmanKmdInterface->isVfEngineUtilizationSupported());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenGettingBusyAndTotalTicksConfigsThenErrorIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::pair<uint64_t, uint64_t> configPair;
+    EXPECT_EQ(pSysmanKmdInterface->getBusyAndTotalTicksConfigs(0, 0, 1, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

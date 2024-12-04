@@ -237,6 +237,17 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenCheckingWheth
     EXPECT_FALSE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
 }
 
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForVfEngineUtilizationThenFalseValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_FALSE(pSysmanKmdInterface->isVfEngineUtilizationSupported());
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenGettingBusyAndTotalTicksConfigsThenErrorIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::pair<uint64_t, uint64_t> configPair;
+    EXPECT_EQ(pSysmanKmdInterface->getBusyAndTotalTicksConfigs(0, 0, 1, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0
