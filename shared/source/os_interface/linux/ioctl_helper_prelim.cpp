@@ -262,7 +262,7 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
     return ret;
 }
 
-CacheRegion IoctlHelperPrelim20::closAlloc() {
+CacheRegion IoctlHelperPrelim20::closAlloc(CacheLevel cacheLevel) {
     struct prelim_drm_i915_gem_clos_reserve clos = {};
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemClosReserve, &clos);

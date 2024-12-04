@@ -468,7 +468,7 @@ TEST(IoctlHelperTestsUpstream, givenUpstreamWhenClosAllocThenReturnNoneRegion) {
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc();
+    auto cacheRegion = ioctlHelper->closAlloc(NEO::CacheLevel::level3);
 
     EXPECT_EQ(CacheRegion::none, cacheRegion);
 }

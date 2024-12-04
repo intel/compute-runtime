@@ -698,7 +698,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     return create.handle;
 }
 
-CacheRegion IoctlHelperXe::closAlloc() {
+CacheRegion IoctlHelperXe::closAlloc(CacheLevel cacheLevel) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return CacheRegion::none;
 }

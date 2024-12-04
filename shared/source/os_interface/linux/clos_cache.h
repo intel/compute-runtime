@@ -24,7 +24,7 @@ class ClosCacheReservation {
     CacheRegion freeCache(CacheLevel cacheLevel, CacheRegion closIndex);
 
   protected:
-    CacheRegion allocEntry();
+    CacheRegion allocEntry(CacheLevel cacheLevel);
     CacheRegion freeEntry(CacheRegion closIndex);
     uint16_t allocCacheWay(CacheRegion closIndex, CacheLevel cacheLevel, uint16_t numWays);
 

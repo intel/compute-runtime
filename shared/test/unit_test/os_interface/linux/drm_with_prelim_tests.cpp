@@ -240,7 +240,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegiste
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegion) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc();
+    auto cacheRegion = ioctlHelper->closAlloc(NEO::CacheLevel::level3);
 
     EXPECT_EQ(CacheRegion::region1, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -250,7 +250,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     drm->ioctlRetVal = -1;
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc();
+    auto cacheRegion = ioctlHelper->closAlloc(NEO::CacheLevel::level3);
 
     EXPECT_EQ(CacheRegion::none, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);

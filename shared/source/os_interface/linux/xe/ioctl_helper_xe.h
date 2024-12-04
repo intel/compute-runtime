@@ -47,7 +47,7 @@ class IoctlHelperXe : public IoctlHelper {
     bool isVmBindAvailable() override;
     int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, uint64_t patIndex, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, std::optional<uint32_t> memPolicyMode, std::optional<std::vector<unsigned long>> memPolicyNodemask, std::optional<bool> isCoherent) override;
     uint32_t createGem(uint64_t size, uint32_t memoryBanks, std::optional<bool> isCoherent) override;
-    CacheRegion closAlloc() override;
+    CacheRegion closAlloc(CacheLevel cacheLevel) override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
     int waitUserFence(uint32_t ctxId, uint64_t address,

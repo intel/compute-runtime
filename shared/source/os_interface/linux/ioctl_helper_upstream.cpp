@@ -115,7 +115,7 @@ void IoctlHelperUpstream::detectExtSetPatSupport() {
                      this->isSetPatSupported ? "enabled" : "disabled");
 }
 
-CacheRegion IoctlHelperUpstream::closAlloc() {
+CacheRegion IoctlHelperUpstream::closAlloc(CacheLevel cacheLevel) {
     return CacheRegion::none;
 }
 

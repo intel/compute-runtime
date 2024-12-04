@@ -16,7 +16,7 @@
 namespace NEO {
 
 CacheRegion ClosCacheReservation::reserveCache(CacheLevel cacheLevel, uint16_t numWays) {
-    auto closIndex = allocEntry();
+    auto closIndex = allocEntry(cacheLevel);
     if (closIndex == CacheRegion::none) {
         return CacheRegion::none;
     }
@@ -36,8 +36,8 @@ CacheRegion ClosCacheReservation::freeCache(CacheLevel cacheLevel, CacheRegion c
     return freeEntry(closIndex);
 }
 
-CacheRegion ClosCacheReservation::allocEntry() {
-    return ioctlHelper.closAlloc();
+CacheRegion ClosCacheReservation::allocEntry(CacheLevel cacheLevel) {
+    return ioctlHelper.closAlloc(cacheLevel);
 }
 
 CacheRegion ClosCacheReservation::freeEntry(CacheRegion closIndex) {

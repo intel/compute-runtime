@@ -304,7 +304,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_FALSE(xeIoctlHelper->isSetPairAvailable());
 
-    EXPECT_EQ(CacheRegion::none, xeIoctlHelper->closAlloc());
+    EXPECT_EQ(CacheRegion::none, xeIoctlHelper->closAlloc(NEO::CacheLevel::level3));
 
     EXPECT_EQ(0u, xeIoctlHelper->closAllocWays(CacheRegion::none, 0u, 0u));
 
