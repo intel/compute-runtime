@@ -63,7 +63,6 @@ class MockDevice : public RootDevice {
     using Device::deviceInfo;
     using Device::executionEnvironment;
     using Device::generateUuidFromPciBusInfo;
-    using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::preemptionMode;
     using Device::regularEngineGroups;
@@ -97,6 +96,13 @@ class MockDevice : public RootDevice {
 
     void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
         performanceCounters = std::move(perfCounters);
+    }
+
+    uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override {
+        if (callBaseGetGlobalMemorySize) {
+            return Device::getGlobalMemorySize(deviceBitfield);
+        }
+        return getGlobalMemorySizeReturn;
     }
 
     size_t getMaxParameterSizeFromIGC() const override {
@@ -173,6 +179,8 @@ class MockDevice : public RootDevice {
 
     bool callBaseGetMaxParameterSizeFromIGC = false;
     bool callBaseVerifyAdapterLuid = true;
+    bool callBaseGetGlobalMemorySize = true;
+    uint64_t getGlobalMemorySizeReturn = 0u;
     bool verifyAdapterLuidReturnValue = true;
     size_t maxParameterSizeFromIGC = 0u;
     bool rtDispatchGlobalsForceAllocation = true;
