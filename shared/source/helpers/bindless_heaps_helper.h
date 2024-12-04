@@ -13,12 +13,15 @@
 #include <array>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
 namespace NEO {
 
 class IndirectHeap;
+struct AddressRange;
+class HeapAllocator;
 
 namespace BindlessImageSlot {
 constexpr uint32_t image = 0;
@@ -69,6 +72,12 @@ class BindlessHeapsHelper {
     void clearStateDirtyForContext(uint32_t osContextId);
 
   protected:
+    bool tryReservingMemoryForSpecialSsh(const size_t size, size_t alignment);
+    std::optional<AddressRange> reserveMemoryRange(size_t size, size_t alignment, HeapIndex heapIndex);
+    bool initializeReservedMemory();
+    bool isReservedMemoryModeAvailable();
+
+  protected:
     Device *rootDevice = nullptr;
     const size_t surfaceStateSize;
     bool growHeap(BindlesHeapType heapType);
@@ -89,5 +98,14 @@ class BindlessHeapsHelper {
     std::mutex mtx;
     DeviceBitfield deviceBitfield;
     bool globalBindlessDsh = false;
+
+    bool useReservedMemory = false;
+    bool reservedMemoryInitialized = false;
+    uint64_t reservedRangeBase = 0;
+
+    std::unique_ptr<HeapAllocator> heapFrontWindow;
+    std::unique_ptr<HeapAllocator> heapRegular;
+
+    std::vector<AddressRange> reservedRanges;
 };
 } // namespace NEO

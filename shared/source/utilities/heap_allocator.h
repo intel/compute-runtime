@@ -58,6 +58,10 @@ class HeapAllocator {
 
     double getUsage() const;
 
+    uint64_t getBaseAddress() const {
+        return this->pLeftBound;
+    }
+
   protected:
     const uint64_t size;
     uint64_t availableSize;

@@ -52,6 +52,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::useNonSvmHostPtrAlloc;
     using OsAgnosticMemoryManager::allocateGraphicsMemoryForImageFromHostPtr;
     using MemoryManagerCreate<OsAgnosticMemoryManager>::MemoryManagerCreate;
+    using MemoryManager::customHeapAllocators;
     using MemoryManager::enable64kbpages;
     using MemoryManager::executionEnvironment;
     using MemoryManager::getPreferredAllocationMethod;
@@ -101,6 +102,41 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         freeGraphicsMemoryCalled++;
         OsAgnosticMemoryManager::freeGraphicsMemoryImpl(gfxAllocation);
     };
+
+    AddressRange reserveGpuAddressOnHeap(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex, HeapIndex heap, size_t alignment) override {
+        reserveGpuAddressOnHeapCalled++;
+        reserveGpuAddressOnHeapParamsPassed.push_back({requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, heap, alignment});
+
+        bool shouldFail = failReserveGpuAddressOnHeap;
+        if (!reserveGpuAddressOnHeapFailOnCalls.empty() &&
+            std::find(reserveGpuAddressOnHeapFailOnCalls.begin(), reserveGpuAddressOnHeapFailOnCalls.end(), reserveGpuAddressOnHeapCalled - 1) != reserveGpuAddressOnHeapFailOnCalls.end()) {
+            shouldFail = true;
+        }
+
+        if (shouldFail) {
+            reserveGpuAddressOnHeapResult = AddressRange{0u, 0u};
+        } else {
+            reserveGpuAddressOnHeapResult = OsAgnosticMemoryManager::reserveGpuAddressOnHeap(requiredStartAddress, size, rootDeviceIndices, reservedOnRootDeviceIndex, heap, alignment);
+        }
+        return reserveGpuAddressOnHeapResult;
+    }
+
+    struct ReserveGpuAddressOnHeapParams {
+        uint64_t requiredStartAddress{};
+        size_t size{};
+        RootDeviceIndicesContainer rootDeviceIndices{};
+        uint32_t *reservedOnRootDeviceIndex{};
+        HeapIndex heap{};
+        size_t alignment{};
+    };
+
+    StackVec<ReserveGpuAddressOnHeapParams, 2> reserveGpuAddressOnHeapParamsPassed{};
+    StackVec<size_t, 5> reserveGpuAddressOnHeapFailOnCalls;
+
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override {
+        freeGpuAddressCalled++;
+        return OsAgnosticMemoryManager::freeGpuAddress(addressRange, rootDeviceIndex);
+    }
 
     void *lockResourceImpl(GraphicsAllocation &gfxAllocation) override {
         lockResourceCalled++;
@@ -258,6 +294,8 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t populateOsHandlesCalled = 0u;
     uint32_t allocateGraphicsMemoryForNonSvmHostPtrCalled = 0u;
     uint32_t freeGraphicsMemoryCalled = 0u;
+    uint32_t reserveGpuAddressOnHeapCalled = 0u;
+    uint32_t freeGpuAddressCalled = 0u;
     uint32_t unlockResourceCalled = 0u;
     uint32_t lockResourceCalled = 0u;
     uint32_t createGraphicsAllocationFromExistingStorageCalled = 0u;
@@ -284,6 +322,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool allocate32BitGraphicsMemoryImplCalled = false;
     bool allocateForShareableCalled = false;
     bool failReserveAddress = false;
+    bool failReserveGpuAddressOnHeap = false;
     bool failAllocateSystemMemory = false;
     bool failAllocate32Bit = false;
     bool failLockResource = false;
@@ -314,6 +353,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtrResult = nullptr;
     std::unique_ptr<AllocationProperties> lastAllocationProperties = nullptr;
     std::function<void(const AllocationProperties &)> validateAllocateProperties = [](const AllocationProperties &) -> void {};
+    AddressRange reserveGpuAddressOnHeapResult = AddressRange{0u, 0u};
 };
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {

@@ -1220,4 +1220,20 @@ bool MemoryManager::usmCompressionSupported(Device *device) {
     return gfxCoreHelper.usmCompressionSupported(hwInfo);
 }
 
+void MemoryManager::addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, const CustomHeapAllocatorConfig &config) {
+    customHeapAllocators[{allocationType, isFrontWindowPool}] = config;
+}
+
+std::optional<std::reference_wrapper<CustomHeapAllocatorConfig>> MemoryManager::getCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool) {
+    auto it = customHeapAllocators.find({allocationType, isFrontWindowPool});
+    if (it != customHeapAllocators.end()) {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
+void MemoryManager::removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool) {
+    customHeapAllocators.erase({allocationType, isFrontWindowPool});
+}
+
 } // namespace NEO

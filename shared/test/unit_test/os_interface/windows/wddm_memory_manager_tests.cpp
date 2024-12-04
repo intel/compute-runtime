@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
+#include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
@@ -4383,4 +4384,107 @@ TEST(WddmMemoryManagerTest3, givenWmmWhenAsyncDeleterIsEnabledAndWaitForDeletion
     memoryManager.waitForDeletions();
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
     debugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
+}
+
+class WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest : public WddmMemoryManagerSimpleTest {
+  public:
+    void SetUp() override {
+        debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
+        WddmMemoryManagerSimpleTest::SetUp();
+        wddm->callBaseMapGpuVa = false;
+
+        heapBase = alignUp(0xAAAAAAAA, alignment);
+        heapFrontStart = heapBase;
+        heapRegularStart = heapFrontStart + heapFrontSize;
+
+        heapFrontWindow = std::make_unique<HeapAllocator>(heapFrontStart, heapFrontSize, alignment, 0);
+        heapRegular = std::make_unique<HeapAllocator>(heapRegularStart, heapRegularSize, alignment, 0);
+    }
+
+    void TearDown() override {
+        WddmMemoryManagerSimpleTest::TearDown();
+    }
+
+    DebugManagerStateRestore restore{};
+
+    size_t allocationSize = MemoryConstants::pageSize64k;
+    size_t alignment = MemoryConstants::pageSize64k;
+
+    size_t heapFrontSize = 1 * MemoryConstants::gigaByte;
+    size_t heapRegularSize = 2 * MemoryConstants::gigaByte;
+
+    uint64_t heapBase = 0u;
+    uint64_t heapFrontStart = 0u;
+    uint64_t heapRegularStart = 0u;
+
+    std::unique_ptr<HeapAllocator> heapFrontWindow;
+    std::unique_ptr<HeapAllocator> heapRegular;
+};
+
+TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCustomHeapAllocatorForFrontWindowWhenAllocatingThenGpuAddressAndBaseAreAssignedByCustomAllocator) {
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {heapFrontWindow.get(), heapBase});
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {heapRegular.get(), heapBase});
+
+    NEO::AllocationProperties properties{mockRootDeviceIndex, true, allocationSize, AllocationType::linearStream, false, mockDeviceBitfield};
+    properties.flags.use32BitFrontWindow = 1;
+    properties.alignment = alignment;
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(heapFrontStart, allocation->getGpuBaseAddress());
+    EXPECT_EQ(heapFrontStart, allocation->getGpuAddress());
+
+    EXPECT_LE(allocationSize, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_TRUE(allocation->isAllocInFrontWindowPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCustomHeapAllocatorForNonFrontWindowHeapWhenAllocatingThenGpuAddressAndBaseAreAssignedByCustomAllocator) {
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {heapFrontWindow.get(), heapBase});
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {heapRegular.get(), heapBase});
+
+    NEO::AllocationProperties properties{mockRootDeviceIndex, true, allocationSize, AllocationType::linearStream, false, mockDeviceBitfield};
+    properties.flags.use32BitFrontWindow = 0;
+    properties.alignment = alignment;
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(heapBase, allocation->getGpuBaseAddress());
+    EXPECT_EQ(heapRegularStart, allocation->getGpuAddress());
+
+    EXPECT_LE(allocationSize, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_FALSE(allocation->isAllocInFrontWindowPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerBindlessHeapHelperCustomHeapAllocatorCfgTest, givenCustomHeapAllocatorCfgWithoutGpuVaBaseWhenAllocatingThenGpuBaseAddressIsNotObtainedFromCfg) {
+    CustomHeapAllocatorConfig cfg1;
+    cfg1.allocator = heapFrontWindow.get();
+    CustomHeapAllocatorConfig cfg2;
+    cfg2.allocator = heapRegular.get();
+
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, true, cfg1);
+    memoryManager->addCustomHeapAllocatorConfig(AllocationType::linearStream, false, cfg2);
+
+    NEO::AllocationProperties properties{mockRootDeviceIndex, true, allocationSize, AllocationType::linearStream, false, mockDeviceBitfield};
+    properties.flags.use32BitFrontWindow = 1;
+    properties.alignment = alignment;
+
+    auto allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(properties));
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_NE(heapFrontStart, allocation->getGpuBaseAddress());
+    EXPECT_EQ(heapFrontStart, allocation->getGpuAddress());
+
+    EXPECT_LE(allocationSize, allocation->getUnderlyingBufferSize());
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+    EXPECT_TRUE(allocation->isAllocInFrontWindowPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
 }

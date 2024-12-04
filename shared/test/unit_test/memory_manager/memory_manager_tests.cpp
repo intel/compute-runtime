@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/program_initialization.h"
+#include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/memory_allocator_fixture.h"
@@ -3362,4 +3363,42 @@ TEST(MemoryManagerTest, WhenGettingExtraDevicePropertiesThenPropertiesRemainUnch
 
     EXPECT_EQ(moduleId, 0u);
     EXPECT_EQ(serverType, 0u);
+}
+
+TEST(MemoryManagerTest, WhenAddingCustomHeapAllocatorConfigsThenCanRetrieveAndMatchConfigs) {
+    uint64_t heapBase = 0xAAAAAAAA;
+
+    uint64_t heapFrontStart = 0xAAAABBBB;
+    uint64_t heapRegularStart = 0xEEEEFFFF;
+
+    size_t heapFrontSize = 1 * MemoryConstants::gigaByte;
+    size_t heapRegularSize = 2 * MemoryConstants::gigaByte;
+
+    auto allocator1 = std::make_unique<HeapAllocator>(heapFrontStart, heapFrontSize, MemoryConstants::pageSize64k, 0);
+    auto allocator2 = std::make_unique<HeapAllocator>(heapRegularStart, heapRegularSize, MemoryConstants::pageSize64k, 0);
+
+    MockMemoryManager memoryManager;
+
+    memoryManager.addCustomHeapAllocatorConfig(AllocationType::linearStream, true, {allocator1.get(), heapBase});
+    memoryManager.addCustomHeapAllocatorConfig(AllocationType::linearStream, false, {allocator2.get(), heapBase});
+
+    auto config1 = memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true);
+    auto config2 = memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false);
+    auto configNonExisting = memoryManager.getCustomHeapAllocatorConfig(AllocationType::buffer, false);
+
+    EXPECT_TRUE(config1.has_value());
+    EXPECT_TRUE(config2.has_value());
+    EXPECT_FALSE(configNonExisting.has_value());
+
+    EXPECT_EQ(allocator1.get(), config1->get().allocator);
+    EXPECT_EQ(heapBase, config1->get().gpuVaBase);
+
+    EXPECT_EQ(allocator2.get(), config2->get().allocator);
+    EXPECT_EQ(heapBase, config2->get().gpuVaBase);
+
+    memoryManager.removeCustomHeapAllocatorConfig(AllocationType::linearStream, true);
+    memoryManager.removeCustomHeapAllocatorConfig(AllocationType::linearStream, false);
+
+    EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, true).has_value());
+    EXPECT_FALSE(memoryManager.getCustomHeapAllocatorConfig(AllocationType::linearStream, false).has_value());
 }

@@ -40,6 +40,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
+#include "shared/source/utilities/heap_allocator.h"
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <algorithm>
@@ -587,10 +588,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
         freeSystemMemory(pSysMem);
         return nullptr;
     }
-    auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigners[allocationData.rootDeviceIndex]->get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow));
-    UNRECOVERABLE_IF(gmmHelper->canonize(baseAddress) != wddmAllocation->getGpuBaseAddress());
-
-    wddmAllocation->setGpuBaseAddress(gmmHelper->canonize(baseAddress));
+    [[maybe_unused]] auto baseAddress = getGfxPartition(allocationData.rootDeviceIndex)->getHeapBase(heapAssigners[allocationData.rootDeviceIndex]->get32BitHeapIndex(allocationData.type, false, *hwInfo, allocationData.flags.use32BitFrontWindow));
+    DEBUG_BREAK_IF(gmmHelper->canonize(baseAddress) != wddmAllocation->getGpuBaseAddress());
 
     if (storageInfo.isLockable) {
         auto lockedPtr = lockResource(wddmAllocation.get());
@@ -1045,9 +1044,16 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
     if (allocation->getReservedGpuVirtualAddress()) {
         addressToMap = allocation->getReservedGpuVirtualAddress();
     }
+
+    auto customHeapAllocatorCfg = getCustomHeapAllocatorConfig(allocation->getAllocationType(), allocation->isAllocInFrontWindowPool());
+
     auto gfxPartition = getGfxPartition(allocation->getRootDeviceIndex());
-    if (allocation->isAllocInFrontWindowPool()) {
-        auto alignedSize = allocation->getAlignedSize();
+    auto alignedSize = allocation->getAlignedSize();
+
+    if (customHeapAllocatorCfg.has_value()) {
+        auto &customRange = customHeapAllocatorCfg.value().get();
+        addressToMap = customRange.allocator->allocateWithCustomAlignment(alignedSize, MemoryConstants::pageSize64k);
+    } else if (allocation->isAllocInFrontWindowPool()) {
         addressToMap = gfxPartition->heapAllocate(heapIndex, alignedSize);
     }
 
@@ -1067,7 +1073,10 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
         return false;
     }
 
-    if (GfxPartition::isAnyHeap32(heapIndex)) {
+    if (auto config = customHeapAllocatorCfg; config.has_value() && config->get().gpuVaBase != std::numeric_limits<uint64_t>::max()) {
+        auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
+        allocation->setGpuBaseAddress(gmmHelper->canonize(config->get().gpuVaBase));
+    } else if (GfxPartition::isAnyHeap32(heapIndex)) {
         auto gmmHelper = getGmmHelper(allocation->getRootDeviceIndex());
         allocation->setGpuBaseAddress(gmmHelper->canonize(gfxPartition->getHeapBase(heapIndex)));
     }

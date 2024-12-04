@@ -5,12 +5,16 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_gfx_partition.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
@@ -556,4 +560,220 @@ TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenItsCreatedThenSshAll
         auto *allocation = bindlessHeapHelper->getHeap(static_cast<BindlessHeapsHelper::BindlesHeapType>(heapType))->getGraphicsAllocation();
         EXPECT_EQ(memoryOperationsIface->isResident(getDevice(), *allocation), MemoryOperationsStatus::success);
     }
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenDriverModelWDDMThenReservedMemoryModeIsAvailable) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    getDevice()->getRootDeviceEnvironmentRef().osInterface.reset(new NEO::OSInterface());
+
+    getDevice()->getRootDeviceEnvironmentRef().osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+    EXPECT_TRUE(bindlessHeapHelper->isReservedMemoryModeAvailable());
+
+    getDevice()->getRootDeviceEnvironmentRef().osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
+    EXPECT_FALSE(bindlessHeapHelper->isReservedMemoryModeAvailable());
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenSuccessfullyReservingMemoryRangeThenRangeIsReservedAndStoredAndFreed) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    size_t reservationSize = 1 * MemoryConstants::gigaByte;
+    size_t alignment = MemoryConstants::pageSize64k;
+    HeapIndex heapIndex = HeapIndex::heapStandard;
+
+    auto reservedRange = bindlessHeapHelper->reserveMemoryRange(reservationSize, alignment, heapIndex);
+    ASSERT_TRUE(reservedRange.has_value());
+
+    EXPECT_EQ(reservationSize, reservedRange->size);
+
+    EXPECT_EQ(1u, bindlessHeapHelper->reservedRanges.size());
+    EXPECT_EQ(bindlessHeapHelper->reservedRanges[0].address, reservedRange->address);
+    EXPECT_EQ(bindlessHeapHelper->reservedRanges[0].size, reservedRange->size);
+
+    EXPECT_EQ(1u, memManager->reserveGpuAddressOnHeapCalled);
+
+    bindlessHeapHelper.reset();
+
+    EXPECT_EQ(1u, memManager->freeGpuAddressCalled);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenUnsuccessfullyReservingMemoryRangeThenNoValueIsReturned) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    size_t reservationSize = 1 * MemoryConstants::gigaByte;
+    size_t alignment = MemoryConstants::pageSize64k;
+    HeapIndex heapIndex = HeapIndex::heapStandard;
+
+    memManager->failReserveGpuAddressOnHeap = true;
+
+    auto reservedRange = bindlessHeapHelper->reserveMemoryRange(reservationSize, alignment, heapIndex);
+    EXPECT_FALSE(reservedRange.has_value());
+
+    EXPECT_EQ(0u, bindlessHeapHelper->reservedRanges.size());
+    EXPECT_EQ(1u, memManager->reserveGpuAddressOnHeapCalled);
+
+    bindlessHeapHelper.reset();
+
+    EXPECT_EQ(0u, memManager->freeGpuAddressCalled);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenLocalMemorySupportWhenReservingMemoryForSpecialSshThenCorrectHeapIsUsed) {
+    auto gfxPartition = std::make_unique<MockGfxPartition>();
+    gfxPartition->callHeapAllocate = false;
+    memManager->gfxPartitions[0] = std::move(gfxPartition);
+
+    std::map<bool, HeapIndex> localMemSupportedToExpectedHeapIndexMap = {
+        {false, HeapIndex::heapExternalFrontWindow},
+        {true, HeapIndex::heapExternalDeviceFrontWindow}};
+
+    size_t currentIter = 0u;
+
+    for (auto &[localMemSupported, expectedHeapIndex] : localMemSupportedToExpectedHeapIndexMap) {
+        auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+        size_t reservationSize = MemoryConstants::pageSize64k;
+        size_t alignment = MemoryConstants::pageSize64k;
+
+        memManager->localMemorySupported = {localMemSupported};
+
+        auto specialSshReservationSuccessful = bindlessHeapHelper->tryReservingMemoryForSpecialSsh(reservationSize, alignment);
+        EXPECT_TRUE(specialSshReservationSuccessful);
+
+        auto &reserveGpuAddressOnHeapParamsPassed = memManager->reserveGpuAddressOnHeapParamsPassed;
+        ASSERT_GE(reserveGpuAddressOnHeapParamsPassed.size(), currentIter + 1);
+        EXPECT_EQ(expectedHeapIndex, reserveGpuAddressOnHeapParamsPassed[currentIter].heap);
+
+        EXPECT_EQ(1u, bindlessHeapHelper->reservedRanges.size());
+        EXPECT_EQ(currentIter + 1u, memManager->reserveGpuAddressOnHeapCalled);
+
+        bindlessHeapHelper.reset();
+
+        EXPECT_EQ(currentIter + 1u, memManager->freeGpuAddressCalled);
+        currentIter++;
+    }
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenSpecialSshReservationFailsThenNoRangeIsReserved) {
+    memManager->failReserveGpuAddressOnHeap = true;
+
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    size_t reservationSize = MemoryConstants::pageSize64k;
+    size_t alignment = MemoryConstants::pageSize64k;
+
+    auto specialSshReservationSuccessful = bindlessHeapHelper->tryReservingMemoryForSpecialSsh(reservationSize, alignment);
+    EXPECT_FALSE(specialSshReservationSuccessful);
+
+    EXPECT_EQ(0u, bindlessHeapHelper->reservedRanges.size());
+    EXPECT_EQ(1u, memManager->reserveGpuAddressOnHeapCalled);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenReservedMemoryAlreadyInitializedThenEarlyReturnTrue) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    bindlessHeapHelper->reservedMemoryInitialized = true;
+    memManager->reserveGpuAddressOnHeapCalled = 0u;
+
+    EXPECT_TRUE(bindlessHeapHelper->initializeReservedMemory());
+    EXPECT_EQ(0u, memManager->reserveGpuAddressOnHeapCalled);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenMemoryReservationFailsDuringInitializationThenInitializationReturnsFalse) {
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    memManager->reserveGpuAddressOnHeapCalled = 0u;
+    memManager->failReserveGpuAddressOnHeap = true;
+
+    EXPECT_FALSE(bindlessHeapHelper->initializeReservedMemory());
+    EXPECT_EQ(1u, memManager->reserveGpuAddressOnHeapCalled);
+}
+
+TEST_F(BindlessHeapsHelperTests, givenBindlessHeapHelperWhenSuccessfullyInitializingReservedMemoryThenHeapsAndAllocatorsAreConfiguredCorrectly) {
+    constexpr uint64_t fullHeapSize = 4 * MemoryConstants::gigaByte;
+
+    if (fullHeapSize > std::numeric_limits<size_t>::max()) {
+        GTEST_SKIP();
+    }
+
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    memManager->reserveGpuAddressOnHeapCalled = 0u;
+    memManager->customHeapAllocators.clear();
+
+    // Override gfxPartition to ensure heapStandard has sufficient free/available space for this test.
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->initHeap(HeapIndex::heapStandard, maxNBitValue(56) + 1, MemoryConstants::teraByte, MemoryConstants::pageSize64k);
+    memManager->gfxPartitions[0] = std::move(mockGfxPartition);
+
+    EXPECT_TRUE(bindlessHeapHelper->initializeReservedMemory());
+
+    EXPECT_EQ(1u, memManager->reserveGpuAddressOnHeapCalled);
+    EXPECT_TRUE(bindlessHeapHelper->reservedMemoryInitialized);
+
+    auto &reserveGpuAddressOnHeapParamsPassed = memManager->reserveGpuAddressOnHeapParamsPassed;
+    ASSERT_EQ(1u, reserveGpuAddressOnHeapParamsPassed.size());
+
+    EXPECT_EQ(HeapIndex::heapStandard, reserveGpuAddressOnHeapParamsPassed[0].heap);
+    EXPECT_EQ(4 * MemoryConstants::gigaByte, reserveGpuAddressOnHeapParamsPassed[0].size);
+    EXPECT_EQ(MemoryConstants::pageSize64k, reserveGpuAddressOnHeapParamsPassed[0].alignment);
+
+    EXPECT_EQ(rootDevice->getRootDeviceEnvironmentRef().getGmmHelper()->decanonize(memManager->reserveGpuAddressOnHeapResult.address), bindlessHeapHelper->reservedRangeBase);
+
+    ASSERT_EQ(1u, bindlessHeapHelper->reservedRanges.size());
+    EXPECT_EQ(memManager->reserveGpuAddressOnHeapResult.address, bindlessHeapHelper->reservedRanges[0].address);
+    EXPECT_EQ(memManager->reserveGpuAddressOnHeapResult.size, bindlessHeapHelper->reservedRanges[0].size);
+
+    constexpr auto expectedFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
+
+    {
+        // heapFrontWindow
+        EXPECT_EQ(bindlessHeapHelper->heapFrontWindow->getBaseAddress(), bindlessHeapHelper->reservedRangeBase);
+        auto frontWindowSize = bindlessHeapHelper->heapFrontWindow->getLeftSize() + bindlessHeapHelper->heapFrontWindow->getUsedSize();
+        EXPECT_EQ(expectedFrontWindowSize, frontWindowSize);
+    }
+
+    {
+        // heapRegular
+        EXPECT_EQ(bindlessHeapHelper->heapRegular->getBaseAddress(), bindlessHeapHelper->heapFrontWindow->getBaseAddress() + expectedFrontWindowSize);
+        auto expectedRegularSize = 4 * MemoryConstants::gigaByte - expectedFrontWindowSize;
+        auto heapRegularSize = bindlessHeapHelper->heapRegular->getLeftSize() + bindlessHeapHelper->heapRegular->getUsedSize();
+        EXPECT_EQ(expectedRegularSize, heapRegularSize);
+    }
+
+    EXPECT_EQ(2u, memManager->customHeapAllocators.size());
+
+    {
+        // heapFrontWindow
+        ASSERT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true).has_value());
+        EXPECT_EQ(bindlessHeapHelper->heapFrontWindow.get(), memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true)->get().allocator);
+        EXPECT_EQ(bindlessHeapHelper->reservedRangeBase, memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, true)->get().gpuVaBase);
+    }
+
+    {
+        // heapRegular
+        ASSERT_TRUE(memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false).has_value());
+        EXPECT_EQ(bindlessHeapHelper->heapRegular.get(), memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false)->get().allocator);
+        EXPECT_EQ(bindlessHeapHelper->reservedRangeBase, memManager->getCustomHeapAllocatorConfig(AllocationType::linearStream, false)->get().gpuVaBase);
+    }
+
+    bindlessHeapHelper.reset();
+
+    EXPECT_EQ(1u, memManager->freeGpuAddressCalled); // 1 * 4GB reserved range
+    EXPECT_EQ(0u, memManager->customHeapAllocators.size());
+}
+
+TEST_F(BindlessHeapsHelperTests, givenReservedMemoryModeAvailableWhenSpecialSshReservationInFrontWindowFailsThenReservedMemoryModeIsUsed) {
+    auto gfxPartition = std::make_unique<MockGfxPartition>();
+    gfxPartition->callHeapAllocate = false;
+    memManager->gfxPartitions[0] = std::move(gfxPartition);
+
+    getDevice()->getRootDeviceEnvironmentRef().osInterface.reset(new NEO::OSInterface());
+    getDevice()->getRootDeviceEnvironmentRef().osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelWDDM>());
+
+    memManager->reserveGpuAddressOnHeapFailOnCalls.push_back(0u); // Fail reserving memory for special ssh
+
+    auto bindlessHeapHelper = std::make_unique<MockBindlesHeapsHelper>(getDevice(), false);
+
+    EXPECT_TRUE(bindlessHeapHelper->reservedMemoryInitialized);
+    EXPECT_TRUE(bindlessHeapHelper->useReservedMemory);
 }

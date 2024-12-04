@@ -1437,3 +1437,15 @@ TEST(HeapAllocatorTest, givenZeroAlignmentPassedWhenAllocatingMemoryWithCustomAl
     uint64_t ptr = heapAllocator.allocateWithCustomAlignment(ptrSize, 0u);
     EXPECT_EQ(alignUp(heapBase, allocationAlignment), ptr);
 }
+
+TEST(HeapAllocatorTest, whenGetBaseAddressIsCalledThenReturnInitialLeftBoundAddress) {
+    const uint64_t heapBase = 0x100000llu;
+    const size_t heapSize = 1024 * 4096;
+    HeapAllocatorUnderTest heapAllocator(heapBase, heapSize, allocationAlignment, sizeThreshold);
+
+    EXPECT_EQ(heapBase, heapAllocator.getBaseAddress());
+
+    size_t sizeToAlloc = 4096;
+    heapAllocator.allocate(sizeToAlloc);
+    EXPECT_EQ(heapBase, heapAllocator.getBaseAddress());
+}

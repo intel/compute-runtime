@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -43,6 +44,7 @@ class Gmm;
 class HostPtrManager;
 class OsContext;
 class PrefetchManager;
+class HeapAllocator;
 
 enum AllocationUsage {
     TEMPORARY_ALLOCATION,
@@ -79,6 +81,11 @@ struct VirtualMemoryReservation {
     size_t reservationSize;
     uint64_t reservationBase;
     size_t reservationTotalSize;
+};
+
+struct CustomHeapAllocatorConfig {
+    HeapAllocator *allocator = nullptr;
+    uint64_t gpuVaBase = std::numeric_limits<uint64_t>::max();
 };
 
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
@@ -342,6 +349,10 @@ class MemoryManager {
         return hostAllocationsSavedForReuseSize;
     }
 
+    void addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, const CustomHeapAllocatorConfig &config);
+    std::optional<std::reference_wrapper<CustomHeapAllocatorConfig>> getCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool);
+    void removeCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool);
+
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
@@ -416,6 +427,7 @@ class MemoryManager {
     std::atomic<size_t> sysMemAllocsSize;
     size_t hostAllocationsSavedForReuseSize = 0u;
     mutable std::mutex hostAllocationsReuseMtx;
+    std::map<std::pair<AllocationType, bool>, CustomHeapAllocatorConfig> customHeapAllocators;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();
