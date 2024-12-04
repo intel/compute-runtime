@@ -5624,6 +5624,7 @@ typedef struct tagCOMPUTE_WALKER {
         TheStructure.Common.ComputeCommandOpcode = COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND;
         TheStructure.Common.Pipeline = PIPELINE_COMPUTE;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
+        TheStructure.Common.ThreadGroupBatchSize = THREAD_GROUP_BATCH_SIZE_TG_BATCH_1;
         // patched - copy from compute body walker
         TheStructure.Common.PartitionType = PARTITION_TYPE_DISABLED;
         TheStructure.Common.TileLayout = TILE_LAYOUT_LINEAR;
@@ -5733,12 +5734,12 @@ typedef struct tagCOMPUTE_WALKER {
         DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
         DISPATCH_WALK_ORDER_MORTON_WALK = 0x2,
     } DISPATCH_WALK_ORDER;
-    typedef enum tagTG_BATCH_SIZE { // patched
-        TG_BATCH_1 = 0x0,
-        TG_BATCH_2 = 0x1,
-        TG_BATCH_4 = 0x2,
-        TG_BATCH_8 = 0x3,
-    } TG_BATCH_SIZE;
+    typedef enum tagTHREAD_GROUP_BATCH_SIZE {
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_1 = 0x0,
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_2 = 0x1,
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_4 = 0x2,
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_8 = 0x3,
+    } THREAD_GROUP_BATCH_SIZE;
     inline void setDebugObjectId(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffffff);
         TheStructure.Common.DebugObjectId = value;
@@ -5788,11 +5789,11 @@ typedef struct tagCOMPUTE_WALKER {
     inline bool getComputeDispatchAllWalkerEnable() const {
         return TheStructure.Common.ComputeDispatchAllWalkerEnable;
     }
-    inline void setThreadGroupBatchSize(const TG_BATCH_SIZE value) { // patched
-        TheStructure.Common.ThreadGroupBatchSize = static_cast<uint32_t>(value);
+    inline void setThreadGroupBatchSize(const THREAD_GROUP_BATCH_SIZE value) {
+        TheStructure.Common.ThreadGroupBatchSize = value;
     }
-    inline TG_BATCH_SIZE getThreadGroupBatchSize() const { // patched
-        return static_cast<TG_BATCH_SIZE>(TheStructure.Common.ThreadGroupBatchSize);
+    inline THREAD_GROUP_BATCH_SIZE getThreadGroupBatchSize() const {
+        return static_cast<THREAD_GROUP_BATCH_SIZE>(TheStructure.Common.ThreadGroupBatchSize);
     }
     inline void setDispatchWalkOrder(const DISPATCH_WALK_ORDER value) { // patched
         TheStructure.Common.DispatchWalkOrder = value;
