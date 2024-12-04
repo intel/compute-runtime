@@ -205,7 +205,7 @@ uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersion() const {
 
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersionVC() const {
-    return IndirectDetectionVersions::requiredDetectIndirectVersionPVC;
+    return IndirectDetectionVersions::requiredDetectIndirectVersionPVCVectorCompiler;
 }
 
 template <>
