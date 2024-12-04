@@ -6,5 +6,3 @@
  */
 
 #include "shared/test/common/test_macros/hw_test_base.h"
-
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, whenGettingPreferredAllocationMethodThenNoPreferenceIsReturned, IGFX_BMG);

@@ -31,17 +31,6 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 };
 
 template <>
-std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    switch (allocationType) {
-    case AllocationType::tagBuffer:
-    case AllocationType::timestampPacketTagBuffer:
-        return {};
-    default:
-        return GfxMemoryAllocationMethod::allocateByKmd;
-    }
-}
-
-template <>
 void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 }
