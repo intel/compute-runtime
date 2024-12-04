@@ -410,9 +410,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 appendSignalInOrderDependencyCounter(eventForInOrderExec, false);
             }
         } else {
+            launchParams.skipInOrderNonWalkerSignaling = false;
             UNRECOVERABLE_IF(!dispatchKernelArgs.outWalkerPtr);
             addCmdForPatching(nullptr, dispatchKernelArgs.outWalkerPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::walker);
         }
+    } else {
+        launchParams.skipInOrderNonWalkerSignaling = false;
     }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing && !neoDevice->getBindlessHeapsHelper() && this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
