@@ -199,7 +199,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(const AllocationData &allocationData, bool allowLargePages) {
-    if (allocationData.alignment != MemoryConstants::pageSize64k) {
+    if (allocationData.alignment < MemoryConstants::pageSize64k) {
         allowLargePages = false;
     }
 
@@ -271,7 +271,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
 
         if (alignGpuAddressTo64KB) {
             void *tempCPUPtr = cpuPtr;
-            cpuPtr = alignUp(cpuPtr, MemoryConstants::pageSize64k);
+            cpuPtr = alignUp(cpuPtr, std::max(allocationData.alignment, MemoryConstants::pageSize64k));
             wddmAllocation->setGpuAddress(wddmAllocation->getGpuAddress() + ptrDiff(cpuPtr, tempCPUPtr));
         }
     }
