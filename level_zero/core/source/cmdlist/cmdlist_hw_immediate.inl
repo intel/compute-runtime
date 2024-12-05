@@ -550,6 +550,13 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
     }
 
     if (nonWalkerSignalingHasRelaxedOrdering) {
+        if (event && event->isCounterBased()) {
+            auto hostAddr = reinterpret_cast<uint32_t *>(event->getCompletionFieldHostAddress());
+            for (uint32_t i = 0u; i < event->getPacketsToWait(); i++) {
+                *hostAddr = Event::STATE_CLEARED;
+                hostAddr = ptrOffset(hostAddr, event->getSinglePacketSize());
+            }
+        }
         result = flushImmediate(result, true, hasStallingCmds, relaxedOrderingDispatch, true, false, nullptr, false);
         NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*this->commandContainer.getCommandStream(), isCopyOnly(false));
         relaxedOrderingDispatch = true;

@@ -2549,6 +2549,79 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
     }
 }
 
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEventCbThenClearOnHstAndChainWithSyncAllocSignalingAsTwoSeparateSubmissions, IsAtLeastXeHpcCore) {
+    class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+      public:
+        using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
+        using BaseClass::BaseClass;
+
+        bool handleCounterBasedEventOperations(L0::Event *signalEvent) override {
+            auto ret = BaseClass::handleCounterBasedEventOperations(signalEvent);
+            usedEvent = signalEvent;
+            auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
+            *hostAddr = 0x123;
+
+            return ret;
+        }
+
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate) override {
+            auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
+            eventCompletionData.push_back(*hostAddr);
+
+            if (eventCompletionData.size() == 1) {
+                *hostAddr = 0x345;
+            }
+
+            this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
+
+            return ZE_RESULT_SUCCESS;
+        }
+
+        std::vector<uint32_t> eventCompletionData;
+        L0::Event *usedEvent = nullptr;
+    };
+
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+    int client1, client2;
+    ultCsr->registerClient(&client1);
+    ultCsr->registerClient(&client2);
+
+    auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->signalScope = 0;
+
+    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
+        GTEST_SKIP(); // not supported
+    }
+
+    immCmdList->inOrderExecInfo->addCounterValue(1);
+
+    EXPECT_TRUE(immCmdList->isRelaxedOrderingDispatchAllowed(0, false));
+
+    EXPECT_EQ(0u, immCmdList->eventCompletionData.size());
+
+    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
+
+    ASSERT_EQ(2u, immCmdList->eventCompletionData.size());
+    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_CLEARED), immCmdList->eventCompletionData[0]);
+    EXPECT_EQ(0x345u, immCmdList->eventCompletionData[1]);
+
+    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+
+    immCmdList->eventCompletionData.clear();
+
+    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
+    ASSERT_EQ(2u, immCmdList->eventCompletionData.size());
+    EXPECT_NE(static_cast<uint32_t>(Event::STATE_CLEARED), immCmdList->eventCompletionData[0]);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenRegularNonTimestampEventWhenSkipItsConvertedToCounterBasedThenDisableNonWalkerSignalingSkip, IsAtLeastXeHpcCore) {
     class MyMockCmdList : public WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
       public:

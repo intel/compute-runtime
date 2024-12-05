@@ -210,7 +210,7 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t executeCommandListImmediateImpl(bool performMigration, L0::CommandQueue *cmdQImmediate);
     size_t getReserveSshSize();
     void patchInOrderCmds() override;
-    bool handleCounterBasedEventOperations(Event *signalEvent);
+    MOCKABLE_VIRTUAL bool handleCounterBasedEventOperations(Event *signalEvent);
     bool isCbEventBoundToCmdList(Event *event) const;
 
   protected:
