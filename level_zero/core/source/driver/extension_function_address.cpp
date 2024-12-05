@@ -58,6 +58,11 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexIntelAllocateNetworkInterrupt);
     RETURN_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
 
+    RETURN_FUNC_PTR_IF_EXIST(zeIntelDeviceImportExternalSemaphoreExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeIntelCommandListAppendWaitExternalSemaphoresExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeIntelCommandListAppendSignalExternalSemaphoresExp);
+    RETURN_FUNC_PTR_IF_EXIST(zeIntelDeviceReleaseExternalSemaphoreExp);
+
 #undef RETURN_FUNC_PTR_IF_EXIST
 
     return ExtensionFunctionAddressHelper::getAdditionalExtensionFunctionAddress(functionName);

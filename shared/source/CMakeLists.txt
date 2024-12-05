@@ -129,6 +129,7 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_OS_INTERFACE
                                NEO_CORE_PAGE_FAULT_MANAGER
                                NEO_CORE_PROGRAM
+                               NEO_CORE_SEMAPHORE
                                NEO_CORE_SKU_INFO_BASE
                                NEO_CORE_SRCS_BUILT_INS
                                NEO_CORE_SRCS_BUILT_INS_OPS

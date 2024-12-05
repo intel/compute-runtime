@@ -669,6 +669,10 @@ NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromGpu(IN CONST D3DKMT_
     return STATUS_SUCCESS;
 }
 
+NTSTATUS __stdcall mockD3DKMTOpenSyncObjectFromNtHandle2(IN OUT D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *) {
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS __stdcall mockD3DKMTFreeGpuVirtualAddress(IN CONST D3DKMT_FREEGPUVIRTUALADDRESS *) {
     return STATUS_SUCCESS;
 }
