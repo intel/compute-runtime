@@ -37,6 +37,9 @@
 #define STRINGIFY_ME(X) return #X
 #define RETURN_ME(X) return X
 
+#ifndef DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR
+#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR	(1 << 4)
+#endif
 namespace NEO {
 
 const char *IoctlHelperXe::xeGetClassName(int className) {
@@ -1317,6 +1320,37 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     const char *operation = isBind ? "bind" : "unbind";
     int index = invalidIndex;
 
+    if (this->drm.isVmBindSystemAlloc()) {
+         drm_xe_vm_bind bind = {};
+         bind.vm_id = vmBindParams.vmId;
+         bind.num_syncs = 0;
+         bind.num_binds = 1;
+         bind.bind.range = vmBindParams.length;
+         bind.bind.addr = 0; //gmmHelper->decanonize(vmBindParams.start);
+         bind.bind.obj_offset = vmBindParams.offset;
+         bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
+         bind.bind.extensions = vmBindParams.extensions;
+         bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
+         bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
+         bind.bind.obj = 0;
+         ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind); 
+         xeLog(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d pat=%hu ret=%d\n",
+              bind.vm_id,
+              bind.bind.obj,
+              bind.bind.obj_offset,
+              bind.bind.range,
+              bind.bind.addr,
+              bind.bind.op,
+              xeGetBindOperationName(bind.bind.op),
+              bind.bind.flags,
+              " ", //xeGetBindFlagNames(bind.bind.flags).c_str(),
+              bind.num_syncs,
+              bind.bind.pat_index,
+              ret);
+         return ret;
+    }
+
+
     if (isBind) {
         for (auto i = 0u; i < bindInfo.size(); i++) {
             if (vmBindParams.handle && vmBindParams.handle == bindInfo[i].handle) {
@@ -1373,11 +1407,16 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
                 bind.bind.obj_offset = bindInfo[index].userptr;
             }
         } else {
-            bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
-            bind.bind.obj = 0;
-            if (bindInfo[index].userptr) {
-                bind.bind.obj_offset = bindInfo[index].userptr;
+            if (this->drm.isSystemAllocEnabled()) {
+                bind.bind.op = DRM_XE_VM_BIND_OP_MAP; 
+                bind.bind.flags |= DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR;
+            } else {
+                bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
             }
+            bind.bind.obj = 0;
+            //if (bindInfo[index].userptr) {
+            //    bind.bind.obj_offset = bindInfo[index].userptr;
+            //}
         }
 
         bindInfo[index].addr = bind.bind.addr;
@@ -1403,17 +1442,19 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
             return ret;
         }
 
-        constexpr auto oneSecTimeout = 1000000000ll;
-        constexpr auto infiniteTimeout = -1;
-        bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
-        uint64_t timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
-        if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
-            timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
+        if (!this->drm.isVmBindSystemAlloc())  { 
+            constexpr auto oneSecTimeout = 1000000000ll;
+            constexpr auto infiniteTimeout = -1;
+            bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+            uint64_t timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
+            if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
+                timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
+            }
+            return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
+                                   sync[0].addr,
+                                   sync[0].timeline_value, timeout,
+                                   false, NEO::InterruptId::notUsed, nullptr);
         }
-        return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
-                               sync[0].addr,
-                               sync[0].timeline_value, timeout,
-                               false, NEO::InterruptId::notUsed, nullptr);
     }
 
     xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",

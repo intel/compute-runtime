@@ -59,6 +59,7 @@
 #include <algorithm>
 #include <unordered_map>
 
+
 namespace L0 {
 
 inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) {
@@ -514,18 +515,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 
     appendEventForProfiling(event, nullptr, true, false, false, false);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(pNumLaunchArguments));
-    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-    commandContainer.addToResidencyContainer(alloc);
-
+    if (allocData) {
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        commandContainer.addToResidencyContainer(alloc);
+    
+       for (uint32_t i = 0; i < numKernels; i++) {
+            NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i, isCopyOnly(false));
+            ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
+                                           pLaunchArgumentsBuffer[i],
+                                           nullptr, launchParams);
+            if (ret) {
+                return ret;
+            }
+        }
+    } else {
     for (uint32_t i = 0; i < numKernels; i++) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i, isCopyOnly(false));
-
         ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
                                            pLaunchArgumentsBuffer[i],
                                            nullptr, launchParams);
         if (ret) {
             return ret;
         }
+      }
     }
     addToMappedEventList(event);
     appendSignalEventPostWalker(event, nullptr, nullptr, false, false, false);
@@ -2012,18 +2023,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     bool hostPointerNeedsFlush = false;
 
-    NEO::SvmAllocationData *allocData = nullptr;
-    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
-    if (dstAllocFound) {
-        if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
-            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
-            hostPointerNeedsFlush = true;
-        }
-    } else {
-        if (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    if (!deviceImp->isSystemAllocEnabled()) {
+        NEO::SvmAllocationData *allocData = nullptr;
+        bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
+        if (dstAllocFound) {
+            if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
+                allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+                hostPointerNeedsFlush = true;
+            }
         } else {
-            hostPointerNeedsFlush = true;
+            if (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            } else {
+                hostPointerNeedsFlush = true;
+            }
         }
     }
 

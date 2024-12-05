@@ -173,6 +173,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
     uint32_t getEventMaxPacketCount() const override;
     uint32_t getEventMaxKernelCount() const override;
+    bool isSystemAllocEnabled() const;
     uint32_t queryDeviceNodeMask();
     NEO::EngineGroupType getInternalEngineGroupType();
     uint32_t getCopyEngineOrdinal() const;

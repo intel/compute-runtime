@@ -62,6 +62,7 @@
 #include "level_zero/tools/source/sysman/sysman.h"
 
 #include "encode_surface_state_args.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include <algorithm>
 #include <array>
@@ -2001,6 +2002,15 @@ uint32_t DeviceImp::getEventMaxKernelCount() const {
     auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     return l0GfxCoreHelper.getEventMaxKernelCount(hardwareInfo);
+}
+
+bool DeviceImp::isSystemAllocEnabled() const {
+    auto &osInterface = this->getNEODevice()->getRootDeviceEnvironment().osInterface;
+    if (osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::drm) {
+       auto pDrm = osInterface->getDriverModel()->as<NEO::Drm>();
+       return pDrm->isSystemAllocEnabled();
+    }
+    return false;
 }
 
 } // namespace L0
