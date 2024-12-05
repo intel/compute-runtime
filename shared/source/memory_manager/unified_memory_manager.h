@@ -172,8 +172,6 @@ class SVMAllocsManager {
 
         std::vector<SvmCacheAllocationInfo> allocations;
         std::mutex mtx;
-        bool localMemorySupported = true;
-        double fractionOfAvailableMemoryForRecycling = 0.0;
         size_t maxSize = 0;
     };
 

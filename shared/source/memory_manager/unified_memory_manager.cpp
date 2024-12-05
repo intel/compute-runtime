@@ -62,13 +62,7 @@ bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAll
     if (auto device = svmData->device) {
         auto lock = device->obtainAllocationsReuseLock();
         const auto usedSize = device->getAllocationsSavedForReuseSize();
-        uint64_t availableMemory = device->getGlobalMemorySize(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
-        availableMemory -= memoryManager->getUsedLocalMemorySize(device->getRootDeviceIndex());
-        if (!localMemorySupported) {
-            availableMemory -= memoryManager->getUsedSystemMemorySize();
-        }
-        const auto availableMemoryForReuse = static_cast<uint64_t>(availableMemory * fractionOfAvailableMemoryForRecycling);
-        if (size + usedSize > availableMemoryForReuse) {
+        if (size + usedSize > this->maxSize) {
             return false;
         }
         device->recordAllocationSaveForReuse(size);
@@ -762,8 +756,6 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     if (this->usmDeviceAllocationsCache.maxSize > 0u) {
         this->usmDeviceAllocationsCache.allocations.reserve(128u);
     }
-    this->usmDeviceAllocationsCache.fractionOfAvailableMemoryForRecycling = fractionOfTotalMemoryForRecycling;
-    this->usmDeviceAllocationsCache.localMemorySupported = memoryManager->isLocalMemorySupported(device.getRootDeviceIndex());
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {

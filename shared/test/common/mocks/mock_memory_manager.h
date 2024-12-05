@@ -64,7 +64,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     using MemoryManager::localMemorySupported;
     using MemoryManager::reservedMemory;
     using MemoryManager::secondaryEngines;
-    using MemoryManager::sysMemAllocsSize;
 
     static constexpr osHandle invalidSharedHandle = -1;
     static const unsigned int moduleId;

@@ -231,34 +231,25 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenInitializedT
 
     auto expectedMaxSize = static_cast<size_t>(device->getGlobalMemorySize(static_cast<uint32_t>(mockDeviceBitfield.to_ulong())) * 0.02);
     EXPECT_EQ(expectedMaxSize, svmManager->usmDeviceAllocationsCache.maxSize);
-
-    EXPECT_EQ(0.02, svmManager->usmDeviceAllocationsCache.fractionOfAvailableMemoryForRecycling);
-    EXPECT_EQ(device->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex()), svmManager->usmDeviceAllocationsCache.localMemorySupported);
 }
 
-TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndLocalMemorySupportedWhenFreeingDeviceAllocationThenItIsPutIntoCacheOnlyIfMaxSizeWillNotBeExceeded) {
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenFreeingDeviceAllocationThenItIsPutIntoCacheOnlyIfMaxSizeWillNotBeExceeded) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
     DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(2);
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto device = deviceFactory->rootDevices[0];
-    auto mockMemoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
-    mockMemoryManager->localMemorySupported[device->getRootDeviceIndex()] = true;
-
-    constexpr auto allocationSize = MemoryConstants::pageSize64k;
-    device->callBaseGetGlobalMemorySize = false;
-    device->getGlobalMemorySizeReturn = allocationSize * 100;
-
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     svmManager->initUsmAllocationsCaches(*device);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
 
+    constexpr auto allocationSize = MemoryConstants::pageSize64k;
+    svmManager->usmDeviceAllocationsCache.maxSize = allocationSize;
+
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
     {
-        mockMemoryManager->sysMemAllocsSize = allocationSize * 50;
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = 0u;
         auto allocation = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
         ASSERT_NE(allocation, nullptr);
         auto allocation2 = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
@@ -269,8 +260,6 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndLocalMemorySu
         svmManager->freeSVMAlloc(allocation);
         EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
         EXPECT_EQ(allocationSize, device->getAllocationsSavedForReuseSize());
-
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = allocationSize * 50;
 
         svmManager->freeSVMAlloc(allocation2);
         EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
@@ -288,8 +277,6 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndLocalMemorySu
         EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
     }
     {
-        mockMemoryManager->sysMemAllocsSize = allocationSize * 50;
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = 0u;
         auto allocation = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
         ASSERT_NE(allocation, nullptr);
         auto allocation2 = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
@@ -300,94 +287,6 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndLocalMemorySu
         svmManager->freeSVMAllocDefer(allocation);
         EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
         EXPECT_EQ(allocationSize, device->getAllocationsSavedForReuseSize());
-
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = allocationSize * 50;
-
-        svmManager->freeSVMAllocDefer(allocation2);
-        EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
-        EXPECT_EQ(allocationSize, device->getAllocationsSavedForReuseSize());
-
-        auto recycledAllocation = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
-        EXPECT_EQ(recycledAllocation, allocation);
-        EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
-        EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
-
-        svmManager->freeSVMAllocDefer(recycledAllocation);
-
-        svmManager->trimUSMDeviceAllocCache();
-        EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
-        EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
-    }
-}
-
-TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndLocalMemoryNotSupportedWhenFreeingDeviceAllocationThenItIsPutIntoCacheOnlyIfMaxSizeWillNotBeExceeded) {
-    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
-    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
-    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
-    DebugManagerStateRestore restore;
-    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(2);
-    auto device = deviceFactory->rootDevices[0];
-    auto mockMemoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
-    mockMemoryManager->localMemorySupported[device->getRootDeviceIndex()] = false;
-
-    constexpr auto allocationSize = MemoryConstants::pageSize64k;
-    device->callBaseGetGlobalMemorySize = false;
-    device->getGlobalMemorySizeReturn = allocationSize * 100;
-
-    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
-    svmManager->initUsmAllocationsCaches(*device);
-    ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
-
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
-    unifiedMemoryProperties.device = device;
-    {
-        mockMemoryManager->sysMemAllocsSize = 0u;
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = 0u;
-        auto allocation = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
-        ASSERT_NE(allocation, nullptr);
-        auto allocation2 = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
-        ASSERT_NE(allocation2, nullptr);
-        EXPECT_EQ(0u, svmManager->usmDeviceAllocationsCache.allocations.size());
-        EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
-
-        svmManager->freeSVMAlloc(allocation);
-        EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
-        EXPECT_EQ(allocationSize, device->getAllocationsSavedForReuseSize());
-
-        mockMemoryManager->sysMemAllocsSize = allocationSize * 25;
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = allocationSize * 25;
-
-        svmManager->freeSVMAlloc(allocation2);
-        EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
-        EXPECT_EQ(allocationSize, device->getAllocationsSavedForReuseSize());
-
-        auto recycledAllocation = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
-        EXPECT_EQ(recycledAllocation, allocation);
-        EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
-        EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
-
-        svmManager->freeSVMAlloc(recycledAllocation);
-
-        svmManager->trimUSMDeviceAllocCache();
-        EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
-        EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
-    }
-    {
-        mockMemoryManager->sysMemAllocsSize = 0u;
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = 0u;
-        auto allocation = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
-        ASSERT_NE(allocation, nullptr);
-        auto allocation2 = svmManager->createUnifiedMemoryAllocation(allocationSize, unifiedMemoryProperties);
-        ASSERT_NE(allocation2, nullptr);
-        EXPECT_EQ(0u, svmManager->usmDeviceAllocationsCache.allocations.size());
-        EXPECT_EQ(0u, device->getAllocationsSavedForReuseSize());
-
-        svmManager->freeSVMAllocDefer(allocation);
-        EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
-        EXPECT_EQ(allocationSize, device->getAllocationsSavedForReuseSize());
-
-        mockMemoryManager->sysMemAllocsSize = allocationSize * 25;
-        mockMemoryManager->localMemAllocsSize[device->getRootDeviceIndex()] = allocationSize * 25;
 
         svmManager->freeSVMAllocDefer(allocation2);
         EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
@@ -413,16 +312,16 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledAndMultipleSVMMa
     DebugManagerStateRestore restore;
     debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
     auto device = deviceFactory->rootDevices[0];
-
-    constexpr auto allocationSize = MemoryConstants::pageSize64k;
-    device->callBaseGetGlobalMemorySize = false;
-    device->getGlobalMemorySizeReturn = allocationSize * 100;
     auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     auto secondSvmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
     svmManager->initUsmAllocationsCaches(*device);
     secondSvmManager->initUsmAllocationsCaches(*device);
     ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
     ASSERT_TRUE(secondSvmManager->usmDeviceAllocationsCacheEnabled);
+
+    constexpr auto allocationSize = MemoryConstants::pageSize64k;
+    svmManager->usmDeviceAllocationsCache.maxSize = allocationSize;
+    secondSvmManager->usmDeviceAllocationsCache.maxSize = allocationSize;
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device;
