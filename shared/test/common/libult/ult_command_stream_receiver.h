@@ -323,6 +323,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, throttle);
     }
 
+    WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {
+        if (waitForTaskCountReturnValue.has_value()) {
+            return *waitForTaskCountReturnValue;
+        }
+        return BaseClass::waitForTaskCount(requiredTaskCount);
+    }
+
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
     GraphicsAllocation *getPreemptionAllocation() const { return this->preemptionAllocation; }
 
@@ -585,6 +592,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t createAllocationForHostSurfaceCalled = 0;
     WaitStatus returnWaitForCompletionWithTimeout = WaitStatus::ready;
     std::optional<WaitStatus> waitForTaskCountWithKmdNotifyFallbackReturnValue{};
+    std::optional<WaitStatus> waitForTaskCountReturnValue{};
     std::optional<SubmissionStatus> flushReturnValue{};
     CommandStreamReceiverType commandStreamReceiverType = CommandStreamReceiverType::hardware;
     std::atomic<uint32_t> downloadAllocationsCalledCount = 0;

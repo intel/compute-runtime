@@ -188,6 +188,11 @@ class MockCommandQueue : public CommandQueue {
                             GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
                             const cl_event *eventWaitList, cl_event *event) override { return CL_SUCCESS; }
 
+    cl_int enqueueReadImageImpl(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region,
+                                size_t rowPitch, size_t slicePitch, void *ptr,
+                                GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) override { return CL_SUCCESS; }
+
     cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite, const size_t *origin, const size_t *region,
                              size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, GraphicsAllocation *mapAllocation,
                              cl_uint numEventsInWaitList, const cl_event *eventWaitList,
@@ -379,6 +384,34 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         }
         return CL_INVALID_OPERATION;
     }
+    cl_int enqueueReadImageImpl(Image *srcImage,
+                                cl_bool blockingRead,
+                                const size_t *origin,
+                                const size_t *region,
+                                size_t rowPitch,
+                                size_t slicePitch,
+                                void *ptr,
+                                GraphicsAllocation *mapAllocation,
+                                cl_uint numEventsInWaitList,
+                                const cl_event *eventWaitList,
+                                cl_event *event, CommandStreamReceiver &csr) override {
+        enqueueReadImageCounter++;
+        if (enqueueReadImageCallBase) {
+            return BaseClass::enqueueReadImageImpl(srcImage,
+                                                   blockingRead,
+                                                   origin,
+                                                   region,
+                                                   rowPitch,
+                                                   slicePitch,
+                                                   ptr,
+                                                   mapAllocation,
+                                                   numEventsInWaitList,
+                                                   eventWaitList,
+                                                   event,
+                                                   csr);
+        }
+        return CL_INVALID_OPERATION;
+    }
     void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) override {
         cpuDataTransferHandlerCalled = true;
         return BaseClass::cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
@@ -493,6 +526,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     MultiDispatchInfo storedMultiDispatchInfo;
     size_t enqueueWriteImageCounter = 0;
     bool enqueueWriteImageCallBase = true;
+    size_t enqueueReadImageCounter = 0;
+    bool enqueueReadImageCallBase = true;
     size_t enqueueWriteBufferCounter = 0;
     size_t requestedCmdStreamSize = 0;
     bool blockingWriteBuffer = false;

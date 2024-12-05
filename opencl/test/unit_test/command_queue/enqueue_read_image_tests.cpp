@@ -1098,3 +1098,135 @@ HWTEST_F(EnqueueReadImageTest, whenEnqueueReadImageWithUsmPtrThenDontImportAlloc
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
     svmManager->freeSVMAlloc(usmPtr);
 }
+
+struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
+    void SetUp() override {
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
+        EnqueueReadImageTest::SetUp();
+        ptr = new unsigned char[readSize];
+        device.reset(new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
+    }
+
+    void TearDown() override {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
+            return;
+        }
+        delete[] ptr;
+        EnqueueReadImageTest::TearDown();
+    }
+
+    static constexpr size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    static constexpr size_t readSize = stagingBufferSize * 4;
+    unsigned char *ptr;
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {4, 8, 1};
+    std::unique_ptr<ClDevice> device;
+    cl_queue_properties props = {};
+};
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_SUCCESS);
+    EXPECT_EQ(4ul, mockCommandQueueHw.enqueueReadImageCounter);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithoutRowPitchThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    region[0] = MemoryConstants::megaByte / srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, 0u, MemoryConstants::megaByte, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_SUCCESS);
+    EXPECT_EQ(4ul, mockCommandQueueHw.enqueueReadImageCounter);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenBlockingEnqueueStagingReadImageCalledThenFinishCalled) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, true, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_SUCCESS);
+    EXPECT_EQ(1u, mockCommandQueueHw.finishCalledCount);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithEventThenReturnValidEvent) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_READ_IMAGE;
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    cl_event event;
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(expectedLastCmd, mockCommandQueueHw.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingReadImageCalledWithEventThenReturnValidEvent) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.setOoqEnabled();
+    cl_event event;
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_BARRIER), mockCommandQueueHw.lastCommandType);
+    EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_READ_IMAGE), pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingReadImageCalledWithSingleTransferThenNoBarrierEnqueued) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_READ_IMAGE;
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.setOoqEnabled();
+    cl_event event;
+    region[1] = 1;
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(expectedLastCmd, mockCommandQueueHw.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagingReadImageThenTimestampsSetCorrectly) {
+    cl_event event;
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.setProfilingEnabled();
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_FALSE(pEvent->isCPUProfilingPath());
+    EXPECT_TRUE(pEvent->isProfilingEnabled());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageFailedThenPropagateErrorCode) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    mockCommandQueueHw.enqueueReadImageCallBase = false;
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_INVALID_OPERATION);
+    EXPECT_EQ(1ul, mockCommandQueueHw.enqueueReadImageCounter);
+}
+
+HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledWithGpuHangThenReturnOutOfResources) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_IMAGE, srcImage, nullptr, pDevice->getRootDeviceIndex(), region, nullptr, origin};
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(&mockCommandQueueHw.selectCsrForBuiltinOperation(csrSelectionArgs));
+    ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
+    auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_OUT_OF_RESOURCES);
+    EXPECT_EQ(2ul, mockCommandQueueHw.enqueueReadImageCounter);
+}

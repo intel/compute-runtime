@@ -45,6 +45,7 @@ struct BuiltinOpParams;
 struct CsrSelectionArgs;
 struct MultiDispatchInfo;
 struct TimestampPacketDependencies;
+struct StagingTransferStatus;
 
 enum class QueuePriority {
     low,
@@ -146,6 +147,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     virtual cl_int enqueueReadImage(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region,
                                     size_t rowPitch, size_t slicePitch, void *ptr, GraphicsAllocation *mapAllocation,
                                     cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) = 0;
+
+    virtual cl_int enqueueReadImageImpl(Image *srcImage, cl_bool blockingRead, const size_t *origin, const size_t *region,
+                                        size_t rowPitch, size_t slicePitch, void *ptr, GraphicsAllocation *mapAllocation,
+                                        cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) = 0;
 
     virtual cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t cb,
                                       const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
@@ -396,8 +401,11 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_int enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event);
     cl_int enqueueStagingWriteImage(Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
                                     size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
+    cl_int enqueueStagingReadImage(Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
+                                   size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
+
     bool isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
-    bool isValidForStagingWriteImage(Image *image, const void *ptr, bool hasDependencies);
+    bool isValidForStagingTransferImage(Image *image, const void *ptr, bool hasDependencies);
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
@@ -441,7 +449,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     void unregisterGpgpuAndBcsCsrClients();
 
-    cl_int postStagingTransferSync(cl_event *event, const Event &profilingEvent, bool isSingleTransfer, bool isBlocking);
+    cl_int postStagingTransferSync(const StagingTransferStatus &status, cl_event *event, const cl_event profilingEvent, bool isSingleTransfer, bool isBlocking, cl_command_type commandType);
+    cl_event *assignEventForStaging(cl_event *userEvent, cl_event *profilingEvent, bool isFirstTransfer, bool isLastTransfer) const;
 
     Context *context = nullptr;
     ClDevice *device = nullptr;

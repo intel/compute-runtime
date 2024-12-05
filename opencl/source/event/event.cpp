@@ -397,10 +397,6 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     auto &device = this->cmdQueue->getDevice();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto resolution = device.getDeviceInfo().profilingTimerResolution;
-    if (isAdjustmentNeeded) {
-        // Adjust startTS since we calculate profiling based on other event timestamps
-        contextStartTS = startTimeStamp.gpuTimeStamp;
-    }
 
     // Calculate startTimestamp only if it was not already set on CPU
     if (startTimeStamp.cpuTimeInNs == 0) {
@@ -1044,6 +1040,22 @@ bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_eve
 
 TaskCountType Event::peekTaskLevel() const {
     return taskLevel;
+}
+
+void Event::copyTimestamps(Event &srcEvent) {
+    if (timestampPacketContainer) {
+        this->addTimestampPacketNodes(*srcEvent.getTimestampPacketNodes());
+    } else {
+        if (this->timeStampNode != nullptr) {
+            this->timeStampNode->returnTag();
+        }
+        this->timeStampNode = srcEvent.timeStampNode;
+        srcEvent.timeStampNode = nullptr;
+    }
+    this->queueTimeStamp = srcEvent.queueTimeStamp;
+    this->submitTimeStamp = srcEvent.submitTimeStamp;
+    this->startTimeStamp = srcEvent.startTimeStamp;
+    this->endTimeStamp = srcEvent.endTimeStamp;
 }
 
 } // namespace NEO

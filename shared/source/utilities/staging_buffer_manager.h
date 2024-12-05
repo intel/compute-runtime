@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -14,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <queue>
 
 namespace NEO {
 class SVMAllocsManager;
@@ -21,8 +23,8 @@ class CommandStreamReceiver;
 class Device;
 class HeapAllocator;
 
-using ChunkCopyFunction = std::function<int32_t(void *, size_t, void *, const void *)>;
-using ChunkWriteImageFunc = std::function<int32_t(void *, size_t, const void *, const size_t *, const size_t *)>;
+using ChunkCopyFunction = std::function<int32_t(void *, void *, size_t)>;
+using ChunkTransferImageFunc = std::function<int32_t(void *, const size_t *, const size_t *)>;
 
 class StagingBuffer {
   public:
@@ -50,7 +52,22 @@ struct StagingBufferTracker {
     size_t size = 0;
     CommandStreamReceiver *csr = nullptr;
     uint64_t taskCountToWait = 0;
+
+    bool isReady() const;
+    void freeChunk() const;
 };
+
+struct UserDstData {
+    void *ptr;
+    size_t size;
+};
+
+struct StagingTransferStatus {
+    int32_t chunkCopyStatus = 0; // status from L0/OCL chunk copy
+    WaitStatus waitStatus = WaitStatus::ready;
+};
+
+using StagingQueue = std::queue<std::pair<UserDstData, StagingBufferTracker>>;
 
 class StagingBufferManager {
   public:
@@ -62,10 +79,10 @@ class StagingBufferManager {
     StagingBufferManager &operator=(const StagingBufferManager &other) = delete;
 
     bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
-    bool isValidForStagingWriteImage(const Device &device, const void *ptr, bool hasDependencies) const;
+    bool isValidForStagingTransferImage(const Device &device, const void *ptr, bool hasDependencies) const;
 
-    int32_t performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
-    int32_t performImageWrite(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkWriteImageFunc &chunkWriteImageFunc, CommandStreamReceiver *csr);
+    StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
+    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
 
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size);
     void trackChunk(const StagingBufferTracker &tracker);
@@ -76,7 +93,10 @@ class StagingBufferManager {
     void clearTrackedChunks();
 
     template <class Func, class... Args>
-    int32_t performChunkTransfer(CommandStreamReceiver *csr, size_t size, Func &chunkCopyFunc, Args... args);
+    StagingTransferStatus performChunkTransfer(bool isRead, void *userPtr, size_t size, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args);
+
+    WaitStatus fetchHead(StagingQueue &stagingQueue, StagingBufferTracker &tracker) const;
+    WaitStatus drainAndReleaseStagingQueue(StagingQueue &stagingQueue) const;
 
     size_t chunkSize = MemoryConstants::pageSize2M;
     std::mutex mtx;

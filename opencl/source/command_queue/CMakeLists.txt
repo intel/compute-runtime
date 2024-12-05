@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2024 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,6 +9,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_local_work_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_local_work_size.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_staging.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_base.inl

@@ -39,6 +39,25 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
 
     CsrSelectionArgs csrSelectionArgs{cmdType, srcImage, {}, device->getRootDeviceIndex(), region, origin, nullptr};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+    return enqueueReadImageImpl(srcImage, blockingRead, origin, region, inputRowPitch, inputSlicePitch, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event, csr);
+}
+
+template <typename GfxFamily>
+cl_int CommandQueueHw<GfxFamily>::enqueueReadImageImpl(
+    Image *srcImage,
+    cl_bool blockingRead,
+    const size_t *origin,
+    const size_t *region,
+    size_t inputRowPitch,
+    size_t inputSlicePitch,
+    void *ptr,
+    GraphicsAllocation *mapAllocation,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event, CommandStreamReceiver &csr) {
+    constexpr cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, srcImage, {}, device->getRootDeviceIndex(), region, origin, nullptr};
 
     if (nullptr == mapAllocation) {
         notifyEnqueueReadImage(srcImage, static_cast<bool>(blockingRead), EngineHelpers::isBcs(csr.getOsContext().getEngineType()));

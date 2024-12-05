@@ -2965,7 +2965,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             TRACING_EXIT(ClEnqueueWriteImage, &retVal);
             return retVal;
         }
-        if (pCommandQueue->isValidForStagingWriteImage(pImage, ptr, numEventsInWaitList > 0)) {
+        if (pCommandQueue->isValidForStagingTransferImage(pImage, ptr, numEventsInWaitList > 0)) {
             retVal = pCommandQueue->enqueueStagingWriteImage(pImage, blockingWrite, origin, region, inputRowPitch, inputSlicePitch, ptr, event);
         } else {
             retVal = pCommandQueue->enqueueWriteImage(

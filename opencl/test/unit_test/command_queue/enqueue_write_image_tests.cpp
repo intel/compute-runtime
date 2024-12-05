@@ -801,7 +801,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanR
     svmManager->freeSVMAlloc(usmPtr);
 }
 
-HWTEST_F(EnqueueWriteImageTest, whenIsValidForStagingWriteImageCalledThenReturnCorrectValue) {
+HWTEST_F(EnqueueWriteImageTest, whenIsValidForStagingTransferImageCalledThenReturnCorrectValue) {
     bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
     if (!svmSupported) {
         GTEST_SKIP();
@@ -810,13 +810,13 @@ HWTEST_F(EnqueueWriteImageTest, whenIsValidForStagingWriteImageCalledThenReturnC
     unsigned char ptr[16];
 
     std::unique_ptr<Image> image(Image1dHelper<>::create(context));
-    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransferImage(image.get(), ptr, false));
 
     image.reset(Image2dHelper<>::create(context));
-    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransferImage(image.get(), ptr, false));
 
     image.reset(Image3dHelper<>::create(context));
-    EXPECT_FALSE(pCmdQ->isValidForStagingWriteImage(image.get(), ptr, false));
+    EXPECT_FALSE(pCmdQ->isValidForStagingTransferImage(image.get(), ptr, false));
 }
 
 struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
@@ -847,6 +847,17 @@ struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
 HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     auto res = mockCommandQueueHw.enqueueStagingWriteImage(dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_SUCCESS);
+    EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteImageCounter);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledWithoutRowPitchThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    region[0] = MemoryConstants::megaByte / dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    auto res = mockCommandQueueHw.enqueueStagingWriteImage(dstImage, false, origin, region, 0u, MemoryConstants::megaByte, ptr, nullptr);
 
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteImageCounter);
