@@ -2806,7 +2806,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kernel, NEO::Device &device,
-                                                                    const ze_group_count_t &threadGroupDimensions) {
+                                                                    const ze_group_count_t &threadGroupDimensions, size_t &patchIndex) {
     uint32_t maximalNumberOfWorkgroupsAllowed = kernel.suggestMaxCooperativeGroupCount(this->engineGroupType, false);
 
     size_t requestedNumberOfWorkgroups = (threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ);
@@ -2817,17 +2817,41 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::programSyncBuffer(Kernel &kern
     auto patchData = NEO::KernelHelper::getSyncBufferAllocationOffset(device, requestedNumberOfWorkgroups);
     kernel.patchSyncBuffer(patchData.first, patchData.second);
 
+    if (!isImmediateType()) {
+        patchIndex = commandsToPatch.size();
+
+        CommandToPatch syncBufferSpace;
+        syncBufferSpace.type = CommandToPatch::NoopSpace;
+        syncBufferSpace.offset = patchData.second;
+        syncBufferSpace.pDestination = ptrOffset(patchData.first->getUnderlyingBuffer(), patchData.second);
+        syncBufferSpace.patchSize = NEO::KernelHelper::getSyncBufferSize(requestedNumberOfWorkgroups);
+
+        commandsToPatch.push_back(syncBufferSpace);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize) {
+void CommandListCoreFamily<gfxCoreFamily>::programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize, size_t &patchIndex) {
     auto neoDevice = device->getNEODevice();
 
     auto threadGroupCount = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
     auto patchData = NEO::KernelHelper::getRegionGroupBarrierAllocationOffset(*neoDevice, threadGroupCount, localRegionSize);
 
     kernel.patchRegionGroupBarrier(patchData.first, patchData.second);
+
+    if (!isImmediateType()) {
+        patchIndex = commandsToPatch.size();
+
+        CommandToPatch regionBarrierSpace;
+        regionBarrierSpace.type = CommandToPatch::NoopSpace;
+        regionBarrierSpace.offset = patchData.second;
+        regionBarrierSpace.pDestination = ptrOffset(patchData.first->getUnderlyingBuffer(), patchData.second);
+        regionBarrierSpace.patchSize = NEO::KernelHelper::getRegionGroupBarrierSize(threadGroupCount, localRegionSize);
+
+        commandsToPatch.push_back(regionBarrierSpace);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -3360,6 +3384,7 @@ void CommandListCoreFamily<gfxCoreFamily>::clearCommandsToPatch() {
             break;
         case CommandToPatch::ComputeWalkerInlineDataScratch:
         case CommandToPatch::ComputeWalkerImplicitArgsScratch:
+        case CommandToPatch::NoopSpace:
             break;
         default:
             UNRECOVERABLE_IF(true);

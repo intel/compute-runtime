@@ -304,8 +304,8 @@ struct CommandListCoreFamily : public CommandListImp {
                                   const void **pRanges);
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, uint32_t lws[3]);
-    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions);
-    void programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize);
+    ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions, size_t &patchIndex);
+    void programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize, size_t &patchIndex);
     void appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation);
     void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool maskLsb, uint32_t mask, bool workloadPartition, bool copyOperation);
     void appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);

@@ -154,7 +154,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     containsCooperativeKernelsFlag = (containsCooperativeKernelsFlag || launchParams.isCooperative);
     if (kernel->usesSyncBuffer()) {
         auto retVal = (launchParams.isCooperative
-                           ? programSyncBuffer(*kernel, *device->getNEODevice(), threadGroupDimensions)
+                           ? programSyncBuffer(*kernel, *device->getNEODevice(), threadGroupDimensions, launchParams.syncBufferPatchIndex)
                            : ZE_RESULT_ERROR_INVALID_ARGUMENT);
         if (retVal) {
             return retVal;

@@ -191,6 +191,10 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 args);
             break;
         }
+        case CommandToPatch::NoopSpace: {
+            memset(commandToPatch.pDestination, 0, commandToPatch.patchSize);
+            break;
+        }
         default: {
             UNRECOVERABLE_IF(true);
         }

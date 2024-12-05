@@ -1027,5 +1027,31 @@ HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWh
     commandList->commandsToPatch.clear();
 }
 
+using CommandQueueCreate = Test<DeviceFixture>;
+
+HWTEST2_F(CommandQueueCreate, givenCommandsToPatchWithNoopSpacePatchWhenPatchCommandsIsCalledThenSpaceIsNooped, MatchAny) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+
+    constexpr uint32_t dataSize = 64;
+    auto patchBuffer = std::make_unique<uint8_t[]>(dataSize);
+    auto zeroBuffer = std::make_unique<uint8_t[]>(dataSize);
+    memset(patchBuffer.get(), 0xFF, dataSize);
+    memset(zeroBuffer.get(), 0x0, dataSize);
+
+    CommandToPatch commandToPatch;
+
+    commandToPatch.type = CommandToPatch::NoopSpace;
+    commandToPatch.pDestination = patchBuffer.get();
+    commandToPatch.patchSize = dataSize;
+
+    commandList->commandsToPatch.push_back(commandToPatch);
+    commandQueue->patchCommands(*commandList, 0, false);
+    EXPECT_EQ(0, memcmp(patchBuffer.get(), zeroBuffer.get(), dataSize));
+}
+
 } // namespace ult
 } // namespace L0

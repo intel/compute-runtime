@@ -464,6 +464,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     commandList->initialize(device, engineGroupType, 0u);
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(std::numeric_limits<size_t>::max(), cooperativeParams.syncBufferPatchIndex);
 
     auto mockSyncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(device->getNEODevice()->syncBufferHandler.get());
     auto syncBufferAllocation = mockSyncBufferHandler->graphicsAllocation;
@@ -475,6 +476,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
     EXPECT_EQ(expectedIndex, kernel.getSyncBufferIndex());
 
     EXPECT_EQ(syncBufferAllocation, kernel.getSyncBufferAllocation());
+
+    auto &cmdsToPatch = commandList->getCommandsToPatch();
+    ASSERT_NE(0u, cmdsToPatch.size());
+
+    auto noopParam = cmdsToPatch[cooperativeParams.syncBufferPatchIndex];
+    EXPECT_EQ(CommandToPatch::NoopSpace, noopParam.type);
+    EXPECT_NE(0u, noopParam.patchSize);
 
     commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, engineGroupType, 0u);
@@ -514,7 +522,18 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         result = commandList->appendLaunchKernelWithParams(&kernel, groupCount, nullptr, launchParams);
         EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     }
+
+    const ze_command_queue_desc_t desc = {};
+    std::unique_ptr<L0::CommandList> commandListImmediate(CommandList::createImmediate(productFamily, device, &desc, false, engineGroupType, result));
+
+    cooperativeParams.isCooperative = true;
+    cooperativeParams.syncBufferPatchIndex = std::numeric_limits<size_t>::max();
+
+    result = commandListImmediate->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, cooperativeParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), cooperativeParams.syncBufferPatchIndex);
 }
+
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLaunchCooperativeKernelWithMakeViewIsCalledThenNoAllocationCreated, IsAtLeastXeHpCore) {
     Mock<::L0::KernelImp> kernel;
     auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
@@ -599,6 +618,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     CmdListKernelLaunchParams launchParams = {};
     launchParams.localRegionSize = 4;
     EXPECT_EQ(ZE_RESULT_SUCCESS, cmdList->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
+    EXPECT_EQ(std::numeric_limits<size_t>::max(), launchParams.regionBarrierPatchIndex);
 
     auto patchPtr = *reinterpret_cast<uint64_t *>(ptrOffset(kernel.crossThreadData.get(), regionGroupBarrier.stateless));
     EXPECT_NE(0u, patchPtr);
@@ -633,6 +653,18 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenA
     auto offset = alignUp((requestedNumberOfWorkgroups / launchParams.localRegionSize) * (launchParams.localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(patchPtr2, patchPtr + offset);
+
+    std::unique_ptr<L0::CommandList> cmdListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0, result, false));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, cmdListRegular->appendLaunchKernel(kernel.toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
+    EXPECT_NE(std::numeric_limits<size_t>::max(), launchParams.regionBarrierPatchIndex);
+
+    auto &cmdsToPatch = cmdListRegular->getCommandsToPatch();
+    ASSERT_NE(0u, cmdsToPatch.size());
+
+    auto noopParam = cmdsToPatch[launchParams.regionBarrierPatchIndex];
+    EXPECT_EQ(CommandToPatch::NoopSpace, noopParam.type);
+    EXPECT_NE(0u, noopParam.patchSize);
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingRegionGroupBarrierWhenAppendLaunchKernelWithMakeViewIsCalledThenNoPatchBuffer, IsAtLeastXeHpCore) {

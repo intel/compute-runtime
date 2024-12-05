@@ -66,8 +66,9 @@ HWTEST2_F(MultiTileImmediateCommandListTest, givenMultipleTilesWhenAllocatingBar
     size_t requestedNumberOfWorkgroups = threadGroupDimensions.groupCountX * threadGroupDimensions.groupCountY * threadGroupDimensions.groupCountZ;
 
     size_t localRegionSize = 4;
+    size_t patchIndex = 0;
 
-    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, localRegionSize);
+    whiteBoxCmdList->programRegionGroupBarrier(mockKernel, threadGroupDimensions, localRegionSize, patchIndex);
 
     auto patchData = neoDevice->syncBufferHandler->obtainAllocationAndOffset(1);
 

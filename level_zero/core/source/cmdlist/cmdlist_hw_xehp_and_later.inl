@@ -250,7 +250,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (!launchParams.makeKernelCommandView) {
         if (kernel->usesSyncBuffer()) {
             auto retVal = (launchParams.isCooperative
-                               ? programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions)
+                               ? programSyncBuffer(*kernel, *neoDevice, threadGroupDimensions, launchParams.syncBufferPatchIndex)
                                : ZE_RESULT_ERROR_INVALID_ARGUMENT);
             if (retVal) {
                 return retVal;
@@ -258,7 +258,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
 
         if (kernel->usesRegionGroupBarrier()) {
-            programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize);
+            programRegionGroupBarrier(*kernel, threadGroupDimensions, launchParams.localRegionSize, launchParams.regionBarrierPatchIndex);
         }
     }
 

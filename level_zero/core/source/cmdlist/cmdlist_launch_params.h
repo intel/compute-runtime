@@ -32,6 +32,7 @@ struct CommandToPatch {
         CbWaitEventLoadRegisterImm,
         ComputeWalkerInlineDataScratch,
         ComputeWalkerImplicitArgsScratch,
+        NoopSpace,
         Invalid
     };
     void *pDestination = nullptr;
@@ -51,6 +52,8 @@ struct CmdListKernelLaunchParams {
     void *hostPayloadBuffer = nullptr;
     CommandToPatch *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
+    size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();
+    size_t regionBarrierPatchIndex = std::numeric_limits<size_t>::max();
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
