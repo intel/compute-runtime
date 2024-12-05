@@ -7,12 +7,13 @@
 
 #pragma once
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/os_interface/linux/clos_cache.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include <stddef.h>
-#include <stdint.h>
-#include <unordered_map>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 
 namespace NEO {
 
@@ -24,6 +25,8 @@ struct CacheInfo {
           maxReservationNumCacheRegions(maxReservationNumCacheRegions),
           maxReservationNumWays(maxReservationNumWays),
           cacheReserve{ioctlHelper} {
+
+        reservedCacheRegionsSize.fill(0UL);
     }
 
     MOCKABLE_VIRTUAL ~CacheInfo();
@@ -69,7 +72,7 @@ struct CacheInfo {
     uint32_t maxReservationNumCacheRegions;
     uint16_t maxReservationNumWays;
     ClosCacheReservation cacheReserve;
-    std::unordered_map<CacheRegion, size_t> cacheRegionsReserved;
+    std::array<size_t, toUnderlying(CacheRegion::count)> reservedCacheRegionsSize;
     SpinLock mtx;
 };
 

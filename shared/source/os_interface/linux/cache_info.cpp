@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,10 +14,16 @@
 namespace NEO {
 
 CacheInfo::~CacheInfo() {
-    for (auto const &cacheRegion : cacheRegionsReserved) {
-        cacheReserve.freeCache(CacheLevel::level3, cacheRegion.first);
+    // skip the defaultRegion
+    constexpr auto regionStart{toUnderlying(CacheRegion::region1)};
+    constexpr auto regionEnd{toUnderlying(CacheRegion::count)};
+
+    for (auto regionIndex{regionStart}; regionIndex < regionEnd; ++regionIndex) {
+        if (reservedCacheRegionsSize[regionIndex]) {
+            cacheReserve.freeCache(CacheLevel::level3, toCacheRegion(regionIndex));
+            reservedCacheRegionsSize[regionIndex] = 0u;
+        }
     }
-    cacheRegionsReserved.clear();
 }
 
 CacheRegion CacheInfo::reserveRegion(size_t cacheReservationSize) {
@@ -30,28 +36,28 @@ CacheRegion CacheInfo::reserveRegion(size_t cacheReservationSize) {
     if (regionIndex == CacheRegion::none) {
         return CacheRegion::none;
     }
-    cacheRegionsReserved.insert({regionIndex, cacheReservationSize});
+    DEBUG_BREAK_IF(regionIndex == CacheRegion::defaultRegion);
+    DEBUG_BREAK_IF(regionIndex >= CacheRegion::count);
+    reservedCacheRegionsSize[toUnderlying(regionIndex)] = cacheReservationSize;
 
     return regionIndex;
 }
 
 CacheRegion CacheInfo::freeRegion(CacheRegion regionIndex) {
-    auto search = cacheRegionsReserved.find(regionIndex);
-    if (search != cacheRegionsReserved.end()) {
-        cacheRegionsReserved.erase(search);
+    if (regionIndex < CacheRegion::count && reservedCacheRegionsSize[toUnderlying(regionIndex)] > 0u) {
+        reservedCacheRegionsSize[toUnderlying(regionIndex)] = 0u;
         return cacheReserve.freeCache(CacheLevel::level3, regionIndex);
     }
     return CacheRegion::none;
 }
 
-bool CacheInfo::isRegionReserved(CacheRegion regionIndex, [[maybe_unused]] size_t regionSize) const {
-    auto search = cacheRegionsReserved.find(regionIndex);
-    if (search != cacheRegionsReserved.end()) {
+bool CacheInfo::isRegionReserved(CacheRegion regionIndex, [[maybe_unused]] size_t expectedRegionSize) const {
+    if (regionIndex < CacheRegion::count && reservedCacheRegionsSize[toUnderlying(regionIndex)]) {
         if (debugManager.flags.ClosNumCacheWays.get() != -1) {
             auto numWays = debugManager.flags.ClosNumCacheWays.get();
-            regionSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
+            expectedRegionSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
         }
-        DEBUG_BREAK_IF(search->second != regionSize);
+        DEBUG_BREAK_IF(expectedRegionSize != reservedCacheRegionsSize[toUnderlying(regionIndex)]);
         return true;
     }
     return false;

@@ -13,10 +13,10 @@
 namespace NEO {
 
 struct MockCacheInfo : public CacheInfo {
-    using CacheInfo::cacheRegionsReserved;
     using CacheInfo::freeRegion;
     using CacheInfo::getRegion;
     using CacheInfo::isRegionReserved;
+    using CacheInfo::reservedCacheRegionsSize;
     using CacheInfo::reserveRegion;
 
     MockCacheInfo(IoctlHelper &ioctlHelper, size_t maxReservationCacheSize, uint32_t maxReservationNumCacheRegions, uint16_t maxReservationNumWays)

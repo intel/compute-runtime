@@ -132,9 +132,8 @@ TEST(DrmCacheInfoTest, givenCacheInfoWhenSpecificNumCacheWaysIsRequestedThenRese
     EXPECT_EQ(CacheRegion::region1, cacheInfo.reserveCacheRegion(maxReservationCacheSize));
     EXPECT_TRUE(cacheInfo.isRegionReserved(CacheRegion::region1, maxReservationCacheSize));
 
-    auto cacheRegion = cacheInfo.cacheRegionsReserved.begin();
-    EXPECT_EQ(CacheRegion::region1, cacheRegion->first);
-    EXPECT_EQ(maxReservationCacheSize / 2, cacheRegion->second);
+    auto expectedRegionSize = cacheInfo.reservedCacheRegionsSize[toUnderlying(CacheRegion::region1)];
+    EXPECT_EQ(maxReservationCacheSize / 2, expectedRegionSize);
 
     EXPECT_EQ(CacheRegion::region1, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
@@ -161,6 +160,6 @@ TEST(DrmCacheInfoTest, givenCacheInfoCreatedWhenFreeCacheRegionIsCalledForNonRes
     DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     MockCacheInfo cacheInfo(*drm.getIoctlHelper(), 32 * MemoryConstants::kiloByte, 2, 32);
 
-    cacheInfo.cacheRegionsReserved.insert({CacheRegion::region1, MemoryConstants::kiloByte});
+    cacheInfo.reservedCacheRegionsSize[toUnderlying(CacheRegion::region1)] = MemoryConstants::kiloByte;
     EXPECT_EQ(CacheRegion::none, cacheInfo.freeCacheRegion(CacheRegion::region1));
 }
