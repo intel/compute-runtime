@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -390,6 +391,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
             launchParams.isCooperative ? "zeCommandListAppendLaunchCooperativeKernel" : "zeCommandListAppendLaunchKernel",
             ++neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount);
         callId = neoDevice->getRootDeviceEnvironment().tagsManager->currentCallCount;
+    }
+
+    if (NEO::debugManager.flags.EnableMemoryPrefetch.get() == 1) {
+        auto kernel = Kernel::fromHandle(kernelHandle);
+        NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
+        auto heap = commandContainer.getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+        NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *heap->getGraphicsAllocation(), kernel->getCrossThreadDataSize(), heap->getUsed(), device->getNEODevice()->getRootDeviceEnvironment());
+        NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *kernel->getIsaAllocation(), static_cast<uint32_t>(kernel->getImmutableData()->getIsaSize()), kernel->getIsaOffsetInParentAllocation(), device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     ze_result_t ret = addEventsToCmdList(numWaitEvents, phWaitEvents, launchParams.outListCommands, relaxedOrderingDispatch, true, true, launchParams.omitAddingWaitEventsResidency, false);

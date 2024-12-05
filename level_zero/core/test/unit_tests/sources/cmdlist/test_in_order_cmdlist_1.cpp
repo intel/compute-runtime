@@ -11,6 +11,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -2415,6 +2416,42 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
         EXPECT_EQ(1u, sdiCmd->getDataDword0());
     },
                walkerVariant);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenIoqAndPrefetchEnabledWhenKernelIsAppendedThenPrefetchIsBeforeIt, IsAtLeastXeHpcCore) {
+    using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+    NEO::debugManager.flags.EnableMemoryPrefetch.set(1);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto isaAllocation = kernel->getIsaAllocation();
+    auto isaAddress = isaAllocation->getGpuAddress() + kernel->getIsaOffsetInParentAllocation();
+    auto heap = immCmdList->getCmdContainer().getIndirectHeap(NEO::IndirectHeapType::indirectObject);
+    auto heapAddress = heap->getGraphicsAllocation()->getGpuAddress() + heap->getUsed();
+
+    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto firstPrefetchIterator = find<STATE_PREFETCH *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), firstPrefetchIterator);
+
+    auto firstPrefetch = genCmdCast<STATE_PREFETCH *>(*firstPrefetchIterator);
+    ASSERT_NE(nullptr, firstPrefetch);
+    EXPECT_EQ(heapAddress, firstPrefetch->getAddress());
+
+    EXPECT_FALSE(firstPrefetch->getKernelInstructionPrefetch());
+
+    auto secondPrefetchIterator = find<STATE_PREFETCH *>(++firstPrefetchIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), secondPrefetchIterator);
+
+    auto secondPrefetch = genCmdCast<STATE_PREFETCH *>(*secondPrefetchIterator);
+    ASSERT_NE(nullptr, secondPrefetch);
+
+    EXPECT_TRUE(secondPrefetch->getKernelInstructionPrefetch());
+    EXPECT_EQ(isaAddress, secondPrefetch->getAddress());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenAskingIfSkipInOrderNonWalkerSignallingAllowedThenReturnTrue, IsAtLeastXeHpcCore) {
