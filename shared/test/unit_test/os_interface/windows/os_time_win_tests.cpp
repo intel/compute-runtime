@@ -76,24 +76,29 @@ TEST_F(OSTimeWinTest, given36BitGpuTimeStampWhenGpuTimeStampOverflowThenGpuTimeD
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 200ll;
     error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(200ull, gpuCpuTime.gpuTimeStamp);
 
     osTime->maxGpuTimeStamp = 1ull << 36;
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 10ull; // read below initial value
     error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(osTime->maxGpuTimeStamp + 10ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 30ull; // second read below initial value
     error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(osTime->maxGpuTimeStamp + 30ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 110ull;
     error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(osTime->maxGpuTimeStamp + 110ull, gpuCpuTime.gpuTimeStamp);
 
     deviceTime->gpuCpuTimeValue.gpuTimeStamp = 70ull; // second overflow
     error = osTime->getGpuCpuTime(&gpuCpuTime);
+    EXPECT_EQ(error, TimeQueryStatus::success);
     EXPECT_EQ(2ull * osTime->maxGpuTimeStamp + 70ull, gpuCpuTime.gpuTimeStamp);
 }
 

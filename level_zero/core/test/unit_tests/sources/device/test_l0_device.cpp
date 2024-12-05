@@ -1690,9 +1690,11 @@ TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitiali
     }
 }
 
-TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesSetCorrectly) {
+TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithOsInterfaceThenSuccessIsReturnedAndValuesSetCorrectly) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
+
+    debugManager.flags.EnableGlobalTimestampViaSubmission.set(0);
 
     ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1703,7 +1705,7 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesS
 
 TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionThenSuccessIsReturned) {
 
-    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1u);
+    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1);
 
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
@@ -1719,44 +1721,14 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionThenSuccessIsRetu
     EXPECT_NE(0u, hostTs);
 }
 
-TEST_F(DeviceTest, givenAppendMemoryCopyFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
-    struct MockCommandListAppendMemoryCopyFail : public MockCommandList {
-        ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-    };
-    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1u);
-
-    uint64_t hostTs = 0u;
-    uint64_t deviceTs = 0u;
-
-    // First time to hit the if case of initialization of internal structures.
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(0u, hostTs);
-
-    auto mockCommandList = std::make_unique<MockCommandListAppendMemoryCopyFail>();
-    auto mockCommandListHandle = mockCommandList.get();
-
-    auto deviceImp = static_cast<DeviceImp *>(device);
-    auto actualGlobalTimestampCommandList = deviceImp->globalTimestampCommandList;
-    // Swap the command list with the mock command list.
-    deviceImp->globalTimestampCommandList = mockCommandListHandle;
-
-    result = device->getGlobalTimestamps(&hostTs, &deviceTs);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
-
-    // Swap back the command list.
-    deviceImp->globalTimestampCommandList = actualGlobalTimestampCommandList;
-}
-
 TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
     struct MockCommandListAppendWriteGlobalTimestampFail : public MockCommandList {
         ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     };
-    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1u);
+
+    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1);
 
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
@@ -1767,12 +1739,14 @@ TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUs
     EXPECT_NE(0u, hostTs);
 
     auto mockCommandList = std::make_unique<MockCommandListAppendWriteGlobalTimestampFail>();
-    auto mockCommandListHandle = mockCommandList.get();
+    ze_command_list_handle_t mockCommandListHandle = mockCommandList.get();
 
     auto deviceImp = static_cast<DeviceImp *>(device);
     auto actualGlobalTimestampCommandList = deviceImp->globalTimestampCommandList;
     // Swap the command list with the mock command list.
     deviceImp->globalTimestampCommandList = mockCommandListHandle;
+
+    L0::CommandList::fromHandle(deviceImp->globalTimestampCommandList)->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr);
 
     result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
@@ -1781,60 +1755,44 @@ TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUs
     deviceImp->globalTimestampCommandList = actualGlobalTimestampCommandList;
 }
 
-TEST_F(DeviceTest, givenCreateContextFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
-    struct MockDriverHandleImp : public Mock<L0::DriverHandleImp> {
-        ze_result_t createContext(const ze_context_desc_t *desc,
-                                  uint32_t numDevices,
-                                  ze_device_handle_t *phDevices,
-                                  ze_context_handle_t *phContext) override {
-            return ZE_RESULT_ERROR_UNKNOWN;
+TEST_F(DeviceTest, givenCreateHostUnifiedMemoryAllocationFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
+    struct MockSvmAllocsManager : public NEO::SVMAllocsManager {
+        MockSvmAllocsManager(MemoryManager *memoryManager) : NEO::SVMAllocsManager(memoryManager, false) {}
+
+        void *createHostUnifiedMemoryAllocation(size_t size, const NEO::SVMAllocsManager::UnifiedMemoryProperties &unifiedMemoryProperties) override {
+            return nullptr;
         }
     };
 
-    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1u);
-
-    uint64_t hostTs = 0u;
-    uint64_t deviceTs = 0u;
-
-    auto mockDriverHandle = std::make_unique<MockDriverHandleImp>();
-    device->setDriverHandle(mockDriverHandle.get());
-
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
-    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
-}
-
-TEST_F(DeviceTest, givenAllocDeviceMemFailsWhenGetGlobalTimestampsUsingSubmissionThenErrorIsReturned) {
-    struct MockContext : public L0::ContextImp {
-        MockContext(L0::DriverHandleImp *driverHandle) : L0::ContextImp(driverHandle) {}
-
-        ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
-                                   const ze_device_mem_alloc_desc_t *deviceDesc,
-                                   size_t size,
-                                   size_t alignment,
-                                   void **ptr) override {
-            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    class MockDriverHandleImp : public Mock<L0::DriverHandleImp> {
+      public:
+        void setSVMAllocsManager(MockSvmAllocsManager *mockSvmAllocsManager) {
+            this->svmAllocsManager = mockSvmAllocsManager;
         }
     };
 
-    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1u);
+    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1);
 
-    uint64_t hostTs = 0u;
-    uint64_t deviceTs = 0u;
+    auto mockSvmAllocsManager = std::make_unique<MockSvmAllocsManager>(nullptr);
+    auto mockSvmAllocsManagerHandle = mockSvmAllocsManager.get();
 
-    auto mockContext = std::make_unique<MockContext>(static_cast<L0::DriverHandleImp *>(device->getDriverHandle()));
-    auto mockContextHandle = mockContext.get();
+    auto mockDriverHandleImp = std::make_unique<MockDriverHandleImp>();
+    mockDriverHandleImp->setSVMAllocsManager(mockSvmAllocsManagerHandle);
 
+    // Swap the driver handle with the mock driver handle but keep the original driver handle to be swaped back.
     auto deviceImp = static_cast<DeviceImp *>(device);
-    auto actualGlobalTimestampContext = deviceImp->globalTimestampContext;
+    auto originalDriverHandle = deviceImp->getDriverHandle();
+    deviceImp->setDriverHandle(mockDriverHandleImp.get());
 
-    // Swap the command list with the mock command list.
-    deviceImp->globalTimestampContext = mockContextHandle;
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
 
     ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
-    // Swap back the command list.
-    deviceImp->globalTimestampContext = actualGlobalTimestampContext;
+    mockDriverHandleImp->setSVMAllocsManager(nullptr);
+    // Swap back the driver handle.
+    deviceImp->setDriverHandle(originalDriverHandle);
 }
 
 struct GlobalTimestampTest : public ::testing::Test {
@@ -1992,7 +1950,7 @@ class FailCpuTime : public NEO::OSTime {
 
 TEST_F(GlobalTimestampTest, whenGetGlobalTimestampsUsingSubmissionAndGetCpuTimeHostFailsThenDeviceLostErrorIsReturned) {
 
-    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1u);
+    debugManager.flags.EnableGlobalTimestampViaSubmission.set(1);
 
     neoDevice->setOSTime(new FailCpuTime());
     NEO::DeviceVector devices;
@@ -4703,7 +4661,6 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
     EXPECT_TRUE(deviceImp->resourcesReleased);
     EXPECT_TRUE(nullptr == deviceImp->getNEODevice());
     EXPECT_TRUE(nullptr == deviceImp->globalTimestampCommandList);
-    EXPECT_TRUE(nullptr == deviceImp->globalTimestampContext);
     EXPECT_TRUE(nullptr == deviceImp->globalTimestampAllocation);
     EXPECT_TRUE(nullptr == deviceImp->pageFaultCommandList);
     deviceImp->releaseResources();

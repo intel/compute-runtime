@@ -1097,22 +1097,26 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 }
 
 ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
-    if (NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get()) {
-        return getGlobalTimestampsUsingSubmission(hostTimestamp, deviceTimestamp);
+
+    bool method = 0;
+    if (NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() != -1) {
+        method = NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get();
     }
 
-    auto ret = getGlobalTimestampsUsingOsInterface(hostTimestamp, deviceTimestamp);
-    if (ret == ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
-        return getGlobalTimestampsUsingSubmission(hostTimestamp, deviceTimestamp);
+    if (method == 0) {
+        auto ret = getGlobalTimestampsUsingOsInterface(hostTimestamp, deviceTimestamp);
+        if (ret != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
+            return ret;
+        }
     }
 
-    return ret;
+    return getGlobalTimestampsUsingSubmission(hostTimestamp, deviceTimestamp);
 }
 
 ze_result_t DeviceImp::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
+    std::lock_guard<std::mutex> lock(globalTimestampMutex);
 
     if (this->globalTimestampAllocation == nullptr) {
-
         ze_command_queue_desc_t queueDescriptor = {};
         queueDescriptor.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
         queueDescriptor.pNext = nullptr;
@@ -1121,53 +1125,46 @@ ze_result_t DeviceImp::getGlobalTimestampsUsingSubmission(uint64_t *hostTimestam
         queueDescriptor.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
         queueDescriptor.ordinal = 0;
         queueDescriptor.index = 0;
-
         this->createCommandListImmediate(&queueDescriptor, &this->globalTimestampCommandList);
 
-        if (globalTimestampContext == nullptr) {
-            auto driverHandle = this->getDriverHandle();
-            DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
+        RootDeviceIndicesContainer rootDeviceIndices;
+        rootDeviceIndices.pushUnique(this->getNEODevice()->getRootDeviceIndex());
 
-            ze_context_handle_t context;
-            ze_context_desc_t contextDesc = {};
-            contextDesc.stype = ZE_STRUCTURE_TYPE_CONTEXT_DESC;
-            auto ret = driverHandleImp->createContext(&contextDesc, 0u, nullptr, &context);
-            if (ret != ZE_RESULT_SUCCESS) {
-                return ZE_RESULT_ERROR_DEVICE_LOST;
-            }
+        std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
+        deviceBitfields.insert({this->getNEODevice()->getRootDeviceIndex(), this->getNEODevice()->getDeviceBitfield()});
 
-            this->globalTimestampContext = context;
-        }
+        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory,
+                                                                               sizeof(uint64_t),
+                                                                               rootDeviceIndices,
+                                                                               deviceBitfields);
 
-        ze_device_mem_alloc_desc_t deviceDesc = {};
-        deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-        deviceDesc.ordinal = 0;
-        deviceDesc.flags = 0;
-        deviceDesc.pNext = nullptr;
-
-        auto ret = L0::Context::fromHandle(this->globalTimestampContext)->allocDeviceMem(this->toHandle(), &deviceDesc, sizeof(uint64_t), sizeof(uint64_t), &this->globalTimestampAllocation);
-        if (ret != ZE_RESULT_SUCCESS) {
+        this->globalTimestampAllocation = this->getDriverHandle()->getSvmAllocsManager()->createHostUnifiedMemoryAllocation(sizeof(uint64_t),
+                                                                                                                            unifiedMemoryProperties);
+        if (this->globalTimestampAllocation == nullptr) {
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
     }
+
+    // Get CPU time first here to be used for averaging later
+    uint64_t hostTimestampForAvg = 0;
+    bool cpuHostTimeRetVal = this->neoDevice->getOSTime()->getCpuTimeHost(&hostTimestampForAvg);
 
     auto ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendWriteGlobalTimestamp((uint64_t *)this->globalTimestampAllocation, nullptr, 0, nullptr);
     if (ret != ZE_RESULT_SUCCESS) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    // Copy back timestamp data
-    CmdListMemoryCopyParams memoryCopyParams = {};
-    ret = L0::CommandList::fromHandle(this->globalTimestampCommandList)->appendMemoryCopy(deviceTimestamp, this->globalTimestampAllocation, sizeof(uint64_t), nullptr, 0, nullptr, memoryCopyParams);
-    if (ret != ZE_RESULT_SUCCESS) {
+    // Copy over the device timestamp data
+    *deviceTimestamp = *static_cast<uint64_t *>(this->globalTimestampAllocation);
+
+    // get CPU time
+    cpuHostTimeRetVal |= this->neoDevice->getOSTime()->getCpuTimeHost(hostTimestamp);
+    if (cpuHostTimeRetVal) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
     }
 
-    // get CPU time
-    bool retVal = this->neoDevice->getOSTime()->getCpuTimeHost(hostTimestamp);
-    if (retVal) {
-        return ZE_RESULT_ERROR_DEVICE_LOST;
-    }
+    // Average the host timestamp
+    *hostTimestamp = (*hostTimestamp + hostTimestampForAvg) / 2;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1599,10 +1596,7 @@ void DeviceImp::releaseResources() {
     UNRECOVERABLE_IF(neoDevice == nullptr);
 
     if (this->globalTimestampAllocation) {
-        L0::Context::fromHandle(this->globalTimestampContext)->freeMem(this->globalTimestampAllocation);
-    }
-    if (this->globalTimestampContext) {
-        L0::Context::fromHandle(this->globalTimestampContext)->destroy();
+        driverHandle->getSvmAllocsManager()->freeSVMAlloc(this->globalTimestampAllocation);
     }
     if (this->globalTimestampCommandList) {
         L0::CommandList::fromHandle(this->globalTimestampCommandList)->destroy();

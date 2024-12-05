@@ -665,7 +665,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, ReadOnlyAllocationsTypeMask, 0, "0: default,  >0
 DECLARE_DEBUG_VARIABLE(bool, IgnoreZebinUnknownAttributes, false, "enable to treat unknown zebin attributes as warning instead of error");
 DECLARE_DEBUG_VARIABLE(int64_t, FinalizerInputType, 0, "0: default (N/A), input type for finalizer")
 DECLARE_DEBUG_VARIABLE(std::string, FinalizerLibraryName, std::string("unk"), "Library name for finalizer")
-DECLARE_DEBUG_VARIABLE(bool, EnableGlobalTimestampViaSubmission, false, "Internally use kernel submission to get timestamp for getGlobalTimestamps");
+DECLARE_DEBUG_VARIABLE(int32_t, EnableGlobalTimestampViaSubmission, -1, "-1: OS Interface, 0: OS Interface, 1: Submission. This flag sets the type of method to get timestamp for getGlobalTimestamps");
 
 /* Binary Cache */
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")

@@ -147,8 +147,8 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     BcsSplit bcsSplit;
 
     ze_command_list_handle_t globalTimestampCommandList = nullptr;
-    ze_context_handle_t globalTimestampContext = nullptr;
     void *globalTimestampAllocation = nullptr;
+    std::mutex globalTimestampMutex;
 
     bool resourcesReleased = false;
     bool calculationForDisablingEuFusionWithDpasNeeded = false;
