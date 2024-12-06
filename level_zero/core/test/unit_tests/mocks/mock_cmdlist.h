@@ -206,6 +206,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::eventSignalPipeControl;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
+    using BaseClass::getCmdQImmediate;
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::getInOrderIncrementValue;
@@ -227,6 +228,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::programRegionGroupBarrier;
+    using BaseClass::relaxedOrderingCounter;
     using BaseClass::requiredStreamState;
     using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::signalAllEventPackets;

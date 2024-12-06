@@ -967,6 +967,18 @@ bool CommandStreamReceiverHw<GfxFamily>::bcsRelaxedOrderingAllowed(const BlitPro
 }
 
 template <typename GfxFamily>
+uint32_t CommandStreamReceiverHw<GfxFamily>::getDirectSubmissionRelaxedOrderingQueueDepth() const {
+    if (directSubmission.get()) {
+        return directSubmission->getRelaxedOrderingQueueSize();
+    }
+    if (blitterDirectSubmission.get()) {
+        return blitterDirectSubmission->getRelaxedOrderingQueueSize();
+    }
+
+    return 0;
+}
+
+template <typename GfxFamily>
 TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
     auto lock = obtainUniqueOwnership();
     bool blitterDirectSubmission = this->isBlitterDirectSubmissionEnabled();

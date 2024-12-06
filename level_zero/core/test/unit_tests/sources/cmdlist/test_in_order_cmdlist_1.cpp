@@ -2056,6 +2056,146 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledT
     verifyFlags(false, true); // relaxed ordering disabled == stalling semaphore
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenAppendingThenEnableRelaxedOrderingCorrectly, IsAtLeastXeHpcCore) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->recordFlushedBatchBuffer = true;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+
+    auto verifyFlags = [&ultCsr](bool relaxedOrderingExpected, auto &cmdList, uint64_t expectedCounter) {
+        EXPECT_EQ(expectedCounter, cmdList->relaxedOrderingCounter);
+        EXPECT_EQ(relaxedOrderingExpected, ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+    };
+
+    auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
+    auto queue0 = immCmdList0->getCmdQImmediate(false);
+    EXPECT_EQ(0u, queue0->getTaskCount());
+    EXPECT_EQ(0u, immCmdList0->relaxedOrderingCounter);
+
+    // First queue. Dont enable yet
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(false, immCmdList0, 1);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(false, immCmdList0, 2);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(false, immCmdList0, 3);
+
+    auto immCmdList1 = createImmCmdList<gfxCoreFamily>();
+    auto queue1 = immCmdList1->getCmdQImmediate(false);
+    EXPECT_EQ(0u, queue1->getTaskCount());
+    EXPECT_EQ(0u, immCmdList1->relaxedOrderingCounter);
+
+    // Reset to 0 - new queue
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(false, immCmdList1, 0); // no dependencies
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(true, immCmdList1, 1);
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(true, immCmdList1, 2);
+
+    // Back to queue0. Reset to 0 - new queue
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(true, immCmdList0, 0);
+
+    EXPECT_TRUE(ultCsr->getDirectSubmissionRelaxedOrderingQueueDepth() > 1);
+
+    for (uint32_t i = 0; i < ultCsr->getDirectSubmissionRelaxedOrderingQueueDepth(); i++) {
+        immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+        verifyFlags(true, immCmdList0, i + 1);
+    }
+
+    // Threshold reached
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(false, immCmdList0, ultCsr->getDirectSubmissionRelaxedOrderingQueueDepth() + 1);
+
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.set(1);
+
+    // Back to queue1. Reset to 0 - new queue
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(true, immCmdList1, 0);
+
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(true, immCmdList1, 1);
+
+    // Threshold reached
+    immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    verifyFlags(false, immCmdList1, 2);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWithFirstDeviceInitSubmissionWhenAppendingThenEnableRelaxedOrderingCorrectly, IsAtLeastXeHpcCore) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->recordFlushedBatchBuffer = true;
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useFirstSubmissionInitDevice = true;
+
+    if (!device->getNEODevice()->isInitDeviceWithFirstSubmissionSupported(ultCsr->getType())) {
+        GTEST_SKIP();
+    }
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+
+    EXPECT_EQ(0u, ultCsr->peekTaskCount());
+
+    ultCsr->initializeDeviceWithFirstSubmission(*device->getNEODevice());
+    EXPECT_EQ(1u, ultCsr->peekTaskCount());
+
+    auto immCmdList0 = createImmCmdList<gfxCoreFamily>();
+    auto queue0 = immCmdList0->getCmdQImmediate(false);
+    EXPECT_EQ(0u, queue0->getTaskCount());
+    EXPECT_EQ(0u, immCmdList0->relaxedOrderingCounter);
+
+    immCmdList0->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, immCmdList0->relaxedOrderingCounter);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWithCounterHeuristicWhenSubmisionSplitThenDontIncrementCounterTwice, IsAtLeastXeHpcCore) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(1);
+    debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+    int client1, client2;
+    ultCsr->registerClient(&client1);
+    ultCsr->registerClient(&client2);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, true);
+    events[0]->signalScope = 0;
+
+    if (!immCmdList->skipInOrderNonWalkerSignalingAllowed(events[0].get())) {
+        GTEST_SKIP(); // not supported
+    }
+
+    EXPECT_EQ(0u, immCmdList->relaxedOrderingCounter);
+
+    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
+    EXPECT_EQ(1u, immCmdList->relaxedOrderingCounter);
+
+    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
+    EXPECT_EQ(2u, immCmdList->relaxedOrderingCounter);
+
+    zeCommandListAppendLaunchKernel(immCmdList->toHandle(), kernel->toHandle(), &groupCount, events[0]->toHandle(), 0, nullptr);
+    EXPECT_EQ(3u, immCmdList->relaxedOrderingCounter);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenWaitingForEventFromPreviousAppendThenSkip, IsAtLeastXeHpCore) {
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
