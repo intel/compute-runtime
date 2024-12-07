@@ -54,6 +54,10 @@
 #include <map>
 #include <sstream>
 
+#ifndef DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR
+#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR	(1 << 4)
+#endif
+
 namespace NEO {
 
 Drm::Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment)
@@ -1140,6 +1144,16 @@ bool Drm::hasPageFaultSupport() const {
     return pageFaultSupported;
 }
 
+void Drm::checkSystemAllocEnabled() {
+    auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
+    bool systemAllocSupported = false;
+    //For now, this can only be enabled with debug variable
+    if (("xe" == drmVersion) && (debugManager.flags.EnableSystemAllocator.get() != -1)) {
+        systemAllocSupported =  !!debugManager.flags.EnableSystemAllocator.get();
+    }
+    setSystemAllocEnable(systemAllocSupported);
+}
+
 bool Drm::hasKmdMigrationSupport() const {
     const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
     auto kmdMigrationSupported = hasPageFaultSupport() && productHelper.isKmdMigrationSupported();
@@ -1570,6 +1584,20 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     if (ret == 0) {
         drmVmId = ctl.vmId;
+        checkSystemAllocEnabled();
+        if (isSystemAllocEnabled()) {
+          VmBindParams vmBind{};
+          vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
+          vmBind.flags = DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR;
+          vmBind.handle = 0;
+          vmBind.length = (0x1ull  << 48);
+          vmBind.offset = 0;
+          vmBind.start = 0;
+          vmBind.userptr = 0;
+          setVmBindSystemAlloc(true);
+          ret = ioctlHelper->vmBind(vmBind);
+          setVmBindSystemAlloc(false);
+        }
         if (ctl.vmId == 0) {
             // 0 is reserved for invalid/unassigned ppgtt
             return -1;
