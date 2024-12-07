@@ -53,6 +53,11 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::mitigateDcFlush() const {
+    return true;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const {
     return true;
 }

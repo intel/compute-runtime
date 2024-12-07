@@ -19,7 +19,7 @@ struct CopyEnginesLnlFixture : public CopyEngineXeHPAndLater<numTiles, useLocalM
 
     bool compressionSupported() const override {
         auto &ftrTable = MulticontextOclAubFixture::rootDevice->getHardwareInfo().featureTable;
-        return (ftrTable.flags.ftrFlatPhysCCS && ftrTable.flags.ftrXe2Compression);
+        return (ftrTable.flags.ftrFlatPhysCCS);
     }
 };
 
