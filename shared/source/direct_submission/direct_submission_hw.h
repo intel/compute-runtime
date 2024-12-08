@@ -103,7 +103,6 @@ class DirectSubmissionHw {
     }
 
     virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue){};
-    uint32_t getRelaxedOrderingQueueSize() const { return currentRelaxedOrderingQueueSize; }
 
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;

@@ -398,7 +398,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, bool requireTaskCountUpdate) {
-    return executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, kernelOperation, requireTaskCountUpdate, getCmdQImmediate(copyOffloadSubmission));
+    return executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, kernelOperation, requireTaskCountUpdate, copyOffloadSubmission ? this->cmdQImmediateCopyOffload : this->cmdQImmediate);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -546,9 +546,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::handleInOrderNonWalkerSignal
     bool nonWalkerSignalingHasRelaxedOrdering = false;
 
     if (NEO::debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.get() != 0) {
-        auto counterValueBeforeSecondCheck = this->relaxedOrderingCounter;
         nonWalkerSignalingHasRelaxedOrdering = isRelaxedOrderingDispatchAllowed(1, false);
-        this->relaxedOrderingCounter = counterValueBeforeSecondCheck; // dont increment twice
     }
 
     if (nonWalkerSignalingHasRelaxedOrdering) {
@@ -1067,17 +1065,12 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-CommandQueue *CommandListCoreFamilyImmediate<gfxCoreFamily>::getCmdQImmediate(bool copyOffloadOperation) const {
-    return copyOffloadOperation ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds,
                                                                           bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent,
                                                                           bool requireTaskCountUpdate) {
     auto signalEvent = Event::fromHandle(hSignalEvent);
 
-    auto queue = getCmdQImmediate(copyOffloadSubmission);
+    auto queue = copyOffloadSubmission ? this->cmdQImmediateCopyOffload : this->cmdQImmediate;
     this->latestFlushIsCopyOffload = copyOffloadSubmission;
 
     if (NEO::debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() == 1) {
@@ -1438,46 +1431,10 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) {
-    auto csr = getCsr(copyOffload);
-    if (!csr->directSubmissionRelaxedOrderingEnabled()) {
-        return false;
-    }
-
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) const {
     auto numEvents = numWaitEvents + (this->hasInOrderDependencies() ? 1 : 0);
 
-    if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.get() == 1) {
-        uint32_t relaxedOrderingCounterThreshold = csr->getDirectSubmissionRelaxedOrderingQueueDepth();
-
-        auto queueTaskCount = getCmdQImmediate(copyOffload)->getTaskCount();
-        auto csrTaskCount = csr->peekTaskCount();
-
-        if ((this->device->getNEODevice()->isInitDeviceWithFirstSubmissionSupported(csr->getType()) || this->heaplessStateInitEnabled) && csr->peekTaskCount() == 1) {
-            DEBUG_BREAK_IF(queueTaskCount != 0);
-            queueTaskCount = 1;
-        }
-
-        if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get() != -1) {
-            relaxedOrderingCounterThreshold = static_cast<uint32_t>(NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get());
-        }
-
-        if (queueTaskCount == csrTaskCount) {
-            relaxedOrderingCounter++;
-        } else {
-            // Submission from another queue. Reset counter and keep relaxed ordering allowed
-            relaxedOrderingCounter = 0;
-            this->keepRelaxedOrderingEnabled = true;
-        }
-
-        if (relaxedOrderingCounter > static_cast<uint64_t>(relaxedOrderingCounterThreshold)) {
-            this->keepRelaxedOrderingEnabled = false;
-            return false;
-        }
-
-        return (keepRelaxedOrderingEnabled && (numEvents > 0));
-    }
-
-    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*csr, numEvents);
+    return NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*getCsr(copyOffload), numEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -156,7 +156,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     }
 
     bool directSubmissionRelaxedOrderingEnabled() const override;
-    uint32_t getDirectSubmissionRelaxedOrderingQueueDepth() const override;
 
     void stopDirectSubmission(bool blocking) override;
 
