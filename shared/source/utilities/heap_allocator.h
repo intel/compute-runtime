@@ -31,7 +31,7 @@ class HeapAllocator {
     HeapAllocator(uint64_t address, uint64_t size, size_t allocationAlignment) : HeapAllocator(address, size, allocationAlignment, 4 * MemoryConstants::megaByte) {
     }
 
-    HeapAllocator(uint64_t address, uint64_t size, size_t allocationAlignment, size_t threshold) : baseAddress(address), size(size), availableSize(size), allocationAlignment(allocationAlignment), sizeThreshold(threshold) {
+    HeapAllocator(uint64_t address, uint64_t size, size_t allocationAlignment, size_t threshold) : size(size), availableSize(size), allocationAlignment(allocationAlignment), sizeThreshold(threshold) {
         pLeftBound = address;
         pRightBound = address + size;
         freedChunksBig.reserve(10);
@@ -59,11 +59,10 @@ class HeapAllocator {
     double getUsage() const;
 
     uint64_t getBaseAddress() const {
-        return this->baseAddress;
+        return this->pLeftBound;
     }
 
   protected:
-    const uint64_t baseAddress;
     const uint64_t size;
     uint64_t availableSize;
     uint64_t pLeftBound;
