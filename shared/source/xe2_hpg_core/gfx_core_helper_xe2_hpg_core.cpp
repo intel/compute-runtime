@@ -100,7 +100,7 @@ uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool 
 
 template <>
 bool GfxCoreHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
-    return false;
+    return true;
 }
 
 template <>
