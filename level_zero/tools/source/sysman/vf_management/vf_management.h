@@ -34,6 +34,10 @@ class VfManagement : _zes_vf_handle_t {
 struct VfManagementHandleContext {
     VfManagementHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~VfManagementHandleContext();
+    VfManagementHandleContext(VfManagementHandleContext &&other) noexcept = delete;
+    VfManagementHandleContext(const VfManagementHandleContext &other) = delete;
+    VfManagementHandleContext &operator=(VfManagementHandleContext &&other) noexcept = delete;
+    VfManagementHandleContext &operator=(const VfManagementHandleContext &other) = delete;
 
     ze_result_t init();
 

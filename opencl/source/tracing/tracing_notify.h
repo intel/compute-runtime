@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
 #include "opencl/source/tracing/tracing_handle.h"
@@ -30,11 +29,17 @@ namespace HostSideTracing {
 
 inline thread_local bool tracingInProgress = false;
 
-class CheckIfExitCalled : public NEO::NonCopyableOrMovableClass {
+class CheckIfExitCalled {
   public:
+    CheckIfExitCalled() = default;
     ~CheckIfExitCalled() {
         UNRECOVERABLE_IF(!tracingExited);
     }
+    CheckIfExitCalled(CheckIfExitCalled &&other) noexcept = delete;
+    CheckIfExitCalled(const CheckIfExitCalled &other) = delete;
+    CheckIfExitCalled &operator=(CheckIfExitCalled &&other) noexcept = delete;
+    CheckIfExitCalled &operator=(const CheckIfExitCalled &other) = delete;
+
     void exit() {
         tracingExited = true;
     }
