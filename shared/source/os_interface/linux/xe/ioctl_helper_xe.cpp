@@ -937,9 +937,12 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::createVmControlExtRegion(const std::op
 
 uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
     xeLog(" -> IoctlHelperXe::%s %d,%d,%d\n", __FUNCTION__, disableScratch, enablePageFault, useVmBind);
-    uint32_t flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
+    uint32_t flags = DRM_XE_VM_CREATE_FLAG_LR_MODE | DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE;
     if (enablePageFault) {
         flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
+    }
+    if (disableScratch) {
+        flags &= ~DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE;
     }
     return flags;
 }
