@@ -340,9 +340,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
 
     auto pageFaultManager = context->getMemoryManager()->getPageFaultManager();
     if (dstSvmData && pageFaultManager) {
+        UNRECOVERABLE_IF(dstAllocation == nullptr);
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(dstAllocation->getGpuAddress()));
     }
     if (srcSvmData && pageFaultManager) {
+        UNRECOVERABLE_IF(srcAllocation == nullptr);
         pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(srcAllocation->getGpuAddress()));
     }
 

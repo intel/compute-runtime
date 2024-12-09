@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -205,6 +205,7 @@ int OfflineLinker::initHardwareInfo() {
             hwInfo = *hwInfoTable[productId];
 
             auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            UNRECOVERABLE_IF(compilerProductHelper == nullptr);
             hwInfo.ipVersion = compilerProductHelper->getHwIpVersion(hwInfo);
             auto releaseHelper = NEO::ReleaseHelper::create(hwInfo.ipVersion);
             const auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfo);
