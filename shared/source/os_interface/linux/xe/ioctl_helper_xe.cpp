@@ -624,10 +624,6 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
         return -1;
     }
 
-    if (vmId != std::nullopt) {
-        create.vm_id = vmId.value();
-    }
-
     create.size = allocSize;
     MemoryClassInstance mem = memClassInstances[regionsSize - 1];
     std::bitset<32> memoryInstances{};
