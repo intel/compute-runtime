@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/definitions/indirect_detection_versions.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
@@ -291,4 +292,9 @@ PVCTEST_F(PvcProductHelper, whenQueryingMaxNumSamplersThenReturnZero) {
 
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSupportThenTrueReturned) {
     EXPECT_TRUE(productHelper->supportReadOnlyAllocations());
+}
+
+PVCTEST_F(PvcProductHelper, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion) {
+    EXPECT_EQ(IndirectDetectionVersions::requiredDetectIndirectVersionPVC, productHelper->getRequiredDetectIndirectVersion());
+    EXPECT_EQ(IndirectDetectionVersions::requiredDetectIndirectVersionPVCVectorCompiler, productHelper->getRequiredDetectIndirectVersionVC());
 }

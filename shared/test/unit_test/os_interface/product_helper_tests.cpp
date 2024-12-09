@@ -1093,3 +1093,8 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTr
 
     EXPECT_TRUE(productHelper->supports2DBlockStore());
 }
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion, IsNotPVC) {
+    EXPECT_EQ(IndirectDetectionVersions::disabled, productHelper->getRequiredDetectIndirectVersion());
+    EXPECT_EQ(IndirectDetectionVersions::requiredDetectIndirectVersionVectorCompiler, productHelper->getRequiredDetectIndirectVersionVC());
+}
