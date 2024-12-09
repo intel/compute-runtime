@@ -377,6 +377,8 @@ class CommandStreamReceiver {
         return false;
     }
 
+    virtual uint32_t getDirectSubmissionRelaxedOrderingQueueDepth() const { return 0; }
+
     virtual bool isKmdWaitOnTaskCountAllowed() const {
         return false;
     }

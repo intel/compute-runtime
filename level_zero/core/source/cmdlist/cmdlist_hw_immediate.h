@@ -208,7 +208,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     TransferType getTransferType(const CpuMemCopyInfo &cpuMemCopyInfo);
     size_t getTransferThreshold(TransferType transferType);
     bool isBarrierRequired();
-    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) const override;
+    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents, bool copyOffload) override;
     bool skipInOrderNonWalkerSignalingAllowed(ze_event_handle_t signalEvent) const override;
 
   protected:
@@ -221,12 +221,15 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void setupFlushMethod(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) override;
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
     void handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
+    CommandQueue *getCmdQImmediate(bool copyOffloadOperation) const;
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;
+    uint64_t relaxedOrderingCounter = 0;
     std::atomic<bool> dependenciesPresent{false};
     bool latestFlushIsHostVisible = false;
     bool latestFlushIsCopyOffload = false;
+    bool keepRelaxedOrderingEnabled = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>
