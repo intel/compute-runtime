@@ -1183,9 +1183,12 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
         if (lastFenceValue > monitoredFence.lastSubmittedFence) {
-            this->forEachContextWithinWddm([](const EngineControl &engine) {
-                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                engine.commandStreamReceiver->flushMonitorFence();
+            this->forEachContextWithinWddm([&monitoredFence](const EngineControl &engine) {
+                auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
+                if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
+                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                    engine.commandStreamReceiver->flushMonitorFence();
+                }
             });
         }
 

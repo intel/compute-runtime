@@ -1215,9 +1215,13 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
     wddm->callBaseWaitFromCpu = true;
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
 
+    D3DKMT_HANDLE handle = 1;
     uint64_t value = 0u;
     NEO::MonitoredFence monitorFence = {};
     monitorFence.cpuAddress = &value;
+    auto gpuVa = castToUint64(&value);
+
+    static_cast<OsContextWin *>(device->getDefaultEngine().osContext)->getResidencyController().resetMonitoredFenceParams(handle, &value, gpuVa);
     wddm->waitFromCpu(1, monitorFence, false);
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
