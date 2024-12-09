@@ -92,7 +92,7 @@ bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const 
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersion() const {
-    return IndirectDetectionVersions::requiredDetectIndirectVersionBindless;
+    return IndirectDetectionVersions::disabled;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
