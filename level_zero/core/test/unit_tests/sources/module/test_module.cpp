@@ -3068,7 +3068,6 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
-    EXPECT_TRUE(module.isGlobalSymbolExportEnabled);
     EXPECT_TRUE(module.isFunctionSymbolExportEnabled);
 }
 
@@ -3816,19 +3815,6 @@ TEST_F(ModuleTest, givenEnableLibraryCompileThenIsFunctionSymbolExportEnabledTru
     EXPECT_TRUE(module->isFunctionSymbolExportEnabled);
 }
 
-TEST_F(ModuleTest, givenEnableLibraryCompileThenIsGlobalSymbolExportEnabledTrue) {
-    auto module = std::make_unique<Module>(device, nullptr, ModuleType::user);
-    ASSERT_NE(nullptr, module);
-
-    std::string buildOptions;
-    std::string internalBuildOptions;
-
-    module->createBuildOptions(BuildOptions::enableGlobalVariableSymbols.str().c_str(), buildOptions, internalBuildOptions);
-
-    EXPECT_TRUE(NEO::CompilerOptions::contains(buildOptions, BuildOptions::enableGlobalVariableSymbols));
-    EXPECT_TRUE(module->isGlobalSymbolExportEnabled);
-}
-
 TEST_F(ModuleTest, givenInternalOptionsWhenBuildFlagsIsNullPtrAndBindlessEnabledThenBindlesOptionsPassed) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseBindlessMode.set(1);
@@ -4374,7 +4360,6 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThenSizeAndPoint
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::user);
     module0->symbols["symbol"] = relocatedSymbol;
-    module0->isGlobalSymbolExportEnabled = true;
 
     size_t size = 0;
     void *ptr = nullptr;
@@ -4393,7 +4378,6 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThatIsAnInstucti
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::user);
     module0->symbols["symbol"] = relocatedSymbol;
-    module0->isGlobalSymbolExportEnabled = true;
 
     size_t size = 0;
     void *ptr = nullptr;
@@ -4406,26 +4390,12 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerThatIsAnInstucti
 
 TEST_F(ModuleTest, givenModuleWithoutSymbolsThenFailureReturned) {
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::user);
-    module0->isGlobalSymbolExportEnabled = true;
 
     size_t size = 0;
     void *ptr = nullptr;
     auto result = module0->getGlobalPointer("symbol", &size, &ptr);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_GLOBAL_NAME, result);
-    EXPECT_EQ(0u, size);
-    EXPECT_EQ(nullptr, ptr);
-}
-
-TEST_F(ModuleTest, givenModuleWithoutSymbolExportEnabledThenFailureReturned) {
-    auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::user);
-    module0->isGlobalSymbolExportEnabled = false;
-
-    size_t size = 0;
-    void *ptr = nullptr;
-    auto result = module0->getGlobalPointer("symbol", &size, &ptr);
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(0u, size);
     EXPECT_EQ(nullptr, ptr);
 }
@@ -4438,7 +4408,6 @@ TEST_F(ModuleTest, givenModuleWithSymbolWhenGettingGlobalPointerWithNullptrInput
 
     auto module0 = std::make_unique<Module>(device, nullptr, ModuleType::user);
     module0->symbols["symbol"] = relocatedSymbol;
-    module0->isGlobalSymbolExportEnabled = true;
 
     auto result = module0->getGlobalPointer("symbol", nullptr, nullptr);
 
@@ -4466,7 +4435,6 @@ TEST_F(ModuleTest, givenModuleWithGlobalSymbolMapWhenGettingGlobalPointerByHostS
     auto success = module0->populateHostGlobalSymbolsMap(mapping);
     EXPECT_TRUE(success);
     EXPECT_TRUE(module0->getTranslationUnit()->buildLog.empty());
-    module0->isGlobalSymbolExportEnabled = true;
 
     size_t size = 0;
     void *ptr = nullptr;
