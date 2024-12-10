@@ -268,30 +268,38 @@ bool LinuxEventsUtil::checkIfFabricPortStatusChanged(void *dev, zes_event_type_f
 void LinuxEventsUtil::getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath) {
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::Sysman::SysmanDevice::fromHandle(phDevices[devIndex]));
-        registeredEvents[devIndex] = deviceEventsMap[device];
+        if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
+            registeredEvents[devIndex] = deviceEventsMap[device];
+        }
         if (!registeredEvents[devIndex]) {
             continue;
-        } else {
-            std::string bdf;
-            auto pSysfsAccess = &static_cast<L0::Sysman::LinuxSysmanImp *>(device->deviceGetOsInterface())->getSysfsAccess();
-            if (pSysfsAccess->getRealPath("device", bdf) == ZE_RESULT_SUCCESS) {
-                // /sys needs to be removed from real path inorder to equate with
-                // DEVPATH property of uevent.
-                // Example of real path: /sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0
-                // Example of DEVPATH: /devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0
-                const auto loc = bdf.find("/devices");
-                if (loc == std::string::npos) {
-                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                          "%s", "Invalid device path\n");
-                    continue;
-                }
+        }
 
-                bdf = bdf.substr(loc);
-                mapOfDevIndexToDevPath.insert({devIndex, bdf});
-            } else {
+        auto *osInterface = static_cast<L0::Sysman::LinuxSysmanImp *>(device->deviceGetOsInterface());
+        if (!osInterface) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Failed to get OS Interface\n");
+            UNRECOVERABLE_IF(true);
+        }
+        std::string bdf;
+        auto pSysfsAccess = &osInterface->getSysfsAccess();
+        if (pSysfsAccess->getRealPath("device", bdf) == ZE_RESULT_SUCCESS) {
+            // /sys needs to be removed from real path inorder to equate with
+            // DEVPATH property of uevent.
+            // Example of real path: /sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0
+            // Example of DEVPATH: /devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0
+            const auto loc = bdf.find("/devices");
+            if (loc == std::string::npos) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                                      "%s", "Failed to get real path of device\n");
+                                      "%s", "Invalid device path\n");
+                continue;
             }
+
+            bdf = bdf.substr(loc);
+            mapOfDevIndexToDevPath.insert({devIndex, bdf});
+        } else {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Failed to get real path of device\n");
         }
     }
 }
