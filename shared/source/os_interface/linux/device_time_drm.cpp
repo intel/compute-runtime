@@ -61,7 +61,7 @@ uint64_t DeviceTimeDrm::getDynamicDeviceTimerClock() const {
 }
 
 bool DeviceTimeDrm::isTimestampsRefreshEnabled() const {
-    bool timestampsRefreshEnabled = false;
+    bool timestampsRefreshEnabled = pDrm->getIoctlHelper()->isTimestampsRefreshEnabled();
     if (debugManager.flags.EnableReusingGpuTimestamps.get() != -1) {
         timestampsRefreshEnabled = debugManager.flags.EnableReusingGpuTimestamps.get();
     }

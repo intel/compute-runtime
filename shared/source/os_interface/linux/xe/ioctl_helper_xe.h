@@ -132,6 +132,7 @@ class IoctlHelperXe : public IoctlHelper {
     void registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation) override;
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
+    bool isTimestampsRefreshEnabled() override { return true; }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

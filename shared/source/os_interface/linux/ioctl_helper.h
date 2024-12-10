@@ -234,6 +234,8 @@ class IoctlHelper {
 
     virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
 
+    virtual bool isTimestampsRefreshEnabled() { return false; }
+
   protected:
     Drm &drm;
     ExternalCtx *externalCtx = nullptr;

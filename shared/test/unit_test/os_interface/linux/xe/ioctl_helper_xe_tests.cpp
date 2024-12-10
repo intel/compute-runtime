@@ -2566,3 +2566,10 @@ TEST(IoctlHelperXeTest, givenIoctlFailureWhenCallingSetVmPrefetchThenFalseIsRetu
     EXPECT_FALSE(xeIoctlHelper->setVmPrefetch(0u, 0u, 0u, 0u));
     EXPECT_EQ(0u, drm->vmBindInputs.size());
 }
+
+TEST(IoctlHelperXeTest, givenXeIoctlHelperWhenIsTimestampsRefreshEnabledCalledThenReturnTrue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    EXPECT_TRUE(xeIoctlHelper->isTimestampsRefreshEnabled());
+}
