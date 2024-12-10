@@ -1626,6 +1626,35 @@ TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLo
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
+TEST_F(EventSynchronizeTest, GivenHangHappenedBeforePeriodicHangCheckAndForceGpuStatusCheckDuringHostSynchronizeThenHangIsDetected) {
+    NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(1);
+
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = true;
+
+    event->csrs[0] = csr.get();
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    *hostAddr = Event::STATE_SIGNALED;
+
+    auto result = event->hostSynchronize(0);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+}
+
+TEST_F(EventSynchronizeTest, GivenEventCompletedAndForceGpuStatusCheckThenHostSynchronizeReturnsSuccess) {
+    NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(1);
+
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+
+    event->csrs[0] = csr.get();
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    *hostAddr = Event::STATE_SIGNALED;
+
+    auto result = event->hostSynchronize(0);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST_F(EventSynchronizeTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenResultNotReadyIsReturnedDueToTimeout) {
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = false;
