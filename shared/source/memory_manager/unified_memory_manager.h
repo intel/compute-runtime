@@ -207,13 +207,6 @@ class SVMAllocsManager {
         return svmAllocs.get(ptr);
     }
 
-    template <typename T,
-              std::enable_if_t<std::is_same_v<T, void *>, int> = 0>
-    SvmAllocationData *getSVMDeferFreeAlloc(T ptr) {
-        std::shared_lock<std::shared_mutex> lock(mtx);
-        return svmDeferFreeAllocs.get(ptr);
-    }
-
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
     MOCKABLE_VIRTUAL bool freeSVMAllocDefer(void *ptr);
     MOCKABLE_VIRTUAL void freeSVMAllocDeferImpl();

@@ -564,7 +564,8 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
     } else if (policy == FreePolicyType::defer) {
         if (svmData->cpuAllocation) {
             if (this->memoryManager->allocInUse(*svmData->cpuAllocation)) {
-                if (getSVMDeferFreeAlloc(ptr) == nullptr) {
+                std::lock_guard<std::shared_mutex> lock(mtx);
+                if (svmDeferFreeAllocs.get(ptr) == nullptr) {
                     this->svmDeferFreeAllocs.insert(*svmData);
                 }
                 return;
@@ -573,7 +574,8 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
         for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
             if (gpuAllocation) {
                 if (this->memoryManager->allocInUse(*gpuAllocation)) {
-                    if (getSVMDeferFreeAlloc(ptr) == nullptr) {
+                    std::lock_guard<std::shared_mutex> lock(mtx);
+                    if (svmDeferFreeAllocs.get(ptr) == nullptr) {
                         this->svmDeferFreeAllocs.insert(*svmData);
                     }
                     return;
