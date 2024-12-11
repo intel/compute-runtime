@@ -78,7 +78,7 @@ struct EventImp : public Event {
                                          const uint32_t count, const ze_kernel_timestamp_result_t *pKernelTimestampsBuffer);
     void copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const uint64_t &copyData);
     void copyTbxData(uint64_t dstGpuVa, size_t copySize);
-    void synchronizeCounterBasedTimestampCompletionWithTimeout();
+    void synchronizeTimestampCompletionWithTimeout();
 };
 
 } // namespace L0

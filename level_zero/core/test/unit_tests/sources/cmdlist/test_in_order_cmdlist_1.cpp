@@ -477,6 +477,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
     auto eventPool = createEvents<FamilyType>(1, true);
     auto event1 = std::make_unique<MyMockEvent>(eventPool.get(), device);
     auto event2 = std::make_unique<MyMockEvent>(eventPool.get(), device);
+    auto event3 = std::make_unique<MyMockEvent>(eventPool.get(), device);
 
     event1->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event1->assignKernelEventCompletionDataFailCounter = 2;
@@ -487,26 +488,37 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
     event2->setUsingContextEndOffset(true);
     event2->notReadyData = 0;
 
+    event3->disableImplicitCounterBasedMode();
+    event3->assignKernelEventCompletionDataFailCounter = 2;
+    event3->setUsingContextEndOffset(true);
+
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event1->toHandle(), 0, nullptr, launchParams, false);
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event2->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event3->toHandle(), 0, nullptr, launchParams, false);
 
     *reinterpret_cast<uint64_t *>(event1->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
     *reinterpret_cast<uint64_t *>(event2->getCompletionFieldHostAddress()) = 0;
+    *reinterpret_cast<uint64_t *>(event3->getCompletionFieldHostAddress()) = 0;
     event1->getInOrderExecInfo()->setLastWaitedCounterValue(2);
     event2->getInOrderExecInfo()->setLastWaitedCounterValue(2);
+    event3->getInOrderExecInfo()->setLastWaitedCounterValue(3);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, event1->queryStatus());
     EXPECT_EQ(ZE_RESULT_SUCCESS, event2->queryStatus());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, event3->queryStatus());
 
     ze_kernel_timestamp_result_t kernelTimestamps = {};
 
     EXPECT_EQ(0u, event1->assignKernelEventCompletionDataCalled);
     EXPECT_EQ(0u, event2->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(0u, event3->assignKernelEventCompletionDataCalled);
     event1->queryKernelTimestamp(&kernelTimestamps);
     event2->queryKernelTimestamp(&kernelTimestamps);
+    event3->queryKernelTimestamp(&kernelTimestamps);
 
     EXPECT_EQ(event1->assignKernelEventCompletionDataFailCounter + 1, event1->assignKernelEventCompletionDataCalled);
     EXPECT_EQ(event2->assignKernelEventCompletionDataFailCounter + 1, event2->assignKernelEventCompletionDataCalled);
+    EXPECT_EQ(event3->assignKernelEventCompletionDataFailCounter + 1, event3->assignKernelEventCompletionDataCalled);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInterruptableEventsWhenExecutingOnDifferentCsrThenAssignItToEventOnExecute, IsAtLeastXeHpCore) {
@@ -787,16 +799,16 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventWhenAppendEventResetCalledThenRe
 }
 
 HWTEST2_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignmentWhenCallingSynchronizeOrResetThenUnset, MatchAny) {
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
 
-    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
+    auto hostAddress = static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
 
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
 
-    auto nonWalkerSignallingSupported = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
+    auto nonWalkerSignallingSupported = cmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
     EXPECT_EQ(nonWalkerSignallingSupported, events[0]->inOrderExecInfo.get() != nullptr);
 
@@ -812,7 +824,7 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignme
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(1));
     EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(nonWalkerSignallingSupported, events[0]->inOrderExecInfo.get() != nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->reset());
@@ -822,16 +834,16 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignme
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrderParamsOnlyWhenChainingIsRequired, MatchAny) {
     uint32_t counterOffset = 64;
 
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
+    auto cmdList = createRegularCmdList<gfxCoreFamily>(false);
+    cmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto eventPool = createEvents<FamilyType>(1, false);
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
 
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_FALSE(events[0]->isCounterBased());
 
-    if (immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
+    if (cmdList->isInOrderNonWalkerSignalingRequired(events[0].get())) {
         EXPECT_EQ(events[0]->inOrderExecSignalValue, 1u);
         EXPECT_NE(events[0]->inOrderExecInfo.get(), nullptr);
         EXPECT_EQ(events[0]->inOrderAllocationOffset, counterOffset);
@@ -841,7 +853,7 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrde
         EXPECT_EQ(events[0]->inOrderAllocationOffset, 0u);
     }
 
-    auto copyImmCmdList = createCopyOnlyImmCmdList<gfxCoreFamily>();
+    auto copyImmCmdList = createRegularCmdList<gfxCoreFamily>(true);
 
     uint32_t copyData = 0;
     void *deviceAlloc = nullptr;
@@ -859,6 +871,19 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventThenSetInOrde
     context->freeMem(deviceAlloc);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventAndImmediateCmdListThenSetInOrderParams, MatchAny) {
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+    EXPECT_FALSE(events[0]->isCounterBased());
+
+    EXPECT_EQ(events[0]->inOrderExecSignalValue, 1u);
+    EXPECT_NE(events[0]->inOrderExecInfo.get(), nullptr);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnRegularCmdListThenUnsetInOrderData, MatchAny) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
@@ -866,6 +891,9 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnR
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
 
     auto nonWalkerSignallingSupported = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
+    if (!nonWalkerSignallingSupported) {
+        GTEST_SKIP();
+    }
 
     EXPECT_TRUE(immCmdList->isInOrderExecutionEnabled());
 
@@ -1411,8 +1439,8 @@ HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenCallingApp
     EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
 
     immCmdList->appendEventReset(events[0]->toHandle());
-    EXPECT_EQ(0u, events[0]->inOrderExecSignalValue);
-    EXPECT_EQ(nullptr, events[0]->inOrderExecInfo.get());
+    EXPECT_EQ(3u, events[0]->inOrderExecSignalValue);
+    EXPECT_NE(nullptr, events[0]->inOrderExecInfo.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelThenProgramSemaphoreOnce, IsAtLeastXeHpCore) {
