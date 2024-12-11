@@ -773,7 +773,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
 
     std::array<uint32_t, 8u> timestampData;
     timestampData.fill(std::numeric_limits<uint32_t>::max());
-    event->hostEventSetValueTimestamps(0u);
+    event->hostEventSetValueTimestamps(Event::State::STATE_SIGNALED);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     ze_command_list_handle_t cmdListHandle;

@@ -3875,11 +3875,11 @@ struct MockEventCompletion : public L0::EventImp<TagSizeT> {
         assignKernelEventCompletionDataCounter++;
     }
 
-    ze_result_t hostEventSetValue(TagSizeT eventValue) override {
+    ze_result_t hostEventSetValue(Event::State eventState) override {
         if (shouldHostEventSetValueFail) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
-        return BaseClass::hostEventSetValue(eventValue);
+        return BaseClass::hostEventSetValue(eventState);
     }
 
     ze_result_t hostSynchronize(uint64_t timeout) override {

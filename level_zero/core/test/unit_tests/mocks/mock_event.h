@@ -175,6 +175,9 @@ class MockEvent : public ::L0::Event {
     ze_result_t getWaitScope(ze_event_scope_flags_t *pWaitScope) override {
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t hostEventSetValue(State eventState) override {
+        return ZE_RESULT_SUCCESS;
+    }
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}

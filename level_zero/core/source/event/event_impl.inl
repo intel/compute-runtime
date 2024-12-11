@@ -440,7 +440,7 @@ ze_result_t EventImp<TagSizeT>::queryStatus() {
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
+ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventState) {
     if (isCounterBased() && !getAllocation(this->device)) {
         return ZE_RESULT_SUCCESS;
     }
@@ -448,9 +448,10 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(TagSizeT eventVal) {
     auto baseHostAddr = getHostAddress();
     auto baseGpuAddr = getGpuAddress(device);
 
-    uint64_t timestampStart = static_cast<uint64_t>(eventVal);
-    uint64_t timestampEnd = static_cast<uint64_t>(eventVal);
-    if (eventVal == Event::STATE_SIGNALED) {
+    auto eventVal = static_cast<TagSizeT>(eventState);
+    uint64_t timestampStart = static_cast<uint64_t>(eventState);
+    uint64_t timestampEnd = static_cast<uint64_t>(eventState);
+    if (eventState == Event::STATE_SIGNALED) {
         if (this->gpuStartTimestamp != 0u) {
             timestampStart = static_cast<uint64_t>(this->gpuStartTimestamp);
         }
@@ -529,18 +530,20 @@ void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpu
 }
 
 template <typename TagSizeT>
-ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
+ze_result_t EventImp<TagSizeT>::hostEventSetValue(Event::State eventState) {
     if (!hostAddressFromPool && !this->inOrderTimestampNode) {
         return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
     }
 
     if (isEventTimestampFlagSet()) {
-        return hostEventSetValueTimestamps(eventVal);
+        return hostEventSetValueTimestamps(eventState);
     }
 
     if (isCounterBased()) {
         return ZE_RESULT_SUCCESS;
     }
+
+    auto eventVal = static_cast<TagSizeT>(eventState);
 
     auto basePacketHostAddr = getCompletionFieldHostAddress();
     auto basePacketGpuAddr = getCompletionFieldGpuAddress(device);

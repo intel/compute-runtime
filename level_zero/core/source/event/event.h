@@ -327,6 +327,8 @@ struct Event : _ze_event_handle_t {
 
     bool isIpcImported() const { return isFromIpcPool; }
 
+    virtual ze_result_t hostEventSetValue(State eventState) = 0;
+
   protected:
     Event(int index, Device *device) : device(device), index(index) {}
 

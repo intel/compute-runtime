@@ -1766,6 +1766,32 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAski
     EXPECT_NE(events[0]->getGpuAddress(device), events[1]->getGpuAddress(device));
 }
 
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenAssigningTimestampNodeThenClear, MatchAny) {
+    auto eventPool = createEvents<FamilyType>(2, true);
+
+    auto cmdList = createImmCmdList<gfxCoreFamily>();
+
+    auto tag0 = device->getInOrderTimestampAllocator()->getTag();
+    auto tag1 = device->getInOrderTimestampAllocator()->getTag();
+
+    auto tag0Data = const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(tag0->getContextEndAddress(0)));
+    auto tag1Data = const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(tag1->getContextEndAddress(0)));
+
+    *tag0Data = 123;
+    *tag1Data = 456;
+
+    tag1->returnTag();
+    tag0->returnTag();
+
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
+
+    debugManager.flags.ClearStandaloneInOrderTimestampAllocation.set(1);
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(123u, *tag0Data);
+    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag1Data);
+}
+
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenAssignAllocation, IsAtLeastXeHpCore) {
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();

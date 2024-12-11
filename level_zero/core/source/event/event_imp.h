@@ -52,6 +52,7 @@ struct EventImp : public Event {
     uint32_t getPacketsInUse() const override;
     uint32_t getPacketsUsedInLastKernel() override;
     void setPacketsInUse(uint32_t value) override;
+    ze_result_t hostEventSetValue(State eventState) override;
 
     std::unique_ptr<KernelEventCompletionData<TagSizeT>[]> kernelEventCompletionData;
 
@@ -70,8 +71,7 @@ struct EventImp : public Event {
     ze_result_t queryStatusEventPackets();
     ze_result_t queryCounterBasedEventStatus();
     void handleSuccessfulHostSynchronization();
-    MOCKABLE_VIRTUAL ze_result_t hostEventSetValue(TagSizeT eventValue);
-    MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(TagSizeT eventVal);
+    MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(State eventState);
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
     void setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet);
     void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,
