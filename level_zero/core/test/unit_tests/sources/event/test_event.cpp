@@ -3040,6 +3040,43 @@ TEST_F(EventTests, WhenQueryingStatusThenSuccessIsReturned) {
     event->destroy();
 }
 
+TEST_F(EventTests, givenForceHostSignalScopeSetToOneWhenCreateEventWithoutScopeThenHostScopeSet) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForceHostSignalScope.set(1);
+
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    EXPECT_TRUE(event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+
+    event->destroy();
+}
+
+TEST_F(EventTests, givenForceHostSignalScopeSetToZeroWhenCreateEventWithHostScopeThenHostScopeUnset) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ForceHostSignalScope.set(0);
+
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    EXPECT_FALSE(event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+
+    event->destroy();
+}
+
+TEST_F(EventTests, givenAbortHostSyncOnNonHostVisibleEventWhenWaitForNonHostVisibleEventThenAbort) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.AbortHostSyncOnNonHostVisibleEvent.set(true);
+
+    auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(event, nullptr);
+
+    EXPECT_ANY_THROW(event->hostSynchronize(std::numeric_limits<uint64_t>::max()));
+
+    event->destroy();
+}
+
 TEST_F(EventTests, GivenResetWhenQueryingStatusThenNotReadyIsReturned) {
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(event, nullptr);

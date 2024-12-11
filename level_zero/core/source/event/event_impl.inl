@@ -54,6 +54,14 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
     event->eventPoolOffset = eventDescriptor.index * event->totalEventSize;
     event->hostAddressFromPool = ptrOffset(baseHostAddress, event->eventPoolOffset);
     event->signalScope = eventDescriptor.signalScope;
+
+    if (NEO::debugManager.flags.ForceHostSignalScope.get() == 1) {
+        event->signalScope |= ZE_EVENT_SCOPE_FLAG_HOST;
+    }
+    if (NEO::debugManager.flags.ForceHostSignalScope.get() == 0) {
+        event->signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
+    }
+
     event->waitScope = eventDescriptor.waitScope;
     event->csrs.push_back(csr);
     event->maxKernelCount = eventDescriptor.maxKernelCount;
@@ -641,6 +649,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     uint64_t timeDiff = 0;
 
     ze_result_t ret = ZE_RESULT_NOT_READY;
+
+    if (NEO::debugManager.flags.AbortHostSyncOnNonHostVisibleEvent.get()) {
+        UNRECOVERABLE_IF(!this->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST));
+    }
 
     if (this->csrs[0]->getType() == NEO::CommandStreamReceiverType::aub) {
         this->csrs[0]->pollForAubCompletion();
