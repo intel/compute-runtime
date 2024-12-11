@@ -171,7 +171,8 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeoutNa
 
     auto taskCountToWait = getTaskCount();
     bool enableTimeout = true;
-    int64_t timeoutMicroseconds = static_cast<int64_t>(timeoutNanoseconds / 1000);
+    auto microsecondResolution = device->getNEODevice()->getMicrosecondResolution();
+    int64_t timeoutMicroseconds = static_cast<int64_t>(timeoutNanoseconds / microsecondResolution);
     if (timeoutNanoseconds == std::numeric_limits<uint64_t>::max()) {
         enableTimeout = false;
         timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;

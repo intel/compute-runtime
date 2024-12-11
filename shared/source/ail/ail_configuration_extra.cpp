@@ -44,6 +44,10 @@ const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited = {};
 
 const std::set<std::string_view> applicationsFallbackToPatchtokensRequiredDg2 = {};
 
+const std::set<std::string_view> applicationsMicrosecontResolutionAdjustment = {};
+
+const uint32_t microsecondAdjustment = 1000;
+
 AILConfigurationCreateFunctionType ailConfigurationFactory[IGFX_MAX_PRODUCT];
 
 void AILConfiguration::apply(RuntimeCapabilityTable &runtimeCapabilityTable) {

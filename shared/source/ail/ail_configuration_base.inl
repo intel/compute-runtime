@@ -81,4 +81,14 @@ inline bool AILConfigurationHw<product>::isFallbackToPatchtokensRequired() {
     return false;
 }
 
+template <PRODUCT_FAMILY product>
+inline bool AILConfigurationHw<product>::isAdjustMicrosecondResolutionRequired() {
+    return shouldAdjustMicrosecondResolution;
+}
+
+template <PRODUCT_FAMILY product>
+inline uint32_t AILConfigurationHw<product>::getMicrosecondResolution() {
+    return microsecondAdjustment;
+}
+
 } // namespace NEO

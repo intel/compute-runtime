@@ -233,6 +233,9 @@ class Device : public ReferenceTrackedObject<Device> {
     size_t getAllocationsSavedForReuseSize() const {
         return allocationsSavedForReuseSize;
     }
+    uint32_t getMicrosecondResolution() const {
+        return microsecondResolution;
+    }
 
   protected:
     Device() = delete;
@@ -311,6 +314,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
 
     size_t allocationsSavedForReuseSize = 0u;
+    uint32_t microsecondResolution = 1000u;
     mutable std::mutex allocationsReuseMtx;
 
     struct {

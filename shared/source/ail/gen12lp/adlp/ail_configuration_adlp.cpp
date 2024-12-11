@@ -10,11 +10,15 @@
 #include <map>
 #include <vector>
 
+constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
+
+#include "shared/source/ail/ail_configuration_tgllp_and_later.inl"
+
 namespace NEO {
-static EnableAIL<IGFX_ALDERLAKE_P> enableAILADLP;
+static EnableAIL<gfxProduct> enableAILADLP;
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapADLP = {};
 
-template class AILConfigurationHw<IGFX_ALDERLAKE_P>;
+template class AILConfigurationHw<gfxProduct>;
 
 } // namespace NEO

@@ -76,6 +76,18 @@ class MockAILConfiguration : public AILConfiguration {
         return false;
     }
 
+    bool isAdjustMicrosecondResolutionRequired() override {
+        return adjustMicrosecondResolution;
+    }
+    bool adjustMicrosecondResolution = false;
+
+    uint32_t getMicrosecondResolution() override {
+        getMicrosecondResolutionCalledTimes++;
+        return mockMicrosecondResolution;
+    }
+    uint32_t getMicrosecondResolutionCalledTimes = 0u;
+    uint32_t mockMicrosecondResolution = 1000u;
+
   protected:
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
 };

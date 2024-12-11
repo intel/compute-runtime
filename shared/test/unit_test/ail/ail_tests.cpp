@@ -136,4 +136,9 @@ HWTEST2_F(AILTests, givenAilWhenCheckingIfPatchtokenFallbackIsRequiredThenExpect
     EXPECT_FALSE(ail.isFallbackToPatchtokensRequired());
 }
 
+HWTEST2_F(AILTests, givenAilWhenGetMicrosecondResolutionCalledThenCorrectValueReturned, MatchAny) {
+    AILWhitebox<productFamily> ail;
+    EXPECT_EQ(ail.getMicrosecondResolution(), microsecondAdjustment);
+}
+
 } // namespace NEO

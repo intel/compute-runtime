@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
@@ -43,6 +44,9 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex), isaPoolAllocator(this) {
     this->executionEnvironment->incRefInternal();
     this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
+    if (auto ailHelper = this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getAILConfigurationHelper(); ailHelper && ailHelper->isAdjustMicrosecondResolutionRequired()) {
+        microsecondResolution = ailHelper->getMicrosecondResolution();
+    }
 }
 
 Device::~Device() {

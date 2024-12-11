@@ -1947,3 +1947,10 @@ HWTEST_F(DeviceTests, givenCopyInternalEngineWhenStopDirectSubmissionForCopyEngi
     device->stopDirectSubmissionForCopyEngine();
     EXPECT_TRUE(regularUltCsr->stopDirectSubmissionCalled);
 }
+
+TEST(Device, givenDeviceWhenGettingMicrosecondResolutionThenCorrectValueReturned) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    uint32_t expectedMicrosecondResolution = 123;
+    device->microsecondResolution = expectedMicrosecondResolution;
+    EXPECT_EQ(device->getMicrosecondResolution(), expectedMicrosecondResolution);
+}

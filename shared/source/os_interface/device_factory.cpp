@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/device_factory.h"
 
+#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
