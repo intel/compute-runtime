@@ -1442,7 +1442,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
 
     auto numEvents = numWaitEvents + (this->hasInOrderDependencies() ? 1 : 0);
 
-    if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.get() == 1) {
+    if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.get() != 0) {
         uint32_t relaxedOrderingCounterThreshold = csr->getDirectSubmissionRelaxedOrderingQueueDepth();
 
         auto queueTaskCount = getCmdQImmediate(copyOffload)->getTaskCount();

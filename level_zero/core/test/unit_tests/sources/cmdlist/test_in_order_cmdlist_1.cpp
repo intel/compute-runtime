@@ -1970,6 +1970,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxed
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -2014,6 +2015,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingWhenDispatchingKernelWithRelaxed
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->recordFlushedBatchBuffer = true;
@@ -2059,7 +2061,6 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledT
 
 HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenAppendingThenEnableRelaxedOrderingCorrectly, IsAtLeastXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->recordFlushedBatchBuffer = true;
@@ -2133,7 +2134,6 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhe
 
 HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWithFirstDeviceInitSubmissionWhenAppendingThenEnableRelaxedOrderingCorrectly, IsAtLeastXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ultCsr->recordFlushedBatchBuffer = true;
@@ -2165,7 +2165,6 @@ HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWit
 HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWithCounterHeuristicWhenSubmisionSplitThenDontIncrementCounterTwice, IsAtLeastXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
-    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(1);
     debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(1);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -2626,6 +2625,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -2760,6 +2760,7 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.SkipInOrderNonWalkerSignalingAllowed.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
@@ -2867,6 +2868,7 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
     debugManager.flags.EnableInOrderRelaxedOrderingForEventsChaining.set(0);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 

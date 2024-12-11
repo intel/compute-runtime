@@ -613,6 +613,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenRelaxedOrderingEnabledWhenDispatchingThe
     };
 
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristic.set(0);
 
     auto immCmdList = createImmCmdListImpl<gfxCoreFamily, MyMockCmdList>(true);
 
