@@ -18,10 +18,6 @@ using namespace NEO;
 
 using BmgProductHelperWindows = ProductHelperTest;
 
-BMGTEST_F(BmgProductHelperWindows, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 BMGTEST_F(BmgProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabledThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }

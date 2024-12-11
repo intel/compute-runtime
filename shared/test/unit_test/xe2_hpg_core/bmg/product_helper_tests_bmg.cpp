@@ -127,3 +127,7 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingThreadEuRatioForScratch
     auto hwInfo = *defaultHwInfo;
     EXPECT_EQ(16u, productHelper->getThreadEuRatioForScratch(hwInfo));
 }
+
+BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}

@@ -51,4 +51,9 @@ uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareI
     return 16u;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+    return true;
+}
+
 } // namespace NEO
