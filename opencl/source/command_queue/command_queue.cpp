@@ -1332,6 +1332,8 @@ bool CommandQueue::isWaitForTimestampsEnabled() const {
     auto enabled = CommandQueue::isTimestampWaitEnabled();
     enabled &= gfxCoreHelper.isTimestampWaitSupportedForQueues();
     enabled &= !productHelper.isDcFlushAllowed();
+    enabled &= !getDevice().getRootDeviceEnvironment().isWddmOnLinux();
+    enabled &= !this->isOOQEnabled(); // TSP for OOQ dispatch is optional. We need to wait for task count.
 
     switch (debugManager.flags.EnableTimestampWaitForQueues.get()) {
     case 0:
@@ -1371,12 +1373,9 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
     auto waitStatus = WaitStatus::notReady;
     bool waitedOnTimestamps = false;
 
-    // TSP for OOQ dispatch is optional. We need to wait for task count.
-    if (!isOOQEnabled()) {
-        waitedOnTimestamps = waitForTimestamps(activeBcsStates, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
-        if (waitStatus == WaitStatus::gpuHang) {
-            return WaitStatus::gpuHang;
-        }
+    waitedOnTimestamps = waitForTimestamps(activeBcsStates, waitStatus, this->timestampPacketContainer.get(), this->deferredTimestampPackets.get());
+    if (waitStatus == WaitStatus::gpuHang) {
+        return WaitStatus::gpuHang;
     }
 
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
