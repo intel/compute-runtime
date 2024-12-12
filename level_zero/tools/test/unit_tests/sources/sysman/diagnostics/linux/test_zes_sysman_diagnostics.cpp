@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -762,6 +762,19 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingReleaseResour
     pLinuxSysmanImp->diagnosticsReset = true;
     pLinuxSysmanImp->releaseDeviceResources();
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->initDevice());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenSysmanImpPointerWhenCallingReleaseResourcesThenGfxPartitionIsRemovedForRootDevice) {
+    pLinuxSysmanImp->diagnosticsReset = true;
+    auto devicePtr = static_cast<DeviceImp *>(pLinuxSysmanImp->pDevice);
+    auto executionEnvironment = devicePtr->getNEODevice()->getExecutionEnvironment();
+    auto rootIndex = devicePtr->getNEODevice()->getRootDeviceIndex();
+
+    pLinuxSysmanImp->releaseDeviceResources();
+
+    EXPECT_EQ(nullptr, executionEnvironment->memoryManager->getGfxPartition(rootIndex));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->initDevice());
+    EXPECT_NE(nullptr, executionEnvironment->memoryManager->getGfxPartition(rootIndex));
 }
 
 HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds, IsPVC) {

@@ -251,6 +251,9 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         *serverType = MockMemoryManager::serverType;
     }
 
+    bool reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;
+    void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;
+
     MockGraphicsAllocation *mockGa;
     size_t ipcAllocationSize = 4096u;
     uint32_t copyMemoryToAllocationBanksCalled = 0u;

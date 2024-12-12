@@ -341,6 +341,7 @@ void LinuxSysmanImp::releaseDeviceResources() {
     executionEnvironment->memoryManager->releaseDeviceSpecificMemResources(rootDeviceIndex);
     executionEnvironment->releaseRootDeviceEnvironmentResources(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get());
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].reset();
+    executionEnvironment->memoryManager->releaseDeviceSpecificGfxPartition(rootDeviceIndex);
 }
 
 void LinuxSysmanImp::reInitSysmanDeviceResources() {
