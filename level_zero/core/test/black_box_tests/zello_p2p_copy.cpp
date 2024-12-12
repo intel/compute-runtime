@@ -70,9 +70,9 @@ int main(int argc, char *argv[]) {
 
         devObjects[i].readBackData = new uint8_t[allocSize]();
 
-        devObjects[i].cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, devices[i], nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
+        devObjects[i].cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, devices[i], nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
 
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, devices[i], devObjects[i].cmdList));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, devices[i], devObjects[i].cmdList, false));
 
         ze_device_mem_alloc_desc_t deviceDesc = {};
         deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;

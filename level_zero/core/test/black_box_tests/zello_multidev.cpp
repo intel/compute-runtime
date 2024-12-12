@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
         cmdQueueDesc.pNext = nullptr;
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(devices[i]);
+        cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(devices[i], false);
         cmdQueueDesc.index = 0;
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, devices[i], &cmdQueueDesc, &cmdQueue[i]));

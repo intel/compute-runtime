@@ -17,7 +17,7 @@ void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &
     ze_command_list_handle_t cmdList1;
     ze_command_list_handle_t cmdList2;
 
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     cmdQueueDesc.index = 0;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 

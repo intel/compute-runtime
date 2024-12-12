@@ -36,7 +36,7 @@ void createImmediateCommandList(ze_device_handle_t &device,
     cmdQueueDesc.pNext = nullptr;
     cmdQueueDesc.flags = 0;
     cmdQueueDesc.priority = ZE_COMMAND_QUEUE_PRIORITY_NORMAL;
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     cmdQueueDesc.index = 0;
     LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, syncMode);
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));

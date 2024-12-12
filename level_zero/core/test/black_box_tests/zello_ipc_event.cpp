@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,8 @@ void initializeProcess(ze_context_handle_t &context,
     printDeviceProperties(deviceProperties);
 
     // Create command queue
-    cmdQueue = createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
-    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
+    cmdQueue = createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList, false));
 }
 
 void runClient(int commSocket, uint32_t clientId) {

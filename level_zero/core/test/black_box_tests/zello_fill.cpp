@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
 
         ze_command_list_handle_t cmdListInit = nullptr;
         if (useInitFill) {
-            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListInit));
+            SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListInit, false));
             SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdListInit, devBuffer, &initPattern, sizeof(initPattern), devBufferSize, nullptr, 0, nullptr));
             SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListInit, nullptr, 0, nullptr));
             SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListInit));
@@ -50,7 +50,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
         }
 
         ze_command_list_handle_t cmdListFill;
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListFill));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListFill, false));
 
         void *dst = reinterpret_cast<void *>(reinterpret_cast<uint16_t *>(devBuffer) + offset);
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdListFill, dst, &pattern, sizeof(pattern), (numElements - offset) * sizeof(uint16_t), nullptr, 0, nullptr));
@@ -58,7 +58,7 @@ void testAppendMemoryCopyFill(ze_context_handle_t &context, ze_device_handle_t &
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListFill));
 
         ze_command_list_handle_t cmdListCopy;
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListCopy));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdListCopy, false));
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdListCopy, hostBuffer, devBuffer, devBufferSize, nullptr, 0, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdListCopy, nullptr, 0, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdListCopy));
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     LevelZeroBlackBoxTests::printDeviceProperties(deviceProperties);
 
     ze_command_queue_handle_t cmdQueue;
-    cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr);
+    cmdQueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, false);
 
     testAppendMemoryCopyFill(context, device, outputValidationSuccessful, cmdQueue, maxElemenets, useInitFill);
 

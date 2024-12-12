@@ -18,10 +18,10 @@
 
 void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
-    char *heapBuffer = new char[allocSize];
+    auto heapBuffer = std::make_unique<char[]>(allocSize);
     void *buffer1 = nullptr;
     void *buffer2 = nullptr;
-    char *stackBuffer = new char[allocSize];
+    auto stackBuffer = std::make_unique<char[]>(allocSize);
 
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
@@ -29,7 +29,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
-        std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;
     }
@@ -61,10 +61,10 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     for (size_t i = 0; i < allocSize; ++i) {
         heapBuffer[i] = static_cast<char>(i + 1);
     }
-    memset(stackBuffer, 0, allocSize);
+    memset(stackBuffer.get(), 0, allocSize);
 
     // Copy from heap to device-allocated memory
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer1, heapBuffer, allocSize,
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, buffer1, heapBuffer.get(), allocSize,
                                                        nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
@@ -75,17 +75,14 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     // Copy from device-allocated memory to stack
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer, buffer2, allocSize,
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer.get(), buffer2, allocSize,
                                                        nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
     // Validate stack and ze buffers have the original data from heapBuffer
-    validRet = LevelZeroBlackBoxTests::validate(heapBuffer, stackBuffer, allocSize);
-
-    delete[] heapBuffer;
-    delete[] stackBuffer;
+    validRet = LevelZeroBlackBoxTests::validate(heapBuffer.get(), stackBuffer.get(), allocSize);
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer1));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer2));
@@ -97,14 +94,14 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
     char *hostBuffer = nullptr;
     void *deviceBuffer = nullptr;
-    char *stackBuffer = new char[allocSize];
+    auto stackBuffer = std::make_unique<char[]>(allocSize);
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
-        std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;
     }
@@ -140,7 +137,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     for (size_t i = 0; i < allocSize; ++i) {
         hostBuffer[i] = static_cast<char>(i + 1);
     }
-    memset(stackBuffer, 0, allocSize);
+    memset(stackBuffer.get(), 0, allocSize);
 
     // Copy from host-allocated to device-allocated memory
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, deviceBuffer, hostBuffer, allocSize,
@@ -149,7 +146,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
     // Copy from device-allocated memory to stack
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer, deviceBuffer, allocSize,
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer.get(), deviceBuffer, allocSize,
                                                        nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -157,9 +154,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and ze deviceBuffers have the original data from hostBuffer
-    validRet = LevelZeroBlackBoxTests::validate(hostBuffer, stackBuffer, allocSize);
+    validRet = LevelZeroBlackBoxTests::validate(hostBuffer, stackBuffer.get(), allocSize);
 
-    delete[] stackBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, hostBuffer));
     SUCCESS_OR_TERMINATE(zeMemFree(context, deviceBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
@@ -297,7 +293,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     const size_t allocSize = 4096;
     char pattern0 = 5;
     const size_t pattern1Size = 8;
-    char *pattern1 = new char[pattern1Size];
+    auto pattern1 = std::make_unique<char[]>(pattern1Size);
     void *buffer0 = nullptr;
     void *buffer1 = nullptr;
 
@@ -307,7 +303,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
-        std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
+        std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;
     }
@@ -359,7 +355,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, buffer0, &pattern0, sizeof(pattern0), allocSize,
                                                        nullptr, 0, nullptr));
 
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, buffer1, pattern1, pattern1Size, allocSize,
+    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, buffer1, pattern1.get(), pattern1Size, allocSize,
                                                        nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
@@ -401,7 +397,6 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
         }
     }
 
-    delete[] pattern1;
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer0));
     SUCCESS_OR_TERMINATE(zeMemFree(context, buffer1));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));

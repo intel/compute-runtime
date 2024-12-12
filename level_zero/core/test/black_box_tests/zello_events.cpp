@@ -20,8 +20,8 @@ void createCmdQueueAndCmdList(ze_device_handle_t &device,
                               ze_command_queue_handle_t &cmdqueue,
                               ze_command_list_handle_t &cmdList) {
     // Create commandQueue and cmdList
-    cmdqueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
+    cmdqueue = LevelZeroBlackBoxTests::createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
 }
 
 void createCmdQueueAndCmdListWithOrdinal(ze_device_handle_t &device,

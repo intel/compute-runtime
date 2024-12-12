@@ -53,13 +53,13 @@ void executeImmediateAndRegularCommandLists(ze_context_handle_t &context, ze_dev
     ze_command_list_handle_t immediateCmdList = nullptr;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     cmdQueueDesc.index = 0;
     LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, !asyncMode);
 
     SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &immediateCmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
+    SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
 
     const size_t kernelDataSize = 32;
     const int numIteration = 5;
@@ -185,14 +185,14 @@ void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_ha
     ze_command_list_handle_t cmdList = nullptr;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
+    cmdQueueDesc.ordinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     cmdQueueDesc.index = 0;
     LevelZeroBlackBoxTests::selectQueueMode(cmdQueueDesc, !asyncMode);
     if (useImmediate) {
         SUCCESS_OR_TERMINATE(zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdList));
     } else {
         SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdQueue));
-        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList));
+        SUCCESS_OR_TERMINATE(LevelZeroBlackBoxTests::createCommandList(context, device, cmdList, false));
     }
 
     ze_event_pool_handle_t eventPool;
@@ -325,7 +325,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
 
     eventPoolDevices.push_back(device);
 
-    uint32_t queueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
+    uint32_t queueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     uint32_t subDeviceCopyQueueGroup = std::numeric_limits<uint32_t>::max();
 
@@ -349,7 +349,7 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
     } else {
         subDevice = subDevices[0];
         eventPoolDevices.push_back(subDevice);
-        uint32_t subDeviceQueueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(subDevice);
+        uint32_t subDeviceQueueGroup = LevelZeroBlackBoxTests::getCommandQueueOrdinal(subDevice, false);
 
         subDeviceCopyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(subDevice);
         if (subDeviceCopyQueueGroup != std::numeric_limits<uint32_t>::max()) {

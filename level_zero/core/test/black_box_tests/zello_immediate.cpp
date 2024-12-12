@@ -117,7 +117,7 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
 void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool syncMode, bool &outputValidationSuccessful, bool useEventBasedSync) {
     ze_command_list_handle_t cmdList;
 
-    uint32_t computeOrdinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device);
+    uint32_t computeOrdinal = LevelZeroBlackBoxTests::getCommandQueueOrdinal(device, false);
     createImmediateCommandList(device, context, computeOrdinal, syncMode, cmdList);
     const auto isEventsUsed = useEventBasedSync && !syncMode;
 
