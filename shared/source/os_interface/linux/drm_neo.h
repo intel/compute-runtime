@@ -152,6 +152,12 @@ class Drm : public DriverModel {
     void setDirectSubmissionActive(bool value) { this->directSubmissionActive = value; }
     bool isDirectSubmissionActive() const { return this->directSubmissionActive; }
 
+    void setVmBindSystemAlloc(bool value) { this->vmBindSystemAlloc = value; }
+    bool isVmBindSystemAlloc() const { return this->vmBindSystemAlloc; }
+    void checkSystemAllocEnabled();
+    void setSystemAllocEnable(bool value) { this->systemAllocEnable = value; }
+    bool isSystemAllocEnabled() const { return this->systemAllocEnable; }
+
     MOCKABLE_VIRTUAL bool isSetPairAvailable();
     MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }
     MOCKABLE_VIRTUAL bool isChunkingAvailable();
@@ -166,6 +172,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL void queryPageFaultSupport();
     bool hasPageFaultSupport() const;
+    bool hasSystemAllocSupport() const;
     bool hasKmdMigrationSupport() const;
     bool checkToDisableScratchPage() { return disableScratch; }
     unsigned int getGpuFaultCheckThreshold() const { return gpuFaultCheckThreshold; }
@@ -348,6 +355,8 @@ class Drm : public DriverModel {
     bool requirePerContextVM = false;
     bool bindAvailable = false;
     bool directSubmissionActive = false;
+    bool vmBindSystemAlloc = false;
+    bool systemAllocEnable = false;
     bool setPairAvailable = false;
     bool chunkingAvailable = false;
     uint32_t chunkingMode = 0;
