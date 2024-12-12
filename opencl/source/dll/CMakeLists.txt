@@ -56,6 +56,18 @@ set(RUNTIME_SRCS_DLL_LINUX
     ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
 )
+if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
+  if(NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM)
+    list(APPEND RUNTIME_SRCS_DLL_LINUX
+         ${NEO_SOURCE_DIR}/shared/source/os_interface/linux/xe/eudebug/enable_eudebug_interface_upstream.cpp
+    )
+  endif()
+  if(NEO_ENABLE_XE_PRELIM_DETECTION)
+    list(APPEND RUNTIME_SRCS_DLL_LINUX
+         ${NEO_SOURCE_DIR}/shared/source/os_interface/linux/xe/eudebug/enable_eudebug_interface_prelim.cpp
+    )
+  endif()
+endif()
 
 set(RUNTIME_SRCS_DLL_WINDOWS
     ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp

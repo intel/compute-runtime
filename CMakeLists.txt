@@ -564,7 +564,7 @@ if(WIN32 OR NOT DISABLE_WDDM_LINUX)
 endif()
 
 if(UNIX)
-  # prelim headers detection
+  # i915 prelim detection
   if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
     set(NEO_ENABLE_I915_PRELIM_DETECTION TRUE)
   elseif(NOT DEFINED NEO_ENABLE_I915_PRELIM_DETECTION)
@@ -572,6 +572,7 @@ if(UNIX)
   endif()
   message(STATUS "i915 prelim headers detection: ${NEO_ENABLE_I915_PRELIM_DETECTION}")
 
+  # xe prelim detection
   if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
     set(NEO_ENABLE_XE_PRELIM_DETECTION TRUE)
   elseif(NOT DEFINED NEO_ENABLE_XE_PRELIM_DETECTION)
@@ -579,7 +580,7 @@ if(UNIX)
   endif()
   message(STATUS "xe prelim headers detection: ${NEO_ENABLE_XE_PRELIM_DETECTION}")
 
-  # drm-xe support
+  # xe eudebug support
   if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
     set(NEO_ENABLE_XE_EU_DEBUG_SUPPORT TRUE)
   elseif(NOT DEFINED NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
@@ -587,13 +588,16 @@ if(UNIX)
   endif()
   message(STATUS "Xe EU Debug support: ${NEO_ENABLE_XE_EU_DEBUG_SUPPORT}")
 
-  if((NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM OR NOT NEO_ENABLE_XE_PRELIM_DETECTION) AND ("${BRANCH_TYPE}" STREQUAL ""))
-    get_filename_component(XE_DEBUG_INCLUDE_DIR "${NEO_SOURCE_DIR}/shared/source/debugger/linux/" ABSOLUTE)
-  else()
-    get_filename_component(XE_DEBUG_INCLUDE_DIR "${NEO_SOURCE_DIR}/shared/source/debugger/linux/prelim" ABSOLUTE)
+  if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
+    # xe eudebug exp upstream support
+    if(NOT ("${BRANCH_TYPE}" STREQUAL ""))
+      set(NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM TRUE)
+    elseif(NOT DEFINED NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM)
+      set(NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM FALSE)
+    endif()
+    message(STATUS "Xe EU Debug support for upstream: ${NEO_USE_XE_EU_DEBUG_EXP_UPSTREAM}")
+    message(STATUS "Xe EU Debug support for prelim: ${NEO_ENABLE_XE_PRELIM_DETECTION}")
   endif()
-
-  include_directories(BEFORE ${XE_DEBUG_INCLUDE_DIR})
 endif()
 
 include(cmake${BRANCH_DIR_SUFFIX}/find_drm.cmake)

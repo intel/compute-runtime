@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,11 @@ namespace L0 {
 int DrmHelper::ioctl(Device *device, NEO::DrmIoctl request, void *arg) {
     auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
     return drm->getIoctlHelper()->ioctl(request, arg);
+}
+
+std::string DrmHelper::getSysFsPciPath(Device *device) {
+    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    return drm->getSysFsPciPath();
 }
 
 int DrmHelper::getErrno(Device *device) {

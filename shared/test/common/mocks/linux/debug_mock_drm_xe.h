@@ -14,16 +14,18 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
+#include "shared/source/os_interface/linux/xe/xedrm.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+#include "shared/test/common/os_interface/linux/xe/eudebug/mock_eudebug_interface.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "debug_xe_includes.h"
 
 using namespace NEO;
 
@@ -54,6 +56,7 @@ struct DrmMockXeDebug : public DrmMockCustom {
         drm->reset();
 
         drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+        EXPECT_EQ(1, drm->ioctlHelper->getEuDebugSysFsEnable());
         auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(drm->queryEngines);
         xeQueryEngines->num_engines = 11;
         xeQueryEngines->engines[0] = {{DRM_XE_ENGINE_CLASS_RENDER, 0, 0}, {}};
@@ -122,7 +125,7 @@ struct DrmMockXeDebug : public DrmMockCustom {
             ret = 0;
         } break;
         case DrmIoctl::debuggerOpen: {
-            auto debuggerOpen = reinterpret_cast<drm_xe_eudebug_connect *>(arg);
+            auto debuggerOpen = reinterpret_cast<EuDebugConnect *>(arg);
 
             if (debuggerOpen->version != 0) {
                 return -1;
@@ -133,16 +136,16 @@ struct DrmMockXeDebug : public DrmMockCustom {
             return debuggerOpenRetval;
         } break;
         case DrmIoctl::metadataCreate: {
-            auto metadata = reinterpret_cast<drm_xe_debug_metadata_create *>(arg);
-            metadataAddr = reinterpret_cast<void *>(metadata->user_addr);
+            auto metadata = reinterpret_cast<DebugMetadataCreate *>(arg);
+            metadataAddr = reinterpret_cast<void *>(metadata->userAddr);
             metadataSize = metadata->len;
             metadataType = metadata->type;
-            metadata->metadata_id = metadataID;
+            metadata->metadataId = metadataID;
             return 0;
         } break;
         case DrmIoctl::metadataDestroy: {
-            auto metadata = reinterpret_cast<drm_xe_debug_metadata_destroy *>(arg);
-            metadataID = metadata->metadata_id;
+            auto metadata = reinterpret_cast<DebugMetadataDestroy *>(arg);
+            metadataID = metadata->metadataId;
             return 0;
         } break;
         case DrmIoctl::gemWaitUserFence: {
@@ -182,6 +185,8 @@ struct DrmMockXeDebug : public DrmMockCustom {
         }
         return allowDebugAttach;
     }
+    static constexpr const char *mockSysFsPciPath = "mock_sys_fs_pci_path";
+    std::string getSysFsPciPath() override { return mockSysFsPciPath; }
 
     static_assert(sizeof(drm_xe_engine) == 4 * sizeof(uint64_t), "");
     uint64_t queryEngines[45]{}; // 1 qword for num engines and 4 qwords per engine
@@ -204,6 +209,8 @@ struct DrmMockXeDebug : public DrmMockCustom {
     std::vector<drm_xe_engine_class_instance> execQueueEngineInstances;
     drm_xe_exec_queue_create execQueueCreateParams = {};
     StackVec<drm_xe_wait_user_fence, 1> waitUserFenceInputs;
+    VariableBackup<decltype(NEO::IoFunctions::fopenPtr)> mockFopen{&NEO::IoFunctions::fopenPtr};
+    VariableBackup<size_t (*)(void *, size_t, size_t, FILE *)> mockFread{&NEO::IoFunctions::freadPtr};
 
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd
@@ -212,5 +219,23 @@ struct DrmMockXeDebug : public DrmMockCustom {
   protected:
     // Don't call directly, use the create() function
     DrmMockXeDebug(RootDeviceEnvironment &rootDeviceEnvironment)
-        : DrmMockCustom(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {}
+        : DrmMockCustom(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
+        NEO::IoFunctions::fopenPtr = [](const char *filename, const char *mode) -> FILE * {
+            std::string fsEntry(filename);
+            std::string expectedPath = std::string(DrmMockXeDebug::mockSysFsPciPath) + MockEuDebugInterface::sysFsXeEuDebugFile;
+            if (fsEntry == expectedPath) {
+                return reinterpret_cast<FILE *>(MockEuDebugInterface::sysFsFd);
+            }
+
+            return NEO::IoFunctions::mockFopen(filename, mode);
+        };
+        NEO::IoFunctions::freadPtr = [](void *ptr, size_t size, size_t count, FILE *stream) -> size_t {
+            if (stream == reinterpret_cast<FILE *>(MockEuDebugInterface::sysFsFd)) {
+
+                memcpy_s(ptr, size, &MockEuDebugInterface::sysFsContent, sizeof(MockEuDebugInterface::sysFsContent));
+                return sizeof(MockEuDebugInterface::sysFsContent);
+            }
+            return NEO::IoFunctions::mockFread(ptr, size, count, stream);
+        };
+    }
 };

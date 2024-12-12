@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 
 #include <bitset>
 #include <mutex>
@@ -219,6 +220,7 @@ class IoctlHelperXe : public IoctlHelper {
     static_assert(sizeof(SupportedFeatures::flags) == sizeof(SupportedFeatures::allFlags), "");
 
     void querySupportedFeatures();
+    std::unique_ptr<EuDebugInterface> euDebugInterface;
 };
 
 template <typename... XeLogArgs>

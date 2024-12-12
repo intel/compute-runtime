@@ -8,13 +8,12 @@
 #pragma once
 
 #include "shared/source/os_interface/linux/drm_debug.h"
+#include "shared/source/os_interface/linux/xe/eudebug/eudebug_interface.h"
 
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/source/debug/linux/debug_session.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
-
-#include "debug_xe_includes.h"
 
 namespace L0 {
 
@@ -25,6 +24,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     static DebugSession *createLinuxSession(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
 
     struct IoctlHandlerXe : DebugSessionLinux::IoctlHandler {
+        IoctlHandlerXe(const NEO::EuDebugInterface &euDebugInterface) : euDebugInterface(euDebugInterface){};
         int ioctl(int fd, unsigned long request, void *arg) override {
             int ret = 0;
             int error = 0;
@@ -37,13 +37,14 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
                 if (ret == -1) {
                     shouldRetryIoctl = (error == EINTR || error == EAGAIN || error == EBUSY);
 
-                    if (request == DRM_XE_EUDEBUG_IOCTL_EU_CONTROL) {
+                    if (request == euDebugInterface.getParamValue(NEO::EuDebugParam::ioctlEuControl)) {
                         shouldRetryIoctl = (error == EINTR || error == EAGAIN);
                     }
                 }
             } while (shouldRetryIoctl);
             return ret;
         }
+        const NEO::EuDebugInterface &euDebugInterface;
     };
 
     using ExecQueueHandle = uint64_t;
@@ -66,9 +67,9 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     int threadControlInterruptAll();
     int threadControlResume(const std::vector<EuThread::ThreadId> &threads);
     int threadControlStopped(std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut);
-    MOCKABLE_VIRTUAL void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention);
-    void handleMetadataEvent(drm_xe_eudebug_event_metadata *pMetaData);
-    bool handleMetadataOpEvent(drm_xe_eudebug_event_vm_bind_op_metadata *vmBindOpMetadata);
+    MOCKABLE_VIRTUAL void handleAttentionEvent(NEO::EuDebugEventEuAttention *attention);
+    void handleMetadataEvent(NEO::EuDebugEventMetadata *pMetaData);
+    bool handleMetadataOpEvent(NEO::EuDebugEventVmBindOpMetadata *vmBindOpMetadata);
     void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) override;
     int eventAckIoctl(EventToAck &event) override;
     MOCKABLE_VIRTUAL int getEuControlCmdUnlock() const;
@@ -96,7 +97,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     }
 
     struct MetaData {
-        drm_xe_eudebug_event_metadata metadata;
+        NEO::EuDebugEventMetadata metadata;
         std::unique_ptr<char[]> data;
     };
 
@@ -104,20 +105,20 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     using VmBindSeqNo = uint64_t;
     struct VmBindOpData {
         uint64_t pendingNumExtensions = 0;
-        drm_xe_eudebug_event_vm_bind_op vmBindOp;
-        std::vector<drm_xe_eudebug_event_vm_bind_op_metadata> vmBindOpMetadataVec;
+        NEO::EuDebugEventVmBindOp vmBindOp;
+        std::vector<NEO::EuDebugEventVmBindOpMetadata> vmBindOpMetadataVec;
     };
 
     struct VmBindData {
         uint64_t pendingNumBinds = 0;
-        drm_xe_eudebug_event_vm_bind vmBind;
+        NEO::EuDebugEventVmBind vmBind;
         bool uFenceReceived = false;
-        drm_xe_eudebug_event_vm_bind_ufence vmBindUfence;
+        NEO::EuDebugEventVmBindUfence vmBindUfence;
         std::unordered_map<VmBindOpSeqNo, VmBindOpData> vmBindOpMap;
     };
 
     struct ClientConnectionXe : public ClientConnection {
-        drm_xe_eudebug_event_client client = {};
+        NEO::EuDebugEventClient client = {};
         size_t getElfSize(uint64_t elfHandle) override { return metaDataMap[elfHandle].metadata.len; };
         char *getElfData(uint64_t elfHandle) override { return metaDataMap[elfHandle].data.get(); };
 
@@ -136,8 +137,8 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     void extractMetaData(uint64_t client, const MetaData &metaData);
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
-    MOCKABLE_VIRTUAL void handleEvent(drm_xe_eudebug_event *event);
-    void additionalEvents(drm_xe_eudebug_event *event);
+    MOCKABLE_VIRTUAL void handleEvent(NEO::EuDebugEvent *event);
+    void additionalEvents(NEO::EuDebugEvent *event);
     MOCKABLE_VIRTUAL bool eventTypeIsAttention(uint16_t eventType);
     void readInternalEventsAsync() override;
     std::atomic<bool> detached{false};
@@ -160,10 +161,11 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
 
     uint64_t euControlInterruptSeqno = 0;
 
-    ze_result_t readEventImp(drm_xe_eudebug_event *drmDebugEvent);
+    ze_result_t readEventImp(NEO::EuDebugEvent *drmDebugEvent);
     int ioctl(unsigned long request, void *arg);
     std::atomic<bool> processEntryEventGenerated = false;
     std::atomic<uint64_t> newestAttSeqNo = 0;
+    std::unique_ptr<NEO::EuDebugInterface> euDebugInterface;
 };
 
 } // namespace L0

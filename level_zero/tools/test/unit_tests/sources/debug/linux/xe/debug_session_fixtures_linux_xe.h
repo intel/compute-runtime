@@ -23,7 +23,6 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 
 #include "common/StateSaveAreaHeader.h"
-#include "debug_xe_includes.h"
 
 #include <atomic>
 #include <queue>
@@ -32,7 +31,7 @@
 
 namespace L0 {
 namespace ult {
-using typeOfLrcHandle = std::decay<decltype(drm_xe_eudebug_event_exec_queue::lrc_handle[0])>::type;
+using typeOfLrcHandle = std::decay<decltype(NEO::EuDebugEventExecQueue::lrcHandle[0])>::type;
 
 struct DebugApiLinuxXeFixture : public DeviceFixture {
     void setUp() {
@@ -53,8 +52,8 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
     int ioctl(int fd, unsigned long request, void *arg) override {
         ioctlCalled++;
 
-        if ((request == DRM_XE_EUDEBUG_IOCTL_READ_EVENT) && (arg != nullptr)) {
-            auto debugEvent = reinterpret_cast<drm_xe_eudebug_event *>(arg);
+        if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlReadEvent)) && (arg != nullptr)) {
+            auto debugEvent = reinterpret_cast<NEO::EuDebugEvent *>(arg);
             debugEventInput = *debugEvent;
 
             if (!eventQueue.empty()) {
@@ -66,32 +65,32 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
                 debugEventRetVal = -1;
             }
             return debugEventRetVal;
-        } else if ((request == DRM_XE_EUDEBUG_IOCTL_VM_OPEN) && (arg != nullptr)) {
-            drm_xe_eudebug_vm_open *vmOpenIn = reinterpret_cast<drm_xe_eudebug_vm_open *>(arg);
+        } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlVmOpen)) && (arg != nullptr)) {
+            NEO::EuDebugVmOpen *vmOpenIn = reinterpret_cast<NEO::EuDebugVmOpen *>(arg);
             vmOpen = *vmOpenIn;
             return vmOpenRetVal;
-        } else if ((request == DRM_XE_EUDEBUG_IOCTL_EU_CONTROL) && (arg != nullptr)) {
-            drm_xe_eudebug_eu_control *euControlArg = reinterpret_cast<drm_xe_eudebug_eu_control *>(arg);
+        } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlEuControl)) && (arg != nullptr)) {
+            NEO::EuDebugEuControl *euControlArg = reinterpret_cast<NEO::EuDebugEuControl *>(arg);
             EuControlArg arg;
             arg.euControl = *euControlArg;
 
             euControlArg->seqno = ++euControlOutputSeqno;
 
-            if (euControlArg->bitmask_size != 0) {
-                arg.euControlBitmaskSize = euControlArg->bitmask_size;
+            if (euControlArg->bitmaskSize != 0) {
+                arg.euControlBitmaskSize = euControlArg->bitmaskSize;
                 arg.euControlBitmask = std::make_unique<uint8_t[]>(arg.euControlBitmaskSize);
 
-                memcpy(arg.euControlBitmask.get(), reinterpret_cast<void *>(euControlArg->bitmask_ptr), arg.euControlBitmaskSize);
-                if (euControlArg->cmd == DRM_XE_EUDEBUG_EU_CONTROL_CMD_STOPPED && euControlArg->bitmask_ptr && outputBitmask.get()) {
-                    memcpy_s(reinterpret_cast<uint64_t *>(euControlArg->bitmask_ptr), euControlArg->bitmask_size, outputBitmask.get(), outputBitmaskSize);
+                memcpy(arg.euControlBitmask.get(), reinterpret_cast<void *>(euControlArg->bitmaskPtr), arg.euControlBitmaskSize);
+                if (euControlArg->cmd == static_cast<uint64_t>(NEO::EuDebugParam::euControlCmdStopped) && euControlArg->bitmaskPtr && outputBitmask.get()) {
+                    memcpy_s(reinterpret_cast<uint64_t *>(euControlArg->bitmaskPtr), euControlArg->bitmaskSize, outputBitmask.get(), outputBitmaskSize);
                 }
             }
             euControlArgs.push_back(std::move(arg));
-        } else if ((request == DRM_XE_EUDEBUG_IOCTL_READ_METADATA) && (arg != nullptr)) {
-            drm_xe_eudebug_read_metadata *readMetadata = reinterpret_cast<drm_xe_eudebug_read_metadata *>(arg);
+        } else if ((request == static_cast<uint64_t>(NEO::EuDebugParam::ioctlReadMetadata)) && (arg != nullptr)) {
+            NEO::EuDebugReadMetadata *readMetadata = reinterpret_cast<NEO::EuDebugReadMetadata *>(arg);
             if (returnMetadata) {
-                readMetadata->client_handle = returnMetadata->client_handle;
-                readMetadata->metadata_handle = returnMetadata->metadata_handle;
+                readMetadata->clientHandle = returnMetadata->clientHandle;
+                readMetadata->metadataHandle = returnMetadata->metadataHandle;
                 readMetadata->flags = returnMetadata->flags;
                 int returnError = 0;
                 if (readMetadata->size >= returnMetadata->size) {
@@ -122,14 +121,14 @@ struct MockIoctlHandlerXe : public L0::ult::MockIoctlHandler {
             memset(&euControl, 0, sizeof(euControl));
         }
         EuControlArg(EuControlArg &&in) : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
-        drm_xe_eudebug_eu_control euControl = {};
+        NEO::EuDebugEuControl euControl = {};
         std::unique_ptr<uint8_t[]> euControlBitmask;
         size_t euControlBitmaskSize = 0;
     };
 
-    drm_xe_eudebug_event debugEventInput = {};
-    drm_xe_eudebug_vm_open vmOpen = {};
-    drm_xe_eudebug_read_metadata *returnMetadata = nullptr;
+    NEO::EuDebugEvent debugEventInput = {};
+    NEO::EuDebugVmOpen vmOpen = {};
+    NEO::EuDebugReadMetadata *returnMetadata = nullptr;
 
     int ioctlRetVal = 0;
     int debugEventRetVal = 0;
@@ -209,7 +208,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return DebugSessionLinuxXe::initialize();
     }
 
-    void handleAttentionEvent(drm_xe_eudebug_event_eu_attention *attention) override {
+    void handleAttentionEvent(NEO::EuDebugEventEuAttention *attention) override {
         handleAttentionEventCalled++;
         return DebugSessionLinuxXe::handleAttentionEvent(attention);
     }

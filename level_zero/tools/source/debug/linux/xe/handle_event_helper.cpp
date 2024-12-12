@@ -11,12 +11,12 @@
 
 namespace L0 {
 
-void DebugSessionLinuxXe::additionalEvents(drm_xe_eudebug_event *event) {
+void DebugSessionLinuxXe::additionalEvents(NEO::EuDebugEvent *event) {
     PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", (uint16_t)event->type, (uint16_t)event->flags, (uint32_t)event->len);
 }
 
 bool DebugSessionLinuxXe::eventTypeIsAttention(uint16_t eventType) {
-    return (eventType == DRM_XE_EUDEBUG_EVENT_EU_ATTENTION);
+    return (eventType == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeEuAttention));
 }
 
 int DebugSessionLinuxXe::getEuControlCmdUnlock() const {

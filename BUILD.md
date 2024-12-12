@@ -72,7 +72,7 @@ NEO Driver has build options to enable support for EU Debugging with XeKMD. Kern
 
 To build NEO with support for this feature follow above steps with these additional cmake options added to step 6.
 
-` -DNEO_ENABLE_XE_EU_DEBUG_SUPPORT=1  -DNEO_ENABLE_XE_PRELIM_DETECTION=0 `
+` -DNEO_ENABLE_XE_EU_DEBUG_SUPPORT=1  -DNEO_USE_XE_EU_DEBUG_EXP_UPSTREAM=1`
 
 
 ___(*) Other names and brands may be claimed as property of others.___
