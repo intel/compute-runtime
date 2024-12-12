@@ -755,7 +755,7 @@ void EventImp<TagSizeT>::resetDeviceCompletionData(bool resetAllPackets) {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
+void EventImp<TagSizeT>::synchronizeCounterBasedTimestampCompletionWithTimeout() {
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
     constexpr uint64_t timeoutMs = 1000 * 5; // 5s
     uint64_t timeDiff = 0;
@@ -780,8 +780,8 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
     assignKernelEventCompletionData(getHostAddress());
     calculateProfilingData();
 
-    if (contextEndTS == Event::STATE_CLEARED || contextEndTS == 0) {
-        synchronizeTimestampCompletionWithTimeout();
+    if (isCounterBased() && (contextEndTS == Event::STATE_CLEARED || contextEndTS == 0)) {
+        synchronizeCounterBasedTimestampCompletionWithTimeout();
     }
 
     auto eventTsSetFunc = [&](uint64_t &timestampFieldToCopy, uint64_t &timestampFieldForWriting) {
