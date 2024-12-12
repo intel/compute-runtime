@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
-
 namespace NEO {
 
 class CommandStreamReceiver;

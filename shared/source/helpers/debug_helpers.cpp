@@ -9,7 +9,6 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/abort.h"
-#include "shared/source/helpers/options.h"
 
 #include <cassert>
 #include <cstdio>

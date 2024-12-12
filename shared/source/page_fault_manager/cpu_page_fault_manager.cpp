@@ -16,26 +16,19 @@
 #include <algorithm>
 
 namespace NEO {
-
-void CpuPageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties) {
+void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties) {
     auto initialPlacement = MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties);
     const auto domain = (initialPlacement == GraphicsAllocation::UsmInitialPlacement::CPU) ? AllocationDomain::cpu : AllocationDomain::none;
 
     std::unique_lock<SpinLock> lock{mtx};
-    PageFaultData faultData{};
-    faultData.faultType = FaultMode::cpu;
-    faultData.size = size;
-    faultData.unifiedMemoryManager = unifiedMemoryManager;
-    faultData.cmdQ = cmdQ;
-    faultData.domain = domain;
-    this->memoryData.insert(std::make_pair(ptr, faultData));
+    this->memoryData.insert(std::make_pair(ptr, PageFaultData{size, unifiedMemoryManager, cmdQ, domain}));
     if (initialPlacement != GraphicsAllocation::UsmInitialPlacement::CPU) {
         this->protectCPUMemoryAccess(ptr, size);
     }
     unifiedMemoryManager->nonGpuDomainAllocs.push_back(ptr);
 }
 
-void CpuPageFaultManager::removeAllocation(void *ptr) {
+void PageFaultManager::removeAllocation(void *ptr) {
     std::unique_lock<SpinLock> lock{mtx};
     auto alloc = memoryData.find(ptr);
     if (alloc != memoryData.end()) {
@@ -52,7 +45,7 @@ void CpuPageFaultManager::removeAllocation(void *ptr) {
     }
 }
 
-void CpuPageFaultManager::moveAllocationToGpuDomain(void *ptr) {
+void PageFaultManager::moveAllocationToGpuDomain(void *ptr) {
     std::unique_lock<SpinLock> lock{mtx};
     auto alloc = memoryData.find(ptr);
     if (alloc != memoryData.end()) {
@@ -68,7 +61,7 @@ void CpuPageFaultManager::moveAllocationToGpuDomain(void *ptr) {
     }
 }
 
-void CpuPageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager) {
+void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager) {
     std::unique_lock<SpinLock> lock{mtx};
     for (auto allocPtr : unifiedMemoryManager->nonGpuDomainAllocs) {
         auto &pageFaultData = this->memoryData[allocPtr];
@@ -77,7 +70,7 @@ void CpuPageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAll
     unifiedMemoryManager->nonGpuDomainAllocs.clear();
 }
 
-inline void CpuPageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData) {
+inline void PageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData) {
     if (pageFaultData.domain == AllocationDomain::cpu) {
         this->setCpuAllocEvictable(false, ptr, pageFaultData.unifiedMemoryManager);
         this->allowCPUMemoryEviction(false, ptr, pageFaultData);
@@ -103,19 +96,15 @@ inline void CpuPageFaultManager::migrateStorageToGpuDomain(void *ptr, PageFaultD
     pageFaultData.domain = AllocationDomain::gpu;
 }
 
-void CpuPageFaultManager::handlePageFault(void *ptr, PageFaultData &faultData) {
-    this->setAubWritable(true, ptr, faultData.unifiedMemoryManager);
-    gpuDomainHandler(this, ptr, faultData);
-}
-
-bool CpuPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) {
+bool PageFaultManager::verifyAndHandlePageFault(void *ptr, bool handlePageFault) {
     std::unique_lock<SpinLock> lock{mtx};
-    for (auto &alloc : memoryData) {
+    for (auto &alloc : this->memoryData) {
         auto allocPtr = alloc.first;
         auto &pageFaultData = alloc.second;
         if (ptr >= allocPtr && ptr < ptrOffset(allocPtr, pageFaultData.size)) {
-            if (handleFault) {
-                handlePageFault(allocPtr, pageFaultData);
+            if (handlePageFault) {
+                this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
+                gpuDomainHandler(this, allocPtr, pageFaultData);
             }
             return true;
         }
@@ -123,23 +112,23 @@ bool CpuPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) 
     return false;
 }
 
-void CpuPageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr) {
+void PageFaultManager::setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr) {
     this->gpuDomainHandler = gpuHandlerFuncPtr;
 }
 
-void CpuPageFaultManager::transferAndUnprotectMemory(CpuPageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+void PageFaultManager::transferAndUnprotectMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
     pageFaultHandler->setCpuAllocEvictable(true, allocPtr, pageFaultData.unifiedMemoryManager);
     pageFaultHandler->allowCPUMemoryEviction(true, allocPtr, pageFaultData);
 }
 
-void CpuPageFaultManager::unprotectAndTransferMemory(CpuPageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
+void PageFaultManager::unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *allocPtr, PageFaultData &pageFaultData) {
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
     pageFaultHandler->migrateStorageToCpuDomain(allocPtr, pageFaultData);
 }
 
-inline void CpuPageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData &pageFaultData) {
+inline void PageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultData &pageFaultData) {
     if (pageFaultData.domain == AllocationDomain::gpu) {
         std::chrono::steady_clock::time_point start;
         std::chrono::steady_clock::time_point end;
@@ -155,19 +144,19 @@ inline void CpuPageFaultManager::migrateStorageToCpuDomain(void *ptr, PageFaultD
     pageFaultData.domain = AllocationDomain::cpu;
 }
 
-void CpuPageFaultManager::selectGpuDomainHandler() {
+void PageFaultManager::selectGpuDomainHandler() {
     if (debugManager.flags.SetCommandStreamReceiver.get() > static_cast<int32_t>(CommandStreamReceiverType::hardware) || debugManager.flags.NEO_CAL_ENABLED.get()) {
-        this->gpuDomainHandler = &CpuPageFaultManager::unprotectAndTransferMemory;
+        this->gpuDomainHandler = &PageFaultManager::unprotectAndTransferMemory;
     }
 }
 
-void CpuPageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
     UNRECOVERABLE_IF(ptr == nullptr);
     auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
     gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
 }
 
-void CpuPageFaultManager::setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
+void PageFaultManager::setCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
     UNRECOVERABLE_IF(ptr == nullptr);
     auto cpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->cpuAllocation;
     cpuAlloc->setEvictable(evictable);

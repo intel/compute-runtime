@@ -13,8 +13,7 @@
 #include <functional>
 
 namespace NEO {
-
-class PageFaultManagerWindows : public virtual CpuPageFaultManager {
+class PageFaultManagerWindows : public PageFaultManager {
   public:
     PageFaultManagerWindows();
     ~PageFaultManagerWindows() override;
@@ -34,7 +33,5 @@ class PageFaultManagerWindows : public virtual CpuPageFaultManager {
     static std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> pageFaultHandler;
     PVOID previousHandler;
 };
-
-class CpuPageFaultManagerWindows final : public PageFaultManagerWindows {};
 
 } // namespace NEO

@@ -26,21 +26,13 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 
 #include <cstring>
 
 namespace NEO {
-
-template <typename GfxFamily>
-CpuPageFaultManager *TbxCommandStreamReceiverHw<GfxFamily>::getTbxPageFaultManager() {
-    return this->getMemoryManager()->getPageFaultManager();
-}
 
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment,
@@ -80,26 +72,6 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
     }
 
     this->freeEngineInfo(gttRemap);
-}
-
-template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::allowCPUMemoryAccessIfHostBuffer(AllocationType allocType, void *cpuAddress, size_t size) {
-    if (allocType == AllocationType::bufferHostMemory) {
-        auto faultManager = getTbxPageFaultManager();
-        if (faultManager != nullptr) {
-            faultManager->allowCPUMemoryAccess(cpuAddress, size);
-        }
-    }
-}
-
-template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::protectCPUMemoryAccessIfHostBuffer(AllocationType allocType, void *cpuAddress, size_t size) {
-    if (allocType == AllocationType::bufferHostMemory) {
-        auto faultManager = getTbxPageFaultManager();
-        if (faultManager != nullptr) {
-            faultManager->protectCPUMemoryAccess(cpuAddress, size);
-        }
-    }
 }
 
 template <typename GfxFamily>
@@ -459,30 +431,19 @@ void TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(uint64_t gpuAddress, voi
 
 template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation, bool isChunkCopy, uint64_t gpuVaChunkOffset, size_t chunkSize) {
-    uint64_t gpuAddress;
-    void *cpuAddress;
-    size_t size;
-
-    if (!this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
-        return false;
-    }
-
-    auto allocType = gfxAllocation.getAllocationType();
-    if (allocType == AllocationType::bufferHostMemory) {
-        auto faultManager = getTbxPageFaultManager();
-        if (faultManager != nullptr) {
-            faultManager->insertAllocation(this, &gfxAllocation, cpuAddress, size);
-        }
-    }
-
     if (!this->isTbxWritable(gfxAllocation)) {
         return false;
     }
 
-    this->allowCPUMemoryAccessIfHostBuffer(allocType, cpuAddress, size);
-
     if (!isEngineInitialized) {
         initializeEngine();
+    }
+
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+    if (!this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size)) {
+        return false;
     }
 
     if (aubManager) {
@@ -499,7 +460,6 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {
         this->setTbxWritable(false, gfxAllocation);
     }
-    this->protectCPUMemoryAccessIfHostBuffer(allocType, cpuAddress, size);
 
     return true;
 }
@@ -573,7 +533,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processEviction() {
 
 template <typename GfxFamily>
 SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-
     for (auto &gfxAllocation : allocationsForResidency) {
         if (dumpTbxNonWritable) {
             this->setTbxWritable(true, *gfxAllocation);
@@ -595,15 +554,11 @@ SubmissionStatus TbxCommandStreamReceiverHw<GfxFamily>::processResidency(Residen
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocationTbx(GraphicsAllocation &gfxAllocation) {
-
     uint64_t gpuAddress = 0;
     void *cpuAddress = nullptr;
     size_t size = 0;
 
     this->getParametersForMemory(gfxAllocation, gpuAddress, cpuAddress, size);
-
-    auto allocType = gfxAllocation.getAllocationType();
-    this->allowCPUMemoryAccessIfHostBuffer(allocType, cpuAddress, size);
 
     if (hardwareContextController) {
         hardwareContextController->readMemory(gpuAddress, cpuAddress, size,
@@ -716,12 +671,6 @@ void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::removeDownloadAllocation(GraphicsAllocation *alloc) {
     auto lockCSR = this->obtainUniqueOwnership();
-
     this->allocationsForDownload.erase(alloc);
-
-    auto faultManager = getTbxPageFaultManager();
-    if (faultManager != nullptr) {
-        faultManager->removeAllocation(alloc);
-    }
 }
 } // namespace NEO
