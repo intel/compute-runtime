@@ -590,6 +590,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
         appendSignalInOrderDependencyCounter(event, false);
     }
     handleInOrderDependencyCounter(event, false, false);
+    event->unsetInOrderExecInfo();
 
     appendSynchronizedDispatchCleanupSection();
 
