@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,21 +51,25 @@ std::vector<char> readBinaryFile(const std::string &fileName) {
     }
 }
 
-void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs) {
-    std::ifstream file(fileName);
-    if (file.good()) {
+void istreamToVectorOfStrings(std::istream &input, std::vector<std::string> &lines, bool replaceTabs) {
+    if (input.good()) {
         if (replaceTabs) {
-            for (std::string line; std::getline(file, line);) {
+            for (std::string line; std::getline(input, line);) {
                 std::replace_if(
                     line.begin(), line.end(), [](auto c) { return c == '\t'; }, ' ');
                 lines.push_back(std::move(line));
             }
         } else {
-            for (std::string line; std::getline(file, line);) {
+            for (std::string line; std::getline(input, line);) {
                 lines.push_back(std::move(line));
             }
         }
     }
+}
+
+void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs) {
+    std::ifstream file(fileName);
+    istreamToVectorOfStrings(file, lines, replaceTabs);
 }
 
 size_t findPos(const std::vector<std::string> &lines, const std::string &whatToFind) {

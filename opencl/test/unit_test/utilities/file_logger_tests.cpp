@@ -9,6 +9,7 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 #include "shared/test/common/utilities/logger_tests.h"
 
@@ -421,7 +422,7 @@ TEST(FileLogger, GivenDisabledDebugFunctionalityWhenLoggingThenDumpingDoesNotOcc
     EXPECT_FALSE(fileLogger.enabled());
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     // test kernel dumping
@@ -429,12 +430,12 @@ TEST(FileLogger, GivenDisabledDebugFunctionalityWhenLoggingThenDumpingDoesNotOcc
     std::string kernelDumpFile = "testDumpKernel";
     fileLogger.dumpKernel(kernelDumpFile, "kernel source here");
 
-    kernelDumpCreated = fileExists(kernelDumpFile.append(".txt"));
+    kernelDumpCreated = virtualFileExists(kernelDumpFile.append(".txt"));
     EXPECT_FALSE(kernelDumpCreated);
 
     // test api logging
     fileLogger.logApiCall(__FUNCTION__, true, 0);
-    logFileCreated = fileExists(fileLogger.getLogFileName());
+    logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     // getInput returns 0
@@ -483,12 +484,12 @@ TEST(FileLogger, GivenDisabledDebugFunctionalityWhenLoggingThenDumpingDoesNotOcc
     // test api input logging
     fileLogger.logInputs("Arg name", "value");
     fileLogger.logInputs("int", 5);
-    logFileCreated = fileExists(fileLogger.getLogFileName());
+    logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     // check Log
     fileLogger.log(true, "string to be logged");
-    logFileCreated = fileExists(fileLogger.getLogFileName());
+    logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     files = Directory::getFiles(path);

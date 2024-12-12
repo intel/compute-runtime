@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,18 +49,16 @@ class MockOclocArgHelper : public OclocArgHelper {
     }
 
     void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines) override {
-        if (callBaseReadFileToVectorOfStrings) {
-            return OclocArgHelper::readFileToVectorOfStrings(filename, lines);
-        }
 
         if (shouldReturnEmptyVectorOfStrings) {
             lines.clear();
-        } else {
-            auto ss = std::stringstream(filesMap[filename]);
-            for (std::string line; std::getline(ss, line);) {
-                lines.push_back(line);
-            }
+            return;
+        } else if (filesMap.find(filename) != filesMap.end()) {
+            auto mockInputFile = std::istringstream(filesMap[filename]);
+            ::istreamToVectorOfStrings(mockInputFile, lines);
+            return;
         }
+        OclocArgHelper::readFileToVectorOfStrings(filename, lines);
     }
 
     std::vector<char> readBinaryFile(const std::string &filename) override {
@@ -73,10 +71,11 @@ class MockOclocArgHelper : public OclocArgHelper {
 
   protected:
     bool fileExists(const std::string &filename) const override {
-        if (callBaseFileExists) {
-            return OclocArgHelper::fileExists(filename);
+        if (filesMap.find(filename) != filesMap.end()) {
+            return true;
         }
-        return filesMap.find(filename) != filesMap.end();
+
+        return OclocArgHelper::fileExists(filename);
     }
 
     std::unique_ptr<char[]> loadDataFromFile(const std::string &filename, size_t &retSize) override {

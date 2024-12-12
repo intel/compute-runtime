@@ -11,11 +11,12 @@
 #include "shared/source/helpers/stdio.h"
 
 #include <cstring>
+#include <map>
 #include <new>
-#include <set>
+#include <sstream>
 
 namespace NEO {
-extern std::set<std::string> virtualFileList;
+extern std::map<std::string, std::stringstream> virtualFileList;
 }
 
 size_t writeDataToFile(
@@ -26,7 +27,7 @@ size_t writeDataToFile(
     DEBUG_BREAK_IF(nullptr == pData);
     DEBUG_BREAK_IF(nullptr == filename);
 
-    NEO::virtualFileList.insert(filename);
+    NEO::virtualFileList[filename] << std::string(static_cast<const char *>(pData), dataSize);
 
     return dataSize;
 }
@@ -55,6 +56,13 @@ bool fileExistsHasSize(const std::string &fileName) {
     DEBUG_BREAK_IF(fileName.empty());
     DEBUG_BREAK_IF(fileName == "");
 
+    auto it = NEO::virtualFileList.find(fileName);
+    if (it != NEO::virtualFileList.end()) {
+        std::stringstream &ss = it->second;
+        ss.seekg(0, std::ios::end);
+        return ss.tellg() > 0;
+    }
+
     fopen_s(&pFile, fileName.c_str(), "rb");
     if (pFile) {
         fseek(pFile, 0, SEEK_END);
@@ -73,4 +81,31 @@ bool virtualFileExists(const std::string &fileName) {
         return true;
     }
     return false;
+}
+
+std::unique_ptr<char[]> loadDataFromVirtualFile(
+    const char *filename,
+    size_t &retSize) {
+    if (!virtualFileExists(filename)) {
+        retSize = 0;
+        return nullptr;
+    }
+    std::unique_ptr<char[]> ret;
+
+    auto it = NEO::virtualFileList.find(filename);
+    std::stringstream &fileStream = it->second;
+
+    fileStream.seekg(0, std::ios::end);
+    retSize = static_cast<size_t>(fileStream.tellg());
+    fileStream.seekg(0, std::ios::beg);
+
+    ret.reset(new (std::nothrow) char[retSize + 1]);
+    if (ret) {
+        memset(ret.get(), 0x00, retSize + 1);
+        fileStream.read(ret.get(), retSize);
+    } else {
+        retSize = 0;
+    }
+
+    return ret;
 }

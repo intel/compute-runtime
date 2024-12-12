@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ void addSlash(std::string &path);
 
 std::vector<char> readBinaryFile(const std::string &fileName);
 
+void istreamToVectorOfStrings(std::istream &input, std::vector<std::string> &lines, bool replaceTabs = false);
 void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs = false);
 void setProductFamilyForIga(const std::string &device, IgaWrapper *iga, OclocArgHelper *argHelper);
 

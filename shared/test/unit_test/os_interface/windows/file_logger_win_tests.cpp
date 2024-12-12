@@ -25,7 +25,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -82,7 +82,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     auto executionEnvironment = std::unique_ptr<ExecutionEnvironment>(MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u));

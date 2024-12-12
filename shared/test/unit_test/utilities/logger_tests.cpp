@@ -93,7 +93,7 @@ TEST(FileLogger, GivenDisabledDebugFunctinalityWhenLoggingApiCallsThenFileIsNotC
     FullyDisabledFileLogger fileLogger(std::string("  "), flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     fileLogger.logApiCall("searchString", true, 0);
@@ -109,22 +109,21 @@ TEST(FileLogger, GivenIncorrectFilenameFileWhenLoggingApiCallsThenFileIsNotCreat
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(std::string("test.log"), flags);
-    fileLogger.useRealFiles(true);
     fileLogger.writeToFile("", "", 0, std::ios_base::in | std::ios_base::out);
 
     EXPECT_FALSE(fileLogger.wasFileCreated(fileLogger.getLogFileName()));
+    EXPECT_FALSE(virtualFileExists(fileLogger.getLogFileName()));
 }
 
 TEST(FileLogger, GivenCorrectFilenameFileWhenLoggingApiCallsThenFileIsCreated) {
     std::string testFile = "testfile";
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(true);
     fileLogger.writeToFile(testFile, "test", 4, std::fstream::out);
 
-    EXPECT_TRUE(fileExists(testFile));
-    if (fileExists(testFile)) {
-        std::remove(testFile.c_str());
+    EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
+    if (virtualFileExists(fileLogger.getLogFileName())) {
+        removeVirtualFile(fileLogger.getLogFileName());
     }
 }
 
@@ -133,12 +132,11 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewInstanceThenOldFileIsRemoved) {
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(true);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
-    EXPECT_TRUE(fileExists(fileLogger.getLogFileName()));
+    EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
     FullyEnabledFileLogger fileLogger2(testFile, flags);
-    EXPECT_FALSE(fileExists(fileLogger.getLogFileName()));
+    EXPECT_FALSE(virtualFileExists(fileLogger.getLogFileName()));
 }
 
 TEST(FileLogger, GivenSameFileNameWhenCreatingNewFullyDisabledLoggerThenOldFileIsNotRemoved) {
@@ -146,13 +144,14 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewFullyDisabledLoggerThenOldFileI
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
-    fileLogger.useRealFiles(true);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
-    EXPECT_TRUE(fileExists(fileLogger.getLogFileName()));
+    EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
     FullyDisabledFileLogger fileLogger2(testFile, flags);
-    EXPECT_TRUE(fileExists(fileLogger.getLogFileName()));
-    std::remove(fileLogger.getLogFileName());
+    EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
+    if (virtualFileExists(fileLogger.getLogFileName())) {
+        removeVirtualFile(fileLogger.getLogFileName());
+    }
 }
 
 TEST(FileLogger, GivenFlagIsFalseWhenLoggingThenOnlyCustomLogsAreDumped) {
@@ -163,7 +162,7 @@ TEST(FileLogger, GivenFlagIsFalseWhenLoggingThenOnlyCustomLogsAreDumped) {
     FullyEnabledFileLogger fileLogger(testFile, flags);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     fileLogger.logApiCall("searchString", true, 0);
@@ -554,7 +553,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 
     // Log file not created
-    bool logFileCreated = fileExists(fileLogger.getLogFileName());
+    bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
 
     testing::internal::CaptureStdout();

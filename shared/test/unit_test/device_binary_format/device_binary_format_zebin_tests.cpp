@@ -8,7 +8,6 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
@@ -135,8 +134,8 @@ TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinar
     std::string unpackWarnings;
     std::string fileName = "dumped_zebin_module.elf";
     std::string fileNameInc = "dumped_zebin_module_0.elf";
-    EXPECT_FALSE(fileExists(fileName));
-    EXPECT_FALSE(fileExists(fileNameInc));
+    EXPECT_FALSE(virtualFileExists(fileName));
+    EXPECT_FALSE(virtualFileExists(fileNameInc));
 
     NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
     EXPECT_TRUE(virtualFileExists(fileName));

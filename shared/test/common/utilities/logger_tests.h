@@ -7,24 +7,32 @@
 
 #pragma once
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 
 #include <map>
+
+namespace NEO {
+extern std::map<std::string, std::stringstream> virtualFileList;
+} // namespace NEO
 
 template <DebugFunctionalityLevel debugLevel>
 class TestFileLogger : public NEO::FileLogger<debugLevel> {
   public:
     using NEO::FileLogger<debugLevel>::FileLogger;
 
-    ~TestFileLogger() override {
-        std::remove(NEO::FileLogger<debugLevel>::logFileName.c_str());
+    TestFileLogger(std::string filename, const NEO::DebugVariables &flags) : NEO::FileLogger<debugLevel>(filename, flags) {
+        if (NEO::FileLogger<debugLevel>::enabled() && virtualFileExists(this->getLogFileName())) {
+            removeVirtualFile(this->getLogFileName());
+        }
     }
 
-    void useRealFiles(bool value) {
-        mockFileSystem = !value;
+    ~TestFileLogger() override {
+        if (virtualFileExists(this->getLogFileName())) {
+            removeVirtualFile(this->getLogFileName());
+        }
     }
 
     void writeToFile(std::string filename,
@@ -32,27 +40,20 @@ class TestFileLogger : public NEO::FileLogger<debugLevel> {
                      size_t length,
                      std::ios_base::openmode mode) override {
 
-        savedFiles[filename] << std::string(str, str + length);
-        if (mockFileSystem == false) {
-            NEO::FileLogger<debugLevel>::writeToFile(filename, str, length, mode);
-        }
-    };
+        NEO::FileLogger<debugLevel>::writeToFile(filename, str, length, mode);
+    }
 
     int32_t createdFilesCount() {
-        return static_cast<int32_t>(savedFiles.size());
+        return static_cast<int32_t>(NEO::virtualFileList.size());
     }
 
     bool wasFileCreated(std::string filename) {
-        return savedFiles.find(filename) != savedFiles.end();
+        return virtualFileExists(filename);
     }
 
     std::string getFileString(std::string filename) {
-        return savedFiles[filename].str();
+        return NEO::virtualFileList[filename].str();
     }
-
-  protected:
-    bool mockFileSystem = true;
-    std::map<std::string, std::stringstream> savedFiles;
 };
 
 using FullyEnabledFileLogger = TestFileLogger<DebugFunctionalityLevel::full>;

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/stdio.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 
 #include "gtest/gtest.h"
 
@@ -14,29 +14,30 @@
 
 TEST(FileIO, GivenNonEmptyFileWhenCheckingIfHasSizeThenReturnTrue) {
     std::string fileName("fileIO.bin");
-    std::remove(fileName.c_str());
-    ASSERT_FALSE(fileExists(fileName.c_str()));
+    if (virtualFileExists(fileName)) {
+        removeVirtualFile(fileName);
+    }
 
-    FILE *fp = nullptr;
-    fopen_s(&fp, fileName.c_str(), "wb");
-    ASSERT_NE(nullptr, fp);
-    fprintf(fp, "TEST");
-    fclose(fp);
+    ASSERT_FALSE(virtualFileExists(fileName.c_str()));
 
-    EXPECT_TRUE(fileExists(fileName.c_str()));
+    writeDataToFile(fileName.c_str(), "TEST", 4);
+
+    EXPECT_TRUE(virtualFileExists(fileName.c_str()));
     EXPECT_TRUE(fileExistsHasSize(fileName.c_str()));
+    removeVirtualFile(fileName);
 }
 
 TEST(FileIO, GivenEmptyFileWhenCheckingIfHasSizeThenReturnFalse) {
     std::string fileName("fileIO.bin");
-    std::remove(fileName.c_str());
-    ASSERT_FALSE(fileExists(fileName.c_str()));
+    if (virtualFileExists(fileName)) {
+        removeVirtualFile(fileName);
+    }
 
-    FILE *fp = nullptr;
-    fopen_s(&fp, fileName.c_str(), "wb");
-    ASSERT_NE(nullptr, fp);
-    fclose(fp);
+    ASSERT_FALSE(virtualFileExists(fileName.c_str()));
 
-    EXPECT_TRUE(fileExists(fileName.c_str()));
+    writeDataToFile(fileName.c_str(), "", 0);
+
+    EXPECT_TRUE(virtualFileExists(fileName.c_str()));
     EXPECT_FALSE(fileExistsHasSize(fileName.c_str()));
+    removeVirtualFile(fileName);
 }

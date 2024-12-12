@@ -9,3 +9,6 @@
 
 bool virtualFileExists(const std::string &fileName);
 void removeVirtualFile(const std::string &fileName);
+std::unique_ptr<char[]> loadDataFromVirtualFile(
+    const char *filename,
+    size_t &retSize);

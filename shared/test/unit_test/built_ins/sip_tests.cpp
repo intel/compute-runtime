@@ -30,11 +30,11 @@
 
 #include "common/StateSaveAreaHeader.h"
 
-#include <set>
+#include <map>
 
 using namespace NEO;
 namespace NEO {
-extern std::set<std::string> virtualFileList;
+extern std::map<std::string, std::stringstream> virtualFileList;
 }
 
 struct RawBinarySipFixture : public DeviceWithoutSipFixture {

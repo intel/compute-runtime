@@ -10,7 +10,7 @@
 #include "shared/test/common/helpers/mock_file_io.h"
 
 namespace NEO {
-std::set<std::string> virtualFileList;
+std::map<std::string, std::stringstream> virtualFileList;
 
 void VirtualFileSystemListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 }

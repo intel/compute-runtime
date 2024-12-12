@@ -51,16 +51,13 @@ extern Environment *gEnvironment;
 namespace NEO {
 
 void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {
-    std::ofstream myfile(nameOfFileWithArgs);
-    if (myfile.is_open()) {
-        for (int i = 0; i < numOfBuild; i++) {
-            for (auto singleArg : singleArgs)
-                myfile << singleArg + " ";
-            myfile << std::endl;
+
+    for (int i = 0; i < numOfBuild; i++) {
+        for (auto singleArg : singleArgs) {
+            filesMap[nameOfFileWithArgs.c_str()] += std::string(singleArg + " ");
         }
-        myfile.close();
-    } else
-        ASSERT_TRUE(false) << "Unable to open file\n";
+        filesMap[nameOfFileWithArgs.c_str()] += std::string("\n");
+    }
 }
 
 void MultiCommandTests::deleteFileWithArgs() {

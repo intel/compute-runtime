@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,13 +10,21 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/utilities/directory.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "opencl/source/utilities/cl_logger.h"
 
 #include <map>
 
-using FullyEnabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::full>;
-using FullyDisabledClFileLogger = NEO::ClFileLogger<DebugFunctionalityLevel::none>;
+template <DebugFunctionalityLevel debugLevel>
+class TestClFileLogger : public NEO::ClFileLogger<debugLevel> {
+  public:
+    TestClFileLogger(TestFileLogger<debugLevel> &baseLoggerInm, const NEO::DebugVariables &flags)
+        : NEO::ClFileLogger<debugLevel>(baseLoggerInm, flags), baseLogger(baseLoggerInm) { ; }
+
+  protected:
+    TestFileLogger<debugLevel> &baseLogger;
+};
 
 template <bool debugFunctionality>
 class TestLoggerApiEnterWrapper : public NEO::LoggerApiEnterWrapper<debugFunctionality> {
@@ -29,3 +37,6 @@ class TestLoggerApiEnterWrapper : public NEO::LoggerApiEnterWrapper<debugFunctio
 
     bool loggedEnter = false;
 };
+
+using FullyEnabledClFileLogger = TestClFileLogger<DebugFunctionalityLevel::full>;
+using FullyDisabledClFileLogger = TestClFileLogger<DebugFunctionalityLevel::none>;

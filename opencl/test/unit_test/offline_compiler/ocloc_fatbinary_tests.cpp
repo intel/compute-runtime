@@ -32,7 +32,7 @@
 extern Environment *gEnvironment;
 
 namespace NEO {
-extern std::set<std::string> virtualFileList;
+extern std::map<std::string, std::stringstream> virtualFileList;
 
 auto searchInArchiveByFilename(const Ar::Ar &archive, const ConstStringRef &name) {
     const auto isSearchedFile = [&name](const auto &file) {
