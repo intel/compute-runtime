@@ -286,6 +286,9 @@ class MemoryManager {
 
     virtual void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
     virtual void createDeviceSpecificMemResources(uint32_t rootDeviceIndex){};
+    virtual void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex){};
+    virtual bool reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) { return true; };
+
     void reInitLatestContextId() {
         latestContextId = std::numeric_limits<uint32_t>::max();
     }
