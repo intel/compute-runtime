@@ -4066,7 +4066,7 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
 
         if (signalEvent->isUsingContextEndOffset() && Event::standaloneInOrderTimestampAllocationEnabled()) {
             signalEvent->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
-            if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() == 1) {
+            if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
                 signalEvent->hostEventSetValue(Event::STATE_INITIAL);
             }
         }

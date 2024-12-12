@@ -1785,11 +1785,11 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenAssign
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
 
-    debugManager.flags.ClearStandaloneInOrderTimestampAllocation.set(1);
+    debugManager.flags.ClearStandaloneInOrderTimestampAllocation.set(0);
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[1]->toHandle(), 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(123u, *tag0Data);
-    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag1Data);
+    EXPECT_EQ(456u, *tag1Data);
+    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag0Data);
 }
 
 HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenAssignAllocation, IsAtLeastXeHpCore) {
