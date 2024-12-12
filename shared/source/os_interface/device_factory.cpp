@@ -243,6 +243,7 @@ std::unique_ptr<Device> DeviceFactory::createDevice(ExecutionEnvironment &execut
         return device;
     }
 
+    executionEnvironment.memoryManager->reInitDeviceSpecificGfxPartition(rootDeviceIndex);
     executionEnvironment.memoryManager->createDeviceSpecificMemResources(rootDeviceIndex);
     executionEnvironment.memoryManager->reInitLatestContextId();
     device = createRootDeviceFunc(executionEnvironment, rootDeviceIndex);

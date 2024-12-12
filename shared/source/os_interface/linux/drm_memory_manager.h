@@ -100,6 +100,8 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, void *mappedPtr, bool reuseSharedAllocation);
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override;
+    void releaseDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;
+    bool reInitDeviceSpecificGfxPartition(uint32_t rootDeviceIndex) override;
     bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override;
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     size_t getSizeOfChunk(size_t allocSize);

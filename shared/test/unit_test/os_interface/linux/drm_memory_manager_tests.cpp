@@ -8162,3 +8162,46 @@ TEST_F(DrmMemoryManagerTest, givenVmAdviseAtomicAttributeNotPresentWhenCreateSha
 
     memoryManager->freeGraphicsMemory(sharedUSM);
 }
+
+TEST_F(DrmMemoryManagerTest, givenGfxPartitionWhenReleasedAndReinitializedThenNewGfxPartitionIsCorrect) {
+
+    auto gfxPartition = memoryManager->getGfxPartition(0);
+
+    auto heapExternal = gfxPartition->getHeapBase(HeapIndex::heapExternal);
+    auto heapStandard = gfxPartition->getHeapBase(HeapIndex::heapStandard);
+    auto heapStandard64KB = gfxPartition->getHeapBase(HeapIndex::heapStandard64KB);
+    auto heapSvm = gfxPartition->getHeapBase(HeapIndex::heapSvm);
+    auto heapExtended = gfxPartition->getHeapBase(HeapIndex::heapExtended);
+    auto heapExternalFrontWindow = gfxPartition->getHeapBase(HeapIndex::heapExternalFrontWindow);
+    auto heapExternalDeviceFrontWindow = gfxPartition->getHeapBase(HeapIndex::heapExternalDeviceFrontWindow);
+    auto heapInternalFrontWindow = gfxPartition->getHeapBase(HeapIndex::heapInternalFrontWindow);
+    auto heapInternalDeviceFrontWindow = gfxPartition->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow);
+
+    memoryManager->releaseDeviceSpecificGfxPartition(0);
+    EXPECT_EQ(nullptr, memoryManager->getGfxPartition(0));
+    memoryManager->reInitDeviceSpecificGfxPartition(0);
+
+    EXPECT_NE(nullptr, memoryManager->getGfxPartition(0));
+
+    gfxPartition = memoryManager->getGfxPartition(0);
+
+    auto heapExternal2 = gfxPartition->getHeapBase(HeapIndex::heapExternal);
+    auto heapStandard2 = gfxPartition->getHeapBase(HeapIndex::heapStandard);
+    auto heapStandard64KB2 = gfxPartition->getHeapBase(HeapIndex::heapStandard64KB);
+    auto heapSvm2 = gfxPartition->getHeapBase(HeapIndex::heapSvm);
+    auto heapExtended2 = gfxPartition->getHeapBase(HeapIndex::heapExtended);
+    auto heapExternalFrontWindow2 = gfxPartition->getHeapBase(HeapIndex::heapExternalFrontWindow);
+    auto heapExternalDeviceFrontWindow2 = gfxPartition->getHeapBase(HeapIndex::heapExternalDeviceFrontWindow);
+    auto heapInternalFrontWindow2 = gfxPartition->getHeapBase(HeapIndex::heapInternalFrontWindow);
+    auto heapInternalDeviceFrontWindow2 = gfxPartition->getHeapBase(HeapIndex::heapInternalDeviceFrontWindow);
+
+    EXPECT_EQ(heapExternal, heapExternal2);
+    EXPECT_EQ(heapStandard, heapStandard2);
+    EXPECT_EQ(heapStandard64KB, heapStandard64KB2);
+    EXPECT_EQ(heapSvm, heapSvm2);
+    EXPECT_EQ(heapExtended, heapExtended2);
+    EXPECT_EQ(heapExternalFrontWindow, heapExternalFrontWindow2);
+    EXPECT_EQ(heapExternalDeviceFrontWindow, heapExternalDeviceFrontWindow2);
+    EXPECT_EQ(heapInternalFrontWindow, heapInternalFrontWindow2);
+    EXPECT_EQ(heapInternalDeviceFrontWindow, heapInternalDeviceFrontWindow2);
+}
