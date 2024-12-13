@@ -547,9 +547,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
     MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto isHeapless = compilerProductHelper.isHeaplessModeEnabled();
-    auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
+    auto initialCompletionValue = commandStreamReceiver.peekLatestSentTaskCount();
 
     for (auto i = 0u; i < 2; i++) {
         mockBO.passedExecParams.clear();
@@ -558,7 +556,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
         ASSERT_EQ(1u, mockBO.passedExecParams.size());
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
 
-        auto expectedCompletionValue = isHeaplessStateInit ? (i + 2) : (i + 1);
+        auto expectedCompletionValue = i + 1 + initialCompletionValue;
 
         EXPECT_EQ(expectedCompletionValue, mockBO.passedExecParams[0].completionValue);
     }
@@ -593,9 +591,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
     MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto isHeapless = compilerProductHelper.isHeaplessModeEnabled();
-    auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
+    auto initialCompletionValue = commandStreamReceiver.peekLatestSentTaskCount();
 
     for (auto i = 0u; i < 2; i++) {
         mockBO.passedExecParams.clear();
@@ -604,7 +600,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
         ASSERT_EQ(1u, mockBO.passedExecParams.size());
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
 
-        auto expectedCompletionValue = isHeaplessStateInit ? (i + 2) : (i + 1);
+        auto expectedCompletionValue = i + 1 + initialCompletionValue;
         EXPECT_EQ(expectedCompletionValue, mockBO.passedExecParams[0].completionValue);
     }
     ringBuffer->getBufferObjectToModify(0) = initialBO;
@@ -644,9 +640,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
     MockBufferObject mockBO(0, drm);
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
-    auto &compilerProductHelper = device->getCompilerProductHelper();
-    auto isHeapless = compilerProductHelper.isHeaplessModeEnabled();
-    auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(isHeapless);
+    auto initialCompletionValue = commandStreamReceiver.peekLatestSentTaskCount();
 
     for (auto i = 0u; i < 2; i++) {
         mockBO.passedExecParams.clear();
@@ -655,7 +649,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
         ASSERT_EQ(2u, mockBO.passedExecParams.size());
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
 
-        auto expectedCompletionValue = isHeaplessStateInit ? (i + 2) : (i + 1);
+        auto expectedCompletionValue = i + initialCompletionValue + 1;
         EXPECT_EQ(expectedCompletionValue, mockBO.passedExecParams[0].completionValue);
 
         EXPECT_EQ(completionFenceBaseGpuAddress + commandStreamReceiver.getImmWritePostSyncWriteOffset(), mockBO.passedExecParams[1].completionGpuAddress);
