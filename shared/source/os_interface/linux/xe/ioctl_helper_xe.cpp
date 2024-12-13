@@ -574,9 +574,9 @@ bool IoctlHelperXe::getTopologyDataAndMap(const HardwareInfo &hwInfo, DrmQueryTo
     return receivedDssInfo;
 }
 
-void IoctlHelperXe::updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size) {
+void IoctlHelperXe::updateBindInfo(uint64_t userPtr) {
     std::unique_lock<std::mutex> lock(xeLock);
-    BindInfo b = {handle, userPtr, 0, size};
+    BindInfo b = {userPtr, 0};
     bindInfo.push_back(b);
 }
 
@@ -648,7 +648,6 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     xeLog(" -> IoctlHelperXe::%s [%d,%d] vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           mem.memoryClass, mem.memoryInstance,
           create.vm_id, create.size, create.flags, create.placement, handle, create.cpu_caching, ret);
-    updateBindInfo(create.handle, 0u, create.size);
     return ret;
 }
 
@@ -690,7 +689,6 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     xeLog(" -> IoctlHelperXe::%s vmid=0x%x s=0x%lx f=0x%x p=0x%x h=0x%x c=%hu r=%d\n", __FUNCTION__,
           create.vm_id, create.size, create.flags, create.placement, create.handle, create.cpu_caching, ret);
     DEBUG_BREAK_IF(ret != 0);
-    updateBindInfo(create.handle, 0u, create.size);
     return create.handle;
 }
 
@@ -1098,7 +1096,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::gemUserptr: {
         GemUserPtr *d = static_cast<GemUserPtr *>(arg);
-        updateBindInfo(0, d->userPtr, d->userSize);
+        updateBindInfo(d->userPtr);
         ret = 0;
         xeLog(" -> IoctlHelperXe::ioctl GemUserptr p=0x%llx s=0x%llx f=0x%x h=0x%x r=%d\n", d->userPtr,
               d->userSize, d->flags, d->handle, ret);
@@ -1149,40 +1147,26 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::gemClose: {
         std::unique_lock<std::mutex> lock(gemCloseLock);
         struct GemClose *d = static_cast<struct GemClose *>(arg);
-        int found = -1;
         xeShowBindTable();
         bool isUserptr = false;
-        for (unsigned int i = 0; i < bindInfo.size(); i++) {
-            if (d->handle && d->handle == bindInfo[i].handle) {
-                found = i;
-                break;
-            }
-            if (d->userptr && d->userptr == bindInfo[i].userptr) {
-                found = i;
-                isUserptr = true;
-                break;
+        if (d->userptr) {
+            std::unique_lock<std::mutex> lock(xeLock);
+            for (unsigned int i = 0; i < bindInfo.size(); i++) {
+                if (d->userptr == bindInfo[i].userptr) {
+                    isUserptr = true;
+                    xeLog(" removing 0x%x 0x%lx\n",
+                          bindInfo[i].userptr,
+                          bindInfo[i].addr);
+                    bindInfo.erase(bindInfo.begin() + i);
+                    ret = 0;
+                    break;
+                }
             }
         }
-        if (found != -1) {
-            xeLog(" removing %d: 0x%x 0x%lx 0x%lx\n",
-                  found,
-                  bindInfo[found].handle,
-                  bindInfo[found].userptr,
-                  bindInfo[found].addr);
-            {
-                std::unique_lock<std::mutex> lock(xeLock);
-                bindInfo.erase(bindInfo.begin() + found);
-            }
-            if (isUserptr) {
-                // nothing to do under XE
-                ret = 0;
-            } else {
-                ret = IoctlHelper::ioctl(request, arg);
-            }
-        } else {
-            ret = 0; // let it pass trough for now
+        if (!isUserptr) {
+            ret = IoctlHelper::ioctl(request, arg);
         }
-        xeLog(" -> IoctlHelperXe::ioctl GemClose found=%d h=0x%x r=%d\n", found, d->handle, ret);
+        xeLog(" -> IoctlHelperXe::ioctl GemClose h=0x%x r=%d\n", d->handle, ret);
     } break;
     case DrmIoctl::gemVmCreate: {
         GemVmControl *vmControl = static_cast<GemVmControl *>(arg);
@@ -1263,13 +1247,11 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
 void IoctlHelperXe::xeShowBindTable() {
     if (debugManager.flags.PrintXeLogs.get()) {
         std::unique_lock<std::mutex> lock(xeLock);
-        xeLog("show bind: (<index> <handle> <userptr> <addr> <size>)\n", "");
+        xeLog("show bind: (<index> <userptr> <addr>)\n", "");
         for (unsigned int i = 0; i < bindInfo.size(); i++) {
-            xeLog(" %3d x%08x x%016lx x%016lx x%016lx\n", i,
-                  bindInfo[i].handle,
+            xeLog(" %3d x%016lx x%016lx\n", i,
                   bindInfo[i].userptr,
-                  bindInfo[i].addr,
-                  bindInfo[i].size);
+                  bindInfo[i].addr);
         }
     }
 }
@@ -1307,117 +1289,107 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
 }
 
 int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
-    constexpr int invalidIndex = -1;
     auto gmmHelper = drm.getRootDeviceEnvironment().getGmmHelper();
     int ret = -1;
     const char *operation = isBind ? "bind" : "unbind";
-    int index = invalidIndex;
+
+    uint64_t userptr = 0u;
+    {
+        std::unique_lock<std::mutex> lock(xeLock);
+        if (isBind) {
+            if (vmBindParams.userptr) {
+                for (auto i = 0u; i < bindInfo.size(); i++) {
+                    if (vmBindParams.userptr == bindInfo[i].userptr) {
+                        userptr = bindInfo[i].userptr;
+                        bindInfo[i].addr = gmmHelper->decanonize(vmBindParams.start);
+                        break;
+                    }
+                }
+            }
+        } else // unbind
+        {
+            auto address = gmmHelper->decanonize(vmBindParams.start);
+            for (auto i = 0u; i < bindInfo.size(); i++) {
+                if (address == bindInfo[i].addr) {
+                    userptr = bindInfo[i].userptr;
+                    break;
+                }
+            }
+        }
+    }
+
+    drm_xe_vm_bind bind = {};
+    bind.vm_id = vmBindParams.vmId;
+    bind.num_syncs = 1;
+    bind.num_binds = 1;
+
+    bind.bind.range = vmBindParams.length;
+    bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
+    bind.bind.obj_offset = vmBindParams.offset;
+    bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
+    bind.bind.extensions = vmBindParams.extensions;
+    bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
+
+    UNRECOVERABLE_IF(vmBindParams.userFence == 0x0);
+    drm_xe_sync sync[1] = {};
+
+    auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.userFence);
+    UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
+
+    sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
+    sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
+    sync[0].addr = xeBindExtUserFence->addr;
+    sync[0].timeline_value = xeBindExtUserFence->value;
+    bind.syncs = reinterpret_cast<uintptr_t>(&sync);
 
     if (isBind) {
-        for (auto i = 0u; i < bindInfo.size(); i++) {
-            if (vmBindParams.handle && vmBindParams.handle == bindInfo[i].handle) {
-                index = i;
-                break;
-            }
-            if (vmBindParams.userptr && vmBindParams.userptr == bindInfo[i].userptr) {
-                index = i;
-                break;
-            }
-        }
-    } else // unbind
-    {
-        auto address = gmmHelper->decanonize(vmBindParams.start);
-        for (auto i = 0u; i < bindInfo.size(); i++) {
-            if (address == bindInfo[i].addr) {
-                index = i;
-                break;
-            }
-        }
-    }
-
-    if (index != invalidIndex) {
-        drm_xe_vm_bind bind = {};
-        bind.vm_id = vmBindParams.vmId;
-        bind.num_syncs = 1;
-        bind.num_binds = 1;
-
-        bind.bind.range = vmBindParams.length;
-        bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
-        bind.bind.obj_offset = vmBindParams.offset;
-        bind.bind.pat_index = static_cast<uint16_t>(vmBindParams.patIndex);
-        bind.bind.extensions = vmBindParams.extensions;
-        bind.bind.flags = static_cast<uint32_t>(vmBindParams.flags);
-
-        UNRECOVERABLE_IF(vmBindParams.userFence == 0x0);
-        drm_xe_sync sync[1] = {};
-
-        auto xeBindExtUserFence = reinterpret_cast<UserFenceExtension *>(vmBindParams.userFence);
-        UNRECOVERABLE_IF(xeBindExtUserFence->tag != UserFenceExtension::tagValue);
-
-        sync[0].type = DRM_XE_SYNC_TYPE_USER_FENCE;
-        sync[0].flags = DRM_XE_SYNC_FLAG_SIGNAL;
-        sync[0].addr = xeBindExtUserFence->addr;
-        sync[0].timeline_value = xeBindExtUserFence->value;
-        bind.syncs = reinterpret_cast<uintptr_t>(&sync);
-
-        if (isBind) {
-            bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
-            bind.bind.obj = vmBindParams.handle;
-            if (bindInfo[index].userptr) {
-                bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
-                bind.bind.obj = 0;
-                bind.bind.obj_offset = bindInfo[index].userptr;
-            }
-        } else {
-            bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
+        bind.bind.op = DRM_XE_VM_BIND_OP_MAP;
+        bind.bind.obj = vmBindParams.handle;
+        if (userptr) {
+            bind.bind.op = DRM_XE_VM_BIND_OP_MAP_USERPTR;
             bind.bind.obj = 0;
-            if (bindInfo[index].userptr) {
-                bind.bind.obj_offset = bindInfo[index].userptr;
-            }
+            bind.bind.obj_offset = userptr;
         }
-
-        bindInfo[index].addr = bind.bind.addr;
-
-        ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
-
-        xeLog(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d pat=%hu ret=%d\n",
-              bind.vm_id,
-              bind.bind.obj,
-              bind.bind.obj_offset,
-              bind.bind.range,
-              bind.bind.addr,
-              bind.bind.op,
-              xeGetBindOperationName(bind.bind.op),
-              bind.bind.flags,
-              xeGetBindFlagNames(bind.bind.flags).c_str(),
-              bind.num_syncs,
-              bind.bind.pat_index,
-              ret);
-
-        if (ret != 0) {
-            xeLog("error: %s\n", operation);
-            return ret;
+    } else {
+        bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
+        bind.bind.obj = 0;
+        if (userptr) {
+            bind.bind.obj_offset = userptr;
         }
-
-        constexpr auto oneSecTimeout = 1000000000ll;
-        constexpr auto infiniteTimeout = -1;
-        bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
-        uint64_t timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
-        if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
-            timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
-        }
-        return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
-                               sync[0].addr,
-                               sync[0].timeline_value, timeout,
-                               false, NEO::InterruptId::notUsed, nullptr);
     }
 
-    xeLog("error:  -> IoctlHelperXe::%s %s index=%d vmid=0x%x h=0x%x s=0x%llx o=0x%llx l=0x%llx f=0x%llx pat=%hu r=%d\n",
-          __FUNCTION__, operation, index, vmBindParams.vmId,
-          vmBindParams.handle, vmBindParams.start, vmBindParams.offset,
-          vmBindParams.length, vmBindParams.flags, vmBindParams.patIndex, ret);
+    ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
 
-    return ret;
+    xeLog(" vm=%d obj=0x%x off=0x%llx range=0x%llx addr=0x%llx operation=%d(%s) flags=%d(%s) nsy=%d pat=%hu ret=%d\n",
+          bind.vm_id,
+          bind.bind.obj,
+          bind.bind.obj_offset,
+          bind.bind.range,
+          bind.bind.addr,
+          bind.bind.op,
+          xeGetBindOperationName(bind.bind.op),
+          bind.bind.flags,
+          xeGetBindFlagNames(bind.bind.flags).c_str(),
+          bind.num_syncs,
+          bind.bind.pat_index,
+          ret);
+
+    if (ret != 0) {
+        xeLog("error: %s\n", operation);
+        return ret;
+    }
+
+    constexpr auto oneSecTimeout = 1000000000ll;
+    constexpr auto infiniteTimeout = -1;
+    bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    uint64_t timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
+    if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
+        timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
+    }
+    return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
+                           sync[0].addr,
+                           sync[0].timeline_value, timeout,
+                           false, NEO::InterruptId::notUsed, nullptr);
 }
 
 std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
@@ -1535,11 +1507,6 @@ bool IoctlHelperXe::setGemTiling(void *setTiling) {
 
 bool IoctlHelperXe::getGemTiling(void *setTiling) {
     return true;
-}
-
-void IoctlHelperXe::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {
-    xeLog(" -> IoctlHelperXe::%s s=0x%lx h=0x%x\n", __FUNCTION__, size, handle);
-    updateBindInfo(handle, 0, size);
 }
 
 bool IoctlHelperXe::isImmediateVmBindRequired() const {

@@ -368,15 +368,13 @@ TEST(IoctlHelperXeTest, givenDebuggingEnabledWhenCallingVmBindThenWaitUserFenceI
     uint64_t fenceAddress = 0x4321;
     uint64_t fenceValue = 0x789;
 
-    BindInfo mockBindInfo{};
-    mockBindInfo.handle = 0x1234;
-    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
+    auto handle = 0x1234u;
 
     VmBindExtUserFenceT vmBindExtUserFence{};
     xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
 
     VmBindParams vmBindParams{};
-    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.handle = handle;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));

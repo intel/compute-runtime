@@ -27,10 +27,8 @@ struct drm_xe_query_config;          // NOLINT(readability-identifier-naming)
 enum class EngineClass : uint16_t;
 
 struct BindInfo {
-    uint32_t handle;
     uint64_t userptr;
     uint64_t addr;
-    uint64_t size;
 };
 
 class IoctlHelperXe : public IoctlHelper {
@@ -116,7 +114,6 @@ class IoctlHelperXe : public IoctlHelper {
     void setupIpVersion() override;
 
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
-    void fillBindInfoForIpcHandle(uint32_t handle, size_t size) override;
     bool getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) override;
     bool isImmediateVmBindRequired() const override;
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) override;
@@ -147,7 +144,7 @@ class IoctlHelperXe : public IoctlHelper {
     void setupXeWaitUserFenceStruct(void *arg, uint32_t ctxId, uint16_t op, uint64_t addr, uint64_t value, int64_t timeout);
     int xeVmBind(const VmBindParams &vmBindParams, bool bindOp);
     void xeShowBindTable();
-    void updateBindInfo(uint32_t handle, uint64_t userPtr, uint64_t size);
+    void updateBindInfo(uint64_t userPtr);
     int debuggerOpenIoctl(DrmIoctl request, void *arg);
     int debuggerMetadataCreateIoctl(DrmIoctl request, void *arg);
     int debuggerMetadataDestroyIoctl(DrmIoctl request, void *arg);

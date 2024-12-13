@@ -29,15 +29,15 @@ TEST(IoctlHelperXeMtTest, givenIoctlHelperXeWhenGemCloseIsCalledThenBindInfoIsPr
     auto totalNumHandles = maxThreads * numHandlesPerThread;
 
     for (auto i = 0u; i < totalNumHandles; i++) {
-        xeIoctlHelper->updateBindInfo(i + 1, 0, 0);
-        xeIoctlHelper->updateBindInfo(0, 2 * totalNumHandles + i + 1, 0);
+        xeIoctlHelper->updateBindInfo(i + 1);
+        xeIoctlHelper->updateBindInfo(2 * totalNumHandles + i + 1);
     }
     EXPECT_EQ(2 * totalNumHandles, xeIoctlHelper->bindInfo.size());
 
     auto closeFunction = [&](uint32_t threadId) {
         for (auto i = 0u; i < numHandlesPerThread; i++) {
             GemClose close = {};
-            close.handle = threadId * numHandlesPerThread + i + 1;
+            close.userptr = threadId * numHandlesPerThread + i + 1;
             auto ret = xeIoctlHelper->ioctl(DrmIoctl::gemClose, &close);
             EXPECT_EQ(0, ret);
         }
@@ -50,7 +50,6 @@ TEST(IoctlHelperXeMtTest, givenIoctlHelperXeWhenGemCloseIsCalledThenBindInfoIsPr
     }
     EXPECT_EQ(totalNumHandles, xeIoctlHelper->bindInfo.size());
     for (auto i = 0u; i < totalNumHandles; i++) {
-        EXPECT_EQ(0u, xeIoctlHelper->bindInfo[i].handle);
         EXPECT_EQ(2 * totalNumHandles + i + 1, xeIoctlHelper->bindInfo[i].userptr);
     }
 }

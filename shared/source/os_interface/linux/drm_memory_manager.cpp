@@ -1199,9 +1199,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(c
             return nullptr;
         }
 
-        auto handle = static_cast<uint32_t>(bo->getHandle());
-        ioctlHelper->fillBindInfoForIpcHandle(handle, size);
-
         auto getHeapIndex = [&] {
             if (requireSpecificBitness && this->force32bitAllocations) {
                 return HeapIndex::heapExternal;

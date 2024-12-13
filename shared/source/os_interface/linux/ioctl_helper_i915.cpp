@@ -552,8 +552,6 @@ bool IoctlHelperI915::translateTopologyInfo(const QueryTopologyInfo *queryTopolo
     return (sliceCount && subSliceCount && euCount);
 }
 
-void IoctlHelperI915::fillBindInfoForIpcHandle(uint32_t handle, size_t size) {}
-
 bool IoctlHelperI915::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) {
     return false;
 }

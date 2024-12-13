@@ -86,7 +86,7 @@ TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExt
 
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, allocSize, handle, patIndex, std::nullopt, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent));
-    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
 }
 
@@ -96,7 +96,7 @@ TEST_F(IoctlHelperXeGemCreateExtTests, givenIoctlHelperXeWhenCallingGemCreateExt
     GemVmControl test = {};
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, allocSize, handle, patIndex, test.vmId, pairHandle, isChunked, numOfChunks, std::nullopt, std::nullopt, isCoherent));
-    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
 }
 
@@ -134,7 +134,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThenP
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm->ioctlCnt.gemCreate);
-    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm->createParamsSize);
     EXPECT_EQ(0u, drm->createParamsFlags);
@@ -164,7 +164,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZeroTh
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm->ioctlCnt.gemCreate);
-    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm->createParamsSize);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
@@ -194,7 +194,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenPro
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
     uint32_t handle = xeIoctlHelper->createGem(size, memoryBanks, false);
     EXPECT_EQ(1, drm->ioctlCnt.gemCreate);
-    EXPECT_FALSE(xeIoctlHelper->bindInfo.empty());
+    EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm->createParamsSize);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
@@ -355,11 +355,6 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     EXPECT_NO_THROW(xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, 0, 0, 0));
 
     EXPECT_EQ(std::nullopt, xeIoctlHelper->getVmAdviseAtomicAttribute());
-
-    VmBindParams vmBindParams{};
-    EXPECT_EQ(-1, xeIoctlHelper->vmBind(vmBindParams));
-
-    EXPECT_EQ(-1, xeIoctlHelper->vmUnbind(vmBindParams));
 
     EXPECT_EQ(0u, xeIoctlHelper->getEuStallFdParameter());
 
@@ -608,7 +603,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         EXPECT_EQ(0, ret);
 
         EXPECT_EQ(test.userPtr, mockXeIoctlHelper->bindInfo[0].userptr);
-        EXPECT_EQ(0u, mockXeIoctlHelper->bindInfo[0].handle);
         GemClose cl = {};
         cl.userptr = test.userPtr;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::gemClose, &cl);
@@ -1519,16 +1513,12 @@ TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     uint64_t fenceAddress = 0x4321;
     uint64_t fenceValue = 0x789;
 
-    BindInfo mockBindInfo{};
-    mockBindInfo.handle = 0x1234;
-    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
-
     VmBindExtUserFenceT vmBindExtUserFence{};
 
     xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
 
     VmBindParams vmBindParams{};
-    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.handle = 0x1234;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm->vmBindInputs.clear();
@@ -1600,16 +1590,12 @@ TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWait
     uint64_t fenceAddress = 0x4321;
     uint64_t fenceValue = 0x789;
 
-    BindInfo mockBindInfo{};
-    mockBindInfo.handle = 0x1234;
-    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
-
     VmBindExtUserFenceT vmBindExtUserFence{};
 
     xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
 
     VmBindParams vmBindParams{};
-    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.handle = 0x1234;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm->vmBindInputs.clear();
@@ -1654,16 +1640,12 @@ TEST(IoctlHelperXeTest, whenGemVmBindFailsThenErrorIsPropagated) {
     uint64_t fenceAddress = 0x4321;
     uint64_t fenceValue = 0x789;
 
-    BindInfo mockBindInfo{};
-    mockBindInfo.handle = 0x1234;
-    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
-
     VmBindExtUserFenceT vmBindExtUserFence{};
 
     xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
 
     VmBindParams vmBindParams{};
-    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.handle = 0x1234;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm->waitUserFenceInputs.clear();
@@ -1686,16 +1668,12 @@ TEST(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
     uint64_t fenceAddress = 0x4321;
     uint64_t fenceValue = 0x789;
 
-    BindInfo mockBindInfo{};
-    mockBindInfo.handle = 0x1234;
-    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
-
     VmBindExtUserFenceT vmBindExtUserFence{};
 
     xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
 
     VmBindParams vmBindParams{};
-    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.handle = 0x1234;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     drm->waitUserFenceInputs.clear();
@@ -1727,10 +1705,8 @@ TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
     auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
 
     BindInfo mockBindInfo{};
-    mockBindInfo.handle = 1u;
     mockBindInfo.userptr = 2u;
     mockBindInfo.addr = 3u;
-    mockBindInfo.size = 4u;
     xeIoctlHelper->bindInfo.push_back(mockBindInfo);
 
     ::testing::internal::CaptureStderr();
@@ -1740,23 +1716,11 @@ TEST(IoctlHelperXeTest, whenXeShowBindTableIsCalledThenBindLogsArePrinted) {
     debugManager.flags.PrintXeLogs.set(false);
 
     std::string output = testing::internal::GetCapturedStderr();
-    std::string expectedOutput1 = "show bind: (<index> <handle> <userptr> <addr> <size>)\n";
-    std::string expectedOutput2 = "0 x00000001 x0000000000000002 x0000000000000003 x0000000000000004";
+    std::string expectedOutput1 = "show bind: (<index> <userptr> <addr>)\n";
+    std::string expectedOutput2 = "0 x0000000000000002 x0000000000000003";
 
     EXPECT_NE(std::string::npos, output.find(expectedOutput1));
-    EXPECT_NE(std::string::npos, output.find(expectedOutput2, expectedOutput1.size()));
-}
-
-TEST(IoctlHelperXeTest, whenFillBindInfoForIpcHandleIsCalledThenBindInfoIsCorrect) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
-    uint32_t handle = 100;
-    size_t size = 1024u;
-    xeIoctlHelper->fillBindInfoForIpcHandle(handle, size);
-    auto bindInfo = xeIoctlHelper->bindInfo[0];
-    EXPECT_EQ(bindInfo.handle, handle);
-    EXPECT_EQ(bindInfo.size, size);
+    EXPECT_NE(std::string::npos, output.find(expectedOutput2, expectedOutput1.size())) << output;
 }
 
 TEST(IoctlHelperXeTest, givenIoctlFailureWhenSetGpuCpuTimesIsCalledThenFalseIsReturned) {
@@ -1889,16 +1853,12 @@ TEST(IoctlHelperXeTest, whenCallingVmBindThenPatIndexIsSet) {
     uint64_t fenceValue = 0x789;
     uint64_t expectedPatIndex = 0xba;
 
-    BindInfo mockBindInfo{};
-    mockBindInfo.handle = 0x1234;
-    xeIoctlHelper->bindInfo.push_back(mockBindInfo);
-
     VmBindExtUserFenceT vmBindExtUserFence{};
 
     xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
 
     VmBindParams vmBindParams{};
-    vmBindParams.handle = mockBindInfo.handle;
+    vmBindParams.handle = 0x1234;
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
     vmBindParams.patIndex = expectedPatIndex;
 
@@ -2023,12 +1983,6 @@ TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenGemCloseIsCalledThenProperHand
     drm->gemCloseCalled = 0;
 
     BindInfo bindInfo{};
-
-    bindInfo.handle = 1;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-    bindInfo.handle = 2;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
     bindInfo = {};
     bindInfo.userptr = 1;
     ioctlHelper->bindInfo.push_back(bindInfo);
@@ -2069,13 +2023,6 @@ TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenVmBindIsCalledThenProperHandle
     drm->vmBindInputs.clear();
 
     BindInfo bindInfo{};
-
-    bindInfo.handle = 1;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-    bindInfo.handle = 2;
-    ioctlHelper->bindInfo.push_back(bindInfo);
-
-    bindInfo = {};
     bindInfo.userptr = 1;
     ioctlHelper->bindInfo.push_back(bindInfo);
     bindInfo.userptr = 2;
@@ -2124,9 +2071,9 @@ TEST(IoctlHelperXeTest, givenMultipleBindInfosWhenVmBindIsCalledThenProperHandle
 
     vmBindParams.handle = 0;
     vmBindParams.userptr = 0;
-    EXPECT_NE(0, ioctlHelper->vmBind(vmBindParams));
+    EXPECT_EQ(0, ioctlHelper->vmBind(vmBindParams));
 
-    EXPECT_EQ(0ul, drm->vmBindInputs.size());
+    EXPECT_EQ(1ul, drm->vmBindInputs.size());
 
     ioctlHelper->bindInfo.clear();
 }
