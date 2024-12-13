@@ -1504,7 +1504,7 @@ TEST(IoctlHelperXeTest, givenDisabledFtrMultiTileArchWhenCreatingEngineInfoThenM
 
 using IoctlHelperXeFenceWaitTest = ::testing::Test;
 
-TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
+TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenSyncObjectAdded) {
     DebugManagerStateRestore restorer;
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -1531,9 +1531,11 @@ TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
     EXPECT_EQ(1u, drm->vmBindInputs.size());
     EXPECT_EQ(1u, drm->syncInputs.size());
-    EXPECT_EQ(1u, drm->waitUserFenceInputs.size());
+    EXPECT_EQ(0u, drm->waitUserFenceInputs.size());
     auto expectedMask = std::numeric_limits<uint64_t>::max();
     auto expectedTimeout = 1000000000ll;
+    xeIoctlHelper->waitUserFence(0u, fenceAddress, fenceValue, static_cast<uint32_t>(Drm::ValueWidth::u64), expectedTimeout, 0, false, NEO::InterruptId::notUsed, nullptr);
+    EXPECT_EQ(1u, drm->waitUserFenceInputs.size());
     {
         auto &sync = drm->syncInputs[0];
 
@@ -1543,7 +1545,7 @@ TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         auto &waitUserFence = drm->waitUserFenceInputs[0];
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_GTE), waitUserFence.op);
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(expectedMask, waitUserFence.mask);
@@ -1558,6 +1560,8 @@ TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     EXPECT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
     EXPECT_EQ(1u, drm->vmBindInputs.size());
     EXPECT_EQ(1u, drm->syncInputs.size());
+    EXPECT_EQ(0u, drm->waitUserFenceInputs.size());
+    xeIoctlHelper->waitUserFence(0u, fenceAddress, fenceValue, static_cast<uint32_t>(Drm::ValueWidth::u64), expectedTimeout, 0, false, NEO::InterruptId::notUsed, nullptr);
     EXPECT_EQ(1u, drm->waitUserFenceInputs.size());
     {
         auto &sync = drm->syncInputs[0];
@@ -1568,7 +1572,7 @@ TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
         auto &waitUserFence = drm->waitUserFenceInputs[0];
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_GTE), waitUserFence.op);
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(expectedMask, waitUserFence.mask);
@@ -1579,7 +1583,7 @@ TEST_F(IoctlHelperXeFenceWaitTest, whenCallingVmBindThenWaitUserFenceIsCalled) {
     }
 }
 
-TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWaitUserFenceIsCalledWithSpecificTimeout) {
+TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutCalledThenWaitUserFenceIsCalledWithSpecificTimeout) {
     DebugManagerStateRestore restorer;
     debugManager.flags.VmBindWaitUserFenceTimeout.set(5000000000ll);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1608,9 +1612,12 @@ TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWait
     EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
     EXPECT_EQ(1u, drm->vmBindInputs.size());
     EXPECT_EQ(1u, drm->syncInputs.size());
-    EXPECT_EQ(1u, drm->waitUserFenceInputs.size());
+    EXPECT_EQ(0u, drm->waitUserFenceInputs.size());
+
     auto expectedMask = std::numeric_limits<uint64_t>::max();
     auto expectedTimeout = 5000000000ll;
+    xeIoctlHelper->waitUserFence(0u, fenceAddress, fenceValue, static_cast<uint32_t>(Drm::ValueWidth::u64), expectedTimeout, 0, false, NEO::InterruptId::notUsed, nullptr);
+    EXPECT_EQ(1u, drm->waitUserFenceInputs.size());
     {
         auto &sync = drm->syncInputs[0];
 
@@ -1620,7 +1627,7 @@ TEST(IoctlHelperXeTest, givenVmBindWaitUserFenceTimeoutWhenCallingVmBindThenWait
         auto &waitUserFence = drm->waitUserFenceInputs[0];
 
         EXPECT_EQ(fenceAddress, waitUserFence.addr);
-        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_EQ), waitUserFence.op);
+        EXPECT_EQ(static_cast<uint16_t>(DRM_XE_UFENCE_WAIT_OP_GTE), waitUserFence.op);
         EXPECT_EQ(0u, waitUserFence.flags);
         EXPECT_EQ(fenceValue, waitUserFence.value);
         EXPECT_EQ(expectedMask, waitUserFence.mask);
@@ -1681,8 +1688,9 @@ TEST(IoctlHelperXeTest, whenUserFenceFailsThenErrorIsPropagated) {
     int errorValue = -1;
     drm->waitUserFenceReturn = errorValue;
 
-    EXPECT_EQ(errorValue, xeIoctlHelper->vmBind(vmBindParams));
-    EXPECT_EQ(errorValue, xeIoctlHelper->vmUnbind(vmBindParams));
+    auto expectedTimeout = 1000000000ll;
+    auto ret = xeIoctlHelper->waitUserFence(0u, fenceAddress, fenceValue, static_cast<uint32_t>(Drm::ValueWidth::u64), expectedTimeout, 0, false, NEO::InterruptId::notUsed, nullptr);
+    EXPECT_EQ(errorValue, ret);
 }
 
 TEST(IoctlHelperXeTest, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
