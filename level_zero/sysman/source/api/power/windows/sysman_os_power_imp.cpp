@@ -244,10 +244,19 @@ ze_result_t WddmPowerImp::setEnergyThreshold(double threshold) {
     return pKmdSysManager->requestSingle(request, response);
 }
 
-bool WddmPowerImp::isPowerModuleSupported() {
+void WddmPowerImp::initPowerLimits() {
     if (supportsEnergyCounterOnly) {
-        return true;
+        return;
     }
+
+    auto paramInfo = powerGroupToDomainTypeMap.find(this->powerDomain);
+    if (paramInfo == powerGroupToDomainTypeMap.end()) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Power Domain %u is not supported for KMD calls.\n", this->powerDomain);
+        DEBUG_BREAK_IF(true);
+        return;
+    }
+
     powerLimitCount = 0;
     std::vector<KmdSysman::RequestProperty> vRequests(3);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
@@ -255,7 +264,7 @@ bool WddmPowerImp::isPowerModuleSupported() {
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
-    request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
+    request.paramInfo = static_cast<uint32_t>(paramInfo->second);
     request.requestId = KmdSysman::Requests::Power::PowerLimit1Enabled;
     vRequests[0] = request;
 
@@ -268,7 +277,7 @@ bool WddmPowerImp::isPowerModuleSupported() {
     ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
     if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
-        return status;
+        return;
     }
 
     ze_bool_t enabled;
@@ -290,12 +299,10 @@ bool WddmPowerImp::isPowerModuleSupported() {
             powerLimitCount += 2;
         }
     }
+}
 
-    if (powerLimitCount > 0) {
-        return true;
-    } else {
-        return false;
-    }
+bool WddmPowerImp::isPowerModuleSupported() {
+    return true;
 }
 
 ze_result_t WddmPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
@@ -521,6 +528,7 @@ WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t 
     pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     isPowerHandleEnergyCounterOnly();
+    initPowerLimits();
 }
 
 std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {

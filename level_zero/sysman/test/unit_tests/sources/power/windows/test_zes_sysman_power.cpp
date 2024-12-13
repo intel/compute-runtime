@@ -77,16 +77,49 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithUnexpectedValueFromKmdForDomainsSupportedThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithUnexpectedReturnStatusFromKmdForPowerLimitsEnabledThenZesDeviceEnumPowerDomainsCallSucceedsAndProperHandleCountIsReturned) {
     init(true);
-
     uint32_t count = 0;
-    pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::NumPowerDomains] = 1;
-    EXPECT_EQ(zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 0u);
+    pKmdSysManager->mockRequestMultiple = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr));
+    EXPECT_EQ(count, pKmdSysManager->mockPowerDomainCount);
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithUnexpectedResponseFromKmdThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithUnexpectedReturnSizeFromKmdForPowerLimitsEnabledThenZesDeviceEnumPowerDomainsCallSucceedsAndProperHandleCountIsReturned) {
+    init(true);
+    uint32_t count = 0;
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->requestMultipleSizeDiff = true;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_SUCCESS;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr));
+    EXPECT_EQ(count, pKmdSysManager->mockPowerDomainCount);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithPowerLimitsNotEnabledThenZesDeviceEnumPowerDomainsCallSucceedsAndProperHandleCountIsReturned) {
+    init(true);
+
+    pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::PowerLimit1Enabled] = 1;
+    pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::PowerLimit2Enabled] = 1;
+    pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::PowerLimit4Enabled] = 1;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr));
+    EXPECT_EQ(powerHandleComponentCount, count);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithNoPowerLimitsSupportAvailableThenZesDeviceEnumPowerDomainsCallSucceedsAndProperHandleCountIsReturned) {
+    init(true);
+
+    pKmdSysManager->mockPowerLimit1Enabled = 0;
+    pKmdSysManager->mockPowerLimit2Enabled = 0;
+    pKmdSysManager->mockPowerLimit4Enabled = 0;
+
+    uint32_t count = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumPowerDomains(pSysmanDevice->toHandle(), &count, nullptr));
+    EXPECT_EQ(powerHandleComponentCount, count);
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDomainWithUnexpectedValueFromKmdForDomainsSupportedThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     init(true);
     uint32_t count = 0;
     pKmdSysManager->mockPowerDomainCount = 3;

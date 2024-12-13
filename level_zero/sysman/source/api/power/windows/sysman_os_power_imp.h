@@ -28,6 +28,7 @@ class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
     bool isPowerModuleSupported() override;
     void isPowerHandleEnergyCounterOnly();
+    void initPowerLimits();
     WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
     WddmPowerImp() = default;
     ~WddmPowerImp() override = default;
