@@ -80,9 +80,9 @@ typedef struct _ze_intel_external_semaphore_wait_exp_params_t {
 ///     - ::ZE_RESULT_SUCCESS
 ze_result_t ZE_APICALL
 zeIntelDeviceImportExternalSemaphoreExp(
-    ze_device_handle_t device, ///< [in] device handle
-    ze_intel_external_semaphore_exp_handle_t *phSemaphore, ///< [out] semaphore handle
-    const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc ///< [in] description of semaphore to be imported
+    ze_device_handle_t device,                                   ///< [in] handle of the device
+    const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc, ///< [in] pointer to external semaphore descriptor
+    ze_intel_external_semaphore_exp_handle_t *phSemaphore        ///< [out] pointer to handle of the external semaphore
 );
 
 /// @brief Wait on External Semaphores
@@ -91,13 +91,13 @@ zeIntelDeviceImportExternalSemaphoreExp(
 ///     - ::ZE_RESULT_SUCCESS
 ze_result_t ZE_APICALL
 zeIntelCommandListAppendWaitExternalSemaphoresExp(
-    ze_command_list_handle_t hCmdList, ///< [in] command list handle to append semaphore
-    const ze_intel_external_semaphore_exp_handle_t *hSemaphores, ///< [in] array of semaphores to be appended into command list
-    const ze_intel_external_semaphore_wait_exp_params_t *params, ///< [in] wait parameters for each element in array of semaphores 
-    unsigned int numExternalSemaphores, ///< [in] total number of semaphores 
-    ze_event_handle_t hSignalEvent, ///< [in] event to signal after waiting on the semaphores 
-    uint32_t numWaitEvents, ///< [in] total number of events to wait before waiting on the semaphores
-    ze_event_handle_t *phWaitEvents ///< [in] array of events to wait before waiting on the semaphores
+    ze_command_list_handle_t hCmdList,                            ///< [in] handle of the command list
+    unsigned int numExternalSemaphores,                           ///< [in] number of external semaphores
+    const ze_intel_external_semaphore_exp_handle_t *phSemaphores, ///< [in] pointer to array of external semaphore handles
+    const ze_intel_external_semaphore_wait_params_exp_t *params,  ///< [in] pointer to array of wait parameters
+    ze_event_handle_t hSignalEvent,                               ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                                       ///< [in][optional] number of events to wait on before continuing
+    ze_event_handle_t *phWaitEvents                               ///< [in][optional][range(0, numWaitEvents)] handles of the events to wait on before continuing
 );
 
 /// @brief Signal External Semaphores
@@ -106,13 +106,13 @@ zeIntelCommandListAppendWaitExternalSemaphoresExp(
 ///     - ::ZE_RESULT_SUCCESS
 ze_result_t ZE_APICALL
 zeIntelCommandListAppendSignalExternalSemaphoresExp(
-    ze_command_list_handle_t hCmdList, ///< [in] command list handle to append semaphore
-    const ze_intel_external_semaphore_exp_handle_t *hSemaphores, ///< [in] array of semaphores to be appended into command list
-    const ze_intel_external_semaphore_signal_exp_params_t *params, ///< [in] signal parameters for each element in array of semaphores 
-    unsigned int numExternalSemaphores, ///< [in] total number of semaphores 
-    ze_event_handle_t hSignalEvent, ///< [in] event to signal after signaling the semaphores 
-    uint32_t numWaitEvents, ///< [in] total number of events to wait before signaling the semaphores
-    ze_event_handle_t *phWaitEvents ///< [in] array of events to wait before signaling the semaphores
+    ze_command_list_handle_t hCmdList,                             ///< [in] handle of the command list
+    size_t numExternalSemaphores,                                  ///< [in] number of external semaphores
+    const ze_intel_external_semaphore_exp_handle_t *phSemaphores,  ///< [in] pointer to array of external semaphore handles
+    const ze_intel_external_semaphore_signal_params_exp_t *params, ///< [in] pointer to array of signal parameters
+    ze_event_handle_t hSignalEvent,                                ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                                        ///< [in][optional] number of events to wait on before continuing
+    ze_event_handle_t *phWaitEvents                                ///< [in][optional][range(0, numWaitEvents)] handles of the events to wait on before continuing
 );
 
 /// @brief Release External Semaphore
