@@ -31,10 +31,5 @@ bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const 
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isStagingBuffersEnabled() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

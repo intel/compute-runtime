@@ -724,6 +724,11 @@ XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallGetInt
     EXPECT_EQ(productHelper.getInternalHeapsPreallocated(), 3u);
 }
 
+XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCallIsStagingBuffersEnabledThenReturnTrue) {
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isStagingBuffersEnabled());
+}
+
 using LriHelperTestsXe2HpgCore = ::testing::Test;
 
 XE2_HPG_CORETEST_F(LriHelperTestsXe2HpgCore, whenProgrammingLriCommandThenExpectMmioRemapEnableCorrectlySet) {
