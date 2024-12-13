@@ -27,6 +27,10 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     HardwareInfo localHwInfo = *defaultHwInfo;
 
+    if (debugManager.flags.BlitterEnableMaskOverride.get() > 0) {
+        localHwInfo.featureTable.ftrBcsInfo = debugManager.flags.BlitterEnableMaskOverride.get();
+    }
+
     if (numberOfEnabledTiles > 1 && localHwInfo.gtSystemInfo.MultiTileArchInfo.IsValid == 0) {
         skipped = true;
         GTEST_SKIP();

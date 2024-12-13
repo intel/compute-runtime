@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -36,7 +37,9 @@ struct DebuggerAubFixture : AUBFixtureL0 {
         AUBFixtureL0::setUp(NEO::defaultHwInfo.get(), true);
     }
     void tearDown() {
-        module->destroy();
+        if (module != nullptr) {
+            module->destroy();
+        }
         AUBFixtureL0::tearDown();
     }
 
@@ -63,6 +66,9 @@ using DebuggerSingleAddressSpaceAub = Test<DebuggerSingleAddressSpaceAubFixture>
 using PlatformsSupportingSingleAddressSpace = MatchAny;
 
 HWTEST2_F(DebuggerSingleAddressSpaceAub, GivenSingleAddressSpaceWhenCmdListIsExecutedThenSbaAddressesAreTracked, PlatformsSupportingSingleAddressSpace) {
+    if (neoDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};
