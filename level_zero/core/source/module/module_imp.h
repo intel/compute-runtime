@@ -41,6 +41,7 @@ extern NEO::ConstStringRef profileFlags;
 extern NEO::ConstStringRef optLargeRegisterFile;
 extern NEO::ConstStringRef optAutoGrf;
 extern NEO::ConstStringRef enableLibraryCompile;
+extern NEO::ConstStringRef enableGlobalVariableSymbols;
 extern NEO::ConstStringRef enableFP64GenEmu;
 
 } // namespace BuildOptions
@@ -205,6 +206,7 @@ struct ModuleImp : public Module {
     bool allocatePrivateMemoryPerDispatch = true;
     bool isZebinBinary = false;
     bool isFunctionSymbolExportEnabled = false;
+    bool isGlobalSymbolExportEnabled = false;
     bool precompiled = false;
     ModuleType type;
     NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};

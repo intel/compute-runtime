@@ -68,6 +68,7 @@ NEO::ConstStringRef profileFlags = "-zet-profile-flags";
 NEO::ConstStringRef optLargeRegisterFile = "-ze-opt-large-register-file";
 NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
 NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
+NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
 NEO::ConstStringRef enableFP64GenEmu = "-ze-fp64-gen-emu";
 } // namespace BuildOptions
 
@@ -738,6 +739,7 @@ inline ze_result_t ModuleImp::initializeTranslationUnit(const ze_module_desc_t *
         if (desc->format == ZE_MODULE_FORMAT_NATIVE) {
             // Assume Symbol Generation Given Prebuilt Binary
             this->isFunctionSymbolExportEnabled = true;
+            this->isGlobalSymbolExportEnabled = true;
             this->precompiled = true;
             return this->translationUnit->createFromNativeBinary(reinterpret_cast<const char *>(desc->pInputModule), desc->inputSize, internalBuildOptions.c_str());
         } else if (desc->format == ZE_MODULE_FORMAT_IL_SPIRV) {
@@ -903,6 +905,8 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveOptLevelOption(apiOptions, apiOptions);
         moveProfileFlagsOption(apiOptions, apiOptions);
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
+        this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
+
         createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessMode(*device->getNEODevice())) {
@@ -1214,16 +1218,16 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, size_t *pSize, 
         auto deviceSymbolIt = symbols.find(pGlobalName);
         if (deviceSymbolIt != symbols.end()) {
             if (deviceSymbolIt->second.symbol.segment == NEO::SegmentType::instructions) {
-                CREATE_DEBUG_STRING(str, "Symbol %s is a function and not a global symbol. Invalid Global Name\n", pGlobalName);
-                driverHandle->setErrorDescription(std::string(str.get()));
-                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s", str.get());
                 driverHandle->clearErrorDescription();
                 return ZE_RESULT_ERROR_INVALID_GLOBAL_NAME;
             }
         } else {
-            CREATE_DEBUG_STRING(str, "Global Pointer Symbol %s Missing in target Module\n", pGlobalName);
-            driverHandle->setErrorDescription(std::string(str.get()));
-            PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "%s", str.get());
+            if (!this->isGlobalSymbolExportEnabled) {
+                CREATE_DEBUG_STRING(str, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                driverHandle->setErrorDescription(std::string(str.get()));
+                PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Global Pointers Not Supported Without Compiler flag %s\n", BuildOptions::enableGlobalVariableSymbols.str().c_str());
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            }
             driverHandle->clearErrorDescription();
             return ZE_RESULT_ERROR_INVALID_GLOBAL_NAME;
         }

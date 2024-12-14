@@ -62,6 +62,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::isaSegmentsForPatching;
     using BaseClass::isFullyLinked;
     using BaseClass::isFunctionSymbolExportEnabled;
+    using BaseClass::isGlobalSymbolExportEnabled;
     using BaseClass::kernelImmDatas;
     using BaseClass::setIsaGraphicsAllocations;
     using BaseClass::symbols;
@@ -114,6 +115,7 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::initializeKernelImmutableDatas;
     using ModuleImp::isaAllocationPageSize;
     using ModuleImp::isFunctionSymbolExportEnabled;
+    using ModuleImp::isGlobalSymbolExportEnabled;
     using ModuleImp::kernelImmDatas;
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::setIsaGraphicsAllocations;
