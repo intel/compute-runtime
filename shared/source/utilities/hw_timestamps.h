@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,13 +14,15 @@ namespace NEO {
 
 class HwTimeStamps : public TagTypeBase {
   public:
-    void initialize() {
-        globalStartTS = 0;
-        contextStartTS = 0;
-        globalEndTS = 0;
-        contextEndTS = 0;
-        globalCompleteTS = 0;
-        contextCompleteTS = 0;
+    using ValueT = uint64_t;
+
+    void initialize(uint64_t initValue) {
+        globalStartTS = initValue;
+        contextStartTS = initValue;
+        globalEndTS = initValue;
+        contextEndTS = initValue;
+        globalCompleteTS = initValue;
+        contextCompleteTS = initValue;
     }
 
     static constexpr AllocationType getAllocationType() {

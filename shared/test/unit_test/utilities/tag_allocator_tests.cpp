@@ -36,7 +36,8 @@ struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
 };
 
 struct TimeStamps {
-    void initialize() {
+    using ValueT = uint64_t;
+    void initialize(uint64_t initValue) {
         initializeCount++;
         start = 1;
         end = 2;
@@ -94,7 +95,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-        : BaseClass(RootDeviceIndicesContainer{rootDeviceIndex}, memoryManager, tagCount, tagAlignment, tagSize, doNotReleaseNodes, true, deviceBitfield) {
+        : BaseClass(RootDeviceIndicesContainer{rootDeviceIndex}, memoryManager, tagCount, tagAlignment, tagSize, 0, doNotReleaseNodes, true, deviceBitfield) {
     }
 
     MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, bool disableCompletionCheck, DeviceBitfield deviceBitfield)
@@ -357,8 +358,8 @@ TEST_F(TagAllocatorTest, whenNewTagIsTakenThenItIsInitialized) {
 }
 
 TEST_F(TagAllocatorTest, givenReinitializationDisabledWhenGettingNewTagThenDontInitialize) {
-    MockTagAllocator<TimeStamps> tagAllocator1(RootDeviceIndicesContainer{0}, memoryManager, 1, 2, sizeof(TimeStamps), false, true, deviceBitfield);
-    MockTagAllocator<TimeStamps> tagAllocator2(RootDeviceIndicesContainer{0}, memoryManager, 1, 2, sizeof(TimeStamps), false, false, deviceBitfield);
+    MockTagAllocator<TimeStamps> tagAllocator1(RootDeviceIndicesContainer{0}, memoryManager, 1, 2, sizeof(TimeStamps), 0, false, true, deviceBitfield);
+    MockTagAllocator<TimeStamps> tagAllocator2(RootDeviceIndicesContainer{0}, memoryManager, 1, 2, sizeof(TimeStamps), 0, false, false, deviceBitfield);
 
     tagAllocator1.freeTags.peekHead()->tagForCpuAccess->initializeCount = 0;
     tagAllocator2.freeTags.peekHead()->tagForCpuAccess->initializeCount = 0;
@@ -500,7 +501,7 @@ TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMul
     const RootDeviceIndicesContainer indices = {0, 2, maxRootDeviceIndex};
 
     MockTagAllocator<TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>> timestampPacketAllocator(indices, testMemoryManager, 1, 1,
-                                                                                                                          sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), false,
+                                                                                                                          sizeof(TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>), 0, false,
                                                                                                                           true, mockDeviceBitfield);
 
     EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
@@ -532,7 +533,7 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
     const RootDeviceIndicesContainer indicesVector = {0, 1};
 
     MockTagAllocator<TimestampPackets<uint32_t, FamilyType::timestampPacketCount>> timestampPacketAllocator(indicesVector, testMemoryManager, 1, 1, sizeof(TimestampPackets<uint32_t, FamilyType::timestampPacketCount>),
-                                                                                                            false, true, mockDeviceBitfield);
+                                                                                                            0, false, true, mockDeviceBitfield);
 
     EXPECT_EQ(1u, timestampPacketAllocator.getGraphicsAllocationsCount());
 

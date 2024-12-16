@@ -26,6 +26,8 @@ class TagNodeBase;
 template <bool deviceAlloc>
 class DeviceAllocNodeType {
   public:
+    using ValueT = uint64_t;
+
     static constexpr size_t defaultAllocatorTagCount = 128;
 
     static constexpr AllocationType getAllocationType() { return deviceAlloc ? AllocationType::timestampPacketTagBuffer : NEO::AllocationType::bufferHostMemory; }
@@ -34,7 +36,7 @@ class DeviceAllocNodeType {
 
     static constexpr size_t getSinglePacketSize() { return sizeof(uint64_t); }
 
-    void initialize() { data = 0; }
+    void initialize(uint64_t initValue) { data = initValue; }
 
   protected:
     uint64_t data = {};

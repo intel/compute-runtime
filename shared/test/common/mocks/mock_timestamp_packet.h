@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ class MockTimestampPackets32 : public TimestampPackets<uint32_t, TimestampPacket
     using TimestampPackets<uint32_t, TimestampPacketConstants::preferredPacketCount>::packets;
 
     void setTagToReadyState() {
-        initialize();
+        initialize(0);
 
         uint32_t zeros[4] = {};
 

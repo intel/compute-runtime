@@ -21,7 +21,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount,
                      size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes, DeviceBitfield deviceBitfield)
-        : BaseClass(RootDeviceIndicesContainer({rootDeviceIndex}), memoryManager, tagCount, tagAlignment, tagSize, doNotReleaseNodes, true, deviceBitfield) {
+        : BaseClass(RootDeviceIndicesContainer({rootDeviceIndex}), memoryManager, tagCount, tagAlignment, tagSize, NEO::TimestampPacketConstants::initValue, doNotReleaseNodes, true, deviceBitfield) {
     }
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount = 10)
@@ -29,7 +29,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
     }
 
     MockTagAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager, size_t tagCount = 10)
-        : BaseClass(rootDeviceIndices, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), false, true, mockDeviceBitfield) {}
+        : BaseClass(rootDeviceIndices, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), NEO::TimestampPacketConstants::initValue, false, true, mockDeviceBitfield) {}
 
     void returnTag(TagNodeBase *node) override {
         releaseReferenceNodes.push_back(static_cast<NodeType *>(node));

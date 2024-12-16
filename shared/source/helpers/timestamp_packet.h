@@ -29,6 +29,8 @@ class LinearStream;
 template <typename TSize, uint32_t packetCount>
 class TimestampPackets : public TagTypeBase {
   public:
+    using ValueT = TSize;
+
     static constexpr AllocationType getAllocationType() {
         return AllocationType::timestampPacketTagBuffer;
     }
@@ -37,12 +39,12 @@ class TimestampPackets : public TagTypeBase {
 
     static constexpr size_t getSinglePacketSize() { return sizeof(Packet); }
 
-    void initialize() {
+    void initialize(TSize initValue) {
         for (auto &packet : packets) {
-            packet.contextStart = TimestampPacketConstants::initValue;
-            packet.globalStart = TimestampPacketConstants::initValue;
-            packet.contextEnd = TimestampPacketConstants::initValue;
-            packet.globalEnd = TimestampPacketConstants::initValue;
+            packet.contextStart = initValue;
+            packet.globalStart = initValue;
+            packet.contextEnd = initValue;
+            packet.globalEnd = initValue;
         }
     }
 

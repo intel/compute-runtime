@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,11 @@ namespace NEO {
 
 class HwPerfCounter : public TagTypeBase {
   public:
-    void initialize() {
+    using ValueT = uint8_t;
+
+    void initialize(uint8_t initValue) {
         query = {};
-        report[0] = 0;
+        report[0] = initValue;
     }
 
     static constexpr AllocationType getAllocationType() {
