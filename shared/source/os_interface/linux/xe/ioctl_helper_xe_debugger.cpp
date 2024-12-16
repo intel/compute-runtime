@@ -8,12 +8,6 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/xe/ioctl_helper_xe.h"
 
-#include <fstream>
-#include <sstream>
-
-#define STRINGIFY_ME(X) return #X
-#define RETURN_ME(X) return X
-
 namespace NEO {
 
 unsigned int IoctlHelperXe::getIoctlRequestValueDebugger(DrmIoctl ioctlRequest) const {
