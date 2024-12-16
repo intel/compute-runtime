@@ -3969,12 +3969,12 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::nearest;
     inlineSampler.isNormalized = false;
 
-    std::array<uint8_t, 64 + 16> dsh = {0};
+    using SamplerState = typename FamilyType::SAMPLER_STATE;
+    std::array<uint8_t, 64 + sizeof(SamplerState)> dsh = {0};
     kernel.kernelInfo.heapInfo.pDsh = dsh.data();
     kernel.kernelInfo.heapInfo.dynamicStateHeapSize = static_cast<uint32_t>(dsh.size());
     kernel.mockKernel->setInlineSamplers();
 
-    using SamplerState = typename FamilyType::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<const SamplerState *>(dsh.data() + 64U);
     EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcxAddressControlMode());
