@@ -54,7 +54,7 @@ void SVMAllocsManager::MapBasedAllocationTracker::freeAllocations(NEO::MemoryMan
     }
 }
 
-bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData, MemoryManager *memoryManager) {
+bool SVMAllocsManager::SvmAllocationCache::insert(size_t size, void *ptr, SvmAllocationData *svmData) {
     if (false == sizeAllowed(size)) {
         return false;
     }
@@ -86,7 +86,7 @@ bool SVMAllocsManager::SvmAllocationCache::allocUtilizationAllows(size_t request
     return true;
 }
 
-void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager, MemoryManager *memoryManager) {
+void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties) {
     if (false == sizeAllowed(size)) {
         return nullptr;
     }
@@ -117,7 +117,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
     return nullptr;
 }
 
-void SVMAllocsManager::SvmAllocationCache::trim(SVMAllocsManager *svmAllocsManager, MemoryManager *memoryManager) {
+void SVMAllocsManager::SvmAllocationCache::trim() {
     std::lock_guard<std::mutex> lock(this->mtx);
     for (auto &cachedAllocationInfo : this->allocations) {
         SvmAllocationData *svmData = svmAllocsManager->getSVMAlloc(cachedAllocationInfo.allocation);
@@ -274,7 +274,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
 
     if (this->usmHostAllocationsCacheEnabled) {
-        void *allocationFromCache = this->usmHostAllocationsCache.get(size, memoryProperties, this, memoryManager);
+        void *allocationFromCache = this->usmHostAllocationsCache.get(size, memoryProperties);
         if (allocationFromCache) {
             return allocationFromCache;
         }
@@ -352,7 +352,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
         unifiedMemoryProperties.flags.isUSMDeviceAllocation = true;
         if (this->usmDeviceAllocationsCacheEnabled &&
             false == memoryProperties.isInternalAllocation) {
-            void *allocationFromCache = this->usmDeviceAllocationsCache.get(size, memoryProperties, this, memoryManager);
+            void *allocationFromCache = this->usmDeviceAllocationsCache.get(size, memoryProperties);
             if (allocationFromCache) {
                 return allocationFromCache;
             }
@@ -501,13 +501,13 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             false == svmData->isInternalAllocation &&
             this->usmDeviceAllocationsCacheEnabled) {
-            if (this->usmDeviceAllocationsCache.insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData, memoryManager)) {
+            if (this->usmDeviceAllocationsCache.insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
                 return true;
             }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCacheEnabled) {
-            if (this->usmHostAllocationsCache.insert(svmData->size, ptr, svmData, memoryManager)) {
+            if (this->usmHostAllocationsCache.insert(svmData->size, ptr, svmData)) {
                 return true;
             }
         }
@@ -531,13 +531,13 @@ bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
     if (svmData) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
-            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr, svmData, memoryManager)) {
+            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr, svmData)) {
                 return true;
             }
         }
         if (InternalMemoryType::hostUnifiedMemory == svmData->memoryType &&
             this->usmHostAllocationsCacheEnabled) {
-            if (this->usmHostAllocationsCache.insert(svmData->size, ptr, svmData, memoryManager)) {
+            if (this->usmHostAllocationsCache.insert(svmData->size, ptr, svmData)) {
                 return true;
             }
         }
@@ -610,11 +610,11 @@ void SVMAllocsManager::freeSVMAllocDeferImpl() {
 }
 
 void SVMAllocsManager::trimUSMDeviceAllocCache() {
-    this->usmDeviceAllocationsCache.trim(this, memoryManager);
+    this->usmDeviceAllocationsCache.trim();
 }
 
 void SVMAllocsManager::trimUSMHostAllocCache() {
-    this->usmHostAllocationsCache.trim(this, memoryManager);
+    this->usmHostAllocationsCache.trim();
 }
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(size_t size, const SvmAllocationProperties &svmProperties,
@@ -758,6 +758,7 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
     if (this->usmDeviceAllocationsCache.maxSize > 0u) {
         this->usmDeviceAllocationsCache.allocations.reserve(128u);
     }
+    this->usmDeviceAllocationsCache.svmAllocsManager = this;
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {
@@ -770,6 +771,8 @@ void SVMAllocsManager::initUsmHostAllocationsCache() {
     if (this->usmHostAllocationsCache.maxSize > 0u) {
         this->usmHostAllocationsCache.allocations.reserve(128u);
     }
+    this->usmHostAllocationsCache.svmAllocsManager = this;
+    this->usmHostAllocationsCache.memoryManager = memoryManager;
 }
 
 void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {

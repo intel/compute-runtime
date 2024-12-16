@@ -165,14 +165,16 @@ class SVMAllocsManager {
         static constexpr double minimalAllocUtilization = 0.5;
 
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
-        bool insert(size_t size, void *ptr, SvmAllocationData *svmData, MemoryManager *memoryManager);
+        bool insert(size_t size, void *ptr, SvmAllocationData *svmData);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
-        void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties, SVMAllocsManager *svmAllocsManager, MemoryManager *memoryManager);
-        void trim(SVMAllocsManager *svmAllocsManager, MemoryManager *memoryManager);
+        void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
+        void trim();
 
         std::vector<SvmCacheAllocationInfo> allocations;
         std::mutex mtx;
         size_t maxSize = 0;
+        SVMAllocsManager *svmAllocsManager = nullptr;
+        MemoryManager *memoryManager = nullptr;
     };
 
     enum class FreePolicyType : uint32_t {
