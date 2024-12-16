@@ -18,6 +18,7 @@
 #include "shared/source/os_interface/driver_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/sharings/sharing_factory.h"
@@ -470,6 +471,14 @@ void ClDevice::initializeILsWithVersion() {
             deviceInfo.ilsWithVersion.push_back(ilWithVersion);
         }
     }
+}
+
+void ClDevice::initializeMaxPoolCount() {
+    auto &device = getDevice();
+    const auto bitfield = device.getDeviceBitfield();
+    const auto deviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
+    const auto maxPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(deviceMemory, 2);
+    device.updateMaxPoolCount(maxPoolCount);
 }
 
 const std::string ClDevice::getClDeviceName() const {

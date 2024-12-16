@@ -147,6 +147,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void initializeOpenclCAllVersions();
     void initializeILsWithVersion();
     void initializeOsSpecificCaps();
+    void initializeMaxPoolCount();
     void initGTPinHelper();
     void setupFp64Flags();
     const std::string getClDeviceName() const;

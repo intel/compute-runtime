@@ -108,6 +108,7 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenPoolWithoutMainStorage
     buffersAllocator.addNewBufferPool(std::move(pool));
 
     EXPECT_EQ(buffersAllocator.bufferPools.size(), 0u);
+    EXPECT_EQ(buffersAllocator.getPoolsCount(), 0u);
 }
 
 TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenNullptrTriedToBeFreedThenItIsNotConsideredValidBuffer) {
@@ -164,8 +165,11 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenChunkOfMainStorageTrie
     auto poolStorage2 = pool2.mainStorage.get();
 
     auto buffersAllocator = DummyBuffersAllocator{};
+    EXPECT_EQ(0u, buffersAllocator.getPoolsCount());
     buffersAllocator.addNewBufferPool(std::move(pool1));
+    EXPECT_EQ(1u, buffersAllocator.getPoolsCount());
     buffersAllocator.addNewBufferPool(std::move(pool2));
+    EXPECT_EQ(2u, buffersAllocator.getPoolsCount());
 
     auto &chunksToFree1 = buffersAllocator.bufferPools[0].chunksToFree;
     auto &chunksToFree2 = buffersAllocator.bufferPools[1].chunksToFree;

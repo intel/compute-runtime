@@ -59,7 +59,6 @@ class MockContext : public Context {
         using BufferPoolAllocator::bufferPools;
         using BufferPoolAllocator::calculateMaxPoolCount;
         using BufferPoolAllocator::isAggregatedSmallBuffersEnabled;
-        using BufferPoolAllocator::maxPoolCount;
     };
 
   private:

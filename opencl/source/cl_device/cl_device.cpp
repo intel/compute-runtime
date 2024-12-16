@@ -35,6 +35,7 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     driverInfo.reset(DriverInfo::create(&device.getHardwareInfo(), osInterface));
     initGTPinHelper();
     initializeCaps();
+    initializeMaxPoolCount();
 
     OpenClCFeaturesContainer emptyOpenClCFeatures;
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, emptyOpenClCFeatures);

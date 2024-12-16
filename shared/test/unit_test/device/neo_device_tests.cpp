@@ -349,6 +349,24 @@ TEST_F(DeviceTest, GivenDeviceWhenGenerateUuidFromPciBusInfoThenValidValuesAreSe
     EXPECT_EQ(memcmp(&uuid, &expectedUuid, ProductHelper::uuidSize), 0);
 }
 
+TEST_F(DeviceTest, givenDeviceWhenUsingBufferPoolsTrackingThenCountIsUpdated) {
+    pDevice->updateMaxPoolCount(3u);
+    EXPECT_EQ(3u, pDevice->maxBufferPoolCount);
+    EXPECT_EQ(0u, pDevice->bufferPoolCount.load());
+
+    EXPECT_FALSE(pDevice->requestPoolCreate(4u));
+    EXPECT_EQ(0u, pDevice->bufferPoolCount.load());
+
+    EXPECT_TRUE(pDevice->requestPoolCreate(3u));
+    EXPECT_EQ(3u, pDevice->bufferPoolCount.load());
+
+    EXPECT_FALSE(pDevice->requestPoolCreate(1u));
+    EXPECT_EQ(3u, pDevice->bufferPoolCount.load());
+
+    pDevice->recordPoolsFreed(2u);
+    EXPECT_EQ(1u, pDevice->bufferPoolCount.load());
+}
+
 using DeviceGetCapsTest = Test<DeviceFixture>;
 
 TEST_F(DeviceGetCapsTest, givenMockCompilerInterfaceWhenInitializeCapsIsCalledThenMaxParameterSizeIsSetCorrectly) {

@@ -55,6 +55,7 @@ class MockDevice : public RootDevice {
     using Device::addEngineToEngineGroup;
     using Device::allEngines;
     using Device::allocateDebugSurface;
+    using Device::bufferPoolCount;
     using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;
@@ -65,6 +66,7 @@ class MockDevice : public RootDevice {
     using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
+    using Device::maxBufferPoolCount;
     using Device::microsecondResolution;
     using Device::preemptionMode;
     using Device::regularEngineGroups;
@@ -169,6 +171,14 @@ class MockDevice : public RootDevice {
         stopDirectSubmissionCalled = true;
         Device::stopDirectSubmissionAndWaitForCompletion();
     }
+
+    uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const override {
+        if (callBaseGetGlobalMemorySize) {
+            return Device::getGlobalMemorySize(deviceBitfield);
+        }
+        return getGlobalMemorySizeReturn;
+    }
+
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
@@ -180,6 +190,8 @@ class MockDevice : public RootDevice {
     bool stopDirectSubmissionCalled = false;
     ReleaseHelper *mockReleaseHelper = nullptr;
     AILConfiguration *mockAilConfigurationHelper = nullptr;
+    uint64_t getGlobalMemorySizeReturn = 0u;
+    bool callBaseGetGlobalMemorySize = true;
 };
 
 template <>

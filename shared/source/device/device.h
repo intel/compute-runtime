@@ -181,7 +181,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void initializeRayTracing(uint32_t maxBvhLevels);
     void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
 
-    uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
+    MOCKABLE_VIRTUAL uint64_t getGlobalMemorySize(uint32_t deviceBitfield) const;
     const std::vector<SubDevice *> &getSubDevices() const { return subdevices; }
     bool getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
     void generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid);
@@ -235,6 +235,23 @@ class Device : public ReferenceTrackedObject<Device> {
     }
     uint32_t getMicrosecondResolution() const {
         return microsecondResolution;
+    }
+
+    void updateMaxPoolCount(uint32_t maxPoolCount) {
+        maxBufferPoolCount = maxPoolCount;
+    }
+
+    bool requestPoolCreate(uint32_t count) {
+        if (maxBufferPoolCount >= count + bufferPoolCount.fetch_add(count)) {
+            return true;
+        } else {
+            bufferPoolCount -= count;
+            return false;
+        }
+    }
+
+    void recordPoolsFreed(uint32_t size) {
+        bufferPoolCount -= size;
     }
 
   protected:
@@ -314,8 +331,10 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
 
     size_t allocationsSavedForReuseSize = 0u;
-    uint32_t microsecondResolution = 1000u;
+    std::atomic_uint32_t bufferPoolCount = 0u;
+    uint32_t maxBufferPoolCount = 0u;
     mutable std::mutex allocationsReuseMtx;
+    uint32_t microsecondResolution = 1000u;
 
     struct {
         bool isValid = false;

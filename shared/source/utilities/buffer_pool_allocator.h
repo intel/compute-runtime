@@ -84,6 +84,7 @@ class AbstractBuffersAllocator : public SmallBuffersParams<BuffersPoolType> {
     void releasePools() { this->bufferPools.clear(); }
     bool isPoolBuffer(const BufferParentType *buffer) const;
     void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size);
+    uint32_t getPoolsCount() { return static_cast<uint32_t>(this->bufferPools.size()); }
 
   protected:
     inline bool isSizeWithinThreshold(size_t size) const { return smallBufferThreshold >= size; }

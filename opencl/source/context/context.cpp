@@ -62,6 +62,8 @@ Context::~Context() {
     }
 
     if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
+        auto &device = this->getDevice(0)->getDevice();
+        device.recordPoolsFreed(smallBufferPoolAllocator.getPoolsCount());
         smallBufferPoolAllocator.releasePools();
     }
 
@@ -628,11 +630,10 @@ Buffer *Context::BufferPool::allocate(const MemoryProperties &memoryProperties,
 
 void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
     this->context = context;
-    const auto &device = context->getDevice(0)->getDevice();
-    const auto bitfield = device.getDeviceBitfield();
-    const auto deviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
-    this->maxPoolCount = this->calculateMaxPoolCount(deviceMemory, 2);
-    this->addNewBufferPool(Context::BufferPool{this->context});
+    auto &device = context->getDevice(0)->getDevice();
+    if (device.requestPoolCreate(1u)) {
+        this->addNewBufferPool(Context::BufferPool{this->context});
+    }
 }
 
 Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryProperties &memoryProperties,
@@ -671,7 +672,8 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
         return bufferFromPool;
     }
 
-    if (this->bufferPools.size() < this->maxPoolCount) {
+    auto &device = context->getDevice(0)->getDevice();
+    if (device.requestPoolCreate(1u)) {
         this->addNewBufferPool(BufferPool{this->context});
         return this->allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
     }

@@ -79,6 +79,10 @@ class Context : public BaseObject<_cl_context> {
                                        void *hostPtr,
                                        cl_int &errcodeRet);
         bool flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const;
+        static inline uint32_t calculateMaxPoolCount(uint64_t totalMemory, size_t percentOfMemory) {
+            const auto maxPoolCount = static_cast<uint32_t>(totalMemory * (percentOfMemory / 100.0) / BufferPoolAllocator::aggregatedSmallBuffersPoolSize);
+            return maxPoolCount ? maxPoolCount : 1u;
+        }
 
       protected:
         Buffer *allocateFromPools(const MemoryProperties &memoryProperties,
@@ -87,13 +91,7 @@ class Context : public BaseObject<_cl_context> {
                                   size_t requestedSize,
                                   void *hostPtr,
                                   cl_int &errcodeRet);
-        static inline size_t calculateMaxPoolCount(uint64_t totalMemory, size_t percentOfMemory) {
-            const auto maxPoolCount = static_cast<size_t>(totalMemory * (percentOfMemory / 100.0) / BufferPoolAllocator::aggregatedSmallBuffersPoolSize);
-            return maxPoolCount ? maxPoolCount : 1u;
-        }
-
         Context *context{nullptr};
-        size_t maxPoolCount{1u};
     };
 
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
