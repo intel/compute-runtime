@@ -47,7 +47,7 @@ void IoctlHelperXe::unregisterResource(uint32_t handle) {
     UNRECOVERABLE_IF(true);
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
+std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint32_t vmHandleId) {
     return {};
 }
 

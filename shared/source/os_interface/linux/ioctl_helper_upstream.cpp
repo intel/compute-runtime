@@ -164,7 +164,7 @@ uint32_t IoctlHelperUpstream::getDirectSubmissionFlag() {
     return 0u;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperUpstream::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
+std::unique_ptr<uint8_t[]> IoctlHelperUpstream::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint32_t vmHandleId) {
     return {};
 }
 

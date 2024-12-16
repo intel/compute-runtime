@@ -267,13 +267,14 @@ TEST(IoctlHelperXeTest, whenGettingVmBindExtFromHandlesThenProperStructsAreRetur
     bindExtHandles.push_back(1u);
     bindExtHandles.push_back(2u);
     bindExtHandles.push_back(3u);
-    auto retVal = xeIoctlHelper->prepareVmBindExt(bindExtHandles);
+    auto retVal = xeIoctlHelper->prepareVmBindExt(bindExtHandles, 1);
     auto vmBindExt = reinterpret_cast<VmBindOpExtAttachDebug *>(retVal.get());
 
     for (size_t i = 0; i < bindExtHandles.size(); i++) {
 
         EXPECT_EQ(bindExtHandles[i], vmBindExt[i].metadataId);
         EXPECT_EQ(static_cast<uint32_t>(EuDebugParam::vmBindOpExtensionsAttachDebug), vmBindExt[i].base.name);
+        EXPECT_EQ(1u, vmBindExt[i].cookie);
     }
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[1]), vmBindExt[0].base.nextExtension);

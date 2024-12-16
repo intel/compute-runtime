@@ -495,7 +495,7 @@ bool IoctlHelperPrelim20::completionFenceExtensionSupported(const bool isVmBindA
     return isVmBindAvailable;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint32_t vmHandleId) {
     static_assert(std::is_trivially_destructible_v<prelim_drm_i915_vm_bind_ext_uuid>,
                   "Storage must be allowed to be reused without calling the destructor!");
 

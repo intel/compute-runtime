@@ -334,7 +334,7 @@ TEST(IoctlHelperUpstreamTest, whenGettingVmBindExtFromHandlesThenNullptrIsReturn
     bindExtHandles.push_back(1u);
     bindExtHandles.push_back(2u);
     bindExtHandles.push_back(3u);
-    auto retVal = ioctlHelper.prepareVmBindExt(bindExtHandles);
+    auto retVal = ioctlHelper.prepareVmBindExt(bindExtHandles, 0);
     EXPECT_EQ(nullptr, retVal);
 }
 

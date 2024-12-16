@@ -1427,7 +1427,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
     if (bind) {
         bool allowUUIDsForDebug = !osContext->isInternalEngine() && !EngineHelpers::isBcs(osContext->getEngineType());
         if (bo->getBindExtHandles().size() > 0 && allowUUIDsForDebug) {
-            extensions = ioctlHelper->prepareVmBindExt(bo->getBindExtHandles());
+            extensions = ioctlHelper->prepareVmBindExt(bo->getBindExtHandles(), vmHandleId);
         }
         bool bindCapture = bo->isMarkedForCapture();
         bool bindImmediate = bo->isImmediateBindingRequired();

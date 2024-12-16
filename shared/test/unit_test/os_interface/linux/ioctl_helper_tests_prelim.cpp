@@ -303,7 +303,7 @@ TEST_F(IoctlPrelimHelperTests, whenGettingVmBindExtFromHandlesThenProperStructsA
     bindExtHandles.push_back(1u);
     bindExtHandles.push_back(2u);
     bindExtHandles.push_back(3u);
-    auto retVal = ioctlHelper.prepareVmBindExt(bindExtHandles);
+    auto retVal = ioctlHelper.prepareVmBindExt(bindExtHandles, 0);
     auto vmBindExt = reinterpret_cast<prelim_drm_i915_vm_bind_ext_uuid *>(retVal.get());
 
     for (size_t i = 0; i < bindExtHandles.size(); i++) {

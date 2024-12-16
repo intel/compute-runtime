@@ -104,7 +104,7 @@ void IoctlHelperXe::unregisterResource(uint32_t handle) {
     PRINT_DEBUGGER_INFO_LOG("DRM_XE_DEBUG_METADATA_DESTROY: id=%llu\n", metadata.metadataId);
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) {
+std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint32_t vmHandleId) {
 
     static_assert(std::is_trivially_destructible_v<VmBindOpExtAttachDebug>,
                   "Storage must be allowed to be reused without calling the destructor!");
@@ -121,12 +121,13 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::prepareVmBindExt(const StackVec<uint32
 
     extensions[0].metadataId = bindExtHandles[0];
     extensions[0].base.name = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsAttachDebug);
+    extensions[0].cookie = vmHandleId;
 
     for (size_t i = 1; i < bindExtHandles.size(); i++) {
         extensions[i - 1].base.nextExtension = reinterpret_cast<uint64_t>(&extensions[i]);
         extensions[i].metadataId = bindExtHandles[i];
         extensions[i].base.name = euDebugInterface->getParamValue(EuDebugParam::vmBindOpExtensionsAttachDebug);
-        ;
+        extensions[i].cookie = vmHandleId;
     }
     return extensionsBuffer;
 }
