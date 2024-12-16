@@ -32,6 +32,8 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_DRM_XE_EUDEBUG_EVENT_EU_ATTENTION;
     case EuDebugParam::eventTypeExecQueue:
         return PRELIM_DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    case EuDebugParam::eventTypeExecQueuePlacements:
+        return PRELIM_DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE_PLACEMENTS;
     case EuDebugParam::eventTypeMetadata:
         return PRELIM_DRM_XE_EUDEBUG_EVENT_METADATA;
     case EuDebugParam::eventTypeOpen:

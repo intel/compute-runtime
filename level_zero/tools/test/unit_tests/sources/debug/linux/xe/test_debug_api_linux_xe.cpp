@@ -2534,6 +2534,18 @@ TEST_F(DebugApiLinuxTestXe, GivenNotImplementedEventTypeWhenHandleEventThenDebug
     output = testing::internal::GetCapturedStdout();
     expectedOutput = std::string("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED ") + std::to_string(pagefaultEvent.type) + " flags = 3 len = 2\n";
     EXPECT_NE(std::string::npos, output.find(expectedOutput.c_str()));
+
+    NEO::EuDebugEvent execQueuePlacementsEvent{};
+    execQueuePlacementsEvent.len = 4;
+    execQueuePlacementsEvent.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueuePlacements);
+    execQueuePlacementsEvent.flags = 5;
+
+    ::testing::internal::CaptureStdout();
+    session->handleEvent(&execQueuePlacementsEvent);
+
+    output = testing::internal::GetCapturedStdout();
+    expectedOutput = std::string("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED ") + std::to_string(execQueuePlacementsEvent.type) + " flags = 5 len = 4\n";
+    EXPECT_NE(std::string::npos, output.find(expectedOutput.c_str())) << output;
 }
 
 TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsNotCreated) {

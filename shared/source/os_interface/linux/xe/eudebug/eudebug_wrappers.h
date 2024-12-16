@@ -163,6 +163,7 @@ enum class EuDebugParam {
     eventBitStateChange,
     eventTypeEuAttention = 20,
     eventTypeExecQueue,
+    eventTypeExecQueuePlacements,
     eventTypeMetadata,
     eventTypeOpen,
     eventTypePagefault,

@@ -344,7 +344,8 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         vmBindOpData.vmBindOpMetadataVec.push_back(*vmBindOpMetadata);
         vmBindOpData.pendingNumExtensions--;
         handleVmBind(vmBindMap[vmBindSeqNo]);
-    } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypePagefault)) {
+    } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypePagefault) ||
+               type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeExecQueuePlacements)) {
         PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", type, event->flags, event->len);
     } else {
         additionalEvents(event);

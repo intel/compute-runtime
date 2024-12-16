@@ -24,6 +24,7 @@ TEST(EuDebugInterfaceUpstreamTest, whenGettingParamValueThenCorrectValueIsReturn
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_STATE_CHANGE), euDebugInterface.getParamValue(EuDebugParam::eventBitStateChange));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_EU_ATTENTION), euDebugInterface.getParamValue(EuDebugParam::eventTypeEuAttention));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE), euDebugInterface.getParamValue(EuDebugParam::eventTypeExecQueue));
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE_PLACEMENTS), euDebugInterface.getParamValue(EuDebugParam::eventTypeExecQueuePlacements));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_METADATA), euDebugInterface.getParamValue(EuDebugParam::eventTypeMetadata));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_OPEN), euDebugInterface.getParamValue(EuDebugParam::eventTypeOpen));
     EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EUDEBUG_EVENT_PAGEFAULT), euDebugInterface.getParamValue(EuDebugParam::eventTypePagefault));

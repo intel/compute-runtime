@@ -31,6 +31,8 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return DRM_XE_EUDEBUG_EVENT_EU_ATTENTION;
     case EuDebugParam::eventTypeExecQueue:
         return DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE;
+    case EuDebugParam::eventTypeExecQueuePlacements:
+        return DRM_XE_EUDEBUG_EVENT_EXEC_QUEUE_PLACEMENTS;
     case EuDebugParam::eventTypeMetadata:
         return DRM_XE_EUDEBUG_EVENT_METADATA;
     case EuDebugParam::eventTypeOpen:

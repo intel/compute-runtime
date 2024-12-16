@@ -28,6 +28,7 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::execQueueSetPropertyEuDebug);
         RETURN_AS_IS(EuDebugParam::eventTypeEuAttention);
         RETURN_AS_IS(EuDebugParam::eventTypeExecQueue);
+        RETURN_AS_IS(EuDebugParam::eventTypeExecQueuePlacements);
         RETURN_AS_IS(EuDebugParam::eventTypeMetadata);
         RETURN_AS_IS(EuDebugParam::eventTypeOpen);
         RETURN_AS_IS(EuDebugParam::eventTypePagefault);
