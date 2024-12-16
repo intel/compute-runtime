@@ -31,6 +31,7 @@ using namespace NEO;
 
 struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
+    using IoctlHelperXe::euDebugInterface;
     using IoctlHelperXe::getEudebugExtProperty;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::tileIdToGtId;
@@ -56,6 +57,7 @@ struct DrmMockXeDebug : public DrmMockCustom {
         drm->reset();
 
         drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+        drm->ioctlHelper->initialize();
         EXPECT_EQ(1, drm->ioctlHelper->getEuDebugSysFsEnable());
         auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(drm->queryEngines);
         xeQueryEngines->num_engines = 11;

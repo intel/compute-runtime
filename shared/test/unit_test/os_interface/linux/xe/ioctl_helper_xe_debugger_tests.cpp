@@ -169,35 +169,41 @@ TEST(IoctlHelperXeTest, GivenXeDriverThenDebugAttachReturnsTrue) {
     EXPECT_TRUE(xeIoctlHelper->isDebugAttachAvailable());
 }
 
-TEST(IoctlHelperXeTest, givenXeEnableEuDebugThenReturnCorrectValue) {
+TEST(IoctlHelperXeTest, givenEuDebugSysFsContentWhenItIsZeroThenEuDebugInterfaceIsNotCreated) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
 
     VariableBackup<char> euDebugAvailabilityBackup(&MockEuDebugInterface::sysFsContent);
 
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
-
     MockEuDebugInterface::sysFsContent = '1';
-    int enableEuDebug = xeIoctlHelper->getEuDebugSysFsEnable();
-    EXPECT_EQ(1, enableEuDebug);
+    auto euDebugInterface = EuDebugInterface::create(drm->getSysFsPciPath());
+    EXPECT_NE(nullptr, euDebugInterface);
 
     MockEuDebugInterface::sysFsContent = '0';
-    enableEuDebug = xeIoctlHelper->getEuDebugSysFsEnable();
-    EXPECT_EQ(0, enableEuDebug);
+    euDebugInterface = EuDebugInterface::create(drm->getSysFsPciPath());
+    EXPECT_EQ(nullptr, euDebugInterface);
 }
 
-TEST(IoctlHelperXeTest, givenXeEnableEuDebugWithInvalidPathThenReturnCorrectValue) {
-
+TEST(IoctlHelperXeTest, givenInvalidPathWhenCreateEuDebugInterfaceThenReturnNullptr) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
 
     VariableBackup<size_t> mockFreadReturnBackup(&IoFunctions::mockFreadReturn, 0);
     VariableBackup<const char *> eudebugSysFsEntryBackup(&eudebugSysfsEntry[static_cast<uint32_t>(MockEuDebugInterface::euDebugInterfaceType)], "invalidEntry");
 
-    int enableEuDebug = xeIoctlHelper->getEuDebugSysFsEnable();
+    auto euDebugInterface = EuDebugInterface::create(drm->getSysFsPciPath());
+    EXPECT_EQ(nullptr, euDebugInterface);
+}
 
-    EXPECT_EQ(0, enableEuDebug);
+TEST(IoctlHelperXeTest, whenEuDebugInterfaceIsCreatedThenEuDebugIsAvailable) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+
+    xeIoctlHelper->euDebugInterface.reset();
+    EXPECT_EQ(0, xeIoctlHelper->getEuDebugSysFsEnable());
+    xeIoctlHelper->euDebugInterface = std::make_unique<MockEuDebugInterface>();
+    EXPECT_EQ(1, xeIoctlHelper->getEuDebugSysFsEnable());
 }
 
 TEST(IoctlHelperXeTest, givenXeRegisterResourceThenCorrectIoctlCalled) {

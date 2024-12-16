@@ -130,6 +130,7 @@ IoctlHelperXe::IoctlHelperXe(Drm &drmArg) : IoctlHelper(drmArg) {
 bool IoctlHelperXe::initialize() {
     xeLog("IoctlHelperXe::initialize\n", "");
 
+    euDebugInterface = EuDebugInterface::create(drm.getSysFsPciPath());
     drm_xe_device_query queryConfig = {};
     queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
 

@@ -60,7 +60,6 @@ int IoctlHelperXe::getEudebugExtProperty() {
 }
 
 int IoctlHelperXe::getEuDebugSysFsEnable() {
-    euDebugInterface = EuDebugInterface::create(drm.getSysFsPciPath());
     return euDebugInterface != nullptr ? 1 : 0;
 }
 
