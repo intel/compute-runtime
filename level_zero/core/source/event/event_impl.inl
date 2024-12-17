@@ -457,18 +457,21 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventSt
     auto baseGpuAddr = getGpuAddress(device);
 
     auto eventVal = static_cast<TagSizeT>(eventState);
-    uint64_t timestampStart = static_cast<uint64_t>(eventState);
-    uint64_t timestampEnd = static_cast<uint64_t>(eventState);
+    auto timestampStart = static_cast<TagSizeT>(eventState);
+    auto timestampEnd = static_cast<TagSizeT>(eventState);
     if (eventState == Event::STATE_SIGNALED) {
         if (this->gpuStartTimestamp != 0u) {
-            timestampStart = static_cast<uint64_t>(this->gpuStartTimestamp);
+            timestampStart = static_cast<TagSizeT>(this->gpuStartTimestamp);
         }
         if (this->gpuEndTimestamp != 0u) {
-            timestampEnd = static_cast<uint64_t>(this->gpuEndTimestamp);
+            timestampEnd = static_cast<TagSizeT>(this->gpuEndTimestamp);
         }
     }
 
     auto hostAddresss = getHostAddress();
+
+    const std::array<TagSizeT, 4> copyData = {{timestampStart, timestampStart, timestampEnd, timestampEnd}};
+    constexpr size_t copySize = copyData.size() * sizeof(TagSizeT);
 
     uint32_t packets = 0;
     for (uint32_t i = 0; i < this->kernelCount; i++) {
@@ -477,10 +480,8 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValueTimestamps(Event::State eventSt
             if (castToUint64(baseHostAddr) >= castToUint64(ptrOffset(hostAddresss, totalEventSize))) {
                 break;
             }
-            copyDataToEventAlloc(ptrOffset(baseHostAddr, contextStartOffset), baseGpuAddr + contextStartOffset, sizeof(TagSizeT), timestampStart);
-            copyDataToEventAlloc(ptrOffset(baseHostAddr, globalStartOffset), baseGpuAddr + globalStartOffset, sizeof(TagSizeT), timestampStart);
-            copyDataToEventAlloc(ptrOffset(baseHostAddr, contextEndOffset), baseGpuAddr + contextEndOffset, sizeof(TagSizeT), timestampEnd);
-            copyDataToEventAlloc(ptrOffset(baseHostAddr, globalEndOffset), baseGpuAddr + globalEndOffset, sizeof(TagSizeT), timestampEnd);
+
+            copyDataToEventAlloc(baseHostAddr, baseGpuAddr, copySize, copyData.data());
 
             baseHostAddr = ptrOffset(baseHostAddr, singlePacketSize);
             baseGpuAddr += singlePacketSize;
@@ -529,8 +530,8 @@ void EventImp<TagSizeT>::copyTbxData(uint64_t dstGpuVa, size_t copySize) {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const uint64_t &copyData) {
-    memcpy_s(dstHostAddr, copySize, &copyData, copySize);
+void EventImp<TagSizeT>::copyDataToEventAlloc(void *dstHostAddr, uint64_t dstGpuVa, size_t copySize, const void *copyData) {
+    memcpy_s(dstHostAddr, copySize, copyData, copySize);
 
     if (this->tbxMode) {
         copyTbxData(dstGpuVa, copySize);
@@ -586,7 +587,7 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(Event::State eventState) {
         StackVec<uint64_t, 16 * 4 * 3> tempCopyData; // 16 packets, 4 timestamps, 3 kernels
         tempCopyData.reserve(numElements);
         std::fill_n(tempCopyData.begin(), numElements, static_cast<uint64_t>(eventVal));
-        copyDataToEventAlloc(basePacketHostAddr, basePacketGpuAddr, totalSizeToCopy, tempCopyData[0]);
+        copyDataToEventAlloc(basePacketHostAddr, basePacketGpuAddr, totalSizeToCopy, &tempCopyData[0]);
     }
 
     if (this->signalAllEventPackets) {
@@ -1012,7 +1013,7 @@ void EventImp<TagSizeT>::setRemainingPackets(TagSizeT eventVal, uint64_t nextPac
     if (getMaxPacketsCount() > packetsAlreadySet) {
         uint32_t remainingPackets = getMaxPacketsCount() - packetsAlreadySet;
         for (uint32_t i = 0; i < remainingPackets; i++) {
-            copyDataToEventAlloc(nextPacketAddress, nextPacketGpuVa, sizeof(TagSizeT), copyData);
+            copyDataToEventAlloc(nextPacketAddress, nextPacketGpuVa, sizeof(TagSizeT), &copyData);
             nextPacketAddress = ptrOffset(nextPacketAddress, this->singlePacketSize);
             nextPacketGpuVa = ptrOffset(nextPacketGpuVa, this->singlePacketSize);
         }
