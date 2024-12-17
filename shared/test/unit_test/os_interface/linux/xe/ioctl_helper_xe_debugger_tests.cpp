@@ -355,3 +355,34 @@ TEST(IoctlHelperXeTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
     }
     EXPECT_EQ(DrmResourceClass::maxSize, drm.registeredClass);
 }
+
+TEST(IoctlHelperXeTest, givenDebuggingEnabledWhenCallingVmBindThenWaitUserFenceIsCalledWithCorrectTimeout) {
+
+    DebugManagerStateRestore restorer;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(DebuggingMode::online);
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drm);
+
+    auto expectedTimeout = -1;
+
+    uint64_t fenceAddress = 0x4321;
+    uint64_t fenceValue = 0x789;
+
+    auto handle = 0x1234u;
+
+    VmBindExtUserFenceT vmBindExtUserFence{};
+    xeIoctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, fenceAddress, fenceValue, 0u);
+
+    VmBindParams vmBindParams{};
+    vmBindParams.handle = handle;
+    xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
+
+    EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
+    auto &waitUserFence = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
+    drm->waitUserFenceInputs.clear();
+    EXPECT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
+    waitUserFence = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
+}

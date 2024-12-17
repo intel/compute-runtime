@@ -1380,7 +1380,17 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
         return ret;
     }
 
-    return ret;
+    constexpr auto oneSecTimeout = 1000000000ll;
+    constexpr auto infiniteTimeout = -1;
+    bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    uint64_t timeout = debuggingEnabled ? infiniteTimeout : oneSecTimeout;
+    if (debugManager.flags.VmBindWaitUserFenceTimeout.get() != -1) {
+        timeout = debugManager.flags.VmBindWaitUserFenceTimeout.get();
+    }
+    return xeWaitUserFence(bind.exec_queue_id, DRM_XE_UFENCE_WAIT_OP_EQ,
+                           sync[0].addr,
+                           sync[0].timeline_value, timeout,
+                           false, NEO::InterruptId::notUsed, nullptr);
 }
 
 std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
