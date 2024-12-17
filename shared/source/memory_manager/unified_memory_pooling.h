@@ -86,8 +86,8 @@ class UsmMemAllocPoolsManager {
     static constexpr uint64_t MB = MemoryConstants::megaByte; // NOLINT(readability-identifier-naming)
     static constexpr uint64_t maxPoolableSize = 256 * MB;
     UsmMemAllocPoolsManager(MemoryManager *memoryManager,
-                            RootDeviceIndicesContainer rootDeviceIndices,
-                            std::map<uint32_t, NEO::DeviceBitfield> deviceBitFields,
+                            const RootDeviceIndicesContainer &rootDeviceIndices,
+                            const std::map<uint32_t, NEO::DeviceBitfield> &deviceBitFields,
                             Device *device,
                             InternalMemoryType poolMemoryType) : memoryManager(memoryManager), rootDeviceIndices(rootDeviceIndices), deviceBitFields(deviceBitFields), device(device), poolMemoryType(poolMemoryType){};
     MOCKABLE_VIRTUAL ~UsmMemAllocPoolsManager() = default;

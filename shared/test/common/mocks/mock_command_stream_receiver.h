@@ -119,7 +119,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     };
 
     TagAllocatorBase *getTimestampPacketAllocator() override { return nullptr; }
-    std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer rootDeviceIndices) override { return std::unique_ptr<TagAllocatorBase>(nullptr); }
+    std::unique_ptr<TagAllocatorBase> createMultiRootDeviceTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices) override { return std::unique_ptr<TagAllocatorBase>(nullptr); }
 
     CompletionStamp flushTask(
         LinearStream &commandStream,
