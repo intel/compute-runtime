@@ -54,6 +54,17 @@ struct EuDebugEventExecQueue {
     uint64_t lrcHandle[];
 };
 
+struct EuDebugEventExecQueuePlacements {
+    struct EuDebugEvent base;
+    uint64_t clientHandle;
+    uint64_t vmHandle;
+    uint64_t execQueueHandle;
+    uint64_t lrcHandle;
+    uint64_t numPlacements;
+    uint64_t pad;
+    uint64_t instances[];
+};
+
 struct EuDebugEventMetadata {
     struct EuDebugEvent base;
     uint64_t clientHandle;

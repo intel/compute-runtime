@@ -150,62 +150,6 @@ struct DebugSessionLinuxi915 : DebugSessionLinux {
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override;
     void printContextVms();
 
-    bool isTileWithinDeviceBitfield(uint32_t tileIndex) {
-        return connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex);
-    }
-
-    bool checkAllOtherTileIsaAllocationsPresent(uint32_t tileIndex, uint64_t isaVa) {
-        bool allInstancesPresent = true;
-        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (clientHandleToConnection[clientHandle]->isaMap[i].find(isaVa) == clientHandleToConnection[clientHandle]->isaMap[i].end()) {
-                    allInstancesPresent = false;
-                    break;
-                }
-            }
-        }
-        return allInstancesPresent;
-    }
-
-    bool checkAllOtherTileIsaAllocationsRemoved(uint32_t tileIndex, uint64_t isaVa) {
-        bool allInstancesRemoved = true;
-        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (clientHandleToConnection[clientHandle]->isaMap[i].find(isaVa) != clientHandleToConnection[clientHandle]->isaMap[i].end()) {
-                    allInstancesRemoved = false;
-                    break;
-                }
-            }
-        }
-        return allInstancesRemoved;
-    }
-
-    bool checkAllOtherTileModuleSegmentsPresent(uint32_t tileIndex, const Module &module) {
-        bool allInstancesPresent = true;
-        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (module.loadAddresses[i].size() != module.segmentCount) {
-                    allInstancesPresent = false;
-                    break;
-                }
-            }
-        }
-        return allInstancesPresent;
-    }
-
-    bool checkAllOtherTileModuleSegmentsRemoved(uint32_t tileIndex, const Module &module) {
-        bool allInstancesRemoved = true;
-        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
-            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
-                if (module.loadAddresses[i].size() != 0) {
-                    allInstancesRemoved = false;
-                    break;
-                }
-            }
-        }
-        return allInstancesRemoved;
-    }
-
     std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
 
     uint32_t i915DebuggerVersion = 0;

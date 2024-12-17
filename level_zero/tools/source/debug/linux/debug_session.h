@@ -197,6 +197,62 @@ struct DebugSessionLinux : DebugSessionImp {
         apiEventCondition.notify_all();
     }
 
+    bool isTileWithinDeviceBitfield(uint32_t tileIndex) {
+        return connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex);
+    }
+
+    bool checkAllOtherTileIsaAllocationsPresent(uint32_t tileIndex, uint64_t isaVa) {
+        bool allInstancesPresent = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (getClientConnection(clientHandle)->isaMap[i].find(isaVa) == getClientConnection(clientHandle)->isaMap[i].end()) {
+                    allInstancesPresent = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesPresent;
+    }
+
+    bool checkAllOtherTileIsaAllocationsRemoved(uint32_t tileIndex, uint64_t isaVa) {
+        bool allInstancesRemoved = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (getClientConnection(clientHandle)->isaMap[i].find(isaVa) != getClientConnection(clientHandle)->isaMap[i].end()) {
+                    allInstancesRemoved = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesRemoved;
+    }
+
+    bool checkAllOtherTileModuleSegmentsPresent(uint32_t tileIndex, const Module &module) {
+        bool allInstancesPresent = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (module.loadAddresses[i].size() != module.segmentCount) {
+                    allInstancesPresent = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesPresent;
+    }
+
+    bool checkAllOtherTileModuleSegmentsRemoved(uint32_t tileIndex, const Module &module) {
+        bool allInstancesRemoved = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (i != tileIndex && connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (module.loadAddresses[i].size() != 0) {
+                    allInstancesRemoved = false;
+                    break;
+                }
+            }
+        }
+        return allInstancesRemoved;
+    }
+
     void updateStoppedThreadsAndCheckTriggerEvents(const AttentionEventFields &attention, uint32_t tileIndex, std::vector<EuThread::ThreadId> &threadsWithAttention) override;
     virtual void updateContextAndLrcHandlesForThreadsWithAttention(EuThread::ThreadId threadId, const AttentionEventFields &attention) = 0;
     virtual uint64_t getVmHandleFromClientAndlrcHandle(uint64_t clientHandle, uint64_t lrcHandle) = 0;
