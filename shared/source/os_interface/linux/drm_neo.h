@@ -280,7 +280,6 @@ class Drm : public DriverModel {
     void setupIoctlHelper(const PRODUCT_FAMILY productFamily);
     void queryAndSetVmBindPatIndexProgrammingSupport();
     bool queryDeviceIdAndRevision();
-    bool queryI915DeviceIdAndRevision();
     static uint64_t alignUpGttSize(uint64_t inputGttSize);
 
 #pragma pack(1)

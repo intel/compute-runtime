@@ -161,8 +161,6 @@ DG1TEST_F(IoctlHelperTestsDg1, whenGettingDrmParamStringThenProperStringIsReturn
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmMockProdDg1>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto &ioctlHelper = *drm->getIoctlHelper();
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramChipsetId).c_str(), "I915_PARAM_CHIPSET_ID");
-    EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramRevision).c_str(), "I915_PARAM_REVISION");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramHasPooledEu).c_str(), "I915_PARAM_HAS_POOLED_EU");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramEuTotal).c_str(), "I915_PARAM_EU_TOTAL");
     EXPECT_STREQ(ioctlHelper.getDrmParamString(DrmParam::paramSubsliceTotal).c_str(), "I915_PARAM_SUBSLICE_TOTAL");

@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include <fcntl.h>
@@ -133,10 +134,6 @@ int IoctlHelperI915::getDrmParamValueBase(DrmParam drmParam) const {
         return I915_MMAP_OFFSET_WB;
     case DrmParam::mmapOffsetWc:
         return I915_MMAP_OFFSET_WC;
-    case DrmParam::paramChipsetId:
-        return I915_PARAM_CHIPSET_ID;
-    case DrmParam::paramRevision:
-        return I915_PARAM_REVISION;
     case DrmParam::paramHasPooledEu:
         return I915_PARAM_HAS_POOLED_EU;
     case DrmParam::paramEuTotal:
@@ -348,10 +345,6 @@ size_t IoctlHelperI915::getLocalMemoryRegionsSize(const MemoryInfo *memoryInfo, 
 
 std::string IoctlHelperI915::getDrmParamString(DrmParam drmParam) const {
     switch (drmParam) {
-    case DrmParam::paramChipsetId:
-        return "I915_PARAM_CHIPSET_ID";
-    case DrmParam::paramRevision:
-        return "I915_PARAM_REVISION";
     case DrmParam::paramHasPooledEu:
         return "I915_PARAM_HAS_POOLED_EU";
     case DrmParam::paramEuTotal:
@@ -683,5 +676,35 @@ bool IoctlHelperI915::isPreemptionSupported() {
                retVal);
     }
     return retVal == 0 && (schedulerCap & I915_SCHEDULER_CAP_PREEMPTION);
+}
+
+bool IoctlHelperI915::queryDeviceIdAndRevision(const Drm &drm) {
+
+    HardwareInfo *hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto fileDescriptor = drm.getFileDescriptor();
+    int param{};
+
+    GetParam getParam{};
+    getParam.param = I915_PARAM_CHIPSET_ID;
+    getParam.value = &param;
+
+    int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_I915_GETPARAM, &getParam);
+    if (ret) {
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
+        return false;
+    }
+
+    hwInfo->platform.usDeviceID = param;
+
+    getParam.param = I915_PARAM_REVISION;
+    ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_I915_GETPARAM, &getParam);
+
+    if (ret != 0) {
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
+        return false;
+    }
+
+    hwInfo->platform.usRevId = param;
+    return true;
 }
 } // namespace NEO

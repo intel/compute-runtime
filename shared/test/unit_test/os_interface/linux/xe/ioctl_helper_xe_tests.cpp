@@ -720,12 +720,6 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         test.value = &dstvalue;
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(-1, ret);
-        test.param = static_cast<int>(DrmParam::paramChipsetId);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
-        EXPECT_EQ(-1, ret);
-        test.param = static_cast<int>(DrmParam::paramRevision);
-        ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
-        EXPECT_EQ(-1, ret);
         test.param = static_cast<int>(DrmParam::paramHasPageFault);
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::getparam, &test);
         EXPECT_EQ(-1, ret);

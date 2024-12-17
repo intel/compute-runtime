@@ -300,8 +300,6 @@ enum class DrmParam {
     memoryClassSystem,
     mmapOffsetWb,
     mmapOffsetWc,
-    paramChipsetId,
-    paramRevision,
     paramHasPooledEu,
     paramEuTotal,
     paramSubsliceTotal,
@@ -320,9 +318,6 @@ enum class DrmParam {
 };
 
 unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
-int getDrmParamValue(DrmParam drmParam, IoctlHelper *ioctlHelper);
-std::string getDrmParamString(DrmParam param, IoctlHelper *ioctlHelper);
-std::string getIoctlString(DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest, IoctlHelper *ioctlHelper);
 
 } // namespace NEO

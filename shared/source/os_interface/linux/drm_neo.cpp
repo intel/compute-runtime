@@ -98,7 +98,7 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         auto printIoctl = debugManager.flags.PrintIoctlEntries.get();
 
         if (printIoctl) {
-            printf("IOCTL %s called\n", getIoctlString(request, ioctlHelper.get()).c_str());
+            printf("IOCTL %s called\n", ioctlHelper->getIoctlString(request).c_str());
         }
 
         if (measureTime) {
@@ -131,10 +131,10 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
         if (printIoctl) {
             if (ret == 0) {
                 printf("IOCTL %s returns %d\n",
-                       getIoctlString(request, ioctlHelper.get()).c_str(), ret);
+                       ioctlHelper->getIoctlString(request).c_str(), ret);
             } else {
                 printf("IOCTL %s returns %d, errno %d(%s)\n",
-                       getIoctlString(request, ioctlHelper.get()).c_str(), ret, returnedErrno, strerror(returnedErrno));
+                       ioctlHelper->getIoctlString(request).c_str(), ret, returnedErrno, strerror(returnedErrno));
             }
         }
 
@@ -145,36 +145,17 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
 
 int Drm::getParamIoctl(DrmParam param, int *dstValue) {
     GetParam getParam{};
-    getParam.param = getDrmParamValue(param, ioctlHelper.get());
+    getParam.param = ioctlHelper->getDrmParamValue(param);
     getParam.value = dstValue;
 
-    int retVal = ioctlHelper ? ioctlHelper->ioctl(DrmIoctl::getparam, &getParam) : ioctl(DrmIoctl::getparam, &getParam);
+    int retVal = ioctlHelper->ioctl(DrmIoctl::getparam, &getParam);
     if (debugManager.flags.PrintIoctlEntries.get()) {
         printf("DRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode:% d\n",
-               getDrmParamString(param, ioctlHelper.get()).c_str(),
+               ioctlHelper->getDrmParamString(param).c_str(),
                *getParam.value,
                retVal);
     }
     return retVal;
-}
-
-bool Drm::queryI915DeviceIdAndRevision() {
-    HardwareInfo *hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    int deviceId = hwInfo->platform.usDeviceID;
-    int revisionId = hwInfo->platform.usRevId;
-    auto ret = getParamIoctl(DrmParam::paramChipsetId, &deviceId);
-    if (ret != 0) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID parameter!\n");
-        return false;
-    }
-    ret = getParamIoctl(DrmParam::paramRevision, &revisionId);
-    if (ret != 0) {
-        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device Rev ID parameter!\n");
-        return false;
-    }
-    hwInfo->platform.usDeviceID = deviceId;
-    hwInfo->platform.usRevId = revisionId;
-    return true;
 }
 
 int Drm::enableTurboBoost() {
@@ -771,7 +752,7 @@ void Drm::printIoctlStatistics() {
     printf("%41s %15s %10s %20s %20s %20s", "Request", "Total time(ns)", "Count", "Avg time per ioctl", "Min", "Max\n");
     for (const auto &ioctlData : this->ioctlStatistics) {
         printf("%41s %15llu %10lu %20f %20lld %20lld\n",
-               getIoctlString(ioctlData.first, ioctlHelper.get()).c_str(),
+               ioctlHelper->getIoctlString(ioctlData.first).c_str(),
                ioctlData.second.totalTime,
                static_cast<unsigned long>(ioctlData.second.count),
                ioctlData.second.totalTime / static_cast<double>(ioctlData.second.count),
@@ -1745,7 +1726,7 @@ bool Drm::queryDeviceIdAndRevision() {
         this->setPerContextVMRequired(false);
         return xeIoctlHelperPtr->initialize();
     }
-    return queryI915DeviceIdAndRevision();
+    return IoctlHelperI915::queryDeviceIdAndRevision(*this);
 }
 
 template std::vector<uint16_t> Drm::query<uint16_t>(uint32_t queryId, uint32_t queryItemFlags);

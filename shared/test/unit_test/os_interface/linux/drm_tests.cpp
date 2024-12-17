@@ -292,16 +292,33 @@ TEST(DrmTest, WhenGettingRevisionIdThenCorrectIdIsReturned) {
 
     auto hwInfo = pDrm->getRootDeviceEnvironment().getMutableHardwareInfo();
 
-    pDrm->storedDeviceID = 0x1234;
-    pDrm->storedDeviceRevID = 0xB;
+    static constexpr uint16_t mockDeviceId = 0x1234;
+    static constexpr uint16_t mockRevisionId = 0xB;
 
     hwInfo->platform.usDeviceID = 0;
     hwInfo->platform.usRevId = 0;
 
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
+
+    SysCalls::sysCallsIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        if (request == DRM_IOCTL_I915_GETPARAM) {
+            auto getParam = reinterpret_cast<GetParam *>(arg);
+            if (getParam->param == I915_PARAM_CHIPSET_ID) {
+                *getParam->value = mockDeviceId;
+            } else if (getParam->param == I915_PARAM_REVISION) {
+                *getParam->value = mockRevisionId;
+            } else {
+                return -1;
+            }
+            return 0;
+        }
+        return 1;
+    };
+
     EXPECT_TRUE(pDrm->queryDeviceIdAndRevision());
 
-    EXPECT_EQ(pDrm->storedDeviceID, hwInfo->platform.usDeviceID);
-    EXPECT_EQ(pDrm->storedDeviceRevID, hwInfo->platform.usRevId);
+    EXPECT_EQ(mockDeviceId, hwInfo->platform.usDeviceID);
+    EXPECT_EQ(mockRevisionId, hwInfo->platform.usRevId);
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForGttSizeThenReturnCorrectValue) {
@@ -1745,33 +1762,8 @@ TEST(DrmTest, GivenDrmWhenDiscoveringDevicesThenCloseOnExecFlagIsPassedToFdOpen)
     EXPECT_NE(0u, SysCalls::openFuncCalled);
 }
 
-TEST(DrmWrapperTest, WhenGettingDrmIoctlGetparamValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, nullptr), static_cast<unsigned int>(DRM_IOCTL_I915_GETPARAM));
-    EXPECT_THROW(getIoctlRequestValue(DrmIoctl::dg1GemCreateExt, nullptr), std::runtime_error);
-}
-
 TEST(DrmWrapperTest, WhenGettingDrmIoctlVersionValueThenIoctlHelperIsNotNeeded) {
     EXPECT_EQ(getIoctlRequestValue(DrmIoctl::version, nullptr), static_cast<unsigned int>(DRM_IOCTL_VERSION));
-}
-
-TEST(DrmWrapperTest, WhenGettingChipsetIdParamValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getDrmParamValue(DrmParam::paramChipsetId, nullptr), static_cast<int>(I915_PARAM_CHIPSET_ID));
-}
-
-TEST(DrmWrapperTest, WhenGettingRevisionParamValueThenIoctlHelperIsNotNeeded) {
-    EXPECT_EQ(getDrmParamValue(DrmParam::paramRevision, nullptr), static_cast<int>(I915_PARAM_REVISION));
-}
-
-TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhenAvailable) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-
-    MockIoctlHelper ioctlHelper{drm};
-    EXPECT_EQ(getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper), ioctlHelper.getIoctlRequestValueResult);
-    EXPECT_NE(getIoctlRequestValue(DrmIoctl::getparam, nullptr), getIoctlRequestValue(DrmIoctl::getparam, &ioctlHelper));
-
-    EXPECT_EQ(getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper), ioctlHelper.getDrmParamValueResult);
-    EXPECT_NE(getDrmParamValue(DrmParam::paramChipsetId, nullptr), getDrmParamValue(DrmParam::paramChipsetId, &ioctlHelper));
 }
 
 TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
@@ -1779,8 +1771,7 @@ TEST(DrmWrapperTest, WhenGettingIoctlStringValueThenProperStringIsReturned) {
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     MockIoctlHelper ioctlHelper{drm};
-    EXPECT_STREQ(getIoctlString(DrmIoctl::getparam, &ioctlHelper).c_str(), "DRM_IOCTL_I915_GETPARAM");
-    EXPECT_STREQ(getIoctlString(DrmIoctl::getparam, nullptr).c_str(), "DRM_IOCTL_I915_GETPARAM");
+    EXPECT_STREQ(ioctlHelper.getIoctlString(DrmIoctl::getparam).c_str(), "DRM_IOCTL_I915_GETPARAM");
 }
 TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -1794,16 +1785,8 @@ TEST(DrmWrapperTest, WhenGettingDrmParamValueStringThenProperStringIsReturned) {
         {DrmParam::paramMinEuInPool, "I915_PARAM_MIN_EU_IN_POOL"},
         {DrmParam::paramCsTimestampFrequency, "I915_PARAM_CS_TIMESTAMP_FREQUENCY"}};
     for (auto &ioctlCodeString : ioctlCodeStringMap) {
-        EXPECT_STREQ(getDrmParamString(ioctlCodeString.first, &ioctlHelper).c_str(), ioctlCodeString.second);
-        EXPECT_THROW(getDrmParamString(ioctlCodeString.first, nullptr), std::runtime_error);
+        EXPECT_STREQ(ioctlHelper.getDrmParamString(ioctlCodeString.first).c_str(), ioctlCodeString.second);
     }
-
-    EXPECT_STREQ(getDrmParamString(DrmParam::paramChipsetId, &ioctlHelper).c_str(), "I915_PARAM_CHIPSET_ID");
-    EXPECT_STREQ(getDrmParamString(DrmParam::paramChipsetId, nullptr).c_str(), "I915_PARAM_CHIPSET_ID");
-    EXPECT_STREQ(getDrmParamString(DrmParam::paramRevision, &ioctlHelper).c_str(), "I915_PARAM_REVISION");
-    EXPECT_STREQ(getDrmParamString(DrmParam::paramRevision, nullptr).c_str(), "I915_PARAM_REVISION");
-
-    EXPECT_THROW(getDrmParamString(DrmParam::engineClassRender, &ioctlHelper), std::runtime_error);
 }
 
 TEST(DrmHwInfoTest, givenTopologyDataWithoutSystemInfoWhenSettingHwInfoThenCorrectValuesAreSet) {
