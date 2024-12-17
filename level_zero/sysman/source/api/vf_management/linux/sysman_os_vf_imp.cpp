@@ -220,10 +220,6 @@ bool LinuxVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMemUsed) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Used with error 0x%x \n", __FUNCTION__, result);
         return false;
     }
-    if (lMemUsed == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): since the Local Memory Used is zero \n", __FUNCTION__);
-        return false;
-    }
     return true;
 }
 
@@ -235,10 +231,6 @@ bool LinuxVfImp::vfOsGetLocalMemoryQuota(uint64_t &lMemQuota) {
     if (result != ZE_RESULT_SUCCESS) {
         lMemQuota = 0;
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read Local Memory Quota with error 0x%x \n", __FUNCTION__, result);
-        return false;
-    }
-    if (lMemQuota == 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): since the Local Memory Quota is zero \n", __FUNCTION__);
         return false;
     }
     return true;

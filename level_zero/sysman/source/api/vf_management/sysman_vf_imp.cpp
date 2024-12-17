@@ -24,8 +24,6 @@ ze_result_t VfImp::vfGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_e
 }
 
 void VfImp::init() {
-    uint64_t lmemUsed = 0;
-    isVfEnabled = pOsVf->vfOsGetLocalMemoryUsed(lmemUsed);
     pOsVf->vfOsGetCapabilities(&capability);
 }
 

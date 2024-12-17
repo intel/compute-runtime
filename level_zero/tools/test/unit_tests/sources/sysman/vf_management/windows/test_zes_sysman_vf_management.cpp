@@ -31,26 +31,9 @@ class ZesVfFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesVfFixture, GivenValidDeviceHandleWhenRetrievingVfHandlesThenZeroCountIsReturned) {
-
-    uint32_t mockHandleCount = 0u;
-    WddmVfImp::numEnabledVfs = 1;
-    uint32_t count = 0;
-    ze_result_t result = zesDeviceEnumEnabledVFExp(device->toHandle(), &count, nullptr);
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, mockHandleCount);
-    uint32_t testCount = count + 1;
-    std::vector<zes_vf_handle_t> handles(testCount);
-    result = zesDeviceEnumEnabledVFExp(device->toHandle(), &testCount, handles.data());
-    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(testCount, count);
-    WddmVfImp::numEnabledVfs = 0;
-}
-
-TEST_F(ZesVfFixture, GivenValidDeviceHandleAndOneVfIsEnabledAndLocalMemoryIsUsedWhenRetrievingVfHandlesThenCorrectCountIsReturned) {
+TEST_F(ZesVfFixture, GivenValidDeviceHandleAndOneVfIsEnabledWhenRetrievingVfHandlesThenCorrectCountIsReturned) {
 
     WddmVfImp::numEnabledVfs = 1;
-    WddmVfImp::localMemoryUsedStatus = true;
     uint32_t count = 0;
     uint32_t mockHandleCount = 1u;
     ze_result_t result = zesDeviceEnumEnabledVFExp(device->toHandle(), &count, nullptr);
@@ -59,11 +42,14 @@ TEST_F(ZesVfFixture, GivenValidDeviceHandleAndOneVfIsEnabledAndLocalMemoryIsUsed
     result = zesDeviceEnumEnabledVFExp(device->toHandle(), &count, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, mockHandleCount);
+    count = count + 1;
+    result = zesDeviceEnumEnabledVFExp(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, mockHandleCount);
     std::vector<zes_vf_handle_t> handles(count);
     result = zesDeviceEnumEnabledVFExp(device->toHandle(), &count, handles.data());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(handles.size(), mockHandleCount);
-    WddmVfImp::localMemoryUsedStatus = false;
     WddmVfImp::numEnabledVfs = 0;
 }
 

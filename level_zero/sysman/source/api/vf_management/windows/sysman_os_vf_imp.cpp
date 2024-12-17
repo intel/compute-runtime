@@ -13,7 +13,6 @@ namespace L0 {
 namespace Sysman {
 
 uint32_t WddmVfImp::numEnabledVfs = 0;
-bool WddmVfImp::localMemoryUsedStatus = false;
 
 ze_result_t WddmVfImp::vfOsGetCapabilities(zes_vf_exp_capabilities_t *pCapability) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -25,7 +24,7 @@ ze_result_t WddmVfImp::vfOsGetEngineUtilization(uint32_t *pCount, zes_vf_util_en
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 bool WddmVfImp::vfOsGetLocalMemoryUsed(uint64_t &lMmemUsed) {
-    return WddmVfImp::localMemoryUsedStatus;
+    return false;
 }
 bool WddmVfImp::vfOsGetLocalMemoryQuota(uint64_t &lMemQuota) {
     return false;

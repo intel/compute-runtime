@@ -69,13 +69,6 @@ TEST_F(ZesVfFixture, GivenValidDeviceWithNoSRIOVSupportWhenQueryingEnabledVfHand
     EXPECT_EQ(count, (uint32_t)0);
 }
 
-TEST_F(ZesVfFixture, GivenValidDeviceWhenZeroLocalMemoryValueIsReadThenZeroHandlesAreCreated) {
-    pSysfsAccess->mockLmemValue = false;
-    uint32_t count = 0;
-    EXPECT_EQ(zesDeviceEnumEnabledVFExp(device, &count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, (uint32_t)0);
-}
-
 TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenPciAddressReturnedCorrectly) {
     uint32_t mockedDomain = 0;
     uint32_t mockedBus = 0x4d;
@@ -210,29 +203,12 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtil
     }
 }
 
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesAndZeroMemoryQuotaValueIsReadThenErrorIsReturned) {
-
-    pSysfsAccess->mockLmemQuotaValue = false;
-    zes_vf_exp_capabilities_t capabilities = {};
-    auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
-    EXPECT_EQ(pVfImp->vfOsGetCapabilities(&capabilities), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
 TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesAndSysfsReadForMemoryQuotaValueFailsThenErrorIsReturned) {
 
     pSysfsAccess->mockError = ZE_RESULT_ERROR_UNKNOWN;
     zes_vf_exp_capabilities_t capabilities = {};
     auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
     EXPECT_EQ(pVfImp->vfOsGetCapabilities(&capabilities), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-}
-
-TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationAndAndZeroLocalMemoryUsedIsReadThenErrorIsReturned) {
-
-    pSysfsAccess->mockLmemValue = false;
-    uint32_t mockCount = 1;
-    std::vector<zes_vf_util_mem_exp2_t> memUtils(mockCount);
-    auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
-    EXPECT_EQ(pVfImp->vfOsGetMemoryUtilization(&mockCount, memUtils.data()), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(ZesVfFixture, GivenValidVfHandleWhenBusyAndTotalTicksConfigNotAvailableAndCallingVfEngineDataInitThenErrorIsReturned) {

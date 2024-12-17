@@ -28,7 +28,6 @@ class VfManagement : _zes_vf_handle_t {
     static VfManagement *fromHandle(zes_vf_handle_t handle) {
         return static_cast<VfManagement *>(handle);
     }
-    bool isVfEnabled = false;
 };
 
 struct VfManagementHandleContext {

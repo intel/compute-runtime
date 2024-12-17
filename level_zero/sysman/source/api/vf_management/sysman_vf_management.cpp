@@ -22,9 +22,7 @@ VfManagementHandleContext::~VfManagementHandleContext() {
 
 void VfManagementHandleContext::createHandle(uint32_t vfId) {
     std::unique_ptr<VfManagement> pVf = std::make_unique<VfImp>(pOsSysman, vfId);
-    if (pVf->isVfEnabled == true) {
-        handleList.push_back(std::move(pVf));
-    }
+    handleList.push_back(std::move(pVf));
 }
 
 ze_result_t VfManagementHandleContext::init() {
