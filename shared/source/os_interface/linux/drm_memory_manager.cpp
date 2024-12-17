@@ -594,7 +594,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(con
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
     uint64_t gpuVirtualAddress = 0;
-    if (this->isLimitedRange(allocationData.rootDeviceIndex)) {
+
+    if (this->getDrm(rootDeviceIndex).isSystemAllocEnabled()) {
+        gpuVirtualAddress = reinterpret_cast<uint64_t>(alignedPtr);
+    } else if (this->isLimitedRange(allocationData.rootDeviceIndex)) {
         gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::heapStandard);
     } else {
         alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2M);

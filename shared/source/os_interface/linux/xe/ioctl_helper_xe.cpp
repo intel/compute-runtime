@@ -1414,9 +1414,6 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
                 bind.bind.op = DRM_XE_VM_BIND_OP_UNMAP;
             }
             bind.bind.obj = 0;
-            //if (bindInfo[index].userptr) {
-            //    bind.bind.obj_offset = bindInfo[index].userptr;
-            //}
         }
 
         bindInfo[index].addr = bind.bind.addr;

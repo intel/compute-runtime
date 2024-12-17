@@ -46,6 +46,7 @@
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
+#include "shared/source/utilities/cpu_info.h"
 
 #include <cstdio>
 #include <cstring>
@@ -1590,7 +1591,7 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
           vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
           vmBind.flags = DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR;
           vmBind.handle = 0;
-          vmBind.length = (0x1ull  << 48);
+          vmBind.length = (0x1ull  << NEO::CpuInfo::getInstance().getVirtualAddressSize());
           vmBind.offset = 0;
           vmBind.start = 0;
           vmBind.userptr = 0;

@@ -59,7 +59,6 @@
 #include <algorithm>
 #include <unordered_map>
 
-
 namespace L0 {
 
 inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) {
@@ -515,6 +514,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 
     appendEventForProfiling(event, nullptr, true, false, false, false);
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(static_cast<const void *>(pNumLaunchArguments));
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
     if (allocData) {
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         commandContainer.addToResidencyContainer(alloc);
@@ -528,8 +528,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
                 return ret;
             }
         }
-    } else {
-    for (uint32_t i = 0; i < numKernels; i++) {
+    } else if (deviceImp->isSystemAllocEnabled()) {
+        for (uint32_t i = 0; i < numKernels; i++) {
         ret = appendLaunchKernelWithParams(Kernel::fromHandle(kernelHandles[i]),
                                            pLaunchArgumentsBuffer[i],
                                            nullptr, launchParams);
@@ -537,6 +537,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
             return ret;
         }
       }
+    } else {
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
     }
     addToMappedEventList(event);
     appendSignalEventPostWalker(event, nullptr, nullptr, false, false, false);
@@ -1501,7 +1503,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     auto dstAllocationStruct = getAlignedAllocationData(this->device, dstptr, size, false, isCopyOffloadEnabled());
     auto srcAllocationStruct = getAlignedAllocationData(this->device, srcptr, size, true, isCopyOffloadEnabled());
-
     if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -1593,6 +1594,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             args.tlbFlush = true;
             encodeMiFlush(0, 0, args);
         }
+
         ret = appendMemoryCopyBlit(dstAllocationStruct.alignedAllocationPtr,
                                    dstAllocationStruct.alloc, dstAllocationStruct.offset,
                                    srcAllocationStruct.alignedAllocationPtr,
@@ -1741,8 +1743,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
-
-    const bool isCopyOnlyEnabled = isCopyOnly(isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc));
+    bool isCopyOnlyEnabled = false; 
+    if (dstAllocationStruct.alloc && srcAllocationStruct.alloc) {
+       isCopyOnlyEnabled = isCopyOnly(isCopyOffloadAllowed(*srcAllocationStruct.alloc, *dstAllocationStruct.alloc));
+    }
     const bool inOrderCopyOnlySignalingAllowed = this->isInOrderExecutionEnabled() && !forceDisableCopyOnlyInOrderSignaling && isCopyOnlyEnabled;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -1927,6 +1931,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
+
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(),
                                                                     dispatchKernelArgs, signalEvent,
                                                                     numWaitEvents,
@@ -2024,22 +2029,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     bool hostPointerNeedsFlush = false;
 
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-    if (!deviceImp->isSystemAllocEnabled()) {
-        NEO::SvmAllocationData *allocData = nullptr;
-        bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
-        if (dstAllocFound) {
-            if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
-                allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
-                hostPointerNeedsFlush = true;
-            }
+
+    NEO::SvmAllocationData *allocData = nullptr;
+    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, allocData);
+    if (dstAllocFound) {
+        if (allocData->memoryType == InternalMemoryType::hostUnifiedMemory ||
+            allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
+            hostPointerNeedsFlush = true;
+        }
+    } else {
+        if ((device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS) && (!deviceImp->isSystemAllocEnabled())) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         } else {
-            if (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            } else {
-                hostPointerNeedsFlush = true;
-            }
+            hostPointerNeedsFlush = true;
         }
     }
+
 
     auto dstAllocation = this->getAlignedAllocationData(this->device, ptr, size, false, false);
     if (dstAllocation.alloc == nullptr) {
