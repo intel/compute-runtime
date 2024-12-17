@@ -86,6 +86,18 @@ bool SVMAllocsManager::SvmAllocationCache::allocUtilizationAllows(size_t request
     return true;
 }
 
+bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmAllocationData *svmData) {
+    if (svmData->cpuAllocation && memoryManager->allocInUse(*svmData->cpuAllocation)) {
+        return true;
+    }
+    for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
+        if (gpuAllocation && memoryManager->allocInUse(*gpuAllocation)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties) {
     if (false == sizeAllowed(size)) {
         return nullptr;
@@ -102,7 +114,8 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
         UNRECOVERABLE_IF(!svmAllocData);
         if (svmAllocData->device == unifiedMemoryProperties.device &&
             svmAllocData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
-            svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags) {
+            svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags &&
+            false == isInUse(svmAllocData)) {
             if (svmAllocData->device) {
                 auto lock = svmAllocData->device->obtainAllocationsReuseLock();
                 svmAllocData->device->recordAllocationGetFromReuse(allocationIter->allocationSize);
@@ -759,6 +772,7 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
         this->usmDeviceAllocationsCache.allocations.reserve(128u);
     }
     this->usmDeviceAllocationsCache.svmAllocsManager = this;
+    this->usmDeviceAllocationsCache.memoryManager = memoryManager;
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {
