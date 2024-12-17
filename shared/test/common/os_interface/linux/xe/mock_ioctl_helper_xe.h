@@ -46,11 +46,13 @@ struct MockIoctlHelperXe : IoctlHelperXe {
             if (failPerfDisable) {
                 return -1;
             }
+            return 0;
         }
         if (request == DrmIoctl::perfEnable) {
             if (failPerfEnable) {
                 return -1;
             }
+            return 0;
         }
         return IoctlHelperXe::ioctl(fd, request, arg);
     }

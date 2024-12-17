@@ -127,10 +127,44 @@ IoctlHelperXe::IoctlHelperXe(Drm &drmArg) : IoctlHelper(drmArg) {
     xeLog("IoctlHelperXe::IoctlHelperXe\n", "");
 }
 
+bool IoctlHelperXe::queryDeviceIdAndRevision(const Drm &drm) {
+    auto fileDescriptor = drm.getFileDescriptor();
+
+    drm_xe_device_query queryConfig = {};
+    queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
+
+    int ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_XE_DEVICE_QUERY, &queryConfig);
+    if (ret || queryConfig.size == 0) {
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query size for device config!\n");
+        return false;
+    }
+
+    auto data = std::vector<uint64_t>(Math::divideAndRoundUp(sizeof(drm_xe_query_config) + sizeof(uint64_t) * queryConfig.size, sizeof(uint64_t)), 0);
+    struct drm_xe_query_config *config = reinterpret_cast<struct drm_xe_query_config *>(data.data());
+    queryConfig.data = castToUint64(config);
+
+    ret = SysCalls::ioctl(fileDescriptor, DRM_IOCTL_XE_DEVICE_QUERY, &queryConfig);
+
+    if (ret) {
+        printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query device ID and revision!\n");
+        return false;
+    }
+
+    auto hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->platform.usDeviceID = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
+    hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
+    return true;
+}
+
 bool IoctlHelperXe::initialize() {
     xeLog("IoctlHelperXe::initialize\n", "");
 
     euDebugInterface = EuDebugInterface::create(drm.getSysFsPciPath());
+
+    if (!IoctlHelperXe::queryDeviceIdAndRevision(this->drm)) {
+        return false;
+    }
+
     drm_xe_device_query queryConfig = {};
     queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
 
@@ -174,8 +208,6 @@ bool IoctlHelperXe::initialize() {
     IoctlHelper::ioctl(DrmIoctl::query, &queryConfig);
 
     auto hwInfo = this->drm.getRootDeviceEnvironment().getMutableHardwareInfo();
-    hwInfo->platform.usDeviceID = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
-    hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
     hwInfo->capabilityTable.gpuAddressSpace = (1ull << config->info[DRM_XE_QUERY_CONFIG_VA_BITS]) - 1;
 
     hwInfo->capabilityTable.cxlType = 0;

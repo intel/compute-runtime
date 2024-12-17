@@ -224,7 +224,7 @@ void DrmMockXe::initInstance() {
 
     auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(this->queryConfig);
     xeQueryConfig->num_params = 6;
-    xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = (this->revId << 16) | this->devId;
+    xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = 0; // this should be queried by ioctl sys call
     xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
     xeQueryConfig->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] = mockMaxExecQueuePriority;
 

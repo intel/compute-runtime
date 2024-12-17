@@ -30,9 +30,6 @@ struct DrmMockXe : public DrmMockCustom {
     int gemMmapOffsetCalled = 0;
     int gemDestroyContextCalled = 0;
 
-    const uint16_t revId = 0x12;
-    const uint16_t devId = 0xabc;
-
     uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
     uint32_t mockExecQueueId = 1234;
     static constexpr int32_t mockMaxExecQueuePriority = 3;
