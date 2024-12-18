@@ -53,7 +53,7 @@ HWTEST_F(WddmExternalSemaphoreTest, givenDriverModelWddmWhenImportExternalSemaph
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32;
 
-    win32Desc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXP_DESC;
+    win32Desc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXP_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
 
     desc.pNext = &win32Desc;

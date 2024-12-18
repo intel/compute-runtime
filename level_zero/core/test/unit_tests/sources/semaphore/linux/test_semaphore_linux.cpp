@@ -55,7 +55,7 @@ HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphor
 
     desc.flags = ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_FD;
 
-    fdDesc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXP_DESC;
+    fdDesc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXP_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     fdDesc.fd = fd;
 
     desc.pNext = &fdDesc;
