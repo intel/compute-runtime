@@ -1066,6 +1066,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                                                               static_cast<size_t>(this->kernelImmData->getKernelInfo()->heapInfo.kernelHeapSize));
     }
 
+    this->kernelArgHandlers.reserve(kernelDescriptor.payloadMappings.explicitArgs.size());
+
     for (const auto &argT : kernelDescriptor.payloadMappings.explicitArgs) {
         switch (argT.type) {
         default:
