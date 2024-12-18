@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "gtest/gtest.h"
 
@@ -32,6 +33,8 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
         }
     }
 
+    DebugManagerStateRestore restore;
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     if (!isPerContextVMRequired()) {
         createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));

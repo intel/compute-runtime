@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
@@ -32,6 +33,8 @@ Drm **pDrmToReturnFromCreateFunc = nullptr;
 bool disableBindDefaultInTests = true;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
     if (pDrmToReturnFromCreateFunc) {
         return *pDrmToReturnFromCreateFunc;
