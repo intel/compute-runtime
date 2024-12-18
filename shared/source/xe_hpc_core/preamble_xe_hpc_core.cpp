@@ -36,6 +36,9 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
     if (debugManager.flags.CFENumberOfWalkers.get() != -1) {
         command->setNumberOfWalkers(debugManager.flags.CFENumberOfWalkers.get());
     }
+    if (debugManager.flags.CFELargeGRFThreadAdjustDisable.get() != -1) {
+        command->setLargeGRFThreadAdjustDisable(debugManager.flags.CFELargeGRFThreadAdjustDisable.get());
+    }
 }
 
 template struct PreambleHelper<Family>;

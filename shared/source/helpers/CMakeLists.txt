@@ -217,7 +217,12 @@ endif()
 if(SUPPORT_XE2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe2_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xe2_hpg_and_later.inl
+  )
+endif()
+
+if(SUPPORT_XE2_CORE OR SUPPORT_XE_2HPG_CORE)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xe2_hpg.inl
   )
 endif()
 

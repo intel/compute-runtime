@@ -5989,10 +5989,10 @@ typedef struct tagCFE_STATE {
             uint64_t Reserved_64 : BITFIELD_RANGE(32, 63);
             // DWORD 3
             uint32_t StackIdControl : BITFIELD_RANGE(0, 1);
-            uint32_t Reserved_98 : BITFIELD_RANGE(2, 9);
-            uint32_t LargeGrfThreadAdjustDisable : BITFIELD_RANGE(10, 10);
+            uint32_t DynamicStackIdControl : BITFIELD_RANGE(2, 2);
+            uint32_t Reserved_99 : BITFIELD_RANGE(3, 10);
             uint32_t ComputeOverdispatchDisable : BITFIELD_RANGE(11, 11);
-            uint32_t Reserved_108 : BITFIELD_RANGE(12, 12);
+            uint32_t ComputeDispatchAllWalkerEnable : BITFIELD_RANGE(12, 12);
             uint32_t SingleSliceDispatchCcsMode : BITFIELD_RANGE(13, 13);
             uint32_t OverDispatchControl : BITFIELD_RANGE(14, 15);
             uint32_t MaximumNumberOfThreads : BITFIELD_RANGE(16, 31);
@@ -6029,6 +6029,10 @@ typedef struct tagCFE_STATE {
         STACK_ID_CONTROL_512 = 0x2,
         STACK_ID_CONTROL_256 = 0x3,
     } STACK_ID_CONTROL;
+    typedef enum tagDYNAMIC_STACK_ID_CONTROL {
+        DYNAMIC_STACK_ID_CONTROL_DISABLED = 0x0,
+        DYNAMIC_STACK_ID_CONTROL_ENABLED = 0x1,
+    } DYNAMIC_STACK_ID_CONTROL;
     typedef enum tagOVER_DISPATCH_CONTROL {
         OVER_DISPATCH_CONTROL_NONE = 0x0,
         OVER_DISPATCH_CONTROL_LOW = 0x1,
@@ -6044,6 +6048,7 @@ typedef struct tagCFE_STATE {
         TheStructure.Common.Pipeline = PIPELINE_COMPUTE;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.StackIdControl = STACK_ID_CONTROL_2K;
+        TheStructure.Common.DynamicStackIdControl = DYNAMIC_STACK_ID_CONTROL_ENABLED;
         TheStructure.Common.OverDispatchControl = OVER_DISPATCH_CONTROL_NORMAL;
     }
     static tagCFE_STATE sInit() {
@@ -6078,7 +6083,7 @@ typedef struct tagCFE_STATE {
         SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
     } SCRATCHSPACEBUFFER;
     inline void setScratchSpaceBuffer(const uint64_t value) {
-        UNRECOVERABLE_IF(value > 0xfffffc00L);
+        UNRECOVERABLE_IF(value > 0xfffffff);
         TheStructure.Common.ScratchSpaceBuffer = static_cast<uint32_t>(value) >> SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
     inline uint64_t getScratchSpaceBuffer() const {
@@ -6090,17 +6095,23 @@ typedef struct tagCFE_STATE {
     inline STACK_ID_CONTROL getStackIdControl() const {
         return static_cast<STACK_ID_CONTROL>(TheStructure.Common.StackIdControl);
     }
-    inline void setLargeGRFThreadAdjustDisable(const bool value) {
-        TheStructure.Common.LargeGrfThreadAdjustDisable = value;
+    inline void setDynamicStackIdControl(const DYNAMIC_STACK_ID_CONTROL value) {
+        TheStructure.Common.DynamicStackIdControl = value;
     }
-    inline bool getLargeGRFThreadAdjustDisable() const {
-        return TheStructure.Common.LargeGrfThreadAdjustDisable;
+    inline DYNAMIC_STACK_ID_CONTROL getDynamicStackIdControl() const {
+        return static_cast<DYNAMIC_STACK_ID_CONTROL>(TheStructure.Common.DynamicStackIdControl);
     }
     inline void setComputeOverdispatchDisable(const bool value) {
         TheStructure.Common.ComputeOverdispatchDisable = value;
     }
     inline bool getComputeOverdispatchDisable() const {
         return TheStructure.Common.ComputeOverdispatchDisable;
+    }
+    inline void setComputeDispatchAllWalkerEnable(const bool value) {
+        TheStructure.Common.ComputeDispatchAllWalkerEnable = value;
+    }
+    inline bool getComputeDispatchAllWalkerEnable() const {
+        return TheStructure.Common.ComputeDispatchAllWalkerEnable;
     }
     inline void setSingleSliceDispatchCcsMode(const bool value) {
         TheStructure.Common.SingleSliceDispatchCcsMode = value;

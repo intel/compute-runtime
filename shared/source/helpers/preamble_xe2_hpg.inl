@@ -50,6 +50,9 @@ void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &
     if (debugManager.flags.CFEStackIDControl.get() != -1) {
         command->setStackIdControl(static_cast<STACK_ID_CONTROL>(debugManager.flags.CFEStackIDControl.get()));
     }
+    if (debugManager.flags.CFELargeGRFThreadAdjustDisable.get() != -1) {
+        command->setLargeGRFThreadAdjustDisable(debugManager.flags.CFELargeGRFThreadAdjustDisable.get());
+    }
 }
 
 } // namespace NEO

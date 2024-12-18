@@ -12,7 +12,7 @@ struct Xe2HpgCoreFamily;
 using Family = Xe2HpgCoreFamily;
 } // namespace NEO
 
-#include "shared/source/helpers/preamble_xe2_hpg_and_later.inl"
+#include "shared/source/helpers/preamble_xe2_hpg.inl"
 #include "shared/source/helpers/preamble_xehp_and_later.inl"
 
 namespace NEO {
