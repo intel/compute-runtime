@@ -1127,7 +1127,7 @@ void DrmMemoryManager::registerSharedBoHandleAllocation(DrmAllocation *drmAlloca
 
         auto foundHandleWrapperIt = sharedBoHandles.find(std::pair<int, uint32_t>(bo->getHandle(), rootDeviceIndex));
         if (foundHandleWrapperIt == std::end(sharedBoHandles)) {
-            sharedBoHandles.emplace(std::make_pair(bo->getHandle(), rootDeviceIndex), bo->acquireWeakOwnershipOfBoHandle());
+            sharedBoHandles.insert({std::make_pair(bo->getHandle(), rootDeviceIndex), bo->acquireWeakOwnershipOfBoHandle()});
         } else {
             bo->markAsSharedBoHandle();
         }
