@@ -455,8 +455,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const Alloc
         return nullptr;
     }
 
-    auto ioctlHelper = getDrm(allocationData.rootDeviceIndex).getIoctlHelper();
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(ioctlHelper->allocUserptr(*this, allocationData, reinterpret_cast<uintptr_t>(res), size, allocationData.rootDeviceIndex));
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(res), size, allocationData.rootDeviceIndex));
     if (!bo) {
         alignedFreeWrapper(res);
         return nullptr;
@@ -1364,6 +1363,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation,
         }
     }
 
+    ioctlHelper->syncUserptrAlloc(*this, *gfxAllocation);
     ioctlHelper->releaseGpuRange(*this, gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
 
@@ -1383,7 +1383,6 @@ void DrmMemoryManager::handleFenceCompletion(GraphicsAllocation *allocation) {
     } else {
         static_cast<DrmAllocation *>(allocation)->getBO()->wait(-1);
     }
-    drm.getIoctlHelper()->syncUserptrAllocs(*this);
 }
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) {
