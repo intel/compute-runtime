@@ -110,19 +110,17 @@ ze_result_t LinuxVfImp::getEngineUtilization(uint32_t *pCount, zes_vf_util_engin
 
     if (pEngineUtil != nullptr) {
         PmuInterface *pPmuInterface = pLinuxSysmanImp->getPmuInterface();
-        uint32_t index = 0;
-        for (auto pEngineUtilsData : pEngineUtils) {
+        for (uint32_t i = 0; i < *pCount; i++) {
             uint64_t pmuData[4] = {};
-            auto ret = pPmuInterface->pmuRead(static_cast<int>(pEngineUtilsData.busyTicksFd), pmuData, sizeof(pmuData));
+            auto ret = pPmuInterface->pmuRead(static_cast<int>(pEngineUtils[i].busyTicksFd), pmuData, sizeof(pmuData));
             if (ret < 0) {
                 NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
                 *pCount = 0;
                 return ZE_RESULT_ERROR_UNKNOWN;
             }
-            pEngineUtil[index].vfEngineType = pEngineUtilsData.engineType;
-            pEngineUtil[index].activeCounterValue = pmuData[2];
-            pEngineUtil[index].samplingCounterValue = pmuData[3];
-            index++;
+            pEngineUtil[i].vfEngineType = pEngineUtils[i].engineType;
+            pEngineUtil[i].activeCounterValue = pmuData[2];
+            pEngineUtil[i].samplingCounterValue = pmuData[3];
         }
     }
 

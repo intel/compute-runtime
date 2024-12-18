@@ -99,6 +99,26 @@ TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngi
     }
 }
 
+TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtilizationExp2WithEngineStatsCountLessThanActualThenCorrectEngineStatsCountIsReturned) {
+
+    auto handles = getEnabledVfHandles(mockHandleCount);
+    for (auto handleVf : handles) {
+        ASSERT_NE(nullptr, handleVf);
+        uint32_t count = 0;
+        auto result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, nullptr);
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(count, numberMockedEngines);
+        count = count - 1;
+        std::vector<zes_vf_util_engine_exp2_t> engineUtils(count);
+        result = zesVFManagementGetVFEngineUtilizationExp2(handleVf, &count, engineUtils.data());
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(count, engineUtils.size());
+        EXPECT_EQ(engineUtils[0].vfEngineType, ZES_ENGINE_GROUP_COMPUTE_SINGLE);
+        EXPECT_EQ(engineUtils[0].activeCounterValue, mockActiveTime);
+        EXPECT_EQ(engineUtils[0].samplingCounterValue, mockTimestamp);
+    }
+}
+
 TEST_F(ZesVfFixturePrelim, GivenValidVfHandleWhenQueryingEngineUtilizationMultipleTimesThenCorrectEngineStatsAreReturned) {
 
     auto handles = getEnabledVfHandles(mockHandleCount);
