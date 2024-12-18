@@ -2060,6 +2060,33 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingEnabledWhenSignalEventCalledT
     verifyFlags(false, true); // relaxed ordering disabled == stalling semaphore
 }
 
+HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenSmallTaskIsFlushedThenIncrementCounter, IsAtLeastXeHpcCore) {
+    debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto queue = immCmdList->getCmdQImmediate(false);
+    EXPECT_EQ(0u, queue->getTaskCount());
+    EXPECT_EQ(0u, immCmdList->relaxedOrderingCounter);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(1u, immCmdList->relaxedOrderingCounter);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(2u, immCmdList->relaxedOrderingCounter);
+
+    ultCsr->flushTagUpdate();
+    EXPECT_NE(ultCsr->taskCount, queue->getTaskCount());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(3u, immCmdList->relaxedOrderingCounter);
+    EXPECT_EQ(ultCsr->taskCount, queue->getTaskCount());
+}
+
 HWTEST2_F(InOrderCmdListTests, givenCounterHeuristicForRelaxedOrderingEnabledWhenAppendingThenEnableRelaxedOrderingCorrectly, IsAtLeastXeHpcCore) {
     debugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,8 @@ struct BatchBufferHelper {
             0,                                  // numCsrClients
             false,                              // hasStallingCmds
             false,                              // hasRelaxedOrderingDependencies
-            false                               // dispatchMonitorFence
+            false,                              // dispatchMonitorFence
+            false                               // taskCountUpdateOnly
         );
     }
 

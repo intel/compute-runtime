@@ -566,6 +566,7 @@ class CommandStreamReceiver {
     bool enqueueWaitForPagingFence(uint64_t pagingFenceValue);
     virtual void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) {}
     MOCKABLE_VIRTUAL void drainPagingFenceQueue();
+    bool isLatestFlushIsTaskCountUpdateOnly() const { return latestFlushIsTaskCountUpdateOnly; }
 
   protected:
     void cleanupResources();
@@ -707,6 +708,7 @@ class CommandStreamReceiver {
     bool heaplessModeEnabled = false;
     bool use4GbHeaps = true;
     bool csrSurfaceProgrammingDone = false;
+    bool latestFlushIsTaskCountUpdateOnly = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

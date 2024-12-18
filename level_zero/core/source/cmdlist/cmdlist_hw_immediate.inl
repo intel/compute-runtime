@@ -1448,16 +1448,13 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAll
         auto queueTaskCount = getCmdQImmediate(copyOffload)->getTaskCount();
         auto csrTaskCount = csr->peekTaskCount();
 
-        if ((this->device->getNEODevice()->isInitDeviceWithFirstSubmissionSupported(csr->getType()) || this->heaplessStateInitEnabled) && csr->peekTaskCount() == 1) {
-            DEBUG_BREAK_IF(queueTaskCount != 0);
-            queueTaskCount = 1;
-        }
+        bool skipTaskCountCheck = (csrTaskCount - queueTaskCount == 1) && csr->isLatestFlushIsTaskCountUpdateOnly();
 
         if (NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get() != -1) {
             relaxedOrderingCounterThreshold = static_cast<uint32_t>(NEO::debugManager.flags.DirectSubmissionRelaxedOrderingCounterHeuristicTreshold.get());
         }
 
-        if (queueTaskCount == csrTaskCount) {
+        if (queueTaskCount == csrTaskCount || skipTaskCountCheck) {
             relaxedOrderingCounter++;
         } else {
             // Submission from another queue. Reset counter and keep relaxed ordering allowed

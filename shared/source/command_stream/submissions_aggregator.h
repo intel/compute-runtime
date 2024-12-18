@@ -43,7 +43,8 @@ struct BatchBuffer {
                 uint32_t numCsrClients,
                 bool hasStallingCmds,
                 bool hasRelaxedOrderingDependencies,
-                bool dispatchMonitorFence);
+                bool dispatchMonitorFence,
+                bool taskCountUpdateOnly);
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
     ResidencyContainer *allocationsForResidency = nullptr;
@@ -68,6 +69,7 @@ struct BatchBuffer {
     bool hasRelaxedOrderingDependencies = false;
     bool disableFlatRingBuffer = false;
     bool dispatchMonitorFence = false;
+    bool taskCountUpdateOnly = false;
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {
