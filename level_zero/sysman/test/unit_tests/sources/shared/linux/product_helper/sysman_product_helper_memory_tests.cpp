@@ -1163,7 +1163,7 @@ HWTEST2_F(SysmanProductHelperMemoryTest, GivenSysmanProductHelperInstanceWhenCal
     outputWriteCounter = (outputWriteCounter * transactionSize) / microFactor;
     EXPECT_EQ(outputWriteCounter, memBandwidth.writeCounter);
 
-    uint64_t outputTimestamp = packInto64Bit(timeStampUpper, timeStampLower);
+    uint64_t outputTimestamp = packInto64Bit(timeStampUpper, timeStampLower) * milliSecsToMicroSecs;
     EXPECT_EQ(outputTimestamp, memBandwidth.timestamp);
 
     uint64_t outputMaxBandwidth = vramBandwidth;

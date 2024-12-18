@@ -605,6 +605,18 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
 
     uint64_t txPacketCounter = packInto64Bit(txPacketCounterMsb, txPacketCounterLsb);
 
+    uint32_t timeStampLsb = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "GDDR_TELEM_CAPTURE_TIMESTAMP_LOWER", 0, timeStampLsb)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint32_t timeStampMsb = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemNodeDir, "GDDR_TELEM_CAPTURE_TIMESTAMP_UPPER", 0, timeStampMsb)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint64_t timeStamp = packInto64Bit(timeStampMsb, timeStampLsb);
+
     pStats->speed.gen = -1;
     pStats->speed.width = -1;
     pStats->speed.maxBandwidth = -1;
@@ -612,7 +624,7 @@ static ze_result_t getPciStatsValues(zes_pci_stats_t *pStats, std::map<std::stri
     pStats->rxCounter = rxCounter;
     pStats->txCounter = txCounter;
     pStats->packetCounter = rxPacketCounter + txPacketCounter;
-    pStats->timestamp = SysmanDevice::getSysmanTimestamp();
+    pStats->timestamp = timeStamp * milliSecsToMicroSecs;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -757,7 +769,7 @@ static ze_result_t getMemoryBandwidthTimestamp(const std::map<std::string, uint6
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL);
+    pBandwidth->timestamp = packInto64Bit(timeStampH, timeStampL) * milliSecsToMicroSecs;
 
     return ZE_RESULT_SUCCESS;
 }
