@@ -1091,9 +1091,14 @@ bool Drm::completionFenceSupport() {
 
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     if (!this->ioctlHelper) {
-        std::string prelimVersion = "";
-        getPrelimVersion(prelimVersion);
-        this->ioctlHelper = IoctlHelper::getI915Helper(productFamily, prelimVersion, *this);
+        auto productSpecificIoctlHelperCreator = ioctlHelperFactory[productFamily];
+        if (productSpecificIoctlHelperCreator) {
+            this->ioctlHelper = productSpecificIoctlHelperCreator.value()(*this);
+        } else {
+            std::string prelimVersion = "";
+            getPrelimVersion(prelimVersion);
+            this->ioctlHelper = IoctlHelper::getI915Helper(productFamily, prelimVersion, *this);
+        }
         this->ioctlHelper->initialize();
     }
 }

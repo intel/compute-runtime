@@ -446,4 +446,5 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     uint64_t uuid = 0;
 };
 
+extern std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[IGFX_MAX_PRODUCT];
 } // namespace NEO
