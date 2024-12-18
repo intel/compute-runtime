@@ -183,10 +183,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     uint32_t samplerCount = 0;
 
-    if constexpr (Family::supportsSampler && heaplessModeEnabled == false) {
+    if constexpr (Family::supportsSampler) {
         if (args.device->getDeviceInfo().imageSupport && !args.makeCommandView) {
-
-            uint32_t samplerStateOffset = 0;
 
             if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
                 auto dsHeap = args.dynamicStateHeap;
@@ -199,22 +197,28 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 }
                 UNRECOVERABLE_IF(!dsHeap);
 
+                auto bindlessHeapsHelper = args.device->getBindlessHeapsHelper();
                 samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-                samplerStateOffset = EncodeStates<Family>::copySamplerState(
+                uint64_t samplerStateOffset = EncodeStates<Family>::copySamplerState(
                     dsHeap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
-                    kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
+                    kernelDescriptor.payloadMappings.samplerTable.numSamplers,
+                    kernelDescriptor.payloadMappings.samplerTable.borderColor,
                     args.dispatchInterface->getDynamicStateHeapData(),
-                    args.device->getBindlessHeapsHelper(), rootDeviceEnvironment);
+                    bindlessHeapsHelper, rootDeviceEnvironment);
 
-                if (args.device->getBindlessHeapsHelper() && !args.device->getBindlessHeapsHelper()->isGlobalDshSupported()) {
+                if (bindlessHeapsHelper && !bindlessHeapsHelper->isGlobalDshSupported()) {
                     // add offset of graphics allocation base address relative to heap base address
-                    samplerStateOffset += static_cast<uint32_t>(ptrDiff(dsHeap->getGpuBase(), args.device->getBindlessHeapsHelper()->getGlobalHeapsBase()));
+                    samplerStateOffset += static_cast<uint32_t>(ptrDiff(dsHeap->getGpuBase(), bindlessHeapsHelper->getGlobalHeapsBase()));
+                }
+                if (heaplessModeEnabled && bindlessHeapsHelper) {
+                    samplerStateOffset += bindlessHeapsHelper->getGlobalHeapsBase();
                 }
 
                 args.dispatchInterface->patchSamplerBindlessOffsetsInCrossThreadData(samplerStateOffset);
+                if constexpr (!heaplessModeEnabled) {
+                    idd.setSamplerStatePointer(static_cast<uint32_t>(samplerStateOffset));
+                }
             }
-
-            idd.setSamplerStatePointer(samplerStateOffset);
         }
     }
 

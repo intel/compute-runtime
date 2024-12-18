@@ -3115,6 +3115,56 @@ HWTEST2_F(SetKernelArg, givenImageBindlessKernelAndGlobalBindlessHelperWhenSetAr
     EXPECT_EQ(0, std::count(kernel->argumentsResidencyContainer.begin(), kernel->argumentsResidencyContainer.end(), expectedSsInHeap.heapAllocation));
 }
 
+HWTEST2_F(SetKernelArg, givenHeaplessWhenPatchingImageWithBindlessEnabledCorrectSurfaceStateAddressIsPatchedInCrossThreadData, ImageSupport) {
+
+    for (auto heaplessEnabled : {false, true}) {
+
+        createKernel();
+        kernel->heaplessEnabled = heaplessEnabled;
+
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(neoDevice,
+                                                                                                                                 neoDevice->getNumGenericSubDevices() > 1);
+        NEO::BindlessHeapsHelper *bindlessHeapsHelper = neoDevice->getBindlessHeapsHelper();
+        ASSERT_NE(nullptr, bindlessHeapsHelper);
+
+        auto &imageArg = const_cast<NEO::ArgDescImage &>(kernel->kernelImmData->getDescriptor().payloadMappings.explicitArgs[3].template as<NEO::ArgDescImage>());
+        auto &addressingMode = kernel->kernelImmData->getDescriptor().kernelAttributes.imageAddressingMode;
+        const_cast<NEO::KernelDescriptor::AddressingMode &>(addressingMode) = NEO::KernelDescriptor::Bindless;
+        imageArg.bindless = 0x8;
+        imageArg.bindful = undefined<SurfaceStateHeapOffset>;
+        ze_image_desc_t desc = {};
+        desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+
+        auto imageHW = std::make_unique<MyMockImage<gfxCoreFamily>>();
+        auto ret = imageHW->initialize(device, &desc);
+        auto handle = imageHW->toHandle();
+        ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+        ret = kernel->setArgRedescribedImage(3, handle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+        auto ctd = kernel->crossThreadData.get();
+
+        auto ssInHeap = imageHW->getBindlessSlot();
+        auto patchLocation = ptrOffset(ctd, imageArg.bindless);
+        uint64_t bindlessSlotOffset = ssInHeap->surfaceStateOffset + surfaceStateSize * NEO::BindlessImageSlot::redescribedImage;
+        uint64_t expectedPatchValue = kernel->heaplessEnabled
+                                          ? bindlessSlotOffset + bindlessHeapsHelper->getGlobalHeapsBase()
+                                          : gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(bindlessSlotOffset));
+
+        if (kernel->heaplessEnabled) {
+            uint64_t patchedValued = *(reinterpret_cast<uint64_t *>(patchLocation));
+            EXPECT_EQ(expectedPatchValue, patchedValued);
+        } else {
+            uint32_t patchedValued = *(reinterpret_cast<uint32_t *>(patchLocation));
+            EXPECT_EQ(static_cast<uint32_t>(expectedPatchValue), patchedValued);
+        }
+    }
+}
+
 HWTEST2_F(SetKernelArg, givenGlobalBindlessHelperAndImageViewWhenAllocatingBindlessSlotThenViewHasDifferentSlotThanParentImage, ImageSupport) {
     createKernel();
 
