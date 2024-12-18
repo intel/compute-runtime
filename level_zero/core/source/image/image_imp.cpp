@@ -163,14 +163,22 @@ ze_result_t Image::getPitchFor2dImage(
     imgInfo.imgDesc.imageWidth = imageWidth;
     imgInfo.imgDesc.imageHeight = imageHeight;
     imgInfo.linearStorage = true;
-
-    const uint32_t exponent = Math::log2(elementSizeInByte);
-
-    if (exponent >= 5u) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    [[maybe_unused]] uint32_t exponent;
+    switch (elementSizeInByte) {
+    default:
+        exponent = Math::log2(elementSizeInByte);
+        if (exponent >= 5u) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        imgInfo.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[exponent % 5];
+        break;
+    case 3:
+        imgInfo.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[5];
+        break;
+    case 6:
+        imgInfo.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[6];
+        break;
     }
-
-    imgInfo.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[exponent % 5];
 
     Device *device = Device::fromHandle(hDevice);
     *rowPitch = ImageImp::getRowPitchFor2dImage(device, imgInfo);

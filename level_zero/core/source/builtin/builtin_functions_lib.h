@@ -65,8 +65,12 @@ enum class ImageBuiltin : uint32_t {
     copyImage3dToBuffer16BytesHeapless,
     copyImage3dToBuffer2Bytes,
     copyImage3dToBuffer2BytesHeapless,
+    copyImage3dToBuffer3Bytes,
+    copyImage3dToBuffer3BytesHeapless,
     copyImage3dToBuffer4Bytes,
     copyImage3dToBuffer4BytesHeapless,
+    copyImage3dToBuffer6Bytes,
+    copyImage3dToBuffer6BytesHeapless,
     copyImage3dToBuffer8Bytes,
     copyImage3dToBuffer8BytesHeapless,
     copyImage3dToBufferBytes,
@@ -200,7 +204,9 @@ DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3d8Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyBufferToImage3dBytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer16Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer2Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer3Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer4Bytes);
+DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer6Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBuffer8Bytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImage3dToBufferBytes);
 DEFINE_ADJUST_IMAGE_BUILTIN_TYPE(ImageBuiltin::copyImageRegion);

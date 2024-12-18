@@ -2332,5 +2332,57 @@ HWTEST2_F(ImageCreate, GivenBindlessSampledImageViewFromUnsampledImageWhenInitia
     Image::fromHandle(imageView)->destroy();
 }
 
+HWTEST2_F(ImageCreate, given2DImageFormatWithPixelSizeOf3BytesWhenRowPitchIsQueriedThenCorrectRowPitchIsReturned, ImageSupport) {
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UNORM;
+    desc.width = 12;
+    desc.height = 12;
+    desc.depth = 1;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    size_t rowPitch = 0;
+    uint32_t pixelSizeInBytes = 3;
+    imageHW->getPitchFor2dImage(device->toHandle(), desc.width, desc.height, pixelSizeInBytes, &rowPitch);
+    EXPECT_EQ(rowPitch, imageHW->imgInfo.rowPitch);
+}
+
+HWTEST2_F(ImageCreate, given2DImageFormatWithPixelSizeOf6BytesWhenRowPitchIsQueriedThenCorrectRowPitchIsReturned, ImageSupport) {
+    ze_image_desc_t desc = {};
+
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_2D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_FLOAT;
+    desc.width = 12;
+    desc.height = 12;
+    desc.depth = 1;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    size_t rowPitch = 0;
+    uint32_t pixelSizeInBytes = 6;
+    imageHW->getPitchFor2dImage(device->toHandle(), desc.width, desc.height, pixelSizeInBytes, &rowPitch);
+    EXPECT_EQ(rowPitch, imageHW->imgInfo.rowPitch);
+}
+
 } // namespace ult
 } // namespace L0

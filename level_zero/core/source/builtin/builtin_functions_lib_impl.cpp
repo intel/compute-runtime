@@ -211,12 +211,28 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
         builtinName = "CopyImage3dToBuffer2BytesStateless";
         builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
         break;
+    case ImageBuiltin::copyImage3dToBuffer3Bytes:
+        builtinName = "CopyImage3dToBuffer3Bytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
+        break;
+    case ImageBuiltin::copyImage3dToBuffer3BytesHeapless:
+        builtinName = "CopyImage3dToBuffer3BytesStateless";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
+        break;
     case ImageBuiltin::copyImage3dToBuffer4Bytes:
         builtinName = "CopyImage3dToBuffer4Bytes";
         builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
         break;
     case ImageBuiltin::copyImage3dToBuffer4BytesHeapless:
         builtinName = "CopyImage3dToBuffer4BytesStateless";
+        builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
+        break;
+    case ImageBuiltin::copyImage3dToBuffer6Bytes:
+        builtinName = "CopyImage3dToBuffer6Bytes";
+        builtin = NEO::EBuiltInOps::copyImage3dToBuffer;
+        break;
+    case ImageBuiltin::copyImage3dToBuffer6BytesHeapless:
+        builtinName = "CopyImage3dToBuffer6BytesStateless";
         builtin = NEO::EBuiltInOps::copyImage3dToBufferHeapless;
         break;
     case ImageBuiltin::copyImage3dToBuffer8Bytes:

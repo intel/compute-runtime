@@ -15,14 +15,16 @@ namespace L0 {
 namespace ImageFormats {
 inline constexpr uint32_t maxLayoutCount = 46u;
 
-using FormatTypes = std::array<NEO::SurfaceFormatInfo, 5u>;
+using FormatTypes = std::array<NEO::SurfaceFormatInfo, 7u>;
 
-inline constexpr std::array<NEO::SurfaceFormatInfo, 5u> surfaceFormatsForRedescribe = {
+inline constexpr std::array<NEO::SurfaceFormatInfo, 7u> surfaceFormatsForRedescribe = {
     {{GMM_FORMAT_R8_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 1, 1, 1},
      {GMM_FORMAT_R16_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R16_UINT, 0, 1, 2, 2},
      {GMM_FORMAT_R32_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R32_UINT, 0, 1, 4, 4},
      {GMM_FORMAT_R32G32_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R32G32_UINT, 0, 2, 4, 8},
-     {GMM_FORMAT_R32G32B32A32_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_UINT, 0, 4, 4, 16}}};
+     {GMM_FORMAT_R32G32B32A32_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R32G32B32A32_UINT, 0, 4, 4, 16},
+     {GMM_FORMAT_R8G8B8_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8G8B8_UINT, 0, 3, 1, 3},
+     {GMM_FORMAT_R16G16B16_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R16G16B16_UINT, 0, 3, 2, 6}}};
 
 inline constexpr FormatTypes layout8 = {{{GMM_FORMAT_R8_UINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8_UINT, 0, 1, 1, 1},
                                          {GMM_FORMAT_R8_SINT_TYPE, NEO::GFX3DSTATE_SURFACEFORMAT_R8_SINT, 0, 1, 1, 1},
