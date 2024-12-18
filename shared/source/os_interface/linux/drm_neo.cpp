@@ -1091,9 +1091,12 @@ bool Drm::completionFenceSupport() {
 
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     if (!this->ioctlHelper) {
+        auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
         auto productSpecificIoctlHelperCreator = ioctlHelperFactory[productFamily];
         if (productSpecificIoctlHelperCreator && !debugManager.flags.IgnoreProductSpecificIoctlHelper.get()) {
             this->ioctlHelper = productSpecificIoctlHelperCreator.value()(*this);
+        } else if ("xe" == drmVersion) {
+            this->ioctlHelper = IoctlHelperXe::create(*this);
         } else {
             std::string prelimVersion = "";
             getPrelimVersion(prelimVersion);
@@ -1726,10 +1729,8 @@ bool Drm::isDrmSupported(int fileDescriptor) {
 bool Drm::queryDeviceIdAndRevision() {
     auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
     if ("xe" == drmVersion) {
-        this->ioctlHelper = IoctlHelperXe::create(*this);
-        auto xeIoctlHelperPtr = static_cast<IoctlHelperXe *>(this->ioctlHelper.get());
         this->setPerContextVMRequired(false);
-        return xeIoctlHelperPtr->initialize();
+        return IoctlHelperXe::queryDeviceIdAndRevision(*this);
     }
     return IoctlHelperI915::queryDeviceIdAndRevision(*this);
 }
