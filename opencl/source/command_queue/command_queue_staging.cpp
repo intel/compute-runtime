@@ -25,7 +25,7 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_SVM_MEMCPY, &size};
     csrSelectionArgs.direction = TransferDirection::hostToLocal;
     auto csr = &selectCsrForBuiltinOperation(csrSelectionArgs);
-    cl_event profilingEvent;
+    cl_event profilingEvent = nullptr;
 
     bool isSingleTransfer = false;
     ChunkCopyFunction chunkCopy = [&](void *chunkSrc, void *chunkDst, size_t chunkSize) -> int32_t {
@@ -46,7 +46,7 @@ cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingC
                                               size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event) {
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_WRITE_IMAGE, nullptr, dstImage, this->getDevice().getRootDeviceIndex(), globalRegion, nullptr, globalOrigin};
     auto &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
-    cl_event profilingEvent;
+    cl_event profilingEvent = nullptr;
 
     bool isSingleTransfer = false;
     ChunkTransferImageFunc chunkWrite = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
@@ -69,7 +69,7 @@ cl_int CommandQueue::enqueueStagingReadImage(Image *srcImage, cl_bool blockingCo
                                              size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event) {
     CsrSelectionArgs csrSelectionArgs{CL_COMMAND_READ_IMAGE, srcImage, nullptr, this->getDevice().getRootDeviceIndex(), globalRegion, nullptr, globalOrigin};
     auto &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
-    cl_event profilingEvent;
+    cl_event profilingEvent = nullptr;
 
     bool isSingleTransfer = false;
     ChunkTransferImageFunc chunkRead = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
