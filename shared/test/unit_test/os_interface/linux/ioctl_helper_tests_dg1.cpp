@@ -20,6 +20,10 @@ using namespace NEO;
 
 using IoctlHelperTestsDg1 = ::testing::Test;
 
+DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenSetupIoctlHelperThenDg1SpecificHelperIsAvailable) {
+    EXPECT_TRUE(ioctlHelperFactory[IGFX_DG1].has_value());
+}
+
 DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
