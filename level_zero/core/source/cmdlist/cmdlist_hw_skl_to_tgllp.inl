@@ -301,7 +301,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
         }
-        appendSignalInOrderDependencyCounter(event, false);
+        appendSignalInOrderDependencyCounter(event, false, false);
     }
 
     return ZE_RESULT_SUCCESS;

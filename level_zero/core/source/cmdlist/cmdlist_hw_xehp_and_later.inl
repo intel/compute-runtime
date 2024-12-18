@@ -299,16 +299,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         inOrderNonWalkerSignalling = isInOrderNonWalkerSignalingRequired(eventForInOrderExec);
 
         if (inOrderExecSignalRequired) {
-            if (inOrderNonWalkerSignalling) {
-                if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
-                    eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
-                }
-                dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
-            } else {
-                inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-                inOrderExecInfo = this->inOrderExecInfo.get();
-                if (eventForInOrderExec && eventForInOrderExec->isCounterBased() && !isTimestampEvent) {
-                    eventAddress = 0;
+            if (!compactEvent || !this->isImmediateType() || (!compactEvent->isCounterBased() || compactEvent->isUsingContextEndOffset())) {
+                if (inOrderNonWalkerSignalling) {
+                    if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
+                        eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
+                    }
+                    dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
+                } else {
+                    inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+                    inOrderExecInfo = this->inOrderExecInfo.get();
+                    if (eventForInOrderExec && eventForInOrderExec->isCounterBased() && !isTimestampEvent) {
+                        eventAddress = 0;
+                    }
                 }
             }
         }
@@ -382,7 +384,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (!launchParams.makeKernelCommandView) {
-        if (compactEvent) {
+        if ((compactEvent && (!compactEvent->isCounterBased() || compactEvent->isUsingContextEndOffset() || !this->isImmediateType()))) {
             void **syncCmdBuffer = nullptr;
             if (launchParams.outSyncCommand != nullptr) {
                 launchParams.outSyncCommand->type = CommandToPatch::SignalEventPostSyncPipeControl;
@@ -406,8 +408,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
-                appendSignalInOrderDependencyCounter(eventForInOrderExec, false);
+                if ((compactEvent && (compactEvent->isCounterBased() && !compactEvent->isUsingContextEndOffset() && this->isImmediateType()))) {
+                    appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true);
+                } else {
+                    appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+                    appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false);
+                }
             }
         } else {
             launchParams.skipInOrderNonWalkerSignaling = false;

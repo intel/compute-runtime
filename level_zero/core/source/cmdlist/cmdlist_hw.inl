@@ -186,7 +186,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
         inOrderExecInfo->setAllocationOffset(newOffset);
         inOrderExecInfo->initializeAllocationsFromHost();
 
-        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation); // signal counter on new offset
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation, false); // signal counter on new offset
     }
 
     inOrderExecInfo->addCounterValue(getInOrderIncrementValue());
@@ -587,7 +587,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(event, false);
+        appendSignalInOrderDependencyCounter(event, false, false);
     }
     handleInOrderDependencyCounter(event, false, false);
     event->unsetInOrderExecInfo();
@@ -635,7 +635,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(uint
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -1416,7 +1416,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -1677,7 +1677,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                 NEO::PipeControlArgs args;
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
-            appendSignalInOrderDependencyCounter(signalEvent, isCopyOnlyEnabled);
+            appendSignalInOrderDependencyCounter(signalEvent, isCopyOnlyEnabled, false);
         }
 
         if (!isCopyOnlyEnabled || inOrderCopyOnlySignalingAllowed) {
@@ -1782,7 +1782,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
-            appendSignalInOrderDependencyCounter(signalEvent, isCopyOnlyEnabled);
+            appendSignalInOrderDependencyCounter(signalEvent, isCopyOnlyEnabled, false);
             handleInOrderDependencyCounter(signalEvent, false, isCopyOnlyEnabled);
         }
     } else {
@@ -2223,7 +2223,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                 NEO::PipeControlArgs args;
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
-            appendSignalInOrderDependencyCounter(signalEvent, false);
+            appendSignalInOrderDependencyCounter(signalEvent, false, false);
         } else {
             nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent);
         }
@@ -2295,7 +2295,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
 
         if (isInOrderExecutionEnabled()) {
-            appendSignalInOrderDependencyCounter(signalEvent, false);
+            appendSignalInOrderDependencyCounter(signalEvent, false, false);
         }
         handleInOrderDependencyCounter(signalEvent, false, false);
     }
@@ -2536,7 +2536,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(event, false);
+        appendSignalInOrderDependencyCounter(event, false, false);
     }
     handleInOrderDependencyCounter(event, false, false);
 
@@ -2746,7 +2746,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     if (apiRequest) {
         if (this->isInOrderExecutionEnabled()) {
-            appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation);
+            appendSignalInOrderDependencyCounter(nullptr, copyOffloadOperation, false);
         }
         handleInOrderDependencyCounter(nullptr, false, copyOffloadOperation);
     }
@@ -2789,13 +2789,26 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation) {
+void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall) {
     uint64_t deviceAllocGpuVa = inOrderExecInfo->getBaseDeviceAddress();
     uint64_t signalValue = inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
 
     auto cmdStream = commandContainer.getCommandStream();
 
-    if (this->inOrderAtomicSignalingEnabled) {
+    if (stall) {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = true;
+        args.workloadPartitionOffset = partitionCount > 1;
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+            *cmdStream,
+            NEO::PostSyncMode::immediateData,
+            deviceAllocGpuVa + inOrderExecInfo->getAllocationOffset(),
+            signalValue,
+            device->getNEODevice()->getRootDeviceEnvironment(),
+            args);
+
+    } else if (this->inOrderAtomicSignalingEnabled) {
         using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
         using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
@@ -3016,7 +3029,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly(false));
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -3575,7 +3588,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, this->isInOrderExecutionEnabled(), false, isCopyOnly(false));
 
     if (isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -3742,7 +3755,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
     appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, isCopyOnly(false));
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(signalEvent, false);
+        appendSignalInOrderDependencyCounter(signalEvent, false, false);
     }
     handleInOrderDependencyCounter(signalEvent, false, false);
 
@@ -3789,7 +3802,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     }
 
     if (this->isInOrderExecutionEnabled()) {
-        appendSignalInOrderDependencyCounter(nullptr, false);
+        appendSignalInOrderDependencyCounter(nullptr, false, false);
     }
     handleInOrderDependencyCounter(nullptr, false, false);
 

@@ -1793,7 +1793,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenAssign
     EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag0Data);
 }
 
-HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenAssignAllocation, IsAtLeastXeHpCore) {
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenNotAssignAllocation, IsAtLeastXeHpCore) {
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
 
@@ -1805,7 +1805,11 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignal
 
     bool isCompactEvent = cmdList->compactL3FlushEvent(cmdList->getDcFlushRequired(events[0]->isSignalScope()));
 
-    EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) != nullptr);
+    if (cmdList->getDcFlushRequired(events[0]->isSignalScope())) {
+        EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) == nullptr);
+    } else {
+        EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) != nullptr);
+    }
     EXPECT_EQ(isCompactEvent, cmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
 }
 
@@ -2951,6 +2955,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
@@ -2969,32 +2974,16 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
         if (isCompactEvent) {
-            ASSERT_NE(cmdList.end(), semaphoreItor);
-            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+            auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+            ASSERT_NE(pcItors.size(), 0u);
+            auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.back());
 
-            ASSERT_NE(nullptr, semaphoreCmd);
-
-            auto gpuAddress = events[0]->getCompletionFieldGpuAddress(device);
-
-            while (gpuAddress != semaphoreCmd->getSemaphoreGraphicsAddress()) {
-                semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
-                ASSERT_NE(cmdList.end(), semaphoreItor);
-
-                semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-                ASSERT_NE(nullptr, semaphoreCmd);
-            }
-
-            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-            ASSERT_NE(nullptr, semaphoreCmd);
-
-            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress + events[0]->getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
+            uint64_t address = pcCmd->getAddressHigh();
+            address <<= 32;
+            address |= pcCmd->getAddress();
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getCounterValue(), pcCmd->getImmediateData());
         }
     }
 
@@ -3043,7 +3032,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false);
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
