@@ -2230,3 +2230,53 @@ TEST(DistanceInfoTest, givenDistanceInfosWhenAssignRegionsFromDistancesThenCorre
     EXPECT_EQ(1024u, memoryInfo->getMemoryRegionSize(2));
     EXPECT_ANY_THROW(memoryInfo->getMemoryRegionSize(4));
 }
+
+TEST(DrmTest, GivenProductSpecificIoctlHelperAvailableWhenSetupIoctlHelperThenCreateProductSpecificOne) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper.reset();
+
+    auto productFamily = defaultHwInfo->platform.eProductFamily;
+    VariableBackup<std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm & drm)>>> createFuncBackup{&ioctlHelperFactory[productFamily]};
+
+    static uint32_t customFuncCalled = 0;
+
+    ioctlHelperFactory[productFamily] = [](Drm &drm) -> std::unique_ptr<IoctlHelper> {
+        EXPECT_EQ(0u, customFuncCalled);
+        customFuncCalled++;
+
+        return std::make_unique<MockIoctlHelper>(drm);
+    };
+
+    customFuncCalled = 0;
+
+    drm.setupIoctlHelper(productFamily);
+
+    EXPECT_EQ(1u, customFuncCalled);
+}
+
+TEST(DrmTest, GivenProductSpecificIoctlHelperAvailableAndDebugFlagToIgnoreIsSetWhenSetupIoctlHelperThenDontCreateProductSpecificOne) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.ioctlHelper.reset();
+
+    auto productFamily = defaultHwInfo->platform.eProductFamily;
+    VariableBackup<std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm & drm)>>> createFuncBackup{&ioctlHelperFactory[productFamily]};
+
+    static uint32_t customFuncCalled = 0;
+
+    ioctlHelperFactory[productFamily] = [](Drm &drm) -> std::unique_ptr<IoctlHelper> {
+        EXPECT_EQ(0u, customFuncCalled);
+        customFuncCalled++;
+
+        return std::make_unique<MockIoctlHelper>(drm);
+    };
+
+    customFuncCalled = 0;
+
+    drm.setupIoctlHelper(productFamily);
+
+    EXPECT_EQ(0u, customFuncCalled);
+}

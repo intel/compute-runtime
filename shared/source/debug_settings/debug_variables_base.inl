@@ -89,6 +89,7 @@ DECLARE_DEBUG_VARIABLE(bool, DisableGemCreateExtSetPat, false, "Do not use I915_
 DECLARE_DEBUG_VARIABLE(bool, SkipInOrderNonWalkerSignalingAllowed, false, "Allows for skipping non walker signalling in InOrder command lists, default: false")
 DECLARE_DEBUG_VARIABLE(bool, PipelinedPipelineSelect, false, "Restore usage of default pipeline select command")
 DECLARE_DEBUG_VARIABLE(bool, AbortHostSyncOnNonHostVisibleEvent, false, "Aborts execution when user calls zeEventHostSynchronize on event without host signal scope")
+DECLARE_DEBUG_VARIABLE(bool, IgnoreProductSpecificIoctlHelper, false, "When set then product specific ioctl helper is not created even if available, generic one is used")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
 DECLARE_DEBUG_VARIABLE(std::string, FilterDeviceId, std::string("unk"), "Device id filter, adapter matching device id will be opened; ignored when unk")
 DECLARE_DEBUG_VARIABLE(std::string, FilterBdfPath, std::string("unk"), "Linux-only, BDF path filter, only matching paths will be opened; ignored when unk")

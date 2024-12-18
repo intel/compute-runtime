@@ -1092,7 +1092,7 @@ bool Drm::completionFenceSupport() {
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     if (!this->ioctlHelper) {
         auto productSpecificIoctlHelperCreator = ioctlHelperFactory[productFamily];
-        if (productSpecificIoctlHelperCreator) {
+        if (productSpecificIoctlHelperCreator && !debugManager.flags.IgnoreProductSpecificIoctlHelper.get()) {
             this->ioctlHelper = productSpecificIoctlHelperCreator.value()(*this);
         } else {
             std::string prelimVersion = "";
