@@ -20,7 +20,7 @@ template <DebugFunctionalityLevel debugLevel>
 class TestClFileLogger : public NEO::ClFileLogger<debugLevel> {
   public:
     TestClFileLogger(TestFileLogger<debugLevel> &baseLoggerInm, const NEO::DebugVariables &flags)
-        : NEO::ClFileLogger<debugLevel>(baseLoggerInm, flags), baseLogger(baseLoggerInm) { ; }
+        : NEO::ClFileLogger<debugLevel>(baseLoggerInm, flags), baseLogger(baseLoggerInm) { baseLogger.useRealFiles(false); }
 
   protected:
     TestFileLogger<debugLevel> &baseLogger;

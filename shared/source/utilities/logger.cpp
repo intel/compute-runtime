@@ -45,7 +45,11 @@ FileLogger<debugLevel>::~FileLogger() = default;
 template <DebugFunctionalityLevel debugLevel>
 void FileLogger<debugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
     std::lock_guard theLock(mutex);
-    writeDataToFile(filename.c_str(), str, length);
+    std::ofstream outFile(filename, mode);
+    if (outFile.is_open()) {
+        outFile.write(str, length);
+        outFile.close();
+    }
 }
 
 template <DebugFunctionalityLevel debugLevel>

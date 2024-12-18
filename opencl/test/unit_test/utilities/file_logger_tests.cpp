@@ -153,6 +153,7 @@ TEST(FileLogger, GivenMdiWhenDumpingKernelArgsThenFileIsCreated) {
     flags.DumpKernelArgs.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
     FullyEnabledClFileLogger clFileLogger(fileLogger, flags);
+    fileLogger.useRealFiles(false);
 
     clFileLogger.dumpKernelArgs(multiDispatchInfo.get());
 
@@ -217,6 +218,7 @@ TEST(FileLogger, GivenImmediateWhenDumpingKernelArgsThenFileIsCreated) {
     flags.DumpKernelArgs.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
     FullyEnabledClFileLogger clFileLogger(fileLogger, flags);
+    fileLogger.useRealFiles(false);
 
     clFileLogger.dumpKernelArgs(multiDispatchInfo.get());
 
@@ -332,6 +334,7 @@ TEST(FileLogger, GivenBufferWhenDumpingKernelArgsThenFileIsCreated) {
     flags.DumpKernelArgs.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
     FullyEnabledClFileLogger clFileLogger(fileLogger, flags);
+    fileLogger.useRealFiles(false);
 
     clFileLogger.dumpKernelArgs(multiDispatchInfo.get());
 
