@@ -5243,8 +5243,17 @@ TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeI
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     size_t sizeIn = 1024llu;
     uint64_t gpuAddress = 0x1337llu;
-    DrmAllocation stackDrmAllocation(0u, 1u /*num gmms*/, AllocationType::buffer, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::system64KBPages);
-    memoryManager.freeGraphicsMemoryImpl(&stackDrmAllocation);
+    auto drmAllocation = std::make_unique<DrmAllocation>(0u, 1u /*num gmms*/, AllocationType::buffer, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::system64KBPages);
+    memoryManager.freeGraphicsMemoryImpl(drmAllocation.get());
+
+    EXPECT_EQ(drmAllocation->getNumGmms(), 1u);
+    EXPECT_EQ(drmAllocation->getRootDeviceIndex(), 0u);
+    EXPECT_EQ(drmAllocation->getBOs().size(), EngineLimits::maxHandleCount);
+    EXPECT_EQ(drmAllocation->getAllocationType(), AllocationType::buffer);
+    EXPECT_EQ(drmAllocation->getGpuAddress(), gpuAddress);
+    EXPECT_EQ(drmAllocation->getUnderlyingBufferSize(), sizeIn);
+    EXPECT_EQ(drmAllocation->getMemoryPool(), MemoryPool::system64KBPages);
+    EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), nullptr);
 }
 
 TEST_F(DrmMemoryManagerTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {

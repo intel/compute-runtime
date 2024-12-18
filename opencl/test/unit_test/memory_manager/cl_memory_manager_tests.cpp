@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ TEST(ClMemoryManagerTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIs
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
 
-    char memory;
+    char memory{};
 
     EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, &memory));
 }
@@ -233,7 +233,7 @@ TEST(ClMemoryManagerTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTr
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
 
-    char memory[10];
+    char memory[10] = {};
 
     EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, memory));
 }
@@ -259,7 +259,7 @@ TEST(ClMemoryManagerTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyR
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
-    char memory[8];
+    char memory[8] = {};
 
     EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, memory));
 }
@@ -284,7 +284,7 @@ TEST(ClMemoryManagerTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCall
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.imageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
-    char memory[8];
+    char memory[8] = {};
 
     EXPECT_TRUE(MockMemoryManager::isCopyRequired(imgInfo, &memory[1]));
 }

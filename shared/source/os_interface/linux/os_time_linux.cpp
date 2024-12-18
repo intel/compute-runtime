@@ -29,7 +29,9 @@ OSTimeLinux::OSTimeLinux(OSInterface &osInterface, std::unique_ptr<DeviceTime> d
 }
 
 bool OSTimeLinux::getCpuTime(uint64_t *timestamp) {
-    struct timespec ts;
+    struct timespec ts {
+        0, 0
+    };
 
     if (getTimeFunc(CLOCK_MONOTONIC_RAW, &ts)) {
         return false;
@@ -41,7 +43,9 @@ bool OSTimeLinux::getCpuTime(uint64_t *timestamp) {
 }
 
 bool OSTime::getCpuTimeHost(uint64_t *timestamp) {
-    struct timespec ts;
+    struct timespec ts {
+        0, 0
+    };
 
     auto ret = clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
 
@@ -51,7 +55,9 @@ bool OSTime::getCpuTimeHost(uint64_t *timestamp) {
 }
 
 double OSTimeLinux::getHostTimerResolution() const {
-    struct timespec ts;
+    struct timespec ts {
+        0, 0
+    };
     if (resolutionFunc(CLOCK_MONOTONIC_RAW, &ts)) {
         return 0;
     }

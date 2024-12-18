@@ -634,7 +634,7 @@ TEST_F(BindlessHeapsHelperTests, givenLocalMemorySupportWhenReservingMemoryForSp
         size_t reservationSize = MemoryConstants::pageSize64k;
         size_t alignment = MemoryConstants::pageSize64k;
 
-        memManager->localMemorySupported = {localMemSupported};
+        memManager->localMemorySupported = std::vector<bool>{localMemSupported};
 
         auto specialSshReservationSuccessful = bindlessHeapHelper->tryReservingMemoryForSpecialSsh(reservationSize, alignment);
         EXPECT_TRUE(specialSshReservationSuccessful);
