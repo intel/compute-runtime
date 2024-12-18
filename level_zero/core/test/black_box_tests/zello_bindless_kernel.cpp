@@ -179,11 +179,21 @@ kernel void image_query_3d(global int *dst, image3d_t img) {
 }
 )===";
 
+const char *source1DSampler = R"===(
+__kernel void image_read_sampler(__global float4 *dst, image1d_t img, sampler_t sampler) {
+    int id = get_global_id(0);
+    float coord = (float)(id+1);
+    dst[id] = read_imagef(img, sampler, coord);
+    printf( "gid[%zu], coord=%.2f, dst.x=%.2f , dst.y=%.2f , dst.z=%.2f , dst.w=%.2f \n", get_global_id(0), coord, dst[id].x, dst[id].y, dst[id].z, dst[id].w);
+}
+)===";
+
 static std::string kernelName = "kernel_copy";
 static std::string kernelName2 = "kernel_fill";
 static std::string kernelName3 = "image_copy";
 static std::string kernelName4 = "image_read_sampler";
 static std::string kernelName4a = "image_read_sampler_oob";
+static std::string kernelName1DSampler = "image_read_sampler";
 
 enum class ExecutionMode : uint32_t {
     commandQueue,
@@ -871,6 +881,120 @@ bool testBindlessImageSampledBorderColor(ze_context_handle_t context, ze_device_
     return outputValidated;
 }
 
+bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId,
+                                const std::string &revisionId, AddressingMode mode) {
+    bool outputValidated = true;
+
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+
+    createModule(source1DSampler, mode, context, device, deviceId, revisionId, module, "", false);
+    createKernel(module, kernel, kernelName1DSampler.c_str());
+
+    LevelZeroBlackBoxTests::CommandHandler commandHandler;
+    bool isImmediateCmdList = false;
+
+    SUCCESS_OR_TERMINATE(commandHandler.create(context, device, isImmediateCmdList));
+
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
+
+    bool normalized = false;
+    ze_sampler_desc_t samplerDesc = {ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+                                     nullptr,
+                                     ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+                                     ZE_SAMPLER_FILTER_MODE_NEAREST,
+                                     normalized};
+    ze_sampler_handle_t sampler;
+    SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc, &sampler));
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  0,
+                                  ZE_IMAGE_TYPE_1D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  8,
+                                  1,
+                                  1,
+                                  0,
+                                  0};
+    constexpr auto nChannels = 4u;
+    constexpr auto bytesPerChannel = sizeof(float);
+    constexpr auto bytesPerPixel = bytesPerChannel * nChannels;
+    uint32_t xDim = static_cast<uint32_t>(srcImgDesc.width);
+    uint32_t yDim = static_cast<uint32_t>(srcImgDesc.height);
+    uint32_t zDim = static_cast<uint32_t>(srcImgDesc.depth);
+    uint32_t nPixels = xDim * yDim * zDim;
+    size_t allocSize = nPixels * bytesPerPixel;
+
+    // Create and initialize host memory
+    void *dstBuffer;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer));
+
+    float *dst = reinterpret_cast<float *>(dstBuffer);
+    for (auto iPixel = 0u; iPixel < srcImgDesc.width; ++iPixel) {
+        for (auto channel = 0u; channel < 4; ++channel) {
+            dst[iPixel * bytesPerChannel + channel] = static_cast<float>(iPixel * 10);
+        }
+    }
+
+    ze_image_handle_t srcImg;
+    ze_group_count_t dispatchTraits;
+    dispatchTraits.groupCountX = 1u;
+    dispatchTraits.groupCountY = 1u;
+    dispatchTraits.groupCountZ = 1u;
+
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc, &srcImg));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcImg), &srcImg));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(sampler), &sampler));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, xDim, 1u, 1u));
+
+    ze_image_region_t srcRegion = {0, 0, 0, (uint32_t)srcImgDesc.width, (uint32_t)srcImgDesc.height, (uint32_t)srcImgDesc.depth};
+
+    std::vector<float> data(nPixels * nChannels);
+    memcpy(data.data(), dstBuffer, allocSize);
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemory(commandHandler.cmdList, srcImg, data.data(),
+                                                                &srcRegion, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(commandHandler.cmdList, nullptr, 0, nullptr));
+    SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
+    SUCCESS_OR_TERMINATE(commandHandler.execute());
+    SUCCESS_OR_TERMINATE(commandHandler.synchronize());
+
+    // Validate
+    float *output = reinterpret_cast<float *>(dstBuffer);
+    std::vector<float> expectedOutput = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 70.f};
+
+    for (auto i = 0u; i < nPixels; ++i) {
+        for (auto j = 0u; j < nChannels; ++j) {
+
+            if (output[i * nChannels + j] != expectedOutput[i]) {
+                std::cerr << "error: dstBuffer[" << i << "] channel[" << j << "] = " << output[i * nChannels + j] << " is not equal to " << expectedOutput[i] << "\n ";
+                outputValidated = false;
+                break;
+            }
+        }
+    }
+
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler));
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+
+    if (outputValidated) {
+        std::cout << "\nTest PASSED" << std::endl;
+    } else {
+        std::cout << "\nTest FAILED" << std::endl;
+    }
+
+    return outputValidated;
+}
+
 bool runImageQuery(ze_context_handle_t context, ze_device_handle_t device, ze_module_handle_t module,
                    const char *kernelName, ze_image_desc_t &imgDesc, std::vector<uint32_t> &reference, bool imgIsSupported) {
     if (!imgIsSupported) {
@@ -1313,7 +1437,7 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
-    int numTests = 8;
+    int numTests = 9;
     int testCase = -1;
     testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     if (testCase < -1 || testCase >= numTests) {
@@ -1461,6 +1585,15 @@ int main(int argc, char *argv[]) {
             }
 
             break;
+
+        case 8:
+            if (is1dImageSupported) {
+                std::cout << "\ntest case: testBindlessImage1DSampled\n"
+                          << std::endl;
+                outputValidated &= testBindlessImage1DSampled(context, device, ss.str(), revisionId, mode);
+            } else {
+                std::cout << "Skipped. testBindlessImage1DSampled case not supported\n";
+            }
         }
 
         if (testCase != -1) {
