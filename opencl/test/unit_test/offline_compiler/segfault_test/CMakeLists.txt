@@ -22,6 +22,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_library_win.h
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/sys_calls.cpp
        ${OCLOC_DIRECTORY}/source/utilities/windows/safety_guard_windows.h
        ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.cpp
        ${OCLOC_DIRECTORY}/source/utilities/windows/seh_exception.h

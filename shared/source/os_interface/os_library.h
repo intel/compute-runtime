@@ -51,4 +51,7 @@ class OsLibrary {
     virtual bool isLoaded() = 0;
     virtual std::string getFullPath() = 0;
 };
+
+bool getLoadedLibVersion(const std::string &libName, const std::string &regexVersionPattern, std::string &outVersion, std::string &errReason);
+
 } // namespace NEO

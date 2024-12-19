@@ -5,11 +5,10 @@
  *
  */
 
-#include "sys_calls.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 
+#include "shared/source/os_interface/windows/os_inc.h"
 #include "shared/test/common/os_interface/windows/mock_sys_calls.h"
-
-#include "os_inc.h"
 
 #include <cstdint>
 #include <unordered_map>
@@ -422,6 +421,50 @@ SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_
     memcpy_s(lpBuffer, sizeof(MEMORY_BASIC_INFORMATION), &virtualQueryMemoryBasicInformation, sizeof(MEMORY_BASIC_INFORMATION));
     return sizeof(MEMORY_BASIC_INFORMATION);
 }
+
+BOOL(*sysCallsGetModuleHandleExW)
+(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) = nullptr;
+DWORD(*sysCallsGetModuleFileNameW)
+(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) = nullptr;
+DWORD(*sysCallsGetFileVersionInfoSizeW)
+(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) = nullptr;
+BOOL(*sysCallsGetFileVersionInfoW)
+(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) = nullptr;
+BOOL(*sysCallsVerQueryValueW)
+(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) = nullptr;
+DWORD(*sysCallsGetLastError)
+() = nullptr;
+BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
+    if (sysCallsGetModuleHandleExW) {
+        return sysCallsGetModuleHandleExW(dwFlags, lpModuleName, phModule);
+    }
+    return FALSE;
+}
+DWORD getModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
+    if (sysCallsGetModuleFileNameW) {
+        return sysCallsGetModuleFileNameW(hModule, lpFilename, nSize);
+    }
+    return 0;
+}
+DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) {
+    if (sysCallsGetFileVersionInfoSizeW) {
+        return sysCallsGetFileVersionInfoSizeW(lptstrFilename, lpdwHandle);
+    }
+    return 0;
+}
+BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) {
+    if (sysCallsGetFileVersionInfoW) {
+        return sysCallsGetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData);
+    }
+    return FALSE;
+}
+BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen) {
+    if (sysCallsVerQueryValueW) {
+        return sysCallsVerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen);
+    }
+    return FALSE;
+}
+
 } // namespace SysCalls
 
 bool isShutdownInProgress() {
