@@ -12,24 +12,24 @@
 
 // Used for creating CL resources from GL resources
 typedef struct _tagCLGLResourceInfo {
+    GMM_RESOURCE_INFO *pGmmResInfo; /// Pointer to GMMResInfo from GL that will be copied in CL (GL)
     GLuint name;
     GLenum target;
     unsigned int globalShareHandle;
-    GMM_RESOURCE_INFO *pGmmResInfo; /// Pointer to GMMResInfo from GL that will be copied in CL (GL)
     GLenum glFormat;
     GLint glInternalFormat;
     GLuint glHWFormat;
-    GLboolean isAuxEnabled;
     GLuint borderWidth;
     GLint textureBufferWidth;
     GLint textureBufferSize;
     GLint textureBufferOffset;
+    GMM_RESOURCE_INFO *pGmmResInfoMCS;
+    GLvoid *pReleaseData;
     GLboolean oglSynchronized;
+    GLboolean isAuxEnabled;
     GMM_STATUS status;
     unsigned int globalShareHandleMCS;
-    GMM_RESOURCE_INFO *pGmmResInfoMCS;
     GLint numberOfSamples; // Number of samples as specified by API
-    GLvoid *pReleaseData;
 } CL_GL_RESOURCE_INFO, *PCL_GL_RESOURCE_INFO;
 
 // Used for creating GL resources from CL resources
@@ -48,15 +48,15 @@ typedef struct _tagGLCLResourceInfo {
 } GL_CL_RESOURCE_INFO, *PGL_CL_RESOURCE_INFO;
 
 typedef struct _tagCLGLBufferInfo {
-    GLenum bufferName;
-    unsigned int globalShareHandle;
     GMM_RESOURCE_INFO *pGmmResInfo; /// Pointer to GMMResInfo from GL that will be copied in CL (GL)
     GLvoid *pSysMem;
+    GLvoid *pReleaseData;
+    GLenum bufferName;
+    unsigned int globalShareHandle;
     GLint bufferSize;
     GLint bufferOffset;
-    GLboolean oglSynchronized;
     GMM_STATUS status;
-    GLvoid *pReleaseData;
+    GLboolean oglSynchronized;
     GLboolean createOrDestroy;
 } CL_GL_BUFFER_INFO, *PCL_GL_BUFFER_INFO;
 
