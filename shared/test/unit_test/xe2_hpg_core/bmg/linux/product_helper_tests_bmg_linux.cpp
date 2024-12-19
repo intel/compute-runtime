@@ -61,8 +61,8 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
+BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
 }
 
 BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {

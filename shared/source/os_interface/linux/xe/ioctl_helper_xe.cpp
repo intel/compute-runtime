@@ -968,6 +968,9 @@ uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePage
     if (enablePageFault) {
         flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
     }
+    if (!disableScratch) {
+        flags |= DRM_XE_VM_CREATE_FLAG_SCRATCH_PAGE;
+    }
     return flags;
 }
 
