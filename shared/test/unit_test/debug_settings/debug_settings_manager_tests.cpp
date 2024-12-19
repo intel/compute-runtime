@@ -452,21 +452,3 @@ TEST(DurationLogTest, givenDurationGetTimeStringThenTimeStringIsCorrect) {
         EXPECT_TRUE(std::isdigit(c) || c == '[' || c == ']' || c == '.' || c == ' ');
     }
 }
-
-TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeWhenCallingIsTbxModeThenReturnTrue) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(2);
-    EXPECT_TRUE(NEO::debugManager.isTbxMode());
-
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(4);
-    EXPECT_TRUE(NEO::debugManager.isTbxMode());
-}
-
-TEST(DebugSettingsManager, GivenHardwareOrHardwareWithAubCsrTypeWhenCallingIsTbxModeThenReturnFalse) {
-    DebugManagerStateRestore restorer;
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(1);
-    EXPECT_FALSE(NEO::debugManager.isTbxMode());
-
-    NEO::debugManager.flags.SetCommandStreamReceiver.set(3);
-    EXPECT_FALSE(NEO::debugManager.isTbxMode());
-}

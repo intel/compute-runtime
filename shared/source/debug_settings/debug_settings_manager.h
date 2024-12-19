@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/options.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -160,11 +159,6 @@ class DebugSettingsManager {
         if (!disabled()) {
             callable();
         }
-    }
-
-    inline bool isTbxMode() {
-        auto setCsr = flags.SetCommandStreamReceiver.get();
-        return (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbx)) || (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
     }
 
   protected:

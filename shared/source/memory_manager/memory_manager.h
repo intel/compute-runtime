@@ -29,7 +29,7 @@ namespace NEO {
 using SubDeviceIdsVec = StackVec<uint32_t, 4>;
 
 class MultiGraphicsAllocation;
-class CpuPageFaultManager;
+class PageFaultManager;
 class GfxPartition;
 struct ImageInfo;
 struct AllocationData;
@@ -192,7 +192,7 @@ class MemoryManager {
         return deferredDeleter.get();
     }
 
-    MOCKABLE_VIRTUAL CpuPageFaultManager *getPageFaultManager() const {
+    PageFaultManager *getPageFaultManager() const {
         return pageFaultManager.get();
     }
 
@@ -413,7 +413,7 @@ class MemoryManager {
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> internalLocalMemoryUsageBankSelector;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> externalLocalMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
-    std::unique_ptr<CpuPageFaultManager> pageFaultManager;
+    std::unique_ptr<PageFaultManager> pageFaultManager;
     std::unique_ptr<PrefetchManager> prefetchManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     std::vector<std::unique_ptr<HeapAssigner>> heapAssigners;

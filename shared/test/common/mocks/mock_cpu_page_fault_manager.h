@@ -14,17 +14,16 @@
 
 using namespace NEO;
 
-template <class BaseFaultManager>
-class MockPageFaultManagerImpl : public BaseFaultManager {
+class MockPageFaultManager : public PageFaultManager {
   public:
-    using BaseFaultManager::BaseFaultManager;
-    using BaseFaultManager::gpuDomainHandler;
-    using BaseFaultManager::memoryData;
-    using PageFaultData = typename BaseFaultManager::PageFaultData;
-    using BaseFaultManager::selectGpuDomainHandler;
-    using BaseFaultManager::transferAndUnprotectMemory;
-    using BaseFaultManager::unprotectAndTransferMemory;
-    using BaseFaultManager::verifyAndHandlePageFault;
+    using PageFaultManager::gpuDomainHandler;
+    using PageFaultManager::memoryData;
+    using PageFaultManager::PageFaultData;
+    using PageFaultManager::PageFaultManager;
+    using PageFaultManager::selectGpuDomainHandler;
+    using PageFaultManager::transferAndUnprotectMemory;
+    using PageFaultManager::unprotectAndTransferMemory;
+    using PageFaultManager::verifyAndHandlePageFault;
 
     bool checkFaultHandlerFromPageFaultManager() override {
         checkFaultHandlerCalled++;
@@ -42,9 +41,6 @@ class MockPageFaultManagerImpl : public BaseFaultManager {
         protectMemoryCalled++;
         protectedMemoryAccessAddress = ptr;
         protectedSize = size;
-    }
-    void protectCpuMemoryFromWrites(void *ptr, size_t size) override {
-        protectWritesCalled++;
     }
     void transferToCpu(void *ptr, size_t size, void *cmdQ) override {
         transferToCpuCalled++;
@@ -66,19 +62,19 @@ class MockPageFaultManagerImpl : public BaseFaultManager {
         allowCPUMemoryEvictionCalled++;
     }
     void baseAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
-        BaseFaultManager::setAubWritable(writable, ptr, unifiedMemoryManager);
+        PageFaultManager::setAubWritable(writable, ptr, unifiedMemoryManager);
     }
     void baseCpuTransfer(void *ptr, size_t size, void *cmdQ) {
-        BaseFaultManager::transferToCpu(ptr, size, cmdQ);
+        PageFaultManager::transferToCpu(ptr, size, cmdQ);
     }
     void baseGpuTransfer(void *ptr, void *cmdQ) {
-        BaseFaultManager::transferToGpu(ptr, cmdQ);
+        PageFaultManager::transferToGpu(ptr, cmdQ);
     }
     void baseCpuAllocEvictable(bool evictable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
-        BaseFaultManager::setCpuAllocEvictable(evictable, ptr, unifiedMemoryManager);
+        PageFaultManager::setCpuAllocEvictable(evictable, ptr, unifiedMemoryManager);
     }
     void baseAllowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
-        BaseFaultManager::allowCPUMemoryEviction(evict, ptr, pageFaultData);
+        PageFaultManager::allowCPUMemoryEviction(evict, ptr, pageFaultData);
     }
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override {}
 
@@ -89,22 +85,21 @@ class MockPageFaultManagerImpl : public BaseFaultManager {
     }
 
     void *getHwHandlerAddress() {
-        return reinterpret_cast<void *>(BaseFaultManager::transferAndUnprotectMemory);
+        return reinterpret_cast<void *>(PageFaultManager::transferAndUnprotectMemory);
     }
 
     void *getAubAndTbxHandlerAddress() {
-        return reinterpret_cast<void *>(BaseFaultManager::unprotectAndTransferMemory);
+        return reinterpret_cast<void *>(PageFaultManager::unprotectAndTransferMemory);
     }
     void moveAllocationToGpuDomain(void *ptr) override {
         moveAllocationToGpuDomainCalled++;
-        BaseFaultManager::moveAllocationToGpuDomain(ptr);
+        PageFaultManager::moveAllocationToGpuDomain(ptr);
     }
 
     int checkFaultHandlerCalled = 0;
     int registerFaultHandlerCalled = 0;
     int allowMemoryAccessCalled = 0;
     int protectMemoryCalled = 0;
-    int protectWritesCalled = 0;
     int transferToCpuCalled = 0;
     int transferToGpuCalled = 0;
     int moveAllocationToGpuDomainCalled = 0;
@@ -124,8 +119,6 @@ class MockPageFaultManagerImpl : public BaseFaultManager {
     aub_stream::EngineType engineType = aub_stream::EngineType::NUM_ENGINES;
     EngineUsage engineUsage = EngineUsage::engineUsageCount;
 };
-
-class MockPageFaultManager : public MockPageFaultManagerImpl<CpuPageFaultManager> {};
 
 template <class T>
 class MockPageFaultManagerHandlerInvoke : public T {

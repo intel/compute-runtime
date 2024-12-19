@@ -18,7 +18,6 @@ namespace NEO {
 
 class AubSubCaptureManager;
 class TbxStream;
-class CpuPageFaultManager;
 
 template <typename GfxFamily>
 class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
@@ -36,12 +35,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL uint64_t getNonBlockingDownloadTimeoutMs() const {
         return 2000; // 2s
     }
-
-    bool isAllocTbxFaultable(GraphicsAllocation *gfxAlloc);
-    void registerAllocationWithTbxFaultMngrIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
-    void allowCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
-    void protectCPUMemoryAccessIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
-    void protectCPUMemoryFromWritesIfTbxFaultable(GraphicsAllocation *gfxAllocation, void *cpuAddress, size_t size);
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
@@ -88,11 +81,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     void initializeEngine() override;
 
-    MOCKABLE_VIRTUAL MemoryManager *getMemoryManager() {
+    MemoryManager *getMemoryManager() {
         return CommandStreamReceiver::getMemoryManager();
     }
-
-    MOCKABLE_VIRTUAL CpuPageFaultManager *getTbxPageFaultManager();
 
     TbxStream tbxStream;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;

@@ -16,7 +16,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace NEO {
-void CpuPageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
+void PageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
     deviceImp->getNEODevice()->stopDirectSubmissionForCopyEngine();
 
@@ -29,7 +29,7 @@ void CpuPageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
                                                              allocData->size, true);
     UNRECOVERABLE_IF(ret);
 }
-void CpuPageFaultManager::transferToGpu(void *ptr, void *device) {
+void PageFaultManager::transferToGpu(void *ptr, void *device) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(device);
     deviceImp->getNEODevice()->stopDirectSubmissionForCopyEngine();
 
@@ -44,7 +44,7 @@ void CpuPageFaultManager::transferToGpu(void *ptr, void *device) {
 
     this->evictMemoryAfterImplCopy(allocData->cpuAllocation, deviceImp->getNEODevice());
 }
-void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
+void PageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaultData &pageFaultData) {
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
 
     CommandStreamReceiver *csr = nullptr;
@@ -61,9 +61,9 @@ void CpuPageFaultManager::allowCPUMemoryEviction(bool evict, void *ptr, PageFaul
 } // namespace NEO
 
 namespace L0 {
-void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHandler, void *allocPtr, NEO::CpuPageFaultManager::PageFaultData &pageFaultData) {
+void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData) {
     bool migration = true;
-    if (pageFaultData.domain == NEO::CpuPageFaultManager::AllocationDomain::gpu) {
+    if (pageFaultData.domain == NEO::PageFaultManager::AllocationDomain::gpu) {
         L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
         NEO::SvmAllocationData *allocData = deviceImp->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(allocPtr);
 
@@ -87,7 +87,7 @@ void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHand
         }
     }
     if (migration) {
-        pageFaultData.domain = NEO::CpuPageFaultManager::AllocationDomain::cpu;
+        pageFaultData.domain = NEO::PageFaultManager::AllocationDomain::cpu;
     }
     pageFaultHandler->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
 }

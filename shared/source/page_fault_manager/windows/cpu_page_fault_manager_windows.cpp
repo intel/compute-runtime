@@ -8,27 +8,21 @@
 #include "shared/source/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/page_fault_manager/windows/tbx_page_fault_manager_windows.h"
 
 namespace NEO {
-std::unique_ptr<CpuPageFaultManager> CpuPageFaultManager::create() {
-    auto pageFaultManager = [&]() -> std::unique_ptr<CpuPageFaultManager> {
-        if (debugManager.isTbxMode()) {
-            return TbxPageFaultManager::create();
-        }
-        return std::make_unique<CpuPageFaultManagerWindows>();
-    }();
+std::unique_ptr<PageFaultManager> PageFaultManager::create() {
+    auto pageFaultManager = std::make_unique<PageFaultManagerWindows>();
 
     pageFaultManager->selectGpuDomainHandler();
     return pageFaultManager;
 }
 
-std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler = nullptr;
+std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> PageFaultManagerWindows::pageFaultHandler;
 
 PageFaultManagerWindows::PageFaultManagerWindows() {
     PageFaultManagerWindows::registerFaultHandler();
@@ -73,16 +67,10 @@ void PageFaultManagerWindows::protectCPUMemoryAccess(void *ptr, size_t size) {
     UNRECOVERABLE_IF(!retVal);
 }
 
-void PageFaultManagerWindows::protectCpuMemoryFromWrites(void *ptr, size_t size) {
-    DWORD previousState;
-    auto retVal = VirtualProtect(ptr, size, PAGE_READONLY, &previousState);
-    UNRECOVERABLE_IF(!retVal);
-}
-
 void PageFaultManagerWindows::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {}
 
 void PageFaultManagerWindows::allowCPUMemoryEvictionImpl(bool evict, void *ptr, CommandStreamReceiver &csr, OSInterface *osInterface) {
-    NEO::SvmAllocationData *allocData = this->memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
+    NEO::SvmAllocationData *allocData = memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
     UNRECOVERABLE_IF(allocData == nullptr);
 
     if (osInterface) {
