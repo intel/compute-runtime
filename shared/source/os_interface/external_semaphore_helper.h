@@ -30,7 +30,8 @@ class ExternalSemaphoreHelper {
         KeyedMutex,
         KeyedMutexKmt,
         TimelineSemaphoreFd,
-        TimelineSemaphoreWin32
+        TimelineSemaphoreWin32,
+        Invalid
     };
 
     static std::unique_ptr<ExternalSemaphoreHelper> create(OSInterface *osInterface);
@@ -49,7 +50,7 @@ class ExternalSemaphoreHelper {
     OSInterface *osInterface = nullptr;
 
   private:
-    Type type;
+    Type type = Invalid;
 };
 
 } // namespace NEO
