@@ -19,6 +19,17 @@ class GraphicsAllocation;
 class LinearStream;
 
 class SWTagsManager {
+  protected:
+    void allocateBXMLHeap(Device &device);
+    void allocateSWTagHeap(Device &device);
+
+    MemoryManager *memoryManager{};
+    GraphicsAllocation *tagHeap = nullptr;
+    GraphicsAllocation *bxmlHeap = nullptr;
+    unsigned int currentHeapOffset = 0;
+    unsigned int currentTagCount = 0;
+    bool initialized = false;
+
   public:
     SWTagsManager() = default;
 
@@ -43,17 +54,6 @@ class SWTagsManager {
     static const unsigned int maxTagHeapSize = 16384;
     unsigned int currentCallCount = 0;
     unsigned int getCurrentHeapOffset() { return currentHeapOffset; }
-
-  protected:
-    void allocateBXMLHeap(Device &device);
-    void allocateSWTagHeap(Device &device);
-
-    MemoryManager *memoryManager{};
-    GraphicsAllocation *tagHeap = nullptr;
-    GraphicsAllocation *bxmlHeap = nullptr;
-    unsigned int currentHeapOffset = 0;
-    unsigned int currentTagCount = 0;
-    bool initialized = false;
 };
 
 template <typename GfxFamily>
