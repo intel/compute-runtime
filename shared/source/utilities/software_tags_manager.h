@@ -41,8 +41,8 @@ class SWTagsManager {
 
     static const unsigned int maxTagCount = 200;
     static const unsigned int maxTagHeapSize = 16384;
-    unsigned int currentCallCount = 0;
     unsigned int getCurrentHeapOffset() { return currentHeapOffset; }
+    unsigned int incrementAndGetCurrentCallCount() { return ++currentCallCount; }
 
   protected:
     void allocateBXMLHeap(Device &device);
@@ -53,6 +53,7 @@ class SWTagsManager {
     GraphicsAllocation *bxmlHeap = nullptr;
     unsigned int currentHeapOffset = 0;
     unsigned int currentTagCount = 0;
+    unsigned int currentCallCount = 0;
     bool initialized = false;
 };
 
