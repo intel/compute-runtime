@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,10 +64,13 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqueuein
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSizeVal = pKernel->getLocalWorkSizeValues();
-    EXPECT_EQ(8u, *localWorkSizeVal[0]);
-    EXPECT_EQ(2u, *localWorkSizeVal[1]);
-    EXPECT_EQ(2u, *localWorkSizeVal[2]);
+    // IGC may inline local worksize here so tokens are optional
+    if (pKernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) {
+        auto localWorkSizeVal = pKernel->getLocalWorkSizeValues();
+        EXPECT_EQ(8u, *localWorkSizeVal[0]);
+        EXPECT_EQ(2u, *localWorkSizeVal[1]);
+        EXPECT_EQ(2u, *localWorkSizeVal[2]);
+    }
 }
 
 // Fully specified
@@ -87,11 +90,13 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqueueingKe
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto localWorkSizeVal = pKernel->getLocalWorkSizeValues();
-    EXPECT_EQ(8u, *localWorkSizeVal[0]);
-    EXPECT_EQ(2u, *localWorkSizeVal[1]);
-    EXPECT_EQ(2u, *localWorkSizeVal[2]);
+    // IGC may inline local worksize here so tokens are optional
+    if (pKernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) {
+        auto localWorkSizeVal = pKernel->getLocalWorkSizeValues();
+        EXPECT_EQ(8u, *localWorkSizeVal[0]);
+        EXPECT_EQ(2u, *localWorkSizeVal[1]);
+        EXPECT_EQ(2u, *localWorkSizeVal[2]);
+    }
 }
 
 // Underspecified.  Won't permit.
