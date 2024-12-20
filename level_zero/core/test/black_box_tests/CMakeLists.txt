@@ -29,7 +29,11 @@ if(NOT DEFINED L0_BLACK_BOX_OCLOC_HEADER_DIR)
 endif()
 
 target_link_libraries(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ocloc_lib)
-target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/common ${L0_BLACK_BOX_OCLOC_HEADER_DIR})
+target_include_directories(${L0_BLACK_BOX_TEST_SHARED_LIB} PUBLIC
+                           ${CMAKE_CURRENT_SOURCE_DIR}/common
+                           ${L0_BLACK_BOX_OCLOC_HEADER_DIR}
+                           ${NEO_SOURCE_DIR}/level_zero/include
+)
 
 set_target_properties(${L0_BLACK_BOX_TEST_SHARED_LIB} PROPERTIES FOLDER ${L0_BLACK_BOX_TEST_PROJECT_FOLDER})
 

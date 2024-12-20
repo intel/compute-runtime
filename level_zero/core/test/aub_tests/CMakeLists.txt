@@ -96,6 +96,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
                              ${CIF_BASE_DIR}
                              ${NEO__GMM_INCLUDE_DIR}
                              ${WDK_DIR}
+                             ${NEO_SOURCE_DIR}/level_zero/include
   )
 
   create_project_source_tree(${TARGET_NAME})

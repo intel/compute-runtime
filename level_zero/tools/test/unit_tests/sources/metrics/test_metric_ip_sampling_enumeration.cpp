@@ -11,12 +11,12 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/include/zet_intel_gpu_metric.h"
-#include "level_zero/include/zet_intel_gpu_metric_export.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_ip_sampling.h"
+#include "level_zero/zet_intel_gpu_metric.h"
+#include "level_zero/zet_intel_gpu_metric_export.h"
 #include <level_zero/zet_api.h>
 
 #include "metric_ip_sampling_fixture.h"

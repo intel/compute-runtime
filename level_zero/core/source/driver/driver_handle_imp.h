@@ -14,7 +14,7 @@
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include <map>
 #include <mutex>

@@ -11,7 +11,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 

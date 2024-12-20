@@ -6,7 +6,7 @@
  */
 
 #include "level_zero/core/source/semaphore/external_semaphore_imp.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 ze_result_t ZE_APICALL
 zeIntelDeviceImportExternalSemaphoreExp(

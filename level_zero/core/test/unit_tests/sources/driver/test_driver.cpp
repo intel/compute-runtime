@@ -41,7 +41,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "driver_version.h"
 

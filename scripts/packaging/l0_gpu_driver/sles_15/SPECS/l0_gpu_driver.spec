@@ -124,6 +124,8 @@ fi
 
 %files -n intel-level-zero-gpu%{?name_suffix}-devel
 %{_includedir}/level_zero/zet_intel_gpu_debug.h
+%{_includedir}/level_zero/ze_intel_gpu.h
+%{_includedir}/level_zero/ze_stypes.h
 
 %doc
 

@@ -8,7 +8,7 @@
 #include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
 ZE_APIEXPORT ze_result_t ZE_APICALL

@@ -11,8 +11,8 @@
 #include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 
-#include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 

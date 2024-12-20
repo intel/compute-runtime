@@ -12,7 +12,7 @@
 #endif
 
 // 'core' API headers
-#include "level_zero/include/ze_stypes.h"
+#include "level_zero/ze_stypes.h"
 #include <level_zero/ze_api.h>
 // 'sysman' API headers
 #include <level_zero/zes_api.h>

@@ -16,10 +16,10 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
 namespace L0 {
 namespace ult {

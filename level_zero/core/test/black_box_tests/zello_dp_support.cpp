@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "zello_common.h"
 

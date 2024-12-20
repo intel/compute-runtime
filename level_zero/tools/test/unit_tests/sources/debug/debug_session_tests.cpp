@@ -18,10 +18,10 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_registers_access.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
 #include "common/StateSaveAreaHeader.h"
 #include "encode_surface_state_args.h"

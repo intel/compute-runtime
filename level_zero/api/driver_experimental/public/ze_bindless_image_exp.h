@@ -11,7 +11,7 @@
 #pragma once
 #endif
 
-#include "level_zero/include/ze_stypes.h"
+#include "level_zero/ze_stypes.h"
 #include <level_zero/ze_api.h>
 
 #ifndef ZE_BINDLESS_IMAGE_EXP_NAME

@@ -56,10 +56,10 @@
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
-#include "level_zero/include/ze_intel_gpu.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "encode_surface_state_args.h"
 

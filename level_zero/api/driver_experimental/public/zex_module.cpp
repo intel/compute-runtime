@@ -8,7 +8,7 @@
 #include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
 

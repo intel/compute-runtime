@@ -7,7 +7,7 @@
 
 #include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
 const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsSupported = {
