@@ -772,8 +772,8 @@ void EventImp<TagSizeT>::synchronizeCounterBasedTimestampCompletionWithTimeout()
         calculateProfilingData();
 
         timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-    } while ((contextEndTS == Event::STATE_CLEARED || contextEndTS == 0) && (timeDiff < timeoutMs));
-    DEBUG_BREAK_IF(contextEndTS == Event::STATE_CLEARED || contextEndTS == 0);
+    } while (!isTimestampPopulated() && (timeDiff < timeoutMs));
+    DEBUG_BREAK_IF(!isTimestampPopulated());
 }
 
 template <typename TagSizeT>
@@ -787,7 +787,7 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
     assignKernelEventCompletionData(getHostAddress());
     calculateProfilingData();
 
-    if (isCounterBased() && (contextEndTS == Event::STATE_CLEARED || contextEndTS == 0)) {
+    if (isCounterBased() && !isTimestampPopulated()) {
         synchronizeCounterBasedTimestampCompletionWithTimeout();
     }
 

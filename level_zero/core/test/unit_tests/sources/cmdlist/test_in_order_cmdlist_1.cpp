@@ -457,10 +457,12 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
 
         uint32_t assignKernelEventCompletionDataCalled = 0;
         uint32_t assignKernelEventCompletionDataFailCounter = 0;
-        uint64_t notReadyData = Event::STATE_CLEARED;
+        const uint64_t notReadyData = Event::STATE_CLEARED;
+        bool useContextEndForVerification = true;
 
         void assignKernelEventCompletionData(void *address) override {
-            auto completionAddress = reinterpret_cast<uint64_t *>(getCompletionFieldHostAddress());
+            auto offset = useContextEndForVerification ? NEO::TimestampPackets<uint64_t, 1>::getContextEndOffset() : NEO::TimestampPackets<uint64_t, 1>::getGlobalEndOffset();
+            auto completionAddress = reinterpret_cast<uint64_t *>(ptrOffset(getHostAddress(), offset));
             assignKernelEventCompletionDataCalled++;
             if (assignKernelEventCompletionDataCalled <= assignKernelEventCompletionDataFailCounter) {
                 *completionAddress = notReadyData;
@@ -481,17 +483,21 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
     event1->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event1->assignKernelEventCompletionDataFailCounter = 2;
     event1->setUsingContextEndOffset(true);
+    event1->setEventTimestampFlag(true);
+    event1->useContextEndForVerification = true;
 
     event2->enableCounterBasedMode(true, ZE_EVENT_POOL_COUNTER_BASED_EXP_FLAG_IMMEDIATE);
     event2->assignKernelEventCompletionDataFailCounter = 2;
     event2->setUsingContextEndOffset(true);
-    event2->notReadyData = 0;
+    event2->setEventTimestampFlag(true);
+    event2->useContextEndForVerification = false;
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event1->toHandle(), 0, nullptr, launchParams, false);
-    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event2->toHandle(), 0, nullptr, launchParams, false);
+    event1->hostEventSetValue(Event::STATE_CLEARED);
 
-    *reinterpret_cast<uint64_t *>(event1->getCompletionFieldHostAddress()) = Event::STATE_CLEARED;
-    *reinterpret_cast<uint64_t *>(event2->getCompletionFieldHostAddress()) = 0;
+    cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, event2->toHandle(), 0, nullptr, launchParams, false);
+    event2->hostEventSetValue(Event::STATE_CLEARED);
+
     event1->getInOrderExecInfo()->setLastWaitedCounterValue(2);
     event2->getInOrderExecInfo()->setLastWaitedCounterValue(2);
 
@@ -500,8 +506,8 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
 
     ze_kernel_timestamp_result_t kernelTimestamps = {};
 
-    EXPECT_EQ(0u, event1->assignKernelEventCompletionDataCalled);
-    EXPECT_EQ(0u, event2->assignKernelEventCompletionDataCalled);
+    event1->assignKernelEventCompletionDataCalled = 0;
+    event2->assignKernelEventCompletionDataCalled = 0;
     event1->queryKernelTimestamp(&kernelTimestamps);
     event2->queryKernelTimestamp(&kernelTimestamps);
 
