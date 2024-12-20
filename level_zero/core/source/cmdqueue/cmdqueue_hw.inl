@@ -1287,6 +1287,10 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartSecondaryBa
             }
         }
     }
+
+    if (ctx.containsParentImmediateStream) {
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(commandContainer);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
