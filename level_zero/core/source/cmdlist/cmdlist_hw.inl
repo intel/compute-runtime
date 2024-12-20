@@ -785,17 +785,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(z
     builtinKernel->setArgRedescribedImage(1u, image->toHandle());
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
 
-    uint32_t origin[] = {
-        static_cast<uint32_t>(pDstRegion->originX),
-        static_cast<uint32_t>(pDstRegion->originY),
-        static_cast<uint32_t>(pDstRegion->originZ),
-        0};
+    uint32_t origin[] = {pDstRegion->originX,
+                         pDstRegion->originY,
+                         pDstRegion->originZ,
+                         0};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
-    uint32_t pitch[] = {
-        srcRowPitch,
-        srcSlicePitch};
-    builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    if (this->heaplessModeEnabled) {
+        uint64_t pitch[] = {srcRowPitch, srcSlicePitch};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    } else {
+        uint32_t pitch[] = {srcRowPitch, srcSlicePitch};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    }
 
     uint32_t groupSizeX = pDstRegion->width;
     uint32_t groupSizeY = pDstRegion->height;
@@ -968,20 +970,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     builtinKernel->setArgBufferWithAlloc(1u, allocationStruct.alignedAllocationPtr,
                                          allocationStruct.alloc,
                                          nullptr);
-
-    uint32_t origin[] = {
-        static_cast<uint32_t>(pSrcRegion->originX),
-        static_cast<uint32_t>(pSrcRegion->originY),
-        static_cast<uint32_t>(pSrcRegion->originZ),
-        0};
+    uint32_t origin[] = {pSrcRegion->originX,
+                         pSrcRegion->originY,
+                         pSrcRegion->originZ,
+                         0};
     builtinKernel->setArgumentValue(2u, sizeof(origin), &origin);
-
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
-    uint32_t pitch[] = {
-        destRowPitch,
-        destSlicePitch};
-    builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    if (this->heaplessModeEnabled) {
+        uint64_t pitch[] = {destRowPitch, destSlicePitch};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    } else {
+        uint32_t pitch[] = {destRowPitch, destSlicePitch};
+        builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
+    }
 
     uint32_t groupSizeX = pSrcRegion->width;
     uint32_t groupSizeY = pSrcRegion->height;

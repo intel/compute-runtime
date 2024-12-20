@@ -115,13 +115,29 @@ struct Mock<::L0::KernelImp> : public WhiteBox<::L0::KernelImp> {
         printPrintfOutputCalledTimes++;
     }
 
+    ze_result_t setArgumentValue(uint32_t argIndex, size_t argSize, const void *pArgValue) override {
+
+        if (checkPassedArgumentValues) {
+            UNRECOVERABLE_IF(argIndex >= passedArgumentValues.size());
+
+            passedArgumentValues[argIndex].resize(argSize);
+            memcpy(passedArgumentValues[argIndex].data(), pArgValue, argSize);
+
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return BaseClass::setArgumentValue(argIndex, argSize, pArgValue);
+        }
+    }
+
     WhiteBox<::L0::KernelImmutableData> immutableData;
+    std::vector<std::vector<uint8_t>> passedArgumentValues;
     NEO::KernelDescriptor descriptor;
     NEO::KernelInfo info;
     uint32_t printPrintfOutputCalledTimes = 0;
     bool hangDetectedPassedToPrintfOutput = false;
     bool enableForcingOfGenerateLocalIdByHw = false;
     bool forceGenerateLocalIdByHw = false;
+    bool checkPassedArgumentValues = false;
 };
 
 } // namespace ult
