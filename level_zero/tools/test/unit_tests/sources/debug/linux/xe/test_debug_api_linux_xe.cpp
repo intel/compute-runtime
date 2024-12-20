@@ -2767,39 +2767,6 @@ TEST_F(DebugApiLinuxTestXe, GivenMaxRetriesProvidedByDebugVariablesWhenAsyncThre
     session->closeAsyncThread();
 }
 
-TEST_F(DebugApiLinuxTestXe, GivenNotImplementedEventTypeWhenHandleEventThenDebugMessageIsPrinted) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
-    ASSERT_NE(nullptr, session);
-    DebugManagerStateRestore restore;
-    NEO::debugManager.flags.PrintDebugMessages.set(1);
-    NEO::debugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO);
-
-    NEO::EuDebugEvent emptyEvent{};
-
-    ::testing::internal::CaptureStdout();
-
-    session->handleEvent(&emptyEvent);
-
-    std::string output = testing::internal::GetCapturedStdout();
-    std::string expectedOutput("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED 0 flags = 0 len = 0\n");
-    EXPECT_NE(std::string::npos, output.find(expectedOutput.c_str()));
-
-    NEO::EuDebugEvent pagefaultEvent{};
-    pagefaultEvent.len = 2;
-    pagefaultEvent.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypePagefault);
-    pagefaultEvent.flags = 3;
-
-    ::testing::internal::CaptureStdout();
-    session->handleEvent(&pagefaultEvent);
-
-    output = testing::internal::GetCapturedStdout();
-    expectedOutput = std::string("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED ") + std::to_string(pagefaultEvent.type) + " flags = 3 len = 2\n";
-    EXPECT_NE(std::string::npos, output.find(expectedOutput.c_str()));
-}
-
 TEST(DebugSessionLinuxXeTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsNotCreated) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
@@ -3111,6 +3078,49 @@ TEST_F(DebugApiLinuxMultiDeviceVmBindTestXe, GivenVmBindForProgramModuleWhenHand
     }
     event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenPageFaultEventThenPageFaultHandledCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+    uint64_t execQueueHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    sessionMock->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->lrcHandleToVmHandle[lrcHandle] = vmHandle;
+
+    uint8_t data[sizeof(NEO::EuDebugEventPageFault) + 128];
+    ze_device_thread_t thread{0, 0, 0, 0};
+
+    sessionMock->stoppedThreads[EuThread::ThreadId(0, thread).packed] = 1;
+    sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+
+    sessionMock->interruptSent = true;
+    sessionMock->euControlInterruptSeqno = 1;
+
+    NEO::EuDebugEventPageFault pf = {};
+    pf.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypePagefault);
+    pf.base.flags = static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange);
+    pf.base.len = sizeof(data);
+    pf.base.seqno = 2;
+    pf.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    pf.lrcHandle = lrcHandle;
+    pf.flags = 0;
+    pf.execQueueHandle = execQueueHandle;
+    pf.bitmaskSize = 0;
+    memcpy(data, &pf, sizeof(NEO::EuDebugEventPageFault));
+    sessionMock->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(data));
+    EXPECT_EQ(sessionMock->handlePageFaultEventCalled, 1u);
+
+    pf.lrcHandle = 0x1234;
+    memcpy(data, &pf, sizeof(NEO::EuDebugEventPageFault));
+    sessionMock->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(data));
+    EXPECT_EQ(sessionMock->handlePageFaultEventCalled, 1u);
 }
 
 } // namespace ult

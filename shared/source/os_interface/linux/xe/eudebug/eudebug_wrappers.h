@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,6 +99,17 @@ struct EuDebugEventVmBindOpMetadata {
 struct EuDebugEventVmBindUfence {
     struct EuDebugEvent base;
     uint64_t vmBindRefSeqno;
+};
+
+struct EuDebugEventPageFault {
+    struct EuDebugEvent base;
+    uint64_t clientHandle;
+    uint64_t execQueueHandle;
+    uint64_t lrcHandle;
+    uint32_t flags;
+    uint32_t bitmaskSize;
+    uint64_t pagefaultAddress;
+    uint8_t bitmask[];
 };
 
 struct EuDebugReadMetadata {

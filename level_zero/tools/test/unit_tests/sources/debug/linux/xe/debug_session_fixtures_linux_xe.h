@@ -293,6 +293,10 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return L0::DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srIdent);
     }
 
+    void handlePageFaultEvent(PageFaultEvent &pfEvent) override {
+        handlePageFaultEventCalled++;
+    }
+
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
         return 0x1000;
     }
@@ -314,6 +318,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     uint32_t countToAddThreadToNewlyStoppedFromRaisedAttentionForTileSession = 0;
     int64_t returnTimeDiff = -1;
     uint32_t handleAttentionEventCalled = 0;
+    uint32_t handlePageFaultEventCalled = 0;
 };
 
 struct MockAsyncThreadDebugSessionLinuxXe : public MockDebugSessionLinuxXe {

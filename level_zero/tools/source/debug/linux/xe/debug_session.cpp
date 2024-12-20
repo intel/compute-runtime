@@ -379,7 +379,19 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
                                     static_cast<uint64_t>(execQueuePlacements->clientHandle), static_cast<uint64_t>(execQueuePlacements->vmHandle), tileIndex);
         }
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypePagefault)) {
-        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: UNHANDLED %u flags = %u len = %lu\n", type, event->flags, event->len);
+        NEO::EuDebugEventPageFault *pf = reinterpret_cast<NEO::EuDebugEventPageFault *>(event);
+
+        PRINT_DEBUGGER_INFO_LOG("DRM_XE_EUDEBUG_IOCTL_READ_EVENT type: DRM_XE_EUDEBUG_EVENT_PAGEFAULT flags = %d, address = %llu seqno = %d, length = %llu"
+                                " client_handle = %llu pf_flags = %llu  bitmask_size = %lu exec_queue_handle = %llu\n",
+                                (int)pf->base.flags, (uint64_t)pf->pagefaultAddress, (uint64_t)pf->base.seqno, (uint64_t)pf->base.len,
+                                (uint64_t)pf->clientHandle, (uint64_t)pf->flags, (uint32_t)pf->bitmaskSize, uint64_t(pf->execQueueHandle));
+        auto tileIndex = 0u;
+        auto vmHandle = getVmHandleFromClientAndlrcHandle(pf->clientHandle, pf->lrcHandle);
+        if (vmHandle == invalidHandle) {
+            return;
+        }
+        PageFaultEvent pfEvent = {vmHandle, tileIndex, pf->pagefaultAddress, pf->bitmaskSize, pf->bitmask};
+        handlePageFaultEvent(pfEvent);
     } else {
         additionalEvents(event);
     }

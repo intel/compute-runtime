@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -156,6 +156,15 @@ static_assert(offsetof(EuDebugEventVmBindOpMetadata, metadataCookie) == offsetof
 static_assert(sizeof(EuDebugEventVmBindUfence) == sizeof(prelim_drm_xe_eudebug_event_vm_bind_ufence));
 static_assert(offsetof(EuDebugEventVmBindUfence, base) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_ufence, base));
 static_assert(offsetof(EuDebugEventVmBindUfence, vmBindRefSeqno) == offsetof(prelim_drm_xe_eudebug_event_vm_bind_ufence, vm_bind_ref_seqno));
+
+static_assert(sizeof(EuDebugEventPageFault) == sizeof(prelim_drm_xe_eudebug_event_pagefault));
+static_assert(offsetof(EuDebugEventPageFault, clientHandle) == offsetof(prelim_drm_xe_eudebug_event_pagefault, client_handle));
+static_assert(offsetof(EuDebugEventPageFault, execQueueHandle) == offsetof(prelim_drm_xe_eudebug_event_pagefault, exec_queue_handle));
+static_assert(offsetof(EuDebugEventPageFault, lrcHandle) == offsetof(prelim_drm_xe_eudebug_event_pagefault, lrc_handle));
+static_assert(offsetof(EuDebugEventPageFault, flags) == offsetof(prelim_drm_xe_eudebug_event_pagefault, flags));
+static_assert(offsetof(EuDebugEventPageFault, bitmaskSize) == offsetof(prelim_drm_xe_eudebug_event_pagefault, bitmask_size));
+static_assert(offsetof(EuDebugEventPageFault, pagefaultAddress) == offsetof(prelim_drm_xe_eudebug_event_pagefault, pagefault_address));
+static_assert(offsetof(EuDebugEventPageFault, bitmask) == offsetof(prelim_drm_xe_eudebug_event_pagefault, bitmask));
 
 static_assert(sizeof(EuDebugReadMetadata) == sizeof(prelim_drm_xe_eudebug_read_metadata));
 static_assert(offsetof(EuDebugReadMetadata, clientHandle) == offsetof(prelim_drm_xe_eudebug_read_metadata, client_handle));

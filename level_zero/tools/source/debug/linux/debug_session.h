@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -304,7 +304,7 @@ struct DebugSessionLinux : DebugSessionImp {
         uint32_t bitmaskSize;
         uint8_t *bitmask;
     };
-    void handlePageFaultEvent(PageFaultEvent &pfEvent);
+    MOCKABLE_VIRTUAL void handlePageFaultEvent(PageFaultEvent &pfEvent);
 
     uint8_t maxRetries = 3;
     std::unique_ptr<IoctlHandler> ioctlHandler;
