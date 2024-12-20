@@ -1733,10 +1733,10 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenForcedPrimaryBatchBufferWhenRegular
     EXPECT_TRUE(commandList->dispatchCmdListBatchBufferAsPrimary);
     EXPECT_TRUE(commandQueue->dispatchCmdListBatchBufferAsPrimary);
 
-    EXPECT_FALSE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_TRUE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
     ASSERT_NE(nullptr, commandListImmediate->cmdQImmediate);
     auto immediateCmdQueue = static_cast<L0::ult::CommandQueue *>(commandListImmediate->cmdQImmediate);
-    EXPECT_FALSE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_TRUE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
 }
 
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenAppendingKernelAndClosingCommandListThenExpectAlignedSpaceForBatchBufferStart) {

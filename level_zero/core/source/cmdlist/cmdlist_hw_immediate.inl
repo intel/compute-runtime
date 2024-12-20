@@ -51,12 +51,26 @@ CommandListCoreFamilyImmediate<gfxCoreFamily>::CommandListCoreFamilyImmediate(ui
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize) {
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem) {
     this->commandContainer.fillReusableAllocationLists();
 
-    /* Command container might has two command buffers. If it has, one is in local memory, because relaxed ordering requires that and one in system for copying it into ring buffer.
-       If relaxed ordering is needed in given dispatch and current command stream is in system memory, swap of command streams is required to ensure local memory. Same in the opposite scenario. */
-    if (hasRelaxedOrderingDependencies == NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+    // Command container might have two command buffers - one in local mem (mainly for relaxed ordering and any other specific purposes) and one in system mem for copying into ring buffer.
+    // If relaxed ordering is needed in given dispatch or if we need to force Local mem usage, and current command stream is in system memory, swap of command streams is required to ensure local memory.
+    // If relaxed ordering is not needed and command buffer is in local mem, then also we need to swap.
+    bool swapStreams = false;
+    if (hasRelaxedOrderingDependencies) {
+        if (NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            swapStreams = true;
+        }
+    } else {
+        if (requestCommandBufferInLocalMem && NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            swapStreams = true;
+        } else if (!requestCommandBufferInLocalMem && !NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            swapStreams = true;
+        }
+    }
+
+    if (swapStreams) {
         if (this->commandContainer.swapStreams()) {
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
         }
@@ -514,7 +528,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
     bool stallingCmdsForRelaxedOrdering = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
     bool hostWait = waitForEventsFromHost();
     if (hostWait) {
         this->synchronizeEventList(numWaitEvents, phWaitEvents);
@@ -571,7 +585,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelInd
     ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(kernelHandle, pDispatchArgumentsBuffer,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -598,7 +612,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendBarrier(ze_even
         isStallingOperation = hasStallingCmdsForRelaxedOrdering(numWaitEvents, relaxedOrderingDispatch);
     }
 
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
     ret = CommandListCoreFamily<gfxCoreFamily>::appendBarrier(hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 
@@ -623,7 +637,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
         estimatedSize += nBlits * sizePerBlit;
     }
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
     bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
 
@@ -679,7 +693,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
         auto sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
         estimatedSize += xBlits * yBlits * zBlits * sizePerBlit;
     }
-    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize);
+    checkAvailableSpace(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch, estimatedSize, false);
 
     bool hasStallindCmds = hasStallingCmdsForRelaxedOrdering(numWaitEvents, memoryCopyParams.relaxedOrderingDispatch);
 
@@ -722,7 +736,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryFill(void
                                                                             ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(ptr, pattern, patternSize, size, hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
 
@@ -736,7 +750,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalEvent(ze_
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(0, false);
     bool hasStallingCmds = !Event::fromHandle(hSignalEvent)->isCounterBased() || hasStallingCmdsForRelaxedOrdering(0, relaxedOrderingDispatch);
 
-    checkAvailableSpace(0, false, commonImmediateCommandSize);
+    checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
     return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, false, false, hSignalEvent, false);
 }
@@ -745,7 +759,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendEventReset(ze_event_handle_t hSignalEvent) {
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
-    checkAvailableSpace(0, false, commonImmediateCommandSize);
+    checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     ret = CommandListCoreFamily<gfxCoreFamily>::appendEventReset(hSignalEvent);
     return flushImmediate(ret, true, true, false, false, false, hSignalEvent, false);
 }
@@ -755,7 +769,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
                                                                                NEO::GraphicsAllocation *srcAllocation,
                                                                                size_t size, bool flushHost) {
 
-    checkAvailableSpace(0, false, commonImmediateCommandSize);
+    checkAvailableSpace(0, false, commonImmediateCommandSize, false);
 
     ze_result_t ret;
 
@@ -792,7 +806,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
     }
 
     if (!skipFlush) {
-        checkAvailableSpace(numEvents, false, commonImmediateCommandSize);
+        checkAvailableSpace(numEvents, false, commonImmediateCommandSize, false);
     }
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numEvents, phWaitEvents, outWaitCmds, relaxedOrderingAllowed, trackDependencies, apiRequest, skipAddingWaitEventsToResidency, false, copyOffloadOperation);
@@ -810,7 +824,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTime
     uint64_t *dstptr, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
 
@@ -854,7 +868,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyRegion
         auto sizePerBlit = sizeof(typename GfxFamily::XY_BLOCK_COPY_BLT) + NEO::BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize();
         estimatedSize += nBlits * sizePerBlit;
     }
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, estimatedSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, estimatedSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hSignalEvent,
                                                                            numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -872,7 +886,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(hDstImage, srcPtr, pDstRegion, hSignalEvent,
                                                                                numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -890,7 +904,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(dstPtr, hSrcImage, pSrcRegion, hSignalEvent,
                                                                              numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -910,7 +924,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMe
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemoryExt(hDstImage, srcPtr, pDstRegion, srcRowPitch, srcSlicePitch,
                                                                                   hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -930,7 +944,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyToMemo
     ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents, false);
 
-    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, relaxedOrderingDispatch, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(dstPtr, hSrcImage, pSrcRegion, destRowPitch, destSlicePitch,
                                                                                 hSignalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
@@ -945,7 +959,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
                                                                                      ze_event_handle_t hSignalEvent,
                                                                                      uint32_t numWaitEvents,
                                                                                      ze_event_handle_t *phWaitEvents) {
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
 
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryRangesBarrier(numRanges, pRangeSizes, pRanges, hSignalEvent, numWaitEvents, phWaitEvents);
     return flushImmediate(ret, true, true, false, false, false, hSignalEvent, false);
@@ -953,14 +967,14 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryRangesBar
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) {
-    checkAvailableSpace(0, false, commonImmediateCommandSize);
+    checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(desc, ptr, data, signalEventHandle, useQwordData);
     return flushImmediate(ret, true, false, false, false, false, signalEventHandle, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteToMemory(void *desc, void *ptr, uint64_t data) {
-    checkAvailableSpace(0, false, commonImmediateCommandSize);
+    checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(desc, ptr, data);
     return flushImmediate(ret, true, false, false, false, false, nullptr, false);
 }
@@ -1559,7 +1573,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                                               ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     auto ret = ZE_RESULT_SUCCESS;
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize);
+
+    //  For API functionality, we require command buffer alloc in local mem for.
+    //  So ensure we force it when checking available space and when allocating any new comand buffer allocs
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, true);
     if (numWaitEvents) {
         ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, true, true, true, true, false);
     }
@@ -1584,7 +1601,9 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     }
 
     bool hasStallingCmds = true;
-    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, true, false, hSignalEvent, true);
+    ret = flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, true, false, hSignalEvent, true);
+
+    return ret;
 }
 
 } // namespace L0
