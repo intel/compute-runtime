@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,7 +113,7 @@ bool RootDeviceEnvironment::initAilConfiguration() {
         return false;
     }
 
-    ailConfiguration->apply(hwInfo->capabilityTable);
+    ailConfiguration->apply(*hwInfo);
 
     return true;
 }

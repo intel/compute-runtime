@@ -32,6 +32,7 @@ namespace NEO {
 
 extern const char legacyPlatformName[];
 
+struct HardwareInfo;
 struct RuntimeCapabilityTable;
 
 enum class AILEnumeration : uint32_t {
@@ -62,7 +63,7 @@ class AILConfiguration {
 
     MOCKABLE_VIRTUAL bool initProcessExecutableName();
 
-    virtual void apply(RuntimeCapabilityTable &runtimeCapabilityTable);
+    virtual void apply(HardwareInfo &hwInfo);
 
     virtual void modifyKernelIfRequired(std::string &kernel) = 0;
 
@@ -95,7 +96,7 @@ class AILConfiguration {
     virtual uint32_t getMicrosecondResolution() = 0;
 
   protected:
-    virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
+    virtual void applyExt(HardwareInfo &hwInfo) = 0;
     std::string processName;
 
     bool sourcesContain(const std::string &sources, std::string_view contentToFind) const;
@@ -124,7 +125,7 @@ class AILConfigurationHw : public AILConfiguration {
         return ailConfiguration;
     }
 
-    void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override;
+    void applyExt(HardwareInfo &hwInfo) override;
 
     void modifyKernelIfRequired(std::string &kernel) override;
     bool isContextSyncFlagRequired() override;

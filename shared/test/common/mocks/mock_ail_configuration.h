@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,7 +89,7 @@ class MockAILConfiguration : public AILConfiguration {
     uint32_t mockMicrosecondResolution = 1000u;
 
   protected:
-    void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override {}
+    void applyExt(HardwareInfo &hwInfo) override {}
 };
 
 template <PRODUCT_FAMILY productFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,23 +16,24 @@ using AILTestsMTL = ::testing::Test;
 HWTEST2_F(AILTestsMTL, givenMtlWhenSvchostAppIsDetectedThenDisableDirectSubmission, IsMTL) {
     AILWhitebox<productFamily> ail;
 
-    auto capabilityTable = defaultHwInfo->capabilityTable;
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &capabilityTable = hwInfo.capabilityTable;
     auto defaultEngineSupportedValue = capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported;
 
     ail.processName = "UnknownProcess";
-    ail.apply(capabilityTable);
+    ail.apply(hwInfo);
     EXPECT_EQ(defaultEngineSupportedValue, capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 
     ail.processName = "svchost";
-    ail.apply(capabilityTable);
+    ail.apply(hwInfo);
     EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 
     ail.processName = "aomhost64";
-    ail.apply(capabilityTable);
+    ail.apply(hwInfo);
     EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 
     ail.processName = "Zoom";
-    ail.apply(capabilityTable);
+    ail.apply(hwInfo);
     EXPECT_FALSE(capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported);
 }
 

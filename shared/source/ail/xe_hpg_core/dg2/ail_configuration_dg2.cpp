@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ bool AILConfigurationHw<IGFX_DG2>::useLegacyValidationLogic() {
 }
 
 template <>
-inline void AILConfigurationHw<IGFX_DG2>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
+inline void AILConfigurationHw<IGFX_DG2>::applyExt(HardwareInfo &hwInfo) {
     auto search = applicationsForceRcsDg2.find(processName);
     if (search != applicationsForceRcsDg2.end()) {
         shouldForceRcs = true;

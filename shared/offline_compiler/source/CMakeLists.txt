@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,7 +19,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/ail/ail_configuration.h
     ${NEO_SHARED_DIRECTORY}/ail/ail_configuration.cpp
     ${NEO_SHARED_DIRECTORY}/ail${BRANCH_DIR_SUFFIX}ail_configuration_extra.cpp
-    ${NEO_SHARED_DIRECTORY}/ail//ail_configuration_base.inl
+    ${NEO_SHARED_DIRECTORY}/ail/ail_configuration_base.inl
+    ${NEO_SHARED_DIRECTORY}/ail/ail_ov_comp_wa.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.cpp
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options.h
     ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options_extra.h
@@ -152,6 +153,7 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/helpers/windows/path.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
+       ${NEO_SHARED_DIRECTORY}/ail/windows${BRANCH_DIR_SUFFIX}/ail_ov_comp_wa_windows.cpp
        ${OCLOC_DIRECTORY}/source/windows/ocloc_supported_devices_helper_windows.cpp
   )
 else()
@@ -167,6 +169,7 @@ else()
        ${NEO_SHARED_DIRECTORY}/helpers/linux/path.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
+       ${NEO_SHARED_DIRECTORY}/ail/linux/ail_ov_comp_wa_linux.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
        ${OCLOC_DIRECTORY}/source/linux/ocloc_supported_devices_helper_linux.cpp
   )

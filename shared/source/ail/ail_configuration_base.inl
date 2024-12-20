@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ inline void AILConfigurationHw<product>::modifyKernelIfRequired(std::string &ker
 }
 
 template <PRODUCT_FAMILY product>
-inline void AILConfigurationHw<product>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
+inline void AILConfigurationHw<product>::applyExt(HardwareInfo &hwInfo) {
 }
 
 template <PRODUCT_FAMILY product>

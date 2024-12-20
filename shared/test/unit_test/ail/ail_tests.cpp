@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,11 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64S
     AILWhitebox<productFamily> ail;
     ail.processName = "blender";
 
-    NEO::RuntimeCapabilityTable rtTable = {};
+    HardwareInfo hwInfo = {};
+    NEO::RuntimeCapabilityTable &rtTable = hwInfo.capabilityTable;
     rtTable.ftrSupportsFP64 = false;
 
-    ail.apply(rtTable);
+    ail.apply(hwInfo);
 
     EXPECT_EQ(rtTable.ftrSupportsFP64, true);
 }
@@ -37,10 +38,11 @@ HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithAdobePremiereProIsCalled
     AILWhitebox<productFamily> ail;
     ail.processName = "Adobe Premiere Pro";
 
-    NEO::RuntimeCapabilityTable rtTable = {};
+    HardwareInfo hwInfo = {};
+    NEO::RuntimeCapabilityTable &rtTable = hwInfo.capabilityTable;
     rtTable.preferredPlatformName = nullptr;
 
-    ail.apply(rtTable);
+    ail.apply(hwInfo);
 
     EXPECT_NE(nullptr, rtTable.preferredPlatformName);
     EXPECT_STREQ("Intel(R) OpenCL", rtTable.preferredPlatformName);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,13 +28,13 @@ constexpr std::array<std::string_view, 3> applicationsLegacyValidationPathMtl = 
     "blender", "bforartists", "cycles"};
 
 template <>
-void AILConfigurationHw<gfxProduct>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
+void AILConfigurationHw<gfxProduct>::applyExt(HardwareInfo &hwInfo) {
     auto search = applicationMapMTL.find(processName);
     if (search != applicationMapMTL.end()) {
         for (size_t i = 0; i < search->second.size(); ++i) {
             switch (search->second[i]) {
             case AILEnumeration::disableDirectSubmission:
-                runtimeCapabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = false;
+                hwInfo.capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_CCS].engineSupported = false;
             default:
                 break;
             }
