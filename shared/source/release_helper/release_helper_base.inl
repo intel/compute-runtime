@@ -158,4 +158,8 @@ bool ReleaseHelperHw<releaseType>::isNumRtStacksPerDssFixedValue() const {
     return true;
 }
 
+template <ReleaseType releaseType>
+bool ReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
+    return true;
+}
 } // namespace NEO

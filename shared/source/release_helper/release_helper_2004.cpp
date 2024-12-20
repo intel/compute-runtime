@@ -46,6 +46,11 @@ const SizeToPreferredSlmValueArray &ReleaseHelperHw<release>::getSizeToPreferred
     return sizeToPreferredSlmValue;
 }
 
+template <>
+bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe2_hpg.inl"

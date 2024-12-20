@@ -49,6 +49,11 @@ bool ReleaseHelperHw<release>::isDummyBlitWaRequired() const {
     return true;
 }
 
+template <>
+bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
+    return false;
+}
+
 } // namespace NEO
 
 template class NEO::ReleaseHelperHw<NEO::release>;
