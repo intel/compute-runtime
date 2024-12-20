@@ -18,7 +18,6 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/cpu_info.h"
 
-#include "level_zero/api/driver_experimental/public/zex_memory.h"
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -28,6 +27,7 @@
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/driver_experimental/zex_memory.h"
 
 namespace NEO {
 enum class AtomicAccessMode : uint32_t;

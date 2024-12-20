@@ -6,8 +6,9 @@
  */
 
 #pragma once
-#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include <level_zero/ze_api.h>
+
+#include "zex_common.h"
 
 namespace L0 {
 

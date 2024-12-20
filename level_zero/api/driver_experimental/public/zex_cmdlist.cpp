@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
+#include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/ze_intel_gpu.h"

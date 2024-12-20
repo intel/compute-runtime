@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_event.h"
+#include "level_zero/driver_experimental/zex_event.h"
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

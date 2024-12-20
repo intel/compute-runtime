@@ -5,9 +5,9 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 

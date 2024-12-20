@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/api/driver_experimental/public/zex_event.h"
+#include "level_zero/driver_experimental/zex_event.h"
 #include <level_zero/ze_api.h>
 
 #include <bitset>

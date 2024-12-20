@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #pragma once
 #endif
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
+#include "zex_api.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // It indicates that the application wants the L0 driver implementation to use

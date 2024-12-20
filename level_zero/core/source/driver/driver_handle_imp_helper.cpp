@@ -5,8 +5,8 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {

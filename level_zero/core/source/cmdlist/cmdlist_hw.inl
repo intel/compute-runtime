@@ -39,7 +39,6 @@
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
-#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -53,6 +52,7 @@
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "CL/cl.h"
 

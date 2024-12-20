@@ -39,7 +39,6 @@
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/arrayref.h"
 
-#include "level_zero/api/driver_experimental/public/zex_module.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -50,6 +49,7 @@
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
+#include "level_zero/driver_experimental/zex_module.h"
 
 #include "encode_surface_state_args.h"
 
