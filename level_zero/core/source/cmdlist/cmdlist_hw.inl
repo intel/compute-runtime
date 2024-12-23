@@ -195,7 +195,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
     this->commandContainer.addToResidencyContainer(inOrderExecInfo->getHostCounterAllocation());
 
     if (signalEvent) {
-        if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining) {
+        if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || isImmediateType()) {
             signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
         } else {
             signalEvent->unsetInOrderExecInfo();
