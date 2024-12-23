@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -451,4 +451,33 @@ TEST(DurationLogTest, givenDurationGetTimeStringThenTimeStringIsCorrect) {
     for (auto c : timeString) {
         EXPECT_TRUE(std::isdigit(c) || c == '[' || c == ']' || c == '.' || c == ' ');
     }
+}
+
+TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndTbxFaultsEnabledWhenCallingIsTbxMngrEnabledThenReturnTrue) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(true);
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(2);
+    EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(4);
+    EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, GivenTbxFaultsDisabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(false);
+
+    EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, GivenHardwareOrHardwareWithAubCsrTypeAndTbxFaultsEnabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(true);
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(1);
+    EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(3);
+    EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
 }

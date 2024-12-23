@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,11 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
+#include "shared/source/helpers/options.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/fixtures/tbx_command_stream_fixture.h"
@@ -1280,4 +1282,267 @@ HWTEST_F(TbxCommandStreamTests, givenTimestampBufferAllocationWhenTbxWriteMemory
     EXPECT_FALSE(timestampAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
 
     memoryManager->freeGraphicsMemory(timestampAllocation);
+}
+
+template <typename FamilyType>
+class MockTbxCsrForPageFaultTests : public MockTbxCsr<FamilyType> {
+  public:
+    using MockTbxCsr<FamilyType>::MockTbxCsr;
+
+    CpuPageFaultManager *getTbxPageFaultManager() override {
+        return this->tbxFaultManager.get();
+    }
+
+    using MockTbxCsr<FamilyType>::isAllocTbxFaultable;
+
+    std::unique_ptr<TbxPageFaultManager> tbxFaultManager = TbxPageFaultManager::create();
+};
+
+HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostWritesHostAllocThenAllocShouldBeDownloadedAndWritable) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+
+    EXPECT_TRUE(tbxCsr->getParametersForMemory(*gfxAlloc1, gpuAddress, cpuAddress, size));
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    // accessing outside address range does not affect inserted host allocs
+    auto ptrBelow = (void *)0x0;
+    EXPECT_FALSE(tbxCsr->tbxFaultManager->verifyAndHandlePageFault(ptrBelow, true));
+    auto ptrAbove = ptrOffset(cpuAddress, size + 1);
+    EXPECT_FALSE(tbxCsr->tbxFaultManager->verifyAndHandlePageFault(ptrAbove, true));
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    *reinterpret_cast<char *>(cpuAddress) = 1;
+    EXPECT_TRUE(tbxCsr->isTbxWritable(*gfxAlloc1));
+    EXPECT_TRUE(tbxCsr->makeCoherentCalled);
+    tbxCsr->makeCoherentCalled = false;
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    // accessing address with offset that is still in alloc range should
+    // also make writable and download
+    reinterpret_cast<char *>(cpuAddress)[1] = 1;
+    EXPECT_TRUE(tbxCsr->isTbxWritable(*gfxAlloc1));
+    EXPECT_TRUE(tbxCsr->makeCoherentCalled);
+    tbxCsr->makeCoherentCalled = false;
+
+    // for coverage
+    tbxCsr->tbxFaultManager->removeAllocation(static_cast<GraphicsAllocation *>(nullptr));
+    tbxCsr->tbxFaultManager->removeAllocation(gfxAlloc1);
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxWithModeWhenHostBufferNotWritableAndProtectedThenDownloadShouldNotCrash) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+
+    EXPECT_TRUE(tbxCsr->getParametersForMemory(*gfxAlloc1, gpuAddress, cpuAddress, size));
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    tbxCsr->downloadAllocationTbx(*gfxAlloc1);
+    EXPECT_TRUE(!tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    static_cast<float *>(cpuAddress)[0] = 1.0f;
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenAllocationWithNoDriverAllocatedCpuPtrThenIsAllocTbxFaultableShouldReturnFalse) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    auto cpuPtr = gfxAlloc1->getDriverAllocatedCpuPtr();
+
+    gfxAlloc1->setDriverAllocatedCpuPtr(nullptr);
+    EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
+
+    gfxAlloc1->setDriverAllocatedCpuPtr(cpuPtr);
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHostReadsHostAllocThenAllocShouldBeDownloadedButNotWritable) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+
+    EXPECT_TRUE(tbxCsr->getParametersForMemory(*gfxAlloc1, gpuAddress, cpuAddress, size));
+    *reinterpret_cast<char *>(cpuAddress) = 1;
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    auto readVal = *reinterpret_cast<char *>(cpuAddress);
+    EXPECT_EQ(1, readVal);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+    EXPECT_TRUE(tbxCsr->makeCoherentCalled);
+    tbxCsr->makeCoherentCalled = false;
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    readVal = *reinterpret_cast<char *>(cpuAddress);
+    EXPECT_EQ(1, readVal);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+    EXPECT_TRUE(tbxCsr->makeCoherentCalled);
+    tbxCsr->makeCoherentCalled = false;
+
+    // for coverage
+    tbxCsr->tbxFaultManager->removeAllocation(static_cast<GraphicsAllocation *>(nullptr));
+    tbxCsr->tbxFaultManager->removeAllocation(gfxAlloc1);
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenHandleFaultFalseThenTbxFaultableTypesShouldNotBeHandled) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    uint64_t gpuAddress;
+    void *cpuAddress;
+    size_t size;
+
+    EXPECT_TRUE(tbxCsr->getParametersForMemory(*gfxAlloc1, gpuAddress, cpuAddress, size));
+    *reinterpret_cast<char *>(cpuAddress) = 1;
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    auto readVal = *reinterpret_cast<char *>(cpuAddress);
+    EXPECT_EQ(1, readVal);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+    EXPECT_TRUE(tbxCsr->makeCoherentCalled);
+    tbxCsr->makeCoherentCalled = false;
+
+    tbxCsr->writeMemory(*gfxAlloc1);
+    EXPECT_FALSE(tbxCsr->isTbxWritable(*gfxAlloc1));
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->verifyAndHandlePageFault(cpuAddress, false));
+    EXPECT_FALSE(tbxCsr->makeCoherentCalled);
+
+    tbxCsr->tbxFaultManager->removeAllocation(gfxAlloc1);
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsDisabledThenIsAllocTbxFaultableShouldReturnFalse) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(false);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    EXPECT_TRUE(tbxCsr->tbxFaultManager->checkFaultHandlerFromPageFaultManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+    EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsNotAvailableThenIsAllocTbxFaultableShouldReturnFalse) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(false);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    tbxCsr->tbxFaultManager.reset(nullptr);
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
 }

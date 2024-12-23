@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,15 +10,20 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/page_fault_manager/linux/tbx_page_fault_manager_linux.h"
 
 #include <algorithm>
 #include <sys/mman.h>
 
 namespace NEO {
-std::unique_ptr<PageFaultManager> PageFaultManager::create() {
-    auto pageFaultManager = std::make_unique<PageFaultManagerLinux>();
+std::unique_ptr<CpuPageFaultManager> CpuPageFaultManager::create() {
+    auto pageFaultManager = [&]() -> std::unique_ptr<CpuPageFaultManager> {
+        if (debugManager.isTbxPageFaultManagerEnabled()) {
+            return TbxPageFaultManager::create();
+        }
+        return std::make_unique<PageFaultManagerLinux>();
+    }();
 
     pageFaultManager->selectGpuDomainHandler();
     return pageFaultManager;
@@ -87,6 +92,11 @@ void PageFaultManagerLinux::allowCPUMemoryAccess(void *ptr, size_t size) {
 
 void PageFaultManagerLinux::protectCPUMemoryAccess(void *ptr, size_t size) {
     auto retVal = mprotect(ptr, size, PROT_NONE);
+    UNRECOVERABLE_IF(retVal != 0);
+}
+
+void PageFaultManagerLinux::protectCpuMemoryFromWrites(void *ptr, size_t size) {
+    auto retVal = mprotect(ptr, size, PROT_READ);
     UNRECOVERABLE_IF(retVal != 0);
 }
 

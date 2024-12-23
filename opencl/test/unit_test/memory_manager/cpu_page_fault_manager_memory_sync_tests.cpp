@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenAllowCPUMemoryEvictionIs
     cmdQ->device = device.get();
     pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});
 
-    NEO::PageFaultManager::PageFaultData pageData;
+    NEO::CpuPageFaultManager::PageFaultData pageData;
     pageData.cmdQ = cmdQ.get();
 
     pageFaultManager->baseAllowCPUMemoryEviction(true, alloc, pageData);

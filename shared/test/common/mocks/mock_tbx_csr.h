@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 
 namespace NEO {
 
@@ -18,6 +20,8 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
   public:
     using TbxCommandStreamReceiverHw<GfxFamily>::writeMemory;
     using TbxCommandStreamReceiverHw<GfxFamily>::allocationsForDownload;
+    using TbxCommandStreamReceiverHw<GfxFamily>::getParametersForMemory;
+    using TbxCommandStreamReceiverHw<GfxFamily>::getTbxPageFaultManager;
     MockTbxCsr(ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : TbxCommandStreamReceiverHw<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
         this->downloadAllocationImpl = [this](GraphicsAllocation &gfxAllocation) {
@@ -64,6 +68,7 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(gfxAllocation);
         dumpAllocationCalled = true;
     }
+
     bool initializeEngineCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMemoryCalled = false;

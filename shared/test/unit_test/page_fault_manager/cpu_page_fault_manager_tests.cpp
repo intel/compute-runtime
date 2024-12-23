@@ -1,10 +1,12 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/options.h"
+#include "shared/source/page_fault_manager/tbx_page_fault_manager.h"
 #include "shared/test/common/fixtures/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -21,7 +23,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenInsertingAllocsThenAllo
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].size, 10u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].cmdQ, cmdQ);
-    EXPECT_EQ(pageFaultManager->memoryData[alloc1].domain, PageFaultManager::AllocationDomain::cpu);
+    EXPECT_EQ(pageFaultManager->memoryData[alloc1].domain, CpuPageFaultManager::AllocationDomain::cpu);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].unifiedMemoryManager, unifiedMemoryManager.get());
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 0);
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
@@ -33,11 +35,11 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenInsertingAllocsThenAllo
     EXPECT_EQ(pageFaultManager->memoryData.size(), 2u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].size, 10u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].cmdQ, cmdQ);
-    EXPECT_EQ(pageFaultManager->memoryData[alloc1].domain, PageFaultManager::AllocationDomain::cpu);
+    EXPECT_EQ(pageFaultManager->memoryData[alloc1].domain, CpuPageFaultManager::AllocationDomain::cpu);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].unifiedMemoryManager, unifiedMemoryManager.get());
     EXPECT_EQ(pageFaultManager->memoryData[alloc2].size, 20u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc2].cmdQ, cmdQ);
-    EXPECT_EQ(pageFaultManager->memoryData[alloc2].domain, PageFaultManager::AllocationDomain::cpu);
+    EXPECT_EQ(pageFaultManager->memoryData[alloc2].domain, CpuPageFaultManager::AllocationDomain::cpu);
     EXPECT_EQ(pageFaultManager->memoryData[alloc2].unifiedMemoryManager, unifiedMemoryManager.get());
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 0);
     EXPECT_EQ(pageFaultManager->protectMemoryCalled, 0);
@@ -62,7 +64,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenRemovingProtectedAllocTh
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].size, 10u);
     EXPECT_EQ(pageFaultManager->memoryData[alloc1].unifiedMemoryManager, unifiedMemoryManager.get());
 
-    pageFaultManager->memoryData[alloc1].domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData[alloc1].domain = CpuPageFaultManager::AllocationDomain::gpu;
 
     pageFaultManager->removeAllocation(alloc1);
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
@@ -91,7 +93,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenRemovingAllocsThenNonGpu
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 1u);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc2);
 
-    pageFaultManager->memoryData.at(alloc2).domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData.at(alloc2).domain = CpuPageFaultManager::AllocationDomain::gpu;
     pageFaultManager->removeAllocation(alloc2);
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 1);
     EXPECT_EQ(pageFaultManager->allowedMemoryAccessAddress, alloc2);
@@ -109,7 +111,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenAllocNotPresentInNonGpuD
 
     pageFaultManager->moveAllocationToGpuDomain(alloc1);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
-    pageFaultManager->memoryData.at(alloc1).domain = PageFaultManager::AllocationDomain::cpu;
+    pageFaultManager->memoryData.at(alloc1).domain = CpuPageFaultManager::AllocationDomain::cpu;
     pageFaultManager->removeAllocation(alloc1);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
 }
@@ -127,7 +129,7 @@ TEST_F(PageFaultManagerTest, givenNonGpuAllocsContainerWhenMovingToGpuDomainMult
     pageFaultManager->moveAllocationToGpuDomain(alloc1);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 1u);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc2);
-    pageFaultManager->memoryData.at(alloc1).domain = PageFaultManager::AllocationDomain::none;
+    pageFaultManager->memoryData.at(alloc1).domain = CpuPageFaultManager::AllocationDomain::none;
     pageFaultManager->moveAllocationToGpuDomain(alloc1);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 1u);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc2);
@@ -146,7 +148,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocs
     pageFaultManager->insertAllocation(alloc3, 30, unifiedMemoryManager.get(), cmdQ, {});
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 3u);
-    pageFaultManager->memoryData.at(alloc3).domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData.at(alloc3).domain = CpuPageFaultManager::AllocationDomain::gpu;
 
     pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(unifiedMemoryManager.get());
 
@@ -166,9 +168,9 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMovingAllocsOfGivenUMMan
     pageFaultManager->insertAllocation(alloc1, 10u, unifiedMemoryManager.get(), nullptr, {});
     pageFaultManager->insertAllocation(alloc2, 20u, unifiedMemoryManager.get(), nullptr, {});
 
-    pageFaultManager->memoryData.at(alloc2).domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData.at(alloc2).domain = CpuPageFaultManager::AllocationDomain::gpu;
     pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(unifiedMemoryManager.get());
-    EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, PageFaultManager::AllocationDomain::gpu);
+    EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, CpuPageFaultManager::AllocationDomain::gpu);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
 }
 
@@ -187,7 +189,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainWithPr
     pageFaultManager->insertAllocation(alloc3, 30, unifiedMemoryManager.get(), cmdQ, {});
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 3u);
-    pageFaultManager->memoryData.at(alloc3).domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData.at(alloc3).domain = CpuPageFaultManager::AllocationDomain::gpu;
 
     testing::internal::CaptureStdout(); // start capturing
 
@@ -219,8 +221,8 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocsWhenMovingToGpuDomainAllocs
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 2u);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[0], alloc1);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs[1], alloc2);
-    pageFaultManager->memoryData.at(alloc1).domain = PageFaultManager::AllocationDomain::cpu;
-    pageFaultManager->memoryData.at(alloc2).domain = PageFaultManager::AllocationDomain::none;
+    pageFaultManager->memoryData.at(alloc1).domain = CpuPageFaultManager::AllocationDomain::cpu;
+    pageFaultManager->memoryData.at(alloc2).domain = CpuPageFaultManager::AllocationDomain::none;
 
     pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(unifiedMemoryManager.get());
 
@@ -366,13 +368,13 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenMovingToGpuDomainThenUpd
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 2u);
 
     pageFaultManager->moveAllocationToGpuDomain(alloc1);
-    EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, PageFaultManager::AllocationDomain::gpu);
+    EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, CpuPageFaultManager::AllocationDomain::gpu);
     const auto &allocsVec = unifiedMemoryManager->nonGpuDomainAllocs;
     EXPECT_EQ(std::find(allocsVec.cbegin(), allocsVec.cend(), alloc1), allocsVec.cend());
     EXPECT_EQ(allocsVec.size(), 1u);
     EXPECT_EQ(allocsVec[0], alloc2);
 
-    pageFaultManager->memoryData.at(alloc2).domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData.at(alloc2).domain = CpuPageFaultManager::AllocationDomain::gpu;
     pageFaultManager->moveAllocationToGpuDomain(alloc2);
     EXPECT_NE(std::find(allocsVec.cbegin(), allocsVec.cend(), alloc2), allocsVec.cend());
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 1u);
@@ -413,7 +415,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocInGpuDomainWhenMovingToGpuDo
     pageFaultManager->insertAllocation(alloc, 10, unifiedMemoryManager.get(), cmdQ, {});
     EXPECT_EQ(pageFaultManager->transferToCpuCalled, 0);
     EXPECT_EQ(pageFaultManager->memoryData.size(), 1u);
-    pageFaultManager->memoryData.at(alloc).domain = PageFaultManager::AllocationDomain::gpu;
+    pageFaultManager->memoryData.at(alloc).domain = CpuPageFaultManager::AllocationDomain::gpu;
 
     pageFaultManager->moveAllocationToGpuDomain(alloc);
     EXPECT_EQ(pageFaultManager->allowMemoryAccessCalled, 0);
@@ -539,15 +541,15 @@ TEST_F(PageFaultManagerTest, givenAllocsFromCpuDomainWhenVerifyingPageFaultThenD
     pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(unifiedMemoryManager.get());
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
 
-    pageFaultManager->memoryData.at(alloc2).domain = PageFaultManager::AllocationDomain::none;
+    pageFaultManager->memoryData.at(alloc2).domain = CpuPageFaultManager::AllocationDomain::none;
     pageFaultManager->verifyAndHandlePageFault(alloc2, true);
-    EXPECT_EQ(pageFaultManager->memoryData.at(alloc2).domain, PageFaultManager::AllocationDomain::cpu);
+    EXPECT_EQ(pageFaultManager->memoryData.at(alloc2).domain, CpuPageFaultManager::AllocationDomain::cpu);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
 
     pageFaultManager->gpuDomainHandler = &MockPageFaultManager::unprotectAndTransferMemory;
-    pageFaultManager->memoryData.at(alloc1).domain = PageFaultManager::AllocationDomain::none;
+    pageFaultManager->memoryData.at(alloc1).domain = CpuPageFaultManager::AllocationDomain::none;
     pageFaultManager->verifyAndHandlePageFault(alloc1, true);
-    EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, PageFaultManager::AllocationDomain::cpu);
+    EXPECT_EQ(pageFaultManager->memoryData.at(alloc1).domain, CpuPageFaultManager::AllocationDomain::cpu);
     EXPECT_EQ(unifiedMemoryManager->nonGpuDomainAllocs.size(), 0u);
 }
 
@@ -902,7 +904,7 @@ struct PageFaultManagerTestWithDebugFlag : public ::testing::TestWithParam<uint3
 TEST_P(PageFaultManagerTestWithDebugFlag, givenDebugFlagWhenInsertingAllocationThenItOverridesHints) {
     DebugManagerStateRestore restore;
     debugManager.flags.UsmInitialPlacement.set(GetParam()); // Should be ignored by the driver, when passing hints
-    const auto expectedDomain = GetParam() == 1 ? PageFaultManager::AllocationDomain::none : PageFaultManager::AllocationDomain::cpu;
+    const auto expectedDomain = GetParam() == 1 ? CpuPageFaultManager::AllocationDomain::none : CpuPageFaultManager::AllocationDomain::cpu;
 
     void *allocs[] = {
         reinterpret_cast<void *>(0x1),
@@ -953,24 +955,59 @@ TEST_F(PageFaultManagerTest, givenNoUsmInitialPlacementFlagsWHenInsertingUsmAllo
     memoryProperties.allocFlags.usmInitialPlacementCpu = 0;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 0;
     pageFaultManager->insertAllocation(allocs[0], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
-    EXPECT_EQ(PageFaultManager::AllocationDomain::cpu, pageFaultManager->memoryData.at(allocs[0]).domain);
+    EXPECT_EQ(CpuPageFaultManager::AllocationDomain::cpu, pageFaultManager->memoryData.at(allocs[0]).domain);
     EXPECT_EQ(allocs[0], unifiedMemoryManager->nonGpuDomainAllocs[0]);
 
     memoryProperties.allocFlags.usmInitialPlacementCpu = 0;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(allocs[1], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
-    EXPECT_EQ(PageFaultManager::AllocationDomain::none, pageFaultManager->memoryData.at(allocs[1]).domain);
+    EXPECT_EQ(CpuPageFaultManager::AllocationDomain::none, pageFaultManager->memoryData.at(allocs[1]).domain);
     EXPECT_EQ(allocs[1], unifiedMemoryManager->nonGpuDomainAllocs[1]);
 
     memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 0;
     pageFaultManager->insertAllocation(allocs[2], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
-    EXPECT_EQ(PageFaultManager::AllocationDomain::cpu, pageFaultManager->memoryData.at(allocs[2]).domain);
+    EXPECT_EQ(CpuPageFaultManager::AllocationDomain::cpu, pageFaultManager->memoryData.at(allocs[2]).domain);
     EXPECT_EQ(allocs[2], unifiedMemoryManager->nonGpuDomainAllocs[2]);
 
     memoryProperties.allocFlags.usmInitialPlacementCpu = 1;
     memoryProperties.allocFlags.usmInitialPlacementGpu = 1;
     pageFaultManager->insertAllocation(allocs[3], 10, unifiedMemoryManager.get(), cmdQ, memoryProperties);
-    EXPECT_EQ(PageFaultManager::AllocationDomain::cpu, pageFaultManager->memoryData.at(allocs[3]).domain);
+    EXPECT_EQ(CpuPageFaultManager::AllocationDomain::cpu, pageFaultManager->memoryData.at(allocs[3]).domain);
     EXPECT_EQ(allocs[3], unifiedMemoryManager->nonGpuDomainAllocs[3]);
+}
+
+TEST_F(PageFaultManagerTest, givenTbxModeWhenAllocateSharedMemoryThenTbxFaultManagerShouldBehaveLikeCpuFaultManager) {
+    auto memoryManager2 = std::make_unique<MockMemoryManager>(executionEnvironment);
+    auto unifiedMemoryManager2 = std::make_unique<SVMAllocsManager>(memoryManager2.get(), false);
+    auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<TbxPageFaultManager>>();
+    void *cmdQ = reinterpret_cast<void *>(0xFFFF);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+
+    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::sharedUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+    void *ptr = unifiedMemoryManager2->createSharedUnifiedMemoryAllocation(10, properties, cmdQ);
+
+    pageFaultManager2->insertAllocation(ptr, 10, unifiedMemoryManager2.get(), cmdQ, {});
+
+    EXPECT_TRUE(pageFaultManager2->verifyAndHandlePageFault(ptr, true));
+    EXPECT_EQ(pageFaultManager2->protectWritesCalled, 0);
+
+    unifiedMemoryManager2->freeSVMAlloc(ptr);
+}
+
+TEST_F(PageFaultManagerTest, givenHardwareModeWhenCallTbxInsertOrRemoveApiThenNothing) {
+    auto pageFaultManager2 = std::make_unique<MockPageFaultManagerImpl<CpuPageFaultManager>>();
+
+    auto ptr = reinterpret_cast<void *>(0XFFFF);
+    auto gfxAlloc = reinterpret_cast<GraphicsAllocation *>(0xFFFF);
+    auto csr = reinterpret_cast<CommandStreamReceiver *>(0xFFFF);
+    pageFaultManager2->insertAllocation(csr, gfxAlloc, 0, ptr, 0);
+    EXPECT_EQ(pageFaultManager2->memoryData.find(ptr), pageFaultManager2->memoryData.end());
+
+    pageFaultManager2->memoryData[ptr] = {};
+    pageFaultManager2->removeAllocation(gfxAlloc);
+    EXPECT_FALSE(pageFaultManager2->memoryData.find(ptr) == pageFaultManager2->memoryData.end());
+    pageFaultManager2->memoryData.erase(ptr);
 }

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/options.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -159,6 +160,13 @@ class DebugSettingsManager {
         if (!disabled()) {
             callable();
         }
+    }
+
+    inline bool isTbxPageFaultManagerEnabled() {
+        auto setCsr = flags.SetCommandStreamReceiver.get();
+        auto tbxMngrFlag = flags.EnableTbxPageFaultManager.get();
+        auto isTbxMode = (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbx)) || (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
+        return tbxMngrFlag && isTbxMode;
     }
 
   protected:
