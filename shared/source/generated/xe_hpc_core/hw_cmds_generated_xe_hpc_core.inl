@@ -3372,7 +3372,7 @@ struct MI_USER_INTERRUPT {
     union tagTheStructure {
         struct tagCommon {
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 22);
-            uint32_t MICommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
         } Common;
         uint32_t RawData[1];
@@ -3385,7 +3385,7 @@ struct MI_USER_INTERRUPT {
     };
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.MICommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
     }
     static MI_USER_INTERRUPT sInit() {
         MI_USER_INTERRUPT state;
@@ -4453,10 +4453,10 @@ struct XY_FAST_COLOR_BLT {
     };
 
     enum DESTINATION_SURFACE_TYPE {
-        DESTINATION_SURFACE_TYPE_1D = 0,
-        DESTINATION_SURFACE_TYPE_2D = 1,
-        DESTINATION_SURFACE_TYPE_3D = 2,
-        DESTINATION_SURFACE_TYPE_CUBE = 3,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_1D = 0,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_2D = 1,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_3D = 2,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_CUBE = 3,
     };
     enum INSTRUCTIONTARGET_OPCODE {
         INSTRUCTIONTARGET_OPCODE_OPCODE = 0x44,

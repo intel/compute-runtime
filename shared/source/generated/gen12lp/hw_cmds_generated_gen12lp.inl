@@ -3825,7 +3825,7 @@ typedef struct tagMI_USER_INTERRUPT {
         struct tagCommon {
             // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 22);
-            uint32_t MICommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
         } Common;
         uint32_t RawData[1];
@@ -3838,7 +3838,7 @@ typedef struct tagMI_USER_INTERRUPT {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.MICommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_USER_INTERRUPT sInit() {
