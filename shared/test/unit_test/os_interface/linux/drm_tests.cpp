@@ -1549,7 +1549,7 @@ HWTEST2_F(DrmDisableScratchPagesDefaultTest,
 }
 
 HWTEST2_F(DrmDisableScratchPagesDefaultTest,
-          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultAndScratchPageIsEnabled, IsBeforeXeHpcCore) {
+          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultAndScratchPageIsEnabled, IsNotPVC) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.configureScratchPagePolicy();
