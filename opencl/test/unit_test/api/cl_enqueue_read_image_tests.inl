@@ -205,33 +205,4 @@ TEST_F(ClEnqueueReadImageYuv, GivenInvalidRegionWhenReadingYuvImageThenInvalidVa
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
-
-TEST_F(ClEnqueueReadImageTests, givenStagingEnabledWhenEnqueueReadImageCalledThenReadSuccesfullAndStagingBufferAllocated) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
-    imageFormat.image_channel_order = CL_RGBA;
-    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, image);
-    const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 1};
-    char nonUsmPtr[1024];
-    auto retVal = clEnqueueReadImage(
-        pCommandQueue,
-        image,
-        false,
-        origin,
-        region,
-        0,
-        0,
-        nonUsmPtr,
-        0,
-        nullptr,
-        nullptr);
-    auto unifiedMemoryManager = pContext->getSVMAllocsManager();
-    EXPECT_EQ(1u, unifiedMemoryManager->getNumAllocs());
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clReleaseMemObject(image);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
 } // namespace ULT
