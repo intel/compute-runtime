@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -227,6 +226,18 @@ TEST(MemoryManagerTest, givenFailureOnRegisterLocalMemoryAllocationWhenAllocatin
     MockMemoryManager memoryManager(true, true);
     memoryManager.registerLocalMemAllocResult = MemoryManager::AllocationStatus::Error;
     EXPECT_EQ(nullptr, memoryManager.allocateGraphicsMemoryWithProperties(properties));
+}
+
+TEST(MemoryManagerTest, givenDifferentSizesWhenRegisteringAndUnregisteringModulePrivateMemorySizesThenCorrectValuesAreReturned) {
+    MockMemoryManager memoryManager(true, true);
+    auto privateMemorySizeLock = memoryManager.lockKernelManagedPrivateMemorySize();
+    EXPECT_EQ(0u, memoryManager.getKernelManagedPrivateMemorySize());
+    memoryManager.registerKernelManagedPrivateMemorySize(1234u);
+    EXPECT_EQ(1234u, memoryManager.getKernelManagedPrivateMemorySize());
+    memoryManager.unregisterKernelManagedPrivateMemorySize(1000u);
+    EXPECT_EQ(234u, memoryManager.getKernelManagedPrivateMemorySize());
+    memoryManager.unregisterKernelManagedPrivateMemorySize(234u);
+    EXPECT_EQ(0u, memoryManager.getKernelManagedPrivateMemorySize());
 }
 
 using MemoryhManagerMultiContextResourceTests = ::testing::Test;

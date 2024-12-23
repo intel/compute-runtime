@@ -12,7 +12,6 @@
 #include "shared/source/compiler_interface/compiler_options_extra.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
@@ -53,9 +52,9 @@
 #include "program_debug_data.h"
 
 #include <algorithm>
-#include <list>
 #include <memory>
 #include <unordered_map>
+
 namespace L0 {
 
 namespace BuildOptions {
@@ -1280,7 +1279,6 @@ ze_result_t ModuleImp::getKernelNames(uint32_t *pCount, const char **pNames) {
 }
 
 void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
-    size_t modulePrivateMemorySize = 0;
     auto neoDevice = this->device->getNEODevice();
     for (auto &kernelImmData : this->kernelImmDatas) {
         if (0 == kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize) {
@@ -1288,17 +1286,26 @@ void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
         }
         auto kernelPrivateMemorySize = NEO::KernelHelper::getPrivateSurfaceSize(kernelImmData->getDescriptor().kernelAttributes.perHwThreadPrivateMemorySize,
                                                                                 neoDevice->getDeviceInfo().computeUnitsUsedForScratch);
-        modulePrivateMemorySize += kernelPrivateMemorySize;
+        this->privateMemorySize += kernelPrivateMemorySize;
     }
 
     this->allocatePrivateMemoryPerDispatch = false;
-    if (modulePrivateMemorySize > 0U) {
+    if (this->privateMemorySize > 0U) {
         auto deviceBitfield = neoDevice->getDeviceBitfield();
         auto globalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(deviceBitfield.to_ulong()));
         auto numSubDevices = deviceBitfield.count();
-        this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize * numSubDevices > globalMemorySize;
+        auto allSubDevicePrivateMemorySize = this->privateMemorySize * numSubDevices;
+        float maxPercentage = 0.25f;
+        if (NEO::debugManager.flags.MaxKernelManagedPrivateMemoryPercent.get() > 0) {
+            maxPercentage = NEO::debugManager.flags.MaxKernelManagedPrivateMemoryPercent.get() / 100.0f;
+        }
+        auto privateMemorySizeLock = neoDevice->getMemoryManager()->lockKernelManagedPrivateMemorySize();
+        this->allocatePrivateMemoryPerDispatch = (neoDevice->getMemoryManager()->getKernelManagedPrivateMemorySize() + allSubDevicePrivateMemorySize) > static_cast<size_t>(globalMemorySize * maxPercentage);
+        if (!this->allocatePrivateMemoryPerDispatch) {
+            neoDevice->getMemoryManager()->registerKernelManagedPrivateMemorySize(allSubDevicePrivateMemorySize);
+        }
         PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Private Memory Per Dispatch %d for modulePrivateMemorySize %zu subDevices %zu globalMemorySize %" PRIu64 "\n",
-                           this->allocatePrivateMemoryPerDispatch, modulePrivateMemorySize, numSubDevices, globalMemorySize);
+                           this->allocatePrivateMemoryPerDispatch, this->privateMemorySize, numSubDevices, globalMemorySize);
     }
 }
 
@@ -1568,6 +1575,13 @@ ze_result_t ModuleImp::destroy() {
                 }
             }
         }
+    }
+
+    if (!this->allocatePrivateMemoryPerDispatch) {
+        auto neoDevice = this->device->getNEODevice();
+        auto allSubDevicePrivateMemorySize = neoDevice->getDeviceBitfield().count() * this->privateMemorySize;
+        auto privateMemorySizeLock = neoDevice->getMemoryManager()->lockKernelManagedPrivateMemorySize();
+        neoDevice->getMemoryManager()->unregisterKernelManagedPrivateMemorySize(allSubDevicePrivateMemorySize);
     }
 
     delete this;

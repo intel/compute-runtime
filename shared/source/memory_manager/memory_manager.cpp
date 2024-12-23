@@ -64,6 +64,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     secondaryEngines.resize(rootEnvCount + 1);
     localMemAllocsSize = std::make_unique<std::atomic<size_t>[]>(rootEnvCount);
     sysMemAllocsSize.store(0u);
+    kernelManagedPrivateMemorySize = 0u;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
