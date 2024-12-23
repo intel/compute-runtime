@@ -236,6 +236,22 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceWhenCheckin
     EXPECT_TRUE(pSysmanKmdInterface->isVfEngineUtilizationSupported());
 }
 
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenGetEnergyCounterNodeFilePathIsCalledForDifferentPowerDomainsThenProperPathIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::string expectedFilePath = "energy1_input";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(false, ZES_POWER_DOMAIN_CARD));
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(true, ZES_POWER_DOMAIN_PACKAGE));
+    expectedFilePath = "";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(true, ZES_POWER_DOMAIN_CARD));
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(false, ZES_POWER_DOMAIN_PACKAGE));
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenIsPowerSupportForSubdeviceAvailableIsCalledForDifferentPowerDomainsThenProperValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isPowerSupportForSubdeviceAvailable(ZES_POWER_DOMAIN_PACKAGE));
+    EXPECT_FALSE(pSysmanKmdInterface->isPowerSupportForSubdeviceAvailable(ZES_POWER_DOMAIN_CARD));
+}
+
 } // namespace ult
 } // namespace Sysman
 } // namespace L0

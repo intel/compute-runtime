@@ -197,9 +197,20 @@ ze_result_t FsAccessInterface::canWrite(const std::string file) {
 }
 
 bool FsAccessInterface::fileExists(const std::string file) {
+    struct stat sb;
+
+    if (NEO::SysCalls::stat(file.c_str(), &sb) != 0) {
+        return false;
+    }
+
+    if (!S_ISREG(sb.st_mode)) {
+        return false;
+    }
+
     if (NEO::SysCalls::access(file.c_str(), F_OK)) {
         return false;
     }
+
     return true;
 }
 
