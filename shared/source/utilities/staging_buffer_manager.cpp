@@ -31,7 +31,8 @@ void StagingBufferTracker::freeChunk() const {
     allocator->free(chunkAddress, size);
 }
 
-StagingBufferManager::StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields) : svmAllocsManager(svmAllocsManager), rootDeviceIndices(rootDeviceIndices), deviceBitfields(deviceBitfields) {
+StagingBufferManager::StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields, bool requiresWritable)
+    : svmAllocsManager(svmAllocsManager), rootDeviceIndices(rootDeviceIndices), deviceBitfields(deviceBitfields), requiresWritable(requiresWritable) {
     if (debugManager.flags.StagingBufferSize.get() != -1) {
         chunkSize = debugManager.flags.StagingBufferSize.get() * MemoryConstants::kiloByte;
     }
@@ -240,6 +241,11 @@ std::pair<HeapAllocator *, uint64_t> StagingBufferManager::getExistingBuffer(siz
         allocator = stagingBuffer.getAllocator();
         buffer = allocator->allocate(size);
         if (buffer != 0) {
+            if (requiresWritable) {
+                auto alloc = svmAllocsManager->getSVMAlloc(stagingBuffer.getBaseAddress())->gpuAllocations.getDefaultGraphicsAllocation();
+                alloc->setTbxWritable(true, std::numeric_limits<uint32_t>::max());
+                alloc->setAubWritable(true, std::numeric_limits<uint32_t>::max());
+            }
             break;
         }
     }

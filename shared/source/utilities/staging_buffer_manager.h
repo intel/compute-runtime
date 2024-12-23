@@ -71,7 +71,7 @@ using StagingQueue = std::queue<std::pair<UserDstData, StagingBufferTracker>>;
 
 class StagingBufferManager {
   public:
-    StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields);
+    StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields, bool requiresWritable);
     ~StagingBufferManager();
     StagingBufferManager(StagingBufferManager &&other) noexcept = delete;
     StagingBufferManager(const StagingBufferManager &other) = delete;
@@ -106,6 +106,7 @@ class StagingBufferManager {
     SVMAllocsManager *svmAllocsManager;
     const RootDeviceIndicesContainer rootDeviceIndices;
     const std::map<uint32_t, DeviceBitfield> deviceBitfields;
+    const bool requiresWritable = false;
 };
 
 } // namespace NEO

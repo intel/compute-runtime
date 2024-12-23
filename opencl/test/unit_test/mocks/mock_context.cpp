@@ -125,7 +125,7 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
         }
         deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
     }
-    stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields);
+    stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, true);
 
     cl_int retVal;
     if (!noSpecialQueue) {
