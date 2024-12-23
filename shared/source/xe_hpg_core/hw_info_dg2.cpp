@@ -89,8 +89,8 @@ const RuntimeCapabilityTable DG2::capabilityTable{
 WorkaroundTable DG2::workaroundTable = {};
 FeatureTable DG2::featureTable = {};
 
-void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
+void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrFlatPhysCCS = true;
@@ -105,7 +105,7 @@ void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     setupDefaultGtSysInfo(hwInfo, releaseHelper);
 
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
+        setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
 }
 

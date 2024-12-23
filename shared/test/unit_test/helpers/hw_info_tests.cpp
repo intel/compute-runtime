@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -14,6 +15,7 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
     HardwareInfo hwInfo{};
     FeatureTable expectedFeatureTable{};
     WorkaroundTable expectedWorkaroundTable{};
+    MockReleaseHelper mockReleaseHelper;
 
     expectedFeatureTable.flags.ftrAstcHdr2D = true;
     expectedFeatureTable.flags.ftrAstcLdr2D = true;
@@ -34,7 +36,7 @@ TEST(HwInfoTest, whenSettingDefaultFeatureTableAndWorkaroundTableThenProperField
 
     expectedWorkaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 
-    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo);
+    setupDefaultFeatureTableAndWorkaroundTable(&hwInfo, mockReleaseHelper);
 
     EXPECT_EQ(expectedFeatureTable.asHash(), hwInfo.featureTable.asHash());
     EXPECT_EQ(expectedWorkaroundTable.asHash(), hwInfo.workaroundTable.asHash());

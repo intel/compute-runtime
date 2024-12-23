@@ -86,8 +86,8 @@ const RuntimeCapabilityTable BMG::capabilityTable{
     0                                                         // cxlType
 };
 
-void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
+void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -95,7 +95,6 @@ void BMG::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrTile64Optimization = true;
     featureTable->flags.ftrWalkerMTP = true;
-    featureTable->flags.ftrXe2Compression = true;
     featureTable->flags.ftrXe2PlusTiling = true;
     featureTable->flags.ftrL3TransientDataFlush = true;
     featureTable->flags.ftrPml5Support = true;
@@ -122,7 +121,7 @@ void BMG::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     BMG::adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        BMG::setupFeatureAndWorkaroundTable(hwInfo);
+        BMG::setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
 }
 

@@ -84,8 +84,8 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     0                                                          // cxlType
 };
 
-void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
+void LNL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrFlatPhysCCS = true;
@@ -117,7 +117,7 @@ void LNL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
 
     LNL::adjustHardwareInfo(hwInfo);
     if (setupFeatureTableAndWorkaroundTable) {
-        LNL::setupFeatureAndWorkaroundTable(hwInfo);
+        LNL::setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
 }
 void LnlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper) {
