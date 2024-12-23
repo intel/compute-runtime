@@ -97,13 +97,8 @@ LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdI
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
-        if (allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
-            EXPECT_FALSE(preferredAllocationMethod.has_value());
-        } else {
-            EXPECT_TRUE(preferredAllocationMethod.has_value());
-            EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
-        }
+        EXPECT_TRUE(preferredAllocationMethod.has_value());
+        EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
     }
     debugManager.flags.AllowDcFlush.set(0);
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {

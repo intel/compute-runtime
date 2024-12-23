@@ -32,13 +32,7 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    switch (allocationType) {
-    case AllocationType::tagBuffer:
-    case AllocationType::timestampPacketTagBuffer:
-        return {};
-    default:
-        return GfxMemoryAllocationMethod::allocateByKmd;
-    }
+    return GfxMemoryAllocationMethod::allocateByKmd;
 }
 
 template <>
