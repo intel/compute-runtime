@@ -324,6 +324,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
 
     WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {
+        this->waitForTaskCountCalled = true;
         if (waitForTaskCountReturnValue.has_value()) {
             return *waitForTaskCountReturnValue;
         }
@@ -605,6 +606,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool recordFlushedBatchBuffer = false;
     bool checkAndActivateAubSubCaptureCalled = false;
     bool addAubCommentCalled = false;
+    bool waitForTaskCountCalled = false;
     std::atomic_bool downloadAllocationCalled = false;
     std::atomic_bool downloadAllocationsCalled = false;
     bool flushBatchedSubmissionsCalled = false;

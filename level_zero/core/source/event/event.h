@@ -327,6 +327,10 @@ struct Event : _ze_event_handle_t {
 
     bool isIpcImported() const { return isFromIpcPool; }
 
+    void setMitigateHostVisibleSignal() {
+        this->mitigateHostVisibleSignal = true;
+    }
+
     virtual ze_result_t hostEventSetValue(State eventState) = 0;
 
   protected:
@@ -398,6 +402,7 @@ struct Event : _ze_event_handle_t {
     bool kmdWaitMode = false;
     bool interruptMode = false;
     bool isSharableCouterBased = false;
+    bool mitigateHostVisibleSignal = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 

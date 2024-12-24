@@ -66,6 +66,12 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    auto signalScope = desc->signalScope;
+
+    if (NEO::debugManager.flags.MitigateHostVisibleSignal.get()) {
+        signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
+    }
+
     EventDescriptor eventDescriptor = {
         nullptr,                           // eventPoolAllocation
         desc->pNext,                       // extensions
@@ -74,7 +80,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         1,                                 // maxPacketsCount
         inputCbFlags,                      // counterBasedFlags
         0,                                 // index
-        desc->signalScope,                 // signalScope
+        signalScope,                       // signalScope
         desc->waitScope,                   // waitScope
         timestampFlag,                     // timestampPool
         mappedTimestampFlag,               // kerneMappedTsPoolFlag
@@ -84,7 +90,13 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    *phEvent = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
+    auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
+
+    if (signalScope ^ desc->signalScope) {
+        l0Event->setMitigateHostVisibleSignal();
+    }
+
+    *phEvent = l0Event;
 
     return result;
 }

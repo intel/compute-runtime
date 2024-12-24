@@ -5213,6 +5213,40 @@ HWTEST2_F(InOrderCmdListTests, givenStandaloneEventWhenCallingSynchronizeThenRet
     context->freeMem(hostAddress);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenMitigateHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported, MatchAny) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.MitigateHostVisibleSignal.set(true);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    uint64_t counterValue = 2;
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+    *hostAddress = counterValue;
+    uint64_t *gpuAddress = ptrOffset(&counterValue, 64);
+    ze_event_desc_t eventDesc = {};
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t handle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate(context, device, gpuAddress, hostAddress, counterValue, &eventDesc, &handle));
+    auto eventObj = Event::fromHandle(handle);
+
+    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
+
+    if (device->getProductHelper().isDcFlushAllowed()) {
+        EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
+        EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
+    } else {
+        EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
+        EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
+    }
+
+    zeEventDestroy(handle);
+    context->freeMem(hostAddress);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign, MatchAny) {
     zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     syncModeDesc.externalInterruptId = 123;

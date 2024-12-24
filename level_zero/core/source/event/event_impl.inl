@@ -664,6 +664,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         timeout = NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get();
     }
 
+    TaskCountType taskCountToWaitForL3Flush = 0;
+    if (this->mitigateHostVisibleSignal && this->device->getProductHelper().isDcFlushAllowed()) {
+        auto lock = this->csrs[0]->obtainUniqueOwnership();
+        this->csrs[0]->flushTagUpdate();
+        taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
+    }
+
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
 
@@ -692,6 +699,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 if (hangDetected) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
                 }
+            }
+            if (taskCountToWaitForL3Flush) {
+                this->csrs[0]->waitForTaskCount(taskCountToWaitForL3Flush);
             }
             return ret;
         }
