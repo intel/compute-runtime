@@ -63,7 +63,7 @@ HWTEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForCmdListWaitOnMemD
     EXPECT_EQ(expectedSize, l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize());
 }
 
-HWTEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForUsmCompressionSupportThenReturnFalse) {
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForUsmCompressionSupportThenReturnFalse, IsAtMostXeHpcCore) {
     DebugManagerStateRestore restore;
 
     MockExecutionEnvironment executionEnvironment;
