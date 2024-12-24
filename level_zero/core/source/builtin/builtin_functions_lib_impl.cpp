@@ -17,7 +17,8 @@
 namespace L0 {
 
 BuiltinFunctionsLibImpl::BuiltinData::~BuiltinData() {
-    func.reset();
+    func->destroy();
+    func.release();
 }
 BuiltinFunctionsLibImpl::BuiltinData::BuiltinData() = default;
 BuiltinFunctionsLibImpl::BuiltinData::BuiltinData(Module *module, std::unique_ptr<L0::Kernel> &&ker) : module(module), func(std::move(ker)) {}

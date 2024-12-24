@@ -3007,9 +3007,9 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
-    auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo));
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
 
-    MockDeviceImp l0Device(neoDevice.get(), neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     l0Device.setDriverHandle(device->getDriverHandle());
 
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -3046,6 +3046,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
 
     EXPECT_NE(nullptr, primaryCsr->getScratchSpaceController()->getScratchSpaceSlot0Allocation());
     EXPECT_NE(primaryCsr, commandListImmediate->getCsr(false));
+    commandListImmediate.reset();
 }
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
