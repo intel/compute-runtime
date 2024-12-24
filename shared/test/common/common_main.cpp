@@ -34,7 +34,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
-#if !defined(__linux__) && NDEBUG
+#if !defined(__linux__)
 #include <regex>
 #endif
 
@@ -142,12 +142,12 @@ void applyCommonWorkarounds() {
 
 bool enableAlarm = true;
 int main(int argc, char **argv) {
-#if !defined(__linux__) && NDEBUG
-    std::regex _dummyRegex{"dummyRegex"};   // these dummy objects are neededed to prevent false-positive
-    std::wstringstream _dummyWstringstream; // leaks when using instances of std::regex and std::wstringstream in tests
-    _dummyWstringstream << std::setw(4)     // in Windows Release builds
-                        << std::setfill(L'0')
-                        << std::hex << 5;
+#if !defined(__linux__)
+    std::regex dummyRegex{"dummyRegex"};   // these dummy objects are neededed to prevent false-positive
+    std::wstringstream dummyWstringstream; // leaks when using instances of std::regex and std::wstringstream in tests
+    dummyWstringstream << std::setw(4)     // in Windows Release builds
+                       << std::setfill(L'0')
+                       << std::hex << 5;
 #endif
     int retVal = 0;
     bool useDefaultListener = false;
