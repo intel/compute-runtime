@@ -201,6 +201,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::disablePatching;
     using BaseClass::dispatchEventRemainingPacketsPostSyncOperation;
     using BaseClass::doubleSbaWa;
+    using BaseClass::duplicatedInOrderCounterStorageEnabled;
     using BaseClass::enablePatching;
     using BaseClass::engineGroupType;
     using BaseClass::eventSignalPipeControl;

@@ -885,8 +885,19 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWheUsingRegularEventAndImmediateC
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_FALSE(events[0]->isCounterBased());
-    EXPECT_EQ(events[0]->inOrderExecSignalValue, 1u);
-    EXPECT_NE(events[0]->inOrderExecInfo.get(), nullptr);
+
+    if (cmdList->isInOrderNonWalkerSignalingRequired(events[0].get()) || cmdList->duplicatedInOrderCounterStorageEnabled) {
+        EXPECT_EQ(events[0]->inOrderExecSignalValue, 1u);
+        EXPECT_NE(events[0]->inOrderExecInfo.get(), nullptr);
+    } else {
+        EXPECT_EQ(events[0]->inOrderExecInfo.get(), nullptr);
+    }
+
+    auto tsEventPool = createEvents<FamilyType>(1, true);
+    events[1]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
+
+    cmdList->appendBarrier(events[1]->toHandle(), 0, nullptr, false);
+    EXPECT_EQ(events[1]->inOrderExecInfo.get() != nullptr, cmdList->duplicatedInOrderCounterStorageEnabled);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenRegularEventWithInOrderExecInfoWhenReusedOnRegularCmdListThenUnsetInOrderData, MatchAny) {
