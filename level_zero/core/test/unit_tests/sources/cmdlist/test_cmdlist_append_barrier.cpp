@@ -347,7 +347,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
         size_t timestampRegisters = 2 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) +
                                          NEO::EncodeMath<FamilyType>::streamCommandSize + sizeof(MI_STORE_REGISTER_MEM));
         if (NEO::UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
-            timestampRegisters *= 2;
+            timestampRegisters += 2 * sizeof(MI_STORE_REGISTER_MEM);
         }
 
         size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false) +
@@ -385,6 +385,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
                                                begin,
                                                RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                                RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
+                                               true,
                                                true);
 
         auto barrierOffset = timestampRegisters;
@@ -419,6 +420,7 @@ struct MultiTileCommandListAppendBarrierFixture : public MultiTileCommandListFix
                                                begin,
                                                RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                                RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
+                                               true,
                                                true);
     }
 };

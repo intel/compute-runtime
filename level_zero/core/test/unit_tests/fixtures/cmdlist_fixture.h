@@ -70,7 +70,8 @@ void validateTimestampRegisters(GenCmdList &cmdList,
                                 uint64_t firstStoreRegMemAddress,
                                 uint32_t secondLoadRegisterRegSrcAddress,
                                 uint64_t secondStoreRegMemAddress,
-                                bool workloadPartition);
+                                bool workloadPartition,
+                                bool useMask);
 
 struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     void setUp() {

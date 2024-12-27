@@ -829,6 +829,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
                                            startCmdList,
                                            RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
+                                           true,
                                            true);
 
     if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
@@ -837,14 +838,16 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
                                                RegisterOffsets::globalTimestampUn, globalStartAddressHigh,
-                                               0x23AC, contextStartAddressHigh,
-                                               true);
+                                               RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextStartAddressHigh,
+                                               true,
+                                               false);
     }
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            startCmdList,
                                            RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
+                                           true,
                                            true);
 
     if (UnitTestHelper<FamilyType>::timestampRegisterHighAddress()) {
@@ -853,8 +856,9 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         validateTimestampRegisters<FamilyType>(cmdList,
                                                startCmdList,
                                                RegisterOffsets::globalTimestampUn, globalEndAddressHigh,
-                                               0x23AC, contextEndAddressHigh,
-                                               true);
+                                               RegisterOffsets::gpThreadTimeRegAddressOffsetHigh, contextEndAddressHigh,
+                                               true,
+                                               false);
     }
 }
 

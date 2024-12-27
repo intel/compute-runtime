@@ -813,13 +813,15 @@ HWTEST2_F(AppendMemoryCopyTests,
                                            begin,
                                            RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
-                                           false);
+                                           false,
+                                           true);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            secondWalker,
                                            RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
-                                           false);
+                                           false,
+                                           true);
 }
 
 HWTEST2_F(AppendMemoryCopyTests,
@@ -871,13 +873,15 @@ HWTEST2_F(AppendMemoryCopyTests,
                                            begin,
                                            RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
-                                           false);
+                                           false,
+                                           true);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            thirdWalker,
                                            RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
-                                           false);
+                                           false,
+                                           true);
 }
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListImmediateWithDummyBlitWaWhenCopyMemoryRegionThenDummyBlitIsNotProgrammedButIsRequiredForNextFlushProgramming, IsAtLeastXeHpCore) {

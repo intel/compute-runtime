@@ -38,7 +38,7 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool maskLsb, uint32_t mask,
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds,
                                                                       bool workloadPartition, bool copyOperation) {}
 
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -2932,7 +2932,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWriteKernelTimestamp(Event *eve
         outTimeStampSyncCmds->push_back(ctxCmd);
     }
 
-    adjustWriteKernelTimestamp(globalAddress, contextAddress, baseAddr, outTimeStampSyncCmds, maskLsb, mask, workloadPartition, copyOperation);
+    adjustWriteKernelTimestamp(globalAddress, contextAddress, baseAddr, outTimeStampSyncCmds, workloadPartition, copyOperation);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
