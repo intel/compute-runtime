@@ -139,7 +139,8 @@ enum class PatchCmdType {
     lri64b,
     sdi,
     semaphore,
-    walker
+    walker,
+    pipeControl
 };
 
 template <typename GfxFamily>
@@ -167,6 +168,9 @@ struct PatchCmd {
             break;
         case PatchCmdType::lri64b:
             patchLri64b(appendCounterValue);
+            break;
+        case PatchCmdType::pipeControl:
+            patchPipeControl(appendCounterValue);
             break;
         default:
             UNRECOVERABLE_IF(true);
@@ -213,6 +217,11 @@ struct PatchCmd {
     }
 
     void patchComputeWalker(uint64_t appendCounterValue);
+
+    void patchPipeControl(uint64_t appendCounterValue) {
+        auto pcCmd = reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(cmd1);
+        pcCmd->setImmediateData(static_cast<uint64_t>(baseCounterValue + appendCounterValue));
+    }
 
     void patchLri64b(uint64_t appendCounterValue) {
         if (isExternalDependency()) {

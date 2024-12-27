@@ -1681,6 +1681,45 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
     EXPECT_EQ(5u, semaphoreCmd.getSemaphoreDataDword());
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenPipeControlCmdAddedForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeHpCore) {
+    auto pcCmd = FamilyType::cmdInitPipeControl;
+
+    auto inOrderRegularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto &inOrderExecInfo = inOrderRegularCmdList->inOrderExecInfo;
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(4);
+    inOrderExecInfo->addCounterValue(1);
+
+    auto inOrderRegularCmdList2 = createRegularCmdList<gfxCoreFamily>(false);
+    auto &inOrderExecInfo2 = inOrderRegularCmdList2->inOrderExecInfo;
+    inOrderExecInfo2->addRegularCmdListSubmissionCounter(6);
+    inOrderExecInfo2->addCounterValue(1);
+
+    inOrderRegularCmdList->addCmdForPatching(&inOrderExecInfo, &pcCmd, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
+
+    ASSERT_EQ(1u, inOrderRegularCmdList->inOrderPatchCmds.size());
+
+    inOrderRegularCmdList->disablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(0u, pcCmd.getImmediateData());
+
+    inOrderRegularCmdList->enablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo2, false);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(1);
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo, true);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+
+    inOrderRegularCmdList->enablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+}
+
 struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListFixture {
     void SetUp() override {
         InOrderCmdListFixture::SetUp();
