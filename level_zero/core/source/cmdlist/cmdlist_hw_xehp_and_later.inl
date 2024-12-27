@@ -304,9 +304,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
                         eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
                     }
-                    if (!compactEvent || this->asMutable() || !compactEvent->isCounterBased()) {
+                    if ((!compactEvent && this->heaplessModeEnabled) || this->asMutable() || !eventForInOrderExec->isCounterBased()) {
                         dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
-                    } else {
+                    } else if (compactEvent) {
                         eventAddress = eventForInOrderExec->getPacketAddress(this->device);
                         isTimestampEvent = true;
                         if (!launchParams.omitAddingEventResidency) {
