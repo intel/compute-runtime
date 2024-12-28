@@ -3855,6 +3855,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
+                                                                               const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                                                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) {
     L0::KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     if (sizePerHwThread != 0U && kernelImp->getParentModule().shouldAllocatePrivateMemoryPerDispatch()) {

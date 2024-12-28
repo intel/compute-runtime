@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,7 +82,7 @@ zeIntelCommandListAppendWaitExternalSemaphoresExp(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::CommandList::fromHandle(hCmdList)->appendWaitExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t ZE_APICALL

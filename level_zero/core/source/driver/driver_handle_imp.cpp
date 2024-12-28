@@ -34,6 +34,7 @@
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
 
 #include "driver_version.h"
@@ -183,6 +184,11 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandleImp::~DriverHandleImp() {
+    if (this->externalSemaphoreControllerCreated) {
+        ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+        externalSemaphoreController->releaseResources();
+    }
+
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {

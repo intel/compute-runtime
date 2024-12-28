@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_launch_params.h"
 #include "level_zero/core/source/helpers/api_handle_helper.h"
+#include "level_zero/include/level_zero/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -171,6 +172,9 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) = 0;
     virtual ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                             uint64_t data) = 0;
+    virtual ze_result_t appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
+                                                     const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                                                     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
 
     virtual ze_result_t getDeviceHandle(ze_device_handle_t *phDevice) = 0;

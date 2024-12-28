@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,6 +154,8 @@ struct DriverHandleImp : public DriverHandle {
 
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
+
+    bool externalSemaphoreControllerCreated = false;
 
     uint32_t numDevices = 0;
 

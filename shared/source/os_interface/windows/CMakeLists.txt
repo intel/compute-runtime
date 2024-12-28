@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -64,8 +64,8 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_time_wddm.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_windows.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_helper_windows.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_helper_windows.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_windows.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_logging.cpp

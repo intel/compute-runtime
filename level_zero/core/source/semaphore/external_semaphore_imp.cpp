@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,12 @@
 #include "shared/source/device/device.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
 namespace L0 {
+
+ExternalSemaphoreController *ExternalSemaphoreController::instance = nullptr;
 
 ze_result_t ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc, ze_intel_external_semaphore_exp_handle_t *phSemaphore) {
     auto externalSemaphore = new ExternalSemaphoreImp();
@@ -26,16 +29,22 @@ ze_result_t ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device
         return result;
     }
 
+    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+    externalSemaphoreController->startThread();
+
+    auto driverHandleImp = static_cast<DriverHandleImp *>(L0::Device::fromHandle(device)->getDriverHandle());
+    driverHandleImp->externalSemaphoreControllerCreated = true;
+
     *phSemaphore = externalSemaphore;
 
     return result;
 }
 
 ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc) {
-    auto deviceImp = Device::fromHandle(device);
-    this->neoDevice = Device::fromHandle(device)->getNEODevice();
+    this->device = Device::fromHandle(device);
+    auto deviceImp = static_cast<DeviceImp *>(this->device);
     this->desc = semaphoreDesc;
-    NEO::ExternalSemaphoreHelper::Type externalSemaphoreType;
+    NEO::ExternalSemaphore::Type externalSemaphoreType;
     void *handle = nullptr;
     int fd = 0;
 
@@ -59,31 +68,31 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
 
     switch (semaphoreDesc->flags) {
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_FD:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::OpaqueFd;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::OpaqueFd;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::OpaqueWin32;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::OpaqueWin32;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32_KMT:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::OpaqueWin32Kmt;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::OpaqueWin32Kmt;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_D3D12_FENCE:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::D3d12Fence;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::D3d12Fence;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_D3D11_FENCE:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::D3d11Fence;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::D3d11Fence;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_KEYED_MUTEX:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::KeyedMutex;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::KeyedMutex;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_KEYED_MUTEX_KMT:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::KeyedMutexKmt;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::KeyedMutexKmt;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_TIMELINE_SEMAPHORE_FD:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::TimelineSemaphoreFd;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::TimelineSemaphoreFd;
         break;
     case ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_TIMELINE_SEMAPHORE_WIN32:
-        externalSemaphoreType = NEO::ExternalSemaphoreHelper::Type::TimelineSemaphoreWin32;
+        externalSemaphoreType = NEO::ExternalSemaphore::Type::TimelineSemaphoreWin32;
         break;
     default:
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -103,12 +112,80 @@ ze_result_t ExternalSemaphoreImp::releaseExternalSemaphore() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ExternalSemaphoreImp::appendWait(const NEO::CommandStreamReceiver *csr) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent) {
+    std::lock_guard<std::mutex> lock(this->semControllerMutex);
+
+    if (this->eventPoolsMap.find(hDevice) == this->eventPoolsMap.end()) {
+        this->eventPoolsMap[hDevice] = std::vector<EventPool *>();
+        this->eventsCreatedFromLatestPoolMap[hDevice] = 0u;
+    }
+
+    if (this->eventPoolsMap[hDevice].empty() ||
+        this->eventsCreatedFromLatestPoolMap[hDevice] + 1 > this->maxEventCountInPool) {
+        ze_result_t result;
+        ze_event_pool_desc_t desc{};
+        desc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+        desc.count = static_cast<uint32_t>(this->maxEventCountInPool);
+        desc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        auto driverHandle = L0::Device::fromHandle(hDevice)->getDriverHandle();
+        auto pool = EventPool::create(driverHandle, L0::Context::fromHandle(hContext), 1, &hDevice, &desc, result);
+        if (!pool) {
+            return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+        }
+        this->eventPoolsMap[hDevice].push_back(pool);
+        this->eventsCreatedFromLatestPoolMap[hDevice] = 0u;
+    }
+
+    auto pool = this->eventPoolsMap[hDevice][this->eventPoolsMap[hDevice].size() - 1];
+    ze_event_desc_t desc{};
+    desc.index = static_cast<uint32_t>(this->eventsCreatedFromLatestPoolMap[hDevice]++);
+    desc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
+    desc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t hEvent{};
+    pool->createEvent(&desc, &hEvent);
+
+    this->proxyWaitEvents.push_back(std::make_tuple(Event::fromHandle(hEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hExtSemaphore)), fenceValue));
+
+    *phEvent = hEvent;
+
+    return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ExternalSemaphoreImp::appendSignal(const NEO::CommandStreamReceiver *csr) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+void ExternalSemaphoreController::processWaitEvents() {
+    for (auto it = proxyWaitEvents.rbegin(); it != proxyWaitEvents.rend();) {
+        Event *event = std::get<0>(*it);
+        ExternalSemaphoreImp *externalSemaphoreImp = static_cast<ExternalSemaphoreImp *>(std::get<1>(*it));
+        uint64_t fenceValue = std::get<2>(*it);
+
+        if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Initial) {
+            externalSemaphoreImp->neoExternalSemaphore->enqueueWait(&fenceValue);
+        }
+
+        if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
+            event->hostSignal(false);
+            event->destroy();
+            it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t>>::reverse_iterator(this->proxyWaitEvents.erase((++it).base()));
+        } else {
+            ++it;
+        }
+    }
+}
+
+void ExternalSemaphoreController::runController() {
+    while (this->continueRunning) {
+        std::unique_lock<std::mutex> lock(this->semControllerMutex);
+        this->semControllerCv.wait(lock, [this] { return (!this->proxyWaitEvents.empty() || !this->continueRunning); });
+
+        if (!this->continueRunning) {
+            lock.unlock();
+        } else {
+            this->processWaitEvents();
+
+            lock.unlock();
+            this->semControllerCv.notify_all();
+        }
+    }
 }
 
 } // namespace L0

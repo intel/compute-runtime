@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,6 +173,10 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendWaitOnMemory(void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData) override;
     ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                     uint64_t data) override;
+
+    ze_result_t appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
+                                             const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
 
     ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
                                             const size_t *pOffsets, ze_event_handle_t hSignalEvent,

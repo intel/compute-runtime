@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/os_interface/os_handle.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include <limits>
@@ -19,7 +20,7 @@
 
 namespace NEO {
 
-class ExternalSemaphoreHelper {
+class ExternalSemaphore {
   public:
     enum Type {
         OpaqueFd,
@@ -34,23 +35,28 @@ class ExternalSemaphoreHelper {
         Invalid
     };
 
-    static std::unique_ptr<ExternalSemaphoreHelper> create(OSInterface *osInterface);
+    enum SemaphoreState {
+        Initial,
+        Waiting,
+        Signaled
+    };
 
-    virtual ~ExternalSemaphoreHelper() = default;
+    static std::unique_ptr<ExternalSemaphore> create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd);
 
-    virtual bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, NEO::ExternalSemaphoreHelper::Type type, bool isNative, void *syncHandle) = 0;
+    virtual ~ExternalSemaphore() = default;
 
-    virtual bool semaphoreWait(const CommandStreamReceiver *csr, void *syncHandle) = 0;
-    virtual bool semaphoreSignal(const CommandStreamReceiver *csr, void *syncHandle) = 0;
+    virtual bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) = 0;
 
-    virtual bool isSupported(ExternalSemaphoreHelper::Type type) = 0;
-
-    Type getType() { return type; }
+    virtual bool enqueueWait(uint64_t *fenceValue) = 0;
+    virtual bool enqueueSignal() = 0;
 
     OSInterface *osInterface = nullptr;
 
-  private:
-    Type type = Invalid;
+    SemaphoreState getState() { return state; }
+
+  protected:
+    Type type = Type::Invalid;
+    SemaphoreState state = SemaphoreState::Initial;
 };
 
 } // namespace NEO

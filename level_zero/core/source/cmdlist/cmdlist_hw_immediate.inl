@@ -37,6 +37,7 @@
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 
 #include "encode_surface_state_args.h"
 
@@ -963,6 +964,51 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteToMemory(v
     checkAvailableSpace(0, false, commonImmediateCommandSize);
     auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(desc, ptr, data);
     return flushImmediate(ret, true, false, false, false, false, nullptr, false);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
+                                                                                        const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                                                                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+
+    checkAvailableSpace(0, false, commonImmediateCommandSize);
+
+    auto ret = ZE_RESULT_SUCCESS;
+    if (numWaitEvents) {
+        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, false, true, false, true, false);
+    }
+
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+
+    for (uint32_t i = 0; i < numExternalSemaphores; i++) {
+        ze_event_handle_t proxyWaitEvent = nullptr;
+        ret = externalSemaphoreController->allocateProxyEvent(hSemaphores[i], this->device->toHandle(), this->hContext, params[i].value, &proxyWaitEvent);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+
+        ret = this->appendWaitOnEvents(1u, &proxyWaitEvent, nullptr, false, false, false, false, false, false);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+    }
+
+    externalSemaphoreController->semControllerCv.notify_one();
+
+    bool relaxedOrderingDispatch = false;
+    if (hSignalEvent) {
+        ret = this->appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
+    }
+
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
