@@ -464,16 +464,6 @@ SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitNativ
 }
 
 template <>
-std::string SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitFile() {
-    return "curr2_crit";
-}
-
-template <>
-SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitNativeUnit() {
-    return SysfsValueUnit::milli;
-}
-
-template <>
 bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
     return true;
 }
