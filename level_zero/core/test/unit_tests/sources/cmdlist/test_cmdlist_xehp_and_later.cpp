@@ -2852,8 +2852,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     auto eventCompletionAddress = event->getCompletionFieldGpuAddress(device);
 
-    ASSERT_EQ(heapless ? 0u : 1u, outCbEventCmds.size());
-    size_t expectedSdi = heapless ? 0 : 1;
+    ASSERT_EQ(heapless ? 0u : 2u, outCbEventCmds.size());
+    size_t expectedSdi = heapless ? 0 : commandList->inOrderAtomicSignalingEnabled ? 1
+                                                                                   : 2;
 
     auto storeDataImmList = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(expectedSdi, storeDataImmList.size());
@@ -2861,6 +2862,14 @@ HWTEST2_F(CommandListAppendLaunchKernel,
     ASSERT_EQ(1u, computeWalkerList.size());
     auto semaphoreWaitList = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(heapless ? 0u : 1u, semaphoreWaitList.size());
+
+    if (!heapless) {
+        EXPECT_EQ(CommandToPatch::CbEventTimestampClearStoreDataImm, outCbEventCmds[0].type);
+        EXPECT_EQ(*storeDataImmList[0], outCbEventCmds[0].pDestination);
+        auto storeDataImmCmd = genCmdCast<MI_STORE_DATA_IMM *>(outCbEventCmds[0].pDestination);
+        ASSERT_NE(nullptr, storeDataImmCmd);
+        EXPECT_EQ(eventCompletionAddress, storeDataImmCmd->getAddress());
+    }
     EXPECT_EQ(launchParams.outWalker, *computeWalkerList[0]);
 
     ASSERT_NE(nullptr, launchParams.outWalker);
@@ -2879,9 +2888,9 @@ HWTEST2_F(CommandListAppendLaunchKernel,
 
     if (!heapless) {
 
-        EXPECT_EQ(CommandToPatch::CbEventTimestampPostSyncSemaphoreWait, outCbEventCmds[0].type);
-        EXPECT_EQ(*semaphoreWaitList[0], outCbEventCmds[0].pDestination);
-        auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outCbEventCmds[0].pDestination);
+        EXPECT_EQ(CommandToPatch::CbEventTimestampPostSyncSemaphoreWait, outCbEventCmds[1].type);
+        EXPECT_EQ(*semaphoreWaitList[0], outCbEventCmds[1].pDestination);
+        auto semaphoreWaitCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(outCbEventCmds[1].pDestination);
         ASSERT_NE(nullptr, semaphoreWaitCmd);
         EXPECT_EQ(eventCompletionAddress, semaphoreWaitCmd->getSemaphoreGraphicsAddress());
     }
