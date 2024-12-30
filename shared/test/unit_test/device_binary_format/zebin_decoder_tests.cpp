@@ -1551,6 +1551,28 @@ kernels:
     EXPECT_EQ(KernelDescriptor::BindlessAndStateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenStatelessArgBufferAndMissingHas4GbBuffersInExecEnvWhenDecodingZeInfoThenAssumeBuffersAccessedInStatelessMode) {
+    ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:
+        simd_size: 8
+      payload_arguments:
+        - arg_type:        arg_bypointer
+          offset:          0
+          size:            8
+          arg_index:       0
+          addrmode:        stateless
+          addrspace:       global
+          access_type:     readwrite
+...
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::success, err);
+
+    EXPECT_EQ(KernelDescriptor::Stateless, kernelDescriptor->kernelAttributes.bufferAddressingMode);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenStatefulImplicitArgsWhenDecodingZeInfoThenNumberOfStatefulArgsIsCorrect) {
     ConstStringRef zeinfo = R"===(
 kernels:

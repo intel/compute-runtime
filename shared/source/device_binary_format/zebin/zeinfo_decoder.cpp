@@ -1046,7 +1046,11 @@ DecodeError decodeZeInfoKernelPayloadArguments(KernelDescriptor &dst, Yaml::Yaml
 
         if (bindlessBufferAccess) {
             dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::BindlessAndStateless;
+        } else if (!bindfulBufferAccess) {
+            DEBUG_BREAK_IF(dst.kernelAttributes.numArgsStateful != 0 && !dst.kernelAttributes.flags.usesImages);
+            dst.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
         }
+
         if (bindlessImageAccess) {
             dst.kernelAttributes.imageAddressingMode = KernelDescriptor::Bindless;
         }
