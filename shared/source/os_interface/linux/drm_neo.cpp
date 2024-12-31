@@ -189,7 +189,7 @@ bool Drm::readSysFsAsString(const std::string &relativeFilePath, std::string &re
         return false;
     }
 
-    const std::string fileName = devicePath + relativeFilePath;
+    const std::string &fileName = devicePath + relativeFilePath;
     int fd = SysCalls::open(fileName.c_str(), O_RDONLY);
     if (fd < 0) {
         return false;
