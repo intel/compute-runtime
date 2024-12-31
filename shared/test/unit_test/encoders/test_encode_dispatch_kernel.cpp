@@ -962,18 +962,6 @@ HWTEST_F(CommandEncodeStatesTest, givenPauseOnEnqueueSetToAlwaysWhenEncodingWalk
 
 using EncodeDispatchKernelTest = Test<CommandEncodeStatesFixture>;
 
-struct HeapfulSupportedMatch {
-
-    template <PRODUCT_FAMILY productFamily>
-    static constexpr bool isMatched() {
-        const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
-        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
-        constexpr bool heaplessModeEnabled = FamilyType::template isHeaplessMode<DefaultWalkerType>();
-        return !heaplessModeEnabled;
-    }
-};
-
 HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenSshFromContainerIsUsed, HeapfulSupportedMatch) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
