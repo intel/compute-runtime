@@ -20,6 +20,7 @@ struct StateComputeModePropertiesSupport {
     bool threadArbitrationPolicy = false;
     bool devicePreemptionMode = false;
     bool allocationForScratchAndMidthreadPreemption = false;
+    bool enableVariableRegisterSizeAllocation = false;
 };
 
 struct StateComputeModeProperties {
@@ -30,6 +31,7 @@ struct StateComputeModeProperties {
     StreamProperty threadArbitrationPolicy{};
     StreamProperty devicePreemptionMode{};
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
+    StreamProperty enableVariableRegisterSizeAllocation{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();

@@ -404,6 +404,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
     scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption = true;
+    scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = true;
 
     int32_t grfNumber = 128;
     int32_t threadArbitration = 1;
@@ -416,6 +417,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(2, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+    EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
     scmProperties.resetState();
     EXPECT_FALSE(scmProperties.isDirty());
@@ -424,6 +426,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(-1, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+    EXPECT_EQ(-1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
     EXPECT_TRUE(scmProperties.propertiesSupportLoaded);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.coherencyRequired);
@@ -431,6 +434,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.threadArbitrationPolicy);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.devicePreemptionMode);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {

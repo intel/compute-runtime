@@ -48,6 +48,9 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     if (this->scmPropertiesSupport.allocationForScratchAndMidthreadPreemption) {
         this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     }
+    if (this->scmPropertiesSupport.enableVariableRegisterSizeAllocation) {
+        this->enableVariableRegisterSizeAllocation.set(this->scmPropertiesSupport.enableVariableRegisterSizeAllocation);
+    }
 
     setPropertiesExtraPerContext();
 }
@@ -62,6 +65,7 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
     devicePreemptionMode.set(properties.devicePreemptionMode.value);
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+    enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
 
     copyPropertiesExtra(properties);
 }
@@ -77,8 +81,15 @@ void StateComputeModeProperties::copyPropertiesGrfNumberThreadArbitration(const 
 }
 
 bool StateComputeModeProperties::isDirty() const {
-    return isCoherencyRequired.isDirty || largeGrfMode.isDirty || zPassAsyncComputeThreadLimit.isDirty ||
-           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty || devicePreemptionMode.isDirty || memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty || isDirtyExtra();
+    return isCoherencyRequired.isDirty ||
+           largeGrfMode.isDirty ||
+           zPassAsyncComputeThreadLimit.isDirty ||
+           pixelAsyncComputeThreadLimit.isDirty ||
+           threadArbitrationPolicy.isDirty ||
+           devicePreemptionMode.isDirty ||
+           memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
+           enableVariableRegisterSizeAllocation.isDirty ||
+           isDirtyExtra();
 }
 
 void StateComputeModeProperties::clearIsDirty() {
@@ -89,6 +100,7 @@ void StateComputeModeProperties::clearIsDirty() {
     threadArbitrationPolicy.isDirty = false;
     devicePreemptionMode.isDirty = false;
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty = false;
+    enableVariableRegisterSizeAllocation.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -149,6 +161,8 @@ void StateComputeModeProperties::resetState() {
     this->threadArbitrationPolicy.value = StreamProperty::initValue;
     this->devicePreemptionMode.value = StreamProperty::initValue;
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
+    this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
+
     resetStateExtra();
 }
 
