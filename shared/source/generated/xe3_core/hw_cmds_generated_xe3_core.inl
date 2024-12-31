@@ -6989,10 +6989,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t MidthreadPreemptionOverdispatchThreadGroupCount : BITFIELD_RANGE(3, 4);
             uint32_t MidthreadPreemptionOverdispatchTestMode : BITFIELD_RANGE(5, 5);
             uint32_t UavCoherencyMode : BITFIELD_RANGE(6, 6);
-            uint32_t OutOfBoundariesInTranslationExceptionEnable : BITFIELD_RANGE(7, 7);
-            uint32_t Reserved_72 : BITFIELD_RANGE(8, 10);
-            uint32_t MemoryAllocationForScratchAndMidthreadPreemptionBuffers : BITFIELD_RANGE(11, 11);
-            uint32_t Reserved_76 : BITFIELD_RANGE(12, 15);
+            uint32_t Reserved_76 : BITFIELD_RANGE(7, 15);
             uint32_t Mask2 : BITFIELD_RANGE(16, 31);
         } Common;
         uint32_t RawData[3];
@@ -7151,18 +7148,6 @@ typedef struct tagSTATE_COMPUTE_MODE {
     }
     inline UAV_COHERENCY_MODE getUavCoherencyMode() const {
         return static_cast<UAV_COHERENCY_MODE>(TheStructure.Common.UavCoherencyMode);
-    }
-    inline void setOutOfBoundariesInTranslationExceptionEnable(const bool value) {
-        TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable = value;
-    }
-    inline bool getOutOfBoundariesInTranslationExceptionEnable() const {
-        return TheStructure.Common.OutOfBoundariesInTranslationExceptionEnable;
-    }
-    inline void setMemoryAllocationForScratchAndMidthreadPreemptionBuffers(const bool value) {
-        TheStructure.Common.MemoryAllocationForScratchAndMidthreadPreemptionBuffers = value;
-    }
-    inline bool getMemoryAllocationForScratchAndMidthreadPreemptionBuffers() const {
-        return TheStructure.Common.MemoryAllocationForScratchAndMidthreadPreemptionBuffers;
     }
     inline void setMask2(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffff);
