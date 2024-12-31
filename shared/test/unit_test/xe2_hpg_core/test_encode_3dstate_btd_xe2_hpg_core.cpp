@@ -18,7 +18,7 @@ using namespace NEO;
 
 using CommandEncodeEnableRayTracing = Test<CommandEncodeStatesFixture>;
 
-HWTEST2_F(CommandEncodeEnableRayTracing, givenDefaultDebugFlagsWhenProgramEnableRayTracingThenBtdStateBodyIsSetProperly, IsXe2HpgCore) {
+HWTEST2_F(CommandEncodeEnableRayTracing, givenDefaultDebugFlagsWhenProgramEnableRayTracingThenBtdStateIsSetProperly, IsXe2HpgCore) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
     DebugManagerStateRestore restore;
     debugManager.flags.ForceTheMaximumNumberOfOutstandingRayqueriesPerSs.set(-1);
@@ -41,11 +41,11 @@ HWTEST2_F(CommandEncodeEnableRayTracing, givenDefaultDebugFlagsWhenProgramEnable
     ASSERT_NE(iterator3dStateBtd, commands.end());
 
     auto cmd3dStateBtd = genCmdCast<_3DSTATE_BTD *>(*iterator3dStateBtd);
-    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getBtdStateBody().getControlsTheMaximumNumberOfOutstandingRayqueriesPerSs()), 0);
-    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getBtdStateBody().getDispatchTimeoutCounter()), 0);
+    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getControlsTheMaximumNumberOfOutstandingRayqueriesPerSs()), 0);
+    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getDispatchTimeoutCounter()), 0);
 }
 
-HWTEST2_F(CommandEncodeEnableRayTracing, givenDebugFlagsWhenProgramEnableRayTracingThenBtdStateBodyIsSetProperly, IsXe2HpgCore) {
+HWTEST2_F(CommandEncodeEnableRayTracing, givenDebugFlagsWhenProgramEnableRayTracingThenBtdStateIsSetProperly, IsXe2HpgCore) {
     using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
     DebugManagerStateRestore restore;
     debugManager.flags.ForceTheMaximumNumberOfOutstandingRayqueriesPerSs.set(1);
@@ -68,6 +68,6 @@ HWTEST2_F(CommandEncodeEnableRayTracing, givenDebugFlagsWhenProgramEnableRayTrac
     ASSERT_NE(iterator3dStateBtd, commands.end());
 
     auto cmd3dStateBtd = genCmdCast<_3DSTATE_BTD *>(*iterator3dStateBtd);
-    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getBtdStateBody().getControlsTheMaximumNumberOfOutstandingRayqueriesPerSs()), debugManager.flags.ForceTheMaximumNumberOfOutstandingRayqueriesPerSs.get());
-    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getBtdStateBody().getDispatchTimeoutCounter()), debugManager.flags.ForceDispatchTimeoutCounter.get());
+    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getControlsTheMaximumNumberOfOutstandingRayqueriesPerSs()), debugManager.flags.ForceTheMaximumNumberOfOutstandingRayqueriesPerSs.get());
+    EXPECT_EQ(static_cast<int32_t>(cmd3dStateBtd->getDispatchTimeoutCounter()), debugManager.flags.ForceDispatchTimeoutCounter.get());
 }

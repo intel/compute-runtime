@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,8 +59,8 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
 
     _3DSTATE_BTD *cmd = genCmdCast<_3DSTATE_BTD *>(cs.getCpuBase());
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(RayTracingHelper::getMemoryBackedFifoSizeToPatch(), cmd->getBtdStateBody().getPerDssMemoryBackedBufferSize());
-    EXPECT_EQ(allocation->getGpuAddressToPatch(), cmd->getBtdStateBody().getMemoryBackedBufferBasePointer());
+    EXPECT_EQ(RayTracingHelper::getMemoryBackedFifoSizeToPatch(), cmd->getPerDssMemoryBackedBufferSize());
+    EXPECT_EQ(allocation->getGpuAddressToPatch(), cmd->getMemoryBackedBufferBasePointer());
     EXPECT_TRUE(commandStreamReceiver.isPerDssBackedBufferSent);
 }
 
@@ -115,8 +115,8 @@ HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPi
     auto cmd3dStateBtdCmd = genCmdCast<_3DSTATE_BTD *>(*cmd3dStateBtdIterator);
 
     ASSERT_NE(nullptr, cmd3dStateBtdCmd);
-    EXPECT_EQ(RayTracingHelper::getMemoryBackedFifoSizeToPatch(), cmd3dStateBtdCmd->getBtdStateBody().getPerDssMemoryBackedBufferSize());
-    EXPECT_EQ(allocation->getGpuAddressToPatch(), cmd3dStateBtdCmd->getBtdStateBody().getMemoryBackedBufferBasePointer());
+    EXPECT_EQ(RayTracingHelper::getMemoryBackedFifoSizeToPatch(), cmd3dStateBtdCmd->getPerDssMemoryBackedBufferSize());
+    EXPECT_EQ(allocation->getGpuAddressToPatch(), cmd3dStateBtdCmd->getMemoryBackedBufferBasePointer());
     EXPECT_TRUE(commandStreamReceiver.isPerDssBackedBufferSent);
 
     --cmd3dStateBtdIterator;

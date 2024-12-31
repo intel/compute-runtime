@@ -144,7 +144,6 @@ struct Xe3CoreFamily : public Xe3Core {
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
     static const STATE_PREFETCH cmdInitStatePrefetch;
     static const _3DSTATE_BTD cmd3dStateBtd;
-    static const _3DSTATE_BTD_BODY cmd3dStateBtdBody;
     static const MI_MEM_FENCE cmdInitMemFence;
     static const MEM_SET cmdInitMemSet;
     static const STATE_SIP cmdInitStateSip;

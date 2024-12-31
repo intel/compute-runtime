@@ -145,7 +145,6 @@ struct XeHpgCoreFamily : public XeHpgCore {
     static const XY_BLOCK_COPY_BLT cmdInitXyCopyBlt;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
     static const _3DSTATE_BTD cmd3dStateBtd;
-    static const _3DSTATE_BTD_BODY cmd3dStateBtdBody;
     static const STATE_SIP cmdInitStateSip;
     static constexpr bool isQwordInOrderCounter = false;
     static constexpr bool walkerPostSyncSupport = true;

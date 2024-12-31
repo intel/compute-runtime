@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 namespace NEO {
 
 using _3DSTATE_BTD = typename Family::_3DSTATE_BTD;
-using _3DSTATE_BTD_BODY = typename Family::_3DSTATE_BTD_BODY;
 using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
 template <>

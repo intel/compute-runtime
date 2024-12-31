@@ -4924,16 +4924,23 @@ typedef struct tagMI_FLUSH_DW {
 } MI_FLUSH_DW;
 STATIC_ASSERT(20 == sizeof(MI_FLUSH_DW));
 
-typedef struct tag_3DSTATE_BTD_BODY {
+typedef struct tag_3DSTATE_BTD {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
+            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
+            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
+            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t DispatchTimeoutCounter : BITFIELD_RANGE(0, 2);
             uint32_t Reserved_3 : BITFIELD_RANGE(3, 6);
             uint32_t ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs : BITFIELD_RANGE(7, 8);
             uint32_t Reserved_9 : BITFIELD_RANGE(9, 30);
             uint32_t BtdMidThreadPreemption : BITFIELD_RANGE(31, 31);
-            // DWORD 1
+            // DWORD 2
             uint64_t PerDssMemoryBackedBufferSize : BITFIELD_RANGE(0, 2);
             uint64_t Reserved_35 : BITFIELD_RANGE(3, 9);
             uint64_t MemoryBackedBufferBasePointer : BITFIELD_RANGE(10, 63);
@@ -4943,8 +4950,23 @@ typedef struct tag_3DSTATE_BTD_BODY {
             // DWORD 4
             uint64_t Reserved_128 : BITFIELD_RANGE(32, 63);
         } Common;
-        uint32_t RawData[5];
+        uint32_t RawData[6];
     } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_DWORD_COUNT_N = 0x4,
+    } DWORD_LENGTH;
+    typedef enum tag_3D_COMMAND_SUB_OPCODE {
+        _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD = 0x6,
+    } _3D_COMMAND_SUB_OPCODE;
+    typedef enum tag_3D_COMMAND_OPCODE {
+        _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED = 0x1,
+    } _3D_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_SUBTYPE {
+        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
+    } COMMAND_SUBTYPE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_GFXPIPE = 0x3,
+    } COMMAND_TYPE;
     typedef enum tagDISPATCH_TIMEOUT_COUNTER {
         DISPATCH_TIMEOUT_COUNTER_64 = 0x0,
         DISPATCH_TIMEOUT_COUNTER_128 = 0x1,
@@ -4972,17 +4994,22 @@ typedef struct tag_3DSTATE_BTD_BODY {
     } PER_DSS_MEMORY_BACKED_BUFFER_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD;
+        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
+        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
+        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.DispatchTimeoutCounter = DISPATCH_TIMEOUT_COUNTER_64;
         TheStructure.Common.ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs = CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_128;
         TheStructure.Common.PerDssMemoryBackedBufferSize = PER_DSS_MEMORY_BACKED_BUFFER_SIZE_2KB;
     }
-    static tag_3DSTATE_BTD_BODY sInit() {
-        _3DSTATE_BTD_BODY state;
+    static tag_3DSTATE_BTD sInit() {
+        _3DSTATE_BTD state;
         state.init();
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index >= 5);
+        UNRECOVERABLE_IF(index >= 6);
         return TheStructure.RawData[index];
     }
     inline void setDispatchTimeoutCounter(const DISPATCH_TIMEOUT_COUNTER value) {
@@ -5028,63 +5055,6 @@ typedef struct tag_3DSTATE_BTD_BODY {
     }
     inline uint64_t getScratchSpaceBuffer() const {
         return TheStructure.Common.ScratchSpaceBuffer << SCRATCHSPACEBUFFER_BIT_SHIFT;
-    }
-} _3DSTATE_BTD_BODY;
-STATIC_ASSERT(20 == sizeof(_3DSTATE_BTD_BODY));
-
-typedef struct tag_3DSTATE_BTD {
-    union tagTheStructure {
-        struct tagCommon {
-            // DWORD 0
-            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
-            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
-            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
-            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
-            uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
-            _3DSTATE_BTD_BODY BtdStateBody;
-        } Common;
-        uint32_t RawData[6];
-    } TheStructure;
-    typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_DWORD_COUNT_N = 0x4,
-    } DWORD_LENGTH;
-    typedef enum tag_3D_COMMAND_SUB_OPCODE {
-        _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD = 0x6,
-    } _3D_COMMAND_SUB_OPCODE;
-    typedef enum tag_3D_COMMAND_OPCODE {
-        _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED = 0x1,
-    } _3D_COMMAND_OPCODE;
-    typedef enum tagCOMMAND_SUBTYPE {
-        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
-    } COMMAND_SUBTYPE;
-    typedef enum tagCOMMAND_TYPE {
-        COMMAND_TYPE_GFXPIPE = 0x3,
-    } COMMAND_TYPE;
-    inline void init() {
-        memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD;
-        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
-        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.BtdStateBody.init();
-    }
-    static tag_3DSTATE_BTD sInit() {
-        _3DSTATE_BTD state;
-        state.init();
-        return state;
-    }
-    inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index >= 6);
-        return TheStructure.RawData[index];
-    }
-    inline void setBtdStateBody(const _3DSTATE_BTD_BODY &value) {
-        TheStructure.Common.BtdStateBody = value;
-    }
-    inline _3DSTATE_BTD_BODY &getBtdStateBody() {
-        return TheStructure.Common.BtdStateBody;
     }
 } _3DSTATE_BTD;
 STATIC_ASSERT(24 == sizeof(_3DSTATE_BTD));

@@ -3592,8 +3592,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
     ASSERT_NE(nullptr, btdStateCmd);
 
-    auto &btdStateBody = btdStateCmd->getBtdStateBody();
-    EXPECT_EQ(rtAllocationAddress, btdStateBody.getMemoryBackedBufferBasePointer());
+    EXPECT_EQ(rtAllocationAddress, btdStateCmd->getMemoryBackedBufferBasePointer());
 
     uint32_t residentCount = 1;
     commandStreamReceiver.isMadeResident(rtAllocation, residentCount);
