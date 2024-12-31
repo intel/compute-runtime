@@ -14,7 +14,6 @@ struct TestTraits<IGFX_GEN12LP_CORE> {
     static constexpr bool programOnlyChangedFieldsInComputeStateMode = false;
     static constexpr bool iohInSbaSupported = true;
     static constexpr bool auxTranslationSupported = true;
-    static constexpr bool isUsingNonDefaultIoctls = false;
     static constexpr bool deviceEnqueueSupport = false;
     static constexpr bool implementsPreambleThreadArbitration = false;
     static constexpr bool forceGpuNonCoherent = true;

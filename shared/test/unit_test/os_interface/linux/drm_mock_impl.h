@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,7 @@
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
-
-#include "gtest/gtest.h"
-#include "test_traits_common.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -129,6 +127,6 @@ struct NonDefaultIoctlsSupported {
         if (productFamily == IGFX_DG1) {
             return true;
         }
-        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::isUsingNonDefaultIoctls;
+        return IsWithinXeGfxFamily::isMatched<productFamily>();
     }
 };

@@ -28,5 +28,4 @@ struct TestTraits<IGFX_XE2_HPG_CORE> {
     static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = false;
     static constexpr bool largeGrfModeInStateComputeModeSupported = true;
     static constexpr bool heaplessAllowed = false;
-    static constexpr bool isUsingNonDefaultIoctls = false;
 };
