@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,9 +21,9 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
     using AubMemoryOperationsHandler::getMemoryBanksBitfield;
     using AubMemoryOperationsHandler::residentAllocations;
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {
         makeResidentCalled = true;
-        return AubMemoryOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded);
+        return AubMemoryOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
     }
 
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
@@ -36,9 +36,9 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
         return AubMemoryOperationsHandler::isResident(device, gfxAllocation);
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
         makeResidentWithinOsContextCalled = true;
-        return AubMemoryOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable);
+        return AubMemoryOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
     }
 
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {

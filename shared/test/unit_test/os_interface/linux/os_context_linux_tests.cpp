@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,6 +113,52 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenWaitForPagingFenceThen
     osContext.fenceVal[0] = 3u;
 
     osContext.waitForPagingFence();
+
+    EXPECT_EQ(0u, drm.waitUserFenceParams.size());
+}
+
+TEST(OSContextLinux, givenPerContextVmsAndBindNotCompleteWhenWaitForPagingFenceGivenFenceValThenContextFenceIsPassedToWaitUserFenceIoctl) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.requirePerContextVM = true;
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+
+    drm.pagingFence[0] = 26u;
+
+    osContext.pagingFence[0] = 46u;
+    uint64_t fenceValToWait = 51u;
+
+    osContext.waitForPagingFenceGivenFenceVal(fenceValToWait);
+
+    EXPECT_EQ(1u, drm.waitUserFenceParams.size());
+    EXPECT_EQ(0u, drm.waitUserFenceParams[0].ctxId);
+    EXPECT_EQ(castToUint64(&osContext.pagingFence[0]), drm.waitUserFenceParams[0].address);
+    EXPECT_EQ(drm.ioctlHelper->getWaitUserFenceSoftFlag(), drm.waitUserFenceParams[0].flags);
+    EXPECT_EQ(fenceValToWait, drm.waitUserFenceParams[0].value);
+    EXPECT_EQ(-1, drm.waitUserFenceParams[0].timeout);
+
+    drm.requirePerContextVM = false;
+    osContext.waitForPagingFenceGivenFenceVal(fenceValToWait);
+
+    EXPECT_EQ(castToUint64(&drm.pagingFence[0]), drm.waitUserFenceParams[1].address);
+    EXPECT_EQ(drm.ioctlHelper->getWaitUserFenceSoftFlag(), drm.waitUserFenceParams[1].flags);
+    EXPECT_EQ(fenceValToWait, drm.waitUserFenceParams[1].value);
+}
+
+TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenWaitForPagingFenceGivenFenceValThenWaitUserFenceIoctlIsNotCalled) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.requirePerContextVM = true;
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+
+    osContext.pagingFence[0] = 3u;
+    uint64_t fenceValToWait = 3u;
+
+    osContext.waitForPagingFenceGivenFenceVal(fenceValToWait);
 
     EXPECT_EQ(0u, drm.waitUserFenceParams.size());
 }

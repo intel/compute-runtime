@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -241,11 +241,11 @@ bool DrmAllocation::prefetchBOWithChunking(Drm *drm) {
     return success;
 }
 
-int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
     if (this->fragmentsStorage.fragmentCount) {
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
             if (!this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContext->getContextId()]) {
-                int retVal = bindBO(static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo, osContext, vmHandleId, bufferObjects, bind);
+                int retVal = bindBO(static_cast<OsHandleLinux *>(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage)->bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
                 if (retVal) {
                     return retVal;
                 }
@@ -253,7 +253,7 @@ int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, st
             }
         }
     } else {
-        int retVal = bindBOs(osContext, vmHandleId, bufferObjects, bind);
+        int retVal = bindBOs(osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
         if (retVal) {
             return retVal;
         }
@@ -262,7 +262,7 @@ int DrmAllocation::makeBOsResident(OsContext *osContext, uint32_t vmHandleId, st
     return 0;
 }
 
-int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
     auto retVal = 0;
     if (bo) {
         bo->requireExplicitResidency(bo->peekDrm()->hasPageFaultSupport() && !shouldAllocationPageFault(bo->peekDrm()));
@@ -279,7 +279,7 @@ int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHan
 
         } else {
             if (bind) {
-                retVal = bo->bind(osContext, vmHandleId);
+                retVal = bo->bind(osContext, vmHandleId, forcePagingFence);
             } else {
                 retVal = bo->unbind(osContext, vmHandleId);
             }
@@ -288,19 +288,19 @@ int DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHan
     return retVal;
 }
 
-int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) {
     int retVal = 0;
     if (this->storageInfo.getNumBanks() > 1) {
         auto &bos = this->getBOs();
         if (this->storageInfo.tileInstanced) {
             auto bo = bos[vmHandleId];
-            retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+            retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
             if (retVal) {
                 return retVal;
             }
         } else {
             for (auto bo : bos) {
-                retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+                retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
                 if (retVal) {
                     return retVal;
                 }
@@ -308,7 +308,7 @@ int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vecto
         }
     } else {
         auto bo = this->getBO();
-        retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
+        retVal = bindBO(bo, osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
         if (retVal) {
             return retVal;
         }

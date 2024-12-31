@@ -114,7 +114,7 @@ class BufferObject {
     MOCKABLE_VIRTUAL int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
                               BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue);
 
-    int bind(OsContext *osContext, uint32_t vmHandleId);
+    int bind(OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence);
     int unbind(OsContext *osContext, uint32_t vmHandleId);
 
     void printExecutionBuffer(ExecBuffer &execbuf, const size_t &residencyCount, ExecObject *execObjectsStorage, BufferObject *const residency[]);

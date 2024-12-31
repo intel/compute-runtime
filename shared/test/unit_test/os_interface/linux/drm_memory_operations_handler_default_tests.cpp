@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ struct MockDrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler
     using BaseClass = DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault;
     using DrmMemoryOperationsHandlerDefault::residency;
-    ADDMETHOD(makeResidentWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable), (osContext, gfxAllocations, evictable));
+    ADDMETHOD(makeResidentWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence), (osContext, gfxAllocations, evictable, forcePagingFence));
     ADDMETHOD(flushDummyExec, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations), (device, gfxAllocations));
     ADDMETHOD(evictWithinOsContext, MemoryOperationsStatus, true, MemoryOperationsStatus::success, (OsContext * osContext, GraphicsAllocation &gfxAllocation), (osContext, gfxAllocation));
 };
@@ -73,7 +73,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenMakingAllocationResidentThenAlloc
     initializeAllocation(1);
     EXPECT_EQ(1u, drmAllocation->storageInfo.getNumBanks());
 
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::success);
@@ -84,7 +84,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingResidentAllocationThenAll
     EXPECT_EQ(1u, drmAllocation->storageInfo.getNumBanks());
 
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false), MemoryOperationsStatus::success);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
@@ -174,7 +174,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenCallingMake
     drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
 
     initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false);
     EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 0u);
 }
 TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenMakeResidentWithinOsContextReturnFailhenFlushDummyExecNotCalled) {
@@ -183,7 +183,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenMakeResiden
     drmMemoryOperationsHandler->makeResidentWithinOsContextResult = MemoryOperationsStatus::failed;
 
     initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true, false);
     EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 0u);
 }
 
@@ -192,7 +192,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenCallingMake
     drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
 
     initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true, false);
     EXPECT_EQ(drmMemoryOperationsHandler->flushDummyExecCalled, 1u);
 }
 
@@ -202,7 +202,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenFlushReturn
     drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
 
     initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true, false);
     EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 1u);
 }
 
@@ -212,7 +212,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, givenOperationsHandlerWhenFlushReturn
     drmMemoryOperationsHandler->makeResidentWithinOsContextCallBase = false;
 
     initializeAllocation(1);
-    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true);
+    drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), true, false);
     EXPECT_EQ(drmMemoryOperationsHandler->evictWithinOsContextCalled, 0u);
 }
 

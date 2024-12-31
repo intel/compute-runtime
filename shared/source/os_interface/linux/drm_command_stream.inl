@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -190,13 +190,13 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::printBOsForSubmit(Residenc
             if (osContext->getDeviceBitfield().test(drmIterator)) {
                 for (auto gfxAllocation = allocationsForResidency.begin(); gfxAllocation != allocationsForResidency.end(); gfxAllocation++) {
                     auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-                    auto retCode = drmAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                    auto retCode = drmAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true, false);
                     if (retCode) {
                         return Drm::getSubmissionStatusFromReturnCode(retCode);
                     }
                 }
                 auto drmCmdBufferAllocation = static_cast<DrmAllocation *>(&cmdBufferAllocation);
-                auto retCode = drmCmdBufferAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true);
+                auto retCode = drmCmdBufferAllocation->makeBOsResident(osContext, drmIterator, &bosForSubmit, true, false);
                 if (retCode) {
                     return Drm::getSubmissionStatusFromReturnCode(retCode);
                 }
@@ -260,7 +260,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::processResidency(Residency
     int ret = 0;
     for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = static_cast<DrmAllocation *>(alloc);
-        ret = drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false);
+        ret = drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false, false);
         if (ret != 0) {
             break;
         }

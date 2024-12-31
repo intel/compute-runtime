@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,10 +61,10 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::evictResources(const D3
 }
 
 MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResource(const D3DKMT_HANDLE &handle, size_t size) {
-    return makeResidentResources(&handle, 1u, size);
+    return makeResidentResources(&handle, 1u, size, false);
 }
 
-MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size) {
+MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size, const bool forcePagingFence) {
     while (!wddm->makeResident(handles, count, false, nullptr, size)) {
         if (evictAllResources() == MemoryOperationsStatus::success) {
             continue;
@@ -80,7 +80,7 @@ MemoryOperationsStatus WddmResidentAllocationsContainer::makeResidentResources(c
         resourceHandles.push_back(handles[i]);
     }
     lock.unlock();
-    wddm->waitOnPagingFenceFromCpu(false);
+    wddm->waitOnPagingFenceFromCpu(forcePagingFence);
     return MemoryOperationsStatus::success;
 }
 

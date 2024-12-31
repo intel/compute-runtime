@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,7 @@ class OsContextLinux : public OsContext {
     bool isDirectSubmissionSupported() const override;
     Drm &getDrm() const;
     virtual void waitForPagingFence();
+    virtual void waitForPagingFenceGivenFenceVal(uint64_t fenceValToWait);
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;
     void setHangDetected() {
@@ -45,6 +46,7 @@ class OsContextLinux : public OsContext {
     void incFenceVal(uint32_t deviceIndex) { fenceVal[deviceIndex]++; }
     uint64_t *getFenceAddr(uint32_t deviceIndex) { return &pagingFence[deviceIndex]; }
     void waitForBind(uint32_t drmIterator);
+    void waitForBindGivenFenceVal(uint32_t drmIterator, uint64_t fenceValToWait);
 
   protected:
     bool initializeContext(bool allocateInterrupt) override;
