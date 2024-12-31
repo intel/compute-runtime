@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ AubMemoryOperationsHandler::AubMemoryOperationsHandler(aub_stream::AubManager *a
     this->aubManager = aubManager;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) {
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
     if (!aubManager) {
         return MemoryOperationsStatus::deviceUninitialized;
     }
@@ -76,7 +76,7 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
-    return makeResident(device, gfxAllocations, false);
+    return makeResident(device, gfxAllocations, false, false);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
@@ -98,8 +98,8 @@ MemoryOperationsStatus AubMemoryOperationsHandler::free(Device *device, Graphics
     return MemoryOperationsStatus::success;
 }
 
-MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
-    return makeResident(nullptr, gfxAllocations, false);
+MemoryOperationsStatus AubMemoryOperationsHandler::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
+    return makeResident(nullptr, gfxAllocations, false, forcePagingFence);
 }
 
 MemoryOperationsStatus AubMemoryOperationsHandler::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {

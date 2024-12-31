@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -262,11 +262,11 @@ void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleI
     }
 }
 
-int BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
+int BufferObject::bind(OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence) {
     int retVal = 0;
     auto contextId = getOsContextId(osContext);
     if (!this->bindInfo[contextId][vmHandleId]) {
-        retVal = this->drm->bindBufferObject(osContext, vmHandleId, this);
+        retVal = this->drm->bindBufferObject(osContext, vmHandleId, this, forcePagingFence);
         if (debugManager.flags.PrintBOBindingResult.get()) {
             printBOBindingResult(osContext, vmHandleId, true, retVal);
         }
@@ -307,13 +307,13 @@ void BufferObject::printExecutionBuffer(ExecBuffer &execbuf, const size_t &resid
     printf("%s\n", logger.str().c_str());
 }
 
-int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId) {
+int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, const bool forcePagingFence) {
     auto retVal = 0;
 
     for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
         if (osContext->getDeviceBitfield().test(drmIterator)) {
             for (size_t i = 0; i < numberOfBos; i++) {
-                retVal |= boToPin[i]->bind(osContext, drmIterator);
+                retVal |= boToPin[i]->bind(osContext, drmIterator, forcePagingFence);
             }
         }
     }
@@ -325,7 +325,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
     auto retVal = 0;
 
     if (this->drm->isVmBindAvailable()) {
-        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
+        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId, false);
     } else {
         StackVec<ExecObject, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0], 0, 0);
@@ -339,7 +339,7 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
 
     if (this->drm->isVmBindAvailable()) {
         for (size_t i = 0; i < numberOfBos; i++) {
-            retVal = boToPin[i]->bind(osContext, vmHandleId);
+            retVal = boToPin[i]->bind(osContext, vmHandleId, false);
             if (retVal) {
                 break;
             }

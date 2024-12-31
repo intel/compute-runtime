@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,6 +121,28 @@ void OsContextLinux::waitForBind(uint32_t drmIterator) {
 
     } else {
         drm.waitForBind(drmIterator);
+    }
+}
+
+void OsContextLinux::waitForPagingFenceGivenFenceVal(uint64_t fenceValToWait) {
+    for (auto drmIterator = 0u; drmIterator < this->deviceBitfield.size(); drmIterator++) {
+        if (this->deviceBitfield.test(drmIterator)) {
+            this->waitForBindGivenFenceVal(drmIterator, fenceValToWait);
+        }
+    }
+}
+
+void OsContextLinux::waitForBindGivenFenceVal(uint32_t drmIterator, uint64_t fenceValToWait) {
+    if (drm.isPerContextVMRequired()) {
+        if (pagingFence[drmIterator] >= fenceValToWait) {
+            return;
+        }
+
+        auto fenceAddress = castToUint64(&this->pagingFence[drmIterator]);
+        drm.waitUserFence(0u, fenceAddress, fenceValToWait, Drm::ValueWidth::u64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
+
+    } else {
+        drm.waitForBindGivenFenceVal(drmIterator, fenceValToWait);
     }
 }
 

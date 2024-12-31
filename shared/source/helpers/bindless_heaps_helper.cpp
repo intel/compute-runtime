@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -153,7 +153,7 @@ GraphicsAllocation *BindlessHeapsHelper::getHeapAllocation(size_t heapSize, size
 
     GraphicsAllocation *allocation = memManager->allocateGraphicsMemoryWithProperties(properties);
     MemoryOperationsHandler *memoryOperationsIface = rootDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.get();
-    auto result = memoryOperationsIface->makeResident(rootDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false);
+    auto result = memoryOperationsIface->makeResident(rootDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false);
     if (result != NEO::MemoryOperationsStatus::success) {
         memManager->freeGraphicsMemory(allocation);
         return nullptr;
