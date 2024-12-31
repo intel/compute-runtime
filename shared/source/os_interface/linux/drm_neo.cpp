@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1273,6 +1273,15 @@ void Drm::waitForBind(uint32_t vmHandleId) {
     waitUserFence(0u, fenceAddress, fenceValue, ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
 }
 
+void Drm::waitForBindGivenFenceVal(uint32_t vmHandleId, uint64_t fenceValToWait) {
+    if (*ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr) >= fenceValToWait) {
+        return;
+    }
+
+    auto fenceAddress = castToUint64(ioctlHelper->getPagingFenceAddress(vmHandleId, nullptr));
+    waitUserFence(0u, fenceAddress, fenceValToWait, ValueWidth::u64, -1, ioctlHelper->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
+}
+
 bool Drm::isSetPairAvailable() {
     if (debugManager.flags.EnableSetPair.get() == 1) {
         std::call_once(checkSetPairOnce, [this]() {
@@ -1401,7 +1410,7 @@ void programUserFence(Drm *drm, OsContext *osContext, BufferObject *bo, VmBindEx
     ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence, address, value, nextExtension);
 }
 
-int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind) {
+int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, bool bind, const bool forcePagingFence) {
     auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
     auto ioctlHelper = drm->getIoctlHelper();
 
@@ -1412,6 +1421,9 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         UNRECOVERABLE_IF(osContextLinux->getDrmVmIds().size() <= vmHandleId);
         vmId = osContextLinux->getDrmVmIds()[vmHandleId];
     }
+
+    // Use only when debugger is disabled
+    const bool guaranteePagingFence = forcePagingFence && !drm->getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
 
     std::unique_ptr<uint8_t[]> extensions;
     if (bind) {
@@ -1424,7 +1436,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool bindMakeResident = false;
         bool readOnlyResource = bo->isReadOnlyGpuResource();
 
-        if (drm->useVMBindImmediate()) {
+        if (drm->useVMBindImmediate() || guaranteePagingFence) {
             bindMakeResident = bo->isExplicitResidencyRequired();
             bindImmediate = true;
         }
@@ -1472,11 +1484,12 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         }
 
         std::unique_lock<std::mutex> lock;
-
         VmBindExtUserFenceT vmBindExtUserFence{};
         bool incrementFenceValue = false;
+
         if (ioctlHelper->isWaitBeforeBindRequired(bind)) {
-            if (drm->useVMBindImmediate()) {
+
+            if (drm->useVMBindImmediate() || guaranteePagingFence) {
                 lock = drm->lockBindFenceMutex();
                 auto nextExtension = vmBind.extensions;
                 incrementFenceValue = true;
@@ -1484,6 +1497,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
             }
         }
+
         if (bind) {
             ret = ioctlHelper->vmBind(vmBind);
             if (ret) {
@@ -1498,20 +1512,28 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
                 break;
             }
         }
-        bool waitOnUserFenceAfterBindAndUnbind = false;
-        if (debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get() != -1) {
-            waitOnUserFenceAfterBindAndUnbind = !!debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get();
-        }
-        if (ioctlHelper->isWaitBeforeBindRequired(bind) && waitOnUserFenceAfterBindAndUnbind && drm->useVMBindImmediate()) {
-            auto osContextLinux = static_cast<OsContextLinux *>(osContext);
-            osContextLinux->waitForPagingFence();
-        }
+
         if (incrementFenceValue) {
+            uint64_t fenceValToWait = 0;
+
             if (drm->isPerContextVMRequired()) {
                 auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+                fenceValToWait = osContextLinux->getNextFenceVal(vmHandleId);
                 osContextLinux->incFenceVal(vmHandleId);
             } else {
+                fenceValToWait = drm->getNextFenceVal(vmHandleId);
                 drm->incFenceVal(vmHandleId);
+            }
+
+            lock.unlock();
+
+            bool waitOnUserFenceAfterBindAndUnbind = false;
+            if (debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get() != -1) {
+                waitOnUserFenceAfterBindAndUnbind = !!debugManager.flags.EnableWaitOnUserFenceAfterBindAndUnbind.get();
+            }
+            if ((ioctlHelper->isWaitBeforeBindRequired(bind) && waitOnUserFenceAfterBindAndUnbind && drm->useVMBindImmediate()) || guaranteePagingFence) {
+                auto osContextLinux = static_cast<OsContextLinux *>(osContext);
+                osContextLinux->waitForPagingFenceGivenFenceVal(fenceValToWait);
             }
         }
     }
@@ -1519,17 +1541,17 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
     return ret;
 }
 
-int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, const bool forcePagingFence) {
+    auto ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true, forcePagingFence);
     if (ret != 0) {
         static_cast<DrmMemoryOperationsHandlerBind *>(this->rootDeviceEnvironment.memoryOperationsInterface.get())->evictUnusedAllocations(false, false);
-        ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true);
+        ret = changeBufferObjectBinding(this, osContext, vmHandleId, bo, true, forcePagingFence);
     }
     return ret;
 }
 
 int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
-    return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false);
+    return changeBufferObjectBinding(this, osContext, vmHandleId, bo, false, false);
 }
 
 int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1048,7 +1048,7 @@ void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSeg
                 NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
                 auto allocation = kernelImmData->getIsaGraphicsAllocation();
                 if (memoryOperationsIface) {
-                    memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false);
+                    memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false);
                 }
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,15 +23,15 @@ DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault(uint32_t ro
 ;
 DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = default;
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
     std::lock_guard<std::mutex> lock(mutex);
     this->residency.insert(gfxAllocations.begin(), gfxAllocations.end());
     return MemoryOperationsStatus::success;
 }
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
     OsContext *osContext = nullptr;
-    auto ret = this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
+    auto ret = this->makeResidentWithinOsContext(osContext, gfxAllocations, false, forcePagingFence);
     if (!isDummyExecNeeded || ret != MemoryOperationsStatus::success) {
         return ret;
     }
@@ -53,7 +53,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, A
             bo->requireExplicitLockedMemory(true);
         }
     }
-    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
+    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false, false);
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {

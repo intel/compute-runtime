@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -376,7 +376,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrAndResidentAllocationWhenProcessR
 
     MockGraphicsAllocation allocation2(reinterpret_cast<void *>(0x5000), 0x5000, 0x1000);
     GraphicsAllocation *allocPtr = &allocation2;
-    memoryOperationsHandler->makeResident(pDevice, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false);
+    memoryOperationsHandler->makeResident(pDevice, ArrayRef<GraphicsAllocation *>(&allocPtr, 1), false, false);
     EXPECT_TRUE(mockManager->writeMemory2Called);
 
     mockManager->storeAllocationParams = true;
