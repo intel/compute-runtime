@@ -970,7 +970,7 @@ void SVMAllocsManager::insertSVMAlloc(void *svmPtr, const SvmAllocationData &all
     UNRECOVERABLE_IF(internalAllocationsMap.count(allocData.getAllocId()) > 0);
     for (auto alloc : allocData.gpuAllocations.getGraphicsAllocations()) {
         if (alloc != nullptr) {
-            internalAllocationsMap.insert({allocData.getAllocId(), alloc});
+            internalAllocationsMap.emplace(allocData.getAllocId(), alloc);
         }
     }
 }

@@ -787,7 +787,7 @@ DecodeError readZeInfoAttributes(const Yaml::YamlParser &parser, const Yaml::Nod
         } else if (key == Tags::Kernel::Attributes::vecTypeHint) {
             outAttributes.vecTypeHint = parser.readValue(attributesMetadataNd);
         } else if (key.contains(Tags::Kernel::Attributes::hintSuffix.data())) {
-            outAttributes.otherHints.push_back({key, parser.readValue(attributesMetadataNd)});
+            outAttributes.otherHints.emplace_back(key, parser.readValue(attributesMetadataNd));
         } else {
             encounterUnknownZeInfoAttribute("\"" + key.str() + "\" in context of " + context.str(), outErrReason, outWarning, err);
         }

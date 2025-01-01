@@ -250,8 +250,8 @@ std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
         auto productFamily = device->getHardwareInfo().platform.eProductFamily;
         auto result = platformsMap.find(productFamily);
         if (result == platformsMap.end()) {
-            platformsMap.insert({productFamily, platformsMap.size()});
-            outDevices.push_back(DeviceVector{});
+            platformsMap.emplace(productFamily, platformsMap.size());
+            outDevices.emplace_back();
         }
         auto platformId = platformsMap[productFamily];
         outDevices[platformId].push_back(std::move(device));

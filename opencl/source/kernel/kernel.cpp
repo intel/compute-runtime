@@ -879,7 +879,7 @@ void Kernel::markArgPatchedAndResolveArgs(uint32_t argIndex) {
         auto migrateRequiredForArg = memObj->getMultiGraphicsAllocation().requiresMigrations();
 
         if (migratableArgsMap.find(argIndex) == migratableArgsMap.end() && migrateRequiredForArg) {
-            migratableArgsMap.insert({argIndex, memObj});
+            migratableArgsMap.emplace(argIndex, memObj);
         } else if (migrateRequiredForArg) {
             migratableArgsMap[argIndex] = memObj;
         } else {
