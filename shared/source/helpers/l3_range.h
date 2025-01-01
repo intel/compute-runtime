@@ -106,6 +106,12 @@ inline bool operator!=(const L3Range &lhs, const L3Range &rhs) {
     return (false == (lhs == rhs));
 }
 
+template <class T>
+constexpr bool isCanPreallocStlContainer(const std::vector<T>& v) { return true; }
+
+template <class T1, class T2>
+constexpr bool isCanPreallocStlContainer(const std::unordered_map<T1, T2>& v) { return true; }
+
 template <typename ContainerT>
 inline void coverRangeExactImpl(uint64_t address, uint64_t size, ContainerT &ret, uint64_t policy) {
     UNRECOVERABLE_IF(false == L3Range::meetsMinimumAlignment(address));
@@ -114,10 +120,23 @@ inline void coverRangeExactImpl(uint64_t address, uint64_t size, ContainerT &ret
     const uint64_t end = address + size;
 
     uint64_t offset = address;
+
+    uint64_t maxRangeSizeBySize;
+    uint64_t maxRangeSizeByOffset;
+    uint64_t rangeSize;
+
+    if constexpr (is_can_prealloc_stl_container(ret)) {
+        maxRangeSizeBySize = Math::prevPowerOfTwo(end - offset);
+        maxRangeSizeByOffset = offset ? (1ULL << Math::ffs(offset)) : L3Range::maxSingleRange;
+        rangeSize = std::min(maxRangeSizeBySize, maxRangeSizeByOffset);
+        rangeSize = std::min(rangeSize, +L3Range::maxSingleRange);
+        ret.reserve((end - offset) / rangeSize);
+    }
+
     while (offset < end) {
-        uint64_t maxRangeSizeBySize = Math::prevPowerOfTwo(end - offset);
-        uint64_t maxRangeSizeByOffset = offset ? (1ULL << Math::ffs(offset)) : L3Range::maxSingleRange;
-        uint64_t rangeSize = std::min(maxRangeSizeBySize, maxRangeSizeByOffset);
+        maxRangeSizeBySize = Math::prevPowerOfTwo(end - offset);
+        maxRangeSizeByOffset = offset ? (1ULL << Math::ffs(offset)) : L3Range::maxSingleRange;
+        rangeSize = std::min(maxRangeSizeBySize, maxRangeSizeByOffset);
         rangeSize = std::min(rangeSize, +L3Range::maxSingleRange);
         ret.push_back(L3Range::fromAddressSizeWithPolicy(offset, rangeSize, policy));
         offset += rangeSize;

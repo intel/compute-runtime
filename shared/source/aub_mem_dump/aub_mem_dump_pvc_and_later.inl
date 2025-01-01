@@ -252,6 +252,7 @@ static const MMIOList mmioListVECS = {
 static MMIOList mmioListCCSInstance(uint32_t mmioBase) {
     MMIOList mmioList;
 
+    mmioList.reserve(17);
     mmioList.push_back(MMIOPair(0x0000ce90, 0x00030003));                                              // GFX_MULT_CTXT_CTL - enable multi-context with 4CCS
     mmioList.push_back(MMIOPair(0x0000b170, 0x00030003));                                              // MULT_CTXT_CTL - enable multi-context with 4CCS
     mmioList.push_back(MMIOPair(0x00014800, 0xFFFF0001));                                              // RCU_MODE

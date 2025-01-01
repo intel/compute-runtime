@@ -128,6 +128,7 @@ aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const Hardware
         uint32_t value = 1;     // [0] enable
         value |= (format << 3); // [3:7] compression_format
 
+        mmioList.reserve(3);
         mmioList.push_back({0x519C, value});
         mmioList.push_back({0xB0F0, value});
         mmioList.push_back({0xE4C0, value});
