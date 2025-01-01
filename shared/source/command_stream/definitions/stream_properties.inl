@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ struct StateComputeModePropertiesSupport {
     bool threadArbitrationPolicy = false;
     bool devicePreemptionMode = false;
     bool allocationForScratchAndMidthreadPreemption = false;
-    bool enableVariableRegisterSizeAllocation = false;
 };
 
 struct StateComputeModeProperties {
@@ -31,7 +30,6 @@ struct StateComputeModeProperties {
     StreamProperty threadArbitrationPolicy{};
     StreamProperty devicePreemptionMode{};
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
-    StreamProperty enableVariableRegisterSizeAllocation{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
