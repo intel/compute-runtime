@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,9 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     bool isPowerSetLimitSupported() override;
     std::string getCardCriticalPowerLimitFile() override;
     SysfsValueUnit getCardCriticalPowerLimitNativeUnit() override;
+    std::string getPackageCriticalPowerLimitFile() override;
+    SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() override;
+    bool isPmtNodeAvailableForEnergyCounter(zes_power_domain_t powerDomain) override;
 
     // Diagnostics
     bool isDiagnosticsSupported() override;

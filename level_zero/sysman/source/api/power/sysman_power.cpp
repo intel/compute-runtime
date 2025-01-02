@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,21 +35,16 @@ void PowerHandleContext::createHandle(ze_bool_t isSubDevice, uint32_t subDeviceI
         delete pPower;
     }
 }
-ze_result_t PowerHandleContext::init(uint32_t subDeviceCount) {
 
-    auto totalDomains = OsPower::getNumberOfPowerDomainsSupported(pOsSysman);
+void PowerHandleContext::init(uint32_t subDeviceCount) {
+    auto totalDomains = OsPower::getPowerDomains(pOsSysman);
 
-    for (auto &powerDomain : totalDomains) {
+    for (const auto &powerDomain : totalDomains) {
         createHandle(false, 0, powerDomain);
-    }
-
-    for (uint32_t subDeviceId = 0; subDeviceId < subDeviceCount; subDeviceId++) {
-        for (auto &powerDomain : totalDomains) {
+        for (uint32_t subDeviceId = 0; subDeviceId < subDeviceCount; subDeviceId++) {
             createHandle(true, subDeviceId, powerDomain);
         }
     }
-
-    return ZE_RESULT_SUCCESS;
 }
 
 void PowerHandleContext::initPower() {
@@ -71,6 +66,7 @@ ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phP
             phPower[i] = handleList[i]->toHandle();
         }
     }
+
     return ZE_RESULT_SUCCESS;
 }
 

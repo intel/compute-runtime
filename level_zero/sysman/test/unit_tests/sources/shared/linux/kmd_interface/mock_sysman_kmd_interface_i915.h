@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,17 @@ class MockSysmanKmdInterfacePrelim : public L0::Sysman::SysmanKmdInterfaceI915Pr
     using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
     MockSysmanKmdInterfacePrelim(SysmanProductHelper *pSysmanProductHelper) : SysmanKmdInterfaceI915Prelim(pSysmanProductHelper) {}
     ~MockSysmanKmdInterfacePrelim() override = default;
+    bool isEnergyNodeAvailable = true;
+
+    std::string getEnergyCounterNodeFilePath(bool isSubdevice, zes_power_domain_t powerDomain) override {
+        if ((isSubdevice && powerDomain == ZES_POWER_DOMAIN_PACKAGE) || (!isSubdevice && powerDomain == ZES_POWER_DOMAIN_CARD)) {
+            return isEnergyNodeAvailable ? "energy1_input" : "";
+        } else if (powerDomain == ZES_POWER_DOMAIN_UNKNOWN) {
+            return "invalidNode";
+        }
+
+        return "";
+    }
 };
 
 class MockSysmanKmdInterfaceUpstream : public L0::Sysman::SysmanKmdInterfaceI915Upstream {

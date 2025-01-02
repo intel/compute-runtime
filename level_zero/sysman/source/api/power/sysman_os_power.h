@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,8 +29,7 @@ class OsPower {
 
     virtual bool isPowerModuleSupported() = 0;
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
-    static std::vector<zes_power_domain_t> getNumberOfPowerDomainsSupported(OsSysman *pOsSysman);
-
+    static std::vector<zes_power_domain_t> getPowerDomains(OsSysman *pOsSysman);
     virtual ~OsPower() = default;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ PowerImp::PowerImp(OsSysman *pOsSysman, ze_bool_t isSubDevice, uint32_t subDevic
 
     pOsPower = OsPower::create(pOsSysman, isSubDevice, subDeviceId, powerDomain);
     UNRECOVERABLE_IF(nullptr == pOsPower);
-    this->isCardPower = isSubDevice ? false : true;
+    this->isCardPower = powerDomain == ZES_POWER_DOMAIN_CARD;
     init();
 }
 

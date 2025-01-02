@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -460,6 +460,16 @@ std::string SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitFile() {
 
 template <>
 SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitNativeUnit() {
+    return SysfsValueUnit::milli;
+}
+
+template <>
+std::string SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitFile() {
+    return "curr2_crit";
+}
+
+template <>
+SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitNativeUnit() {
     return SysfsValueUnit::milli;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -161,6 +161,14 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryProperties(zes_mem_prope
 
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
+    return true;
+}
+
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isPmtNodeAvailableForEnergyCounter(zes_power_domain_t powerDomain) {
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        return false;
+    }
     return true;
 }
 

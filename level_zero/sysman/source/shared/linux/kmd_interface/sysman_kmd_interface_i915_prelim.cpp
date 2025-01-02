@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,25 @@ std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePathForPhysicalMemorySize(
     std::string filePathPhysicalMemorySize = getBasePath(subDeviceId) +
                                              sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
     return filePathPhysicalMemorySize;
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePathForPower(SysfsName sysfsName) {
+    std::string filePath = sysfsNameToFileMap[sysfsName].second;
+    return filePath;
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getEnergyCounterNodeFilePath(bool isSubdevice, zes_power_domain_t powerDomain) {
+    if ((isSubdevice && powerDomain == ZES_POWER_DOMAIN_PACKAGE) || (!isSubdevice && powerDomain == ZES_POWER_DOMAIN_CARD)) {
+        return getSysfsFilePathForPower(SysfsName::sysfsNameEnergyCounterNode);
+    }
+    return {};
+}
+
+bool SysmanKmdInterfaceI915Prelim::isPowerSupportForSubdeviceAvailable(zes_power_domain_t powerDomain) const {
+    if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+        return false;
+    }
+    return true;
 }
 
 int64_t SysmanKmdInterfaceI915Prelim::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
