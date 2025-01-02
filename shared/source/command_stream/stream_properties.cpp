@@ -20,7 +20,6 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
-    setCoherencyProperty(requiresCoherency);
     setGrfNumberProperty(numGrfRequired);
     setThreadArbitrationProperty(threadArbitrationPolicy);
 
@@ -39,7 +38,6 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     if (pixelAsyncComputeThreadLimit != -1 && this->scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
         this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
     }
-    setDevicePreemptionProperty(devicePreemptionMode);
 
     int32_t memoryAllocationForScratchAndMidthreadPreemptionBuffers = -1;
     if (debugManager.flags.ForceScratchAndMTPBufferSizeMode.get() != -1) {
@@ -49,7 +47,7 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
         this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(memoryAllocationForScratchAndMidthreadPreemptionBuffers);
     }
 
-    setPropertiesExtraPerContext();
+    setPropertiesPerContext(requiresCoherency, devicePreemptionMode, false);
 }
 
 void StateComputeModeProperties::copyPropertiesAll(const StateComputeModeProperties &properties) {
@@ -77,18 +75,29 @@ void StateComputeModeProperties::copyPropertiesGrfNumberThreadArbitration(const 
 }
 
 bool StateComputeModeProperties::isDirty() const {
-    return isCoherencyRequired.isDirty || largeGrfMode.isDirty || zPassAsyncComputeThreadLimit.isDirty ||
-           pixelAsyncComputeThreadLimit.isDirty || threadArbitrationPolicy.isDirty || devicePreemptionMode.isDirty || memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty || isDirtyExtra();
+    return isCoherencyRequired.isDirty ||
+           largeGrfMode.isDirty ||
+           zPassAsyncComputeThreadLimit.isDirty ||
+           pixelAsyncComputeThreadLimit.isDirty ||
+           threadArbitrationPolicy.isDirty ||
+           devicePreemptionMode.isDirty ||
+           memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
+           isDirtyExtra();
 }
 
 void StateComputeModeProperties::clearIsDirty() {
-    isCoherencyRequired.isDirty = false;
     largeGrfMode.isDirty = false;
     zPassAsyncComputeThreadLimit.isDirty = false;
     pixelAsyncComputeThreadLimit.isDirty = false;
     threadArbitrationPolicy.isDirty = false;
-    devicePreemptionMode.isDirty = false;
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty = false;
+
+    clearIsDirtyPerContext();
+}
+
+void StateComputeModeProperties::clearIsDirtyPerContext() {
+    isCoherencyRequired.isDirty = false;
+    devicePreemptionMode.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -152,21 +161,17 @@ void StateComputeModeProperties::resetState() {
     resetStateExtra();
 }
 
-void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState) {
+void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
-        this->isCoherencyRequired.isDirty = false;
-        this->devicePreemptionMode.isDirty = false;
-        clearIsDirtyExtraPerContext();
+        clearIsDirtyPerContext();
     }
     setCoherencyProperty(requiresCoherency);
     setDevicePreemptionProperty(devicePreemptionMode);
     setPropertiesExtraPerContext();
     if (clearDirtyState) {
-        this->isCoherencyRequired.isDirty = false;
-        this->devicePreemptionMode.isDirty = false;
-        clearIsDirtyExtraPerContext();
+        clearIsDirtyPerContext();
     }
 }
 

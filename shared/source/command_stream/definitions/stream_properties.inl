@@ -35,8 +35,8 @@ struct StateComputeModeProperties {
     void resetState();
 
     void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
+    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
-    void setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
     void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
@@ -45,6 +45,7 @@ struct StateComputeModeProperties {
     void clearIsDirty();
 
   protected:
+    void clearIsDirtyPerContext();
     void clearIsDirtyExtraPerContext();
     bool isDirtyExtra() const;
     void resetStateExtra();
