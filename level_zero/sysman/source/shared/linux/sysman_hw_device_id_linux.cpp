@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,10 @@ int SysmanHwDeviceIdDrm::closeFileDescriptor() {
 }
 
 std::unique_ptr<NEO::HwDeviceId> createSysmanHwDeviceId(std::unique_ptr<NEO::HwDeviceId> &hwDeviceId) {
+
+    if (hwDeviceId->getDriverModelType() != NEO::DriverModelType::drm) {
+        return std::move(hwDeviceId);
+    }
 
     const auto hwDeviceIdDrm = static_cast<NEO::HwDeviceIdDrm *>(hwDeviceId.get());
     return std::make_unique<SysmanHwDeviceIdDrm>(hwDeviceIdDrm->getFileDescriptor(), hwDeviceIdDrm->getPciPath(), hwDeviceIdDrm->getDeviceNode());
