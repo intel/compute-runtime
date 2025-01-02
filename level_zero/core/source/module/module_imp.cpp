@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1297,6 +1297,8 @@ void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
         auto globalMemorySize = neoDevice->getRootDevice()->getGlobalMemorySize(static_cast<uint32_t>(deviceBitfield.to_ulong()));
         auto numSubDevices = deviceBitfield.count();
         this->allocatePrivateMemoryPerDispatch = modulePrivateMemorySize * numSubDevices > globalMemorySize;
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Private Memory Per Dispatch %d for modulePrivateMemorySize %zu subDevices %zu globalMemorySize %" PRIu64 "\n",
+                           this->allocatePrivateMemoryPerDispatch, modulePrivateMemorySize, numSubDevices, globalMemorySize);
     }
 }
 

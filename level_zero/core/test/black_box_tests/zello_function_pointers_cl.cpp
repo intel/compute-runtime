@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,6 +66,10 @@ int main(int argc, char *argv[]) {
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "memcpy_bytes";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
+    ze_kernel_properties_t kernProps = {ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
+    SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
+    std::cout << "function pointer memcpy_bytes Private size = " << std::dec << kernProps.privateMemSize << std::endl;
+    std::cout << "function pointer memcpy_bytes Spill size = " << std::dec << kernProps.spillMemSize << std::endl;
 
     uint32_t groupSizeX = 1u;
     uint32_t groupSizeY = 1u;
