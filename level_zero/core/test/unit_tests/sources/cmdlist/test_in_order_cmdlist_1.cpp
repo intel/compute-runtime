@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1420,6 +1420,21 @@ HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmed
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(Event::CounterBasedMode::explicitlyEnabled, events[0]->counterBasedMode);
     EXPECT_TRUE(events[0]->isCounterBased());
+}
+
+HWTEST2_F(InOrderCmdListTests, givenWaitEventWhenUsedOnRegularCmdListThenDisableImplicitConversion, MatchAny) {
+    auto regularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+
+    auto eventPool = createEvents<FamilyType>(1, false);
+    auto eventHandle = events[0]->toHandle();
+
+    events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
+
+    EXPECT_EQ(Event::CounterBasedMode::initiallyDisabled, events[0]->counterBasedMode);
+    regularCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &eventHandle, launchParams, false);
+    EXPECT_EQ(Event::CounterBasedMode::implicitlyDisabled, events[0]->counterBasedMode);
+    EXPECT_EQ(0u, events[0]->counterBasedFlags);
+    EXPECT_FALSE(events[0]->isCounterBased());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingAppendResetThenImplicitlyDisable, MatchAny) {

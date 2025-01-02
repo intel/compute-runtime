@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2768,6 +2768,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                                 isCbEventBoundToCmdList(event), copyOffloadOperation);
 
             continue;
+        }
+
+        if (!isImmediateType()) {
+            event->disableImplicitCounterBasedMode();
         }
 
         if (!skipAddingWaitEventsToResidency) {
