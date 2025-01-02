@@ -60,6 +60,7 @@ void StateComputeModeProperties::copyPropertiesAll(const StateComputeModePropert
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
     devicePreemptionMode.set(properties.devicePreemptionMode.value);
     memoryAllocationForScratchAndMidthreadPreemptionBuffers.set(properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+    enableVariableRegisterSizeAllocation.set(properties.enableVariableRegisterSizeAllocation.value);
 
     copyPropertiesExtra(properties);
 }
@@ -82,6 +83,7 @@ bool StateComputeModeProperties::isDirty() const {
            threadArbitrationPolicy.isDirty ||
            devicePreemptionMode.isDirty ||
            memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty ||
+           enableVariableRegisterSizeAllocation.isDirty ||
            isDirtyExtra();
 }
 
@@ -98,6 +100,7 @@ void StateComputeModeProperties::clearIsDirty() {
 void StateComputeModeProperties::clearIsDirtyPerContext() {
     isCoherencyRequired.isDirty = false;
     devicePreemptionMode.isDirty = false;
+    enableVariableRegisterSizeAllocation.isDirty = false;
 
     clearIsDirtyExtraPerContext();
 }
@@ -158,6 +161,8 @@ void StateComputeModeProperties::resetState() {
     this->threadArbitrationPolicy.value = StreamProperty::initValue;
     this->devicePreemptionMode.value = StreamProperty::initValue;
     this->memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = StreamProperty::initValue;
+    this->enableVariableRegisterSizeAllocation.value = StreamProperty::initValue;
+
     resetStateExtra();
 }
 
@@ -169,6 +174,11 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
     }
     setCoherencyProperty(requiresCoherency);
     setDevicePreemptionProperty(devicePreemptionMode);
+
+    if (this->scmPropertiesSupport.enableVariableRegisterSizeAllocation) {
+        this->enableVariableRegisterSizeAllocation.set(this->scmPropertiesSupport.enableVariableRegisterSizeAllocation);
+    }
+
     setPropertiesExtraPerContext();
     if (clearDirtyState) {
         clearIsDirtyPerContext();
