@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 Intel Corporation
+# Copyright (C) 2022-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,4 +13,5 @@ if(SUPPORT_MTL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_mtl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_mtl.cpp
   )
+  add_subdirectories()
 endif()
