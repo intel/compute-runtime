@@ -29,7 +29,7 @@ Segments::Segments(const GraphicsAllocation *globalVarAlloc, const GraphicsAlloc
         stringData = {reinterpret_cast<uintptr_t>(globalStrings.begin()), globalStrings.size()};
     }
     for (auto &[kernelName, isaSegment] : kernels) {
-        nameToSegMap.insert(std::pair(kernelName, isaSegment));
+        nameToSegMap.emplace(kernelName, isaSegment);
     }
 }
 

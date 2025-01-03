@@ -124,7 +124,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
         for (const auto &kernelInfo : kernelInfoArray) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize));
+            patchedIsaTempStorage.emplace_back(originalIsa, originalIsa + kernHeapInfo.kernelHeapSize);
             DEBUG_BREAK_IF(nullptr == kernelInfo->getGraphicsAllocation());
             isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), static_cast<uintptr_t>(kernelInfo->getGraphicsAllocation()->getGpuAddressToPatch()), kernHeapInfo.kernelHeapSize});
             kernelDescriptors.push_back(&kernelInfo->kernelDescriptor);
@@ -142,7 +142,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;
         for (const auto &kernelInfo : kernelInfoArray) {
-            kernelNames.push_back("kernel : " + kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
+            kernelNames.emplace_back("kernel : " + kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
         }
         auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
         updateBuildLog(pDevice->getRootDeviceIndex(), error.c_str(), error.size());
