@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,10 +61,6 @@ void applyWorkarounds() {
         std::string resource = "__mock_spirv_resource";
         storageRegistry.store(builtinIntermediateName.str(), createBuiltinResource(resource.data(), resource.size() + 1));
     }
-}
-
-bool isPlatformSupported(const HardwareInfo &hwInfoForTests) {
-    return true;
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {

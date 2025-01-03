@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,6 @@ struct RuntimeCapabilityTable {
     bool supportsOnDemandPageFaults;
     bool supportsIndependentForwardProgress;
     bool hostPtrTrackingEnabled;
-    bool levelZeroSupported;
     bool isIntegratedDevice;
     bool supportsMediaBlock;
     bool p2pAccessSupported;
@@ -126,7 +125,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.supportsOnDemandPageFaults == rhs.supportsOnDemandPageFaults);
     result &= (lhs.supportsIndependentForwardProgress == rhs.supportsIndependentForwardProgress);
     result &= (lhs.hostPtrTrackingEnabled == rhs.hostPtrTrackingEnabled);
-    result &= (lhs.levelZeroSupported == rhs.levelZeroSupported);
     result &= (lhs.isIntegratedDevice == rhs.isIntegratedDevice);
     result &= (lhs.supportsMediaBlock == rhs.supportsMediaBlock);
     result &= (lhs.fusedEuEnabled == rhs.fusedEuEnabled);

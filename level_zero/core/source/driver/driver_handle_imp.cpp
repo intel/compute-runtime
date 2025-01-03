@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -232,9 +232,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     for (auto &neoDevice : neoDevices) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        if (!neoDevice->getHardwareInfo().capabilityTable.levelZeroSupported) {
-            continue;
-        }
 
         if (this->memoryManager == nullptr) {
             this->memoryManager = neoDevice->getMemoryManager();

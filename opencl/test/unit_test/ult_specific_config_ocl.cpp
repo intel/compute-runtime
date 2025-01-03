@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,6 @@ void applyWorkarounds() {
 
 void cleanTestHelpers() {
     delete platformsImpl;
-}
-
-bool isPlatformSupported(const HardwareInfo &hwInfoForTests) {
-    return true;
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {

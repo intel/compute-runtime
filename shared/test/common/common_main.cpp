@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,6 @@ extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
 void applyWorkarounds();
-bool isPlatformSupported(const HardwareInfo &hwInfoForTests);
 void setupTestFiles(std::string testBinaryFiles, int32_t revId);
 std::string getBaseExecutionDir();
 void addUltListener(::testing::TestEventListeners &listener);
@@ -342,12 +341,6 @@ int main(int argc, char **argv) {
         }
 
         adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
-        // Platforms with uninitialized factory are not supported
-        if (!isPlatformSupported(hwInfoForTests)) {
-            std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
-            std::cout << "skipping tests" << std::endl;
-            return 0;
-        }
 
         binaryNameSuffix = hardwarePrefix[hwInfoForTests.platform.eProductFamily];
 

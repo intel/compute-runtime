@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,7 +73,6 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     true,                                                      // supportsOnDemandPageFaults
     true,                                                      // supportsIndependentForwardProgress
     false,                                                     // hostPtrTrackingEnabled
-    true,                                                      // levelZeroSupported
     true,                                                      // isIntegratedDevice
     false,                                                     // supportsMediaBlock
     false,                                                     // p2pAccessSupported

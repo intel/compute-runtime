@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,10 +22,6 @@ void applyWorkarounds() {
     if (sysmanUltsEnableEnv != nullptr) {
         sysmanUltsEnable = (strcmp(sysmanUltsEnableEnv, "1") == 0);
     }
-}
-
-bool isPlatformSupported(const HardwareInfo &hwInfoForTests) {
-    return L0::commandListFactory[hwInfoForTests.platform.eProductFamily] && hwInfoForTests.capabilityTable.levelZeroSupported;
 }
 
 void setupTestFiles(std::string testBinaryFiles, int32_t revId) {
