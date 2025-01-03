@@ -268,27 +268,12 @@ bool SysmanProductHelperHw<gfxProduct>::isPowerSetLimitSupported() {
 
 template <PRODUCT_FAMILY gfxProduct>
 std::string SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitFile() {
-    return "";
+    return "power1_crit";
 }
 
 template <PRODUCT_FAMILY gfxProduct>
 SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitNativeUnit() {
     return SysfsValueUnit::micro;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-std::string SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitFile() {
-    return "power2_crit";
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitNativeUnit() {
-    return SysfsValueUnit::micro;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool SysmanProductHelperHw<gfxProduct>::isPmtNodeAvailableForEnergyCounter(zes_power_domain_t powerDomain) {
-    return false;
 }
 
 template <PRODUCT_FAMILY gfxProduct>

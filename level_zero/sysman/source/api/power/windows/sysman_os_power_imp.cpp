@@ -531,7 +531,7 @@ WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t 
     initPowerLimits();
 }
 
-std::vector<zes_power_domain_t> OsPower::getPowerDomains(OsSysman *pOsSysman) {
+std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
     return pSysmanProductHelper->getNumberOfPowerDomainsSupported(pWddmSysmanImp);

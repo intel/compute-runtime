@@ -38,7 +38,7 @@ struct PowerHandleContext {
     PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PowerHandleContext();
 
-    void init(uint32_t subDeviceCount);
+    ze_result_t init(uint32_t subDeviceCount);
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower);
     ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower);
 

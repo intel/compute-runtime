@@ -89,25 +89,6 @@ std::string SysmanKmdInterfaceI915Upstream::getSysfsFilePathForPhysicalMemorySiz
     return filePathPhysicalMemorySize;
 }
 
-std::string SysmanKmdInterfaceI915Upstream::getSysfsFilePathForPower(SysfsName sysfsName) {
-    std::string filePath = sysfsNameToFileMap[sysfsName].second;
-    return filePath;
-}
-
-std::string SysmanKmdInterfaceI915Upstream::getEnergyCounterNodeFilePath(bool isSubdevice, zes_power_domain_t powerDomain) {
-    if ((isSubdevice && powerDomain == ZES_POWER_DOMAIN_PACKAGE) || (!isSubdevice && powerDomain == ZES_POWER_DOMAIN_CARD)) {
-        return getSysfsFilePathForPower(SysfsName::sysfsNameEnergyCounterNode);
-    }
-    return {};
-}
-
-bool SysmanKmdInterfaceI915Upstream::isPowerSupportForSubdeviceAvailable(zes_power_domain_t powerDomain) const {
-    if (powerDomain == ZES_POWER_DOMAIN_CARD) {
-        return false;
-    }
-    return true;
-}
-
 int64_t SysmanKmdInterfaceI915Upstream::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
     uint64_t config = UINT64_MAX;
     auto engineClass = engineGroupToEngineClass.find(engineGroup);

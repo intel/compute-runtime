@@ -65,11 +65,6 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(SysmanProductHelper *pSysmanPr
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactor] = std::make_pair("media_freq_factor", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceMediaFrequencyFactorScale] = std::make_pair("media_freq_factor.scale", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePerformanceSystemPowerBalance] = std::make_pair("", "sys_pwr_balance");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageSustainedPowerLimit] = std::make_pair("", "power2_max");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageSustainedPowerLimitInterval] = std::make_pair("", "power2_max_interval");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageDefaultPowerLimit] = std::make_pair("", "power2_rated_max");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode] = std::make_pair("", "energy2_input");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageCriticalPowerLimit] = std::make_pair("", pSysmanProductHelper->getPackageCriticalPowerLimitFile());
 }
 
 void SysmanKmdInterfaceXe::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSysmanProductHelper) {
@@ -80,7 +75,6 @@ void SysmanKmdInterfaceXe::initSysfsNameToNativeUnitMap(SysmanProductHelper *pSy
     sysfsNameToNativeUnitMap[SysfsName::sysfsNameSustainedPowerLimit] = SysfsValueUnit::micro;
     sysfsNameToNativeUnitMap[SysfsName::sysfsNameDefaultPowerLimit] = SysfsValueUnit::micro;
     sysfsNameToNativeUnitMap[SysfsName::sysfsNameCriticalPowerLimit] = pSysmanProductHelper->getCardCriticalPowerLimitNativeUnit();
-    sysfsNameToNativeUnitMap[SysfsName::sysfsNamePackageCriticalPowerLimit] = pSysmanProductHelper->getPackageCriticalPowerLimitNativeUnit();
 }
 
 std::string SysmanKmdInterfaceXe::getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool prefixBaseDirectory) {
@@ -97,21 +91,6 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t
     std::string filePathPhysicalMemorySize = "device/tile" + std::to_string(subDeviceId) + "/" +
                                              sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange].first;
     return filePathPhysicalMemorySize;
-}
-
-std::string SysmanKmdInterfaceXe::getSysfsFilePathForPower(SysfsName sysfsName) {
-    std::string filePath = sysfsNameToFileMap[sysfsName].second;
-    return filePath;
-}
-
-std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFilePath(bool isSubdevice, zes_power_domain_t powerDomain) {
-    if (powerDomain == ZES_POWER_DOMAIN_CARD) {
-        return getSysfsFilePathForPower(SysfsName::sysfsNameEnergyCounterNode);
-    } else if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
-        return getSysfsFilePathForPower(SysfsName::sysfsNamePackageEnergyCounterNode);
-    } else {
-        return {};
-    }
 }
 
 int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
