@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -278,7 +278,6 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device, bool useCooperativeF
             break;
         }
     }
-    SUCCESS_OR_TERMINATE_BOOL(computeQueueGroupOrdinal != std::numeric_limits<uint32_t>::max());
     return computeQueueGroupOrdinal;
 }
 
