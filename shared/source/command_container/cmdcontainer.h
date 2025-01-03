@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,8 +89,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     LinearStream *getCommandStream() { return commandStream.get(); }
 
-    bool usingSecondaryCmdbufInHostMem() { return useSecondaryCommandStream; }
-
     IndirectHeap *getIndirectHeap(HeapType heapType);
 
     HeapHelper *getHeapHelper() { return heapHelper.get(); }
@@ -121,7 +119,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     GraphicsAllocation *obtainNextCommandBufferAllocation();
     GraphicsAllocation *obtainNextCommandBufferAllocation(bool forceHostMemory);
 
-    MOCKABLE_VIRTUAL bool swapStreams();
+    bool swapStreams();
 
     void reset();
 

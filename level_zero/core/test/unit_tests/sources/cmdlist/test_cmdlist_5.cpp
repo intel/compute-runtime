@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -927,7 +927,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
     auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
     auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
 
-    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
+    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize);
 
     EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
@@ -936,144 +936,6 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
 
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
-}
-
-HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamInHostMemForImmediateCmdListWhenCheckAvailableSpaceForRelaxedOrderingThenSwapCommandStreams, MatchAny) {
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &productHelper = device->getProductHelper();
-    if (!gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper)) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
-
-    static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
-
-    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
-
-    auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
-
-    immediateCmdList->getCmdContainer().swapStreams();
-    EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
-
-    immediateCmdList->checkAvailableSpace(0u, true, commonImmediateCommandSize, false);
-
-    EXPECT_NE(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-}
-
-struct CmdContainerMockLocalAllocTests : public CommandContainer {
-    using CommandContainer::secondaryCommandStreamForImmediateCmdList;
-};
-
-HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListButNotYetUsingHostAllocWhenCallingAppendCmdlistsThenDoNotSwapCommandStreams, IsPVC) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
-
-    static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    EXPECT_NE(reinterpret_cast<CmdContainerMockLocalAllocTests *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMockLocalAllocTests *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
-
-    auto secondaryCmdStream = reinterpret_cast<CmdContainerMockLocalAllocTests *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
-
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
-    commandListRegular->close();
-    auto commandListHandle = commandListRegular->toHandle();
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    result = commandList->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_NE(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-    EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
-}
-
-HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListButAndUsingHostAllocWhenCallingAppendCmdlistsThenSwapCommandStreamsAndAppendSucceeds, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
-
-    static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    EXPECT_NE(reinterpret_cast<CmdContainerMockLocalAllocTests *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMockLocalAllocTests *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
-
-    auto secondaryCmdStream = reinterpret_cast<CmdContainerMockLocalAllocTests *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
-
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::compute, 0u, returnValue, false));
-    commandListRegular->close();
-    auto commandListHandle = commandListRegular->toHandle();
-
-    commandList->getCmdContainer().swapStreams();
-    EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    result = commandList->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    EXPECT_NE(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-}
-
-HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListAndAlreadyUsingHostAllocThenAppendingRegularCommandlistsIntoImmediateUsesLocalAndRestoresHostAlloc, MatchAny) {
-    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
-        GTEST_SKIP();
-    }
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
-
-    static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue;
-    CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index, ZE_COMMAND_QUEUE_PRIORITY_NORMAL, false);
-    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
-    ASSERT_NE(nullptr, commandList);
-    EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
-
-    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
-    auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
-
-    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
-
-    EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
-
-    std::unique_ptr<L0::CommandList> commandListRegular(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
-    commandListRegular->close();
-    auto commandListHandle = commandListRegular->toHandle();
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    result = commandList->appendCommandLists(1u, &commandListHandle, nullptr, 0u, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
-    EXPECT_TRUE(commandList->getCmdContainer().usingSecondaryCmdbufInHostMem());
 }
 
 HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenNotSwapCommandStreams, MatchAny) {
@@ -1094,7 +956,7 @@ HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhe
     auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
-    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
+    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize);
 
     EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), cmdStream);
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));

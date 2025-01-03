@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1733,10 +1733,10 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenForcedPrimaryBatchBufferWhenRegular
     EXPECT_TRUE(commandList->dispatchCmdListBatchBufferAsPrimary);
     EXPECT_TRUE(commandQueue->dispatchCmdListBatchBufferAsPrimary);
 
-    EXPECT_TRUE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_FALSE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
     ASSERT_NE(nullptr, commandListImmediate->cmdQImmediate);
     auto immediateCmdQueue = static_cast<L0::ult::CommandQueue *>(commandListImmediate->cmdQImmediate);
-    EXPECT_TRUE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_FALSE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
 }
 
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenAppendingKernelAndClosingCommandListThenExpectAlignedSpaceForBatchBufferStart) {
