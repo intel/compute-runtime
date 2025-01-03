@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,6 +43,11 @@ using IsNotXeHpOrXeHpgCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>
 using IsNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
 using IsNotXeHpgOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
 
+using IsXe2HpgCoreOrXe3Core = IsAnyGfxCores<IGFX_XE2_HPG_CORE, IGFX_XE3_CORE>;
+
+using IsXe3Core = IsGfxCore<IGFX_XE3_CORE>;
+using IsAtLeastXe3Core = IsAtLeastGfxCore<IGFX_XE3_CORE>;
+
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsDG1 = IsProduct<IGFX_DG1>;
 using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;
@@ -59,6 +64,8 @@ using IsBMG = IsProduct<IGFX_BMG>;
 using IsNotBMG = IsNotWithinProducts<IGFX_BMG, IGFX_BMG>;
 
 using IsLNL = IsProduct<IGFX_LUNARLAKE>;
+
+using IsPTL = IsProduct<IGFX_PTL>;
 
 using IsAtLeastMtl = IsAtLeastProduct<IGFX_METEORLAKE>;
 using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;

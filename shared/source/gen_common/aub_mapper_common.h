@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,4 +17,7 @@
 #endif
 #ifdef SUPPORT_XE2_HPG_CORE
 #include "shared/source/xe2_hpg_core/aub_mapper.h"
+#endif
+#ifdef SUPPORT_XE3_CORE
+#include "shared/source/xe3_core/aub_mapper.h"
 #endif
