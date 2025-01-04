@@ -659,15 +659,17 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
 
     do {
         const char *renderDeviceSuffix = "-render";
+        constexpr size_t renderDevSufSize = std::char_traits<char>::length(renderDeviceSuffix);
+        constexpr size_t pciDevDirLen = std::char_traits<char>::length(Os::pciDevicesDirectory);
         for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
             std::string_view devicePathView(file->c_str(), file->size());
-            devicePathView = devicePathView.substr(strlen(Os::pciDevicesDirectory));
+            devicePathView = devicePathView.substr(pciDevDirLen);
 
             auto rdsPos = devicePathView.rfind(renderDeviceSuffix);
             if (rdsPos == std::string::npos) {
                 continue;
             }
-            if (rdsPos < devicePathView.size() - strlen(renderDeviceSuffix)) {
+            if (rdsPos < devicePathView.size() - renderDevSufSize) {
                 continue;
             }
             // at least 'pci-0000:00:00.0' -> 16
