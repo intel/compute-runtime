@@ -27,13 +27,18 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
     SupportedDevicesData data;
 
     // Populate IP Versions, Device Infos, Acronyms
+    data.deviceIpVersions.reserve(enabledDevices.size());
+    data.deviceInfos.reserve(enabledDevices.size());
+    data.acronyms.reserve(enabledDevices.size());
     for (const auto &device : enabledDevices) {
         data.deviceIpVersions.push_back(device.aotConfig.value);
 
+        data.deviceInfos.reserve((*device.deviceIds).size());
         for (const auto &deviceId : *device.deviceIds) {
             data.deviceInfos.push_back({deviceId, device.aotConfig.revision, device.aotConfig.value});
         }
 
+        data.acronyms.reserve(device.deviceAcronyms.size());
         for (const auto &acronym : device.deviceAcronyms) {
             data.acronyms.push_back({acronym.data(), device.aotConfig.value});
         }
@@ -44,6 +49,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
     for (const auto &device : enabledDevices) {
         groupedDevices[device.family].push_back(device.aotConfig.value);
     }
+    data.familyGroups.reserve(groupedDevices.size());
     for (const auto &entry : groupedDevices) {
         data.familyGroups.push_back({productConfigHelper->getAcronymFromAFamily(entry.first).data(), entry.second});
     }
@@ -271,6 +277,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocD
               [](const auto &a, const auto &b) { return a.second < b.second; });
 
     // Sort FamilyGroups (alphabetically by group name)
+    mergedData.familyGroups.reserve(uniqueFamilyGroups.size());
     for (const auto &[family, ipVersions] : uniqueFamilyGroups) {
         mergedData.familyGroups.push_back({family, std::vector<uint32_t>(ipVersions.begin(), ipVersions.end())});
     }
@@ -278,6 +285,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocD
               [](const auto &a, const auto &b) { return a.first < b.first; });
 
     // Sort ReleaseGroups (alphabetically by group name)
+    mergedData.releaseGroups.reserve(uniqueReleaseGroups.size());
     for (const auto &[release, ipVersions] : uniqueReleaseGroups) {
         mergedData.releaseGroups.push_back({release, std::vector<uint32_t>(ipVersions.begin(), ipVersions.end())});
     }
