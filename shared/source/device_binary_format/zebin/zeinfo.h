@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -634,12 +634,12 @@ inline constexpr BtiValueT btiValue = -1;
 } // namespace Defaults
 
 struct PayloadArgumentBaseT {
-    ArgTypeT argType = argTypeUnknown;
     OffsetT offset = Defaults::offset;
     SourceOffseT sourceOffset = Defaults::sourceOffset;
     SizeT size = 0;
     ArgIndexT argIndex = Defaults::argIndex;
     BtiValueT btiValue = Defaults::btiValue;
+    ArgTypeT argType = argTypeUnknown;
     AddrmodeT addrmode = memoryAddressingModeUnknown;
     AddrspaceT addrspace = addressSpaceUnknown;
     AccessTypeT accessType = accessTypeUnknown;
@@ -692,9 +692,9 @@ inline constexpr Slot slot = 0U;
 } // namespace Defaults
 
 struct PerThreadMemoryBufferBaseT {
+    SizeT size = 0U;
     AllocationType allocationType = AllocationTypeUnknown;
     MemoryUsageT memoryUsage = MemoryUsageUnknown;
-    SizeT size = 0U;
     IsSimtThreadT isSimtThread = Defaults::isSimtThread;
     Slot slot = Defaults::slot;
 };
@@ -732,8 +732,8 @@ inline constexpr NormalizedT normalized = false;
 
 struct InlineSamplerBaseT {
     SamplerIndexT samplerIndex = Defaults::samplerIndex;
-    AddrModeT addrMode = Defaults::addrMode;
     FilterModeT filterMode = Defaults::filterMode;
+    AddrModeT addrMode = Defaults::addrMode;
     NormalizedT normalized = Defaults::normalized;
 };
 } // namespace InlineSamplers
