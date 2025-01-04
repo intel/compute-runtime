@@ -48,15 +48,15 @@ typedef struct _tagGLCLResourceInfo {
 } GL_CL_RESOURCE_INFO, *PGL_CL_RESOURCE_INFO;
 
 typedef struct _tagCLGLBufferInfo {
-    GLenum bufferName;
-    unsigned int globalShareHandle;
     GMM_RESOURCE_INFO *pGmmResInfo; /// Pointer to GMMResInfo from GL that will be copied in CL (GL)
     GLvoid *pSysMem;
+    GLvoid *pReleaseData;
+    GLenum bufferName;
+    unsigned int globalShareHandle;
     GLint bufferSize;
     GLint bufferOffset;
-    GLboolean oglSynchronized;
     GMM_STATUS status;
-    GLvoid *pReleaseData;
+    GLboolean oglSynchronized;
     GLboolean createOrDestroy;
 } CL_GL_BUFFER_INFO, *PCL_GL_BUFFER_INFO;
 
