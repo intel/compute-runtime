@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,6 @@
 
 namespace NEO {
 std::unique_ptr<DeferredDeleter> createDeferredDeleter() {
-    return std::unique_ptr<DeferredDeleter>(new DeferredDeleter());
+    return std::make_unique<DeferredDeleter>();
 }
 } // namespace NEO

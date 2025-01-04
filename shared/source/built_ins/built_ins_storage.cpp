@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -173,8 +173,8 @@ BuiltinResourceT EmbeddedStorage::loadImpl(const std::string &fullResourceName) 
 }
 
 BuiltinsLib::BuiltinsLib() {
-    allStorages.push_back(std::unique_ptr<Storage>(new EmbeddedStorage("")));
-    allStorages.push_back(std::unique_ptr<Storage>(new FileStorage(getDriverInstallationPath())));
+    allStorages.push_back(std::make_unique<EmbeddedStorage>(""));
+    allStorages.push_back(std::make_unique<FileStorage>(getDriverInstallationPath()));
 }
 
 BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {

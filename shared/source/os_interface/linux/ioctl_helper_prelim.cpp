@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -503,7 +503,7 @@ std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<
                   "Alignment of a buffer returned via new[] operator must allow storing the required type!");
 
     const auto bufferSize{sizeof(prelim_drm_i915_vm_bind_ext_uuid) * bindExtHandles.size()};
-    std::unique_ptr<uint8_t[]> extensionsBuffer{new uint8_t[bufferSize]};
+    auto extensionsBuffer = std::make_unique<uint8_t[]>(bufferSize);
 
     auto extensions = new (extensionsBuffer.get()) prelim_drm_i915_vm_bind_ext_uuid[bindExtHandles.size()];
     std::memset(extensionsBuffer.get(), 0, bufferSize);
