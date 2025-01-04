@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ HWTEST_F(CommandQueueHwTest, whenCallingIsCompletedThenTestTaskCountValue) {
     bcsCsr->setupContext(*osContext);
     bcsCsr->initializeTagAllocation();
     EngineControl control(bcsCsr.get(), osContext.get());
-    CopyEngineState state{aub_stream::EngineType::ENGINE_BCS, 1, false};
+    CopyEngineState state{1, aub_stream::EngineType::ENGINE_BCS, false};
 
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
 
