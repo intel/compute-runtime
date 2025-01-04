@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ void VASharingFunctions::initFunctions() {
 void VASharingFunctions::querySupportedVaImageFormats(VADisplay vaDisplay) {
     int maxFormats = this->maxNumImageFormats(vaDisplay);
     if (maxFormats > 0) {
-        std::unique_ptr<VAImageFormat[]> allVaFormats(new VAImageFormat[maxFormats]);
+        auto allVaFormats = std::make_unique<VAImageFormat[]>(maxFormats);
         auto result = this->queryImageFormats(vaDisplay, allVaFormats.get(), &maxFormats);
         if (result == VA_STATUS_SUCCESS) {
             for (int i = 0; i < maxFormats; i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,8 +120,7 @@ template <PRODUCT_FAMILY product>
 class AILConfigurationHw : public AILConfiguration {
   public:
     static std::unique_ptr<AILConfiguration> create() {
-        auto ailConfiguration = std::unique_ptr<AILConfiguration>(new AILConfigurationHw());
-        return ailConfiguration;
+        return std::make_unique<AILConfigurationHw>();
     }
 
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override;

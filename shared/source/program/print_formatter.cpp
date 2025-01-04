@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
     size_t length = strnlen_s(formatString, maxSinglePrintStringLength - 1);
 
     size_t cursor = 0;
-    std::unique_ptr<char[]> dataFormat(new char[length + 1]);
+    auto dataFormat = std::make_unique<char[]>(length + 1);
 
     for (size_t i = 0; i <= length; i++) {
         if (formatString[i] == '\\')

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ decltype(&Thread::create) Thread::createFunc = Thread::create;
 std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
     pthread_t threadId;
     pthread_create(&threadId, nullptr, func, arg);
-    return std::unique_ptr<Thread>(new ThreadLinux(threadId));
+    return std::make_unique<ThreadLinux>(threadId);
 }
 
 void ThreadLinux::join() {
