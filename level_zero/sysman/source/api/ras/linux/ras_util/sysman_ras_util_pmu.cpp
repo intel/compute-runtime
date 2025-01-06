@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,9 @@ static const std::map<zes_ras_error_category_exp_t, std::vector<std::string>> ca
       "sgunit-fatal", "soc-nonfatal-punit", "sgunit-fatal", "sgunit-nonfatal", "gsc-nonfatal-mia-shutdown",
       "gsc-nonfatal-aon-parity", "gsc-nonfatal-rom-parity", "gsc-nonfatal-fuse-crc-check",
       "gsc-nonfatal-selfmbist", "gsc-nonfatal-fuse-pull", "gsc-nonfatal-sram-ecc", "gsc-nonfatal-glitch-det",
-      "gsc-nonfatal-ucode-parity", "gsc-nonfatal-mia-int", "gsc-nonfatal-wdg-timeout"}},
+      "gsc-nonfatal-ucode-parity", "gsc-nonfatal-mia-int", "gsc-nonfatal-wdg-timeout", "soc-fatal-iosf-pciaer",
+      "soc-fatal-iosf-pcierr", "soc-fatal-pciaer", "soc-fatal-pcierr", "soc-fatal-serr-spi", "soc-fatal-serr-srcs",
+      "soc-fatal-ur-response", "soc-fatal-ur", "soc-fatal-hbm-mca", "soc-fatal-hbm-punit-mca"}},
     {ZES_RAS_ERROR_CATEGORY_EXP_COMPUTE_ERRORS,
      {"fatal-fpu", "fatal-eu-grf", "fatal-sampler", "fatal-slm",
       "fatal-guc", "fatal-eu-ic", "fatal-subslice"}},

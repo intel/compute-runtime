@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,7 +117,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpTh
                     expectedErrCount = fatalEuErrorCount + initialUncorrectableComputeErrors;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS) {
-                    expectedErrCount = socFatalPsfCsc0Count + initialUncorrectableNonComputeErrors;
+                    expectedErrCount = socFatalPsfCsc0Count + socFatalIosfPciaer + initialUncorrectableNonComputeErrors;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS) {
                     expectedErrCount = euAttention + initialProgrammingErrors;
@@ -194,7 +194,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingZesRasGetStateExpFo
                     expectedErrCount = fatalEuErrorCount + initialUncorrectableComputeErrors;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS) {
-                    expectedErrCount = socFatalPsfCsc0Count + initialUncorrectableNonComputeErrors;
+                    expectedErrCount = socFatalPsfCsc0Count + socFatalIosfPciaer + initialUncorrectableNonComputeErrors;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS) {
                     expectedErrCount = euAttention + initialProgrammingErrors;
@@ -481,7 +481,7 @@ HWTEST2_F(SysmanRasExpFixture, GivenValidRasHandleWhenCallingzesRasClearStateExp
                     expectedErrCount = fatalEuErrorCount + initialUncorrectableComputeErrors;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS) {
-                    expectedErrCount = socFatalPsfCsc0Count + initialUncorrectableNonComputeErrors;
+                    expectedErrCount = socFatalPsfCsc0Count + socFatalIosfPciaer + initialUncorrectableNonComputeErrors;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS) {
                     expectedErrCount = euAttention + initialProgrammingErrors;
@@ -858,7 +858,7 @@ HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingZesRasGe
                     expectedErrCount = fatalSubslice + fatalEuErrorCount + initialUncorrectableComputeErrorsTile0;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS) {
-                    expectedErrCount = socFatalPsfCsc0Count + nonFatalGscAonParity + nonFataGscSelfmBist + initialUncorrectableNonComputeErrorsTile0;
+                    expectedErrCount = socFatalPsfCsc0Count + socFatalIosfPciaer + nonFatalGscAonParity + nonFataGscSelfmBist + initialUncorrectableNonComputeErrorsTile0;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS) {
                     expectedErrCount = euAttention + initialProgrammingErrors;
@@ -1040,7 +1040,7 @@ HWTEST2_F(SysmanRasExpMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasCl
                     expectedErrCount = fatalSubslice + fatalEuErrorCount + initialUncorrectableComputeErrorsTile0;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_NON_COMPUTE_ERRORS) {
-                    expectedErrCount = socFatalPsfCsc0Count + nonFatalGscAonParity + nonFataGscSelfmBist + initialUncorrectableNonComputeErrorsTile0;
+                    expectedErrCount = socFatalPsfCsc0Count + socFatalIosfPciaer + nonFatalGscAonParity + nonFataGscSelfmBist + initialUncorrectableNonComputeErrorsTile0;
                     EXPECT_EQ(rasStates[i].errorCounter, expectedErrCount);
                 } else if (rasStates[i].category == ZES_RAS_ERROR_CATEGORY_EXP_PROGRAMMING_ERRORS) {
                     expectedErrCount = euAttention + initialProgrammingErrors;
