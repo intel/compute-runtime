@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
+#include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/debug_mock_drm_xe.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -32,6 +33,18 @@
 namespace L0 {
 namespace ult {
 using typeOfLrcHandle = std::decay<decltype(NEO::EuDebugEventExecQueue::lrcHandle[0])>::type;
+
+struct DebugApiLinuxMultiDeviceFixtureXe : public MultipleDevicesWithCustomHwInfo {
+    void setUp();
+
+    void tearDown() {
+        MultipleDevicesWithCustomHwInfo::tearDown();
+    }
+    NEO::Device *neoDevice = nullptr;
+    L0::DeviceImp *deviceImp = nullptr;
+    DrmMockXeDebug *mockDrm = nullptr;
+    static constexpr uint8_t bufferSize = 16;
+};
 
 struct DebugApiLinuxXeFixture : public DeviceFixture {
     void setUp() {

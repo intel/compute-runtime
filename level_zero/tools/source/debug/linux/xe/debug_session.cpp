@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -420,6 +420,7 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     for (auto &vmBindOpData : vmBindData.vmBindOpMap) {
         auto &vmBindOp = vmBindOpData.second.vmBindOp;
         for (const auto &vmBindOpMetadata : vmBindOpData.second.vmBindOpMetadataVec) {
+            const NEO::DeviceBitfield devices(vmBindOpMetadata.metadataCookie);
             auto &metaDataEntry = connection->metaDataMap[vmBindOpMetadata.metadataHandle];
             if (vmBindOp.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
                 {
@@ -467,9 +468,10 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         isa->elfHandle = vmBindOpMetadata.metadataHandle;
                         isa->moduleBegin = reinterpret_cast<uint64_t>(metaDataEntry.data.get());
                         isa->moduleEnd = isa->moduleBegin + metaDataEntry.metadata.len;
-                        isa->tileInstanced = false;
+                        isa->tileInstanced = (devices.count() != 0);
                         isa->validVMs.insert(vmBindData.vmBind.vmHandle);
                         isa->perKernelModule = false;
+                        isa->deviceBitfield = devices;
                         elfMap[isa->moduleBegin] = isa->elfHandle;
                         isaMap[vmBindOp.addr] = std::move(isa);
                         isaMap[vmBindOp.addr]->moduleLoadEventAck = true;
@@ -481,6 +483,7 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                 }
                 if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataProgramModule)) {
                     auto &module = connection->metaDataToModule[vmBindOpMetadata.metadataHandle];
+                    module.deviceBitfield = devices;
                     module.segmentVmBindCounter[tileIndex]++;
                     DEBUG_BREAK_IF(module.loadAddresses[tileIndex].size() > module.segmentCount);
 
@@ -488,7 +491,11 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                     module.loadAddresses[tileIndex].insert(vmBindOp.addr);
                     moduleHandle = vmBindOpMetadata.metadataHandle;
                     if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
-                        triggerModuleLoadEvent = true;
+                        bool allInstancesEventsReceived = true;
+                        if (module.deviceBitfield.count() > 1) {
+                            allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
+                        }
+                        triggerModuleLoadEvent = allInstancesEventsReceived;
                     }
                 }
             }
@@ -511,7 +518,14 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         auto &elfMetadata = connection->metaDataMap[isa->elfHandle];
                         debugEvent.info.module.moduleBegin = reinterpret_cast<uint64_t>(elfMetadata.data.get());
                         debugEvent.info.module.moduleEnd = reinterpret_cast<uint64_t>(elfMetadata.data.get()) + elfMetadata.metadata.len;
-                        pushApiEvent(debugEvent, metaDataEntry.metadata.metadataHandle);
+
+                        bool notifyEvent = true;
+                        if (module.deviceBitfield.count() > 1) {
+                            notifyEvent = checkAllOtherTileModuleSegmentsRemoved(tileIndex, module);
+                        }
+                        if (notifyEvent) {
+                            pushApiEvent(debugEvent, metaDataEntry.metadata.metadataHandle);
+                        }
                         module.loadAddresses[tileIndex].clear();
                         module.moduleLoadEventAcked[tileIndex] = false;
                     }

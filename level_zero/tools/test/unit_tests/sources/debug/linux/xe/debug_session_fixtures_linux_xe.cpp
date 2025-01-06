@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,31 @@ void DebugApiLinuxXeFixture::setUp(NEO::HardwareInfo *hwInfo) {
     rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
     rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 
+    mockDrm->setFileDescriptor(SysCalls::fakeFileDescriptor);
+    SysCalls::drmVersion = "xe";
+}
+
+void DebugApiLinuxMultiDeviceFixtureXe::setUp() {
+    MultipleDevicesWithCustomHwInfo::setUp();
+    neoDevice = driverHandle->devices[0]->getNEODevice();
+
+    L0::Device *device = driverHandle->devices[0];
+    deviceImp = static_cast<DeviceImp *>(device);
+
+    mockDrm = DrmMockXeDebug::create(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]).release();
+    mockDrm->allowDebugAttach = true;
+    mockDrm->memoryInfoQueried = true;
+
+    mockDrm->queryEngineInfo();
+
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
+    auto gtSystemInfo = &rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo;
+    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
+        gtSystemInfo->SliceInfo[slice].Enabled = slice < gtSystemInfo->SliceCount;
+    }
+
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
+    rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
     mockDrm->setFileDescriptor(SysCalls::fakeFileDescriptor);
     SysCalls::drmVersion = "xe";
 }
