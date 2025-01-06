@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1417,7 +1417,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
     if (bind) {
         bool allowUUIDsForDebug = !osContext->isInternalEngine() && !EngineHelpers::isBcs(osContext->getEngineType());
         if (bo->getBindExtHandles().size() > 0 && allowUUIDsForDebug) {
-            extensions = ioctlHelper->prepareVmBindExt(bo->getBindExtHandles(), vmHandleId);
+            extensions = ioctlHelper->prepareVmBindExt(bo->getBindExtHandles(), bo->getRegisteredBindHandleCookie());
         }
         bool bindCapture = bo->isMarkedForCapture();
         bool bindImmediate = bo->isImmediateBindingRequired();

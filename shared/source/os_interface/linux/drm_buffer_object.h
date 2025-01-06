@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,6 +247,14 @@ class BufferObject {
     void setChunked(bool chunked) { this->chunked = chunked; }
     bool isChunked() const { return this->chunked; }
 
+    void setRegisteredBindHandleCookie(uint64_t cookie) {
+        registeredBindHandleCookie = cookie;
+    }
+
+    uint64_t getRegisteredBindHandleCookie() {
+        return registeredBindHandleCookie;
+    }
+
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
@@ -267,6 +275,7 @@ class BufferObject {
     std::vector<uint64_t> bindAddresses;
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
+    uint64_t registeredBindHandleCookie = 0;
     BOType boType = BOType::legacy;
     std::atomic<uint32_t> refCount;
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();

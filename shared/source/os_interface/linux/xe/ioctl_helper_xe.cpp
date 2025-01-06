@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1565,6 +1565,17 @@ void IoctlHelperXe::registerBOBindHandle(Drm *drm, DrmAllocation *drmAllocation)
     case AllocationType::debugModuleArea:
         resourceClass = DrmResourceClass::moduleHeapDebugArea;
         break;
+    case AllocationType::kernelIsa:
+        if (drmAllocation->storageInfo.tileInstanced) {
+            auto &bos = drmAllocation->getBOs();
+            for (auto bo : bos) {
+                if (!bo) {
+                    continue;
+                }
+                bo->setRegisteredBindHandleCookie(drmAllocation->storageInfo.subDeviceBitfield.to_ulong());
+            }
+        }
+        return;
     default:
         return;
     }
