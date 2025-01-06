@@ -48,7 +48,7 @@ class ExternalSemaphore {
     virtual bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) = 0;
 
     virtual bool enqueueWait(uint64_t *fenceValue) = 0;
-    virtual bool enqueueSignal() = 0;
+    virtual bool enqueueSignal(uint64_t *fenceValue) = 0;
 
     OSInterface *osInterface = nullptr;
 

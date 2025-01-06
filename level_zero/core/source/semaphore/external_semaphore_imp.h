@@ -36,7 +36,13 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
 
 class ExternalSemaphoreController {
   public:
+    enum SemaphoreOperation {
+        Wait,
+        Signal
+    };
+
     static ExternalSemaphoreController *getInstance() {
+        std::lock_guard<std::mutex> lock(instanceMutex);
         if (instance == nullptr) {
             instance = new ExternalSemaphoreController();
         }
@@ -64,7 +70,7 @@ class ExternalSemaphoreController {
 
         joinThread();
 
-        for (auto it = proxyWaitEvents.begin(); it != proxyWaitEvents.end(); ++it) {
+        for (auto it = proxyEvents.begin(); it != proxyEvents.end(); ++it) {
             Event *event = std::get<0>(*it);
             event->destroy();
         }
@@ -79,8 +85,8 @@ class ExternalSemaphoreController {
         instance = nullptr;
     }
 
-    ze_result_t allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent);
-    void processWaitEvents();
+    ze_result_t allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, SemaphoreOperation operation);
+    void processProxyEvents();
 
     std::mutex semControllerMutex;
     std::condition_variable semControllerCv;
@@ -88,8 +94,7 @@ class ExternalSemaphoreController {
     std::unordered_map<ze_device_handle_t, std::vector<EventPool *>> eventPoolsMap;
     std::unordered_map<ze_device_handle_t, size_t> eventsCreatedFromLatestPoolMap;
     const size_t maxEventCountInPool = 20u;
-    std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t>> proxyWaitEvents;
-    std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t>> proxySignalEvents;
+    std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>> proxyEvents;
     bool continueRunning = true;
 
   private:
@@ -101,6 +106,7 @@ class ExternalSemaphoreController {
     void runController();
 
     static ExternalSemaphoreController *instance;
+    static std::mutex instanceMutex;
     std::thread extSemThread;
 };
 

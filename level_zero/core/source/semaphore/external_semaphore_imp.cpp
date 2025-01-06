@@ -16,8 +16,10 @@
 namespace L0 {
 
 ExternalSemaphoreController *ExternalSemaphoreController::instance = nullptr;
+std::mutex ExternalSemaphoreController::instanceMutex;
 
-ze_result_t ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc, ze_intel_external_semaphore_exp_handle_t *phSemaphore) {
+ze_result_t
+ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc, ze_intel_external_semaphore_exp_handle_t *phSemaphore) {
     auto externalSemaphore = new ExternalSemaphoreImp();
     if (externalSemaphore == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -112,7 +114,7 @@ ze_result_t ExternalSemaphoreImp::releaseExternalSemaphore() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent) {
+ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, ExternalSemaphoreController::SemaphoreOperation operation) {
     std::lock_guard<std::mutex> lock(this->semControllerMutex);
 
     if (this->eventPoolsMap.find(hDevice) == this->eventPoolsMap.end()) {
@@ -145,29 +147,39 @@ ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_intel_external_se
     ze_event_handle_t hEvent{};
     pool->createEvent(&desc, &hEvent);
 
-    this->proxyWaitEvents.push_back(std::make_tuple(Event::fromHandle(hEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hExtSemaphore)), fenceValue));
+    this->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hExtSemaphore)), fenceValue, operation));
 
     *phEvent = hEvent;
 
     return ZE_RESULT_SUCCESS;
 }
 
-void ExternalSemaphoreController::processWaitEvents() {
-    for (auto it = proxyWaitEvents.rbegin(); it != proxyWaitEvents.rend();) {
+void ExternalSemaphoreController::processProxyEvents() {
+    for (auto it = proxyEvents.rbegin(); it != proxyEvents.rend();) {
         Event *event = std::get<0>(*it);
         ExternalSemaphoreImp *externalSemaphoreImp = static_cast<ExternalSemaphoreImp *>(std::get<1>(*it));
         uint64_t fenceValue = std::get<2>(*it);
+        SemaphoreOperation operation = std::get<3>(*it);
 
-        if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Initial) {
-            externalSemaphoreImp->neoExternalSemaphore->enqueueWait(&fenceValue);
-        }
-
-        if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
-            event->hostSignal(false);
-            event->destroy();
-            it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t>>::reverse_iterator(this->proxyWaitEvents.erase((++it).base()));
+        if (operation == SemaphoreOperation::Wait) {
+            if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Initial) {
+                externalSemaphoreImp->neoExternalSemaphore->enqueueWait(&fenceValue);
+            }
+            if (externalSemaphoreImp->neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled) {
+                event->hostSignal(false);
+                event->destroy();
+                it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>>::reverse_iterator(this->proxyEvents.erase((++it).base()));
+            } else {
+                ++it;
+            }
         } else {
-            ++it;
+            ze_result_t ret = event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+            if (ret == ZE_RESULT_SUCCESS) {
+                externalSemaphoreImp->neoExternalSemaphore->enqueueSignal(&fenceValue);
+            }
+
+            event->destroy();
+            it = std::vector<std::tuple<Event *, ExternalSemaphore *, uint64_t, SemaphoreOperation>>::reverse_iterator(this->proxyEvents.erase((++it).base()));
         }
     }
 }
@@ -175,12 +187,12 @@ void ExternalSemaphoreController::processWaitEvents() {
 void ExternalSemaphoreController::runController() {
     while (this->continueRunning) {
         std::unique_lock<std::mutex> lock(this->semControllerMutex);
-        this->semControllerCv.wait(lock, [this] { return (!this->proxyWaitEvents.empty() || !this->continueRunning); });
+        this->semControllerCv.wait(lock, [this] { return (!this->proxyEvents.empty() || !this->continueRunning); });
 
         if (!this->continueRunning) {
             lock.unlock();
         } else {
-            this->processWaitEvents();
+            this->processProxyEvents();
 
             lock.unlock();
             this->semControllerCv.notify_all();

@@ -29,7 +29,7 @@ class ExternalSemaphoreWindows : public ExternalSemaphore {
     bool importSemaphore(void *extHandle, int fd, uint32_t flags, const char *name, Type type, bool isNative) override;
 
     bool enqueueWait(uint64_t *fenceValue) override;
-    bool enqueueSignal() override;
+    bool enqueueSignal(uint64_t *fenceValue) override;
 
   protected:
     D3DKMT_HANDLE syncHandle;

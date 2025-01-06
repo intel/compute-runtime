@@ -94,5 +94,5 @@ zeIntelCommandListAppendSignalExternalSemaphoresExp(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::CommandList::fromHandle(hCmdList)->appendSignalExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
 }

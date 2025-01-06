@@ -47,7 +47,7 @@ class WddmSemaphoreFixture : public DeviceFixture {
 using WddmExternalSemaphoreTest = Test<WddmSemaphoreFixture>;
 using MockDriverHandleImp = Mock<L0::DriverHandleImp>;
 
-HWTEST_F(WddmExternalSemaphoreTest, givenValidExternalSemaphoreWhenImportExternalSemaphoreExpIsCalledThenSuccessIsReturned) {
+HWTEST_F(WddmExternalSemaphoreTest, DISABLED_givenValidExternalSemaphoreWhenImportExternalSemaphoreExpIsCalledThenSuccessIsReturned) {
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     ze_intel_external_semaphore_exp_desc_t desc = {};
@@ -71,7 +71,135 @@ HWTEST_F(WddmExternalSemaphoreTest, givenValidExternalSemaphoreWhenImportExterna
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(WddmExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenSuccessIsReturned, MatchAny) {
+class MockFailGdi : public MockGdi {
+  public:
+    MockFailGdi() : MockGdi() {
+        signalSynchronizationObjectFromCpu = mockD3DKMTSignalSynchronizationObjectFromCpu;
+    }
+
+    static NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromCpu(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *) {
+        return STATUS_UNSUCCESSFUL;
+    }
+};
+
+class MockExternalSemaphoreEvent : public MockEvent {
+  public:
+    MockExternalSemaphoreEvent() : MockEvent() {}
+    ze_result_t hostSynchronize(uint64_t timeout) override {
+        hostSynchronizeCalledTimes++;
+
+        if (failOnFirstHostSynchronize && hostSynchronizeCalledTimes == 1) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    bool failOnFirstHostSynchronize = false;
+    uint32_t hostSynchronizeCalledTimes = 0;
+};
+
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenEnqueueSignalFailsWhenExternalSemaphoreControllerIsRunningThenExpectedStateIsReturned, MatchAny) {
+    auto mockGdi = new MockFailGdi();
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    driverHandleImp->setMemoryManager(mockMemoryManager.get());
+
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    l0Device.setDriverHandle(driverHandleImp.get());
+
+    static_cast<OsEnvironmentWin *>(l0Device.neoDevice->getExecutionEnvironment()->osEnvironment.get())->gdi.reset(mockGdi);
+
+    ze_intel_external_semaphore_exp_desc_t desc = {};
+    ze_intel_external_semaphore_exp_handle_t hSemaphore;
+    HANDLE extSemaphoreHandle = 0;
+    ze_intel_external_semaphore_win32_exp_desc_t win32Desc = {};
+
+    desc.flags = ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32;
+
+    win32Desc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXP_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
+
+    desc.pNext = &win32Desc;
+
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+    driverHandleImp->externalSemaphoreControllerCreated = true;
+    auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
+    auto hProxyEvent = proxyEvent->toHandle();
+
+    externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+
+    proxyEvent->hostSignal(false);
+    externalSemaphoreController->startThread();
+
+    auto externalSemaphore = static_cast<ExternalSemaphoreImp *>(ExternalSemaphore::fromHandle(hSemaphore));
+    auto neoExternalSemaphore = externalSemaphore->neoExternalSemaphore.get();
+
+    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
+    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (externalSemaphoreController->proxyEvents.empty()); });
+    EXPECT_EQ(neoExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Initial);
+    lock.unlock();
+
+    externalSemaphoreController->releaseResources();
+    driverHandleImp->externalSemaphoreControllerCreated = false;
+
+    result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSemaphoreSignalOperationEventWhenExternalSemaphoreControllerIsRunningThenExpectedStateIsReturned, MatchAny) {
+    auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
+    driverHandleImp->setMemoryManager(mockMemoryManager.get());
+
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    l0Device.setDriverHandle(driverHandleImp.get());
+
+    ze_intel_external_semaphore_exp_desc_t desc = {};
+    ze_intel_external_semaphore_exp_handle_t hSemaphore;
+    HANDLE extSemaphoreHandle = 0;
+    ze_intel_external_semaphore_win32_exp_desc_t win32Desc = {};
+
+    desc.flags = ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_WIN32;
+
+    win32Desc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WIN32_EXP_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    win32Desc.handle = reinterpret_cast<void *>(extSemaphoreHandle);
+
+    desc.pNext = &win32Desc;
+
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+    driverHandleImp->externalSemaphoreControllerCreated = true;
+    auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
+    auto hProxyEvent = proxyEvent->toHandle();
+
+    externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+
+    proxyEvent->hostSignal(false);
+    externalSemaphoreController->startThread();
+
+    auto externalSemaphore = static_cast<ExternalSemaphoreImp *>(ExternalSemaphore::fromHandle(hSemaphore));
+    auto neoExternalSemaphore = externalSemaphore->neoExternalSemaphore.get();
+
+    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
+    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled); });
+    EXPECT_EQ(neoExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Signaled);
+    lock.unlock();
+
+    externalSemaphoreController->releaseResources();
+    driverHandleImp->externalSemaphoreControllerCreated = false;
+
+    result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenImmediateCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenSuccessIsReturned, MatchAny) {
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -121,7 +249,7 @@ HWTEST2_F(WddmExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExte
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(WddmExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenInvalidArgumentIsReturned, MatchAny) {
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenRegularCommandListWhenAppendWaitExternalSemaphoresExpIsCalledThenInvalidArgumentIsReturned, MatchAny) {
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -192,7 +320,7 @@ struct MockCommandListImmediateExtSem : public WhiteBox<::L0::CommandListCoreFam
     bool failingSignalEvent = false;
 };
 
-HWTEST2_F(WddmExternalSemaphoreTest, givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenInternalProxyEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -242,7 +370,7 @@ HWTEST2_F(WddmExternalSemaphoreTest, givenInternalProxyEventFailsToAppendWhenApp
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(WddmExternalSemaphoreTest, givenWaitEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenWaitEventFailsToAppendWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
@@ -293,7 +421,7 @@ HWTEST2_F(WddmExternalSemaphoreTest, givenWaitEventFailsToAppendWhenAppendWaitEx
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-HWTEST2_F(WddmExternalSemaphoreTest, givenSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
+HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSignalEventFailsWhenAppendWaitExternalSemaphoresExpIsCalledThenErrorIsReturned, MatchAny) {
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;

@@ -79,8 +79,23 @@ bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
     return true;
 }
 
-bool ExternalSemaphoreWindows::enqueueSignal() {
-    return false;
+bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
+    auto wddm = this->osInterface->getDriverModel()->as<Wddm>();
+
+    D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU signal = {};
+    signal.hDevice = wddm->getDeviceHandle();
+    signal.ObjectCount = 1;
+    signal.ObjectHandleArray = &this->syncHandle;
+    signal.FenceValueArray = fenceValue;
+
+    auto status = wddm->getGdi()->signalSynchronizationObjectFromCpu(&signal);
+    if (status != STATUS_SUCCESS) {
+        return false;
+    }
+
+    this->state = SemaphoreState::Signaled;
+
+    return true;
 }
 
 } // namespace NEO
