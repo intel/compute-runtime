@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,8 +121,8 @@ class SysFsAccessInterface : protected FsAccessInterface {
     MOCKABLE_VIRTUAL ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &list);
     ze_result_t readSymLink(const std::string path, std::string &buf) override;
     ze_result_t getRealPath(const std::string path, std::string &buf) override;
-    MOCKABLE_VIRTUAL ze_result_t bindDevice(const std::string device);
-    MOCKABLE_VIRTUAL ze_result_t unbindDevice(const std::string device);
+    MOCKABLE_VIRTUAL ze_result_t bindDevice(const std::string &gpuBindEntry, const std::string &device);
+    MOCKABLE_VIRTUAL ze_result_t unbindDevice(const std::string &gpuUnbindEntry, const std::string &device);
     bool fileExists(const std::string file) override;
     MOCKABLE_VIRTUAL bool isMyDeviceFile(const std::string dev);
     bool directoryExists(const std::string path) override;
@@ -140,8 +140,6 @@ class SysFsAccessInterface : protected FsAccessInterface {
     static const std::string devicesPath;
     static const std::string primaryDevName;
     static const std::string drmDriverDevNodeDir;
-    static const std::string intelGpuBindEntry;
-    static const std::string intelGpuUnbindEntry;
 };
 
 } // namespace Sysman

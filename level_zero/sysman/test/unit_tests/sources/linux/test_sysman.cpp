@@ -433,6 +433,42 @@ TEST_F(SysmanDeviceFixture, GivenValidPciPathWhileGettingCardBusPortThenReturned
     EXPECT_EQ(pciRootPort2, "device");
 }
 
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessAndValidDeviceNameWhenCallingBindDeviceThenSuccessIsReturned) {
+
+    std::string_view deviceName = "card0";
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string_view deviceName = "card0";
+        return static_cast<ssize_t>(deviceName.size());
+    });
+
+    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysfsAccess->bindDevice(pSysmanKmdInterface->getGpuBindEntry(), deviceName.data()));
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessAndValidDeviceNameWhenCallingUnbindDeviceThenSuccessIsReturned) {
+
+    std::string_view deviceName = "card0";
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string_view deviceName = "card0";
+        return static_cast<ssize_t>(deviceName.size());
+    });
+
+    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysfsAccess->unbindDevice(pSysmanKmdInterface->getGpuUnBindEntry(), deviceName.data()));
+}
+
 TEST_F(SysmanMultiDeviceFixture, GivenValidEffectiveUserIdCheckWhetherPermissionsReturnedByIsRootUserAreCorrect) {
     int euid = geteuid();
     auto pFsAccess = &pLinuxSysmanImp->getFsAccess();

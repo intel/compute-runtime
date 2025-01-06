@@ -149,6 +149,8 @@ class SysmanKmdInterface {
     virtual void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) = 0;
     virtual bool isVfEngineUtilizationSupported() const = 0;
     virtual ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) = 0;
+    virtual std::string getGpuBindEntry() const = 0;
+    virtual std::string getGpuUnBindEntry() const = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -167,6 +169,8 @@ class SysmanKmdInterfaceI915 {
     static std::string getHwmonNameI915(uint32_t subDeviceId, bool isSubdevice);
     static std::optional<std::string> getEngineClassStringI915(uint16_t engineClass);
     static std::string getEngineBasePathI915(uint32_t subDeviceId);
+    static std::string getGpuBindEntryI915();
+    static std::string getGpuUnBindEntryI915();
 };
 
 class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInterfaceI915 {
@@ -203,6 +207,8 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return false; }
     ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
+    std::string getGpuBindEntry() const override;
+    std::string getGpuUnBindEntry() const override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -248,6 +254,8 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return true; }
     ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
+    std::string getGpuBindEntry() const override;
+    std::string getGpuUnBindEntry() const override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -295,6 +303,8 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     bool isVfEngineUtilizationSupported() const override { return false; }
     ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
+    std::string getGpuBindEntry() const override;
+    std::string getGpuUnBindEntry() const override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

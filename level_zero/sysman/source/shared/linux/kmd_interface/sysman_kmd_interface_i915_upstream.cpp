@@ -144,5 +144,13 @@ ze_result_t SysmanKmdInterfaceI915Upstream::getBusyAndTotalTicksConfigs(uint64_t
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
+std::string SysmanKmdInterfaceI915Upstream::getGpuBindEntry() const {
+    return getGpuBindEntryI915();
+}
+
+std::string SysmanKmdInterfaceI915Upstream::getGpuUnBindEntry() const {
+    return getGpuUnBindEntryI915();
+}
+
 } // namespace Sysman
 } // namespace L0

@@ -180,5 +180,13 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getBusyAndTotalTicksConfigs(uint64_t f
     return ZE_RESULT_SUCCESS;
 }
 
+std::string SysmanKmdInterfaceI915Prelim::getGpuBindEntry() const {
+    return getGpuBindEntryI915();
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getGpuUnBindEntry() const {
+    return getGpuUnBindEntryI915();
+}
+
 } // namespace Sysman
 } // namespace L0

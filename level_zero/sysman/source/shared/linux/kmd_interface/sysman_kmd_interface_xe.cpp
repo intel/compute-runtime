@@ -150,5 +150,13 @@ ze_result_t SysmanKmdInterfaceXe::getBusyAndTotalTicksConfigs(uint64_t fnNumber,
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
+std::string SysmanKmdInterfaceXe::getGpuBindEntry() const {
+    return "/sys/bus/pci/drivers/xe/bind";
+}
+
+std::string SysmanKmdInterfaceXe::getGpuUnBindEntry() const {
+    return "/sys/bus/pci/drivers/xe/unbind";
+}
+
 } // namespace Sysman
 } // namespace L0

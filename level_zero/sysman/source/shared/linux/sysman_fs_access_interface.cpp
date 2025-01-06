@@ -394,8 +394,6 @@ const std::string SysFsAccessInterface::drmPath = "/sys/class/drm/";
 const std::string SysFsAccessInterface::devicesPath = "device/drm/";
 const std::string SysFsAccessInterface::primaryDevName = "card";
 const std::string SysFsAccessInterface::drmDriverDevNodeDir = "/dev/dri/";
-const std::string SysFsAccessInterface::intelGpuBindEntry = "/sys/bus/pci/drivers/i915/bind";
-const std::string SysFsAccessInterface::intelGpuUnbindEntry = "/sys/bus/pci/drivers/i915/unbind";
 
 std::string SysFsAccessInterface::fullPath(const std::string file) {
     // Prepend sysfs directory path for this device
@@ -511,12 +509,12 @@ ze_result_t SysFsAccessInterface::getRealPath(const std::string path, std::strin
     return FsAccessInterface::getRealPath(fullPath(path).c_str(), val);
 }
 
-ze_result_t SysFsAccessInterface::bindDevice(std::string device) {
-    return FsAccessInterface::write(intelGpuBindEntry, device);
+ze_result_t SysFsAccessInterface::bindDevice(const std::string &gpuBindEntry, const std::string &device) {
+    return FsAccessInterface::write(gpuBindEntry, device);
 }
 
-ze_result_t SysFsAccessInterface::unbindDevice(std::string device) {
-    return FsAccessInterface::write(intelGpuUnbindEntry, device);
+ze_result_t SysFsAccessInterface::unbindDevice(const std::string &gpuUnbindEntry, const std::string &device) {
+    return FsAccessInterface::write(gpuUnbindEntry, device);
 }
 
 bool SysFsAccessInterface::fileExists(const std::string file) {
