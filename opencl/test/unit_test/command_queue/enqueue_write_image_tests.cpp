@@ -847,7 +847,7 @@ struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
 HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     auto res = mockCommandQueueHw.enqueueStagingWriteImage(dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
-
+    EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteImageCounter);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

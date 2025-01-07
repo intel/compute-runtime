@@ -34,7 +34,9 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
-        return this->enqueueSVMMemcpy(false, chunkDst, chunkSrc, chunkSize, 0, nullptr, outEvent, csr);
+        auto ret = this->enqueueSVMMemcpy(false, chunkDst, chunkSrc, chunkSize, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
     };
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
@@ -55,7 +57,9 @@ cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingC
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
-        return this->enqueueWriteImageImpl(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        auto ret = this->enqueueWriteImageImpl(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
     };
     auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
@@ -78,7 +82,9 @@ cl_int CommandQueue::enqueueStagingReadImage(Image *srcImage, cl_bool blockingCo
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
-        return this->enqueueReadImageImpl(srcImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        auto ret = this->enqueueReadImageImpl(srcImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
     };
     auto bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
