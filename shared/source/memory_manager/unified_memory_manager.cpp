@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
@@ -261,7 +262,16 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
-    constexpr size_t pageSizeForAlignment = MemoryConstants::pageSize;
+    bool isDiscrete = false;
+    if (size >= MemoryConstants::pageSize2M) {
+        for (const auto rootDeviceIndex : memoryProperties.rootDeviceIndices) {
+            isDiscrete |= !this->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+            if (isDiscrete) {
+                break;
+            }
+        }
+    }
+    const size_t pageSizeForAlignment = isDiscrete ? MemoryConstants::pageSize2M : MemoryConstants::pageSize;
     const size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
