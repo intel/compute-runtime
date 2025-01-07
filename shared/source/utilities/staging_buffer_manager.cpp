@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -273,7 +273,7 @@ bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, co
     return stagingCopyEnabled && hostToUsmCopy && !hasDependencies && (isUsedByOsContext || size <= chunkSize);
 }
 
-bool StagingBufferManager::isValidForStagingTransferImage(const Device &device, const void *ptr, bool hasDependencies) const {
+bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const void *ptr, bool hasDependencies) const {
     auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();

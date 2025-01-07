@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,15 +152,21 @@ bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, con
     return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
 }
 
-bool CommandQueue::isValidForStagingTransferImage(Image *image, const void *ptr, bool hasDependencies) {
+bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, bool hasDependencies) {
+    GraphicsAllocation *allocation = nullptr;
+    context->tryGetExistingMapAllocation(ptr, memObj->getSize(), allocation);
+    if (allocation != nullptr) {
+        // Direct transfer from mapped allocation is faster than staging buffer
+        return false;
+    }
     auto stagingBufferManager = context->getStagingBufferManager();
     if (!stagingBufferManager) {
         return false;
     }
-    switch (image->getImageDesc().image_type) {
+    switch (memObj->peekClMemObjType()) {
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE2D:
-        return stagingBufferManager->isValidForStagingTransferImage(this->getDevice(), ptr, hasDependencies);
+        return stagingBufferManager->isValidForStagingTransfer(this->getDevice(), ptr, hasDependencies);
     default:
         return false;
     }

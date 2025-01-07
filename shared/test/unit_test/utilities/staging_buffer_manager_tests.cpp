@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,16 +198,16 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForImageWrite
         {nonUsmBuffer, true, false},
     };
     for (auto i = 0; i < 4; i++) {
-        auto actualValid = stagingBufferManager->isValidForStagingTransferImage(*pDevice, copyParamsStruct[i].ptr, copyParamsStruct[i].hasDependencies);
+        auto actualValid = stagingBufferManager->isValidForStagingTransfer(*pDevice, copyParamsStruct[i].ptr, copyParamsStruct[i].hasDependencies);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransferImage(*pDevice, nonUsmBuffer, false));
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, false));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
     auto isStaingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingTransferImage(*pDevice, nonUsmBuffer, false));
+    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, false));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 
