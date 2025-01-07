@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5512,7 +5512,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenParticular
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevicesIndicatedThenCorrectBankIsSelected) {
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryAndClonedAllocationTypeWhenAllTilesIndicatedThenCorrectBankIsSelected) {
     auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
     auto &localMemoryRegions = memoryInfo->localMemoryRegions;
     localMemoryRegions.resize(1U);
@@ -5526,6 +5526,25 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevi
 
     constexpr auto expectedMemoryBanks = 0b01;
     EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
+    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryAndNonClonedAllocationTypeWhenAllTilesIndicatedThenCorrectBankIsSelected) {
+    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
+    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
+    localMemoryRegions.resize(1U);
+    localMemoryRegions[0].tilesMask = 0b11;
+
+    AllocationProperties properties{1, true, 4096, AllocationType::workPartitionSurface, false, {}};
+    properties.subDevicesBitfield = 0b11;
+
+    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+
+    constexpr auto defaultMemoryBanks = 0b01;
+    EXPECT_NE(storageInfo.memoryBanks, defaultMemoryBanks);
+    EXPECT_EQ(storageInfo.memoryBanks, storageInfo.pageTablesVisibility);
+    EXPECT_TRUE(storageInfo.tileInstanced);
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 
