@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7225,9 +7225,9 @@ typedef struct tagMI_MEM_FENCE {
         uint32_t RawData[1];
     } TheStructure;
     typedef enum tagFENCE_TYPE {
-        FENCE_TYPE_RELEASE = 0x0,
-        FENCE_TYPE_ACQUIRE = 0x1,
-        FENCE_TYPE_MI_WRITE = 0x3,
+        FENCE_TYPE_RELEASE_FENCE = 0x0,
+        FENCE_TYPE_ACQUIRE_FENCE = 0x1,
+        FENCE_TYPE_MI_WRITE_FENCE = 0x3,
     } FENCE_TYPE;
     typedef enum tagMI_COMMAND_SUB_OPCODE {
         MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE = 0x0,
@@ -7240,7 +7240,7 @@ typedef struct tagMI_MEM_FENCE {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.FenceType = FENCE_TYPE_RELEASE;
+        TheStructure.Common.FenceType = FENCE_TYPE_RELEASE_FENCE;
         TheStructure.Common.MiCommandSubOpcode = MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_EXTENDED;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;

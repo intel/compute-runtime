@@ -141,9 +141,9 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::fence) {
         MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
         if (acquire) {
-            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE);
+            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE);
         } else {
-            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE);
+            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE);
         }
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));

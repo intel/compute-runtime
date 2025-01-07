@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -760,7 +760,7 @@ HWTEST2_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithHostMemAndNoScopeT
     auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_MEM_FENCE *>(*itor);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE, cmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE, cmd->getFenceType());
 
     context->freeMem(dstBuffer);
 }
@@ -1328,7 +1328,7 @@ HWTEST2_F(ImmediateCommandListAppendWaitOnMem, givenAppendWaitOnMemWithHostMemAn
     auto itor = find<MI_MEM_FENCE *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     auto cmd = genCmdCast<MI_MEM_FENCE *>(*itor);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE, cmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE, cmd->getFenceType());
 
     context->freeMem(dstBuffer);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7057,14 +7057,14 @@ struct MI_MEM_FENCE {
     } TheStructure;
 
     typedef enum tagFENCE_TYPE {
-        FENCE_TYPE_RELEASE = 0x0,
-        FENCE_TYPE_ACQUIRE = 0x1,
+        FENCE_TYPE_RELEASE_FENCE = 0x0,
+        FENCE_TYPE_ACQUIRE_FENCE = 0x1,
     } FENCE_TYPE;
 
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.MiCommandOpcode = 0x9;
-        TheStructure.Common.FenceType = FENCE_TYPE::FENCE_TYPE_RELEASE;
+        TheStructure.Common.FenceType = FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE;
     }
 
     static MI_MEM_FENCE sInit() {

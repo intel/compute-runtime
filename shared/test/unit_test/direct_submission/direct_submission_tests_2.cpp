@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ struct DirectSubmissionDispatchMiMemFenceTest : public DirectSubmissionDispatchB
 
                     EXPECT_NE(0u, sysFenceAddress->getSystemMemoryFenceAddress());
                 } else if (auto miMemFence = genCmdCast<MI_MEM_FENCE *>(it)) {
-                    if (miMemFence->getFenceType() == MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE) {
+                    if (miMemFence->getFenceType() == MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE) {
                         EXPECT_TRUE(id > systemMemoryFenceId);
 
                         fenceCount++;

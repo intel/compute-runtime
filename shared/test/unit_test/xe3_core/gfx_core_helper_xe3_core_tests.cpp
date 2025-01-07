@@ -556,7 +556,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenDefaultMemorySynchronizationComma
         EXPECT_EQ(1u, hwParser.cmdList.size());
         auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
         ASSERT_NE(nullptr, fenceCmd);
-        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+        EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
     }
 }
 
@@ -604,7 +604,7 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCom
     EXPECT_EQ(1u, hwParser.cmdList.size());
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*hwParser.cmdList.begin());
     ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 }
 
 using ProductHelperTestXe3Core = Test<DeviceFixture>;
