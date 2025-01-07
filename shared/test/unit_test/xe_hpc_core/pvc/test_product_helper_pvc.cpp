@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -295,6 +295,6 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenAskingForReadOnlyResourceSuppo
 }
 
 PVCTEST_F(PvcProductHelper, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion) {
-    EXPECT_EQ(IndirectDetectionVersions::requiredDetectIndirectVersionPVC, productHelper->getRequiredDetectIndirectVersion());
-    EXPECT_EQ(IndirectDetectionVersions::requiredDetectIndirectVersionPVCVectorCompiler, productHelper->getRequiredDetectIndirectVersionVC());
+    EXPECT_EQ(3u, productHelper->getRequiredDetectIndirectVersion());
+    EXPECT_EQ(9u, productHelper->getRequiredDetectIndirectVersionVC());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1095,6 +1095,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenQuery2DBlockStoreThenReturnTr
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetRequiredDetectIndirectVersionCalledThenReturnCorrectVersion, IsNotPVC) {
-    EXPECT_EQ(IndirectDetectionVersions::disabled, productHelper->getRequiredDetectIndirectVersion());
-    EXPECT_EQ(IndirectDetectionVersions::requiredDetectIndirectVersionVectorCompiler, productHelper->getRequiredDetectIndirectVersionVC());
+    EXPECT_EQ(9u, productHelper->getRequiredDetectIndirectVersion());
+    EXPECT_EQ(6u, productHelper->getRequiredDetectIndirectVersionVC());
 }
