@@ -7264,9 +7264,9 @@ typedef struct tagMEM_SET {
     typedef enum tagCLIENT {
         CLIENT_2D_PROCESSOR = 0x2,
     } CLIENT;
-    typedef enum tagINSTRUCTIONTARGET_OPCODE {
-        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x5B,
-    } INSTRUCTIONTARGET_OPCODE;
+    typedef enum tagINSTRUCTION_TARGETOPCODE {
+        INSTRUCTION_TARGETOPCODE_MEM_SET = 0x5b,
+    } INSTRUCTION_TARGETOPCODE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
@@ -7274,7 +7274,7 @@ typedef struct tagMEM_SET {
         TheStructure.Common.DestinationCompressible = DESTINATION_COMPRESSIBLE_NOT_COMPRESSIBLE;
         TheStructure.Common.FillType = FILL_TYPE_LINEAR_FILL;
         TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
-        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE::INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTION_TARGETOPCODE::INSTRUCTION_TARGETOPCODE_MEM_SET;
     }
     static tagMEM_SET sInit() {
         MEM_SET state;
