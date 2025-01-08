@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,9 +56,8 @@ class SysmanProductHelper {
     virtual ze_result_t getMemoryBandWidth(zes_mem_bandwidth_t *pBandwidth, WddmSysmanImp *pWddmSysmanImp) = 0;
 
     // Power
-    virtual std::vector<zes_power_domain_t> getNumberOfPowerDomainsSupported(WddmSysmanImp *pWddmSysmanImp) = 0;
-    virtual ze_result_t getPowerProperties(zes_power_properties_t *pProperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
-    virtual ze_result_t getPowerPropertiesExt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
+    virtual ze_result_t getPowerPropertiesFromPmt(zes_power_properties_t *pProperties) = 0;
+    virtual ze_result_t getPowerPropertiesExtFromPmt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain) = 0;
     virtual ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) = 0;
 
     // Pmt

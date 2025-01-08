@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -254,13 +254,20 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenGettingPowerPro
     }
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidEnergyCounterOnlyPowerDomainWhenGettingPowerGetPropertiesAndPmtIsNullThenUnsupportedIsReturned, IsBMG) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidEnergyCounterOnlyPowerDomainWhenGettingPowerGetPropertiesThenUnsupportedIsReturned, IsAtMostDg2) {
     // Setting allow set calls or not
     init(true);
-    pWddmSysmanImp->pPmt.reset(nullptr);
     std::unique_ptr<WddmPowerImp> pWddmPowerImp = std::make_unique<WddmPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_MEMORY);
     zes_power_properties_t powerProperties = {};
-    ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, pWddmPowerImp->getProperties(&powerProperties));
+    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmPowerImp->getProperties(&powerProperties));
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidEnergyCounterOnlyPowerDomainWhenGettingPowerGetPropertiesExtThenUnsupportedIsReturned, IsAtMostDg2) {
+    // Setting allow set calls or not
+    init(true);
+    std::unique_ptr<WddmPowerImp> pWddmPowerImp = std::make_unique<WddmPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_MEMORY);
+    zes_power_ext_properties_t powerProperties = {};
+    ASSERT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pWddmPowerImp->getPropertiesExt(&powerProperties));
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenInValidPowerDomainWhenGettingPowerGetPropertiesThenUnsupportedIsReturned, IsBMG) {

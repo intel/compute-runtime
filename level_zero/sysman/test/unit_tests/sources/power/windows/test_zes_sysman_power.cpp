@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -224,7 +224,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndDefaultPowerIsNotAvailableThenCallSucceedsAndDefaultLimitIsInvalid) {
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAndDefaultPowerIsNotAvailableThenCallFailsAndDefaultLimitIsInvalid) {
     // Setting allow set calls or not
     init(true);
 
@@ -241,8 +241,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
 
         pKmdSysManager->mockPowerFailure[KmdSysman::Requests::Power::TdpDefault] = 1;
         ze_result_t result = zesPowerGetProperties(handle, &properties);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(defaultLimit.limit, -1);
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+        EXPECT_EQ(defaultLimit.limit, 0);
     }
 }
 

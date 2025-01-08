@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -863,163 +863,30 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandWidth(zes_mem_bandwi
 }
 
 template <>
-std::vector<zes_power_domain_t> SysmanProductHelperHw<gfxProduct>::getNumberOfPowerDomainsSupported(WddmSysmanImp *pWddmSysmanImp) {
-    KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
-    KmdSysman::RequestProperty request;
-    KmdSysman::ResponseProperty response;
-
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::PowerComponent;
-    request.requestId = KmdSysman::Requests::Power::NumPowerDomains;
-
-    ze_result_t status = pKmdSysManager->requestSingle(request, response);
-
-    std::vector<zes_power_domain_t> powerDomains;
-    if (status != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "No power domains are supported, power handles will not be created.\n");
-        return powerDomains;
-    }
-
-    uint32_t supportedPowerDomains = 0;
-    memcpy_s(&supportedPowerDomains, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-
-    switch (supportedPowerDomains) {
-    case 1:
-        powerDomains.push_back(ZES_POWER_DOMAIN_PACKAGE);
-        break;
-    case 2:
-        powerDomains.push_back(ZES_POWER_DOMAIN_PACKAGE);
-        powerDomains.push_back(ZES_POWER_DOMAIN_CARD);
-        break;
-    default:
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Unexpected value returned by KMD, power handles will not be created.\n");
-        break;
-    }
-
-    PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
-    if (pPmt != nullptr) {
-        powerDomains.push_back(ZES_POWER_DOMAIN_MEMORY);
-        powerDomains.push_back(ZES_POWER_DOMAIN_GPU);
-    }
-    return powerDomains;
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerPropertiesFromPmt(zes_power_properties_t *pProperties) {
+    pProperties->onSubdevice = false;
+    pProperties->subdeviceId = 0;
+    pProperties->canControl = false;
+    pProperties->isEnergyThresholdSupported = false;
+    pProperties->defaultLimit = -1;
+    pProperties->minLimit = -1;
+    pProperties->maxLimit = -1;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerProperties(zes_power_properties_t *pProperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) {
-    if (powerDomain == ZES_POWER_DOMAIN_CARD || powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
-        KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
-        pProperties->onSubdevice = false;
-        pProperties->subdeviceId = 0;
-
-        std::vector<KmdSysman::RequestProperty> vRequests = {};
-        std::vector<KmdSysman::ResponseProperty> vResponses = {};
-        KmdSysman::RequestProperty request = {};
-
-        request.commandId = KmdSysman::Command::Get;
-        request.componentId = KmdSysman::Component::PowerComponent;
-        request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(powerDomain));
-        request.requestId = KmdSysman::Requests::Power::EnergyThresholdSupported;
-        vRequests.push_back(request);
-
-        request.requestId = KmdSysman::Requests::Power::TdpDefault;
-        vRequests.push_back(request);
-
-        request.requestId = KmdSysman::Requests::Power::MinPowerLimitDefault;
-        vRequests.push_back(request);
-
-        request.requestId = KmdSysman::Requests::Power::MaxPowerLimitDefault;
-        vRequests.push_back(request);
-
-        ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
-
-        if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
-            return status;
-        }
-
-        if (vResponses[0].returnCode == KmdSysman::Success) {
-            memcpy_s(&pProperties->canControl, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
-            memcpy_s(&pProperties->isEnergyThresholdSupported, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
-        }
-
-        pProperties->defaultLimit = -1;
-        if (vResponses[1].returnCode == KmdSysman::Success) {
-            memcpy_s(&pProperties->defaultLimit, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
-        }
-
-        pProperties->minLimit = -1;
-        if (vResponses[2].returnCode == KmdSysman::Success) {
-            memcpy_s(&pProperties->minLimit, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
-        }
-
-        pProperties->maxLimit = -1;
-        if (vResponses[3].returnCode == KmdSysman::Success) {
-            memcpy_s(&pProperties->maxLimit, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
-        }
-        return ZE_RESULT_SUCCESS;
-    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY || powerDomain == ZES_POWER_DOMAIN_GPU) {
-        PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
-        if (pPmt == nullptr) {
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
-        pProperties->onSubdevice = false;
-        pProperties->subdeviceId = 0;
-        pProperties->canControl = false;
-        pProperties->isEnergyThresholdSupported = false;
-        pProperties->defaultLimit = -1;
-        pProperties->minLimit = -1;
-        pProperties->maxLimit = -1;
-        return ZE_RESULT_SUCCESS;
-    } else {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerPropertiesExtFromPmt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain) {
+    pExtPoperties->domain = powerDomain;
+    if (pExtPoperties->defaultLimit) {
+        pExtPoperties->defaultLimit->limit = -1;
+        pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
+        pExtPoperties->defaultLimit->enabledStateLocked = true;
+        pExtPoperties->defaultLimit->intervalValueLocked = true;
+        pExtPoperties->defaultLimit->limitValueLocked = true;
+        pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
+        pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
     }
-}
-
-template <>
-ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerPropertiesExt(zes_power_ext_properties_t *pExtPoperties, zes_power_domain_t powerDomain, WddmSysmanImp *pWddmSysmanImp) {
-    if (powerDomain == ZES_POWER_DOMAIN_CARD || powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
-        KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
-        pExtPoperties->domain = powerDomain;
-        if (pExtPoperties->defaultLimit) {
-            KmdSysman::RequestProperty request;
-            KmdSysman::ResponseProperty response;
-
-            request.commandId = KmdSysman::Command::Get;
-            request.componentId = KmdSysman::Component::PowerComponent;
-            request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(powerDomain));
-            request.requestId = KmdSysman::Requests::Power::TdpDefault;
-
-            ze_result_t status = pKmdSysManager->requestSingle(request, response);
-            pExtPoperties->defaultLimit->limit = -1;
-
-            if (status == ZE_RESULT_SUCCESS) {
-                memcpy_s(&pExtPoperties->defaultLimit->limit, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
-            }
-
-            pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
-            pExtPoperties->defaultLimit->enabledStateLocked = true;
-            pExtPoperties->defaultLimit->intervalValueLocked = true;
-            pExtPoperties->defaultLimit->limitValueLocked = true;
-            pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
-            pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY || powerDomain == ZES_POWER_DOMAIN_GPU) {
-        pExtPoperties->domain = powerDomain;
-        if (pExtPoperties->defaultLimit) {
-            pExtPoperties->defaultLimit->limit = -1;
-            pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
-            pExtPoperties->defaultLimit->enabledStateLocked = true;
-            pExtPoperties->defaultLimit->intervalValueLocked = true;
-            pExtPoperties->defaultLimit->limitValueLocked = true;
-            pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
-            pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
-        }
-        return ZE_RESULT_SUCCESS;
-    } else {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    return ZE_RESULT_SUCCESS;
 }
 
 template <>

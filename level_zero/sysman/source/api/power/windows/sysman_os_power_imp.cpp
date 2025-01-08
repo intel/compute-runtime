@@ -16,13 +16,101 @@ namespace L0 {
 namespace Sysman {
 
 ze_result_t WddmPowerImp::getProperties(zes_power_properties_t *pProperties) {
-    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
-    return pSysmanProductHelper->getPowerProperties(pProperties, this->powerDomain, pWddmSysmanImp);
+    if (powerDomain == ZES_POWER_DOMAIN_CARD || powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+        pProperties->onSubdevice = false;
+        pProperties->subdeviceId = 0;
+
+        std::vector<KmdSysman::RequestProperty> vRequests = {};
+        std::vector<KmdSysman::ResponseProperty> vResponses = {};
+        KmdSysman::RequestProperty request = {};
+
+        request.commandId = KmdSysman::Command::Get;
+        request.componentId = KmdSysman::Component::PowerComponent;
+        request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(powerDomain));
+        request.requestId = KmdSysman::Requests::Power::EnergyThresholdSupported;
+        vRequests.push_back(request);
+
+        request.requestId = KmdSysman::Requests::Power::TdpDefault;
+        vRequests.push_back(request);
+
+        request.requestId = KmdSysman::Requests::Power::MinPowerLimitDefault;
+        vRequests.push_back(request);
+
+        request.requestId = KmdSysman::Requests::Power::MaxPowerLimitDefault;
+        vRequests.push_back(request);
+
+        ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
+
+        if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
+            return status;
+        }
+
+        pProperties->canControl = false;
+        pProperties->isEnergyThresholdSupported = false;
+        if (vResponses[0].returnCode == KmdSysman::Success) {
+            memcpy_s(&pProperties->canControl, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
+            memcpy_s(&pProperties->isEnergyThresholdSupported, sizeof(ze_bool_t), vResponses[0].dataBuffer, sizeof(ze_bool_t));
+        }
+
+        pProperties->defaultLimit = -1;
+        if (vResponses[1].returnCode == KmdSysman::Success) {
+            memcpy_s(&pProperties->defaultLimit, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
+        }
+
+        pProperties->minLimit = -1;
+        if (vResponses[2].returnCode == KmdSysman::Success) {
+            memcpy_s(&pProperties->minLimit, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
+        }
+
+        pProperties->maxLimit = -1;
+        if (vResponses[3].returnCode == KmdSysman::Success) {
+            memcpy_s(&pProperties->maxLimit, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
+        }
+        return ZE_RESULT_SUCCESS;
+    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY || powerDomain == ZES_POWER_DOMAIN_GPU) {
+        auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+        return pSysmanProductHelper->getPowerPropertiesFromPmt(pProperties);
+    } else {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 }
 
 ze_result_t WddmPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
-    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
-    return pSysmanProductHelper->getPowerPropertiesExt(pExtPoperties, this->powerDomain, pWddmSysmanImp);
+    if (powerDomain == ZES_POWER_DOMAIN_CARD || powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+        pExtPoperties->domain = powerDomain;
+        if (pExtPoperties->defaultLimit) {
+            KmdSysman::RequestProperty request;
+            KmdSysman::ResponseProperty response;
+
+            request.commandId = KmdSysman::Command::Get;
+            request.componentId = KmdSysman::Component::PowerComponent;
+            request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(powerDomain));
+            request.requestId = KmdSysman::Requests::Power::TdpDefault;
+
+            ze_result_t status = pKmdSysManager->requestSingle(request, response);
+            if (status != ZE_RESULT_SUCCESS) {
+                return status;
+            }
+
+            pExtPoperties->defaultLimit->limit = -1;
+            memcpy_s(&pExtPoperties->defaultLimit->limit, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+
+            pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
+            pExtPoperties->defaultLimit->enabledStateLocked = true;
+            pExtPoperties->defaultLimit->intervalValueLocked = true;
+            pExtPoperties->defaultLimit->limitValueLocked = true;
+            pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
+            pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    } else if (powerDomain == ZES_POWER_DOMAIN_MEMORY || powerDomain == ZES_POWER_DOMAIN_GPU) {
+        auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
+        return pSysmanProductHelper->getPowerPropertiesExtFromPmt(pExtPoperties, powerDomain);
+    } else {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 }
 
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
@@ -249,14 +337,6 @@ void WddmPowerImp::initPowerLimits() {
         return;
     }
 
-    auto paramInfo = powerGroupToDomainTypeMap.find(this->powerDomain);
-    if (paramInfo == powerGroupToDomainTypeMap.end()) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "Power Domain %u is not supported for KMD calls.\n", this->powerDomain);
-        DEBUG_BREAK_IF(true);
-        return;
-    }
-
     powerLimitCount = 0;
     std::vector<KmdSysman::RequestProperty> vRequests(3);
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
@@ -264,7 +344,7 @@ void WddmPowerImp::initPowerLimits() {
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
-    request.paramInfo = static_cast<uint32_t>(paramInfo->second);
+    request.paramInfo = static_cast<uint32_t>(powerGroupToDomainTypeMap.at(this->powerDomain));
     request.requestId = KmdSysman::Requests::Power::PowerLimit1Enabled;
     vRequests[0] = request;
 
@@ -302,6 +382,7 @@ void WddmPowerImp::initPowerLimits() {
 }
 
 bool WddmPowerImp::isPowerModuleSupported() {
+    initPowerLimits();
     return true;
 }
 
@@ -528,13 +609,49 @@ WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t 
     pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     isPowerHandleEnergyCounterOnly();
-    initPowerLimits();
 }
 
 std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
-    auto pSysmanProductHelper = pWddmSysmanImp->getSysmanProductHelper();
-    return pSysmanProductHelper->getNumberOfPowerDomainsSupported(pWddmSysmanImp);
+    KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
+
+    request.commandId = KmdSysman::Command::Get;
+    request.componentId = KmdSysman::Component::PowerComponent;
+    request.requestId = KmdSysman::Requests::Power::NumPowerDomains;
+
+    ze_result_t status = pKmdSysManager->requestSingle(request, response);
+
+    std::vector<zes_power_domain_t> powerDomains;
+    if (status != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                              "No power domains are supported, power handles will not be created.\n");
+    } else {
+        uint32_t supportedPowerDomains = 0;
+        memcpy_s(&supportedPowerDomains, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
+
+        switch (supportedPowerDomains) {
+        case 1:
+            powerDomains.push_back(ZES_POWER_DOMAIN_PACKAGE);
+            break;
+        case 2:
+            powerDomains.push_back(ZES_POWER_DOMAIN_PACKAGE);
+            powerDomains.push_back(ZES_POWER_DOMAIN_CARD);
+            break;
+        default:
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Unexpected value returned by KMD. KMD based power handles will not be created.\n");
+            break;
+        }
+    }
+
+    PlatformMonitoringTech *pPmt = pWddmSysmanImp->getSysmanPmt();
+    if (pPmt != nullptr) {
+        powerDomains.push_back(ZES_POWER_DOMAIN_MEMORY);
+        powerDomains.push_back(ZES_POWER_DOMAIN_GPU);
+    }
+    return powerDomains;
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) {
