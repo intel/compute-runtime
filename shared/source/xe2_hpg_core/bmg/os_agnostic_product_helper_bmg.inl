@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,11 +38,6 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
 template <>
 void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
-    return 16u;
 }
 
 template <>

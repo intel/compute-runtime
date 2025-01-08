@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,18 +76,6 @@ void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, con
 template <>
 uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
     return 16u;
-}
-
-template <>
-uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (debugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
-        return static_cast<uint32_t>(debugManager.flags.OverrideNumComputeUnitsForScratch.get());
-    }
-
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto maxSubSlice = productHelper.computeMaxNeededSubSliceSpace(*hwInfo);
-    return maxSubSlice * hwInfo->gtSystemInfo.MaxEuPerSubSlice * productHelper.getThreadEuRatioForScratch(*hwInfo);
 }
 
 template <>

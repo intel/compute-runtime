@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,11 +96,6 @@ TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutP
 template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
-    return 16u;
 }
 
 } // namespace NEO
