@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,7 @@ inline void validate(ResulT result, const char *message) {
 bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *longName);
 
 int getParamValue(int argc, char *argv[], const char *shortName, const char *longName, int defaultValue);
+uint32_t getParamValue(int argc, char *argv[], const char *shortName, const char *longName, uint32_t defaultValue);
 
 const char *getParamValue(int argc, char *argv[], const char *shortName, const char *longName, const char *defaultString);
 
