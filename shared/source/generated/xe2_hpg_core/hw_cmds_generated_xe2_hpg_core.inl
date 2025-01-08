@@ -6912,7 +6912,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t Reserved_37 : BITFIELD_RANGE(5, 6);
             uint32_t AsyncComputeThreadLimit : BITFIELD_RANGE(7, 9);
             uint32_t Reserved_42 : BITFIELD_RANGE(10, 12);
-            uint32_t EuThreadSchedulingModeOverride : BITFIELD_RANGE(13, 14);
+            uint32_t EuThreadSchedulingMode : BITFIELD_RANGE(13, 14);
             uint32_t LargeGrfMode : BITFIELD_RANGE(15, 15);
             uint32_t Mask1 : BITFIELD_RANGE(16, 31);
             // DWORD 2
@@ -6965,12 +6965,12 @@ typedef struct tagSTATE_COMPUTE_MODE {
         ASYNC_COMPUTE_THREAD_LIMIT_MAX_40 = 0x6,
         ASYNC_COMPUTE_THREAD_LIMIT_MAX_48 = 0x7,
     } ASYNC_COMPUTE_THREAD_LIMIT;
-    typedef enum tagEU_THREAD_SCHEDULING_MODE_OVERRIDE {
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT = 0x0,
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST = 0x1,
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN = 0x2,
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN = 0x3,
-    } EU_THREAD_SCHEDULING_MODE_OVERRIDE;
+    typedef enum tagEU_THREAD_SCHEDULING_MODE {
+        EU_THREAD_SCHEDULING_MODE_HW_DEFAULT = 0x0,
+        EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST = 0x1,
+        EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN = 0x2,
+        EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN = 0x3,
+    } EU_THREAD_SCHEDULING_MODE;
     typedef enum tagMIDTHREAD_PREEMPTION_DELAY_TIMER {
         MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0 = 0x0,
         MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_50 = 0x1,
@@ -7000,7 +7000,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.ZPassAsyncComputeThreadLimit = Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60;
         TheStructure.Common.AsyncComputeThreadLimit = ASYNC_COMPUTE_THREAD_LIMIT_DISABLED;
-        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT;
+        TheStructure.Common.EuThreadSchedulingMode = EU_THREAD_SCHEDULING_MODE_HW_DEFAULT;
         TheStructure.Common.MidthreadPreemptionDelayTimer = MIDTHREAD_PREEMPTION_DELAY_TIMER_MTP_TIMER_VAL_0;
         TheStructure.Common.MidthreadPreemptionOverdispatchThreadGroupCount = MIDTHREAD_PREEMPTION_OVERDISPATCH_THREAD_GROUP_COUNT_OD_TG_M2;
         TheStructure.Common.MidthreadPreemptionOverdispatchTestMode = MIDTHREAD_PREEMPTION_OVERDISPATCH_TEST_MODE_REGULAR;
@@ -7033,11 +7033,11 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline ASYNC_COMPUTE_THREAD_LIMIT getAsyncComputeThreadLimit() const {
         return static_cast<ASYNC_COMPUTE_THREAD_LIMIT>(TheStructure.Common.AsyncComputeThreadLimit);
     }
-    inline void setEuThreadSchedulingModeOverride(const EU_THREAD_SCHEDULING_MODE_OVERRIDE value) {
-        TheStructure.Common.EuThreadSchedulingModeOverride = value;
+    inline void setEuThreadSchedulingMode(const EU_THREAD_SCHEDULING_MODE value) {
+        TheStructure.Common.EuThreadSchedulingMode = value;
     }
-    inline EU_THREAD_SCHEDULING_MODE_OVERRIDE getEuThreadSchedulingModeOverride() const {
-        return static_cast<EU_THREAD_SCHEDULING_MODE_OVERRIDE>(TheStructure.Common.EuThreadSchedulingModeOverride);
+    inline EU_THREAD_SCHEDULING_MODE getEuThreadSchedulingMode() const {
+        return static_cast<EU_THREAD_SCHEDULING_MODE>(TheStructure.Common.EuThreadSchedulingMode);
     }
     inline void setLargeGrfMode(const bool value) {
         TheStructure.Common.LargeGrfMode = value;

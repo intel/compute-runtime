@@ -817,7 +817,7 @@ void CmdListPipelineSelectStateFixture::testBodySystolicAndScratchOnSecondComman
 template <typename FamilyType>
 void CmdListThreadArbitrationFixture::testBody() {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
+    using EU_THREAD_SCHEDULING_MODE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE;
 
     const ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -881,7 +881,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         ASSERT_EQ(1u, stateComputeModeList.size());
 
         auto stateComputeModeCmd = genCmdCast<STATE_COMPUTE_MODE *>(*stateComputeModeList[0]);
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, stateComputeModeCmd->getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST, stateComputeModeCmd->getEuThreadSchedulingMode());
 
         cmdList.clear();
         stateComputeModeList.clear();
@@ -927,7 +927,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         ASSERT_EQ(1u, stateComputeModeList.size());
 
         auto stateComputeModeCmd = genCmdCast<STATE_COMPUTE_MODE *>(*stateComputeModeList[0]);
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, stateComputeModeCmd->getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST, stateComputeModeCmd->getEuThreadSchedulingMode());
 
         cmdList.clear();
         stateComputeModeList.clear();
@@ -948,7 +948,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         ASSERT_EQ(1u, stateComputeModeList.size());
 
         stateComputeModeCmd = genCmdCast<STATE_COMPUTE_MODE *>(*stateComputeModeList[0]);
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, stateComputeModeCmd->getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, stateComputeModeCmd->getEuThreadSchedulingMode());
 
         cmdList.clear();
         stateComputeModeList.clear();
@@ -994,7 +994,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         ASSERT_EQ(1u, stateComputeModeList.size());
 
         auto stateComputeModeCmd = genCmdCast<STATE_COMPUTE_MODE *>(*stateComputeModeList[0]);
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, stateComputeModeCmd->getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST, stateComputeModeCmd->getEuThreadSchedulingMode());
 
         cmdList.clear();
         stateComputeModeList.clear();
@@ -1017,7 +1017,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         ASSERT_EQ(1u, stateComputeModeList.size());
 
         stateComputeModeCmd = genCmdCast<STATE_COMPUTE_MODE *>(*stateComputeModeList[0]);
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, stateComputeModeCmd->getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN, stateComputeModeCmd->getEuThreadSchedulingMode());
 
         cmdList.clear();
         stateComputeModeList.clear();
@@ -1038,7 +1038,7 @@ void CmdListThreadArbitrationFixture::testBody() {
         ASSERT_EQ(1u, stateComputeModeList.size());
 
         stateComputeModeCmd = genCmdCast<STATE_COMPUTE_MODE *>(*stateComputeModeList[0]);
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, stateComputeModeCmd->getEuThreadSchedulingModeOverride());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, stateComputeModeCmd->getEuThreadSchedulingMode());
 
         cmdList.clear();
         stateComputeModeList.clear();

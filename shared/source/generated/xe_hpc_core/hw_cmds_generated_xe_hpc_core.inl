@@ -6849,7 +6849,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t Reserved_42 : BITFIELD_RANGE(10, 10);
             uint32_t DisableAtomicOnClearData : BITFIELD_RANGE(11, 11);
             uint32_t Reserved_44 : BITFIELD_RANGE(12, 12);
-            uint32_t EuThreadSchedulingModeOverride : BITFIELD_RANGE(13, 14);
+            uint32_t EuThreadSchedulingMode : BITFIELD_RANGE(13, 14);
             uint32_t LargeGrfMode : BITFIELD_RANGE(15, 15);
             uint32_t Mask : BITFIELD_RANGE(16, 31);
         } Common;
@@ -6887,12 +6887,12 @@ typedef struct tagSTATE_COMPUTE_MODE {
         DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE = 0x0,
         DISABLE_ATOMIC_ON_CLEAR_DATA_DISABLE = 0x1,
     } DISABLE_ATOMIC_ON_CLEAR_DATA;
-    typedef enum tagEU_THREAD_SCHEDULING_MODE_OVERRIDE {
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT = 0x0,
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST = 0x1,
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN = 0x2,
-        EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN = 0x3,
-    } EU_THREAD_SCHEDULING_MODE_OVERRIDE;
+    typedef enum tagEU_THREAD_SCHEDULING_MODE {
+        EU_THREAD_SCHEDULING_MODE_HW_DEFAULT = 0x0,
+        EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST = 0x1,
+        EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN = 0x2,
+        EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN = 0x3,
+    } EU_THREAD_SCHEDULING_MODE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
@@ -6904,7 +6904,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
         TheStructure.Common.FastClearDisabledOnCompressedSurface = FAST_CLEAR_DISABLED_ON_COMPRESSED_SURFACE_ENABLED;
         TheStructure.Common.DisableSlmReadMergeOptimization = DISABLE_SLM_READ_MERGE_OPTIMIZATION_ENABLED;
         TheStructure.Common.DisableAtomicOnClearData = DISABLE_ATOMIC_ON_CLEAR_DATA_ENABLE;
-        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT;
+        TheStructure.Common.EuThreadSchedulingMode = EU_THREAD_SCHEDULING_MODE_HW_DEFAULT;
     }
     static tagSTATE_COMPUTE_MODE sInit() {
         STATE_COMPUTE_MODE state;
@@ -6939,11 +6939,11 @@ typedef struct tagSTATE_COMPUTE_MODE {
     inline DISABLE_ATOMIC_ON_CLEAR_DATA getDisableAtomicOnClearData() const {
         return static_cast<DISABLE_ATOMIC_ON_CLEAR_DATA>(TheStructure.Common.DisableAtomicOnClearData);
     }
-    inline void setEuThreadSchedulingModeOverride(const EU_THREAD_SCHEDULING_MODE_OVERRIDE value) {
-        TheStructure.Common.EuThreadSchedulingModeOverride = value;
+    inline void setEuThreadSchedulingMode(const EU_THREAD_SCHEDULING_MODE value) {
+        TheStructure.Common.EuThreadSchedulingMode = value;
     }
-    inline EU_THREAD_SCHEDULING_MODE_OVERRIDE getEuThreadSchedulingModeOverride() const {
-        return static_cast<EU_THREAD_SCHEDULING_MODE_OVERRIDE>(TheStructure.Common.EuThreadSchedulingModeOverride);
+    inline EU_THREAD_SCHEDULING_MODE getEuThreadSchedulingMode() const {
+        return static_cast<EU_THREAD_SCHEDULING_MODE>(TheStructure.Common.EuThreadSchedulingMode);
     }
     inline void setLargeGrfMode(const bool value) {
         TheStructure.Common.LargeGrfMode = value;
