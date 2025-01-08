@@ -73,6 +73,12 @@ bool DebugSessionLinuxXe::handleInternalEvent() {
 
     auto debugEvent = reinterpret_cast<NEO::EuDebugEvent *>(eventMemory.get());
     handleEvent(debugEvent);
+    if (debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeExecQueuePlacements) ||
+        debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOp) ||
+        debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindUfence) ||
+        debugEvent->type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindOpMetadata)) {
+        processPendingVmBindEvents();
+    }
     return true;
 }
 
@@ -302,7 +308,6 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         vmBindOpData.vmBindOp = *vmBindOp;
         vmBindData.pendingNumBinds--;
         clientHandleToConnection[clientHandle]->vmBindIdentifierMap[vmBindOp->base.seqno] = vmBindOp->vmBindRefSeqno;
-        handleVmBind(vmBindData);
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeVmBindUfence)) {
         NEO::EuDebugEventVmBindUfence *vmBindUfence = reinterpret_cast<NEO::EuDebugEventVmBindUfence *>(event);
 
@@ -316,7 +321,6 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         UNRECOVERABLE_IF(vmBindMap[vmBindUfence->vmBindRefSeqno].uFenceReceived); // Dont expect multiple UFENCE for same vm_bind
         vmBindMap[vmBindUfence->vmBindRefSeqno].uFenceReceived = true;
         vmBindMap[vmBindUfence->vmBindRefSeqno].vmBindUfence = *vmBindUfence;
-        handleVmBind(vmBindMap[vmBindUfence->vmBindRefSeqno]);
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeMetadata)) {
         NEO::EuDebugEventMetadata *metaData = reinterpret_cast<NEO::EuDebugEventMetadata *>(event);
         if (clientHandle == invalidClientHandle) {
@@ -343,7 +347,6 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
         UNRECOVERABLE_IF(!vmBindOpData.pendingNumExtensions);
         vmBindOpData.vmBindOpMetadataVec.push_back(*vmBindOpMetadata);
         vmBindOpData.pendingNumExtensions--;
-        handleVmBind(vmBindMap[vmBindSeqNo]);
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypeExecQueuePlacements)) {
         NEO::EuDebugEventExecQueuePlacements *execQueuePlacements = reinterpret_cast<NEO::EuDebugEventExecQueuePlacements *>(event);
 
@@ -382,6 +385,21 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
     }
 }
 
+void DebugSessionLinuxXe::processPendingVmBindEvents() {
+    std::vector<decltype(clientHandleToConnection[clientHandle]->vmBindMap)::key_type> keysToDelete;
+    auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
+    for (auto &pair : vmBindMap) {
+        auto &vmBindData = pair.second;
+        if (handleVmBind(vmBindData) == false) {
+            break;
+        }
+        keysToDelete.push_back(pair.first);
+    }
+    for (const auto &key : keysToDelete) {
+        vmBindMap.erase(key);
+    }
+}
+
 bool DebugSessionLinuxXe::canHandleVmBind(VmBindData &vmBindData) const {
     if (vmBindData.pendingNumBinds) {
         return false;
@@ -401,9 +419,9 @@ bool DebugSessionLinuxXe::canHandleVmBind(VmBindData &vmBindData) const {
     return true;
 }
 
-void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
+bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     if (!canHandleVmBind(vmBindData)) {
-        return;
+        return false;
     }
     bool shouldAckEvent = vmBindData.vmBind.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventVmBindFlagUfence);
     auto connection = clientHandleToConnection[clientHandle].get();
@@ -414,9 +432,17 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
     bool triggerModuleLoadEvent = false;
 
     uint32_t tileIndex = 0;
-    if (connection->vmToTile.find(vmBindData.vmBind.vmHandle) != connection->vmToTile.end()) {
-        tileIndex = connection->vmToTile[vmBindData.vmBind.vmHandle];
+    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+    if (numTiles > 0) {
+        if (connection->vmToTile.find(vmBindData.vmBind.vmHandle) != connection->vmToTile.end()) {
+            tileIndex = connection->vmToTile[vmBindData.vmBind.vmHandle];
+            PRINT_DEBUGGER_INFO_LOG("handleVmBind: tileIndex = %d for vmHandle = %" SCNx64 " \n", tileIndex, vmBindData.vmBind.vmHandle);
+        } else {
+            PRINT_DEBUGGER_ERROR_LOG("handleVmBind: tileIndex not found for vmHandle = %" SCNx64 " \n", vmBindData.vmBind.vmHandle);
+            return false;
+        }
     }
+
     for (auto &vmBindOpData : vmBindData.vmBindOpMap) {
         auto &vmBindOp = vmBindOpData.second.vmBindOp;
         for (const auto &vmBindOpMetadata : vmBindOpData.second.vmBindOpMetadataVec) {
@@ -574,6 +600,8 @@ void DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
         EventToAck ackEvent(vmBindData.vmBindUfence.base.seqno, vmBindData.vmBindUfence.base.type);
         eventAckIoctl(ackEvent);
     }
+
+    return true;
 }
 
 void DebugSessionLinuxXe::handleMetadataEvent(NEO::EuDebugEventMetadata *metaData) {

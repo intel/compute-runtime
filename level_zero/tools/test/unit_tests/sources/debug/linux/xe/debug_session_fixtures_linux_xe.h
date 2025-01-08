@@ -172,6 +172,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::addThreadToNewlyStoppedFromRaisedAttentionForTileSession;
     using L0::DebugSessionLinuxXe::asyncThread;
     using L0::DebugSessionLinuxXe::asyncThreadFunction;
+    using L0::DebugSessionLinuxXe::canHandleVmBind;
     using L0::DebugSessionLinuxXe::checkStoppedThreadsAndGenerateEvents;
     using L0::DebugSessionLinuxXe::checkTriggerEventsForAttentionForTileSession;
     using L0::DebugSessionLinuxXe::ClientConnectionXe;
@@ -184,6 +185,8 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     using L0::DebugSessionLinuxXe::getThreadStateMutexForTileSession;
     using L0::DebugSessionLinuxXe::getVmHandleFromClientAndlrcHandle;
     using L0::DebugSessionLinuxXe::handleEvent;
+    using L0::DebugSessionLinuxXe::handleInternalEvent;
+    using L0::DebugSessionLinuxXe::handleVmBind;
     using L0::DebugSessionLinuxXe::internalEventQueue;
     using L0::DebugSessionLinuxXe::internalEventThread;
     using L0::DebugSessionLinuxXe::invalidClientHandle;
@@ -224,6 +227,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     void handleAttentionEvent(NEO::EuDebugEventEuAttention *attention) override {
         handleAttentionEventCalled++;
         return DebugSessionLinuxXe::handleAttentionEvent(attention);
+    }
+
+    void processPendingVmBindEvents() override {
+        processPendingVmBindEventsCallCount++;
+        return DebugSessionLinuxXe::processPendingVmBindEvents();
     }
 
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
@@ -294,6 +302,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
     }
 
     uint32_t readSystemRoutineIdentCallCount = 0;
+    uint32_t processPendingVmBindEventsCallCount = 0;
     uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
     size_t numThreadsPassedToThreadControl = 0;

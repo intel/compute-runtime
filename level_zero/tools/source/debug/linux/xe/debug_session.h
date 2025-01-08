@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,6 +82,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     void startAsyncThread() override;
     static void *asyncThreadFunction(void *arg);
     bool handleInternalEvent() override;
+    MOCKABLE_VIRTUAL void processPendingVmBindEvents();
     DebugSessionImp *createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) override {
         return nullptr;
     }
@@ -131,11 +132,10 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     };
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
     bool canHandleVmBind(VmBindData &vmBindData) const;
-    void handleVmBind(VmBindData &vmBindData);
+    bool handleVmBind(VmBindData &vmBindData);
     void handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData);
 
     void extractMetaData(uint64_t client, const MetaData &metaData);
-    std::vector<std::unique_ptr<uint64_t[]>> pendingVmBindEvents;
     bool checkAllEventsCollected();
     MOCKABLE_VIRTUAL void handleEvent(NEO::EuDebugEvent *event);
     void additionalEvents(NEO::EuDebugEvent *event);
