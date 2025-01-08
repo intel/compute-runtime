@@ -108,7 +108,7 @@ HWTEST2_P(CommandEncodeEnableRayTracingAndEnable64bAddressingForRayTracing, give
     ASSERT_NE(iterator3dStateBtd, commands.end());
 
     auto cmd3dStateBtd = genCmdCast<_3DSTATE_BTD *>(*iterator3dStateBtd);
-    EXPECT_EQ(static_cast<bool>(cmd3dStateBtd->getRtMemStructures64bModeEnable()), enable64bAddressingForRayTracing == -1 ? true : static_cast<bool>(enable64bAddressingForRayTracing));
+    EXPECT_EQ(static_cast<bool>(cmd3dStateBtd->getRtMemStructures64BModeEnable()), enable64bAddressingForRayTracing == -1 ? true : static_cast<bool>(enable64bAddressingForRayTracing));
 }
 
 INSTANTIATE_TEST_SUITE_P(

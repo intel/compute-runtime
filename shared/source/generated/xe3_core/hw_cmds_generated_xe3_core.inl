@@ -4923,20 +4923,24 @@ typedef struct tag_3DSTATE_BTD {
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             // DWORD 1
             uint32_t DispatchTimeoutCounter : BITFIELD_RANGE(0, 2);
-            uint32_t Reserved_3 : BITFIELD_RANGE(3, 6);
+            uint32_t Reserved_35 : BITFIELD_RANGE(3, 6);
             uint32_t ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs : BITFIELD_RANGE(7, 8);
-            uint32_t Reserved_9 : BITFIELD_RANGE(9, 29);
-            uint32_t RtMemStructures64bModeEnable : BITFIELD_RANGE(30, 30);
+            uint32_t DynamicStackManagementMechanismMissPenalty : BITFIELD_RANGE(9, 11);
+            uint32_t DynamicStackManagementMechanismHitReward : BITFIELD_RANGE(12, 14);
+            uint32_t DynamicStackManagementMechanismScalingFactor : BITFIELD_RANGE(15, 17);
+            uint32_t DynamicStackManagementMechanismReductionCap : BITFIELD_RANGE(18, 20);
+            uint32_t Reserved_53 : BITFIELD_RANGE(21, 29);
+            uint32_t RtMemStructures64BModeEnable : BITFIELD_RANGE(30, 30);
             uint32_t BtdMidThreadPreemption : BITFIELD_RANGE(31, 31);
             // DWORD 2
             uint64_t PerDssMemoryBackedBufferSize : BITFIELD_RANGE(0, 2);
-            uint64_t Reserved_35 : BITFIELD_RANGE(3, 9);
+            uint64_t Reserved_67 : BITFIELD_RANGE(3, 9);
             uint64_t MemoryBackedBufferBasePointer : BITFIELD_RANGE(10, 63);
-            // DWORD 3
-            uint64_t Reserved_96 : BITFIELD_RANGE(0, 9);
-            uint64_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
             // DWORD 4
-            uint64_t Reserved_128 : BITFIELD_RANGE(32, 63);
+            uint64_t Reserved_128 : BITFIELD_RANGE(0, 9);
+            uint64_t ScratchSpaceBuffer : BITFIELD_RANGE(10, 31);
+            // DWORD 5
+            uint64_t Reserved_160 : BITFIELD_RANGE(32, 63);
         } Common;
         uint32_t RawData[6];
     } TheStructure;
@@ -4971,6 +4975,46 @@ typedef struct tag_3DSTATE_BTD {
         CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_512 = 0x2,
         CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_1024 = 0x3,
     } CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS;
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY { // patched
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_1 = 0x0,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_2 = 0x1,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_4 = 0x2,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_8 = 0x3,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_16 = 0x4,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_32 = 0x5,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_64 = 0x6,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_128 = 0x7,
+    } DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY;
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD { // patched
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_1 = 0x0,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_2 = 0x1,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_4 = 0x2,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_8 = 0x3,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_16 = 0x4,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_32 = 0x5,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_64 = 0x6,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_128 = 0x7,
+    } DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD;
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR { // patched
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_1 = 0x0,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_2 = 0x1,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_4 = 0x2,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_8 = 0x3,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_16 = 0x4,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_32 = 0x5,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_64 = 0x6,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_128 = 0x7,
+    } DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR;
+    typedef enum tagDYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP { // patched
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_128 = 0x0,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_256 = 0x1,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_384 = 0x2,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_512 = 0x3,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_640 = 0x4,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_768 = 0x5,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_896 = 0x6,
+        DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_1024 = 0x7,
+    } DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP;
     typedef enum tagPER_DSS_MEMORY_BACKED_BUFFER_SIZE {
         PER_DSS_MEMORY_BACKED_BUFFER_SIZE_2KB = 0x0,
         PER_DSS_MEMORY_BACKED_BUFFER_SIZE_4KB = 0x1,
@@ -4989,7 +5033,11 @@ typedef struct tag_3DSTATE_BTD {
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.DispatchTimeoutCounter = DISPATCH_TIMEOUT_COUNTER_64;
         TheStructure.Common.ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs = CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_128;
-        TheStructure.Common.PerDssMemoryBackedBufferSize = PER_DSS_MEMORY_BACKED_BUFFER_SIZE_2KB;
+        TheStructure.Common.DynamicStackManagementMechanismMissPenalty = DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY_16;     // patched
+        TheStructure.Common.DynamicStackManagementMechanismHitReward = DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD_1;          // patched
+        TheStructure.Common.DynamicStackManagementMechanismScalingFactor = DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR_16; // patched
+        TheStructure.Common.DynamicStackManagementMechanismReductionCap = DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP_256;  // patched
+        TheStructure.Common.PerDssMemoryBackedBufferSize = PER_DSS_MEMORY_BACKED_BUFFER_SIZE_128KB;
     }
     static tag_3DSTATE_BTD sInit() {
         _3DSTATE_BTD state;
@@ -5012,17 +5060,41 @@ typedef struct tag_3DSTATE_BTD {
     inline CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS getControlsTheMaximumNumberOfOutstandingRayqueriesPerSs() const {
         return static_cast<CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS>(TheStructure.Common.ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs);
     }
+    inline void setDynamicStackManagementMechanismMissPenalty(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY value) { // patched
+        TheStructure.Common.DynamicStackManagementMechanismMissPenalty = value;
+    }
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY getDynamicStackManagementMechanismMissPenalty() const { // patched
+        return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_MISS_PENALTY>(TheStructure.Common.DynamicStackManagementMechanismMissPenalty);
+    }
+    inline void setDynamicStackManagementMechanismHitReward(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD value) { // patched
+        TheStructure.Common.DynamicStackManagementMechanismHitReward = value;
+    }
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD getDynamicStackManagementMechanismHitReward() const { // patched
+        return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_HIT_REWARD>(TheStructure.Common.DynamicStackManagementMechanismHitReward);
+    }
+    inline void setDynamicStackManagementMechanismScalingFactor(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR value) { // patched
+        TheStructure.Common.DynamicStackManagementMechanismScalingFactor = value;
+    }
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR getDynamicStackManagementMechanismScalingFactor() const { // patched
+        return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_SCALING_FACTOR>(TheStructure.Common.DynamicStackManagementMechanismScalingFactor);
+    }
+    inline void setDynamicStackManagementMechanismReductionCap(const DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP value) { // patched
+        TheStructure.Common.DynamicStackManagementMechanismReductionCap = value;
+    }
+    inline DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP getDynamicStackManagementMechanismReductionCap() const { // patched
+        return static_cast<DYNAMIC_STACK_MANAGEMENT_MECHANISM_REDUCTION_CAP>(TheStructure.Common.DynamicStackManagementMechanismReductionCap);
+    }
+    inline void setRtMemStructures64BModeEnable(const bool value) {
+        TheStructure.Common.RtMemStructures64BModeEnable = value;
+    }
+    inline bool getRtMemStructures64BModeEnable() const {
+        return TheStructure.Common.RtMemStructures64BModeEnable;
+    }
     inline void setBtdMidThreadPreemption(const bool value) {
         TheStructure.Common.BtdMidThreadPreemption = value;
     }
     inline bool getBtdMidThreadPreemption() const {
         return TheStructure.Common.BtdMidThreadPreemption;
-    }
-    inline void setRtMemStructures64bModeEnable(const bool value) {
-        TheStructure.Common.RtMemStructures64bModeEnable = value;
-    }
-    inline bool getRtMemStructures64bModeEnable() const {
-        return TheStructure.Common.RtMemStructures64bModeEnable;
     }
     inline void setPerDssMemoryBackedBufferSize(const PER_DSS_MEMORY_BACKED_BUFFER_SIZE value) {
         TheStructure.Common.PerDssMemoryBackedBufferSize = value;
@@ -5045,6 +5117,7 @@ typedef struct tag_3DSTATE_BTD {
         SCRATCHSPACEBUFFER_ALIGN_SIZE = 0x40,
     } SCRATCHSPACEBUFFER;
     inline void setScratchSpaceBuffer(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffff);
         TheStructure.Common.ScratchSpaceBuffer = static_cast<uint32_t>(value) >> SCRATCHSPACEBUFFER_BIT_SHIFT;
     }
     inline uint64_t getScratchSpaceBuffer() const {

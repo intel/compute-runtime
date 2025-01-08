@@ -34,7 +34,7 @@ void EncodeEnableRayTracing<Family>::append3dStateBtd(void *ptr3dStateBtd) {
         cmd->setDispatchTimeoutCounter(value);
     }
 
-    cmd->setRtMemStructures64bModeEnable(!is48bResourceNeededForRayTracing());
+    cmd->setRtMemStructures64BModeEnable(!is48bResourceNeededForRayTracing());
 }
 
 template <typename Family>
