@@ -41,11 +41,11 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenNewRequiredThreadArbitration
     LinearStream stream(buff, 1024);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto newEuThreadSchedulingMode = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
-    typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE expectedEuThreadSchedulingMode = static_cast<typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
+    typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE expectedEuThreadSchedulingMode = static_cast<typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(expectedEuThreadSchedulingMode);
+    expectedScmCmd.setEuThreadSchedulingMode(expectedEuThreadSchedulingMode);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -54,7 +54,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenNewRequiredThreadArbitration
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
-    EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
 }
 
 XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
@@ -194,7 +194,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenComputeModeProgrammingWhenLa
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(true);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true, 256u);
@@ -212,7 +212,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, givenComputeModeProgrammingWhenLa
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);

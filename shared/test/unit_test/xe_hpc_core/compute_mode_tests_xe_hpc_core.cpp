@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,19 +27,19 @@ using XeHpcComputeModeRequirements = ComputeModeRequirements;
 HWTEST2_F(XeHpcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyWhenComputeModeIsProgrammedThenStateComputeIsProgrammedAgain, IsXeHpcCore) {
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
+    using EU_THREAD_SCHEDULING_MODE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE;
 
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     char buff[1024] = {0};
     LinearStream stream(buff, 1024);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto newEuThreadSchedulingMode = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
-    auto expectedEuThreadSchedulingMode = static_cast<EU_THREAD_SCHEDULING_MODE_OVERRIDE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
+    auto expectedEuThreadSchedulingMode = static_cast<EU_THREAD_SCHEDULING_MODE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(expectedEuThreadSchedulingMode);
+    expectedScmCmd.setEuThreadSchedulingMode(expectedEuThreadSchedulingMode);
 
     overrideComputeModeRequest<FamilyType>(true, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -48,7 +48,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenNewRequiredThreadArbitrationPolicyW
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
-    EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlreadySetWhenComputeModeIsProgrammedThenStateComputeIsNotProgrammedAgain, IsXeHpcCore) {
@@ -69,7 +69,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenRequiredThreadArbitrationPolicyAlre
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     EXPECT_FALSE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
-    EXPECT_NE(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingModeOverride());
+    EXPECT_NE(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
 }
 
 HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsXeHpcCore) {
@@ -213,7 +213,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCo
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -232,7 +232,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithoutSharedHandlesWhenCo
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
@@ -250,7 +250,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompu
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -274,7 +274,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenCoherencyWithSharedHandlesWhenCompu
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
@@ -295,7 +295,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfM
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(true);
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -314,7 +314,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenLargeGrfM
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
@@ -332,7 +332,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingWhenRequiredG
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -354,7 +354,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenComputeModeProgrammingThenCorrectCo
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -389,7 +389,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, givenProgramExtendedPipeControlPriorToNo
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
@@ -449,7 +449,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCom
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setForceNonCoherent(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMaskBits(FamilyType::stateComputeModeForceNonCoherentMask | FamilyType::stateComputeModeLargeGrfModeMask |
                                FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 

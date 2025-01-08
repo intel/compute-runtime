@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -209,7 +209,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, givenOffsetWhenProgrammingStateP
 
 XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeThenProperFieldsAreSet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
+    using EU_THREAD_SCHEDULING_MODE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE;
     uint8_t buffer[64]{};
 
     MockExecutionEnvironment executionEnvironment{};
@@ -222,7 +222,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     EXPECT_EQ(0u, pScm->getMask1());
     EXPECT_EQ(0u, pScm->getMask2());
     EXPECT_FALSE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
     EXPECT_FALSE(pScm->getLargeGrfMode());
 
     properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value = 1;
@@ -234,7 +234,7 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     EXPECT_EQ(0u, pScm->getMask1());
     EXPECT_EQ(0u, pScm->getMask2());
     EXPECT_FALSE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
     EXPECT_FALSE(pScm->getLargeGrfMode());
 
     properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.isDirty = true;
@@ -247,13 +247,13 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenProgrammingStateComputeModeT
     EXPECT_EQ(expectedMask, pScm->getMask1());
     EXPECT_EQ(FamilyType::stateComputeModeMemoryAllocationForScratchAndMidthreadPreemptionBuffersMask, pScm->getMask2());
     EXPECT_TRUE(pScm->getMemoryAllocationForScratchAndMidthreadPreemptionBuffers());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
     EXPECT_TRUE(pScm->getLargeGrfMode());
 }
 
 XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenAdjustComputeModeIsCalledThenCorrectPolicyIsProgrammed) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
+    using EU_THREAD_SCHEDULING_MODE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE;
 
     uint8_t buffer[64]{};
     StreamProperties properties{};
@@ -266,25 +266,25 @@ XE2_HPG_CORETEST_F(CommandEncodeXe2HpgCoreTest, whenAdjustComputeModeIsCalledThe
     properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST, pScm->getEuThreadSchedulingMode());
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::RoundRobin, PreemptionMode::Disabled);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::RoundRobinAfterDependency, PreemptionMode::Disabled);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::NotPresent, PreemptionMode::Disabled);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
 }
 
 using EncodeKernelXe2HpgCoreTest = Test<CommandEncodeStatesFixture>;

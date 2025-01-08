@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,11 +36,11 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenNewRequiredThreadArbi
     LinearStream stream(buff, 1024);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto newEuThreadSchedulingMode = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
-    typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE expectedEuThreadSchedulingMode = static_cast<typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
+    typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE expectedEuThreadSchedulingMode = static_cast<typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE>(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(newEuThreadSchedulingMode));
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(expectedEuThreadSchedulingMode);
+    expectedScmCmd.setEuThreadSchedulingMode(expectedEuThreadSchedulingMode);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true);
     getCsrHw<FamilyType>()->programComputeMode(stream, flags, *defaultHwInfo);
@@ -49,7 +49,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenNewRequiredThreadArbi
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
-    EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingModeOverride());
+    EXPECT_EQ(expectedEuThreadSchedulingMode, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
 }
 
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenRequiredThreadArbitrationPolicyAlreadySetWhenComputeModeIsProgrammedThenStateComputeIsNotProgrammedAgain) {
@@ -69,7 +69,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenRequiredThreadArbitra
     auto scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase());
     EXPECT_FALSE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 
-    EXPECT_NE(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingModeOverride());
+    EXPECT_NE(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, static_cast<STATE_COMPUTE_MODE *>(stream.getCpuBase())->getEuThreadSchedulingMode());
 }
 
 XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenCoherencyWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
@@ -209,7 +209,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(true);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true, 256u);
@@ -227,7 +227,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
 
     expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
     scmCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), startOffset));
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
@@ -243,7 +243,7 @@ XE2_HPG_CORETEST_F(ComputeModeRequirementsXe2HpgCore, givenComputeModeProgrammin
 
     auto expectedScmCmd = FamilyType::cmdInitStateComputeMode;
     expectedScmCmd.setLargeGrfMode(false);
-    expectedScmCmd.setEuThreadSchedulingModeOverride(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+    expectedScmCmd.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN);
     expectedScmCmd.setMask1(FamilyType::stateComputeModeLargeGrfModeMask | FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask);
 
     overrideComputeModeRequest<FamilyType>(false, false, false, true, true, 127u);
