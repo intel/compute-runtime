@@ -41,13 +41,13 @@ void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const 
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
-    return 16u;
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+    return true;
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
-    return true;
+void ProductHelperHw<gfxProduct>::adjustPerThreadScratchSize(uint32_t &requiredPerThreadScratchSize) const {
+    requiredPerThreadScratchSize *= 2;
 }
 
 } // namespace NEO

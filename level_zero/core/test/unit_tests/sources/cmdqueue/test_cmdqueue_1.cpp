@@ -1823,10 +1823,19 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
     auto commandListHandle1 = commandList1->toHandle();
     commandList1->close();
 
+    auto &productHelper = device->getProductHelper();
+
     commandQueue->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
-    EXPECT_EQ(0u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+
+    auto expectedScratchSize = 0u;
+    productHelper.adjustPerThreadScratchSize(expectedScratchSize);
+
+    EXPECT_EQ(expectedScratchSize, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
     commandQueue->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
-    EXPECT_EQ(512u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+
+    expectedScratchSize = 512u;
+    productHelper.adjustPerThreadScratchSize(expectedScratchSize);
+    EXPECT_EQ(expectedScratchSize, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
@@ -1854,9 +1863,16 @@ HWTEST2_F(ExecuteCommandListTests, givenTwoCommandQueuesHavingTwoB2BCommandLists
                                                            false,
                                                            returnValue));
     commandQueue1->executeCommandLists(1, &commandListHandle0, nullptr, false, nullptr);
-    EXPECT_EQ(1024u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+
+    expectedScratchSize = 1024u;
+    productHelper.adjustPerThreadScratchSize(expectedScratchSize);
+    EXPECT_EQ(expectedScratchSize, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+
     commandQueue1->executeCommandLists(1, &commandListHandle1, nullptr, false, nullptr);
-    EXPECT_EQ(2048u, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
+
+    expectedScratchSize = 2048u;
+    productHelper.adjustPerThreadScratchSize(expectedScratchSize);
+    EXPECT_EQ(expectedScratchSize, csr->getScratchSpaceController()->getPerThreadScratchSizeSlot1());
 
     usedSpaceAfter = commandQueue1->commandStream.getUsed();
 

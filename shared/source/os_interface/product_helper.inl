@@ -534,6 +534,10 @@ uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::adjustPerThreadScratchSize(uint32_t &requiredPerThreadScratchSize) const {
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
     return MemoryConstants::pageSize2M;
 }

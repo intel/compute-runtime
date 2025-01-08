@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4883,6 +4883,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
 
     uint32_t perThreadScratchSize = 65;
     uint32_t expectedValue = Math::nextPowerOfTwo(perThreadScratchSize);
+
+    auto &productHelper = getHelper<ProductHelper>();
+    productHelper.adjustPerThreadScratchSize(expectedValue);
+
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
     uint8_t surfaceHeap[1000];
@@ -4905,6 +4909,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     bool stateBaseAddressDirty = false;
     scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch,
                                                *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
+
+    auto &productHelper = getHelper<ProductHelper>();
+    productHelper.adjustPerThreadScratchSize(misalignedSizeForPrivateScratch);
+    productHelper.adjustPerThreadScratchSize(alignedSizeForPrivateScratch);
+
     EXPECT_NE(scratchController->scratchSlot1SizeInBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
     EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
     EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, scratchController->getScratchSpaceSlot1Allocation()->getUnderlyingBufferSize());

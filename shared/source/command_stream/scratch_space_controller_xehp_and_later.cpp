@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t rootDeviceIndex,
@@ -158,6 +159,8 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
     if (!Math::isPow2(requiredPerThreadScratchSizeSlot0AlignedUp)) {
         requiredPerThreadScratchSizeSlot0AlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSizeSlot0);
     }
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    productHelper.adjustPerThreadScratchSize(requiredPerThreadScratchSizeSlot0AlignedUp);
     size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot0AlignedUp) * computeUnitsUsedForScratch;
     scratchSurfaceDirty = false;
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
@@ -176,6 +179,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         if (!Math::isPow2(requiredPerThreadScratchSizeSlot1AlignedUp)) {
             requiredPerThreadScratchSizeSlot1AlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSizeSlot1);
         }
+        productHelper.adjustPerThreadScratchSize(requiredPerThreadScratchSizeSlot1AlignedUp);
         size_t requiredScratchSlot1SizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot1AlignedUp) * computeUnitsUsedForScratch;
         if (scratchSlot1SizeInBytes < requiredScratchSlot1SizeInBytes) {
             if (scratchSlot1Allocation) {

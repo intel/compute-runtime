@@ -79,18 +79,6 @@ uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (debugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
-        return static_cast<uint32_t>(debugManager.flags.OverrideNumComputeUnitsForScratch.get());
-    }
-
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto maxSubSlice = productHelper.computeMaxNeededSubSliceSpace(*hwInfo);
-    return maxSubSlice * hwInfo->gtSystemInfo.MaxEuPerSubSlice * productHelper.getThreadEuRatioForScratch(*hwInfo);
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
