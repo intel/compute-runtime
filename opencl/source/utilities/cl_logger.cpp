@@ -79,7 +79,7 @@ void ClFileLogger<debugLevel>::dumpKernelArgs(const MultiDispatchInfo *multiDisp
                 type = "immediate";
                 auto crossThreadData = kernel->getCrossThreadData();
                 auto crossThreadDataSize = kernel->getCrossThreadDataSize();
-                argVal = std::make_unique<char[]>(crossThreadDataSize);
+                argVal = std::unique_ptr<char[]>(new char[crossThreadDataSize]);
 
                 size_t totalArgSize = 0;
                 for (const auto &element : arg.as<ArgDescValue>().elements) {

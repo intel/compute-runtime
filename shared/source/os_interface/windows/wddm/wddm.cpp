@@ -67,7 +67,7 @@ Wddm::Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceIdIn, RootDeviceEnvironment
     memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
     memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
     this->enablePreemptionRegValue = NEO::readEnablePreemptionRegKey();
-    kmDafListener = std::make_unique<KmDafListener>();
+    kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     temporaryResources = std::make_unique<WddmResidentAllocationsContainer>(this);
     osMemory = OSMemory::create();
     bool forceCheck = false;
@@ -864,10 +864,10 @@ bool Wddm::openSharedHandle(const MemoryManager::OsHandleData &osHandleData, Wdd
         return false;
     }
 
-    auto allocPrivateData = std::make_unique<char[]>(queryResourceInfo.TotalPrivateDriverDataSize);
-    auto resPrivateData = std::make_unique<char[]>(queryResourceInfo.ResourcePrivateDriverDataSize);
-    auto resPrivateRuntimeData = std::make_unique<char[]>(queryResourceInfo.PrivateRuntimeDataSize);
-    auto allocationInfo = std::make_unique<D3DDDI_OPENALLOCATIONINFO[]>(queryResourceInfo.NumAllocations);
+    std::unique_ptr<char[]> allocPrivateData(new char[queryResourceInfo.TotalPrivateDriverDataSize]);
+    std::unique_ptr<char[]> resPrivateData(new char[queryResourceInfo.ResourcePrivateDriverDataSize]);
+    std::unique_ptr<char[]> resPrivateRuntimeData(new char[queryResourceInfo.PrivateRuntimeDataSize]);
+    std::unique_ptr<D3DDDI_OPENALLOCATIONINFO[]> allocationInfo(new D3DDDI_OPENALLOCATIONINFO[queryResourceInfo.NumAllocations]);
 
     D3DKMT_OPENRESOURCE openResource = {};
 
@@ -914,10 +914,10 @@ bool Wddm::openNTHandle(const MemoryManager::OsHandleData &osHandleData, WddmAll
         return false;
     }
 
-    auto allocPrivateData = std::make_unique<char>(queryResourceInfoFromNtHandle.TotalPrivateDriverDataSize);
-    auto resPrivateData = std::make_unique<char>(queryResourceInfoFromNtHandle.ResourcePrivateDriverDataSize);
-    auto resPrivateRuntimeData = std::make_unique<char>(queryResourceInfoFromNtHandle.PrivateRuntimeDataSize);
-    auto allocationInfo2 = std::make_unique<D3DDDI_OPENALLOCATIONINFO2[]>(queryResourceInfoFromNtHandle.NumAllocations);
+    std::unique_ptr<char[]> allocPrivateData(new char[queryResourceInfoFromNtHandle.TotalPrivateDriverDataSize]);
+    std::unique_ptr<char[]> resPrivateData(new char[queryResourceInfoFromNtHandle.ResourcePrivateDriverDataSize]);
+    std::unique_ptr<char[]> resPrivateRuntimeData(new char[queryResourceInfoFromNtHandle.PrivateRuntimeDataSize]);
+    std::unique_ptr<D3DDDI_OPENALLOCATIONINFO2[]> allocationInfo2(new D3DDDI_OPENALLOCATIONINFO2[queryResourceInfoFromNtHandle.NumAllocations]);
 
     D3DKMT_OPENRESOURCEFROMNTHANDLE openResourceFromNtHandle = {};
 

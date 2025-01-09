@@ -792,7 +792,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
     auto isCoherent = productHelper.isCoherentAllocation(patIndex);
     uint32_t handle = ioctlHelper->createGem(bufferSize, static_cast<uint32_t>(allocationData.storageInfo.memoryBanks.to_ulong()), isCoherent);
 
-    auto bo = std::make_unique<BufferObject>(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount);
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount));
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, 1u /*num gmms*/, allocationData.type, bo.get(), nullptr, 0u, bufferSize, memoryPool);
     allocation->setDefaultGmm(gmm.release());
@@ -841,7 +841,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
         boType = BufferObject::BOType::legacy;
     }
 
-    auto bo = std::make_unique<BufferObject>(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount);
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, bufferSize, maxOsContextCount));
     bo->setAddress(gpuRange);
     bo->setBOType(boType);
 
@@ -2682,7 +2682,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
-        auto bo = std::make_unique<BufferObject>(allocationData.rootDeviceIndex, &drm, patIndex, handle, currentSize, maxOsContextCount);
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(allocationData.rootDeviceIndex, &drm, patIndex, handle, currentSize, maxOsContextCount));
 
         if (vmAdviseAttribute.has_value() && !ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute.value(), nullptr)) {
             ioctlHelper->munmapFunction(*this, cpuBasePointer, totalSizeToAlloc);

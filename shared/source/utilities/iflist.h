@@ -189,7 +189,7 @@ template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = true
 class IFRefList : public IFList<IFNodeRef<NodeObjectType>, threadSafe, ownsNodes> {
   public:
     void pushRefFrontOne(NodeObjectType &node) {
-        auto up = std::make_unique<IFNodeRef<NodeObjectType>>(&node);
+        auto up = std::unique_ptr<IFNodeRef<NodeObjectType>>(new IFNodeRef<NodeObjectType>(&node));
         this->pushFrontOne(*up);
         up.release();
     } // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)

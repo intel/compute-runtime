@@ -59,7 +59,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
     size_t length = strnlen_s(formatString, maxSinglePrintStringLength - 1);
 
     size_t cursor = 0;
-    auto dataFormat = std::make_unique<char[]>(length + 1);
+    std::unique_ptr<char[]> dataFormat(new char[length + 1]);
 
     for (size_t i = 0; i <= length; i++) {
         if (formatString[i] == '\\')

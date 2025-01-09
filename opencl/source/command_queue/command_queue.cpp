@@ -903,7 +903,7 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
     }
 
     // store task data in event
-    auto cmd = std::make_unique<CommandMapUnmap>(opType, *memObj, copySize, copyOffset, readOnly, *this);
+    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, copySize, copyOffset, readOnly, *this));
     eventBuilder->getEvent()->setCommand(std::move(cmd));
 
     // bind output event with input events

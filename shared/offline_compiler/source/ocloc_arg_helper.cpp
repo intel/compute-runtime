@@ -143,7 +143,7 @@ std::vector<char> OclocArgHelper::readBinaryFile(const std::string &filename) {
 std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &filename, size_t &retSize) {
     if (Source *s = findSourceFile(filename)) {
         auto size = s->length;
-        auto ret = std::make_unique<char[]>(size);
+        std::unique_ptr<char[]> ret(new char[size]());
         memcpy_s(ret.get(), size, s->data, s->length);
         retSize = s->length;
         return ret;

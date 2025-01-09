@@ -120,7 +120,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     addToResidencyContainer(cmdBufferAllocation);
     if (requireHeaps) {
-        heapHelper = std::make_unique<HeapHelper>(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u);
+        heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
         for (uint32_t i = 0; i < IndirectHeap::Type::numTypes; i++) {
             auto heapType = static_cast<HeapType>(i);

@@ -29,8 +29,8 @@ PerfProfiler *PerfProfiler::create(bool dumpToFile) {
     if (gPerfProfiler == nullptr) {
         int old = counter.fetch_add(1);
         if (!dumpToFile) {
-            auto logs = std::make_unique<std::stringstream>();
-            auto sysLogs = std::make_unique<std::stringstream>();
+            std::unique_ptr<std::stringstream> logs = std::unique_ptr<std::stringstream>(new std::stringstream());
+            std::unique_ptr<std::stringstream> sysLogs = std::unique_ptr<std::stringstream>(new std::stringstream());
             gPerfProfiler = new PerfProfiler(old, std::move(logs), std::move(sysLogs));
         } else {
             gPerfProfiler = new PerfProfiler(old);
@@ -63,7 +63,7 @@ PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> &&logOut, std::
         std::stringstream filename;
         filename << "PerfReport_Thread_" << id << ".xml";
 
-        auto logToFile = std::make_unique<std::ofstream>();
+        std::unique_ptr<std::ofstream> logToFile = std::unique_ptr<std::ofstream>(new std::ofstream());
         logToFile->exceptions(std::ios::failbit | std::ios::badbit);
         logToFile->open(filename.str().c_str(), std::ios::trunc);
         this->logFile = std::move(logToFile);
@@ -77,7 +77,7 @@ PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> &&logOut, std::
         std::stringstream filename;
         filename << "SysPerfReport_Thread_" << id << ".xml";
 
-        auto sysLogToFile = std::make_unique<std::ofstream>();
+        std::unique_ptr<std::ofstream> sysLogToFile = std::unique_ptr<std::ofstream>(new std::ofstream());
         sysLogToFile->exceptions(std::ios::failbit | std::ios::badbit);
         sysLogToFile->open(filename.str().c_str(), std::ios::trunc);
         this->sysLogFile = std::move(sysLogToFile);

@@ -9,6 +9,6 @@
 
 namespace NEO {
 std::unique_ptr<DeferredDeleter> createDeferredDeleter() {
-    return std::make_unique<DeferredDeleter>();
+    return std::unique_ptr<DeferredDeleter>(new DeferredDeleter());
 }
 } // namespace NEO

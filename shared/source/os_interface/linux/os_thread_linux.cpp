@@ -17,7 +17,7 @@ decltype(&Thread::create) Thread::createFunc = Thread::create;
 std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
     pthread_t threadId;
     pthread_create(&threadId, nullptr, func, arg);
-    return std::make_unique<ThreadLinux>(threadId);
+    return std::unique_ptr<Thread>(new ThreadLinux(threadId));
 }
 
 void ThreadLinux::join() {
