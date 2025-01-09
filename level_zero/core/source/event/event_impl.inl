@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
     if (eventDescriptor.counterBasedFlags != 0 || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
         event->enableCounterBasedMode(true, eventDescriptor.counterBasedFlags);
         if (eventDescriptor.ipcPool) {
-            event->isSharableCouterBased = true;
+            event->isSharableCounterBased = true;
         }
     }
 

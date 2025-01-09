@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -401,7 +401,7 @@ struct Event : _ze_event_handle_t {
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
     bool interruptMode = false;
-    bool isSharableCouterBased = false;
+    bool isSharableCounterBased = false;
     bool mitigateHostVisibleSignal = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };

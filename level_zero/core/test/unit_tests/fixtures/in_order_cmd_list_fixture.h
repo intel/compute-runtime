@@ -33,7 +33,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::Event::counterBasedMode;
         using EventImp<uint32_t>::Event::isFromIpcPool;
         using EventImp<uint32_t>::Event::counterBasedFlags;
-        using EventImp<uint32_t>::Event::isSharableCouterBased;
+        using EventImp<uint32_t>::Event::isSharableCounterBased;
         using EventImp<uint32_t>::eventPoolAllocation;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
