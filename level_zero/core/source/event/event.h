@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -352,7 +353,7 @@ struct Event : _ze_event_handle_t {
     uint64_t inOrderExecSignalValue = 0;
     uint32_t inOrderAllocationOffset = 0;
 
-    std::chrono::microseconds gpuHangCheckPeriod{500'000};
+    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
 
     size_t contextStartOffset = 0u;

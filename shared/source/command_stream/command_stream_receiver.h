@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -652,7 +652,7 @@ class CommandStreamReceiver {
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
 
-    std::chrono::microseconds gpuHangCheckPeriod{500'000};
+    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     uint64_t lastSentSliceCount = QueueSliceCount::defaultSliceCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,11 +35,13 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     void getTagAddressValue(TagData &tagData) override;
     bool isCompleted(uint32_t ringBufferIndex) override;
     bool isCompletionFenceSupported();
+    bool isGpuHangDetected(std::chrono::high_resolution_clock::time_point &lastHangCheckTime);
 
     MOCKABLE_VIRTUAL void wait(TaskCountType taskCountToWait);
 
     TagData currentTagData{};
     volatile TagAddressType *tagAddress;
     TaskCountType completionFenceValue{};
+    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
 };
 } // namespace NEO

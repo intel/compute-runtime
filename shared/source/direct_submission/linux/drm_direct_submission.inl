@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,12 +246,31 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompletionFenceSupported() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(TaskCountType taskCountToWait) {
+    auto lastHangCheckTime = std::chrono::high_resolution_clock::now();
     auto pollAddress = this->tagAddress;
     for (uint32_t i = 0; i < this->activeTiles; i++) {
-        while (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {
+        while (!WaitUtils::waitFunction(pollAddress, taskCountToWait) &&
+               !isGpuHangDetected(lastHangCheckTime)) {
         }
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncOffset);
     }
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::isGpuHangDetected(std::chrono::high_resolution_clock::time_point &lastHangCheckTime) {
+    if (!this->detectGpuHang) {
+        return false;
+    }
+
+    auto currentTime = std::chrono::high_resolution_clock::now();
+    auto elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
+    if (elapsedTimeSinceGpuHangCheck.count() >= gpuHangCheckPeriod.count()) {
+        lastHangCheckTime = currentTime;
+        auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+        auto &drm = osContextLinux->getDrm();
+        return drm.isGpuHangDetected(this->osContext);
+    }
+    return false;
 }
 
 } // namespace NEO
