@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,7 +83,6 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
     stream = streamProvider->getStream();
     UNRECOVERABLE_IF(nullptr == stream);
 
-    this->dispatchMode = DispatchMode::batchedDispatch;
     if (debugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)debugManager.flags.CsrDispatchMode.get();
     }

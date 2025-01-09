@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,8 @@ struct RangeBasedFlushTest : public KernelAUBFixture<SimpleKernelFixture>, publi
     void SetUp() override {
         debugManager.flags.PerformImplicitFlushForNewResource.set(0);
         debugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+        debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
+
         KernelAUBFixture<SimpleKernelFixture>::setUp();
     };
 
