@@ -218,7 +218,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenProgrammingStateComputeModeThenProperFieldsAreSet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using EU_THREAD_SCHEDULING_MODE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE;
+    using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
     uint8_t buffer[64]{};
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
@@ -228,7 +228,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenProgrammingStateComputeModeThe
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
     EXPECT_FALSE(pScm->getLargeGrfMode());
 
     properties.isCoherencyRequired.value = 0;
@@ -239,7 +239,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenProgrammingStateComputeModeThe
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     EXPECT_EQ(0u, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_DISABLED, pScm->getForceNonCoherent());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
     EXPECT_FALSE(pScm->getLargeGrfMode());
 
     properties.isCoherencyRequired.isDirty = true;
@@ -252,13 +252,13 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenProgrammingStateComputeModeThe
                         FamilyType::stateComputeModeLargeGrfModeMask;
     EXPECT_EQ(expectedMask, pScm->getMaskBits());
     EXPECT_EQ(STATE_COMPUTE_MODE::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT, pScm->getForceNonCoherent());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
     EXPECT_TRUE(pScm->getLargeGrfMode());
 }
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenCorrectPolicyIsProgrammed) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
-    using EU_THREAD_SCHEDULING_MODE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE;
+    using EU_THREAD_SCHEDULING_MODE_OVERRIDE = typename STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE_OVERRIDE;
 
     uint8_t buffer[64]{};
     StreamProperties properties{};
@@ -272,9 +272,9 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     auto pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_OLDEST_FIRST, pScm->getEuThreadSchedulingMode());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST, pScm->getEuThreadSchedulingModeOverride());
     } else {
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
     }
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
@@ -282,9 +282,9 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
     } else {
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
     }
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
@@ -292,16 +292,16 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenAdjustComputeModeIsCalledThenC
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
     if (productHelper.isThreadArbitrationPolicyReportedWithScm()) {
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_STALL_BASED_ROUND_ROBIN, pScm->getEuThreadSchedulingMode());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN, pScm->getEuThreadSchedulingModeOverride());
     } else {
-        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
+        EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
     }
 
     pLinearStream = std::make_unique<LinearStream>(buffer, sizeof(buffer));
     properties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::NotPresent, PreemptionMode::Disabled);
     EncodeComputeMode<FamilyType>::programComputeModeCommand(*pLinearStream, properties.stateComputeMode, rootDeviceEnvironment);
     pScm = reinterpret_cast<STATE_COMPUTE_MODE *>(pLinearStream->getCpuBase());
-    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_HW_DEFAULT, pScm->getEuThreadSchedulingMode());
+    EXPECT_EQ(EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT, pScm->getEuThreadSchedulingModeOverride());
 }
 
 using EncodeKernelXeHpcCoreTest = Test<CommandEncodeStatesFixture>;
