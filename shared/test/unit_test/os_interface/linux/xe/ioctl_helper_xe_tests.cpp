@@ -2590,3 +2590,20 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionThenProperValuesAreSet) {
     EXPECT_EQ(mockDeviceId, hwInfo->platform.usDeviceID);
     EXPECT_EQ(mockRevisionId, hwInfo->platform.usRevId);
 }
+
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenCreateDrmContextThenLowLatencyFlagApplied) {
+    class MockLinuxOsContext : public OsContextLinux {
+      public:
+        using OsContextLinux::initializeContext;
+        using OsContextLinux::OsContextLinux;
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    xeIoctlHelper->contextParamEngine.push_back(drm_xe_engine_class_instance{});
+    MockLinuxOsContext osContext(*drm, 0, 5u, NEO::EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}));
+
+    osContext.initializeContext(false);
+    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT), drm->latestExecQueueCreate.flags);
+}
