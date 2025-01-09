@@ -1304,6 +1304,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     create.vm_id = drmVmId;
     create.instances = castToUint64(contextParamEngine.data());
     create.extensions = (extPropertyIndex > 0U ? castToUint64(extProperties.data()) : 0UL);
+    create.flags = DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT;
     applyContextFlags(&create, allocateInterrupt);
 
     int ret = IoctlHelper::ioctl(DrmIoctl::gemContextCreateExt, &create);
