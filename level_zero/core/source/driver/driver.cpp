@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -159,7 +159,6 @@ ze_result_t initDriver() {
         std::lock_guard<std::mutex> lock(driverInitMutex);
 
         if (Driver::get()->getPid() != pid) {
-            ze_result_t result;
             Driver::get()->initialize(&result);
         }
     }
