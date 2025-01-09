@@ -2623,74 +2623,87 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
             NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddress, waitValue, NEO::CompareOperation::less, true, isQwordInOrderCounter(), isCopyOnly(copyOffloadOperation));
 
         } else {
-            using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-            using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+            auto resolveDependenciesViaPipeControls = !this->asMutable() && implicitDependency && this->dcFlushSupport;
 
-            bool indirectMode = false;
+            if (NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+                resolveDependenciesViaPipeControls = NEO::debugManager.flags.ResolveDependenciesViaPipeControls.get();
+            }
 
-            size_t inOrderPatchListIndex = std::numeric_limits<size_t>::max();
-            if (isQwordInOrderCounter()) {
-                indirectMode = true;
+            if (resolveDependenciesViaPipeControls) {
+                NEO::PipeControlArgs args;
+                args.csStallOnly = true;
+                NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
+                break;
+            } else {
+                using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+                using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-                constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
-                constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
+                bool indirectMode = false;
 
-                auto lri1 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-                auto lri2 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+                size_t inOrderPatchListIndex = std::numeric_limits<size_t>::max();
+                if (isQwordInOrderCounter()) {
+                    indirectMode = true;
 
-                if (!noopDispatch) {
-                    NEO::LriHelper<GfxFamily>::program(lri1, firstRegister, getLowPart(waitValue), true, isCopyOnly(copyOffloadOperation));
-                    NEO::LriHelper<GfxFamily>::program(lri2, secondRegister, getHighPart(waitValue), true, isCopyOnly(copyOffloadOperation));
-                } else {
-                    memset(lri1, 0, sizeof(MI_LOAD_REGISTER_IMM));
-                    memset(lri2, 0, sizeof(MI_LOAD_REGISTER_IMM));
+                    constexpr uint32_t firstRegister = RegisterOffsets::csGprR0;
+                    constexpr uint32_t secondRegister = RegisterOffsets::csGprR0 + 4;
+
+                    auto lri1 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+                    auto lri2 = commandContainer.getCommandStream()->template getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+
+                    if (!noopDispatch) {
+                        NEO::LriHelper<GfxFamily>::program(lri1, firstRegister, getLowPart(waitValue), true, isCopyOnly(copyOffloadOperation));
+                        NEO::LriHelper<GfxFamily>::program(lri2, secondRegister, getHighPart(waitValue), true, isCopyOnly(copyOffloadOperation));
+                    } else {
+                        memset(lri1, 0, sizeof(MI_LOAD_REGISTER_IMM));
+                        memset(lri2, 0, sizeof(MI_LOAD_REGISTER_IMM));
+                    }
+
+                    if (inOrderExecInfo->isRegularCmdList()) {
+                        inOrderPatchListIndex = addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::lri64b);
+                        if (noopDispatch) {
+                            disablePatching(inOrderPatchListIndex);
+                        }
+                    }
+                    if (outListCommands != nullptr) {
+                        auto &lri1ToPatch = outListCommands->emplace_back();
+                        lri1ToPatch.type = CommandToPatch::CbWaitEventLoadRegisterImm;
+                        lri1ToPatch.pDestination = lri1;
+                        lri1ToPatch.inOrderPatchListIndex = inOrderPatchListIndex;
+                        lri1ToPatch.offset = firstRegister;
+
+                        auto &lri2ToPatch = outListCommands->emplace_back();
+                        lri2ToPatch.type = CommandToPatch::CbWaitEventLoadRegisterImm;
+                        lri2ToPatch.pDestination = lri2;
+                        lri2ToPatch.inOrderPatchListIndex = inOrderPatchListIndex;
+                        lri2ToPatch.offset = secondRegister;
+                    }
                 }
 
-                if (inOrderExecInfo->isRegularCmdList()) {
-                    inOrderPatchListIndex = addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::lri64b);
+                auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)));
+
+                if (!noopDispatch) {
+                    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
+                                                                            false, true, isQwordInOrderCounter(), indirectMode, false);
+                } else {
+                    memset(semaphoreCommand, 0, sizeof(MI_SEMAPHORE_WAIT));
+                }
+
+                if (inOrderExecInfo->isRegularCmdList() && !isQwordInOrderCounter()) {
+                    inOrderPatchListIndex = addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, nullptr, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore);
                     if (noopDispatch) {
                         disablePatching(inOrderPatchListIndex);
                     }
+                } else {
+                    inOrderPatchListIndex = std::numeric_limits<size_t>::max();
                 }
+
                 if (outListCommands != nullptr) {
-                    auto &lri1ToPatch = outListCommands->emplace_back();
-                    lri1ToPatch.type = CommandToPatch::CbWaitEventLoadRegisterImm;
-                    lri1ToPatch.pDestination = lri1;
-                    lri1ToPatch.inOrderPatchListIndex = inOrderPatchListIndex;
-                    lri1ToPatch.offset = firstRegister;
-
-                    auto &lri2ToPatch = outListCommands->emplace_back();
-                    lri2ToPatch.type = CommandToPatch::CbWaitEventLoadRegisterImm;
-                    lri2ToPatch.pDestination = lri2;
-                    lri2ToPatch.inOrderPatchListIndex = inOrderPatchListIndex;
-                    lri2ToPatch.offset = secondRegister;
+                    auto &semaphoreWaitPatch = outListCommands->emplace_back();
+                    semaphoreWaitPatch.type = CommandToPatch::CbWaitEventSemaphoreWait;
+                    semaphoreWaitPatch.pDestination = semaphoreCommand;
+                    semaphoreWaitPatch.offset = i * immWriteOffset;
+                    semaphoreWaitPatch.inOrderPatchListIndex = inOrderPatchListIndex;
                 }
-            }
-
-            auto semaphoreCommand = reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandContainer.getCommandStream()->getSpace(sizeof(MI_SEMAPHORE_WAIT)));
-
-            if (!noopDispatch) {
-                NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreCommand, gpuAddress, waitValue, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD,
-                                                                        false, true, isQwordInOrderCounter(), indirectMode, false);
-            } else {
-                memset(semaphoreCommand, 0, sizeof(MI_SEMAPHORE_WAIT));
-            }
-
-            if (inOrderExecInfo->isRegularCmdList() && !isQwordInOrderCounter()) {
-                inOrderPatchListIndex = addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, nullptr, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore);
-                if (noopDispatch) {
-                    disablePatching(inOrderPatchListIndex);
-                }
-            } else {
-                inOrderPatchListIndex = std::numeric_limits<size_t>::max();
-            }
-
-            if (outListCommands != nullptr) {
-                auto &semaphoreWaitPatch = outListCommands->emplace_back();
-                semaphoreWaitPatch.type = CommandToPatch::CbWaitEventSemaphoreWait;
-                semaphoreWaitPatch.pDestination = semaphoreCommand;
-                semaphoreWaitPatch.offset = i * immWriteOffset;
-                semaphoreWaitPatch.inOrderPatchListIndex = inOrderPatchListIndex;
             }
         }
 
