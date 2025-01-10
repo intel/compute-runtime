@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2018-2024 Intel Corporation
+﻿/*
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -658,16 +658,18 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
     }
 
     do {
-        const char *renderDeviceSuffix = "-render";
+        constexpr const char *renderDeviceSuffix = "-render";
+        size_t renderDevSufSize = std::char_traits<char>::length(renderDeviceSuffix);
+        size_t pciDevDirLen = std::char_traits<char>::length(Os::pciDevicesDirectory);
         for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
             std::string_view devicePathView(file->c_str(), file->size());
-            devicePathView = devicePathView.substr(strlen(Os::pciDevicesDirectory));
+            devicePathView = devicePathView.substr(pciDevDirLen);
 
             auto rdsPos = devicePathView.rfind(renderDeviceSuffix);
             if (rdsPos == std::string::npos) {
                 continue;
             }
-            if (rdsPos < devicePathView.size() - strlen(renderDeviceSuffix)) {
+            if (rdsPos < devicePathView.size() - renderDevSufSize) {
                 continue;
             }
             // at least 'pci-0000:00:00.0' -> 16
@@ -1091,9 +1093,12 @@ bool Drm::completionFenceSupport() {
 
 void Drm::setupIoctlHelper(const PRODUCT_FAMILY productFamily) {
     if (!this->ioctlHelper) {
+        auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
         auto productSpecificIoctlHelperCreator = ioctlHelperFactory[productFamily];
         if (productSpecificIoctlHelperCreator && !debugManager.flags.IgnoreProductSpecificIoctlHelper.get()) {
             this->ioctlHelper = productSpecificIoctlHelperCreator.value()(*this);
+        } else if ("xe" == drmVersion) {
+            this->ioctlHelper = IoctlHelperXe::create(*this);
         } else {
             std::string prelimVersion = "";
             getPrelimVersion(prelimVersion);
@@ -1726,10 +1731,8 @@ bool Drm::isDrmSupported(int fileDescriptor) {
 bool Drm::queryDeviceIdAndRevision() {
     auto drmVersion = Drm::getDrmVersion(getFileDescriptor());
     if ("xe" == drmVersion) {
-        this->ioctlHelper = IoctlHelperXe::create(*this);
-        auto xeIoctlHelperPtr = static_cast<IoctlHelperXe *>(this->ioctlHelper.get());
         this->setPerContextVMRequired(false);
-        return xeIoctlHelperPtr->initialize();
+        return IoctlHelperXe::queryDeviceIdAndRevision(*this);
     }
     return IoctlHelperI915::queryDeviceIdAndRevision(*this);
 }

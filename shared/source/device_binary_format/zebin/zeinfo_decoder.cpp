@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -354,7 +354,7 @@ void populateKernelMiscInfo(KernelDescriptor &dst, KernelMiscArgInfos &kernelMis
         dstTypeTraits.typeQualifiers = KernelArgMetadata::parseTypeQualifiers(dstMetadata.typeQualifiers);
         dst.payloadMappings.explicitArgs.at(srcMetadata.index).getTraits() = std::move(dstTypeTraits);
 
-        dstMetadata.type = dstMetadata.type.substr(0U, dstMetadata.type.find(";"));
+        dstMetadata.type = dstMetadata.type.substr(0U, dstMetadata.type.find(';'));
         dst.explicitArgsExtendedMetadata.at(srcMetadata.index) = std::move(dstMetadata);
     }
 }

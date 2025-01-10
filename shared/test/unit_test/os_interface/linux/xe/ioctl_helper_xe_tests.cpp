@@ -1959,13 +1959,10 @@ TEST_F(IoctlHelperXeTest, whenInitializeThenProperHwInfoIsSet) {
 
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
 
-    hwInfo->platform.usDeviceID = defaultHwInfo->platform.usDeviceID + 1;
-    hwInfo->platform.usRevId = defaultHwInfo->platform.usRevId + 1;
     hwInfo->capabilityTable.gpuAddressSpace = 0;
 
     ioctlHelper->initialize();
-    EXPECT_EQ(defaultHwInfo->platform.usRevId, hwInfo->platform.usRevId);
-    EXPECT_EQ(defaultHwInfo->platform.usDeviceID, hwInfo->platform.usDeviceID);
+
     EXPECT_EQ((1ull << 48) - 1, hwInfo->capabilityTable.gpuAddressSpace);
     EXPECT_EQ(static_cast<uint32_t>(DrmMockXe::mockDefaultCxlType), hwInfo->capabilityTable.cxlType);
 

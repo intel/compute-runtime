@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,7 +189,7 @@ int MultiCommand::splitLineInSeparateArgs(std::vector<std::string> &qargs, const
             continue;
         } else {
             start = i;
-            end = commandsLine.find(" ", start);
+            end = commandsLine.find(' ', start);
             end = (end == std::string::npos) ? commandsLine.length() : end;
         }
         if (end == std::string::npos) {

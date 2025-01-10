@@ -161,10 +161,6 @@ bool IoctlHelperXe::initialize() {
 
     euDebugInterface = EuDebugInterface::create(drm.getSysFsPciPath());
 
-    if (!IoctlHelperXe::queryDeviceIdAndRevision(this->drm)) {
-        return false;
-    }
-
     drm_xe_device_query queryConfig = {};
     queryConfig.query = DRM_XE_DEVICE_QUERY_CONFIG;
 
