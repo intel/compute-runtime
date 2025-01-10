@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -302,7 +302,7 @@ bool Wddm::queryAdapterInfo() {
         memcpy_s(&gfxPartition, sizeof(gfxPartition), &adapterInfo.GfxPartition, sizeof(GMM_GFX_PARTITIONING));
         memcpy_s(&adapterBDF, sizeof(adapterBDF), &adapterInfo.stAdapterBDF, sizeof(ADAPTER_BDF));
 
-        deviceRegistryPath = std::string(adapterInfo.DeviceRegistryPath, sizeof(adapterInfo.DeviceRegistryPath)).c_str();
+        deviceRegistryPath = std::string(adapterInfo.DeviceRegistryPath, sizeof(adapterInfo.DeviceRegistryPath));
 
         systemSharedMemory = adapterInfo.SystemSharedMemory;
         dedicatedVideoMemory = adapterInfo.DedicatedVideoMemory;

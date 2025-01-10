@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -936,7 +936,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
     }
 
-    retVal = deviceName.empty() ? OCLOC_SUCCESS : initHardwareInfo(deviceName.c_str());
+    retVal = deviceName.empty() ? OCLOC_SUCCESS : initHardwareInfo(deviceName);
     if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
         return retVal;
