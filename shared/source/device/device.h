@@ -218,6 +218,10 @@ class Device : public ReferenceTrackedObject<Device> {
 
     void stopDirectSubmissionForCopyEngine();
 
+    uint64_t getMaxAllocationsSavedForReuseSize() const {
+        return maxAllocationsSavedForReuseSize;
+    }
+
     std::unique_lock<std::mutex> obtainAllocationsReuseLock() const {
         return std::unique_lock<std::mutex>(allocationsReuseMtx);
     }
@@ -230,7 +234,7 @@ class Device : public ReferenceTrackedObject<Device> {
         allocationsSavedForReuseSize -= size;
     }
 
-    size_t getAllocationsSavedForReuseSize() const {
+    uint64_t getAllocationsSavedForReuseSize() const {
         return allocationsSavedForReuseSize;
     }
     uint32_t getMicrosecondResolution() const {
@@ -273,6 +277,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool initDeviceWithEngines();
     void initializeCommonResources();
     bool initDeviceFully();
+    void initUsmReuseMaxSize();
     virtual bool createEngines();
 
     void addEngineToEngineGroup(EngineControl &engine);
@@ -330,7 +335,8 @@ class Device : public ReferenceTrackedObject<Device> {
     ISAPoolAllocator isaPoolAllocator;
     std::unique_ptr<UsmMemAllocPoolsManager> deviceUsmMemAllocPoolsManager;
 
-    size_t allocationsSavedForReuseSize = 0u;
+    uint64_t allocationsSavedForReuseSize = 0u;
+    uint64_t maxAllocationsSavedForReuseSize = 0u;
     std::atomic_uint32_t bufferPoolCount = 0u;
     uint32_t maxBufferPoolCount = 0u;
     mutable std::mutex allocationsReuseMtx;

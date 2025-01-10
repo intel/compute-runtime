@@ -209,6 +209,19 @@ void Device::initializeCommonResources() {
         deviceBitfields.emplace(getRootDeviceIndex(), getDeviceBitfield());
         deviceUsmMemAllocPoolsManager.reset(new UsmMemAllocPoolsManager(getMemoryManager(), rootDeviceIndices, deviceBitfields, this, InternalMemoryType::deviceUnifiedMemory));
     }
+    initUsmReuseMaxSize();
+}
+
+void Device::initUsmReuseMaxSize() {
+    const bool usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled() && this->getProductHelper().isDeviceUsmAllocationReuseSupported();
+    auto ailConfiguration = this->getAilConfigurationHelper();
+    const bool limitDeviceMemoryForReuse = ailConfiguration && ailConfiguration->limitAmountOfDeviceMemoryForRecycling();
+    auto fractionOfTotalMemoryForRecycling = (limitDeviceMemoryForReuse || !usmDeviceAllocationsCacheEnabled) ? 0 : 0.08;
+    if (debugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
+        fractionOfTotalMemoryForRecycling = 0.01 * std::min(100, debugManager.flags.ExperimentalEnableDeviceAllocationCache.get());
+    }
+    const auto totalDeviceMemory = this->getGlobalMemorySize(static_cast<uint32_t>(this->getDeviceBitfield().to_ulong()));
+    this->maxAllocationsSavedForReuseSize = static_cast<uint64_t>(fractionOfTotalMemoryForRecycling * totalDeviceMemory);
 }
 
 bool Device::initDeviceFully() {
