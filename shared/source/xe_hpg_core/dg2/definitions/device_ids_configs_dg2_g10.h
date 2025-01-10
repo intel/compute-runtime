@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,5 +25,6 @@ const std::vector<unsigned short> dg2G10DeviceIds{
     0x56C0,
     0x56C2,
     0x56BE,
-    0x56BF};
+    0x56BF,
+    0x56AF};
 } // namespace NEO
