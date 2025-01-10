@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ bool CompilerCache::evictCache(uint64_t &bytesEvicted) {
     for (int i = 0; i < filesCount; ++i) {
         ElementsStruct fileElement = {};
         fileElement.path = joinPath(config.cacheDir, files[i]->d_name);
-        if (NEO::SysCalls::stat(fileElement.path.c_str(), &fileElement.statEl) == 0) {
+        if (NEO::SysCalls::stat(fileElement.path, &fileElement.statEl) == 0) {
             cacheFiles.push_back(std::move(fileElement));
         }
         free(files[i]);
@@ -177,7 +177,7 @@ void CompilerCache::lockConfigFileAndReadSize(const std::string &configFilePath,
             if (fileName.find(config.cacheFileExtension) != fileName.npos) {
                 ElementsStruct fileElement = {};
                 fileElement.path = joinPath(config.cacheDir, files[i]->d_name);
-                if (NEO::SysCalls::stat(fileElement.path.c_str(), &fileElement.statEl) == 0) {
+                if (NEO::SysCalls::stat(fileElement.path, &fileElement.statEl) == 0) {
                     cacheFiles.push_back(std::move(fileElement));
                 }
             }
