@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -83,27 +83,14 @@ LNLTEST_F(LnlProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersionT
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::LNL_B0);
 }
 
-LNLTEST_F(LnlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrWalkerMTP = false;
-    EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-    hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
-}
-
 LNLTEST_F(LnlProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdIsReturnedExceptTagBufferAndTimestampPacketTagBuffer) {
     DebugManagerStateRestore restorer;
     debugManager.flags.AllowDcFlush.set(1);
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
-        if (allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
-            EXPECT_FALSE(preferredAllocationMethod.has_value());
-        } else {
-            EXPECT_TRUE(preferredAllocationMethod.has_value());
-            EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
-        }
+        EXPECT_TRUE(preferredAllocationMethod.has_value());
+        EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
     }
     debugManager.flags.AllowDcFlush.set(0);
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
@@ -169,9 +156,4 @@ LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsDeviceUsmAllocationR
 
 LNLTEST_F(LnlProductHelper, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
-}
-
-LNLTEST_F(LnlProductHelper, givenProductHelperWhenGettingThreadEuRatioForScratchThen16IsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_EQ(16u, productHelper->getThreadEuRatioForScratch(hwInfo));
 }

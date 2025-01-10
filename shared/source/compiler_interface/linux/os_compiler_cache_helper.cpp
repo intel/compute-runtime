@@ -67,7 +67,7 @@ bool checkDefaultCacheDirSettings(std::string &cacheDir, NEO::EnvironmentVariabl
 }
 
 time_t getFileModificationTime(const std::string &path) {
-    struct stat st;
+    struct stat st {};
     if (NEO::SysCalls::stat(path, &st) == 0) {
         return st.st_mtime;
     }
@@ -75,7 +75,7 @@ time_t getFileModificationTime(const std::string &path) {
 }
 
 size_t getFileSize(const std::string &path) {
-    struct stat st;
+    struct stat st {};
     if (NEO::SysCalls::stat(path, &st) == 0) {
         return static_cast<size_t>(st.st_size);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,9 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#if !defined(__linux__)
+#include <regex>
+#endif
 
 namespace NEO {
 namespace PagaFaultManagerTestConfig {
@@ -74,7 +77,6 @@ extern PRODUCT_FAMILY productFamily;
 extern GFXCORE_FAMILY renderCoreFamily;
 
 void applyWorkarounds();
-bool isPlatformSupported(const HardwareInfo &hwInfoForTests);
 void setupTestFiles(std::string testBinaryFiles, int32_t revId);
 std::string getBaseExecutionDir();
 void addUltListener(::testing::TestEventListeners &listener);
@@ -139,6 +141,13 @@ void applyCommonWorkarounds() {
 
 bool enableAlarm = true;
 int main(int argc, char **argv) {
+#if !defined(__linux__)
+    std::regex dummyRegex{"dummyRegex"};   // these dummy objects are neededed to prevent false-positive
+    std::wstringstream dummyWstringstream; // leaks when using instances of std::regex and std::wstringstream in tests
+    dummyWstringstream << std::setw(4)     // in Windows Release builds
+                       << std::setfill(L'0')
+                       << std::hex << 5;
+#endif
     int retVal = 0;
     bool useDefaultListener = false;
     bool enableAbrt = true;
@@ -332,12 +341,6 @@ int main(int argc, char **argv) {
         }
 
         adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
-        // Platforms with uninitialized factory are not supported
-        if (!isPlatformSupported(hwInfoForTests)) {
-            std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
-            std::cout << "skipping tests" << std::endl;
-            return 0;
-        }
 
         binaryNameSuffix = hardwarePrefix[hwInfoForTests.platform.eProductFamily];
 

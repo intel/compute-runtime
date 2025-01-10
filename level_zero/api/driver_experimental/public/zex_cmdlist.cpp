@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
+#include "level_zero/driver_experimental/zex_cmdlist.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -82,7 +82,7 @@ zeIntelCommandListAppendWaitExternalSemaphoresExp(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::CommandList::fromHandle(hCmdList)->appendWaitExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t ZE_APICALL
@@ -94,5 +94,5 @@ zeIntelCommandListAppendSignalExternalSemaphoresExp(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::CommandList::fromHandle(hCmdList)->appendSignalExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
 }

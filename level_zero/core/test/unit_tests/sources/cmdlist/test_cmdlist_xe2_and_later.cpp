@@ -98,17 +98,15 @@ struct CommandListXe2AndLaterFixture : public DeviceFixture {
         uint64_t contextAddress = ptrOffset(baseAddr, contextOffset);
 
         if (useMask) {
-            ASSERT_EQ(8u, srmCommands.size());
+            ASSERT_EQ(6u, srmCommands.size());
 
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[0]), globalAddress, RegisterOffsets::csGprR12);
             validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[1]), contextAddress, RegisterOffsets::csGprR12);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), globalAddress + sizeof(uint32_t), RegisterOffsets::csGprR12);
-            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), RegisterOffsets::csGprR12);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[2]), globalAddress + sizeof(uint32_t), RegisterOffsets::globalTimestampUn);
+            validateSrmCommand<FamilyType>(reinterpret_cast<MI_STORE_REGISTER_MEM *>(*srmCommands[3]), contextAddress + sizeof(uint32_t), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
 
             validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[4]), RegisterOffsets::globalTimestampLdw);
             validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[5]), RegisterOffsets::gpThreadTimeRegAddressOffsetLow);
-            validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[6]), RegisterOffsets::globalTimestampUn);
-            validateLrrCommand<FamilyType>(reinterpret_cast<MI_LOAD_REGISTER_REG *>(*srmCommands[7]), RegisterOffsets::gpThreadTimeRegAddressOffsetHigh);
 
         } else {
             ASSERT_EQ(4u, srmCommands.size());

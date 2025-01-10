@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ std::vector<StreamProperty *> getAllStateComputeModeProperties(StateComputeModeP
     allProperties.push_back(&properties.pixelAsyncComputeThreadLimit);
     allProperties.push_back(&properties.threadArbitrationPolicy);
     allProperties.push_back(&properties.memoryAllocationForScratchAndMidthreadPreemptionBuffers);
+    allProperties.push_back(&properties.enableVariableRegisterSizeAllocation);
     return allProperties;
 }
 

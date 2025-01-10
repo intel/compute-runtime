@@ -344,7 +344,6 @@ const Family::MEM_COPY Family::cmdInitXyCopyBlt = Family::MEM_COPY::sInit();
 const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();
 const Family::STATE_PREFETCH Family::cmdInitStatePrefetch = Family::STATE_PREFETCH::sInit();
 const Family::_3DSTATE_BTD Family::cmd3dStateBtd = Family::_3DSTATE_BTD::sInit();
-const Family::_3DSTATE_BTD_BODY Family::cmd3dStateBtdBody = Family::_3DSTATE_BTD_BODY::sInit();
 const Family::MI_MEM_FENCE Family::cmdInitMemFence = Family::MI_MEM_FENCE::sInit();
 const Family::MEM_SET Family::cmdInitMemSet = Family::MEM_SET::sInit();
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();

@@ -1,9 +1,21 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#if SUPPORT_XE3_CORE
+#ifdef SUPPORT_PTL
+DEVICE(0xB080, PtlHwConfig)
+DEVICE(0xB081, PtlHwConfig)
+DEVICE(0xB082, PtlHwConfig)
+DEVICE(0xB083, PtlHwConfig)
+DEVICE(0xB08F, PtlHwConfig)
+DEVICE(0xB090, PtlHwConfig)
+DEVICE(0xB0A0, PtlHwConfig)
+#endif
+#endif
 
 #if SUPPORT_XE2_HPG_CORE
 #ifdef SUPPORT_BMG

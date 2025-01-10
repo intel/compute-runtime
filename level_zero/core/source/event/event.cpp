@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -327,7 +327,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
 }
 
 ze_result_t Event::getCounterBasedIpcHandle(IpcCounterBasedEventData &ipcData) {
-    if (!this->isSharableCouterBased) {
+    if (!this->isSharableCounterBased) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
@@ -680,7 +680,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 setExternalInterruptId(eventSyncModeDesc->externalInterruptId);
                 UNRECOVERABLE_IF(eventSyncModeDesc->externalInterruptId > 0 && eventDescriptor.eventPoolAllocation);
             }
-        } else if (extendedDesc->stype == ZEX_STRUCTURE_COUTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES) {
+        } else if (extendedDesc->stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES) {
             auto externalSyncAllocProperties = reinterpret_cast<const zex_counter_based_event_external_sync_alloc_properties_t *>(extendedDesc);
 
             if (!externalSyncAllocProperties->deviceAddress || !externalSyncAllocProperties->hostAddress) {

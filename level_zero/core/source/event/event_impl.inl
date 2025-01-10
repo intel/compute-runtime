@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,11 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/utilities/wait_util.h"
 
-#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
+#include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
@@ -96,7 +96,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
     if (eventDescriptor.counterBasedFlags != 0 || NEO::debugManager.flags.ForceInOrderEvents.get() == 1) {
         event->enableCounterBasedMode(true, eventDescriptor.counterBasedFlags);
         if (eventDescriptor.ipcPool) {
-            event->isSharableCouterBased = true;
+            event->isSharableCounterBased = true;
         }
     }
 
@@ -664,6 +664,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         timeout = NEO::debugManager.flags.OverrideEventSynchronizeTimeout.get();
     }
 
+    TaskCountType taskCountToWaitForL3Flush = 0;
+    if (this->mitigateHostVisibleSignal && this->device->getProductHelper().isDcFlushAllowed()) {
+        auto lock = this->csrs[0]->obtainUniqueOwnership();
+        this->csrs[0]->flushTagUpdate();
+        taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
+    }
+
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
 
@@ -692,6 +699,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 if (hangDetected) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
                 }
+            }
+            if (taskCountToWaitForL3Flush) {
+                this->csrs[0]->waitForTaskCount(taskCountToWaitForL3Flush);
             }
             return ret;
         }
@@ -762,7 +772,7 @@ void EventImp<TagSizeT>::resetDeviceCompletionData(bool resetAllPackets) {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::synchronizeCounterBasedTimestampCompletionWithTimeout() {
+void EventImp<TagSizeT>::synchronizeTimestampCompletionWithTimeout() {
     std::chrono::high_resolution_clock::time_point startTime = std::chrono::high_resolution_clock::now();
     constexpr uint64_t timeoutMs = 1000 * 5; // 5s
     uint64_t timeDiff = 0;
@@ -772,8 +782,8 @@ void EventImp<TagSizeT>::synchronizeCounterBasedTimestampCompletionWithTimeout()
         calculateProfilingData();
 
         timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
-    } while ((contextEndTS == Event::STATE_CLEARED || contextEndTS == 0) && (timeDiff < timeoutMs));
-    DEBUG_BREAK_IF(contextEndTS == Event::STATE_CLEARED || contextEndTS == 0);
+    } while (!isTimestampPopulated() && (timeDiff < timeoutMs));
+    DEBUG_BREAK_IF(!isTimestampPopulated());
 }
 
 template <typename TagSizeT>
@@ -787,8 +797,8 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
     assignKernelEventCompletionData(getHostAddress());
     calculateProfilingData();
 
-    if (isCounterBased() && (contextEndTS == Event::STATE_CLEARED || contextEndTS == 0)) {
-        synchronizeCounterBasedTimestampCompletionWithTimeout();
+    if (!isTimestampPopulated()) {
+        synchronizeTimestampCompletionWithTimeout();
     }
 
     auto eventTsSetFunc = [&](uint64_t &timestampFieldToCopy, uint64_t &timestampFieldForWriting) {

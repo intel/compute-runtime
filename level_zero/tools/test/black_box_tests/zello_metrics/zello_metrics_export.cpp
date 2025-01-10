@@ -5,9 +5,9 @@
  *
  */
 
-#include "level_zero/include/zet_intel_gpu_metric_export.h"
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics.h"
 #include "level_zero/tools/test/black_box_tests/zello_metrics/zello_metrics_util.h"
+#include "level_zero/zet_intel_gpu_metric_export.h"
 
 #include <map>
 

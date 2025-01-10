@@ -223,7 +223,7 @@ MI_USER_INTERRUPT *genCmdCast<MI_USER_INTERRUPT *>(void *buffer) {
     auto pCmd = reinterpret_cast<MI_USER_INTERRUPT *>(buffer);
 
     return 0 == pCmd->TheStructure.Common.CommandType &&
-                   MI_USER_INTERRUPT::MI_COMMAND_OPCODE_MI_USER_INTERRUPT == pCmd->TheStructure.Common.MICommandOpcode
+                   MI_USER_INTERRUPT::MI_COMMAND_OPCODE_MI_USER_INTERRUPT == pCmd->TheStructure.Common.MiCommandOpcode
                ? pCmd
                : nullptr;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
         debugManager.flags.EnableCopyWithStagingBuffers.set(1);
         RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
-        this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields);
+        this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields, false);
         this->csr = pDevice->commandStreamReceivers[0].get();
     }
 
@@ -198,17 +198,52 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForImageWrite
         {nonUsmBuffer, true, false},
     };
     for (auto i = 0; i < 4; i++) {
-        auto actualValid = stagingBufferManager->isValidForStagingTransferImage(*pDevice, copyParamsStruct[i].ptr, copyParamsStruct[i].hasDependencies);
+        auto actualValid = stagingBufferManager->isValidForStagingTransfer(*pDevice, copyParamsStruct[i].ptr, copyParamsStruct[i].hasDependencies);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransferImage(*pDevice, nonUsmBuffer, false));
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, false));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
     auto isStaingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingTransferImage(*pDevice, nonUsmBuffer, false));
+    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, false));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyOnHwThenDontSetWritable) {
+    constexpr size_t numOfChunkCopies = 8;
+    constexpr size_t remainder = 1024;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1, csr);
+    auto svmData = svmAllocsManager->svmAllocs.allocations[0].second.get();
+    auto alloc = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+    alloc->setAubWritable(false, std::numeric_limits<uint32_t>::max());
+    alloc->setTbxWritable(false, std::numeric_limits<uint32_t>::max());
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 0, csr);
+
+    EXPECT_FALSE(alloc->isAubWritable(std::numeric_limits<uint32_t>::max()));
+    EXPECT_FALSE(alloc->isTbxWritable(std::numeric_limits<uint32_t>::max()));
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyOnSimulationThenSetWritable) {
+    constexpr size_t numOfChunkCopies = 8;
+    constexpr size_t remainder = 1024;
+    constexpr size_t totalCopySize = stagingBufferSize * numOfChunkCopies + remainder;
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields, true);
+
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1, csr);
+    auto svmData = svmAllocsManager->svmAllocs.allocations[0].second.get();
+    auto alloc = svmData->gpuAllocations.getDefaultGraphicsAllocation();
+    alloc->setAubWritable(false, std::numeric_limits<uint32_t>::max());
+    alloc->setTbxWritable(false, std::numeric_limits<uint32_t>::max());
+    copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 0, csr);
+
+    EXPECT_TRUE(alloc->isAubWritable(std::numeric_limits<uint32_t>::max()));
+    EXPECT_TRUE(alloc->isTbxWritable(std::numeric_limits<uint32_t>::max()));
 }
 
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformCopyThenCopyData) {
@@ -336,7 +371,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenChangedBufferSizeThenPerf
 
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
-    stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields);
+    stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields, false);
     copyThroughStagingBuffers(totalCopySize, numOfChunkCopies + 1, 1, csr);
 }
 

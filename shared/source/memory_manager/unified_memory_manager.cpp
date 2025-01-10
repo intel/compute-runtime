@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
@@ -86,6 +87,18 @@ bool SVMAllocsManager::SvmAllocationCache::allocUtilizationAllows(size_t request
     return true;
 }
 
+bool SVMAllocsManager::SvmAllocationCache::isInUse(SvmAllocationData *svmData) {
+    if (svmData->cpuAllocation && memoryManager->allocInUse(*svmData->cpuAllocation)) {
+        return true;
+    }
+    for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
+        if (gpuAllocation && memoryManager->allocInUse(*gpuAllocation)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties) {
     if (false == sizeAllowed(size)) {
         return nullptr;
@@ -102,7 +115,8 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
         UNRECOVERABLE_IF(!svmAllocData);
         if (svmAllocData->device == unifiedMemoryProperties.device &&
             svmAllocData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
-            svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags) {
+            svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags &&
+            false == isInUse(svmAllocData)) {
             if (svmAllocData->device) {
                 auto lock = svmAllocData->device->obtainAllocationsReuseLock();
                 svmAllocData->device->recordAllocationGetFromReuse(allocationIter->allocationSize);
@@ -248,7 +262,16 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
-    constexpr size_t pageSizeForAlignment = MemoryConstants::pageSize;
+    bool isDiscrete = false;
+    if (size >= MemoryConstants::pageSize2M) {
+        for (const auto rootDeviceIndex : memoryProperties.rootDeviceIndices) {
+            isDiscrete |= !this->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
+            if (isDiscrete) {
+                break;
+            }
+        }
+    }
+    const size_t pageSizeForAlignment = isDiscrete ? MemoryConstants::pageSize2M : MemoryConstants::pageSize;
     const size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     bool compressionEnabled = false;
@@ -759,6 +782,7 @@ void SVMAllocsManager::initUsmDeviceAllocationsCache(Device &device) {
         this->usmDeviceAllocationsCache.allocations.reserve(128u);
     }
     this->usmDeviceAllocationsCache.svmAllocsManager = this;
+    this->usmDeviceAllocationsCache.memoryManager = memoryManager;
 }
 
 void SVMAllocsManager::initUsmHostAllocationsCache() {

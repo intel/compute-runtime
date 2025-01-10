@@ -110,18 +110,18 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         auto offset = std::min(inlineDataSize, sizeCrossThreadData);
         sizeCrossThreadData -= offset;
         src += offset;
+
+        if constexpr (heaplessModeEnabled) {
+            uint64_t indirectDataAddress = indirectHeap.getHeapGpuBase();
+            indirectDataAddress += indirectHeap.getHeapGpuStartOffset();
+            indirectDataAddress += offsetCrossThreadData;
+            HardwareCommandsHelper<GfxFamily>::programInlineData<WalkerType>(kernel, walkerCmd, indirectDataAddress, scratchAddress);
+        }
     }
 
     if (sizeCrossThreadData > 0) {
         dest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
         memcpy_s(dest, sizeCrossThreadData, src, sizeCrossThreadData);
-    }
-
-    if constexpr (heaplessModeEnabled) {
-        uint64_t indirectDataAddress = indirectHeap.getHeapGpuBase();
-        indirectDataAddress += indirectHeap.getHeapGpuStartOffset();
-        indirectDataAddress += offsetCrossThreadData;
-        HardwareCommandsHelper<GfxFamily>::programInlineData<WalkerType>(kernel, walkerCmd, indirectDataAddress, scratchAddress);
     }
 
     if (debugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {

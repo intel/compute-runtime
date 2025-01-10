@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/constants.h"
 
 #include <level_zero/ze_api.h>
 
@@ -39,7 +40,7 @@ struct Fence : _ze_fence_handle_t {
   protected:
     Fence(CommandQueueImp *cmdQueueImp) : cmdQueue(cmdQueueImp) {}
 
-    std::chrono::microseconds gpuHangCheckPeriod{500'000};
+    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     CommandQueueImp *cmdQueue;
     TaskCountType taskCount = 0;
 };

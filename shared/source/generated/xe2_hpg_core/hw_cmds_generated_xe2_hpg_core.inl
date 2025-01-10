@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3377,7 +3377,7 @@ typedef struct tagMI_USER_INTERRUPT {
         struct tagCommon {
             // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 22);
-            uint32_t MICommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
         } Common;
         uint32_t RawData[1];
@@ -3390,7 +3390,7 @@ typedef struct tagMI_USER_INTERRUPT {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.MICommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_USER_INTERRUPT sInit() {
@@ -4555,10 +4555,10 @@ typedef struct tagXY_FAST_COLOR_BLT {
         AUX_SPECIAL_OPERATIONS_MODE_FORCE_UNCOMPRESS = 0x2,
     } AUX_SPECIAL_OPERATIONS_MODE;
     typedef enum tagDESTINATION_SURFACE_TYPE {
-        DESTINATION_SURFACE_TYPE_1D = 0x0,
-        DESTINATION_SURFACE_TYPE_2D = 0x1,
-        DESTINATION_SURFACE_TYPE_3D = 0x2,
-        DESTINATION_SURFACE_TYPE_CUBE = 0x3,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_1D = 0x0,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_2D = 0x1,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_3D = 0x2,
+        DESTINATION_SURFACE_TYPE_SURFTYPE_CUBE = 0x3,
     } DESTINATION_SURFACE_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
@@ -4573,7 +4573,7 @@ typedef struct tagXY_FAST_COLOR_BLT {
         TheStructure.Common.DestinationTargetMemory = DESTINATION_TARGET_MEMORY_LOCAL_MEM;
         TheStructure.Common.DestinationCompressionFormat = DESTINATION_COMPRESSION_FORMAT_CMF_R8;
         TheStructure.Common.AuxSpecialOperationsMode = AUX_SPECIAL_OPERATIONS_MODE_FAST_CLEAR_HW_FORMAT_CONVERSION;
-        TheStructure.Common.DestinationSurfaceType = DESTINATION_SURFACE_TYPE_1D;
+        TheStructure.Common.DestinationSurfaceType = DESTINATION_SURFACE_TYPE_SURFTYPE_1D;
     }
     static tagXY_FAST_COLOR_BLT sInit() {
         XY_FAST_COLOR_BLT state;
@@ -4924,16 +4924,23 @@ typedef struct tagMI_FLUSH_DW {
 } MI_FLUSH_DW;
 STATIC_ASSERT(20 == sizeof(MI_FLUSH_DW));
 
-typedef struct tag_3DSTATE_BTD_BODY {
+typedef struct tag_3DSTATE_BTD {
     union tagTheStructure {
         struct tagCommon {
             // DWORD 0
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
+            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
+            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
+            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            // DWORD 1
             uint32_t DispatchTimeoutCounter : BITFIELD_RANGE(0, 2);
             uint32_t Reserved_3 : BITFIELD_RANGE(3, 6);
             uint32_t ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs : BITFIELD_RANGE(7, 8);
             uint32_t Reserved_9 : BITFIELD_RANGE(9, 30);
             uint32_t BtdMidThreadPreemption : BITFIELD_RANGE(31, 31);
-            // DWORD 1
+            // DWORD 2
             uint64_t PerDssMemoryBackedBufferSize : BITFIELD_RANGE(0, 2);
             uint64_t Reserved_35 : BITFIELD_RANGE(3, 9);
             uint64_t MemoryBackedBufferBasePointer : BITFIELD_RANGE(10, 63);
@@ -4943,8 +4950,23 @@ typedef struct tag_3DSTATE_BTD_BODY {
             // DWORD 4
             uint64_t Reserved_128 : BITFIELD_RANGE(32, 63);
         } Common;
-        uint32_t RawData[5];
+        uint32_t RawData[6];
     } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_DWORD_COUNT_N = 0x4,
+    } DWORD_LENGTH;
+    typedef enum tag_3D_COMMAND_SUB_OPCODE {
+        _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD = 0x6,
+    } _3D_COMMAND_SUB_OPCODE;
+    typedef enum tag_3D_COMMAND_OPCODE {
+        _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED = 0x1,
+    } _3D_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_SUBTYPE {
+        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
+    } COMMAND_SUBTYPE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_GFXPIPE = 0x3,
+    } COMMAND_TYPE;
     typedef enum tagDISPATCH_TIMEOUT_COUNTER {
         DISPATCH_TIMEOUT_COUNTER_64 = 0x0,
         DISPATCH_TIMEOUT_COUNTER_128 = 0x1,
@@ -4972,17 +4994,22 @@ typedef struct tag_3DSTATE_BTD_BODY {
     } PER_DSS_MEMORY_BACKED_BUFFER_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD;
+        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
+        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
+        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
         TheStructure.Common.DispatchTimeoutCounter = DISPATCH_TIMEOUT_COUNTER_64;
         TheStructure.Common.ControlsTheMaximumNumberOfOutstandingRayqueriesPerSs = CONTROLS_THE_MAXIMUM_NUMBER_OF_OUTSTANDING_RAYQUERIES_PER_SS_128;
         TheStructure.Common.PerDssMemoryBackedBufferSize = PER_DSS_MEMORY_BACKED_BUFFER_SIZE_2KB;
     }
-    static tag_3DSTATE_BTD_BODY sInit() {
-        _3DSTATE_BTD_BODY state;
+    static tag_3DSTATE_BTD sInit() {
+        _3DSTATE_BTD state;
         state.init();
         return state;
     }
     inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index >= 5);
+        UNRECOVERABLE_IF(index >= 6);
         return TheStructure.RawData[index];
     }
     inline void setDispatchTimeoutCounter(const DISPATCH_TIMEOUT_COUNTER value) {
@@ -5028,63 +5055,6 @@ typedef struct tag_3DSTATE_BTD_BODY {
     }
     inline uint64_t getScratchSpaceBuffer() const {
         return TheStructure.Common.ScratchSpaceBuffer << SCRATCHSPACEBUFFER_BIT_SHIFT;
-    }
-} _3DSTATE_BTD_BODY;
-STATIC_ASSERT(20 == sizeof(_3DSTATE_BTD_BODY));
-
-typedef struct tag_3DSTATE_BTD {
-    union tagTheStructure {
-        struct tagCommon {
-            // DWORD 0
-            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved_8 : BITFIELD_RANGE(8, 15);
-            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
-            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
-            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
-            uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1
-            _3DSTATE_BTD_BODY BtdStateBody;
-        } Common;
-        uint32_t RawData[6];
-    } TheStructure;
-    typedef enum tagDWORD_LENGTH {
-        DWORD_LENGTH_DWORD_COUNT_N = 0x4,
-    } DWORD_LENGTH;
-    typedef enum tag_3D_COMMAND_SUB_OPCODE {
-        _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD = 0x6,
-    } _3D_COMMAND_SUB_OPCODE;
-    typedef enum tag_3D_COMMAND_OPCODE {
-        _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED = 0x1,
-    } _3D_COMMAND_OPCODE;
-    typedef enum tagCOMMAND_SUBTYPE {
-        COMMAND_SUBTYPE_GFXPIPE_COMMON = 0x0,
-    } COMMAND_SUBTYPE;
-    typedef enum tagCOMMAND_TYPE {
-        COMMAND_TYPE_GFXPIPE = 0x3,
-    } COMMAND_TYPE;
-    inline void init() {
-        memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_DWORD_COUNT_N;
-        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_3DSTATE_BTD;
-        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_GFXPIPE_NONPIPELINED;
-        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_COMMON;
-        TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.BtdStateBody.init();
-    }
-    static tag_3DSTATE_BTD sInit() {
-        _3DSTATE_BTD state;
-        state.init();
-        return state;
-    }
-    inline uint32_t &getRawData(const uint32_t index) {
-        UNRECOVERABLE_IF(index >= 6);
-        return TheStructure.RawData[index];
-    }
-    inline void setBtdStateBody(const _3DSTATE_BTD_BODY &value) {
-        TheStructure.Common.BtdStateBody = value;
-    }
-    inline _3DSTATE_BTD_BODY &getBtdStateBody() {
-        return TheStructure.Common.BtdStateBody;
     }
 } _3DSTATE_BTD;
 STATIC_ASSERT(24 == sizeof(_3DSTATE_BTD));
@@ -5266,21 +5236,21 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         BINDING_TABLE_ENTRY_COUNT_PREFETCH_COUNT_MAX = 0x1f,
     } BINDING_TABLE_ENTRY_COUNT;
     typedef enum tagSHARED_LOCAL_MEMORY_SIZE {
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K = 0x0,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K = 0x1,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_2K = 0x2,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_4K = 0x3,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_8K = 0x4,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_16K = 0x5,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_32K = 0x6,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_64K = 0x7,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_24K = 0x8,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_48K = 0x9,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_96K = 0xa,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_128K = 0xb,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_192K = 0xc,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_256K = 0xd,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_384K = 0xe,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K = 0x0,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K = 0x1,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K = 0x2,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K = 0x3,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K = 0x4,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K = 0x5,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K = 0x6,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K = 0x7,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_24K = 0x8,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_48K = 0x9,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_96K = 0xa,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_128K = 0xb,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_192K = 0xc,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_256K = 0xd,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_384K = 0xe,
     } SHARED_LOCAL_MEMORY_SIZE;
     typedef enum tagROUNDING_MODE {
         ROUNDING_MODE_RTNE = 0x0,
@@ -5309,17 +5279,17 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         BTD_MODE_ENABLE = 0x1,
     } BTD_MODE;
     typedef enum tagPREFERRED_SLM_ALLOCATION_SIZE {
-        PREFERRED_SLM_ALLOCATION_SIZE_0K = 0x0,
-        PREFERRED_SLM_ALLOCATION_SIZE_16K = 0x1,
-        PREFERRED_SLM_ALLOCATION_SIZE_32K = 0x2,
-        PREFERRED_SLM_ALLOCATION_SIZE_64K = 0x3,
-        PREFERRED_SLM_ALLOCATION_SIZE_96K = 0x4,
-        PREFERRED_SLM_ALLOCATION_SIZE_128K = 0x5,
-        PREFERRED_SLM_ALLOCATION_SIZE_160K = 0x6,
-        PREFERRED_SLM_ALLOCATION_SIZE_192K = 0x7,
-        PREFERRED_SLM_ALLOCATION_SIZE_224K = 0x8,
-        PREFERRED_SLM_ALLOCATION_SIZE_256K = 0x9,
-        PREFERRED_SLM_ALLOCATION_SIZE_384K = 0xa,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K = 0x0,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K = 0x1,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_32K = 0x2,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_64K = 0x3,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_96K = 0x4,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_128K = 0x5,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_160K = 0x6,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_192K = 0x7,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_224K = 0x8,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_256K = 0x9,
+        PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_384K = 0xa,
     } PREFERRED_SLM_ALLOCATION_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
@@ -5328,12 +5298,12 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
         TheStructure.Common.SamplerCount = SAMPLER_COUNT_NO_SAMPLERS_USED;
         TheStructure.Common.BindingTableEntryCount = BINDING_TABLE_ENTRY_COUNT_PREFETCH_DISABLED;
-        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
+        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K;
         TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
         TheStructure.Common.ThreadGroupDispatchSize = THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8;
         TheStructure.Common.NumberOfBarriers = NUMBER_OF_BARRIERS_NONE;
         TheStructure.Common.BtdMode = BTD_MODE_DISABLE;
-        TheStructure.Common.PreferredSlmAllocationSize = PREFERRED_SLM_ALLOCATION_SIZE_0K;
+        TheStructure.Common.PreferredSlmAllocationSize = PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K;
     }
     static tagINTERFACE_DESCRIPTOR_DATA sInit() {
         INTERFACE_DESCRIPTOR_DATA state;
@@ -7218,9 +7188,9 @@ typedef struct tagMI_MEM_FENCE {
         uint32_t RawData[1];
     } TheStructure;
     typedef enum tagFENCE_TYPE {
-        FENCE_TYPE_RELEASE = 0x0,
-        FENCE_TYPE_ACQUIRE = 0x1,
-        FENCE_TYPE_MI_WRITE = 0x3,
+        FENCE_TYPE_RELEASE_FENCE = 0x0,
+        FENCE_TYPE_ACQUIRE_FENCE = 0x1,
+        FENCE_TYPE_MI_WRITE_FENCE = 0x3,
     } FENCE_TYPE;
     typedef enum tagMI_COMMAND_SUB_OPCODE {
         MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE = 0x0,
@@ -7233,7 +7203,7 @@ typedef struct tagMI_MEM_FENCE {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.FenceType = FENCE_TYPE_RELEASE;
+        TheStructure.Common.FenceType = FENCE_TYPE_RELEASE_FENCE;
         TheStructure.Common.MiCommandSubOpcode = MI_COMMAND_SUB_OPCODE_MI_MEM_FENCE;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_EXTENDED;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;

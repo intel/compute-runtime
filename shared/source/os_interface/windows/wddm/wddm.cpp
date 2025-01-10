@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -406,6 +406,7 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator = createUmKmDataTranslator(*osEnvironment.gdi, openAdapterData.hAdapter);
     if (false == umKmDataTranslator->enabled() && !debugManager.flags.DoNotValidateDriverPath.get()) {
         if (false == validDriverStorePath(osEnvironment, openAdapterData.hAdapter)) {
+            PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "Driver path is not a valid DriverStore path. Try running with debug key: DoNotValidateDriverPath=1.\n");
             return nullptr;
         }
     }

@@ -295,13 +295,15 @@ HWTEST2_F(AppendFillTest,
                                            begin,
                                            RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
-                                           false);
+                                           false,
+                                           true);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            secondWalker,
                                            RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
-                                           false);
+                                           false,
+                                           true);
 }
 
 HWTEST2_F(AppendFillTest,
@@ -349,13 +351,15 @@ HWTEST2_F(AppendFillTest,
                                            begin,
                                            RegisterOffsets::globalTimestampLdw, globalStartAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextStartAddress,
-                                           false);
+                                           false,
+                                           true);
 
     validateTimestampRegisters<FamilyType>(cmdList,
                                            secondWalker,
                                            RegisterOffsets::globalTimestampLdw, globalEndAddress,
                                            RegisterOffsets::gpThreadTimeRegAddressOffsetLow, contextEndAddress,
-                                           false);
+                                           false,
+                                           true);
 }
 
 } // namespace ult

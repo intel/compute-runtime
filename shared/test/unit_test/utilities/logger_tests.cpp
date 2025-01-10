@@ -52,6 +52,7 @@ TEST(FileLogger, GivenFullyDisabledFileLoggerIsCreatedThenItIsDisabled) {
 TEST(FileLogger, GivenFileLoggerWhenSettingFileNameThenCorrectFilenameIsSet) {
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(std::string(""), flags);
+    fileLogger.useRealFiles(false);
     fileLogger.setLogFileName("new_filename");
     EXPECT_STREQ("new_filename", fileLogger.getLogFileName());
 }
@@ -60,6 +61,7 @@ TEST(FileLogger, GivenEnabledDebugFunctinalityWhenLoggingApiCallsThenDumpToFile)
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(std::string("test.log"), flags);
+    fileLogger.useRealFiles(false);
 
     fileLogger.logApiCall("searchString", true, 0);
     fileLogger.logApiCall("searchString2", false, 0);
@@ -119,6 +121,7 @@ TEST(FileLogger, GivenCorrectFilenameFileWhenLoggingApiCallsThenFileIsCreated) {
     std::string testFile = "testfile";
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
     fileLogger.writeToFile(testFile, "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -132,6 +135,7 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewInstanceThenOldFileIsRemoved) {
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -144,6 +148,7 @@ TEST(FileLogger, GivenSameFileNameWhenCreatingNewFullyDisabledLoggerThenOldFileI
     DebugVariables flags;
     flags.LogApiCalls.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
     fileLogger.writeToFile(fileLogger.getLogFileName(), "test", 4, std::fstream::out);
 
     EXPECT_TRUE(virtualFileExists(fileLogger.getLogFileName()));
@@ -160,6 +165,7 @@ TEST(FileLogger, GivenFlagIsFalseWhenLoggingThenOnlyCustomLogsAreDumped) {
     flags.LogApiCalls.set(false);
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     // Log file not created
     bool logFileCreated = virtualFileExists(fileLogger.getLogFileName());
@@ -258,6 +264,7 @@ TEST(FileLogger, WhenDumpingKernelThenFileIsCreated) {
     DebugVariables flags;
     flags.DumpKernels.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
     std::string kernelDumpFile = "testDumpKernel";
 
     // test kernel dumping
@@ -282,6 +289,7 @@ TEST(FileLogger, WhenDumpingBinaryFileThenFileIsCreated) {
     DebugVariables flags;
     flags.DumpKernels.set(true);
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
     std::string programDumpFile = "programBinary.bin";
     size_t length = 4;
     unsigned char binary[4];
@@ -427,6 +435,7 @@ TEST(FileLogger, givenEnabledLogWhenLogDebugStringCalledThenStringIsWrittenToFil
     std::string testFile = "testfile";
     DebugVariables flags;
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     fileLogger.logDebugString(true, "test log");
     EXPECT_EQ(std::string("test log"), fileLogger.getFileString(testFile));
@@ -549,6 +558,7 @@ TEST(AllocationTypeLoggingSingle, givenLogAllocationTypeWhenLoggingAllocationThe
     flags.LogAllocationType.set(1);
 
     FullyEnabledFileLogger fileLogger(testFile, flags);
+    fileLogger.useRealFiles(false);
 
     GraphicsAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::commandBuffer, nullptr, 0, 0, MemoryPool::memoryNull, MemoryManager::maxOsContextCount, 0llu);
 

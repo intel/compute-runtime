@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -50,6 +51,7 @@ class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
 class SysmanDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
+        debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
         VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
             constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
             strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
@@ -93,6 +95,7 @@ class SysmanDeviceFixture : public ::testing::Test {
     NEO::ExecutionEnvironment *execEnv = nullptr;
     std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
     const uint32_t numRootDevices = 1u;
+    DebugManagerStateRestore restore;
 };
 
 class SysmanMultiDeviceFixture : public ::testing::Test {

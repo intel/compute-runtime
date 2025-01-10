@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,31 @@ __kernel void CopyBufferToImage3d4Bytes(__global uchar *src,
     write_imageui(output, dstCoord, c);
 }
 
+__kernel void CopyBufferToImage3d3To4Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        int srcOffset,
+                                        int4 dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint4 c = (uint4)(0, 0, 0, 1);
+
+   
+    uint upper2 = 0;
+    uint upper  = *((__global uchar*)(src + LOffset + x * 3 + 2));
+    uint lower2 = *((__global uchar*)(src + LOffset + x * 3 + 1));
+    uint lower  = *((__global uchar*)(src + LOffset + x * 3));
+    uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.x = combined;
+	
+    write_imageui(output, dstCoord, c);
+}
+
 __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
                                         __write_only image3d_t output,
                                         int srcOffset,
@@ -108,6 +133,37 @@ __kernel void CopyBufferToImage3d8Bytes(__global uchar *src,
     else{
         c = *((__global uint2*)(src + LOffset + x * 8));
     }
+
+    write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
+}
+
+__kernel void CopyBufferToImage3d6To8Bytes(__global uchar *src,
+                                        __write_only image3d_t output,
+                                        int srcOffset,
+                                        int4 dstOffset,
+                                        uint2 Pitch) {
+    const uint x = get_global_id(0);
+    const uint y = get_global_id(1);
+    const uint z = get_global_id(2);
+
+    int4 dstCoord = (int4)(x, y, z, 0) + dstOffset;
+    uint LOffset = srcOffset + (y * Pitch.x) + (z * Pitch.y);
+
+    uint2 c = (uint2)(0, 0);//*((__global uint2*)(src + LOffset + x * 8));
+    
+	
+    uint upper2 = *((__global uchar*)(src + LOffset + x * 6 + 3));
+    uint upper  = *((__global uchar*)(src + LOffset + x * 6 + 2));
+    uint lower2 = *((__global uchar*)(src + LOffset + x * 6 + 1));
+    uint lower  = *((__global uchar*)(src + LOffset + x * 6));
+    uint combined = (upper2 << 24) | (upper << 16) | (lower2 << 8) | lower;
+    c.x = combined;
+	
+    upper2 = upper = 0;
+    lower2 = *((__global uchar*)(src + LOffset + x * 6 + 5));
+    lower  = *((__global uchar*)(src + LOffset + x * 6 + 4));
+    combined = ((uint)upper2 << 24) | ((uint)upper << 16) | ((uint)lower2 << 8) | lower;
+    c.y = combined;
 
     write_imageui(output, dstCoord, (uint4)(c.x, c.y, 0, 1));
 }

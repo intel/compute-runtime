@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,6 +197,12 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenGettingBusyAndT
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     std::pair<uint64_t, uint64_t> configPair;
     EXPECT_EQ(pSysmanKmdInterface->getBusyAndTotalTicksConfigs(0, 0, 1, configPair), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGpuBindAndUnbindEntryThenProperStringIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_STREQ("/sys/bus/pci/drivers/xe/bind", pSysmanKmdInterface->getGpuBindEntry().c_str());
+    EXPECT_STREQ("/sys/bus/pci/drivers/xe/unbind", pSysmanKmdInterface->getGpuUnBindEntry().c_str());
 }
 
 } // namespace ult

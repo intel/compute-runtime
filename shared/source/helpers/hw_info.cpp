@@ -152,7 +152,7 @@ void setupDefaultGtSysInfo(HardwareInfo *hwInfo, const ReleaseHelper *releaseHel
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * releaseHelper->getNumThreadsPerEu();
 }
 
-void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo) {
+void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrAstcHdr2D = true;
@@ -171,6 +171,8 @@ void setupDefaultFeatureTableAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrTileMappedResource = true;
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
+
+    featureTable->flags.ftrXe2Compression = releaseHelper.getFtrXe2Compression();
 
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 

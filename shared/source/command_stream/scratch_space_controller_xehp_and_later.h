@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,8 +67,6 @@ class ScratchSpaceControllerXeHPAndLater : public ScratchSpaceController {
     char *surfaceStateHeap = nullptr;
     size_t singleSurfaceStateSize = 0;
     uint32_t slotId = 0;
-    uint32_t perThreadScratchSize = 0;
-    uint32_t perThreadScratchSpaceSlot1Size = 0;
     uint32_t sshOffset = 0;
     SurfaceStateInHeapInfo bindlessSS = {};
 };

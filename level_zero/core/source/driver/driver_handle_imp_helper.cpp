@@ -5,9 +5,9 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/driver_experimental/zex_common.h"
+#include "level_zero/ze_intel_gpu.h"
 
 namespace L0 {
 const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsSupported = {
@@ -32,6 +32,7 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsS
     {ZE_RTAS_BUILDER_EXP_NAME, ZE_RTAS_BUILDER_EXP_VERSION_CURRENT},
     {ZE_KERNEL_MAX_GROUP_SIZE_PROPERTIES_EXT_NAME, ZE_KERNEL_MAX_GROUP_SIZE_PROPERTIES_EXT_VERSION_CURRENT},
     {ZE_LINKAGE_INSPECTION_EXT_NAME, ZE_LINKAGE_INSPECTION_EXT_VERSION_CURRENT},
+    {ZE_IMMEDIATE_COMMAND_LIST_APPEND_EXP_NAME, ZE_IMMEDIATE_COMMAND_LIST_APPEND_EXP_VERSION_1_0},
 
     // Driver experimental extensions
     {ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_NAME, ZE_INTEL_DEVICE_MODULE_DP_PROPERTIES_EXP_VERSION_CURRENT},

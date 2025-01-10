@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ namespace NEO {
 using SubDeviceIdsVec = StackVec<uint32_t, 4>;
 
 class MultiGraphicsAllocation;
-class PageFaultManager;
+class CpuPageFaultManager;
 class GfxPartition;
 struct ImageInfo;
 struct AllocationData;
@@ -192,7 +192,7 @@ class MemoryManager {
         return deferredDeleter.get();
     }
 
-    PageFaultManager *getPageFaultManager() const {
+    MOCKABLE_VIRTUAL CpuPageFaultManager *getPageFaultManager() const {
         return pageFaultManager.get();
     }
 
@@ -272,6 +272,9 @@ class MemoryManager {
     virtual AllocationStatus registerSysMemAlloc(GraphicsAllocation *allocation);
     virtual AllocationStatus registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex);
 
+    void registerKernelManagedPrivateMemorySize(size_t size) { this->kernelManagedPrivateMemorySize += size; };
+    void unregisterKernelManagedPrivateMemorySize(size_t size) { this->kernelManagedPrivateMemorySize -= size; };
+
     virtual bool setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdviseFlags flags, uint32_t rootDeviceIndex) { return true; }
     virtual bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) { return true; }
     virtual bool setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) { return true; }
@@ -332,6 +335,8 @@ class MemoryManager {
 
     size_t getUsedLocalMemorySize(uint32_t rootDeviceIndex) const { return localMemAllocsSize[rootDeviceIndex]; }
     size_t getUsedSystemMemorySize() const { return sysMemAllocsSize; }
+    size_t getKernelManagedPrivateMemorySize() const { return kernelManagedPrivateMemorySize; }
+    [[nodiscard]] std::unique_lock<std::mutex> lockKernelManagedPrivateMemorySize() { return std::unique_lock<std::mutex>(this->kernelManagedPrivateMemorySizeMutex); };
     uint32_t getFirstContextIdForRootDevice(uint32_t rootDeviceIndex);
 
     virtual void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) { return; }
@@ -413,7 +418,7 @@ class MemoryManager {
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> internalLocalMemoryUsageBankSelector;
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> externalLocalMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
-    std::unique_ptr<PageFaultManager> pageFaultManager;
+    std::unique_ptr<CpuPageFaultManager> pageFaultManager;
     std::unique_ptr<PrefetchManager> prefetchManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     std::vector<std::unique_ptr<HeapAssigner>> heapAssigners;
@@ -428,6 +433,8 @@ class MemoryManager {
     std::mutex physicalMemoryAllocationMapMutex;
     std::unique_ptr<std::atomic<size_t>[]> localMemAllocsSize;
     std::atomic<size_t> sysMemAllocsSize;
+    size_t kernelManagedPrivateMemorySize;
+    std::mutex kernelManagedPrivateMemorySizeMutex;
     size_t hostAllocationsSavedForReuseSize = 0u;
     mutable std::mutex hostAllocationsReuseMtx;
     std::map<std::pair<AllocationType, bool>, CustomHeapAllocatorConfig> customHeapAllocators;

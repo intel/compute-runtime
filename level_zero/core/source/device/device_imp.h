@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -196,6 +196,6 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     std::unique_ptr<DebugSession> debugSession;
 };
 
-void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData);
+void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHandler, void *allocPtr, NEO::CpuPageFaultManager::PageFaultData &pageFaultData);
 
 } // namespace L0

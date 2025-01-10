@@ -10,8 +10,8 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/surface_format_info.h"
 
-#include "level_zero/api/driver_experimental/public/ze_bindless_image_exp.h"
-#include "level_zero/api/driver_experimental/public/zex_common.h"
+#include "level_zero/driver_experimental/ze_bindless_image_exp.h"
+#include "level_zero/driver_experimental/zex_common.h"
 #include <level_zero/ze_api.h>
 
 #include <cstdint>

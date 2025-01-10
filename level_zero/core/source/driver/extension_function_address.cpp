@@ -7,12 +7,12 @@
 
 #include "level_zero/core/source/driver/extension_function_address.h"
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
-#include "level_zero/api/driver_experimental/public/zex_cmdlist.h"
-#include "level_zero/api/driver_experimental/public/zex_context.h"
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
-#include "level_zero/include/ze_intel_gpu.h"
-#include "level_zero/include/zet_intel_gpu_metric.h"
+#include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/driver_experimental/zex_cmdlist.h"
+#include "level_zero/driver_experimental/zex_context.h"
+#include "level_zero/ze_intel_gpu.h"
+#include "level_zero/zet_intel_gpu_metric.h"
 
 #include <cstring>
 

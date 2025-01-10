@@ -964,6 +964,8 @@ TEST(DrmTest, whenImmediateVmBindExtIsEnabledThenUseVmBindImmediate) {
 }
 
 TEST(DrmQueryTest, GivenDrmWhenSetupHardwareInfoCalledThenCorrectMaxValuesInGtSystemInfoArePreservedAndIoctlHelperSet) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
 
     *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo() = *NEO::defaultHwInfo.get();
@@ -1725,6 +1727,8 @@ TEST(DrmTest, whenNotDisablingScratchPagesThenFaultCheckingDoesNotHappen) {
 }
 
 TEST(DrmTest, givenSetupIoctlHelperWhenCalledTwiceThenIoctlHelperIsSetOnlyOnce) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 

@@ -9,9 +9,9 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
-#include "level_zero/include/zet_intel_gpu_metric_export.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_oa.h"
+#include "level_zero/zet_intel_gpu_metric_export.h"
 
 #include "gtest/gtest.h"
 #include "metrics_discovery_api.h"

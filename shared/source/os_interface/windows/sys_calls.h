@@ -59,6 +59,13 @@ CONFIGRET cmGetDeviceInterfaceList(LPGUID interfaceClassGuid, DEVINSTID_W pDevic
 LPVOID heapAlloc(HANDLE hHeap, DWORD dwFlags, SIZE_T dwBytes);
 BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem);
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
+BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
+DWORD getModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
+DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle);
+BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData);
+BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lplpBuffer, PUINT puLen);
+DWORD getLastError();
+
 } // namespace SysCalls
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,12 +31,12 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          OsContext &osContext,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {
-    size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeSlot0 * computeUnitsUsedForScratch;
-    if (requiredScratchSizeInBytes && (scratchSlot0SizeInBytes < requiredScratchSizeInBytes)) {
+    if (requiredPerThreadScratchSizeSlot0 && (perThreadScratchSpaceSlot0Size < requiredPerThreadScratchSizeSlot0)) {
+        perThreadScratchSpaceSlot0Size = requiredPerThreadScratchSizeSlot0;
+        scratchSlot0SizeInBytes = perThreadScratchSpaceSlot0Size * computeUnitsUsedForScratch;
         if (scratchSlot0Allocation) {
             csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot0Allocation), TEMPORARY_ALLOCATION);
         }
-        scratchSlot0SizeInBytes = requiredScratchSizeInBytes;
         createScratchSpaceAllocation();
         vfeStateDirty = true;
         force32BitAllocation = getMemoryManager()->peekForce32BitAllocations();

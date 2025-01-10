@@ -62,6 +62,7 @@ class ReleaseHelper {
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
     virtual bool isNumRtStacksPerDssFixedValue() const = 0;
+    virtual bool getFtrXe2Compression() const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -103,6 +104,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     bool isDummyBlitWaRequired() const override;
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;
     bool isNumRtStacksPerDssFixedValue() const override;
+    bool getFtrXe2Compression() const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

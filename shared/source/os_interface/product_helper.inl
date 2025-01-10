@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,7 @@ bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const 
 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getRequiredDetectIndirectVersion() const {
-    return IndirectDetectionVersions::disabled;
+    return IndirectDetectionVersions::requiredDetectIndirectVersion;
 }
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -531,6 +531,10 @@ bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const 
 template <PRODUCT_FAMILY gfxProduct>
 uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
     return 8u;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>

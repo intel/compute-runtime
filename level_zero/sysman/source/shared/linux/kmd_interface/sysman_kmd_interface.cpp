@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -233,6 +233,14 @@ std::optional<std::string> SysmanKmdInterfaceI915::getEngineClassStringI915(uint
         return {};
     }
     return sysfEngineString->second;
+}
+
+std::string SysmanKmdInterfaceI915::getGpuBindEntryI915() {
+    return "/sys/bus/pci/drivers/i915/bind";
+}
+
+std::string SysmanKmdInterfaceI915::getGpuUnBindEntryI915() {
+    return "/sys/bus/pci/drivers/i915/unbind";
 }
 
 } // namespace Sysman

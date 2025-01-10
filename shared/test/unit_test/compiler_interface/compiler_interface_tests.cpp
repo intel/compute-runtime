@@ -171,6 +171,8 @@ TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedTh
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenBuildFailsGracefully) {
     pCompilerInterface->defaultIgc.entryPoint.reset(nullptr);
+    pCompilerInterface->failLoadIgc = true;
+
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
@@ -259,6 +261,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCompileFailsGraceful
     gEnvironment->fclPushDebugVars(fclDebugVars);
     pCompilerInterface->defaultIgc.entryPoint->Release();
     pCompilerInterface->setIgcMain(nullptr);
+    pCompilerInterface->failLoadIgc = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
@@ -324,6 +327,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenLinkFailsGracefully)
     gEnvironment->igcPushDebugVars(igcDebugVars);
     pCompilerInterface->defaultIgc.entryPoint->Release();
     pCompilerInterface->setIgcMain(nullptr);
+    pCompilerInterface->failLoadIgc = true;
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
@@ -390,6 +394,8 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCreateLibraryFailsGr
     gEnvironment->igcPushDebugVars(igcDebugVars);
     pCompilerInterface->defaultIgc.entryPoint->Release();
     pCompilerInterface->setIgcMain(nullptr);
+    pCompilerInterface->failLoadIgc = true;
+
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);
@@ -1058,6 +1064,8 @@ TEST_F(CompilerInterfaceTest, GivenCompilerWhenGettingCompilerAvailabilityThenCo
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSipKernelBinaryFailsGracefully) {
     pCompilerInterface->defaultIgc.entryPoint.reset();
+    pCompilerInterface->failLoadIgc = true;
+
     std::vector<char> sipBinary;
     std::vector<char> stateAreaHeader;
     auto err = pCompilerInterface->getSipKernelBinary(*this->pDevice, SipKernelType::csr, sipBinary, stateAreaHeader);
@@ -1171,6 +1179,8 @@ TEST_F(CompilerInterfaceTest, whenRequestingInvalidSipKernelBinaryThenErrorIsRet
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenGetSpecializationConstantsFails) {
     pCompilerInterface->defaultIgc.entryPoint.reset();
+    pCompilerInterface->failLoadIgc = true;
+
     NEO::SpecConstantInfo sci;
     auto err = pCompilerInterface->getSpecConstantsInfo(*pDevice, ArrayRef<char>{}, sci);
     EXPECT_EQ(TranslationOutput::ErrorCode::compilerNotAvailable, err);

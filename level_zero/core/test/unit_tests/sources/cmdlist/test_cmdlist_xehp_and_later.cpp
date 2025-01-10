@@ -1708,8 +1708,7 @@ void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint6
 
     if (btdStateCmdCount > 0) {
         auto btdStateCmd = reinterpret_cast<_3DSTATE_BTD *>(*btdStateCmdList[0]);
-        auto &btdStateBody = btdStateCmd->getBtdStateBody();
-        EXPECT_EQ(gpuVa, btdStateBody.getMemoryBackedBufferBasePointer());
+        EXPECT_EQ(gpuVa, btdStateCmd->getMemoryBackedBufferBasePointer());
 
         btdCommandFound = true;
     }

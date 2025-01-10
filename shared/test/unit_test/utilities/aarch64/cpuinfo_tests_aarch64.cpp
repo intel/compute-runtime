@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/helpers/file_io.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "gtest/gtest.h"
@@ -17,22 +17,35 @@
 
 using namespace NEO;
 
-TEST(CpuInfoAarch64, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidValueIsReturned) {
+void mockGetCpuFlags(std::string &cpuFlags) {
+    size_t fileSize = 0;
+    std::string cpuinfoFile = "cpuinfo";
+    auto fileData = loadDataFromVirtualFile(cpuinfoFile.c_str(), fileSize);
+
+    std::string data(fileData.get(), fileSize);
+    std::istringstream cpuinfo(data);
+    std::string line;
+    while (std::getline(cpuinfo, line)) {
+        if (line.substr(0, 8) == "Features") {
+            cpuFlags = line;
+            break;
+        }
+    }
+}
+
+TEST(CpuInfo, givenProcCpuinfoFileExistsWhenIsCpuFlagPresentIsCalledThenValidValueIsReturned) {
     VariableBackup<const char *> pathPrefixBackup(&Os::sysFsProcPathPrefix, ".");
     std::string cpuinfoFile = "cpuinfo";
-    EXPECT_FALSE(fileExists(cpuinfoFile));
+    EXPECT_FALSE(virtualFileExists(cpuinfoFile));
+    std::string cpuinfoData = "processor\t\t: 0\nFeatures\t\t: flag1 flag2 flag3\n";
+    writeDataToFile(cpuinfoFile.c_str(), cpuinfoData.data(), cpuinfoData.length());
+    EXPECT_TRUE(virtualFileExists(cpuinfoFile));
 
-    {
-        std::ofstream cpuinfo(cpuinfoFile);
-        cpuinfo << "processor\t\t: 0\nFeatures\t\t: flag1 flag2 flag3\n";
-    }
-
-    EXPECT_TRUE(fileExists(cpuinfoFile));
-
+    CpuInfo::getCpuFlagsFunc = mockGetCpuFlags;
     CpuInfo testCpuInfo;
     EXPECT_TRUE(testCpuInfo.isCpuFlagPresent("flag1"));
     EXPECT_TRUE(testCpuInfo.isCpuFlagPresent("flag2"));
     EXPECT_FALSE(testCpuInfo.isCpuFlagPresent("nonExistingCpuFlag"));
 
-    std::remove(cpuinfoFile.c_str());
+    removeVirtualFile(cpuinfoFile.c_str());
 }

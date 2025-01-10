@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -174,6 +174,13 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendWriteToMemory(void *desc, void *ptr,
                                     uint64_t data) override;
 
+    ze_result_t appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
+                                             const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendSignalExternalSemaphores(size_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
+                                               const ze_intel_external_semaphore_signal_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+
     ze_result_t appendQueryKernelTimestamps(uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
                                             const size_t *pOffsets, ze_event_handle_t hSignalEvent,
                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
@@ -185,7 +192,7 @@ struct CommandListCoreFamily : public CommandListImp {
     void appendWaitOnInOrderDependency(std::shared_ptr<NEO::InOrderExecInfo> &inOrderExecInfo, CommandToPatchContainer *outListCommands,
                                        uint64_t waitValue, uint32_t offset, bool relaxedOrderingAllowed, bool implicitDependency,
                                        bool skipAddingWaitEventsToResidency, bool noopDispatch, bool copyOffloadOperation);
-    void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation);
+    void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation);
 
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
@@ -307,7 +314,7 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t programSyncBuffer(Kernel &kernel, NEO::Device &device, const ze_group_count_t &threadGroupDimensions, size_t &patchIndex);
     void programRegionGroupBarrier(Kernel &kernel, const ze_group_count_t &threadGroupDimensions, size_t localRegionSize, size_t &patchIndex);
     void appendWriteKernelTimestamp(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool maskLsb, bool workloadPartition, bool copyOperation);
-    void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool maskLsb, uint32_t mask, bool workloadPartition, bool copyOperation);
+    void adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, uint64_t baseAddress, CommandToPatchContainer *outTimeStampSyncCmds, bool workloadPartition, bool copyOperation);
     void appendEventForProfiling(Event *event, CommandToPatchContainer *outTimeStampSyncCmds, bool beforeWalker, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
     void appendSignalEventPostWalker(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outTimeStampSyncCmds, bool skipBarrierForEndProfiling, bool skipAddingEventToResidency, bool copyOperation);

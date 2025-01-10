@@ -180,5 +180,22 @@ BOOL heapFree(HANDLE hHeap, DWORD dwFlags, LPVOID lpMem) {
 SIZE_T virtualQuery(LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength) {
     return VirtualQuery(lpAddress, lpBuffer, dwLength);
 }
+
+BOOL getModuleHandleExW(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
+    return ::GetModuleHandleExW(dwFlags, lpModuleName, phModule);
+}
+DWORD getModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
+    return ::GetModuleFileNameW(hModule, lpFilename, nSize);
+}
+DWORD getFileVersionInfoSizeW(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) {
+    return ::GetFileVersionInfoSizeW(lptstrFilename, lpdwHandle);
+}
+BOOL getFileVersionInfoW(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) {
+    return ::GetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData);
+}
+BOOL verQueryValueW(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID *lpBuffer, PUINT puLen) {
+    return ::VerQueryValueW(pBlock, lpSubBlock, lpBuffer, puLen);
+}
+
 } // namespace SysCalls
 } // namespace NEO

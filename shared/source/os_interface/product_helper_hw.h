@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,7 @@ class ProductHelperHw : public ProductHelper {
     bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
+    void adjustScratchSize(size_t &requiredScratchSize) const override;
     size_t getSvmCpuAlignment() const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;

@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     int retVal = 0;
     const char *fileName = "kernelOutput.txt";
     cl_int err = 0;
-    unique_ptr<cl_platform_id> platforms;
+    unique_ptr<cl_platform_id[]> platforms;
     cl_device_id device_id = 0;
     cl_uint platformsCount = 0;
     cl_context context = NULL;

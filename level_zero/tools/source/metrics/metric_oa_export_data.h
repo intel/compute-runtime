@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "level_zero/include/zet_intel_gpu_metric_export.h"
+#include "level_zero/zet_intel_gpu_metric_export.h"
 #include <level_zero/zet_api.h>
 
 #include "metrics_discovery_api.h"

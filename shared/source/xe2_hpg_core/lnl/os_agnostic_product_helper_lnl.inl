@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,13 +32,7 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
 
 template <>
 std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
-    switch (allocationType) {
-    case AllocationType::tagBuffer:
-    case AllocationType::timestampPacketTagBuffer:
-        return this->isDcFlushMitigated() ? std::optional<GfxMemoryAllocationMethod>(GfxMemoryAllocationMethod::allocateByKmd) : std::nullopt;
-    default:
-        return GfxMemoryAllocationMethod::allocateByKmd;
-    }
+    return GfxMemoryAllocationMethod::allocateByKmd;
 }
 
 template <>
@@ -102,11 +96,6 @@ TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutP
 template <>
 bool ProductHelperHw<gfxProduct>::isDeviceUsmAllocationReuseSupported() const {
     return true;
-}
-
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
-    return 16u;
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -405,7 +405,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                    size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
 
     bool isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
-    bool isValidForStagingTransferImage(Image *image, const void *ptr, bool hasDependencies);
+    bool isValidForStagingTransfer(MemObj *memObj, const void *ptr, bool hasDependencies);
 
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);

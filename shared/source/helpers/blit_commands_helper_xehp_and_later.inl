@@ -279,7 +279,7 @@ void BlitCommandsHelper<GfxFamily>::appendSliceOffsets(const BlitProperties &bli
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_COLOR_BLT &blitCmd) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
-    blitCmd.setDestinationSurfaceType(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D);
+    blitCmd.setDestinationSurfaceType(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_SURFTYPE_2D);
 }
 
 template <typename GfxFamily>

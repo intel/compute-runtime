@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2024 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ bool validateOutput(const std::stringstream &out) {
 }
 
 int main(int argc, char **argv) {
-    std::unique_ptr<cl_platform_id> platforms;
+    std::unique_ptr<cl_platform_id[]> platforms;
     cl_device_id deviceId = 0;
     cl_uint platformsCount = 0;
     cl_context context = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -341,7 +341,7 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
         }
     }
 
-    ze_result_t unbindDevice(const std::string device) override {
+    ze_result_t unbindDevice(const std::string &gpuUnbindEntry, const std::string &device) override {
         if (mockUnbindDeviceError != ZE_RESULT_SUCCESS) {
             return mockUnbindDeviceError;
         }
@@ -351,7 +351,7 @@ struct MockGlobalOperationsSysfsAccess : public L0::Sysman::SysFsAccessInterface
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t bindDevice(const std::string device) override {
+    ze_result_t bindDevice(const std::string &gpuBindEntry, const std::string &device) override {
         if (mockBindDeviceError != ZE_RESULT_SUCCESS) {
             return mockBindDeviceError;
         }
@@ -613,6 +613,7 @@ struct MockGlobalOpsLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
     using LinuxSysmanImp::pFsAccess;
     using LinuxSysmanImp::pProcfsAccess;
     using LinuxSysmanImp::pSysfsAccess;
+    using LinuxSysmanImp::pSysmanKmdInterface;
     MockGlobalOpsLinuxSysmanImp(L0::Sysman::SysmanDeviceImp *pParentSysmanDeviceImp) : LinuxSysmanImp(pParentSysmanDeviceImp) {}
     std::vector<int> fdList = {0, 1, 2};
     ::pid_t ourDevicePid = 0;
@@ -666,6 +667,7 @@ class DrmGlobalOpsMock : public Drm {
 class PublicLinuxGlobalOperationsImp : public L0::Sysman::LinuxGlobalOperationsImp {
   public:
     using LinuxGlobalOperationsImp::pLinuxSysmanImp;
+    using LinuxGlobalOperationsImp::pProcfsAccess;
     using LinuxGlobalOperationsImp::resetTimeout;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,15 +8,15 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 namespace ult {
 struct InOrderIpcTests : public InOrderCmdListFixture {
     void enableEventSharing(FixtureMockEvent &event) {
-        event.isSharableCouterBased = true;
+        event.isSharableCounterBased = true;
 
         if (event.inOrderExecInfo.get()) {
             if (event.inOrderExecInfo->getDeviceCounterAllocation()) {
@@ -66,7 +66,7 @@ HWTEST2_F(InOrderIpcTests, givenInvalidCbEventWhenOpenIpcCalledThenReturnError, 
 HWTEST2_F(InOrderIpcTests, givenCbEventWhenCreatingFromApiThenOpenIpcHandle, MatchAny) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE;
     ze_event_handle_t ipcEvent = nullptr;
     ze_event_handle_t nonIpcEvent = nullptr;

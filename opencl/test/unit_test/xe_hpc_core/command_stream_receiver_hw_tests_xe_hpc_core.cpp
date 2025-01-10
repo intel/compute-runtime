@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -333,7 +333,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
     ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 }
 
 XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
@@ -376,7 +376,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
     ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 }
 
 XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
@@ -419,7 +419,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
     ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
@@ -466,7 +466,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
     ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();
@@ -514,7 +514,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceInDefaultConfigurationTest,
     ASSERT_NE(hwParser.cmdList.end(), itorMiMemFence);
     auto fenceCmd = genCmdCast<MI_MEM_FENCE *>(*itorMiMemFence);
     ASSERT_NE(nullptr, fenceCmd);
-    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE, fenceCmd->getFenceType());
+    EXPECT_EQ(MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE, fenceCmd->getFenceType());
 
     auto event = castToObject<Event>(kernelEvent);
     event->release();

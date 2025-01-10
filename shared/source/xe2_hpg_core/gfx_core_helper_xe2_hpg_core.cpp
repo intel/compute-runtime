@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,18 +79,6 @@ uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
 }
 
 template <>
-uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    if (debugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
-        return static_cast<uint32_t>(debugManager.flags.OverrideNumComputeUnitsForScratch.get());
-    }
-
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto maxSubSlice = productHelper.computeMaxNeededSubSliceSpace(*hwInfo);
-    return maxSubSlice * hwInfo->gtSystemInfo.MaxEuPerSubSlice * productHelper.getThreadEuRatioForScratch(*hwInfo);
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
@@ -153,9 +141,9 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream == AdditionalSynchronizationType::fence) {
         MI_MEM_FENCE miMemFence = Family::cmdInitMemFence;
         if (acquire) {
-            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE);
+            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_ACQUIRE_FENCE);
         } else {
-            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE);
+            miMemFence.setFenceType(Family::MI_MEM_FENCE::FENCE_TYPE::FENCE_TYPE_RELEASE_FENCE);
         }
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -327,6 +328,10 @@ struct Event : _ze_event_handle_t {
 
     bool isIpcImported() const { return isFromIpcPool; }
 
+    void setMitigateHostVisibleSignal() {
+        this->mitigateHostVisibleSignal = true;
+    }
+
     virtual ze_result_t hostEventSetValue(State eventState) = 0;
 
   protected:
@@ -348,7 +353,7 @@ struct Event : _ze_event_handle_t {
     uint64_t inOrderExecSignalValue = 0;
     uint32_t inOrderAllocationOffset = 0;
 
-    std::chrono::microseconds gpuHangCheckPeriod{500'000};
+    std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
     std::bitset<EventPacketsCount::maxKernelSplit> l3FlushAppliedOnKernel;
 
     size_t contextStartOffset = 0u;
@@ -397,7 +402,8 @@ struct Event : _ze_event_handle_t {
     bool isFromIpcPool = false;
     bool kmdWaitMode = false;
     bool interruptMode = false;
-    bool isSharableCouterBased = false;
+    bool isSharableCounterBased = false;
+    bool mitigateHostVisibleSignal = false;
     uint64_t timestampRefreshIntervalInNanoSec = 0;
 };
 

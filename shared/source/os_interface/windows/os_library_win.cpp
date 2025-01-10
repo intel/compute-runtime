@@ -7,6 +7,13 @@
 
 #include "shared/source/os_interface/windows/os_library_win.h"
 
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
+
+#include <iomanip>
+#include <regex>
+#include <sstream>
+
 namespace NEO {
 
 OsLibrary *OsLibrary::load(const OsLibraryCreateProperties &properties) {
@@ -109,4 +116,82 @@ std::string OsLibrary::getFullPath() {
     return std::string(dllPath);
 }
 } // namespace Windows
+
+bool getLoadedLibVersion(const std::string &libName, const std::string &regexVersionPattern, std::string &outVersion, std::string &errReason) {
+    HMODULE mod = NULL;
+    auto ret = SysCalls::getModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, std::wstring(libName.begin(), libName.end()).c_str(), &mod);
+    if (0 == ret) {
+        errReason = "Failed to read info of " + libName + " - GetModuleHandleExA failed, GetLastError=" + std::to_string(SysCalls::getLastError());
+        return false;
+    }
+
+    wchar_t path[MAX_PATH];
+    DWORD length = SysCalls::getModuleFileNameW(mod, path, MAX_PATH);
+    if (0 == length) {
+        errReason = "Failed to read info of " + libName + " - GetModuleFileName failed, GetLastError=" + std::to_string(SysCalls::getLastError());
+        return false;
+    }
+
+    std::wstring trimmedPath = {path, length};
+    DWORD infoVersioSize = SysCalls::getFileVersionInfoSizeW(trimmedPath.c_str(), nullptr);
+    if (0 == infoVersioSize) {
+        errReason = "Failed to read info of " + libName + " - GetFileVersionInfoSize failed, GetLastError=" + std::to_string(SysCalls::getLastError());
+        return false;
+    }
+
+    std::vector<char> fileInformationBackingStorage;
+    fileInformationBackingStorage.resize(infoVersioSize);
+    ret = SysCalls::getFileVersionInfoW(path, 0, static_cast<DWORD>(fileInformationBackingStorage.size()), fileInformationBackingStorage.data());
+    if (0 == ret) {
+        errReason = "Failed to read info of " + libName + " - GetFileVersionInfo failed, GetLastError=" + std::to_string(SysCalls::getLastError());
+        return false;
+    }
+
+    struct LangCodePage {
+        WORD lang;
+        WORD codePage;
+    };
+
+    LangCodePage *translateInfo = nullptr;
+
+    unsigned int langCodePagesSize = 0;
+    ret = SysCalls::verQueryValueW(fileInformationBackingStorage.data(), L"\\VarFileInfo\\Translation", reinterpret_cast<LPVOID *>(&translateInfo), &langCodePagesSize);
+    if (0 == ret) {
+        errReason = "Failed to read info of " + libName + " - VerQueryValue(\\VarFileInfo\\Translation) failed, GetLastError=" + std::to_string(SysCalls::getLastError());
+        return false;
+    }
+
+    auto truncateWstringToString = [](const std::wstring &ws) {
+        std::string ret;
+        std::transform(ws.begin(), ws.end(), std::back_inserter(ret), [](wchar_t wc) { return static_cast<char>(wc); });
+        return ret;
+    };
+
+    size_t langCodePagesCount = (langCodePagesSize / sizeof(LangCodePage));
+    std::regex versionPattern{regexVersionPattern};
+    for (size_t j = 0; j < langCodePagesCount; ++j) {
+        std::wstringstream subBlockPath;
+        subBlockPath << L"\\StringFileInfo\\";
+        subBlockPath << std::setw(4) << std::setfill(L'0') << std::hex << translateInfo[j].lang;
+        subBlockPath << std::setw(4) << std::setfill(L'0') << std::hex << translateInfo[j].codePage;
+        subBlockPath << L"\\ProductVersion";
+
+        wchar_t *data;
+        unsigned int len = 0;
+        ret = SysCalls::verQueryValueW(fileInformationBackingStorage.data(), subBlockPath.str().c_str(), (LPVOID *)&data, &len);
+        if (0 == ret) {
+            errReason = "Failed to read info of " + libName + " - VerQueryValue(" + truncateWstringToString(subBlockPath.str()) + ") failed, GetLastError=" + std::to_string(SysCalls::getLastError());
+            return false;
+        }
+
+        auto sdata = truncateWstringToString(data);
+        if (std::regex_search(sdata, versionPattern)) {
+            outVersion = sdata;
+            return true;
+        }
+    }
+
+    errReason = "Could not find version info for " + std::string(libName) + " that would satisfy expected pattern\n";
+    return false;
+}
 } // namespace NEO

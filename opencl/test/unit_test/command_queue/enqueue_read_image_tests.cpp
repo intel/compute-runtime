@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1127,7 +1127,7 @@ struct ReadImageStagingBufferTest : public EnqueueReadImageTest {
 HWTEST_F(ReadImageStagingBufferTest, whenEnqueueStagingReadImageCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     auto res = mockCommandQueueHw.enqueueStagingReadImage(srcImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
-
+    EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueReadImageCounter);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

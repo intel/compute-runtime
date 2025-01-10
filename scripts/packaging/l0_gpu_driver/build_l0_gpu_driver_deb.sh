@@ -54,12 +54,16 @@ mkdir -p $BUILD_DIR/debian
 COPYRIGHT="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/${SPEC_FILE}/copyright"
 CONTROL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/${SPEC_FILE}/control"
 SHLIBS="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/${SPEC_FILE}/shlibs.local"
+DEV_INSTALL="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/l0_gpu_driver/${SPEC_FILE}/intel-level-zero-gpu-devel.install"
 
-cp -pR ${REPO_DIR}/scripts/packaging/l0_gpu_driver/${SPEC_FILE}/debian/* $BUILD_DIR/debian/
-cp $COPYRIGHT $BUILD_DIR/debian/
-cp $CONTROL $BUILD_DIR/debian/
+cp -pvR ${REPO_DIR}/scripts/packaging/l0_gpu_driver/${SPEC_FILE}/debian/* $BUILD_DIR/debian/
+cp -v $COPYRIGHT $BUILD_DIR/debian/
+cp -v $CONTROL $BUILD_DIR/debian/
 if [ -f "${SHLIBS}" ]; then
-    cp $SHLIBS $BUILD_DIR/debian/
+    cp -v $SHLIBS $BUILD_DIR/debian/
+fi
+if [ -f "${DEV_INSTALL}" ]; then
+    cp -v $DEV_INSTALL $BUILD_DIR/debian/
 fi
 
 LEVEL_ZERO_DEVEL_NAME=${LEVEL_ZERO_DEVEL_NAME:-level-zero-devel}

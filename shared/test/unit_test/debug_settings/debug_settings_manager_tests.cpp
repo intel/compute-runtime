@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,6 @@
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/mock_file_io.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
@@ -403,25 +402,21 @@ TEST(DebugSettingsManager, GivenLogsEnabledAndDumpToFileWhenPrintDebuggerLogCall
 
     auto logFile = NEO::fileLoggerInstance().getLogFileName();
 
-    if (virtualFileExists(logFile)) {
-        removeVirtualFile(logFile);
-    }
+    std::remove(logFile);
 
     ::testing::internal::CaptureStdout();
     PRINT_DEBUGGER_LOG(stdout, "test %s", "log");
     auto output = ::testing::internal::GetCapturedStdout();
     EXPECT_EQ(0u, output.size());
 
-    auto logFileExists = virtualFileExists(logFile);
+    auto logFileExists = fileExists(logFile);
     EXPECT_TRUE(logFileExists);
 
     size_t retSize;
-    auto data = loadDataFromVirtualFile(logFile, retSize);
+    auto data = loadDataFromFile(logFile, retSize);
 
     EXPECT_STREQ("test log", data.get());
-    if (virtualFileExists(logFile)) {
-        removeVirtualFile(logFile);
-    }
+    std::remove(logFile);
 }
 
 TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCalledThenStringIsNotPrintedToFile) {
@@ -456,4 +451,33 @@ TEST(DurationLogTest, givenDurationGetTimeStringThenTimeStringIsCorrect) {
     for (auto c : timeString) {
         EXPECT_TRUE(std::isdigit(c) || c == '[' || c == ']' || c == '.' || c == ' ');
     }
+}
+
+TEST(DebugSettingsManager, GivenTbxOrTbxWithAubCsrTypeAndTbxFaultsEnabledWhenCallingIsTbxMngrEnabledThenReturnTrue) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(true);
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(2);
+    EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(4);
+    EXPECT_TRUE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, GivenTbxFaultsDisabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(false);
+
+    EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+}
+
+TEST(DebugSettingsManager, GivenHardwareOrHardwareWithAubCsrTypeAndTbxFaultsEnabledWhenCallingIsTbxMngrEnabledThenReturnFalse) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.EnableTbxPageFaultManager.set(true);
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(1);
+    EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
+
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(3);
+    EXPECT_FALSE(NEO::debugManager.isTbxPageFaultManagerEnabled());
 }

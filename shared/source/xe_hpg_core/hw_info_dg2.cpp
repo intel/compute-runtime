@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     false,                                                     // supportsOnDemandPageFaults
     false,                                                     // supportsIndependentForwardProgress
     false,                                                     // hostPtrTrackingEnabled
-    true,                                                      // levelZeroSupported
     false,                                                     // isIntegratedDevice
     true,                                                      // supportsMediaBlock
     true,                                                      // p2pAccessSupported
@@ -89,8 +88,8 @@ const RuntimeCapabilityTable DG2::capabilityTable{
 WorkaroundTable DG2::workaroundTable = {};
 FeatureTable DG2::featureTable = {};
 
-void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
+void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrFlatPhysCCS = true;
@@ -105,7 +104,7 @@ void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     setupDefaultGtSysInfo(hwInfo, releaseHelper);
 
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
+        setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
 }
 

@@ -41,6 +41,11 @@ template <>
 bool ReleaseHelperHw<release>::isDisablingMsaaRequired() const {
     return (hardwareIpVersion.value == AOT::PTL_U_A0);
 }
+
+template <>
+bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
+    return !(hardwareIpVersion.value == AOT::PTL_U_A0);
+}
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe3_and_later.inl"

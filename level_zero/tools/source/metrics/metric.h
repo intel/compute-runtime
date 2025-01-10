@@ -7,8 +7,8 @@
 
 #pragma once
 #include "level_zero/core/source/event/event.h"
-#include "level_zero/include/zet_intel_gpu_metric.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
+#include "level_zero/zet_intel_gpu_metric.h"
 #include <level_zero/zet_api.h>
 
 #include "metrics_discovery_api.h"

@@ -7,10 +7,10 @@
 
 #include "shared/source/helpers/string.h"
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "driver_version.h"
 

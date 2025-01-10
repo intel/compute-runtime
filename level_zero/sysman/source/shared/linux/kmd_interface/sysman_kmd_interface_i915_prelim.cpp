@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,6 +178,14 @@ ze_result_t SysmanKmdInterfaceI915Prelim::getBusyAndTotalTicksConfigs(uint64_t f
     configPair.first = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_BUSY_TICKS(engineClass, engineInstance), fnNumber);
     configPair.second = ___PRELIM_I915_PMU_FN_EVENT(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(engineClass, engineInstance), fnNumber);
     return ZE_RESULT_SUCCESS;
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getGpuBindEntry() const {
+    return getGpuBindEntryI915();
+}
+
+std::string SysmanKmdInterfaceI915Prelim::getGpuUnBindEntry() const {
+    return getGpuUnBindEntryI915();
 }
 
 } // namespace Sysman

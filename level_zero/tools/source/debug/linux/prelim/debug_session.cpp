@@ -24,9 +24,9 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/linux/debug_session_factory.h"
 #include "level_zero/tools/source/debug/linux/drm_helper.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 #include <level_zero/ze_api.h>
 
 #include "common/StateSaveAreaHeader.h"

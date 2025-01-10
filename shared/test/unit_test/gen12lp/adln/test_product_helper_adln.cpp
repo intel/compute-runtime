@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,11 +62,6 @@ ADLNTEST_F(AdlnHwInfo, givenBoolWhenCallAdlnHardwareInfoSetupThenFeatureTableAnd
 ADLNTEST_F(AdlnHwInfo, whenPlatformIsAdlnThenExpectSvmIsSet) {
     const HardwareInfo &hardwareInfo = ADLN::hwInfo;
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
-}
-
-ADLNTEST_F(AdlnHwInfo, givenAdlnWhenCheckL0ThenReturnTrue) {
-    const HardwareInfo &hardwareInfo = ADLN::hwInfo;
-    EXPECT_TRUE(hardwareInfo.capabilityTable.levelZeroSupported);
 }
 
 using AdlnProductHelper = ProductHelperTest;

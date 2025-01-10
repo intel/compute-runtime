@@ -239,6 +239,8 @@ std::unique_ptr<DrmMockCustom> DrmMockCustom::create(RootDeviceEnvironment &root
 }
 
 std::unique_ptr<DrmMockCustom> DrmMockCustom::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     auto drm{new DrmMockCustom{std::move(hwDeviceId), rootDeviceEnvironment}};
 
     drm->reset();

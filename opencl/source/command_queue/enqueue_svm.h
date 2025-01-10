@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,20 +25,20 @@ using SvmFreeClbT = void(CL_CALLBACK *)(cl_command_queue queue,
                                         void *userData);
 
 struct SvmFreeUserData {
-    cl_uint numSvmPointers;
     void **svmPointers;
     SvmFreeClbT clb;
     void *userData;
+    cl_uint numSvmPointers;
     bool ownsEventDeletion;
 
     SvmFreeUserData(cl_uint numSvmPointers,
                     void **svmPointers, SvmFreeClbT clb,
                     void *userData,
                     bool ownsEventDeletion)
-        : numSvmPointers(numSvmPointers),
-          svmPointers(svmPointers),
+        : svmPointers(svmPointers),
           clb(clb),
           userData(userData),
+          numSvmPointers(numSvmPointers),
           ownsEventDeletion(ownsEventDeletion){};
 };
 

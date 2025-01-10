@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "zello_common.h"
 
 #include <bitset>
+#include <cstdlib>
 #include <cstring>
 #include <iomanip>
 #include <map>
@@ -73,6 +74,28 @@ int getParamValue(int argc, char *argv[], const char *shortName, const char *lon
                 break;
             }
             return atoi(*arg);
+        }
+    }
+
+    return defaultValue;
+}
+
+uint32_t getParamValue(int argc, char *argv[], const char *shortName, const char *longName, uint32_t defaultValue) {
+    char **arg = &argv[1];
+    char **argE = &argv[argc];
+    char *end = nullptr;
+    int base = 10;
+
+    for (; arg != argE; ++arg) {
+        if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
+            arg++;
+            if (arg == argE) {
+                break;
+            }
+            if (strlen(*arg) > 2 && *arg[0] == '0' && *arg[1] == 'x') {
+                base = 16;
+            }
+            return static_cast<uint32_t>(strtoul(*arg, &end, base));
         }
     }
 
@@ -278,7 +301,6 @@ uint32_t getCommandQueueOrdinal(ze_device_handle_t &device, bool useCooperativeF
             break;
         }
     }
-    SUCCESS_OR_TERMINATE_BOOL(computeQueueGroupOrdinal != std::numeric_limits<uint32_t>::max());
     return computeQueueGroupOrdinal;
 }
 
@@ -674,7 +696,7 @@ ze_result_t CommandHandler::destroy() {
 }
 
 TestBitMask getTestMask(int argc, char *argv[], uint32_t defaultValue) {
-    uint32_t value = static_cast<uint32_t>(getParamValue(argc, argv, "-m", "-mask", static_cast<int>(defaultValue)));
+    uint32_t value = getParamValue(argc, argv, "-m", "-mask", defaultValue);
     std::cout << "Test mask ";
     if (value != defaultValue) {
         std::cout << "override ";

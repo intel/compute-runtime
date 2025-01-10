@@ -128,6 +128,58 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlot() {
     return bindlessInfo.get();
 }
 
+bool getImageDescriptor(const ze_image_desc_t *origImgDesc, ze_image_desc_t *imgDesc) {
+    bool modified = false;
+    *imgDesc = *origImgDesc;
+    if (origImgDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(origImgDesc->pNext);
+        if (extendedDesc->stype != ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32) {
+            switch (origImgDesc->format.layout) {
+            default:
+                break;
+            case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
+                imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
+                imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+                imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+                imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+                imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+                modified = true;
+                break;
+            case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
+                imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+                imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+                imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+                imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+                imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+                modified = true;
+                break;
+            }
+        }
+    } else {
+        switch (origImgDesc->format.layout) {
+        default:
+            break;
+        case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
+            imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
+            imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+            imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+            imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+            imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+            modified = true;
+            break;
+        case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
+            imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+            imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+            imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+            imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+            imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+            modified = true;
+            break;
+        }
+    }
+    return modified;
+}
+
 ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     ImageAllocatorFn allocator = nullptr;
@@ -138,7 +190,15 @@ ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image
     ImageImp *image = nullptr;
     if (allocator) {
         image = static_cast<ImageImp *>((*allocator)());
-        result = image->initialize(device, desc);
+        ze_image_desc_t imgDesc = {};
+        bool modified = getImageDescriptor(desc, &imgDesc);
+        if (modified) {
+            image->setMimickedImage(true);
+            result = image->initialize(device, &imgDesc);
+        } else {
+            result = image->initialize(device, desc);
+        }
+
         if (result != ZE_RESULT_SUCCESS) {
             image->destroy();
             image = nullptr;

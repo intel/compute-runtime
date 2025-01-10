@@ -36,7 +36,6 @@
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/api/driver_experimental/public/zex_module.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module_build_log.h"
 #include "level_zero/core/source/module/module_imp.h"
@@ -45,6 +44,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+#include "level_zero/driver_experimental/zex_module.h"
 
 namespace L0 {
 namespace ult {

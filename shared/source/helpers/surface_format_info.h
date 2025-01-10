@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -218,13 +218,13 @@ enum class ImageType {
 };
 
 struct ImageDescriptor {
-    ImageType imageType;
     size_t imageWidth;
     size_t imageHeight;
     size_t imageDepth;
     size_t imageArraySize;
     size_t imageRowPitch;
     size_t imageSlicePitch;
+    ImageType imageType;
     uint32_t numMipLevels;
     uint32_t numSamples;
     bool fromParent;

@@ -167,6 +167,7 @@ class SVMAllocsManager {
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
         bool insert(size_t size, void *ptr, SvmAllocationData *svmData);
         static bool allocUtilizationAllows(size_t requestedSize, size_t reuseCandidateSize);
+        bool isInUse(SvmAllocationData *svmData);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
 

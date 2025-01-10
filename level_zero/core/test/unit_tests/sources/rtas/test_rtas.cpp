@@ -349,11 +349,10 @@ TEST_F(RTASTest, GivenUnderlyingBuilderDestroySucceedsThenSuccessIsReturned) {
 }
 
 TEST_F(RTASTest, GivenUnderlyingBuilderDestroyFailsThenErrorIsReturned) {
-    RTASBuilder pRTASBuilder;
+    auto pRTASBuilder = std::make_unique<RTASBuilder>();
     builderDestroyExpImpl = &builderDestroyFail;
-    driverHandle->rtasLibraryHandle = std::make_unique<MockRTASOsLibrary>();
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASBuilderDestroyExp(pRTASBuilder.toHandle()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASBuilderDestroyExp(pRTASBuilder.get()));
     EXPECT_EQ(1u, builderDestroyFailCalled);
 }
 
@@ -454,10 +453,10 @@ TEST_F(RTASTest, GivenUnderlyingParallelOperationDestroySucceedsThenSuccessIsRet
 }
 
 TEST_F(RTASTest, GivenUnderlyingParallelOperationDestroyFailsThenErrorIsReturned) {
-    RTASParallelOperation pParallelOperation;
+    auto pParallelOperation = std::make_unique<RTASParallelOperation>();
     parallelOperationDestroyExpImpl = &parallelOperationDestroyFail;
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASParallelOperationDestroyExp(pParallelOperation.toHandle()));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, L0::zeRTASParallelOperationDestroyExp(pParallelOperation.get()));
     EXPECT_EQ(1u, parallelOperationDestroyFailCalled);
 }
 

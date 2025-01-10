@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockGlobalOperationsSysfsAccess> pSysfsAccess;
     std::unique_ptr<MockGlobalOperationsProcfsAccess> pProcfsAccess;
     std::unique_ptr<MockGlobalOperationsFsAccess> pFsAccess;
-    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp;
     L0::Sysman::EngineHandleContext *pEngineHandleContextOld = nullptr;
     L0::Sysman::DiagnosticsHandleContext *pDiagnosticsHandleContextOld = nullptr;
     L0::Sysman::FirmwareHandleContext *pFirmwareHandleContextOld = nullptr;
@@ -94,7 +93,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         pDiagnosticsHandleContext = std::make_unique<MockGlobalOperationsDiagnosticsHandleContext>(pOsSysman);
         pFirmwareHandleContext = std::make_unique<MockGlobalOperationsFirmwareHandleContext>(pOsSysman);
         pRasHandleContext = std::make_unique<MockGlobalOperationsRasHandleContext>(pOsSysman);
-        pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
 
         auto pDrmLocal = new DrmGlobalOpsMock(const_cast<NEO::RootDeviceEnvironment &>(pSysmanDeviceImp->getRootDeviceEnvironment()));
         pDrmLocal->setupIoctlHelper(pSysmanDeviceImp->getRootDeviceEnvironment().getHardwareInfo()->platform.eProductFamily);
@@ -881,6 +879,19 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingZesDeviceResetE
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingZesDeviceResetExtForWarmResetThenErrorIsReturned) {
+    initGlobalOps();
+    pProcfsAccess->ourDevicePid = pProcfsAccess->pidList[0];
+    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->resetTimeout = 0; // timeout immediate
+    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pProcfsAccess->isRepeated.push_back(true);
+    pProcfsAccess->mockNoKill = true;
+    zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_WARM};
+    ze_result_t result = zesDeviceResetExt(device, &pProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, result);
+}
+
 TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetExtWithInvalidTypeThenFailureIsReturned) {
     init(true);
     DebugManagerStateRestore dbgRestore;
@@ -967,25 +978,31 @@ TEST_F(SysmanGlobalOperationsIntegratedFixture, GivenDeviceInUseAndBindingFailsD
 TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseAndReInitFailsDuringResetWhenCallingResetThenErrorIsReturned) {
 
     initGlobalOps();
-    pProcfsAccess->ourDevicePid = pProcfsAccess->pidList[0];
-    pProcfsAccess->ourDeviceFd = pProcfsAccess->extraFd;
+    MockGlobalOperationsProcfsAccess *pProcFsAccess = new MockGlobalOperationsProcfsAccess();
+
+    pProcFsAccess->ourDevicePid = pProcFsAccess->pidList[0];
+    pProcFsAccess->ourDeviceFd = pProcFsAccess->extraFd;
+    pProcFsAccess->mockListProcessCall.push_back(DEVICE_UNUSED);
+    pProcFsAccess->isRepeated.push_back(false);
+    pProcFsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
+    pProcFsAccess->isRepeated.push_back(true);
+    pProcFsAccess->mockNoKill = true;
+
+    MockSysmanKmdInterfacePrelim *pSysmanKmdInterface = new MockSysmanKmdInterfacePrelim(pLinuxSysmanImp->getSysmanProductHelper());
+    pSysmanKmdInterface->pProcfsAccess.reset(pProcFsAccess);
+
+    std::unique_ptr<MockGlobalOpsLinuxSysmanImp> pMockGlobalOpsLinuxSysmanImp = std::make_unique<MockGlobalOpsLinuxSysmanImp>(pLinuxSysmanImp->getSysmanDeviceImp());
+    pMockGlobalOpsLinuxSysmanImp->pProcfsAccess = pProcFsAccess;
+    pMockGlobalOpsLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
 
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pLinuxSysmanImp = pMockGlobalOpsLinuxSysmanImp.get();
+    static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->pProcfsAccess = pProcFsAccess;
     static_cast<PublicLinuxGlobalOperationsImp *>(pGlobalOperationsImp->pOsGlobalOperations)->resetTimeout = 0; // timeout immediate
 
-    pMockGlobalOpsLinuxSysmanImp->pProcfsAccess = pProcfsAccess.get();
-    pMockGlobalOpsLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-    pMockGlobalOpsLinuxSysmanImp->pFsAccess = pFsAccess.get();
-
-    pMockGlobalOpsLinuxSysmanImp->ourDevicePid = pProcfsAccess->ourDevicePid;
-    pMockGlobalOpsLinuxSysmanImp->ourDeviceFd = pProcfsAccess->ourDevicePid;
+    pMockGlobalOpsLinuxSysmanImp->ourDevicePid = pProcFsAccess->ourDevicePid;
+    pMockGlobalOpsLinuxSysmanImp->ourDeviceFd = pProcFsAccess->extraFd;
     pMockGlobalOpsLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_UNKNOWN);
 
-    pProcfsAccess->mockListProcessCall.push_back(DEVICE_UNUSED);
-    pProcfsAccess->isRepeated.push_back(false);
-    pProcfsAccess->mockListProcessCall.push_back(DEVICE_IN_USE);
-    pProcfsAccess->isRepeated.push_back(true);
-    pProcfsAccess->mockNoKill = true;
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }

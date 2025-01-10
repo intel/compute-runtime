@@ -78,7 +78,12 @@ include(GNUInstallDirs)
 if(USE_SANITIZE_UB AND WIN32)
   add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker /NODEFAULTLIB:clang_rt.ubsan_standalone_cxx-x86_64.lib")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker /NODEFAULTLIB:clang_rt.ubsan_standalone_cxx-x86_64.lib")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xlinker /NODEFAULTLIB:clang_rt.ubsan_standalone_cxx-x86_64.lib")
+endif()
+
+if(WIN32 AND NOT MSVC)
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Xlinker onecore.lib")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Xlinker onecore.lib")
 endif()
 
 if(NOT DEFINED NEO_USE_CL_CACHE)

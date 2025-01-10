@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,9 +29,6 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
-#include "level_zero/api/driver_experimental/public/zex_context.h"
-#include "level_zero/api/driver_experimental/public/zex_driver.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -41,7 +38,10 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
-#include "level_zero/include/ze_intel_gpu.h"
+#include "level_zero/driver_experimental/zex_api.h"
+#include "level_zero/driver_experimental/zex_context.h"
+#include "level_zero/driver_experimental/zex_driver.h"
+#include "level_zero/ze_intel_gpu.h"
 
 #include "driver_version.h"
 
@@ -465,7 +465,6 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverI
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
     NEO::DeviceVector devices;
@@ -477,24 +476,10 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverI
     L0::globalDriver = nullptr;
 }
 
-TEST(DriverTestFamilySupport, whenInitializingDriverOnNotSupportedFamilyThenDriverIsNotCreated) {
-    ze_result_t returnValue;
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = false;
-
-    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
-    NEO::DeviceVector devices;
-    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
-
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
-    EXPECT_EQ(nullptr, driverHandle);
-}
-
 TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggingIsFalse) {
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
     NEO::DeviceVector devices;
@@ -534,7 +519,6 @@ TEST_F(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
 TEST_F(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
 
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment;
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
@@ -776,7 +760,6 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue1WhenCreatingDriverThenEnablePr
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
     NEO::DeviceVector devices;
@@ -798,7 +781,6 @@ TEST(DriverTest, givenProgramDebuggingEnvVarValue2WhenCreatingDriverThenEnablePr
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
     NEO::DeviceVector devices;
@@ -822,7 +804,6 @@ TEST(DriverTest, givenBuiltinsAsyncInitEnabledWhenCreatingDriverThenMakeSureBuil
 
     ze_result_t returnValue;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.levelZeroSupported = true;
 
     NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
 
@@ -890,47 +871,6 @@ TEST(DriverTest, givenInvalidCompilerEnvironmentAndEnableProgramDebuggingWithVal
     ASSERT_EQ(nullptr, L0::globalDriver);
 }
 
-struct DriverTestMultipleFamilySupport : public ::testing::Test {
-    void SetUp() override {
-
-        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
-
-        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices);
-        for (auto i = 0u; i < numRootDevices; i++) {
-            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
-            if (i < numSupportedRootDevices) {
-                devices[i]->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.levelZeroSupported = true;
-            } else {
-                deviceFactory->rootDevices.erase(deviceFactory->rootDevices.begin() + i);
-                devices[i]->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.levelZeroSupported = false;
-            }
-        }
-    }
-    DebugManagerStateRestore restorer;
-    std::vector<std::unique_ptr<NEO::Device>> devices;
-    std::unique_ptr<UltDeviceFactory> deviceFactory;
-    const uint32_t numRootDevices = 3u;
-    const uint32_t numSubDevices = 2u;
-    const uint32_t numSupportedRootDevices = 2u;
-};
-
-TEST_F(DriverTestMultipleFamilySupport, whenInitializingDriverWithArrayOfDevicesThenDriverIsInitializedOnlyWithThoseSupported) {
-
-    ze_result_t returnValue;
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
-    EXPECT_NE(nullptr, driverHandle);
-
-    L0::DriverHandleImp *driverHandleImp = reinterpret_cast<L0::DriverHandleImp *>(driverHandle);
-    EXPECT_EQ(numSupportedRootDevices, driverHandleImp->devices.size());
-
-    for (auto d : driverHandleImp->devices) {
-        EXPECT_TRUE(d->getNEODevice()->getHardwareInfo().capabilityTable.levelZeroSupported);
-    }
-
-    delete driverHandle;
-    L0::globalDriver = nullptr;
-}
-
 TEST(MultiRootDeviceDriverTest, whenInitializingDriverHandleWithMultipleDevicesThenOrderInRootDeviceIndicesMatchesOrderInDeviceVector) {
     Mock<DriverHandle> driverHandle;
     for (auto &device : driverHandle.devices) {
@@ -972,37 +912,6 @@ TEST(MultiSubDeviceDriverTest, whenInitializingDriverHandleWithMultipleDevicesWi
     EXPECT_EQ(0u, driverHandle.rootDeviceIndices[0]);
 }
 
-struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
-    void SetUp() override {
-
-        VariableBackup<bool> mockDeviceFlagBackup(&NEO::MockDevice::createSingleDevice, false);
-
-        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-        }
-
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            devices.push_back(std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, i)));
-            devices[i]->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.levelZeroSupported = false;
-        }
-    }
-
-    DebugManagerStateRestore restorer;
-    std::vector<std::unique_ptr<NEO::Device>> devices;
-
-    const uint32_t numRootDevices = 3u;
-};
-
-TEST_F(DriverTestMultipleFamilyNoSupport, whenInitializingDriverWithArrayOfNotSupportedDevicesThenDriverIsNull) {
-
-    ze_result_t returnValue;
-    auto driverHandle = DriverHandle::create(std::move(devices), L0EnvVariables{}, &returnValue);
-    EXPECT_EQ(nullptr, driverHandle);
-}
-
 struct MaskArray {
     const std::string masks[4] = {"0", "1", "2", "3"}; // fixture has 4 subDevices
 };
@@ -1012,7 +921,6 @@ struct DriverHandleTest : public ::testing::Test {
 
         ze_result_t returnValue;
         NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-        hwInfo.capabilityTable.levelZeroSupported = true;
 
         NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
         NEO::DeviceVector devices;

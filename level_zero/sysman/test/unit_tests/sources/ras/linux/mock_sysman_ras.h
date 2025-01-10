@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ constexpr uint64_t correctableEuErrorCount = 75u;
 constexpr uint64_t fatalEuErrorCount = 50u;
 constexpr uint64_t fatalTlb = 3u;
 constexpr uint64_t socFatalPsfCsc0Count = 5u;
+constexpr uint64_t socFatalIosfPciaer = 3u;
 constexpr uint64_t fatalEngineResetCount = 45u;
 constexpr uint64_t correctableGrfErrorCountTile0 = 90u;
 constexpr uint64_t correctableEuErrorCountTile0 = 70u;
@@ -67,7 +68,7 @@ constexpr uint64_t driverEngineOther = 3u;
 constexpr uint64_t initialUncorrectableCacheErrors = 2u;
 constexpr uint64_t initialEngineReset = 2u;
 constexpr uint64_t initialProgrammingErrors = 7u;
-constexpr uint64_t initialUncorrectableNonComputeErrors = 3u;
+constexpr uint64_t initialUncorrectableNonComputeErrors = 4u;
 constexpr uint64_t initialUncorrectableFabricErrors = 8u;
 constexpr uint64_t initialUncorrectableComputeErrors = 7u;
 constexpr uint64_t initialCorrectableComputeErrors = 6u;
@@ -77,7 +78,7 @@ constexpr uint64_t initialUncorrectableCacheErrorsTile0 = 2u;
 constexpr uint64_t initialCorrectableCacheErrorTile0 = 2u;
 constexpr uint64_t initialEngineResetTile0 = 2u;
 constexpr uint64_t initialProgrammingErrorsTile0 = 7u;
-constexpr uint64_t initialUncorrectableNonComputeErrorsTile0 = 10u;
+constexpr uint64_t initialUncorrectableNonComputeErrorsTile0 = 11u;
 constexpr uint64_t initialCorrectableNonComputeErrorsTile0 = 2u;
 constexpr uint64_t initialUncorrectableComputeErrorsTile0 = 8u;
 constexpr uint64_t initialUncorrectableFabricErrorsTile0 = 8u;
@@ -142,9 +143,10 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         data[7] = 0;
         data[8] = fatalEuErrorCount;
         data[9] = socFatalPsfCsc0Count;
-        data[10] = fatalTlb;
-        data[11] = 0;
-        data[12] = socFatalMdfiEastCount;
+        data[10] = socFatalIosfPciaer;
+        data[11] = fatalTlb;
+        data[12] = 0;
+        data[13] = socFatalMdfiEastCount;
         return 0;
     }
 
@@ -170,11 +172,12 @@ struct MockRasPmuInterfaceImp : public L0::Sysman::PmuInterfaceImp {
         data[8] = fatalSubslice;
         data[9] = fatalEuErrorCount;
         data[10] = socFatalPsfCsc0Count;
-        data[11] = nonFatalGscAonParity;
-        data[12] = nonFataGscSelfmBist;
-        data[13] = fatalTlb;
-        data[14] = 0;
-        data[15] = socFatalMdfiEastCount;
+        data[11] = socFatalIosfPciaer;
+        data[12] = nonFatalGscAonParity;
+        data[13] = nonFataGscSelfmBist;
+        data[14] = fatalTlb;
+        data[15] = 0;
+        data[16] = socFatalMdfiEastCount;
         return 0;
     }
 
@@ -391,6 +394,9 @@ struct MockRasSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         } else if (file.compare("gt/gt1/error_counter/correctable_subslice") == 0) {
             val = 2u;
             return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/soc_fatal_iosf_pciaer") == 0) {
+            val = 1u;
+            return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -462,6 +468,9 @@ struct MockRasSysfsAccess : public L0::Sysman::SysFsAccessInterface {
         } else if (file.compare("gt/gt1/error_counter/driver_engine_other") == 0) {
             val = 3u;
             return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/soc_fatal_iosf_pciaer") == 0) {
+            val = 1u;
+            return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -522,6 +531,7 @@ struct MockRasFsAccess : public L0::Sysman::FsAccessInterface {
             events.push_back("error--fatal-fpu");
             events.push_back("error--fatal-l3-fabric");
             events.push_back("ccs0-busy");
+            events.push_back("error--soc-fatal-iosf-pciaer");
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -569,6 +579,7 @@ struct MockRasFsAccess : public L0::Sysman::FsAccessInterface {
             events.push_back("error-gt0--fatal-subslice");
             events.push_back("error-gt1--fatal-l3bank");
             events.push_back("error-gt1--correctable-subslice");
+            events.push_back("error-gt0--soc-fatal-iosf-pciaer");
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;

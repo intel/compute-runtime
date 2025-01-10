@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,7 @@ DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueSVMMemcpyOnly, false, "Force 
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
 DECLARE_DEBUG_VARIABLE(bool, GenerateAubFilePerProcessId, true, "Generate aub file with process id")
 DECLARE_DEBUG_VARIABLE(bool, SetBufferHostMemoryAlwaysAubWritable, false, "Make buffer host memory allocation always uploaded to AUB/TBX")
+DECLARE_DEBUG_VARIABLE(bool, EnableTbxPageFaultManager, false, "Enables experiemental page fault manager for host buffer types, improves upon SetBufferHostMemoryAlwaysAubWritable")
 
 /*DEBUG FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableSWTags, false, "Enable software tagging in batch buffer")
@@ -376,12 +377,14 @@ DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passe
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, ForceNonCoherentModeForTimestamps, false, "When active timestamp buffers are allocated in non coherent memory.")
 DECLARE_DEBUG_VARIABLE(bool, SetAssumeNotInUse, true, "Set AssumeNotInUse flag in d3d destroy allocation.")
+DECLARE_DEBUG_VARIABLE(bool, MitigateHostVisibleSignal, false, "Reset host visible signal in CB events, flush L3 when synchronize")
 DECLARE_DEBUG_VARIABLE(bool, ForceZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will use share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableReusingGpuTimestamps, -1, "Reuse GPU timestamp for next device time requests. -1: os-specific, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AllowZeroCopyWithoutCoherency, -1, "Use cacheline flush instead of memory copy for map/unmap mem object")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, MaxHwThreadsPercent, 0, "If not zero then maximum number of used HW threads is capped to max * MaxHwThreadsPercent / 100")
 DECLARE_DEBUG_VARIABLE(int32_t, MinHwThreadsUnoccupied, 0, "If not zero then maximum number of used HW threads is reduced by MinHwThreadsUnoccupied")
+DECLARE_DEBUG_VARIABLE(int32_t, MaxKernelManagedPrivateMemoryPercent, 0, "If not zero then maximum amount of kernel-managed private memory is capped to MaxGlobalMemory * MaxKernelManagedPrivateMemoryPercent / 100")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushEveryEnqueueCount, -1, "If greater than 0, driver performs implicit flush every N submissions.")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForNewResource, -1, "-1: platform specific, 0: force disable, 1: force enable")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForIdleGpu, -1, "-1: platform specific, 0: force disable, 1: force enable")
@@ -561,6 +564,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableFtrTile64Optimization, -1, "Control featur
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTheMaximumNumberOfOutstandingRayqueriesPerSs, -1, "Set the maximum number of outstanding RayQueries per SS, -1: default, 0: 128, 1: 256, 2: 512, 3: 1024")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceDispatchTimeoutCounter, -1, "Set timeout for Synchronous Ray Tracing, -1: default, 0: 64, 1: 128, 2: 192, 3: 256, 4: 512, 5: 1024, 6: 2048, 7: 4096")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable10ThreadsPerEu, -1, "Enable 10 threads per EU  HSD-18022695913, -1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, Enable64bAddressingForRayTracing, -1, "-1: default, 0: disabled, 1: enabled. Enable support for 64 bit addressing for RayTracing HSD-14016042915")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableXe3VariableRegisterSizeAllocation, -1, "When enabled, use new Xe3 Variable Register per Thread (VRT) feature, -1: default, 0: disabled, 1: enabled")
 
 /* IMPLICIT SCALING */
 DECLARE_DEBUG_VARIABLE(int32_t, EnableWalkerPartition, -1, "-1: default, 0: disable, 1: enable, Enables Walker Partitioning via WPARID.")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -495,7 +495,7 @@ bool IoctlHelperPrelim20::completionFenceExtensionSupported(const bool isVmBindA
     return isVmBindAvailable;
 }
 
-std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint32_t vmHandleId) {
+std::unique_ptr<uint8_t[]> IoctlHelperPrelim20::prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles, uint64_t cookie) {
     static_assert(std::is_trivially_destructible_v<prelim_drm_i915_vm_bind_ext_uuid>,
                   "Storage must be allowed to be reused without calling the destructor!");
 

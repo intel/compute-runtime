@@ -1,11 +1,17 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#if SUPPORT_XE3_CORE
+#ifdef SUPPORT_PTL
+#include "device_ids_configs_ptl.h"
+#endif
+#endif
 
 #if SUPPORT_XE2_HPG_CORE
 #ifdef SUPPORT_BMG

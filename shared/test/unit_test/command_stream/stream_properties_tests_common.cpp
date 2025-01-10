@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -293,62 +293,114 @@ TEST(StreamPropertiesTests, givenOtherPipelineSelectPropertiesStructWhenSetPrope
     verifySettingPropertiesFromOtherStruct<PipelineSelectProperties, getAllPipelineSelectProperties>();
 }
 
-TEST(StreamPropertiesTests, givenCoherencyStateAndDevicePreemptionComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+TEST(StreamPropertiesTests, givenVariousDevicePreemptionComputeModesWhenSettingPropertyPerContextAndCheckIfSupportedThenExpectCorrectState) {
     bool clearDirtyState = false;
     MockStateComputeModeProperties scmProperties{};
     scmProperties.propertiesSupportLoaded = true;
-    scmProperties.scmPropertiesSupport.coherencyRequired = false;
     scmProperties.scmPropertiesSupport.devicePreemptionMode = false;
 
     bool coherencyRequired = false;
     PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
-    EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
 
-    scmProperties.scmPropertiesSupport.coherencyRequired = true;
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_TRUE(scmProperties.isDirty());
-    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     devicePreemptionMode = PreemptionMode::Initial;
     scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
     EXPECT_TRUE(scmProperties.isDirty());
-    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
-    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
-    EXPECT_FALSE(scmProperties.isDirty());
-    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
-    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
-
-    coherencyRequired = true;
     devicePreemptionMode = PreemptionMode::MidThread;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_TRUE(scmProperties.isDirty());
-    EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
-    EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     clearDirtyState = true;
-    coherencyRequired = false;
     devicePreemptionMode = PreemptionMode::ThreadGroup;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+}
+
+TEST(StreamPropertiesTests, givenVariousCoherencyRequirementsWhenSettingPropertyPerContextAndCheckIfSupportedThenExpectCorrectState) {
+    bool clearDirtyState = false;
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.coherencyRequired = false;
+
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
+
+    scmProperties.scmPropertiesSupport.coherencyRequired = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
-    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+
+    coherencyRequired = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
+
+    clearDirtyState = true;
+    coherencyRequired = false;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+}
+
+TEST(StreamPropertiesTests, givenVariableRegisterSizeAllocationSettingWhenSettingPropertyPerContextAndCheckIfSupportedThenSetDirtyOnlyOnce) {
+    bool clearDirtyState = false;
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = false;
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.enableVariableRegisterSizeAllocation.value);
+
+    scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = true;
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
+
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
+
+    scmProperties.setPropertiesPerContext(coherencyRequired, devicePreemptionMode, clearDirtyState);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -404,6 +456,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
     scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption = true;
+    scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation = true;
 
     int32_t grfNumber = 128;
     int32_t threadArbitration = 1;
@@ -416,6 +469,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(2, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+    EXPECT_EQ(1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
     scmProperties.resetState();
     EXPECT_FALSE(scmProperties.isDirty());
@@ -424,6 +478,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
     EXPECT_EQ(-1, scmProperties.memoryAllocationForScratchAndMidthreadPreemptionBuffers.value);
+    EXPECT_EQ(-1, scmProperties.enableVariableRegisterSizeAllocation.value);
 
     EXPECT_TRUE(scmProperties.propertiesSupportLoaded);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.coherencyRequired);
@@ -431,6 +486,7 @@ TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResettingSt
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.threadArbitrationPolicy);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.devicePreemptionMode);
     EXPECT_TRUE(scmProperties.scmPropertiesSupport.allocationForScratchAndMidthreadPreemption);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.enableVariableRegisterSizeAllocation);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {

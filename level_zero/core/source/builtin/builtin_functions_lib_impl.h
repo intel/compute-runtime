@@ -28,8 +28,6 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib);
     ~BuiltinFunctionsLibImpl() override {
         this->ensureInitCompletionImpl();
-        builtins->reset();
-        imageBuiltins->reset();
     }
 
     Kernel *getFunction(Builtin func) override;

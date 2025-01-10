@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -829,6 +829,28 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
     EXPECT_FALSE(memoryManager->multiOsContextCapablePassed);
     EXPECT_FALSE(memoryManager->multiStorageResourcePassed);
     EXPECT_EQ(unifiedMemoryProperties.subdeviceBitfields.at(mockRootDeviceIndex), memoryManager->subDevicesBitfieldPassed);
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(UnifiedMemoryManagerPropertiesTest,
+       givenSizeGreaterThan2mbWhenDiscretGpuAndCreateHostUSMThenAlignSizeAndVATo2mb) {
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    svmManager->multiOsContextSupport = true;
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(4 * MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, unifiedMemoryProperties);
+
+    auto allocation = svmManager->getSVMAlloc(ptr);
+
+    if (executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.isIntegratedDevice) {
+        EXPECT_EQ(4 * MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, allocation->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize());
+        EXPECT_TRUE(isAligned(allocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress(), MemoryConstants::pageSize));
+    } else {
+        EXPECT_EQ(5 * MemoryConstants::pageSize2M, allocation->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize());
+        EXPECT_TRUE(isAligned(allocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress(), MemoryConstants::pageSize2M));
+    }
 
     svmManager->freeSVMAlloc(ptr);
 }

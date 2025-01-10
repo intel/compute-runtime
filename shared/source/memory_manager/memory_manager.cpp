@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,6 +64,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     secondaryEngines.resize(rootEnvCount + 1);
     localMemAllocsSize = std::make_unique<std::atomic<size_t>[]>(rootEnvCount);
     sysMemAllocsSize.store(0u);
+    kernelManagedPrivateMemorySize = 0u;
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
@@ -83,9 +84,11 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
         localMemAllocsSize[rootDeviceIndex].store(0u);
     }
 
-    if (anyLocalMemorySupported) {
-        pageFaultManager = PageFaultManager::create();
-        prefetchManager = PrefetchManager::create();
+    if (anyLocalMemorySupported || debugManager.isTbxPageFaultManagerEnabled()) {
+        pageFaultManager = CpuPageFaultManager::create();
+        if (anyLocalMemorySupported) {
+            prefetchManager = PrefetchManager::create();
+        }
     }
 
     if (debugManager.flags.EnableMultiStorageResources.get() != -1) {

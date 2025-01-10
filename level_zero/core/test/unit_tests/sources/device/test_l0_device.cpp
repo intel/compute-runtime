@@ -38,7 +38,6 @@
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
-#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/cache/cache_reservation.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/context/context_imp.h"
@@ -55,6 +54,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/driver_experimental/zex_common.h"
 
 #include "common/StateSaveAreaHeader.h"
 #include "gtest/gtest.h"

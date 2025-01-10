@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,9 +30,6 @@ SysmanDriverHandleImp::SysmanDriverHandleImp() = default;
 
 ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executionEnvironment) {
     for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
-        if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.levelZeroSupported) {
-            continue;
-        }
         auto pSysmanDevice = SysmanDevice::create(executionEnvironment, rootDeviceIndex);
         if (pSysmanDevice != nullptr) {
             this->sysmanDevices.push_back(pSysmanDevice);

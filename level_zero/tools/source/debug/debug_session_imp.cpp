@@ -19,7 +19,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/include/zet_intel_gpu_debug.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
 namespace L0 {
 

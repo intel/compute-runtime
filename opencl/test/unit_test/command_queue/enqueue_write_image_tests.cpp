@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -801,7 +801,7 @@ HWTEST_F(EnqueueWriteImageTest, whenEnqueueWriteImageWithUsmPtrAndSizeLowerThanR
     svmManager->freeSVMAlloc(usmPtr);
 }
 
-HWTEST_F(EnqueueWriteImageTest, whenIsValidForStagingTransferImageCalledThenReturnCorrectValue) {
+HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCorrectValue) {
     bool svmSupported = pDevice->getHardwareInfo().capabilityTable.ftrSvm;
     if (!svmSupported) {
         GTEST_SKIP();
@@ -810,13 +810,13 @@ HWTEST_F(EnqueueWriteImageTest, whenIsValidForStagingTransferImageCalledThenRetu
     unsigned char ptr[16];
 
     std::unique_ptr<Image> image(Image1dHelper<>::create(context));
-    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransferImage(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
 
     image.reset(Image2dHelper<>::create(context));
-    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransferImage(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
 
     image.reset(Image3dHelper<>::create(context));
-    EXPECT_FALSE(pCmdQ->isValidForStagingTransferImage(image.get(), ptr, false));
+    EXPECT_FALSE(pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
 }
 
 struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
@@ -847,7 +847,7 @@ struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
 HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
     auto res = mockCommandQueueHw.enqueueStagingWriteImage(dstImage, false, origin, region, MemoryConstants::megaByte, MemoryConstants::megaByte, ptr, nullptr);
-
+    EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteImageCounter);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -938,4 +938,16 @@ HWTEST_F(WriteImageStagingBufferTest, whenEnqueueStagingWriteImageFailedThenProp
 
     EXPECT_EQ(res, CL_INVALID_OPERATION);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteImageCounter);
+}
+
+HWTEST_F(WriteImageStagingBufferTest, givenIsValidForStagingTransferWhenUserPtrIsMappedThenReturnFalse) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.DisableZeroCopyForBuffers.set(1);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context, device.get(), &props);
+    auto buffer = BufferHelper<>::create(context);
+    cl_int retVal = CL_SUCCESS;
+    auto mappedPtr = mockCommandQueueHw.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, buffer->getSize(), 0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(buffer, mappedPtr, false));
+    delete buffer;
 }

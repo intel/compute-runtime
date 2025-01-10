@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,11 @@ HWTEST2_F(SysmanProductHelperSysmanInitTest, GivenValidProductHelperHandleWhenQu
 HWTEST2_F(SysmanProductHelperSysmanInitTest, GivenValidProductHelperHandleWhenQueryingForZesInitSupportThenFalseIsReturned, IsPVC) {
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     EXPECT_FALSE(pSysmanProductHelper->isZesInitSupported());
+}
+
+HWTEST2_F(SysmanProductHelperSysmanInitTest, GivenValidProductHelperHandleWhenQueryingForZesInitSupportThenTrueIsReturned, IsPTL) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    EXPECT_TRUE(pSysmanProductHelper->isZesInitSupported());
 }
 
 } // namespace ult

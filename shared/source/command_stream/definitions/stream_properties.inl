@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@ struct StateComputeModePropertiesSupport {
     bool threadArbitrationPolicy = false;
     bool devicePreemptionMode = false;
     bool allocationForScratchAndMidthreadPreemption = false;
+    bool enableVariableRegisterSizeAllocation = false;
 };
 
 struct StateComputeModeProperties {
@@ -30,13 +31,14 @@ struct StateComputeModeProperties {
     StreamProperty threadArbitrationPolicy{};
     StreamProperty devicePreemptionMode{};
     StreamProperty memoryAllocationForScratchAndMidthreadPreemptionBuffers{};
+    StreamProperty enableVariableRegisterSizeAllocation{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
     void resetState();
 
     void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
+    void setPropertiesPerContext(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
-    void setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
     void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
@@ -45,6 +47,7 @@ struct StateComputeModeProperties {
     void clearIsDirty();
 
   protected:
+    void clearIsDirtyPerContext();
     void clearIsDirtyExtraPerContext();
     bool isDirtyExtra() const;
     void resetStateExtra();

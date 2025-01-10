@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -287,6 +287,39 @@ TEST_F(IoctlHelperXeTest, whenGettingVmBindExtFromHandlesThenProperStructsAreRet
 
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[1]), vmBindExt[0].base.nextExtension);
     EXPECT_EQ(reinterpret_cast<uintptr_t>(&vmBindExt[2]), vmBindExt[1].base.nextExtension);
+}
+
+TEST_F(IoctlHelperXeTest, givenRegisterIsaHandleWhenIsaIsTileInstancedThenBOCookieSet) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    drm.ioctlHelper.reset(xeIoctlHelper.release());
+
+    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.tileInstanced = true;
+    allocation.storageInfo.subDeviceBitfield.set();
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(bo.getRegisteredBindHandleCookie(), allocation.storageInfo.subDeviceBitfield.to_ulong());
+}
+
+TEST_F(IoctlHelperXeTest, givenRegisterIsaHandleWhenIsaIsNotTileInstancedThenBOCookieNotSet) {
+    const uint32_t rootDeviceIndex = 0u;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(drm);
+
+    drm.ioctlHelper.reset(xeIoctlHelper.release());
+
+    MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(rootDeviceIndex, AllocationType::kernelIsa, MemoryPool::localMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.tileInstanced = false;
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(bo.getRegisteredBindHandleCookie(), 0u);
 }
 
 TEST_F(IoctlHelperXeTest, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {

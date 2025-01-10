@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,7 +85,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     true,                                                      // supportsOnDemandPageFaults
     true,                                                      // supportsIndependentForwardProgress
     false,                                                     // hostPtrTrackingEnabled
-    true,                                                      // levelZeroSupported
     false,                                                     // isIntegratedDevice
     false,                                                     // supportsMediaBlock
     true,                                                      // p2pAccessSupported
@@ -96,8 +95,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     0                                                          // cxlType
 };
 
-void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    setupDefaultFeatureTableAndWorkaroundTable(hwInfo);
+void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper) {
+    setupDefaultFeatureTableAndWorkaroundTable(hwInfo, releaseHelper);
     FeatureTable *featureTable = &hwInfo->featureTable;
 
     featureTable->flags.ftrLocalMemory = true;
@@ -118,7 +117,7 @@ void PVC::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndW
     PVC::adjustHardwareInfo(hwInfo);
 
     if (setupFeatureTableAndWorkaroundTable) {
-        setupFeatureAndWorkaroundTable(hwInfo);
+        setupFeatureAndWorkaroundTable(hwInfo, *releaseHelper);
     }
 }
 

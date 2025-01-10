@@ -759,4 +759,16 @@ struct SupportsSampler {
     }
 };
 
+struct HeapfulSupportedMatch {
+
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        const GFXCORE_FAMILY gfxCoreFamily = NEO::ToGfxCoreFamily<productFamily>::get();
+        using FamilyType = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+        using DefaultWalkerType = typename FamilyType::DefaultWalkerType;
+        constexpr bool heaplessModeEnabled = FamilyType::template isHeaplessMode<DefaultWalkerType>();
+        return !heaplessModeEnabled;
+    }
+};
+
 #include "common_matchers.h"

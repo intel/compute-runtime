@@ -131,14 +131,14 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         OVER_DISPATCH_CONTROL_NORMAL = 0x3,
     } OVER_DISPATCH_CONTROL;
     typedef enum tagSHARED_LOCAL_MEMORY_SIZE {
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K = 0x0,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_1K = 0x1,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_2K = 0x2,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_4K = 0x3,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_8K = 0x4,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_16K = 0x5,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_32K = 0x6,
-        SHARED_LOCAL_MEMORY_SIZE_ENCODES_64K = 0x7,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K = 0x0,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_1K = 0x1,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_2K = 0x2,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_4K = 0x3,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_8K = 0x4,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_16K = 0x5,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_32K = 0x6,
+        SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_64K = 0x7,
     } SHARED_LOCAL_MEMORY_SIZE;
     typedef enum tagROUNDING_MODE {
         ROUNDING_MODE_RTNE = 0x0,
@@ -155,7 +155,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         TheStructure.Common.ThreadPreemptionDisable = THREAD_PREEMPTION_DISABLE_DISABLE;
         TheStructure.Common.SamplerCount = SAMPLER_COUNT_NO_SAMPLERS_USED;
         TheStructure.Common.OverDispatchControl = OVER_DISPATCH_CONTROL_NONE;
-        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
+        TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K;
         TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
     }
     static tagINTERFACE_DESCRIPTOR_DATA sInit() {
@@ -3825,7 +3825,7 @@ typedef struct tagMI_USER_INTERRUPT {
         struct tagCommon {
             // DWORD 0
             uint32_t Reserved_0 : BITFIELD_RANGE(0, 22);
-            uint32_t MICommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
         } Common;
         uint32_t RawData[1];
@@ -3838,7 +3838,7 @@ typedef struct tagMI_USER_INTERRUPT {
     } COMMAND_TYPE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.MICommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
     static tagMI_USER_INTERRUPT sInit() {

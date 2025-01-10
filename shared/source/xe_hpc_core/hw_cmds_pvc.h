@@ -39,7 +39,7 @@ struct PVC : public XeHpcCoreFamily {
     };
 
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const ReleaseHelper *releaseHelper);
-    static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
+    static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo, const ReleaseHelper &releaseHelper);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const ReleaseHelper *releaseHelper);
     static void setupHardwareInfoMultiTileBase(HardwareInfo *hwInfo, bool setupMultiTile);
     static void adjustHardwareInfo(HardwareInfo *hwInfo);

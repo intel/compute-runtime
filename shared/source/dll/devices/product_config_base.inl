@@ -1,9 +1,18 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#if SUPPORT_XE3_CORE
+#ifdef SUPPORT_PTL
+DEVICE_CONFIG(PTL_H_A0, PtlHwConfig, ptlHDeviceIds, XE3_FAMILY, XE3_LPG_RELEASE)
+DEVICE_CONFIG(PTL_H_B0, PtlHwConfig, ptlHDeviceIds, XE3_FAMILY, XE3_LPG_RELEASE)
+DEVICE_CONFIG(PTL_U_A0, PtlHwConfig, ptlUDeviceIds, XE3_FAMILY, XE3_LPG_RELEASE)
+DEVICE_CONFIG(PTL_U_A1, PtlHwConfig, ptlUDeviceIds, XE3_FAMILY, XE3_LPG_RELEASE)
+#endif
+#endif
 
 #if SUPPORT_XE2_HPG_CORE
 #ifdef SUPPORT_BMG

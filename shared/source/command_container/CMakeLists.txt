@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -67,6 +67,12 @@ endif()
 if(SUPPORT_XE2_AND_LATER)
   list(APPEND NEO_CORE_COMMAND_CONTAINER
        ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_xe2_hpg_core_and_later.inl
+  )
+endif()
+
+if(SUPPORT_XE3_AND_LATER)
+  list(APPEND NEO_CORE_COMMAND_CONTAINER
+       ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_from_xe3_and_later.inl
   )
 endif()
 

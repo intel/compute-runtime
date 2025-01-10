@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -300,6 +300,8 @@ ze_result_t LinuxGlobalOperationsImp::resetExt(zes_reset_properties_t *pProperti
 }
 
 ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_t resetType) {
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     if (!pSysfsAccess->isRootUser()) {
         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Not running as root user and returning error:0x%x \n", __FUNCTION__, ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
@@ -322,7 +324,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     resetName = pFsAccess->getBaseName(resetName);
 
     if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
-        result = pSysfsAccess->unbindDevice(resetName);
+        result = pSysfsAccess->unbindDevice(pSysmanKmdInterface->getGpuUnBindEntry(), resetName);
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to unbind device:%s and returning error:0x%x \n", __FUNCTION__, resetName.c_str(), result);
             return result;
@@ -357,7 +359,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
             if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() > resetTimeout) {
 
                 if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
-                    result = pSysfsAccess->bindDevice(resetName);
+                    result = pSysfsAccess->bindDevice(pSysmanKmdInterface->getGpuBindEntry(), resetName);
                     if (ZE_RESULT_SUCCESS != result) {
                         NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
                         return result;
@@ -399,7 +401,7 @@ ze_result_t LinuxGlobalOperationsImp::resetImpl(ze_bool_t force, zes_reset_type_
     }
 
     if (resetType == ZES_RESET_TYPE_FLR || resetType == ZES_RESET_TYPE_COLD) {
-        result = pSysfsAccess->bindDevice(resetName);
+        result = pSysfsAccess->bindDevice(pSysmanKmdInterface->getGpuBindEntry(), resetName);
         if (ZE_RESULT_SUCCESS != result) {
             NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to bind the device to the kernel driver and returning error:0x%x \n", __FUNCTION__, result);
             return result;

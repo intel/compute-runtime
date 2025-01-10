@@ -405,6 +405,7 @@ if(BUILD_WITH_L0)
                                ${IGC_OCL_ADAPTOR_DIR}
                                ${NEO__IGC_INCLUDE_DIR}
                                ${KHRONOS_HEADERS_DIR}
+                               ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
     if(WIN32 OR NOT DISABLE_WDDM_LINUX)
@@ -548,12 +549,6 @@ if(BUILD_WITH_L0)
 
   endif()
 
-  if(UNIX)
-    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/zet_intel_gpu_debug.h"
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/level_zero
-            PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
-    )
-  endif()
 else()
   message(STATUS "Skipping level zero")
   set(BUILD_WITH_L0 FALSE PARENT_SCOPE)

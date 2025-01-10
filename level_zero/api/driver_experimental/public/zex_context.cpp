@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_context.h"
+#include "level_zero/driver_experimental/zex_context.h"
 
 #include "shared/source/device/device.h"
 

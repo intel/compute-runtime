@@ -858,6 +858,7 @@ int main(int argc, char **argv) {
     defaultHwInfo = std::make_unique<HardwareInfo>();
     *defaultHwInfo = DEFAULT_TEST_PLATFORM::hwInfo;
 
+    debugManager.flags.IgnoreProductSpecificIoctlHelper.set(true);
     initializeTestedDevice();
 
     Os::dxcoreDllName = "";

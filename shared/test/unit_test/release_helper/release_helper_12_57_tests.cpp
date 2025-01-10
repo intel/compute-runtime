@@ -42,6 +42,7 @@ TEST_F(ReleaseHelper1257Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_FALSE(releaseHelper->isDisablingMsaaRequired());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
+        EXPECT_FALSE(releaseHelper->getFtrXe2Compression());
     }
 }
 

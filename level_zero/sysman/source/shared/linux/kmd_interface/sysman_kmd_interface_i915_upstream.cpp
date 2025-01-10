@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,6 +142,14 @@ void SysmanKmdInterfaceI915Upstream::getDriverVersion(char (&driverVersion)[ZES_
 
 ze_result_t SysmanKmdInterfaceI915Upstream::getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) {
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+}
+
+std::string SysmanKmdInterfaceI915Upstream::getGpuBindEntry() const {
+    return getGpuBindEntryI915();
+}
+
+std::string SysmanKmdInterfaceI915Upstream::getGpuUnBindEntry() const {
+    return getGpuUnBindEntryI915();
 }
 
 } // namespace Sysman

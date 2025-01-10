@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,87 +68,12 @@ TEST(zesInit, whenCallingZesDriverGetWithoutZesInitThenZesDriverGetCallNotSuccee
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverGet(&count, nullptr));
 }
 
-struct SysmanDriverTestMultipleFamilySupport : public ::testing::Test {
-    void SetUp() override {
-        executionEnvironment = new NEO::ExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        for (auto i = 0u; i < numRootDevices; i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-            executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
-            executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<SysmanMockDrm>(*executionEnvironment->rootDeviceEnvironments[i]));
-            if (i < numSupportedRootDevices) {
-                executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.levelZeroSupported = true;
-            } else {
-                executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.levelZeroSupported = false;
-            }
-        }
-    }
-
-    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
-    const uint32_t numRootDevices = 3u;
-    const uint32_t numSubDevices = 2u;
-    const uint32_t numSupportedRootDevices = 2u;
-};
-
-TEST_F(SysmanDriverTestMultipleFamilySupport, whenInitializingSysmanDriverWithArrayOfDevicesThenDriverIsInitializedOnlyWithThoseSupported) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
-        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
-        return buf;
-    });
-
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
-        std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
-        std::memcpy(buf, str.c_str(), str.size());
-        return static_cast<int>(str.size());
-    });
-
-    ze_result_t returnValue;
-
-    auto driverHandle = L0::Sysman::SysmanDriverHandle::create(*executionEnvironment, &returnValue);
-    EXPECT_NE(nullptr, driverHandle);
-
-    L0::Sysman::SysmanDriverHandleImp *driverHandleImp = reinterpret_cast<L0::Sysman::SysmanDriverHandleImp *>(driverHandle);
-    EXPECT_EQ(numSupportedRootDevices, driverHandleImp->sysmanDevices.size());
-
-    for (auto d : driverHandleImp->sysmanDevices) {
-        EXPECT_TRUE(d->getHardwareInfo().capabilityTable.levelZeroSupported);
-    }
-
-    delete driverHandle;
-    L0::Sysman::globalSysmanDriver = nullptr;
-}
-
-struct SysmanDriverTestMultipleFamilyNoSupport : public ::testing::Test {
-    void SetUp() override {
-        executionEnvironment = new NEO::ExecutionEnvironment();
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-            executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.levelZeroSupported = false;
-        }
-    }
-
-    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
-    const uint32_t numRootDevices = 3u;
-};
-
-TEST_F(SysmanDriverTestMultipleFamilyNoSupport, whenInitializingSysmanDriverWithArrayOfNotSupportedDevicesThenDriverIsNull) {
-    ze_result_t returnValue;
-    this->executionEnvironment->incRefInternal();
-    auto driverHandle = L0::Sysman::SysmanDriverHandle::create(*executionEnvironment, &returnValue);
-    EXPECT_EQ(nullptr, driverHandle);
-    EXPECT_EQ(returnValue, ZE_RESULT_ERROR_UNINITIALIZED);
-    this->executionEnvironment->decRefInternal();
-}
-
 struct SysmanDriverTestNoDeviceCreate : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-            executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.levelZeroSupported = true;
             executionEnvironment->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<SysmanMockDrm>(*executionEnvironment->rootDeviceEnvironments[i]));
         }

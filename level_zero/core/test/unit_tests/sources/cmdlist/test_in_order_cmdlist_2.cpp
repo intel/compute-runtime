@@ -13,9 +13,9 @@
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/api/driver_experimental/public/zex_api.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/in_order_cmd_list_fixture.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 namespace ult {
@@ -1681,6 +1681,45 @@ HWTEST2_F(InOrderRegularCmdListTests, givenAddedCmdForPatchWhenUpdateNewInOrderI
     EXPECT_EQ(5u, semaphoreCmd.getSemaphoreDataDword());
 }
 
+HWTEST2_F(InOrderRegularCmdListTests, givenPipeControlCmdAddedForPatchWhenUpdateNewInOrderInfoThenNewInfoIsSet, IsAtLeastXeHpCore) {
+    auto pcCmd = FamilyType::cmdInitPipeControl;
+
+    auto inOrderRegularCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    auto &inOrderExecInfo = inOrderRegularCmdList->inOrderExecInfo;
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(4);
+    inOrderExecInfo->addCounterValue(1);
+
+    auto inOrderRegularCmdList2 = createRegularCmdList<gfxCoreFamily>(false);
+    auto &inOrderExecInfo2 = inOrderRegularCmdList2->inOrderExecInfo;
+    inOrderExecInfo2->addRegularCmdListSubmissionCounter(6);
+    inOrderExecInfo2->addCounterValue(1);
+
+    inOrderRegularCmdList->addCmdForPatching(&inOrderExecInfo, &pcCmd, nullptr, 1, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
+
+    ASSERT_EQ(1u, inOrderRegularCmdList->inOrderPatchCmds.size());
+
+    inOrderRegularCmdList->disablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(0u, pcCmd.getImmediateData());
+
+    inOrderRegularCmdList->enablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo2, false);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+
+    inOrderExecInfo->addRegularCmdListSubmissionCounter(1);
+    inOrderRegularCmdList->updateInOrderExecInfo(0, &inOrderExecInfo, true);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+
+    inOrderRegularCmdList->enablePatching(0);
+    inOrderRegularCmdList->inOrderPatchCmds[0].patch(3);
+    EXPECT_EQ(4u, pcCmd.getImmediateData());
+}
+
 struct StandaloneInOrderTimestampAllocationTests : public InOrderCmdListFixture {
     void SetUp() override {
         InOrderCmdListFixture::SetUp();
@@ -1793,7 +1832,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenAssign
     EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), *tag0Data);
 }
 
-HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenAssignAllocation, IsAtLeastXeHpCore) {
+HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignalingWhenPassedNonProfilingEventThenNotAssignAllocation, IsAtLeastXeHpCore) {
     auto eventPool = createEvents<FamilyType>(1, false);
     auto eventHandle = events[0]->toHandle();
 
@@ -1805,7 +1844,11 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignal
 
     bool isCompactEvent = cmdList->compactL3FlushEvent(cmdList->getDcFlushRequired(events[0]->isSignalScope()));
 
-    EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) != nullptr);
+    if (cmdList->getDcFlushRequired(events[0]->isSignalScope())) {
+        EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) == nullptr);
+    } else {
+        EXPECT_EQ(isCompactEvent, events[0]->getAllocation(device) != nullptr);
+    }
     EXPECT_EQ(isCompactEvent, cmdList->isInOrderNonWalkerSignalingRequired(events[0].get()));
 }
 
@@ -2951,6 +2994,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenAtomicSignallingEnabledWhenWaitingF
 
 HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingWaitOnEventsThenHandleAllEventPackets, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
 
@@ -2969,32 +3013,16 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgramming
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), (cmdStream->getUsed() - offset)));
 
-        auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
-
         if (isCompactEvent) {
-            ASSERT_NE(cmdList.end(), semaphoreItor);
-            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
+            auto pcItors = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+            ASSERT_NE(pcItors.size(), 0u);
+            auto pcCmd = genCmdCast<PIPE_CONTROL *>(*pcItors.back());
 
-            ASSERT_NE(nullptr, semaphoreCmd);
-
-            auto gpuAddress = events[0]->getCompletionFieldGpuAddress(device);
-
-            while (gpuAddress != semaphoreCmd->getSemaphoreGraphicsAddress()) {
-                semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
-                ASSERT_NE(cmdList.end(), semaphoreItor);
-
-                semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphoreItor);
-                ASSERT_NE(nullptr, semaphoreCmd);
-            }
-
-            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-            semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-            ASSERT_NE(nullptr, semaphoreCmd);
-
-            EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-            EXPECT_EQ(gpuAddress + events[0]->getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
+            uint64_t address = pcCmd->getAddressHigh();
+            address <<= 32;
+            address |= pcCmd->getAddress();
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), address);
+            EXPECT_EQ(immCmdList->inOrderExecInfo->getCounterValue(), pcCmd->getImmediateData());
         }
     }
 
@@ -3043,7 +3071,7 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenSignalingSy
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
-    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false);
+    immCmdList->appendSignalInOrderDependencyCounter(nullptr, false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));

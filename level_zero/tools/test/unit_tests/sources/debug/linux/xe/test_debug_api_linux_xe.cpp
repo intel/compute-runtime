@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/debug_session.h"
 #include "level_zero/tools/source/debug/linux/debug_session.h"
@@ -37,6 +36,7 @@
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/xe/debug_session_fixtures_linux_xe.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
+#include "level_zero/zet_intel_gpu_debug.h"
 
 #include "common/StateSaveAreaHeader.h"
 
@@ -394,7 +394,6 @@ TEST_F(DebugApiLinuxTestXe, GivenMoreThan1EventsInQueueThenInternalEventsOnlyRea
     handler->pollRetVal = 1;
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
-    //    session->synchronousInternalEventRead = true;
 
     uint64_t clientHandle = 2;
     NEO::EuDebugEventClient client = {};
@@ -1214,6 +1213,60 @@ class DebugApiLinuxTestXeMetadataOpEventTest : public DebugApiLinuxTestXe,
         metadataType = GetParam();
     }
     ~DebugApiLinuxTestXeMetadataOpEventTest() override {}
+
+    void createMetadata(NEO::EuDebugEventMetadata &metadata, uint64_t metadataHandle) {
+        metadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeMetadata);
+        metadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+        metadata.base.len = sizeof(NEO::EuDebugEventMetadata);
+        metadata.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+        metadata.metadataHandle = metadataHandle;
+        metadata.type = metadataType;
+        metadata.len = sizeof(metadata);
+    }
+
+    void createVmBindEvent(NEO::EuDebugEventVmBind &vmBind, uint64_t vmHandle, uint32_t &seqNo) {
+        vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
+        vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
+        vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
+        vmBind.base.seqno = seqNo++;
+        vmBind.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+        vmBind.vmHandle = vmHandle;
+        vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
+        vmBind.numBinds = 1;
+    }
+
+    void createVmBindOpEvent(NEO::EuDebugEventVmBindOp &vmBindOp, uint32_t &seqNo, uint64_t vmBindRefSeqNo,
+                             uint64_t vmBindOpAddr, uint64_t numExtensions, uint16_t flags) {
+        vmBindOp.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOp);
+        vmBindOp.base.flags = flags;
+        vmBindOp.base.len = sizeof(NEO::EuDebugEventVmBindOp);
+        vmBindOp.base.seqno = seqNo++;
+        vmBindOp.numExtensions = numExtensions;
+        vmBindOp.addr = vmBindOpAddr;
+        vmBindOp.range = 1000;
+        vmBindOp.vmBindRefSeqno = vmBindRefSeqNo;
+    }
+
+    void createUfenceEvent(NEO::EuDebugEventVmBindUfence &vmBindUfence, uint32_t &seqNo, uint64_t vmBindRefSeqno) {
+        vmBindUfence.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence);
+        vmBindUfence.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))) | static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitNeedAck)));
+        vmBindUfence.base.len = sizeof(NEO::EuDebugEventVmBindUfence);
+        vmBindUfence.base.seqno = seqNo++;
+        vmBindUfence.vmBindRefSeqno = vmBindRefSeqno;
+    }
+
+    void createVmBindOpMetadata(NEO::EuDebugEventVmBindOpMetadata &vmBindOpMetadata, uint32_t &seqNo, uint64_t vmBindOpRefSeqno, uint64_t metadataHandle) {
+        vmBindOpMetadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpMetadata);
+        vmBindOpMetadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+        vmBindOpMetadata.base.len = sizeof(NEO::EuDebugEventVmBindOpMetadata);
+        vmBindOpMetadata.base.seqno = seqNo++;
+        vmBindOpMetadata.vmBindOpRefSeqno = vmBindOpRefSeqno;
+        vmBindOpMetadata.metadataHandle = metadataHandle;
+        vmBindOpMetadata.metadataCookie = 0x3;
+    }
+
+    uint32_t seqNo = 1;
+    const uint64_t metadataHandle1 = 10;
 };
 TEST_P(DebugApiLinuxTestXeMetadataOpEventTest, GivenVmBindOpMetadataEventForMetadataAreaWhenHandlingEventThenMapIsCorrectlyUpdated) {
     zet_debug_config_t config = {};
@@ -1234,61 +1287,33 @@ TEST_P(DebugApiLinuxTestXeMetadataOpEventTest, GivenVmBindOpMetadataEventForMeta
 
     auto &connection = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle];
     NEO::EuDebugEventMetadata metadata{};
-    metadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeMetadata);
-    metadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
-    metadata.base.len = sizeof(NEO::EuDebugEventMetadata);
-    metadata.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
-    metadata.metadataHandle = 10;
-    metadata.type = metadataType;
-    metadata.len = sizeof(metadata);
-    connection->metaDataMap[10].metadata = metadata;
+    createMetadata(metadata, metadataHandle1);
+    connection->metaDataMap[metadataHandle1].metadata = metadata;
 
     constexpr uint64_t vmHandle = 0x1234;
     connection->vmToTile[vmHandle] = 0u;
     NEO::EuDebugEventVmBind vmBind{};
-    vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
-    vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
-    vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
-    vmBind.base.seqno = 1;
-    vmBind.clientHandle = client1.clientHandle;
-    vmBind.vmHandle = vmHandle;
-    vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
-    vmBind.numBinds = 1;
+    createVmBindEvent(vmBind, vmHandle, seqNo);
 
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind.base));
     auto &vmBindMap = session->clientHandleToConnection[client1.clientHandle]->vmBindMap;
 
     NEO::EuDebugEventVmBindOp vmBindOp{};
-    vmBindOp.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOp);
-    vmBindOp.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
-    vmBindOp.base.len = sizeof(NEO::EuDebugEventVmBindOp);
-    vmBindOp.base.seqno = 2;
-    vmBindOp.numExtensions = 1;
-    vmBindOp.addr = 0xffff1234;
-    vmBindOp.range = 1000;
-    vmBindOp.vmBindRefSeqno = vmBind.base.seqno;
+    createVmBindOpEvent(vmBindOp, seqNo, vmBind.base.seqno, 0xffff1234, 1, static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))));
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOp.base));
 
     auto &vmBindOpData = vmBindMap[vmBindOp.vmBindRefSeqno].vmBindOpMap[vmBindOp.base.seqno];
     NEO::EuDebugEventVmBindOpMetadata vmBindOpMetadata{};
-    vmBindOpMetadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpMetadata);
-    vmBindOpMetadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
-    vmBindOpMetadata.base.len = sizeof(NEO::EuDebugEventVmBindOpMetadata);
-    vmBindOpMetadata.base.seqno = 3;
-    vmBindOpMetadata.vmBindOpRefSeqno = vmBindOp.base.seqno;
-    vmBindOpMetadata.metadataHandle = 10;
+    createVmBindOpMetadata(vmBindOpMetadata, seqNo, vmBindOp.base.seqno, metadataHandle1);
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata.base));
 
     EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
     EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 1ull);
 
     NEO::EuDebugEventVmBindUfence vmBindUfence{};
-    vmBindUfence.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence);
-    vmBindUfence.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))) | static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitNeedAck)));
-    vmBindUfence.base.len = sizeof(NEO::EuDebugEventVmBindUfence);
-    vmBindUfence.base.seqno = 4;
-    vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
+    createUfenceEvent(vmBindUfence, seqNo, vmBind.base.seqno);
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+    session->processPendingVmBindEvents();
 
     if (metadataType == static_cast<uint64_t>(NEO::EuDebugParam::metadataSbaArea)) {
         EXPECT_EQ(connection->vmToStateBaseAreaBindInfo[vmHandle].gpuVa, vmBindOp.addr);
@@ -1308,7 +1333,7 @@ TEST_P(DebugApiLinuxTestXeMetadataOpEventTest, GivenVmBindOpMetadataEventForMeta
     if (metadataType == static_cast<uint64_t>(NEO::EuDebugParam::metadataElfBinary)) {
         EXPECT_EQ(connection->isaMap[0][vmBindOp.addr]->bindInfo.gpuVa, vmBindOp.addr);
         EXPECT_EQ(connection->isaMap[0][vmBindOp.addr]->bindInfo.size, vmBindOp.range);
-        EXPECT_FALSE(connection->isaMap[0][vmBindOp.addr]->tileInstanced);
+        EXPECT_TRUE(connection->isaMap[0][vmBindOp.addr]->tileInstanced);
         EXPECT_FALSE(connection->isaMap[0][vmBindOp.addr]->perKernelModule);
     }
 }
@@ -1324,6 +1349,226 @@ INSTANTIATE_TEST_SUITE_P(
     MetadataOpEventUfenceTest,
     DebugApiLinuxTestXeMetadataOpEventTest,
     testing::ValuesIn(metadataTypes));
+
+TEST_F(DebugApiLinuxTestXe, GivenPendingNumBindsWhenCanHandleVmBindCalledThenFalseIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 1;
+    EXPECT_FALSE(session->canHandleVmBind(vmBindData));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenPendingNumExtensionsForVmBindOpWhenCanHandleVmBindCalledThenFalseIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 1;
+
+    auto &vmBindOpData1 = vmBindData.vmBindOpMap[10];
+    vmBindOpData1.pendingNumExtensions = 1;
+    vmBindData.pendingNumBinds--;
+
+    EXPECT_FALSE(session->canHandleVmBind(vmBindData));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenUfenceNotRequiredAndNoPendingVmBindWhenCanHandleVmBindCalledThenTrueIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 0;
+    vmBindData.vmBind.flags = 0;
+    EXPECT_TRUE(session->canHandleVmBind(vmBindData));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenUfenceRequiredButUfenceNotReceiveddWhenCanHandleVmBindCalledThenFalseIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 0;
+    vmBindData.vmBind.flags = static_cast<uint16_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
+    vmBindData.uFenceReceived = false;
+    EXPECT_FALSE(session->canHandleVmBind(vmBindData));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenCanHandleVmBindReturnFalsedWhenHandleVmBindCalledThenFalseIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 1;
+    EXPECT_FALSE(session->canHandleVmBind(vmBindData));
+    EXPECT_FALSE(session->handleVmBind(vmBindData));
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenNoEventRelatedToVmBindHandlingWhenHandleInternalEventCalledThenTrueIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+
+    uint8_t eventClientData[sizeof(NEO::EuDebugEventClient)];
+    auto client = reinterpret_cast<NEO::EuDebugEventClient *>(&eventClientData);
+    client->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client->base.len = sizeof(NEO::EuDebugEventClient);
+    client->clientHandle = 0x123456789;
+    auto memory = std::make_unique<uint64_t[]>(sizeof(NEO::EuDebugEventClient) / sizeof(uint64_t));
+    memcpy(memory.get(), client, sizeof(NEO::EuDebugEventClient));
+
+    // Clear the event queue before using it
+    while (!session->internalEventQueue.empty()) {
+        session->internalEventQueue.pop();
+    }
+    session->internalEventQueue.push(std::move(memory));
+    EXPECT_TRUE(session->handleInternalEvent());
+}
+
+TEST_F(DebugApiLinuxTestXe, GivenEventTypeExecQueuePlacementsWhenHandleInternalEventCalledThenProcessPendingVmBindEventsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 1;
+
+    constexpr uint64_t vmHandle = 10;
+    // Allocate memory for the structure including the flexible array member
+    constexpr auto size = sizeof(NEO::EuDebugEventExecQueuePlacements) + sizeof(drm_xe_engine_class_instance) * 1;
+
+    uint8_t memoryExecQueuePlacements[size];
+    auto execQueuePlacements = reinterpret_cast<NEO::EuDebugEventExecQueuePlacements *>(memoryExecQueuePlacements);
+    memset(execQueuePlacements, 0, size);
+    execQueuePlacements->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueuePlacements);
+    execQueuePlacements->base.len = sizeof(NEO::EuDebugEventExecQueuePlacements);
+    execQueuePlacements->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    execQueuePlacements->vmHandle = vmHandle;
+    execQueuePlacements->execQueueHandle = 200;
+    execQueuePlacements->lrcHandle = 10;
+    execQueuePlacements->numPlacements = 1;
+
+    auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
+    engineClassInstance[0].engine_class = 0;
+    engineClassInstance[0].engine_instance = 1;
+    engineClassInstance[0].gt_id = 1;
+
+    auto memory = std::make_unique<uint64_t[]>(size / sizeof(uint64_t));
+    memcpy(memory.get(), memoryExecQueuePlacements, size);
+
+    // Clear the event queue before using it
+    while (!session->internalEventQueue.empty()) {
+        session->internalEventQueue.pop();
+    }
+    session->internalEventQueue.push(std::move(memory));
+    EXPECT_TRUE(session->handleInternalEvent());
+    EXPECT_EQ(session->processPendingVmBindEventsCallCount, 1u);
+}
+
+TEST_F(DebugApiLinuxTestXe,
+       GivenEventTypeVmBindOpOrEventTypeVmBindOpMetadataOrUfenceWhenHandleInternalEventCalledThenProcessPendingVmBindEventsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandleToConnection.clear();
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    NEO::EuDebugEventVmBind vmBind{};
+    vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
+    vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
+    vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
+    vmBind.base.seqno = 1;
+    vmBind.clientHandle = client1.clientHandle;
+    vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
+    vmBind.numBinds = 2;
+
+    auto &vmBindMap = session->clientHandleToConnection[client1.clientHandle]->vmBindMap;
+    EXPECT_EQ(vmBindMap.size(), 0u);
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind.base));
+    EXPECT_EQ(vmBindMap.size(), 1u);
+    EXPECT_EQ(vmBindMap[vmBind.base.seqno].pendingNumBinds, 2ull);
+
+    constexpr auto sizeEuDebugEventVmBindOp = sizeof(NEO::EuDebugEventVmBindOp);
+
+    uint8_t memoryEuDebugEventVmBindOp[sizeEuDebugEventVmBindOp];
+    auto vmBindOp = reinterpret_cast<NEO::EuDebugEventVmBindOp *>(memoryEuDebugEventVmBindOp);
+    memset(vmBindOp, 0, sizeEuDebugEventVmBindOp);
+    vmBindOp->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOp);
+    vmBindOp->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    vmBindOp->base.len = sizeof(NEO::EuDebugEventVmBindOp);
+    vmBindOp->base.seqno = 2;
+    vmBindOp->numExtensions = 2;
+    vmBindOp->addr = 0xffff1234;
+    vmBindOp->range = 65536;
+    vmBindOp->vmBindRefSeqno = vmBind.base.seqno;
+
+    auto memoryEvent1 = std::make_unique<uint64_t[]>(sizeEuDebugEventVmBindOp / sizeof(uint64_t));
+    memcpy(memoryEvent1.get(), vmBindOp, sizeEuDebugEventVmBindOp);
+
+    constexpr auto sizeEuDebugEventVmBindOpMetadata = sizeof(NEO::EuDebugEventVmBindOpMetadata);
+    uint8_t memoryEuDebugEventVmBindOpMetadata[sizeEuDebugEventVmBindOpMetadata];
+    auto vmBindOpMetadata = reinterpret_cast<NEO::EuDebugEventVmBindOpMetadata *>(memoryEuDebugEventVmBindOpMetadata);
+    memset(vmBindOpMetadata, 0, sizeEuDebugEventVmBindOpMetadata);
+    vmBindOpMetadata->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpMetadata);
+    vmBindOpMetadata->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    vmBindOpMetadata->base.len = sizeof(NEO::EuDebugEventVmBindOpMetadata);
+    vmBindOpMetadata->base.seqno = 3;
+    vmBindOpMetadata->vmBindOpRefSeqno = vmBindOp->base.seqno;
+    vmBindOpMetadata->metadataHandle = 10;
+    auto memoryEvent2 = std::make_unique<uint64_t[]>(sizeEuDebugEventVmBindOpMetadata / sizeof(uint64_t));
+    memcpy(memoryEvent2.get(), vmBindOpMetadata, sizeEuDebugEventVmBindOpMetadata);
+
+    constexpr auto sizeEuDebugEventVmBindUfence = sizeof(NEO::EuDebugEventVmBindUfence);
+    uint8_t memoryEuDebugEventVmBindUfence[sizeEuDebugEventVmBindUfence];
+    auto vmBindUfence = reinterpret_cast<NEO::EuDebugEventVmBindUfence *>(memoryEuDebugEventVmBindUfence);
+    memset(vmBindUfence, 0, sizeEuDebugEventVmBindUfence);
+    vmBindUfence->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence);
+    vmBindUfence->base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))) | static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitNeedAck)));
+    vmBindUfence->base.len = sizeof(NEO::EuDebugEventVmBindUfence);
+    vmBindUfence->base.seqno = 4;
+    vmBindUfence->vmBindRefSeqno = vmBind.base.seqno;
+    auto memoryEvent3 = std::make_unique<uint64_t[]>(sizeEuDebugEventVmBindUfence / sizeof(uint64_t));
+    memcpy(memoryEvent3.get(), vmBindUfence, sizeEuDebugEventVmBindUfence);
+
+    // Clear the event queue before using it
+    while (!session->internalEventQueue.empty()) {
+        session->internalEventQueue.pop();
+    }
+    session->internalEventQueue.push(std::move(memoryEvent1));
+    session->internalEventQueue.push(std::move(memoryEvent2));
+    session->internalEventQueue.push(std::move(memoryEvent3));
+
+    EXPECT_TRUE(session->handleInternalEvent());
+    EXPECT_EQ(session->processPendingVmBindEventsCallCount, 1u);
+    EXPECT_TRUE(session->handleInternalEvent());
+    EXPECT_EQ(session->processPendingVmBindEventsCallCount, 2u);
+    EXPECT_TRUE(session->handleInternalEvent());
+    EXPECT_EQ(session->processPendingVmBindEventsCallCount, 3u);
+}
 
 TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataCreateEventAndUfenceForProgramModuleWhenHandlingEventThenEventIsAcked) {
     zet_debug_config_t config = {};
@@ -1343,35 +1588,39 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataCreateEventAndUfenceForProgramM
     session->pushApiEventValidateAckEvents = true;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
 
+    constexpr uint64_t vmHandle1 = 0x1234;
+    constexpr uint64_t metadataHandle1 = 10;
+    constexpr uint64_t metadataHandle2 = 11;
+
     auto &connection = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle];
+    connection->vmToTile[vmHandle1] = 0u;
+
     NEO::EuDebugEventMetadata metadata{};
     metadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeMetadata);
     metadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
     metadata.base.len = sizeof(NEO::EuDebugEventMetadata);
     metadata.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
-    metadata.metadataHandle = 10;
+    metadata.metadataHandle = metadataHandle1;
     metadata.type = static_cast<uint64_t>(NEO::EuDebugParam::metadataProgramModule);
     metadata.len = sizeof(metadata);
-    connection->metaDataMap[10].metadata = metadata;
-    connection->metaDataToModule[10].segmentCount = 1;
+    connection->metaDataMap[metadataHandle1].metadata = metadata;
+    connection->metaDataToModule[metadataHandle1].segmentCount = 1;
 
-    metadata.metadataHandle = 11;
+    metadata.metadataHandle = metadataHandle2;
     metadata.type = static_cast<uint64_t>(NEO::EuDebugParam::metadataElfBinary);
     metadata.len = sizeof(metadata);
-    connection->metaDataMap[11].metadata = metadata;
+    connection->metaDataMap[metadataHandle2].metadata = metadata;
     auto ptr = std::make_unique<char[]>(metadata.len);
-    connection->metaDataMap[11].data = std::move(ptr);
-    connection->metaDataMap[11].metadata.len = 10000;
+    connection->metaDataMap[metadataHandle2].data = std::move(ptr);
+    connection->metaDataMap[metadataHandle2].metadata.len = 10000;
 
-    const uint64_t vmHandle = 0x1234;
-    connection->vmToTile[vmHandle] = 0u;
     NEO::EuDebugEventVmBind vmBind{};
     vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
     vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
     vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
     vmBind.base.seqno = 1;
     vmBind.clientHandle = client1.clientHandle;
-    vmBind.vmHandle = vmHandle;
+    vmBind.vmHandle = vmHandle1;
     vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
     vmBind.numBinds = 1;
 
@@ -1404,26 +1653,28 @@ TEST_F(DebugApiLinuxTestXe, GivenVmBindOpMetadataCreateEventAndUfenceForProgramM
     vmBindOpMetadata.base.len = sizeof(NEO::EuDebugEventVmBindOpMetadata);
     vmBindOpMetadata.base.seqno = 4;
     vmBindOpMetadata.vmBindOpRefSeqno = vmBindOp.base.seqno;
-    vmBindOpMetadata.metadataHandle = 10;
+    vmBindOpMetadata.metadataHandle = metadataHandle1;
+    vmBindOpMetadata.metadataCookie = 0x3;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata.base));
 
     vmBindOpMetadata.base.seqno = 5;
-    vmBindOpMetadata.metadataHandle = 11;
+    vmBindOpMetadata.metadataHandle = metadataHandle2;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata.base));
 
     EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
     EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 2ull);
+    session->processPendingVmBindEvents();
 
     EXPECT_TRUE(session->pushApiEventAckEventsFound);
 
-    EXPECT_EQ(connection->metaDataToModule[10].ackEvents->size(), 1ull);
-    EXPECT_EQ(connection->metaDataToModule[10].ackEvents[0][0].seqno, vmBindUfence.base.seqno);
-    EXPECT_EQ(connection->metaDataToModule[10].ackEvents[0][0].type, vmBindUfence.base.type);
+    EXPECT_EQ(connection->metaDataToModule[metadataHandle1].ackEvents->size(), 1ull);
+    EXPECT_EQ(connection->metaDataToModule[metadataHandle1].ackEvents[0][0].seqno, vmBindUfence.base.seqno);
+    EXPECT_EQ(connection->metaDataToModule[metadataHandle1].ackEvents[0][0].type, vmBindUfence.base.type);
 
     auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(connection->metaDataMap[11].data.get()), event.info.module.moduleBegin);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(connection->metaDataMap[11].data.get()) + connection->metaDataMap[11].metadata.len, event.info.module.moduleEnd);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(connection->metaDataMap[metadataHandle2].data.get()), event.info.module.moduleBegin);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(connection->metaDataMap[metadataHandle2].data.get()) + connection->metaDataMap[metadataHandle2].metadata.len, event.info.module.moduleEnd);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEventSent) {
@@ -1515,9 +1766,9 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     vmBindOpMetadata.base.seqno = seqno++;
     vmBindOpMetadata.metadataHandle = 11;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata.base));
-
     ASSERT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
     ASSERT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 2ull);
+    session->processPendingVmBindEvents();
     EXPECT_EQ(session->apiEvents.size(), 0u);
 
     // Now bind 2nd segment
@@ -1542,6 +1793,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     vmBindUfence.base.seqno = seqno++;
     vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+    session->processPendingVmBindEvents();
 
     auto event = session->apiEvents.front();
     ASSERT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
@@ -1562,6 +1814,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     vmBindUfence.base.seqno = seqno++;
     vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+    session->processPendingVmBindEvents();
     EXPECT_EQ(session->apiEvents.size(), 0u);
 
     vmBind.base.seqno = seqno++;
@@ -1577,6 +1830,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     vmBindUfence.base.seqno = seqno++;
     vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+    session->processPendingVmBindEvents();
     // Unmatched vmHandle should not trigger any events
     EXPECT_EQ(session->apiEvents.size(), 0u);
 
@@ -1595,6 +1849,7 @@ TEST_F(DebugApiLinuxTestXe, GivenVmUnbindForLastIsaSegmentThenL0ModuleUnloadEven
     vmBindUfence.base.seqno = seqno++;
     vmBindUfence.vmBindRefSeqno = vmBind.base.seqno;
     session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+    session->processPendingVmBindEvents();
 
     event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
@@ -2430,6 +2685,7 @@ TEST_F(DebugApiLinuxTestXe, GivenSharedModuleDebugAreaWhenVmBindDebugAreaThenIsa
         vmBindUfence.base.seqno = 4;
         vmBindUfence.vmBindRefSeqno = vmBindEvent.base.seqno;
         session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence.base));
+        session->processPendingVmBindEvents();
     }
 
     DebugAreaHeader debugArea;
@@ -2648,6 +2904,213 @@ TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleW
     auto infoMessage = ::testing::internal::GetCapturedStderr();
     EXPECT_EQ(1u, session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle]);
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("tileIndex = 1 already present. Attempt to overwrite with tileIndex = 0")));
+}
+
+struct DebugApiLinuxMultiDeviceVmBindFixtureXe : public DebugApiLinuxMultiDeviceFixtureXe {
+    void setUp() {
+        DebugApiLinuxMultiDeviceFixtureXe::setUp();
+
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+
+        session = std::make_unique<MockDebugSessionLinuxXe>(config, deviceImp, 10);
+        ASSERT_NE(nullptr, session);
+        session->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+
+        handler = new MockIoctlHandlerXe;
+        session->ioctlHandler.reset(handler);
+    }
+
+    void tearDown() {
+        DebugApiLinuxMultiDeviceFixtureXe::tearDown();
+    }
+
+    void createVmBindEvent(NEO::EuDebugEventVmBind &vmBind, uint64_t vmHandle, uint32_t &seqNo) {
+        vmBind.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBind);
+        vmBind.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitStateChange)));
+        vmBind.base.len = sizeof(NEO::EuDebugEventVmBind);
+        vmBind.base.seqno = seqNo++;
+        vmBind.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+        vmBind.vmHandle = vmHandle;
+        vmBind.flags = static_cast<uint64_t>(NEO::EuDebugParam::eventVmBindFlagUfence);
+        vmBind.numBinds = 1;
+    }
+
+    void createVmBindOpEvent(NEO::EuDebugEventVmBindOp &vmBindOp, uint32_t &seqNo, uint64_t vmBindRefSeqNo,
+                             uint64_t vmBindOpAddr, uint64_t numExtensions, uint16_t flags) {
+        vmBindOp.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOp);
+        vmBindOp.base.flags = flags;
+        vmBindOp.base.len = sizeof(NEO::EuDebugEventVmBindOp);
+        vmBindOp.base.seqno = seqNo++;
+        vmBindOp.numExtensions = numExtensions;
+        vmBindOp.addr = vmBindOpAddr;
+        vmBindOp.range = 1000;
+        vmBindOp.vmBindRefSeqno = vmBindRefSeqNo;
+    }
+
+    void createUfenceEvent(NEO::EuDebugEventVmBindUfence &vmBindUfence, uint32_t &seqNo, uint64_t vmBindRefSeqno) {
+        vmBindUfence.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindUfence);
+        vmBindUfence.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))) | static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitNeedAck)));
+        vmBindUfence.base.len = sizeof(NEO::EuDebugEventVmBindUfence);
+        vmBindUfence.base.seqno = seqNo++;
+        vmBindUfence.vmBindRefSeqno = vmBindRefSeqno;
+    }
+
+    void createVmBindOpMetadata(NEO::EuDebugEventVmBindOpMetadata &vmBindOpMetadata, uint32_t &seqNo, uint64_t vmBindOpRefSeqno, uint64_t metadataHandle) {
+        vmBindOpMetadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeVmBindOpMetadata);
+        vmBindOpMetadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+        vmBindOpMetadata.base.len = sizeof(NEO::EuDebugEventVmBindOpMetadata);
+        vmBindOpMetadata.base.seqno = seqNo++;
+        vmBindOpMetadata.vmBindOpRefSeqno = vmBindOpRefSeqno;
+        vmBindOpMetadata.metadataHandle = metadataHandle;
+        vmBindOpMetadata.metadataCookie = 0x3;
+    }
+
+    MockIoctlHandlerXe *handler = nullptr;
+    std::unique_ptr<MockDebugSessionLinuxXe> session;
+    const uint64_t vmHandle1 = 0x1234;
+    const uint64_t vmHandle2 = 0x1235;
+    const uint64_t metadataHandle1 = 10;
+    const uint64_t metadataHandle2 = 11;
+    uint32_t seqNo = 1;
+};
+
+using DebugApiLinuxMultiDeviceVmBindTestXe = Test<DebugApiLinuxMultiDeviceVmBindFixtureXe>;
+TEST_F(DebugApiLinuxMultiDeviceVmBindTestXe, GivenVmBindForProgramModuleWhenHandlingEventThenModuleLoadAndUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    NEO::EuDebugEventClient client1;
+    client1.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeOpen);
+    client1.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    client1.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    session->pushApiEventValidateAckEvents = true;
+    session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&client1));
+
+    auto &connection = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle];
+    connection->vmToTile[vmHandle1] = 1u;
+    connection->vmToTile[vmHandle2] = 0u;
+
+    NEO::EuDebugEventMetadata metadata{};
+    metadata.base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeMetadata);
+    metadata.base.flags = static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate)));
+    metadata.base.len = sizeof(NEO::EuDebugEventMetadata);
+    metadata.clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    metadata.metadataHandle = metadataHandle1;
+    metadata.type = static_cast<uint64_t>(NEO::EuDebugParam::metadataProgramModule);
+    metadata.len = sizeof(metadata);
+    connection->metaDataMap[metadataHandle1].metadata = metadata;
+    connection->metaDataToModule[metadataHandle1].segmentCount = 1;
+
+    metadata.metadataHandle = metadataHandle2;
+    metadata.type = static_cast<uint64_t>(NEO::EuDebugParam::metadataElfBinary);
+    metadata.len = sizeof(metadata);
+    connection->metaDataMap[metadataHandle2].metadata = metadata;
+    auto ptr = std::make_unique<char[]>(metadata.len);
+    connection->metaDataMap[metadataHandle2].data = std::move(ptr);
+    connection->metaDataMap[metadataHandle2].metadata.len = 10000;
+
+    {
+        NEO::EuDebugEventVmBind vmBind1{};
+        createVmBindEvent(vmBind1, vmHandle1, seqNo);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind1.base));
+
+        NEO::EuDebugEventVmBindOp vmBindOp1{};
+        createVmBindOpEvent(vmBindOp1, seqNo, vmBind1.base.seqno, 0xffff1234, 2, static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))));
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOp1.base));
+
+        NEO::EuDebugEventVmBindUfence vmBindUfence1{};
+        createUfenceEvent(vmBindUfence1, seqNo, vmBind1.base.seqno);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence1.base));
+
+        NEO::EuDebugEventVmBindOpMetadata vmBindOpMetadata1{};
+        createVmBindOpMetadata(vmBindOpMetadata1, seqNo, vmBindOp1.base.seqno, metadataHandle1);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata1.base));
+
+        vmBindOpMetadata1.base.seqno = seqNo++;
+        vmBindOpMetadata1.metadataHandle = metadataHandle2;
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata1.base));
+
+        auto &vmBindMap = session->clientHandleToConnection[client1.clientHandle]->vmBindMap;
+        auto &vmBindOpData = vmBindMap[vmBindOp1.vmBindRefSeqno].vmBindOpMap[vmBindOp1.base.seqno];
+        EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
+        EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 2ull);
+        session->processPendingVmBindEvents();
+    }
+    EXPECT_FALSE(session->pushApiEventAckEventsFound);
+    EXPECT_TRUE(connection->metaDataToModule[metadataHandle1].ackEvents->empty());
+    EXPECT_TRUE(session->apiEvents.empty());
+
+    NEO::EuDebugEventVmBindUfence vmBindUfence2{};
+    {
+        NEO::EuDebugEventVmBind vmBind2{};
+        createVmBindEvent(vmBind2, vmHandle2, seqNo);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind2.base));
+
+        NEO::EuDebugEventVmBindOp vmBindOp2{};
+        createVmBindOpEvent(vmBindOp2, seqNo, vmBind2.base.seqno, 0xffff1235, 2, static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitCreate))));
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOp2.base));
+
+        createUfenceEvent(vmBindUfence2, seqNo, vmBind2.base.seqno);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence2.base));
+
+        NEO::EuDebugEventVmBindOpMetadata vmBindOpMetadata2{};
+        createVmBindOpMetadata(vmBindOpMetadata2, seqNo, vmBindOp2.base.seqno, metadataHandle1);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata2.base));
+
+        vmBindOpMetadata2.base.seqno = seqNo++;
+        vmBindOpMetadata2.metadataHandle = metadataHandle2;
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOpMetadata2.base));
+
+        auto &vmBindMap = session->clientHandleToConnection[client1.clientHandle]->vmBindMap;
+        auto &vmBindOpData = vmBindMap[vmBindOp2.vmBindRefSeqno].vmBindOpMap[vmBindOp2.base.seqno];
+        EXPECT_EQ(vmBindOpData.pendingNumExtensions, 0ull);
+        EXPECT_EQ(vmBindOpData.vmBindOpMetadataVec.size(), 2ull);
+        session->processPendingVmBindEvents();
+    }
+    EXPECT_TRUE(session->pushApiEventAckEventsFound);
+
+    EXPECT_EQ(connection->metaDataToModule[metadataHandle1].ackEvents->size(), 1ull);
+    EXPECT_EQ(connection->metaDataToModule[metadataHandle1].ackEvents[0][0].seqno, vmBindUfence2.base.seqno);
+    EXPECT_EQ(connection->metaDataToModule[metadataHandle1].ackEvents[0][0].type, vmBindUfence2.base.type);
+
+    auto event = session->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(connection->metaDataMap[metadataHandle2].data.get()), event.info.module.moduleBegin);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(connection->metaDataMap[metadataHandle2].data.get()) + connection->metaDataMap[metadataHandle2].metadata.len, event.info.module.moduleEnd);
+
+    session->apiEvents.pop();
+
+    // now do unbinds
+    NEO::EuDebugEventVmBindUfence vmBindUfence3{};
+    {
+        NEO::EuDebugEventVmBind vmBind3{};
+        createVmBindEvent(vmBind3, vmHandle2, seqNo);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind3.base));
+
+        NEO::EuDebugEventVmBindOp vmBindOp3{};
+        createVmBindOpEvent(vmBindOp3, seqNo, vmBind3.base.seqno, 0xffff1235, 0, static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitDestroy))));
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOp3.base));
+
+        createUfenceEvent(vmBindUfence3, seqNo, vmBind3.base.seqno);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence3.base));
+        session->processPendingVmBindEvents();
+        EXPECT_TRUE(session->apiEvents.empty());
+    }
+
+    NEO::EuDebugEventVmBindUfence vmBindUfence4{};
+    {
+        NEO::EuDebugEventVmBind vmBind4{};
+        createVmBindEvent(vmBind4, vmHandle1, seqNo);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBind4.base));
+
+        NEO::EuDebugEventVmBindOp vmBindOp4{};
+        createVmBindOpEvent(vmBindOp4, seqNo, vmBind4.base.seqno, 0xffff1234, 0, static_cast<uint16_t>(NEO::shiftLeftBy(static_cast<uint16_t>(NEO::EuDebugParam::eventBitDestroy))));
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindOp4.base));
+
+        createUfenceEvent(vmBindUfence4, seqNo, vmBind4.base.seqno);
+        session->handleEvent(reinterpret_cast<NEO::EuDebugEvent *>(&vmBindUfence4.base));
+        session->processPendingVmBindEvents();
+    }
+    event = session->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
 }
 
 } // namespace ult

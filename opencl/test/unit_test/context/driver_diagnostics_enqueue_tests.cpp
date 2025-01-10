@@ -684,7 +684,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSize = kernel->getLocalWorkSizeValues();
+    auto localWorkSize = (kernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) ? kernel->getLocalWorkSizeValues() : kernel->getEnqueuedLocalWorkSizeValues();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
@@ -698,7 +698,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSize = kernel->getLocalWorkSizeValues();
+    auto localWorkSize = (kernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) ? kernel->getLocalWorkSizeValues() : kernel->getEnqueuedLocalWorkSizeValues();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
@@ -713,7 +713,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSize = kernel->getLocalWorkSizeValues();
+    auto localWorkSize = (kernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) ? kernel->getLocalWorkSizeValues() : kernel->getEnqueuedLocalWorkSizeValues();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
@@ -727,7 +727,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSize = kernel->getLocalWorkSizeValues();
+    auto localWorkSize = (kernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) ? kernel->getLocalWorkSizeValues() : kernel->getEnqueuedLocalWorkSizeValues();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
@@ -743,7 +743,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSize = kernel->getLocalWorkSizeValues();
+    auto localWorkSize = (kernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) ? kernel->getLocalWorkSizeValues() : kernel->getEnqueuedLocalWorkSizeValues();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
@@ -759,7 +759,7 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto localWorkSize = kernel->getLocalWorkSizeValues();
+    auto localWorkSize = (kernel->getKernelInfo().kernelDescriptor.payloadMappings.dispatchTraits.localWorkSize[0] != undefined<CrossThreadDataOffset>) ? kernel->getLocalWorkSizeValues() : kernel->getEnqueuedLocalWorkSizeValues();
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE],
              kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(),
              *localWorkSize[0], *localWorkSize[1], *localWorkSize[2]);
@@ -797,7 +797,7 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
+HWTEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
     size_t preferredWorkGroupSize[3];
     auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     if (debugManager.flags.EnableComputeWorkSizeND.get()) {

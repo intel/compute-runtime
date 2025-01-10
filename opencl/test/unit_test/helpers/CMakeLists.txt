@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -39,6 +39,11 @@ endif()
 if(TESTS_DG2_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_helpers
        ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_dg2_and_later.cpp
+  )
+endif()
+if(TESTS_XE3_AND_LATER)
+  list(APPEND IGDRCL_SRCS_tests_helpers
+       ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xe3_and_later.cpp
   )
 endif()
 

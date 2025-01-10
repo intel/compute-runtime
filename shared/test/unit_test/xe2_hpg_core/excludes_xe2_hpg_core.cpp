@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,4 @@ HWTEST_EXCLUDE_PRODUCT(GmmCompressionTests, givenEnabledAndPreferredE2ECWhenAppl
 HWTEST_EXCLUDE_PRODUCT(CommandEncodeSemaphore, givenIndirectModeSetWhenProgrammingSemaphoreThenSetIndirectBit_IsAtLeastXeHpCore, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenBooleanUncachedWhenCallOverridePatIndexThenProperPatIndexIsReturned, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, whenEncodeAdditionalTimestampOffsetsThenNothingEncoded, IGFX_XE2_HPG_CORE);
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenGetThreadEuRatioForScratchThen8IsReturned, IGFX_XE2_HPG_CORE);
-HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_XE2_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(GfxCoreHelperTest, givenGetDeviceTimestampWidthCalledThenReturnCorrectValue, IGFX_XE2_HPG_CORE);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,13 +73,8 @@ BMGTEST_F(BmgProductHelper, whenCheckPreferredAllocationMethodThenAllocateByKmdI
     for (auto i = 0; i < static_cast<int>(AllocationType::count); i++) {
         auto allocationType = static_cast<AllocationType>(i);
         auto preferredAllocationMethod = productHelper->getPreferredAllocationMethod(allocationType);
-        if (allocationType == AllocationType::tagBuffer ||
-            allocationType == AllocationType::timestampPacketTagBuffer) {
-            EXPECT_FALSE(preferredAllocationMethod.has_value());
-        } else {
-            EXPECT_TRUE(preferredAllocationMethod.has_value());
-            EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
-        }
+        EXPECT_TRUE(preferredAllocationMethod.has_value());
+        EXPECT_EQ(GfxMemoryAllocationMethod::allocateByKmd, preferredAllocationMethod.value());
     }
 }
 
@@ -104,6 +99,7 @@ BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetDefaultHwIpVersonTh
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), AOT::BMG_G21_A0);
 }
 
+HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCalledThenCorrectResultIsReturned, IGFX_BMG);
 BMGTEST_F(BmgProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemptionSupportThenCorrectValueIsSet) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrWalkerMTP = false;
@@ -123,11 +119,13 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenAdjustNumberOfCcsThenOverrideT
     EXPECT_EQ(hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, 1u);
 }
 
-BMGTEST_F(BmgProductHelper, givenProductHelperWhenGettingThreadEuRatioForScratchThen16IsReturned) {
-    auto hwInfo = *defaultHwInfo;
-    EXPECT_EQ(16u, productHelper->getThreadEuRatioForScratch(hwInfo));
-}
-
 BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}
+
+BMGTEST_F(BmgProductHelper, whenAdjustScratchSizeThenSizeIsDoubled) {
+    constexpr size_t initialScratchSize = 0x1234u;
+    size_t scratchSize = initialScratchSize;
+    productHelper->adjustScratchSize(scratchSize);
+    EXPECT_EQ(initialScratchSize * 2, scratchSize);
 }

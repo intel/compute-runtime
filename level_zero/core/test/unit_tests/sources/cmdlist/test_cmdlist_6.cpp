@@ -24,6 +24,7 @@
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
@@ -33,6 +34,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_image.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+
+#include "test_traits_common.h"
 
 namespace L0 {
 namespace ult {
@@ -848,6 +851,115 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenImageCopyFromMemoryThenBui
 
     commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
     EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+}
+
+struct HeaplessSupportedMatch {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessAllowed;
+    }
+};
+
+HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyFromMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupportedMatch) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    for (bool heaplessEnabled : {false, true}) {
+        ImageBuiltin func = heaplessEnabled ? ImageBuiltin::copyBufferToImage3dBytesHeapless : ImageBuiltin::copyBufferToImage3dBytes;
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(func);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(5);
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        commandList->heaplessModeEnabled = heaplessEnabled;
+        commandList->scratchAddressPatchingEnabled = true;
+
+        void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        zeDesc.type = ZE_IMAGE_TYPE_3D;
+        zeDesc.width = 4;
+        zeDesc.height = 2;
+        zeDesc.depth = 2;
+
+        ze_image_region_t dstImgRegion = {2, 1, 1, 4, 2, 2};
+
+        auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        imageHw->initialize(device, &zeDesc);
+        auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+
+        commandList->appendImageCopyFromMemory(imageHw->toHandle(), srcPtr, &dstImgRegion, nullptr, 0, nullptr, false);
+        EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+        auto passedArgSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+        auto *passedArgRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].data();
+
+        if (heaplessEnabled) {
+            EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeRowSlicePitch);
+            uint64_t expectedPitch[] = {dstImgRegion.width * bytesPerPixel, dstImgRegion.height * (dstImgRegion.width * bytesPerPixel)};
+            EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
+        } else {
+            EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeRowSlicePitch);
+            uint32_t expectedPitch[] = {dstImgRegion.width * bytesPerPixel, dstImgRegion.height * (dstImgRegion.width * bytesPerPixel)};
+            EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
+        }
+    }
+}
+
+HWTEST2_F(CommandListTest, givenHeaplessWhenAppendImageCopyToMemoryThenCorrectRowAndSlicePitchArePassed, HeaplessSupportedMatch) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    for (bool heaplessEnabled : {false, true}) {
+        ImageBuiltin func = heaplessEnabled ? ImageBuiltin::copyImage3dToBufferBytesHeapless : ImageBuiltin::copyImage3dToBufferBytes;
+
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(func);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::KernelImp> *>(kernel);
+
+        mockBuiltinKernel->checkPassedArgumentValues = true;
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+        mockBuiltinKernel->passedArgumentValues.clear();
+        mockBuiltinKernel->passedArgumentValues.resize(5);
+
+        auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+        commandList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
+        commandList->heaplessModeEnabled = heaplessEnabled;
+        commandList->scratchAddressPatchingEnabled = true;
+
+        void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        zeDesc.type = ZE_IMAGE_TYPE_3D;
+        zeDesc.width = 4;
+        zeDesc.height = 2;
+        zeDesc.depth = 2;
+
+        ze_image_region_t srcImgRegion = {2, 1, 1, 4, 2, 2};
+
+        auto imageHw = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        imageHw->initialize(device, &zeDesc);
+        auto bytesPerPixel = static_cast<uint32_t>(imageHw->getImageInfo().surfaceFormat->imageElementSizeInBytes);
+
+        commandList->appendImageCopyToMemory(dstPtr, imageHw->toHandle(), &srcImgRegion, nullptr, 0, nullptr, false);
+        EXPECT_TRUE(commandList->usedKernelLaunchParams.isBuiltInKernel);
+
+        auto passedArgSizeRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].size();
+        auto *passedArgRowSlicePitch = mockBuiltinKernel->passedArgumentValues[4u].data();
+
+        if (heaplessEnabled) {
+            EXPECT_EQ(sizeof(uint64_t) * 2, passedArgSizeRowSlicePitch);
+            uint64_t expectedPitch[] = {srcImgRegion.width * bytesPerPixel, srcImgRegion.height * (srcImgRegion.width * bytesPerPixel)};
+            EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
+        } else {
+            EXPECT_EQ(sizeof(uint32_t) * 2, passedArgSizeRowSlicePitch);
+            uint32_t expectedPitch[] = {srcImgRegion.width * bytesPerPixel, srcImgRegion.height * (srcImgRegion.width * bytesPerPixel)};
+            EXPECT_EQ(0, memcmp(passedArgRowSlicePitch, expectedPitch, passedArgSizeRowSlicePitch));
+        }
+    }
 }
 
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenMemoryCopyInExternalHostAllocationThenBuiltinFlagAndDestinationAllocSystemIsSet, MatchAny) {
@@ -2895,9 +3007,9 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
 
-    auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo));
+    auto neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
 
-    MockDeviceImp l0Device(neoDevice.get(), neoDevice->getExecutionEnvironment());
+    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
     l0Device.setDriverHandle(device->getDriverHandle());
 
     auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
@@ -2934,6 +3046,7 @@ HWTEST2_F(ContextGroupStateBaseAddressGlobalStatelessTest,
 
     EXPECT_NE(nullptr, primaryCsr->getScratchSpaceController()->getScratchSpaceSlot0Allocation());
     EXPECT_NE(primaryCsr, commandListImmediate->getCsr(false));
+    commandListImmediate.reset();
 }
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessAndHeaplessModeWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {

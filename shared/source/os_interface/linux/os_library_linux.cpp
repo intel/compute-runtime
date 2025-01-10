@@ -31,6 +31,10 @@ const std::string OsLibrary::createFullSystemPath(const std::string &name) {
     return name;
 }
 
+bool getLoadedLibVersion(const std::string &libName, const std::string &regexVersionPattern, std::string &outVersion, std::string &errReason) {
+    return false;
+}
+
 namespace Linux {
 
 OsLibrary::OsLibrary(const OsLibraryCreateProperties &properties) {

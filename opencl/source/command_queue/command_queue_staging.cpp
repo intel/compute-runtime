@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,9 @@ cl_int CommandQueue::enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstP
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
-        return this->enqueueSVMMemcpy(false, chunkDst, chunkSrc, chunkSize, 0, nullptr, outEvent, csr);
+        auto ret = this->enqueueSVMMemcpy(false, chunkDst, chunkSrc, chunkSize, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
     };
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
@@ -55,7 +57,9 @@ cl_int CommandQueue::enqueueStagingWriteImage(Image *dstImage, cl_bool blockingC
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
-        return this->enqueueWriteImageImpl(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        auto ret = this->enqueueWriteImageImpl(dstImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
     };
     auto bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
@@ -78,7 +82,9 @@ cl_int CommandQueue::enqueueStagingReadImage(Image *srcImage, cl_bool blockingCo
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
 
-        return this->enqueueReadImageImpl(srcImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        auto ret = this->enqueueReadImageImpl(srcImage, false, origin, region, inputRowPitch, inputSlicePitch, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
     };
     auto bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
@@ -152,15 +158,21 @@ bool CommandQueue::isValidForStagingBufferCopy(Device &device, void *dstPtr, con
     return stagingBufferManager->isValidForCopy(device, dstPtr, srcPtr, size, hasDependencies, osContextId);
 }
 
-bool CommandQueue::isValidForStagingTransferImage(Image *image, const void *ptr, bool hasDependencies) {
+bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, bool hasDependencies) {
+    GraphicsAllocation *allocation = nullptr;
+    context->tryGetExistingMapAllocation(ptr, memObj->getSize(), allocation);
+    if (allocation != nullptr) {
+        // Direct transfer from mapped allocation is faster than staging buffer
+        return false;
+    }
     auto stagingBufferManager = context->getStagingBufferManager();
     if (!stagingBufferManager) {
         return false;
     }
-    switch (image->getImageDesc().image_type) {
+    switch (memObj->peekClMemObjType()) {
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE2D:
-        return stagingBufferManager->isValidForStagingTransferImage(this->getDevice(), ptr, hasDependencies);
+        return stagingBufferManager->isValidForStagingTransfer(this->getDevice(), ptr, hasDependencies);
     default:
         return false;
     }

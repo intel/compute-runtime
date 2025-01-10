@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3592,8 +3592,7 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     auto btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
     ASSERT_NE(nullptr, btdStateCmd);
 
-    auto &btdStateBody = btdStateCmd->getBtdStateBody();
-    EXPECT_EQ(rtAllocationAddress, btdStateBody.getMemoryBackedBufferBasePointer());
+    EXPECT_EQ(rtAllocationAddress, btdStateCmd->getMemoryBackedBufferBasePointer());
 
     uint32_t residentCount = 1;
     commandStreamReceiver.isMadeResident(rtAllocation, residentCount);
@@ -4884,11 +4883,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
 
     uint32_t perThreadScratchSize = 65;
     uint32_t expectedValue = Math::nextPowerOfTwo(perThreadScratchSize);
+
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
     uint8_t surfaceHeap[1000];
     scratchController->setRequiredScratchSpace(surfaceHeap, 0u, perThreadScratchSize, 0u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    EXPECT_EQ(expectedValue, scratchController->perThreadScratchSize);
+    EXPECT_EQ(expectedValue, scratchController->perThreadScratchSpaceSlot0Size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfaceStateEnabledWhenSizeForPrivateScratchSpaceIsMisalignedThenAlignItNextPow2) {
@@ -4906,8 +4906,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     bool stateBaseAddressDirty = false;
     scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch,
                                                *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    EXPECT_NE(scratchController->scratchSlot1SizeInBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
-    EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
+
+    EXPECT_NE(scratchController->perThreadScratchSpaceSlot1Size, misalignedSizeForPrivateScratch);
+    EXPECT_EQ(scratchController->perThreadScratchSpaceSlot1Size, alignedSizeForPrivateScratch);
+
+    size_t scratchSlot1SizeInBytes = alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch;
+    auto &productHelper = pDevice->getProductHelper();
+    productHelper.adjustScratchSize(scratchSlot1SizeInBytes);
+
+    EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, scratchSlot1SizeInBytes);
+
     EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, scratchController->getScratchSpaceSlot1Allocation()->getUnderlyingBufferSize());
 }
 

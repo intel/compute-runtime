@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "level_zero/api/driver_experimental/public/zex_event.h"
+#include "level_zero/driver_experimental/zex_event.h"
 
 #include "shared/source/helpers/in_order_cmd_helpers.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -66,6 +66,12 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    auto signalScope = desc->signalScope;
+
+    if (NEO::debugManager.flags.MitigateHostVisibleSignal.get()) {
+        signalScope &= ~ZE_EVENT_SCOPE_FLAG_HOST;
+    }
+
     EventDescriptor eventDescriptor = {
         nullptr,                           // eventPoolAllocation
         desc->pNext,                       // extensions
@@ -74,7 +80,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         1,                                 // maxPacketsCount
         inputCbFlags,                      // counterBasedFlags
         0,                                 // index
-        desc->signalScope,                 // signalScope
+        signalScope,                       // signalScope
         desc->waitScope,                   // waitScope
         timestampFlag,                     // timestampPool
         mappedTimestampFlag,               // kerneMappedTsPoolFlag
@@ -84,7 +90,13 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    *phEvent = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
+    auto l0Event = device->getL0GfxCoreHelper().createStandaloneEvent(eventDescriptor, device, result);
+
+    if (signalScope ^ desc->signalScope) {
+        l0Event->setMitigateHostVisibleSignal();
+    }
+
+    *phEvent = l0Event;
 
     return result;
 }
@@ -97,12 +109,12 @@ zexCounterBasedEventCreate(ze_context_handle_t hContext, ze_device_handle_t hDev
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     externalSyncAllocProperties.completionValue = completionValue;
     externalSyncAllocProperties.deviceAddress = deviceAddress;
     externalSyncAllocProperties.hostAddress = hostAddress;
 
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     counterBasedDesc.flags = counterBasedFlags;
     counterBasedDesc.signalScope = desc->signal;
     counterBasedDesc.waitScope = desc->wait;

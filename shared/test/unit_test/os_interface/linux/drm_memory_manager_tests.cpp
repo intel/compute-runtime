@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5243,8 +5243,17 @@ TEST_F(DrmMemoryManagerTest, whenDebugFlagToNotFreeResourcesIsSpecifiedThenFreeI
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     size_t sizeIn = 1024llu;
     uint64_t gpuAddress = 0x1337llu;
-    DrmAllocation stackDrmAllocation(0u, 1u /*num gmms*/, AllocationType::buffer, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::system64KBPages);
-    memoryManager.freeGraphicsMemoryImpl(&stackDrmAllocation);
+    auto drmAllocation = std::make_unique<DrmAllocation>(0u, 1u /*num gmms*/, AllocationType::buffer, nullptr, nullptr, gpuAddress, sizeIn, MemoryPool::system64KBPages);
+    memoryManager.freeGraphicsMemoryImpl(drmAllocation.get());
+
+    EXPECT_EQ(drmAllocation->getNumGmms(), 1u);
+    EXPECT_EQ(drmAllocation->getRootDeviceIndex(), 0u);
+    EXPECT_EQ(drmAllocation->getBOs().size(), EngineLimits::maxHandleCount);
+    EXPECT_EQ(drmAllocation->getAllocationType(), AllocationType::buffer);
+    EXPECT_EQ(drmAllocation->getGpuAddress(), gpuAddress);
+    EXPECT_EQ(drmAllocation->getUnderlyingBufferSize(), sizeIn);
+    EXPECT_EQ(drmAllocation->getMemoryPool(), MemoryPool::system64KBPages);
+    EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), nullptr);
 }
 
 TEST_F(DrmMemoryManagerTest, given2MbPagesDisabledWhenWddmMemoryManagerIsCreatedThenAlignmentSelectorHasExpectedAlignments) {
@@ -5503,7 +5512,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenParticular
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevicesIndicatedThenCorrectBankIsSelected) {
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryAndClonedAllocationTypeWhenAllTilesIndicatedThenCorrectBankIsSelected) {
     auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
     auto &localMemoryRegions = memoryInfo->localMemoryRegions;
     localMemoryRegions.resize(1U);
@@ -5517,6 +5526,25 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevi
 
     constexpr auto expectedMemoryBanks = 0b01;
     EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
+    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryAndNonClonedAllocationTypeWhenAllTilesIndicatedThenCorrectBankIsSelected) {
+    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
+    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
+    localMemoryRegions.resize(1U);
+    localMemoryRegions[0].tilesMask = 0b11;
+
+    AllocationProperties properties{1, true, 4096, AllocationType::workPartitionSurface, false, {}};
+    properties.subDevicesBitfield = 0b11;
+
+    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+
+    constexpr auto defaultMemoryBanks = 0b01;
+    EXPECT_NE(storageInfo.memoryBanks, defaultMemoryBanks);
+    EXPECT_EQ(storageInfo.memoryBanks, storageInfo.pageTablesVisibility);
+    EXPECT_TRUE(storageInfo.tileInstanced);
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     struct ImmediateFlushData {
-        PipelineSelectArgs pipelineSelectArgs{};
-        size_t estimatedSize = 0;
         void *endPtr = nullptr;
+        size_t estimatedSize = 0;
         size_t csrStartOffset = 0;
+        PipelineSelectArgs pipelineSelectArgs{};
 
         bool pipelineSelectFullConfigurationNeeded = false;
         bool pipelineSelectDirty = false;

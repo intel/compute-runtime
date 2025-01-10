@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,5 +93,6 @@ inline constexpr uint32_t maximalSizeOfAtomicType = 8;
 inline constexpr uint32_t engineGroupCount = static_cast<uint32_t>(NEO::EngineGroupType::maxEngineGroups);
 inline constexpr uint32_t maxWorkgroupSize = 1024u;
 inline constexpr uint32_t minimalSyncBufferSize = 12;
+inline constexpr uint32_t gpuHangCheckTimeInUS = 500'000;
 inline constexpr double defaultProfilingTimerResolution = 83.333;
 } // namespace CommonConstants

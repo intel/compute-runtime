@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,6 @@
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/logger.h"
 
-#include "level_zero/api/driver_experimental/public/zex_common.h"
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -35,6 +34,8 @@
 #include "level_zero/core/source/fabric/fabric.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
+#include "level_zero/driver_experimental/zex_common.h"
 
 #include "driver_version.h"
 
@@ -183,6 +184,11 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandleImp::~DriverHandleImp() {
+    if (this->externalSemaphoreControllerCreated) {
+        ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+        externalSemaphoreController->releaseResources();
+    }
+
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {
@@ -232,9 +238,6 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
     for (auto &neoDevice : neoDevices) {
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        if (!neoDevice->getHardwareInfo().capabilityTable.levelZeroSupported) {
-            continue;
-        }
 
         if (this->memoryManager == nullptr) {
             this->memoryManager = neoDevice->getMemoryManager();
