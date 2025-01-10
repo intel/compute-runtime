@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,11 +50,12 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
 
     virtual uint64_t calculateNewGSH() = 0;
     virtual uint64_t getScratchPatchAddress() = 0;
-    inline uint32_t getPerThreadScratchSpaceSizeSlot0() {
-        return static_cast<uint32_t>(scratchSlot0SizeInBytes / computeUnitsUsedForScratch);
+
+    inline uint32_t getPerThreadScratchSpaceSizeSlot0() const {
+        return perThreadScratchSpaceSlot0Size;
     }
-    inline uint32_t getPerThreadScratchSizeSlot1() {
-        return static_cast<uint32_t>(scratchSlot1SizeInBytes / computeUnitsUsedForScratch);
+    inline uint32_t getPerThreadScratchSizeSlot1() const {
+        return perThreadScratchSpaceSlot1Size;
     }
 
     virtual void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) = 0;
@@ -83,6 +84,8 @@ class ScratchSpaceController : NonCopyableOrMovableClass {
     InternalAllocationStorage &csrAllocationStorage;
     size_t scratchSlot0SizeInBytes = 0;
     size_t scratchSlot1SizeInBytes = 0;
+    uint32_t perThreadScratchSpaceSlot0Size = 0;
+    uint32_t perThreadScratchSpaceSlot1Size = 0;
     bool force32BitAllocation = false;
     uint32_t computeUnitsUsedForScratch = 0;
 };

@@ -123,9 +123,9 @@ BMGTEST_F(BmgProductHelper, givenProductHelperWhenCheckDirectSubmissionSupported
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
 
-BMGTEST_F(BmgProductHelper, whenAdjustPerThreadScratchSizeThenSizeIsDoubled) {
-    constexpr uint32_t initialPerThreadScratchSize = 0x1234u;
-    uint32_t perThreadScratchSize = initialPerThreadScratchSize;
-    productHelper->adjustPerThreadScratchSize(perThreadScratchSize);
-    EXPECT_EQ(initialPerThreadScratchSize * 2, perThreadScratchSize);
+BMGTEST_F(BmgProductHelper, whenAdjustScratchSizeThenSizeIsDoubled) {
+    constexpr size_t initialScratchSize = 0x1234u;
+    size_t scratchSize = initialScratchSize;
+    productHelper->adjustScratchSize(scratchSize);
+    EXPECT_EQ(initialScratchSize * 2, scratchSize);
 }

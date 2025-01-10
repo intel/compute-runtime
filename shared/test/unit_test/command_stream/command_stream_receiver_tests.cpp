@@ -4884,14 +4884,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     uint32_t perThreadScratchSize = 65;
     uint32_t expectedValue = Math::nextPowerOfTwo(perThreadScratchSize);
 
-    auto &productHelper = getHelper<ProductHelper>();
-    productHelper.adjustPerThreadScratchSize(expectedValue);
-
     bool stateBaseAddressDirty = false;
     bool cfeStateDirty = false;
     uint8_t surfaceHeap[1000];
     scratchController->setRequiredScratchSpace(surfaceHeap, 0u, perThreadScratchSize, 0u, *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
-    EXPECT_EQ(expectedValue, scratchController->perThreadScratchSize);
+    EXPECT_EQ(expectedValue, scratchController->perThreadScratchSpaceSlot0Size);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfaceStateEnabledWhenSizeForPrivateScratchSpaceIsMisalignedThenAlignItNextPow2) {
@@ -4910,12 +4907,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTest, givenScratchSpaceSurfa
     scratchController->setRequiredScratchSpace(surfaceState, 0u, 0u, misalignedSizeForPrivateScratch,
                                                *pDevice->getDefaultEngine().osContext, stateBaseAddressDirty, cfeStateDirty);
 
-    auto &productHelper = getHelper<ProductHelper>();
-    productHelper.adjustPerThreadScratchSize(misalignedSizeForPrivateScratch);
-    productHelper.adjustPerThreadScratchSize(alignedSizeForPrivateScratch);
+    EXPECT_NE(scratchController->perThreadScratchSpaceSlot1Size, misalignedSizeForPrivateScratch);
+    EXPECT_EQ(scratchController->perThreadScratchSpaceSlot1Size, alignedSizeForPrivateScratch);
 
-    EXPECT_NE(scratchController->scratchSlot1SizeInBytes, misalignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
-    EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch);
+    size_t scratchSlot1SizeInBytes = alignedSizeForPrivateScratch * scratchController->computeUnitsUsedForScratch;
+    auto &productHelper = pDevice->getProductHelper();
+    productHelper.adjustScratchSize(scratchSlot1SizeInBytes);
+
+    EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, scratchSlot1SizeInBytes);
+
     EXPECT_EQ(scratchController->scratchSlot1SizeInBytes, scratchController->getScratchSpaceSlot1Allocation()->getUnderlyingBufferSize());
 }
 

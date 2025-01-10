@@ -534,7 +534,7 @@ uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareI
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::adjustPerThreadScratchSize(uint32_t &requiredPerThreadScratchSize) const {
+void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -46,8 +46,8 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 }
 
 template <>
-void ProductHelperHw<gfxProduct>::adjustPerThreadScratchSize(uint32_t &requiredPerThreadScratchSize) const {
-    requiredPerThreadScratchSize *= 2;
+void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
+    requiredScratchSize *= 2;
 }
 
 } // namespace NEO

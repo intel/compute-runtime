@@ -186,10 +186,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenScrat
     uint32_t computeUnits = gfxCoreHelper.getComputeUnitsUsedForScratch(pDevice->getRootDeviceEnvironment());
     auto perThreadScratchSize = kernel.kernelInfo.kernelDescriptor.kernelAttributes.perThreadScratchSize[0];
 
-    auto &productHelper = pDevice->getProductHelper();
-    productHelper.adjustPerThreadScratchSize(perThreadScratchSize);
+    size_t scratchSpaceSize = perThreadScratchSize * computeUnits;
 
-    auto scratchSpaceSize = perThreadScratchSize * computeUnits;
+    auto &productHelper = pDevice->getProductHelper();
+    productHelper.adjustScratchSize(scratchSpaceSize);
 
     commandQueue.enqueueKernel(kernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr);
     commandQueue.flush();

@@ -89,7 +89,7 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceS
     }
     gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
                                                           surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
-                                                          perThreadScratchSize, nullptr, false, scratchType, false, true);
+                                                          perThreadScratchSpaceSlot0Size, nullptr, false, scratchType, false, true);
 
     if (twoSlotScratchSpaceSupported) {
         void *surfaceStateForSlot1Allocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
@@ -160,8 +160,8 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         requiredPerThreadScratchSizeSlot0AlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSizeSlot0);
     }
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
-    productHelper.adjustPerThreadScratchSize(requiredPerThreadScratchSizeSlot0AlignedUp);
     size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot0AlignedUp) * computeUnitsUsedForScratch;
+    productHelper.adjustScratchSize(requiredScratchSizeInBytes);
     scratchSurfaceDirty = false;
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
     if (scratchSlot0SizeInBytes < requiredScratchSizeInBytes) {
@@ -170,7 +170,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         }
         scratchSurfaceDirty = true;
         scratchSlot0SizeInBytes = requiredScratchSizeInBytes;
-        perThreadScratchSize = requiredPerThreadScratchSizeSlot0AlignedUp;
+        perThreadScratchSpaceSlot0Size = requiredPerThreadScratchSizeSlot0AlignedUp;
         AllocationProperties properties{this->rootDeviceIndex, true, scratchSlot0SizeInBytes, AllocationType::scratchSurface, multiTileCapable, false, osContext.getDeviceBitfield()};
         scratchSlot0Allocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     }
@@ -179,8 +179,8 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
         if (!Math::isPow2(requiredPerThreadScratchSizeSlot1AlignedUp)) {
             requiredPerThreadScratchSizeSlot1AlignedUp = Math::nextPowerOfTwo(requiredPerThreadScratchSizeSlot1);
         }
-        productHelper.adjustPerThreadScratchSize(requiredPerThreadScratchSizeSlot1AlignedUp);
         size_t requiredScratchSlot1SizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeSlot1AlignedUp) * computeUnitsUsedForScratch;
+        productHelper.adjustScratchSize(requiredScratchSlot1SizeInBytes);
         if (scratchSlot1SizeInBytes < requiredScratchSlot1SizeInBytes) {
             if (scratchSlot1Allocation) {
                 csrAllocationStorage.storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchSlot1Allocation), TEMPORARY_ALLOCATION);

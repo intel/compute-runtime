@@ -1099,9 +1099,9 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenGetRequiredDetectIndirectVers
     EXPECT_EQ(6u, productHelper->getRequiredDetectIndirectVersionVC());
 }
 
-HWTEST_F(ProductHelperTest, whenAdjustPerThreadScratchSizeThenSizeIsNotChanged) {
-    constexpr uint32_t initialPerThreadScratchSize = 0xDEADBEEF;
-    uint32_t perThreadScratchSize = initialPerThreadScratchSize;
-    productHelper->adjustPerThreadScratchSize(perThreadScratchSize);
-    EXPECT_EQ(initialPerThreadScratchSize, perThreadScratchSize);
+HWTEST_F(ProductHelperTest, whenAdjustScratchSizeThenSizeIsNotChanged) {
+    constexpr size_t initialScratchSize = 0xDEADBEEF;
+    size_t scratchSize = initialScratchSize;
+    productHelper->adjustScratchSize(scratchSize);
+    EXPECT_EQ(initialScratchSize, scratchSize);
 }
