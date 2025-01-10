@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,6 +88,8 @@ ze_result_t OaMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawD
         result = metricGroup->readIoStream(reportCount, *pRawData);
         if (result == ZE_RESULT_SUCCESS || result == ZE_RESULT_WARNING_DROPPED_DATA) {
             *pRawDataSize = reportCount * rawReportSize;
+        } else {
+            *pRawDataSize = 0;
         }
     }
 

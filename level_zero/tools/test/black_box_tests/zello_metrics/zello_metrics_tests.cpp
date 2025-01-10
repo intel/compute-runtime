@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,10 +95,12 @@ bool streamTest() {
             std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
         executionCtxt->setExecutionTimeInMilliseconds(200);
 
-        std::unique_ptr<Power> power = std::make_unique<Power>(executionCtxt->getDeviceHandle(0));
-        std::unique_ptr<Frequency> frequency = std::make_unique<Frequency>(executionCtxt->getDeviceHandle(0));
+        std::unique_ptr<Power> power;
+        std::unique_ptr<Frequency> frequency;
 
         if (testSettings->showSystemInfo.get()) {
+            power = std::make_unique<Power>(executionCtxt->getDeviceHandle(0));
+            frequency = std::make_unique<Frequency>(executionCtxt->getDeviceHandle(0));
             executionCtxt->addSystemParameterCapture(power.get());
             executionCtxt->addSystemParameterCapture(frequency.get());
         }

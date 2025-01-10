@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,6 +113,8 @@ void SingleMetricStreamerCollector::showResults() {
         zmu::sleep(5);
         VALIDATECALL(zetMetricStreamerReadData(metricStreamer, maxRawReportCount, &rawDataSize, rawData.data()));
         LOG(zmu::LogLevel::DEBUG) << "Streamer read raw bytes: " << rawDataSize << std::endl;
+    } else if (status != ZE_RESULT_SUCCESS) {
+        LOG(zmu::LogLevel::DEBUG) << "zetMetricStreamerReadData() returned Error status with code: " << status << std::endl;
     }
     zmu::obtainCalculatedMetrics(metricGroup, rawData.data(), static_cast<uint32_t>(rawDataSize));
 }
