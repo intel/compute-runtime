@@ -5512,7 +5512,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenParticular
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
 }
 
-TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevicesIndicatedThenCorrectBankIsSelected) {
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryAndNonTileInstancedAllocationWhenAllTilesIndicatedThenCorrectBankIsSelected) {
     auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
     auto &localMemoryRegions = memoryInfo->localMemoryRegions;
     localMemoryRegions.resize(1U);
@@ -5527,6 +5527,72 @@ TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenAllSubdevi
     constexpr auto expectedMemoryBanks = 0b01;
     EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
     EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryWhenTileInstancedAllocationCreatedThenMemoryBanksSetToAllTilesRegardlessOfSubDevicesIndicatedInProperties) {
+    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
+    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+    localMemoryRegions.resize(1U);
+    localMemoryRegions[0].tilesMask = 0b11;
+
+    const auto expectedMemoryBanks = 0b11;
+    for (auto subDevicesMask = 1U; subDevicesMask < 4; ++subDevicesMask) {
+        AllocationProperties properties{1, 4096, AllocationType::workPartitionSurface, subDevicesMask};
+
+        memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
+        auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+
+        EXPECT_TRUE(storageInfo.tileInstanced);
+        EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
+        EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
+    }
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenSingleLocalMemoryAndTileInstancedAllocationTypeEvenWhenSubsetOfTilesIndicatedThenCorrectBankIsSelected) {
+    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
+    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
+    debugManager.flags.CreateMultipleSubDevices.set(2);
+
+    localMemoryRegions.resize(1U);
+    localMemoryRegions[0].tilesMask = 0b11;
+
+    AllocationProperties properties{1, true, 4096, AllocationType::workPartitionSurface, false, 0b10};
+    const auto expectedMemoryBanks = 0b11;
+
+    memoryManager->computeStorageInfoMemoryBanksCalled = 0U;
+    auto storageInfo = memoryManager->createStorageInfoFromProperties(properties);
+
+    EXPECT_EQ(storageInfo.memoryBanks, expectedMemoryBanks);
+    EXPECT_EQ(memoryManager->computeStorageInfoMemoryBanksCalled, 2UL);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenSingleLocalMemoryWhenTileInstancedAllocationCreatedThenItHasCorrectBOs) {
+    auto *memoryInfo = static_cast<MockMemoryInfo *>(mock->memoryInfo.get());
+    auto &localMemoryRegions = memoryInfo->localMemoryRegions;
+    localMemoryRegions.resize(1U);
+    localMemoryRegions[0].tilesMask = 0b11;
+
+    const DeviceBitfield subDeviceBitfield{0b11};
+    const auto expectedNumHandles{subDeviceBitfield.count()};
+    EXPECT_NE(expectedNumHandles, 0UL);
+
+    AllocationProperties properties{1, 4096, AllocationType::workPartitionSurface, subDeviceBitfield};
+    auto *allocation{memoryManager->allocateGraphicsMemoryInPreferredPool(properties, nullptr)};
+    EXPECT_EQ(allocation->getNumHandles(), expectedNumHandles);
+
+    const auto &bos{static_cast<DrmAllocation *>(allocation)->getBOs()};
+    const auto commonBoAddress{bos[0U]->peekAddress()};
+    auto numberOfValidBos{0U};
+    for (const auto bo : bos) {
+        if (bo == nullptr) {
+            continue;
+        }
+        ++numberOfValidBos;
+        EXPECT_EQ(bo->peekAddress(), commonBoAddress);
+    }
+    EXPECT_EQ(numberOfValidBos, expectedNumHandles);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenMultipleLocalMemoryRegionsWhenParticularSubdeviceIndicatedThenItIsSelected) {
