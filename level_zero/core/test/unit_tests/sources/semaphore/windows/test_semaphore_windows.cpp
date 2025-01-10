@@ -48,13 +48,13 @@ using WddmExternalSemaphoreTest = Test<WddmSemaphoreFixture>;
 using MockDriverHandleImp = Mock<L0::DriverHandleImp>;
 
 HWTEST_F(WddmExternalSemaphoreTest, DISABLED_givenValidExternalSemaphoreWhenImportExternalSemaphoreExpIsCalledThenSuccessIsReturned) {
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
     HANDLE extSemaphoreHandle = 0;
 
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     ze_intel_external_semaphore_win32_exp_desc_t win32Desc = {};
 
@@ -65,7 +65,7 @@ HWTEST_F(WddmExternalSemaphoreTest, DISABLED_givenValidExternalSemaphoreWhenImpo
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -101,13 +101,12 @@ class MockExternalSemaphoreEvent : public MockEvent {
 HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenEnqueueSignalFailsWhenExternalSemaphoreControllerIsRunningThenExpectedStateIsReturned, MatchAny) {
     auto mockGdi = new MockFailGdi();
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
-
-    static_cast<OsEnvironmentWin *>(l0Device.neoDevice->getExecutionEnvironment()->osEnvironment.get())->gdi.reset(mockGdi);
+    static_cast<OsEnvironmentWin *>(l0Device->neoDevice->getExecutionEnvironment()->osEnvironment.get())->gdi.reset(mockGdi);
 
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
@@ -121,11 +120,11 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenEnqueueSignalFailsWhenExterna
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    driverHandleImp->externalSemaphoreControllerCreated = true;
+    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
     auto hProxyEvent = proxyEvent->toHandle();
 
@@ -143,20 +142,16 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenEnqueueSignalFailsWhenExterna
     EXPECT_EQ(neoExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Initial);
     lock.unlock();
 
-    externalSemaphoreController->releaseResources();
-    driverHandleImp->externalSemaphoreControllerCreated = false;
-
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
 HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSemaphoreSignalOperationEventWhenExternalSemaphoreControllerIsRunningThenExpectedStateIsReturned, MatchAny) {
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
-
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     ze_intel_external_semaphore_exp_desc_t desc = {};
     ze_intel_external_semaphore_exp_handle_t hSemaphore;
@@ -170,11 +165,11 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSemaphoreSignalOperationEvent
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    driverHandleImp->externalSemaphoreControllerCreated = true;
+    driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
     auto hProxyEvent = proxyEvent->toHandle();
 
@@ -188,12 +183,9 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSemaphoreSignalOperationEvent
     auto neoExternalSemaphore = externalSemaphore->neoExternalSemaphore.get();
 
     std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
-    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (neoExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled); });
+    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (externalSemaphoreController->proxyEvents.empty()); });
     EXPECT_EQ(neoExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Signaled);
     lock.unlock();
-
-    externalSemaphoreController->releaseResources();
-    driverHandleImp->externalSemaphoreControllerCreated = false;
 
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -205,20 +197,18 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenImmediateCommandListWhenAppen
     HANDLE extSemaphoreHandle = 0;
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
-
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     ze_command_queue_desc_t queueDesc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(&l0Device, l0Device.getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
     std::unique_ptr<L0::CommandList> commandList;
     ze_result_t returnValue;
 
-    commandList.reset(CommandList::createImmediate(productFamily, &l0Device, &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
+    commandList.reset(CommandList::createImmediate(productFamily, l0Device.get(), &queueDesc, false, NEO::EngineGroupType::renderCompute, returnValue));
     commandList->setCmdListContext(context);
     auto &cmdList = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
@@ -231,19 +221,12 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenImmediateCommandListWhenAppen
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    if (externalSemaphoreController) {
-        externalSemaphoreController->releaseResources();
-    }
-
-    driverHandleImp->externalSemaphoreControllerCreated = false;
 
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -255,12 +238,10 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenRegularCommandListWhenAppendW
     HANDLE extSemaphoreHandle = 0;
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
-
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
@@ -274,19 +255,12 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenRegularCommandListWhenAppendW
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
-
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    if (externalSemaphoreController) {
-        externalSemaphoreController->releaseResources();
-    }
-
-    driverHandleImp->externalSemaphoreControllerCreated = false;
 
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -326,15 +300,13 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenInternalProxyEventFailsToAppe
     HANDLE extSemaphoreHandle = 0;
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
-
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     ze_command_queue_desc_t queueDesc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(&l0Device, l0Device.getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
     MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
@@ -352,19 +324,12 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenInternalProxyEventFailsToAppe
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
-
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    if (externalSemaphoreController) {
-        externalSemaphoreController->releaseResources();
-    }
-
-    driverHandleImp->externalSemaphoreControllerCreated = false;
 
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -376,15 +341,13 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenWaitEventFailsToAppendWhenApp
     HANDLE extSemaphoreHandle = 0;
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
-
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     ze_command_queue_desc_t queueDesc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(&l0Device, l0Device.getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
     MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
@@ -402,20 +365,13 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenWaitEventFailsToAppendWhenApp
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
     ze_event_handle_t waitEvent;
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 1, &waitEvent);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
-
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    if (externalSemaphoreController) {
-        externalSemaphoreController->releaseResources();
-    }
-
-    driverHandleImp->externalSemaphoreControllerCreated = false;
 
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -427,15 +383,13 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSignalEventFailsWhenAppendWai
     HANDLE extSemaphoreHandle = 0;
 
     auto mockMemoryManager = std::make_unique<MockMemoryManager>();
-
+    auto l0Device = std::make_unique<MockDeviceImp>(neoDevice, neoDevice->getExecutionEnvironment());
     auto driverHandleImp = std::make_unique<MockDriverHandleImp>();
     driverHandleImp->setMemoryManager(mockMemoryManager.get());
-
-    MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    l0Device.setDriverHandle(driverHandleImp.get());
+    l0Device->setDriverHandle(driverHandleImp.get());
 
     ze_command_queue_desc_t queueDesc = {};
-    auto queue = std::make_unique<Mock<CommandQueue>>(&l0Device, l0Device.getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
+    auto queue = std::make_unique<Mock<CommandQueue>>(l0Device.get(), l0Device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &queueDesc);
 
     MockCommandListImmediateExtSem<gfxCoreFamily> cmdList;
     cmdList.cmdListType = CommandList::CommandListType::typeImmediate;
@@ -453,7 +407,7 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSignalEventFailsWhenAppendWai
 
     desc.pNext = &win32Desc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device->toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
@@ -461,13 +415,6 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSignalEventFailsWhenAppendWai
 
     result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, signalEvent.toHandle(), 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
-
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    if (externalSemaphoreController) {
-        externalSemaphoreController->releaseResources();
-    }
-
-    driverHandleImp->externalSemaphoreControllerCreated = false;
 
     result = zeIntelDeviceReleaseExternalSemaphoreExp(hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

@@ -184,9 +184,9 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 }
 
 DriverHandleImp::~DriverHandleImp() {
-    if (this->externalSemaphoreControllerCreated) {
-        ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-        externalSemaphoreController->releaseResources();
+    if (this->externalSemaphoreController) {
+        this->externalSemaphoreController->releaseResources();
+        this->externalSemaphoreController = nullptr;
     }
 
     if (memoryManager != nullptr) {

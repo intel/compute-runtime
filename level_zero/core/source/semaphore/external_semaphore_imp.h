@@ -41,13 +41,7 @@ class ExternalSemaphoreController {
         Signal
     };
 
-    static ExternalSemaphoreController *getInstance() {
-        std::lock_guard<std::mutex> lock(instanceMutex);
-        if (instance == nullptr) {
-            instance = new ExternalSemaphoreController();
-        }
-        return instance;
-    }
+    static ExternalSemaphoreController *create();
 
     void startThread() {
         if (!extSemThread.joinable()) {
@@ -81,8 +75,7 @@ class ExternalSemaphoreController {
             }
         }
 
-        delete instance;
-        instance = nullptr;
+        delete this;
     }
 
     ze_result_t allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, SemaphoreOperation operation);
@@ -98,15 +91,8 @@ class ExternalSemaphoreController {
     bool continueRunning = true;
 
   private:
-    ExternalSemaphoreController() = default;
-
-    ExternalSemaphoreController(const ExternalSemaphoreController &) = delete;
-    ExternalSemaphoreController &operator=(const ExternalSemaphoreController &) = delete;
-
     void runController();
 
-    static ExternalSemaphoreController *instance;
-    static std::mutex instanceMutex;
     std::thread extSemThread;
 };
 

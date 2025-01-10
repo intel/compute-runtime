@@ -15,9 +15,6 @@
 
 namespace L0 {
 
-ExternalSemaphoreController *ExternalSemaphoreController::instance = nullptr;
-std::mutex ExternalSemaphoreController::instanceMutex;
-
 ze_result_t
 ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc, ze_intel_external_semaphore_exp_handle_t *phSemaphore) {
     auto externalSemaphore = new ExternalSemaphoreImp();
@@ -31,11 +28,14 @@ ExternalSemaphore::importExternalSemaphore(ze_device_handle_t device, const ze_i
         return result;
     }
 
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
-    externalSemaphoreController->startThread();
+    auto driverHandle = Device::fromHandle(device)->getDriverHandle();
+    auto driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
 
-    auto driverHandleImp = static_cast<DriverHandleImp *>(L0::Device::fromHandle(device)->getDriverHandle());
-    driverHandleImp->externalSemaphoreControllerCreated = true;
+    std::lock_guard<std::mutex> lock(driverHandleImp->externalSemaphoreControllerMutex);
+    if (driverHandleImp->externalSemaphoreController == nullptr) {
+        driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
+        driverHandleImp->externalSemaphoreController->startThread();
+    }
 
     *phSemaphore = externalSemaphore;
 
@@ -112,6 +112,12 @@ ze_result_t ExternalSemaphoreImp::releaseExternalSemaphore() {
     delete this;
 
     return ZE_RESULT_SUCCESS;
+}
+
+ExternalSemaphoreController *ExternalSemaphoreController::create() {
+    auto externalSemaphoreController = new ExternalSemaphoreController();
+
+    return externalSemaphoreController;
 }
 
 ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, ExternalSemaphoreController::SemaphoreOperation operation) {

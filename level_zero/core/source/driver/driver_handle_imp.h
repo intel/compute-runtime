@@ -25,6 +25,7 @@ class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
 struct Image;
+class ExternalSemaphoreController;
 
 enum L0DeviceHierarchyMode {
     L0_DEVICE_HIERARCHY_COMPOSITE,
@@ -154,7 +155,8 @@ struct DriverHandleImp : public DriverHandle {
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
 
-    bool externalSemaphoreControllerCreated = false;
+    ExternalSemaphoreController *externalSemaphoreController = nullptr;
+    std::mutex externalSemaphoreControllerMutex;
 
     uint32_t numDevices = 0;
 

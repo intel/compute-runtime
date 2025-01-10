@@ -982,7 +982,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
         return ret;
     }
 
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+    auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     for (uint32_t i = 0; i < numExternalSemaphores; i++) {
         ze_event_handle_t proxyWaitEvent = nullptr;
@@ -1027,7 +1028,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
         return ret;
     }
 
-    ExternalSemaphoreController *externalSemaphoreController = ExternalSemaphoreController::getInstance();
+    auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     for (size_t i = 0; i < numExternalSemaphores; i++) {
         ze_event_handle_t proxySignalEvent = nullptr;
