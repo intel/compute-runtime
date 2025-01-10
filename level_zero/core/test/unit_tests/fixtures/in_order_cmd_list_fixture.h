@@ -70,6 +70,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
 
     void SetUp() override {
         NEO::debugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(NEO::PreemptionMode::Disabled));
+        NEO::debugManager.flags.ResolveDependenciesViaPipeControls.set(0u);
 
         ::Test<ModuleFixture>::SetUp();
         createKernel();
