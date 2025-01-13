@@ -83,6 +83,7 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
             totalUsedSize += nextCommandBufferNewResourcesSize;
             currentNode->inspectionId = currentInspection;
 
+            resourcePackage.reserve(newResources.size());
             for (auto &newResource : newResources) {
                 resourcePackage.push_back(newResource);
             }

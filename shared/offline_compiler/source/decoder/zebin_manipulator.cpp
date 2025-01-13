@@ -280,6 +280,7 @@ void ZebinDecoder<numBits>::dumpSymtab(ElfT &elf, ArrayRef<const uint8_t> symtab
 template <Elf::ElfIdentifierClass numBits>
 std::vector<SectionInfo> ZebinDecoder<numBits>::dumpElfSections(ElfT &elf) {
     std::vector<SectionInfo> sectionInfos;
+    sectionInfos.reserve(elf.sectionHeaders.size() - 1U);
     for (size_t secId = 1U; secId < elf.sectionHeaders.size(); secId++) {
         auto &[header, data] = elf.sectionHeaders[secId];
         auto sectionName = elf.getSectionName(static_cast<uint32_t>(secId));
