@@ -398,6 +398,9 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 }
 
 void DebugSessionLinuxXe::processPendingVmBindEvents() {
+    if (clientHandle == invalidClientHandle) {
+        return;
+    }
     std::vector<decltype(clientHandleToConnection[clientHandle]->vmBindMap)::key_type> keysToDelete;
     auto &vmBindMap = clientHandleToConnection[clientHandle]->vmBindMap;
     for (auto &pair : vmBindMap) {

@@ -1440,6 +1440,53 @@ TEST_F(DebugApiLinuxTestXe, GivenNoEventRelatedToVmBindHandlingWhenHandleInterna
     EXPECT_TRUE(session->handleInternalEvent());
 }
 
+TEST_F(DebugApiLinuxTestXe, GivenEventTypeExecQueuePlacementsAndClientHandleIsInvalidWhenHandleInternalEventCalledThenHandleVmBindNotCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinuxXe>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto &vmBindData = session->clientHandleToConnection[MockDebugSessionLinuxXe::mockClientHandle]->vmBindMap[1];
+    vmBindData.pendingNumBinds = 1;
+
+    constexpr uint64_t vmHandle = 10;
+    // Allocate memory for the structure including the flexible array member
+    constexpr auto size = sizeof(NEO::EuDebugEventExecQueuePlacements) + sizeof(drm_xe_engine_class_instance) * 1;
+
+    uint8_t memoryExecQueuePlacements[size];
+    auto execQueuePlacements = reinterpret_cast<NEO::EuDebugEventExecQueuePlacements *>(memoryExecQueuePlacements);
+    memset(execQueuePlacements, 0, size);
+    execQueuePlacements->base.type = static_cast<uint16_t>(NEO::EuDebugParam::eventTypeExecQueuePlacements);
+    execQueuePlacements->base.len = sizeof(NEO::EuDebugEventExecQueuePlacements);
+    execQueuePlacements->clientHandle = MockDebugSessionLinuxXe::mockClientHandle;
+    execQueuePlacements->vmHandle = vmHandle;
+    execQueuePlacements->execQueueHandle = 200;
+    execQueuePlacements->lrcHandle = 10;
+    execQueuePlacements->numPlacements = 1;
+
+    auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
+    engineClassInstance[0].engine_class = 0;
+    engineClassInstance[0].engine_instance = 1;
+    engineClassInstance[0].gt_id = 1;
+
+    auto memory = std::make_unique<uint64_t[]>(size / sizeof(uint64_t));
+    memcpy(memory.get(), memoryExecQueuePlacements, size);
+
+    // Clear the event queue before using it
+    while (!session->internalEventQueue.empty()) {
+        session->internalEventQueue.pop();
+    }
+    session->internalEventQueue.push(std::move(memory));
+
+    session->clientHandle = DebugSessionLinuxXe::invalidClientHandle;
+    EXPECT_EQ(session->handleVmBindCallCount, 0u);
+
+    EXPECT_TRUE(session->handleInternalEvent());
+
+    EXPECT_EQ(session->handleVmBindCallCount, 0u);
+}
+
 TEST_F(DebugApiLinuxTestXe, GivenEventTypeExecQueuePlacementsWhenHandleInternalEventCalledThenProcessPendingVmBindEventsCalled) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

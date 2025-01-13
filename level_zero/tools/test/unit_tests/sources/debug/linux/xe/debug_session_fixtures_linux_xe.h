@@ -234,6 +234,11 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
         return DebugSessionLinuxXe::processPendingVmBindEvents();
     }
 
+    bool handleVmBind(VmBindData &vmBindData) override {
+        handleVmBindCallCount++;
+        return DebugSessionLinuxXe::handleVmBind(vmBindData);
+    }
+
     int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
         numThreadsPassedToThreadControl = threads.size();
         return L0::DebugSessionLinuxXe::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
@@ -307,6 +312,7 @@ struct MockDebugSessionLinuxXe : public L0::DebugSessionLinuxXe {
 
     uint32_t readSystemRoutineIdentCallCount = 0;
     uint32_t processPendingVmBindEventsCallCount = 0;
+    uint32_t handleVmBindCallCount = 0;
     uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
     uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
     size_t numThreadsPassedToThreadControl = 0;

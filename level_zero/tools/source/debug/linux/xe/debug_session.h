@@ -132,7 +132,7 @@ struct DebugSessionLinuxXe : DebugSessionLinux {
     };
     std::unordered_map<uint64_t, std::shared_ptr<ClientConnectionXe>> clientHandleToConnection;
     bool canHandleVmBind(VmBindData &vmBindData) const;
-    bool handleVmBind(VmBindData &vmBindData);
+    MOCKABLE_VIRTUAL bool handleVmBind(VmBindData &vmBindData);
     void handleVmBindWithoutUfence(VmBindData &vmBindData, VmBindOpData &vmBindOpData);
 
     void extractMetaData(uint64_t client, const MetaData &metaData);
