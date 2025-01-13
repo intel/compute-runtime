@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@
 namespace L0 {
 
 ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};
+bool getImageDescriptor(const ze_image_desc_t *origImgDesc, ze_image_desc_t *imgDesc);
 
 ImageImp::~ImageImp() {
     if ((isImageView() || imageFromBuffer) && this->device != nullptr) {
@@ -86,8 +87,15 @@ ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze
     image->imgInfo = this->imgInfo;
     image->imageFromBuffer = this->imageFromBuffer;
 
-    auto result = image->initialize(device, desc);
-
+    ze_image_desc_t imgDesc = {};
+    bool modified = getImageDescriptor(desc, &imgDesc);
+    auto result = ZE_RESULT_SUCCESS;
+    if (modified && this->isMimickedImage()) {
+        image->setMimickedImage(true);
+        result = image->initialize(device, &imgDesc);
+    } else {
+        result = image->initialize(device, desc);
+    }
     if (result != ZE_RESULT_SUCCESS) {
         image->destroy();
         image = nullptr;
