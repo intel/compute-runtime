@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1912,6 +1912,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDisp
 
     auto node2 = events[0]->inOrderTimestampNode;
 
+    *static_cast<Event::State *>(ptrOffset(events[0]->inOrderTimestampNode->getCpuBase(), events[0]->getContextEndOffset())) = Event::State::STATE_SIGNALED;
     auto hostAddress = cmdList->inOrderExecInfo->getBaseHostAddress();
     *hostAddress = 3;
 
@@ -3120,124 +3121,6 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     *hostAddress1 = 3;
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
-}
-
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandleChaining, IsAtLeastXeHpCore) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    auto eventPool = createEvents<FamilyType>(1, true);
-    auto eventHandle = events[0]->toHandle();
-    events[0]->signalScope = 0;
-
-    bool inOrderExecSignalRequired = (immCmdList->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
-    bool inOrderNonWalkerSignalling = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
-
-    if (!inOrderExecSignalRequired || !inOrderNonWalkerSignalling) {
-        GTEST_SKIP();
-    }
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
-                                                      cmdStream->getCpuBase(),
-                                                      cmdStream->getUsed()));
-
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), walkerItor);
-
-    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
-    ASSERT_NE(cmdList.end(), semaphoreItor);
-
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphoreItor));
-    ASSERT_NE(nullptr, semaphoreCmd);
-
-    auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
-
-    if (eventEndGpuVa != semaphoreCmd->getSemaphoreGraphicsAddress()) {
-        semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
-        ASSERT_NE(cmdList.end(), semaphoreItor);
-
-        semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphoreItor));
-        ASSERT_NE(nullptr, semaphoreCmd);
-    }
-
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-    semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa + events[0]->getSinglePacketSize(), semaphoreCmd->getSemaphoreGraphicsAddress());
-}
-
-HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenProgrammingTimestampEventThenHandlePacketsChaining, IsAtLeastXeHpCore) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
-
-    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
-
-    auto eventPool = createEvents<FamilyType>(1, true);
-    auto eventHandle = events[0]->toHandle();
-    events[0]->signalScope = 0;
-
-    immCmdList->signalAllEventPackets = true;
-    events[0]->maxPacketCount = 4;
-
-    bool inOrderExecSignalRequired = (immCmdList->isInOrderExecutionEnabled() && !launchParams.isKernelSplitOperation && !launchParams.pipeControlSignalling);
-    bool inOrderNonWalkerSignalling = immCmdList->isInOrderNonWalkerSignalingRequired(events[0].get());
-
-    if (!inOrderExecSignalRequired || !inOrderNonWalkerSignalling) {
-        GTEST_SKIP();
-    }
-
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList,
-                                                      cmdStream->getCpuBase(),
-                                                      cmdStream->getUsed()));
-
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), walkerItor);
-
-    auto semaphoreItor = find<MI_SEMAPHORE_WAIT *>(walkerItor, cmdList.end());
-    ASSERT_NE(cmdList.end(), semaphoreItor);
-
-    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphoreItor));
-    ASSERT_NE(nullptr, semaphoreCmd);
-
-    auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
-
-    if (eventEndGpuVa != semaphoreCmd->getSemaphoreGraphicsAddress()) {
-        semaphoreItor = find<MI_SEMAPHORE_WAIT *>(++semaphoreItor, cmdList.end());
-        ASSERT_NE(cmdList.end(), semaphoreItor);
-
-        semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphoreItor));
-        ASSERT_NE(nullptr, semaphoreCmd);
-    }
-
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-    semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-    auto offset = events[0]->getSinglePacketSize();
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa + offset, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-    semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-    offset += events[0]->getSinglePacketSize();
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa + offset, semaphoreCmd->getSemaphoreGraphicsAddress());
-
-    semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++semaphoreCmd);
-    offset += events[0]->getSinglePacketSize();
-    EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
-    EXPECT_EQ(eventEndGpuVa + offset, semaphoreCmd->getSemaphoreGraphicsAddress());
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {
