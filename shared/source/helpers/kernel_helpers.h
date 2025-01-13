@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,8 @@ struct KernelHelper {
     static bool isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor);
 
     static inline size_t getRegionGroupBarrierSize(const size_t threadGroupCount, const size_t localRegionSize) {
-        return alignUp((threadGroupCount / localRegionSize) * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
+        const size_t ratio = (threadGroupCount / localRegionSize) + (threadGroupCount % localRegionSize ? 1 : 0);
+        return alignUp(ratio * (localRegionSize + 1) * 2 * sizeof(uint32_t), MemoryConstants::cacheLineSize);
     }
 
     static std::pair<GraphicsAllocation *, size_t> getRegionGroupBarrierAllocationOffset(Device &device, const size_t threadGroupCount, const size_t localRegionSize);

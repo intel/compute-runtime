@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -325,4 +325,13 @@ TEST_F(KernelHelperTest, GivenThreadGroupCountAndRegionSizeWhenRegionBarrierCrea
     pair = KernelHelper::getRegionGroupBarrierAllocationOffset(*pDevice, requestedNumberOfWorkgroups, localRegionSize);
     EXPECT_EQ(offset, pair.second);
     EXPECT_EQ(allocation, pair.first);
+}
+
+TEST_F(KernelHelperTest, GivenThreadGroupCountWhenGetRegionGroupBarrierSizeThenProvideMinimalOffsetSize) {
+    const size_t requestedNumberOfWorkgroups = 1;
+    const size_t localRegionSize = 4;
+    auto offset = KernelHelper::getRegionGroupBarrierSize(requestedNumberOfWorkgroups, localRegionSize);
+
+    constexpr size_t minOffset = 64;
+    EXPECT_EQ(minOffset, offset);
 }
