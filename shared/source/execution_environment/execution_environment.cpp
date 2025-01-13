@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,12 +212,6 @@ bool ExecutionEnvironment::getSubDeviceHierarchy(uint32_t index, std::tuple<uint
 }
 
 void ExecutionEnvironment::parseAffinityMask() {
-
-    // If the device hierarchy is Combined, then skip the affinity mask parsing until level zero device get.
-    if (isCombinedDeviceHierarchy()) {
-        return;
-    }
-
     const auto &affinityMaskString = debugManager.flags.ZE_AFFINITY_MASK.get();
 
     if (affinityMaskString.compare("default") == 0 ||
@@ -225,19 +219,22 @@ void ExecutionEnvironment::parseAffinityMask() {
         return;
     }
 
-    // If the user has requested FLAT device hierarchy models, then report all the sub devices as devices.
+    // If the user has requested FLAT or COMBINED device hierarchy models, then report all the sub devices as devices.
     bool exposeSubDevicesAsApiDevices = isExposingSubDevicesAsDevices();
-    uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
 
-    RootDeviceIndicesMap mapOfIndices;
     // Reserve at least for a size equal to rootDeviceEnvironments.size() times four,
     // which is enough for typical configurations
+    uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
+    uint32_t numDevices = numRootDevices;
     size_t reservedSizeForIndices = numRootDevices * 4;
+    RootDeviceIndicesMap mapOfIndices;
     mapOfIndices.reserve(reservedSizeForIndices);
     uint32_t hwSubDevicesCount = 0u;
+
     if (exposeSubDevicesAsApiDevices) {
-        for (uint32_t currentRootDevice = 0u; currentRootDevice < static_cast<uint32_t>(rootDeviceEnvironments.size()); currentRootDevice++) {
+        for (uint32_t currentRootDevice = 0u; currentRootDevice < numRootDevices; currentRootDevice++) {
             auto hwInfo = rootDeviceEnvironments[currentRootDevice]->getHardwareInfo();
+
             hwSubDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             uint32_t currentSubDevice = 0;
             mapOfIndices.push_back(std::make_tuple(currentRootDevice, currentSubDevice));
@@ -246,7 +243,7 @@ void ExecutionEnvironment::parseAffinityMask() {
             }
         }
 
-        numRootDevices = static_cast<uint32_t>(mapOfIndices.size());
+        numDevices = static_cast<uint32_t>(mapOfIndices.size());
     }
 
     std::vector<AffinityMaskHelper> affinityMaskHelper(numRootDevices);
@@ -257,32 +254,27 @@ void ExecutionEnvironment::parseAffinityMask() {
     uint32_t deviceIndex = 0;
     for (const auto &entry : affinityMaskEntries) {
         auto subEntries = StringHelpers::split(entry, ".");
-        uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
+        uint32_t entryIndex = StringHelpers::toUint32t(subEntries[0]);
 
-        // tiles as devices
-        if (exposeSubDevicesAsApiDevices) {
-            if (rootDeviceIndex >= numRootDevices) {
-                continue;
-            }
-
-            // FlatHierarchy
+        if (entryIndex >= numDevices) {
+            continue;
+        } else if (exposeSubDevicesAsApiDevices) {
+            // tiles as devices
             // so ignore X.Y
             if (subEntries.size() > 1) {
                 continue;
             }
 
-            std::tuple<uint32_t, uint32_t> indexKey = mapOfIndices[rootDeviceIndex];
+            std::tuple<uint32_t, uint32_t> indexKey = mapOfIndices[entryIndex];
             auto hwDeviceIndex = std::get<0>(indexKey);
             auto tileIndex = std::get<1>(indexKey);
+
             affinityMaskHelper[hwDeviceIndex].enableGenericSubDevice(tileIndex);
             // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
             mapOfSubDeviceIndices[deviceIndex++] = std::make_tuple(hwDeviceIndex, tileIndex, hwSubDevicesCount);
-            continue;
-        }
-
-        // cards as devices
-        if (rootDeviceIndex < numRootDevices) {
-            auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        } else {
+            // cards as devices
+            auto hwInfo = rootDeviceEnvironments[entryIndex]->getHardwareInfo();
             auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
 
             if (subEntries.size() > 1) {
@@ -291,14 +283,14 @@ void ExecutionEnvironment::parseAffinityMask() {
                 if (subDeviceIndex < subDevicesCount) {
                     if (subEntries.size() == 2) {
                         // Store the Physical Hierarchy for this SubDevice mapped to the Device Index passed to the user.
-                        mapOfSubDeviceIndices[rootDeviceIndex] = std::make_tuple(rootDeviceIndex, subDeviceIndex, subDevicesCount);
-                        affinityMaskHelper[rootDeviceIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
+                        mapOfSubDeviceIndices[entryIndex] = std::make_tuple(entryIndex, subDeviceIndex, subDevicesCount);
+                        affinityMaskHelper[entryIndex].enableGenericSubDevice(subDeviceIndex); // Mask: X.Y
                     } else {
                         UNRECOVERABLE_IF(subEntries.size() != 3);
                     }
                 }
             } else {
-                affinityMaskHelper[rootDeviceIndex].enableAllGenericSubDevices(subDevicesCount); // Mask: X
+                affinityMaskHelper[entryIndex].enableAllGenericSubDevices(subDevicesCount); // Mask: X
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         this->subDevicesAsDevices = value;
     }
     void setCombinedDeviceHierarchy(bool value) {
+        this->subDevicesAsDevices = value;
         this->combinedDeviceHierarchy = value;
     }
     bool isExposingSubDevicesAsDevices() const { return this->subDevicesAsDevices; }

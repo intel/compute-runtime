@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -287,7 +287,7 @@ class Device : public ReferenceTrackedObject<Device> {
     virtual void createBindlessHeapsHelper() {}
     bool createSubDevices();
     bool createGenericSubDevices();
-    virtual bool genericSubDevicesAllowed();
+    bool genericSubDevicesAllowed();
     void finalizeRayTracing();
     void createSecondaryContexts(const EngineControl &primaryEngine, SecondaryContexts &secondaryEnginesForType, uint32_t contextCount, uint32_t regularPriorityCount, uint32_t highPriorityContextCount);
     void allocateDebugSurface(size_t debugSurfaceSize);

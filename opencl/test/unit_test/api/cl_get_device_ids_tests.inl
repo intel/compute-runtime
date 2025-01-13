@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -293,6 +293,42 @@ TEST(clGetDeviceIDsNegativeTests, whenFailToCreateDeviceThenclGetDeviceIDsReturn
         auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
         EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
         EXPECT_EQ(numDevices, 0u);
+    }
+}
+
+TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWithAffinityMaskWhenGetDeviceIdsThenCorrectDevicesAreReturned) {
+    constexpr auto numRootDevices = 3u;
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0,1");
+    cl_uint numDevices = 0;
+    cl_uint numEntries = numRootDevices;
+    cl_device_id devices[numRootDevices];
+
+    std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
+    for (std::string hierarchy : hierarchies) {
+        platformsImpl->clear();
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        const auto dummyDevice = reinterpret_cast<cl_device_id>(0x1357);
+        for (auto i = 0u; i < numRootDevices; i++) {
+            devices[i] = dummyDevice;
+        }
+
+        auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_ALL, numEntries, devices, &numDevices);
+        EXPECT_EQ(retVal, CL_SUCCESS);
+        EXPECT_EQ(numDevices, 2u);
+
+        for (auto i = 0u; i < numRootDevices; i++) {
+            if (i < 2u) {
+                EXPECT_EQ(devices[i], platform()->getClDevice(i));
+            } else {
+                EXPECT_EQ(devices[i], dummyDevice);
+            }
+        }
     }
 }
 

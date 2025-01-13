@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,14 +59,16 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
 
     if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
         uint32_t numRootDevices = debugManager.flags.CreateMultipleRootDevices.get() != 0 ? debugManager.flags.CreateMultipleRootDevices.get() : 1u;
-        UltDeviceFactory::prepareDeviceEnvironments(executionEnvironment, numRootDevices);
-        retVal = ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult;
+        retVal = UltDeviceFactory::prepareDeviceEnvironments(executionEnvironment, numRootDevices);
+        retVal &= ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult;
     } else {
         retVal = prepareDeviceEnvironmentsImpl(executionEnvironment);
     }
 
-    for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+    if (retVal) {
+        for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
+            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+        }
     }
 
     return retVal;

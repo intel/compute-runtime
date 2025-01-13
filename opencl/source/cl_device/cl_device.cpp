@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
         pClSubDevice->decRefApi();
         pClSubDevice->internalParentDevice = this;
 
-        if (!device.getExecutionEnvironment()->isExposingSubDevicesAsDevices() && !device.getExecutionEnvironment()->isCombinedDeviceHierarchy()) {
+        if (!device.getExecutionEnvironment()->isExposingSubDevicesAsDevices()) {
             auto &deviceInfo = pClSubDevice->deviceInfo;
             deviceInfo.parentDevice = this;
             deviceInfo.partitionType[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;

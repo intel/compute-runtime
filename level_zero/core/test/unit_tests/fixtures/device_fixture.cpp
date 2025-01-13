@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -130,39 +130,27 @@ void MultiDeviceFixtureHierarchy::setUp() {
     for (size_t i = 0; i < numRootDevices; ++i) {
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     }
-    executionEnvironment->setExposeSubDevicesAsDevices(exposeSubDevices);
-    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    ze_result_t res = driverHandle->initialize(std::move(devices));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
-}
-
-void MultiDeviceFixtureCombinedHierarchy::setUp() {
-    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
-    auto executionEnvironment = new NEO::ExecutionEnvironment;
-    executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-    for (size_t i = 0; i < numRootDevices; ++i) {
-        executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
+    if (driverHandle->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+        executionEnvironment->setExposeSubDevicesAsDevices(true);
+    } else if (driverHandle->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED) {
+        executionEnvironment->setCombinedDeviceHierarchy(true);
     }
-    executionEnvironment->setExposeSubDevicesAsDevices(exposeSubDevices);
-    executionEnvironment->setCombinedDeviceHierarchy(combinedHierarchy);
-    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
-    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    ze_result_t res = driverHandle->initialize(std::move(devices));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    ze_context_handle_t hContext;
-    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
-    res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+    if (devices.size()) {
+        ze_result_t res = driverHandle->initialize(std::move(devices));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        ze_context_handle_t hContext;
+        ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+        res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        context = static_cast<ContextImp *>(Context::fromHandle(hContext));
+    } else {
+        delete executionEnvironment;
+        return;
+    }
 }
 
 void MultipleDevicesWithCustomHwInfo::setUp() {

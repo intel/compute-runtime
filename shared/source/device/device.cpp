@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ bool Device::genericSubDevicesAllowed() {
     deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
-    if (numSubDevices == 1) {
+    if (numSubDevices == 1 && (!executionEnvironment->isCombinedDeviceHierarchy() || subDeviceCount == 1)) {
         numSubDevices = 0;
     }
 
@@ -130,13 +130,14 @@ bool Device::createSubDevices() {
 }
 
 bool Device::createDeviceImpl() {
-    // init sub devices first
-    if (!createSubDevices()) {
-        return false;
-    }
-
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(getHardwareInfo());
+
     if (!isSubDevice()) {
+        // init sub devices first
+        if (!createSubDevices()) {
+            return false;
+        }
+
         // initialize common resources once
         initializeCommonResources();
     }

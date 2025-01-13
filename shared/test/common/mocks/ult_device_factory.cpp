@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ UltDeviceFactory::~UltDeviceFactory() {
     }
 }
 
-void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount) {
+bool UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment, uint32_t rootDevicesCount) {
     uint32_t numRootDevices = rootDevicesCount;
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
     for (auto i = 0u; i < numRootDevices; i++) {
@@ -72,8 +72,12 @@ void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
         executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     }
     executionEnvironment.parseAffinityMask();
-    executionEnvironment.calculateMaxOsContextCount();
-    DeviceFactory::createMemoryManagerFunc(executionEnvironment);
+    auto retVal = executionEnvironment.rootDeviceEnvironments.size();
+    if (retVal) {
+        executionEnvironment.calculateMaxOsContextCount();
+        DeviceFactory::createMemoryManagerFunc(executionEnvironment);
+    }
+    return retVal;
 }
 bool UltDeviceFactory::initializeMemoryManager(ExecutionEnvironment &executionEnvironment) {
     if (executionEnvironment.memoryManager == nullptr) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -126,7 +126,7 @@ struct MultiDeviceFixture {
     void tearDown();
 
     DebugManagerStateRestore restorer;
-    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
     uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
@@ -137,13 +137,27 @@ struct MultiDeviceFixture {
 
 struct MultiDeviceFixtureHierarchy : public MultiDeviceFixture {
     void setUp();
-    bool exposeSubDevices = true;
 };
 
-struct MultiDeviceFixtureCombinedHierarchy : public MultiDeviceFixture {
-    void setUp();
-    bool exposeSubDevices = true;
-    bool combinedHierarchy = true;
+struct MultiDeviceFixtureCompositeHierarchy : public MultiDeviceFixtureHierarchy {
+    void setUp() {
+        this->driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
+        MultiDeviceFixtureHierarchy::setUp();
+    }
+};
+
+struct MultiDeviceFixtureFlatHierarchy : public MultiDeviceFixtureHierarchy {
+    void setUp() {
+        this->driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+        MultiDeviceFixtureHierarchy::setUp();
+    }
+};
+
+struct MultiDeviceFixtureCombinedHierarchy : public MultiDeviceFixtureHierarchy {
+    void setUp() {
+        this->driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
+        MultiDeviceFixtureHierarchy::setUp();
+    }
 };
 
 struct SingleRootMultiSubDeviceFixture : public MultiDeviceFixture {

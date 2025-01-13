@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -943,6 +943,74 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenZeAffinityMaskSetWhenAllocateRTDi
     for (uint32_t i = 0u; i < devices.size(); i++) {
         devices[0]->initializeRayTracing(5);
         EXPECT_NE(nullptr, devices[0]->getRTDispatchGlobals(3));
+    }
+}
+
+TEST_F(DeviceTests, givenDifferentHierarchiesWithoutSubDevicesThenNumSubDevicesIsZero) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    uint32_t numRootDevices = 4;
+
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+
+    auto hwInfo = *defaultHwInfo;
+
+    std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
+    for (std::string hierarchy : hierarchies) {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
+        executionEnvironment.incRefInternal();
+
+        auto devices = DeviceFactory::createDevices(executionEnvironment);
+        EXPECT_EQ(devices.size(), numRootDevices);
+
+        for (uint32_t i = 0u; i < devices.size(); i++) {
+            EXPECT_EQ(devices[i]->getNumSubDevices(), 0u);
+        }
+    }
+}
+
+TEST_F(DeviceTests, givenZeAffinityMaskSetWithDifferentHierarchiesThenNumSubDevicesIsCorrect) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    DebugManagerStateRestore restorer;
+
+    uint32_t numRootDevices = 4;
+    uint32_t numSubDevices = 2;
+    uint32_t expectedNumSubDevices;
+
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    debugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+    debugManager.flags.ZE_AFFINITY_MASK.set("0,2");
+
+    auto hwInfo = *defaultHwInfo;
+
+    std::string hierarchies[] = {"COMPOSITE", "FLAT", "COMBINED"};
+    for (std::string hierarchy : hierarchies) {
+        std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_FLAT_DEVICE_HIERARCHY", hierarchy}};
+        VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+        MockExecutionEnvironment executionEnvironment(&hwInfo, false, numRootDevices);
+        executionEnvironment.incRefInternal();
+
+        auto devices = DeviceFactory::createDevices(executionEnvironment);
+        EXPECT_EQ(devices.size(), 2u);
+
+        if (hierarchy == "COMPOSITE") {
+            expectedNumSubDevices = 2u;
+        } else if (hierarchy == "FLAT") {
+            expectedNumSubDevices = 0u;
+        } else if (hierarchy == "COMBINED") {
+            expectedNumSubDevices = 1u;
+        }
+
+        for (uint32_t i = 0u; i < devices.size(); i++) {
+            EXPECT_EQ(devices[i]->getNumSubDevices(), expectedNumSubDevices);
+        }
     }
 }
 

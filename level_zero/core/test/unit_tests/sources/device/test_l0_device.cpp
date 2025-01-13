@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5739,9 +5739,8 @@ TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenFlagsOfDe
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
-    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5774,7 +5773,6 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenF
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5807,7 +5805,6 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenG
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5836,7 +5833,6 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskWitho
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.numSubDevices = 0;
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5862,7 +5858,6 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithoutDevice
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
@@ -5880,20 +5875,16 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithInvalidAf
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("90");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, 0u);
-
-    multiDeviceFixture.tearDown();
 }
 
 TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetThenGetRootDeviceReturnsNullptr) {
 
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5919,7 +5910,6 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetAndDefaultAff
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("");
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5948,7 +5938,6 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetAndEmptyAffin
 
     MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -5975,9 +5964,8 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetAndEmptyAffin
 
 TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenFlagsOfDevicePropertiesIsCorrect) {
 
-    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -6006,9 +5994,8 @@ TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenGetRootDe
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
-    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -6032,9 +6019,8 @@ TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetWithMaskThenGetRootDe
 
 TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenGetRootDeviceReturnsNullptr) {
 
-    MultiDeviceFixtureHierarchy multiDeviceFixture{};
+    MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -6058,9 +6044,8 @@ TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetWithMaskThe
 
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1,2");
-    MultiDeviceFixture multiDeviceFixture{};
+    MultiDeviceFixtureCompositeHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -6095,9 +6080,8 @@ TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetWithMaskThe
 
 TEST(DeviceReturnCompositeHierarchyTest, GivenCompositeHierarchyIsSetThenGetRootDeviceIsNotNullForSubDevices) {
 
-    MultiDeviceFixture multiDeviceFixture{};
+    MultiDeviceFixtureCompositeHierarchy multiDeviceFixture{};
     multiDeviceFixture.setUp();
-    multiDeviceFixture.driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
 
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
@@ -6158,7 +6142,7 @@ TEST_F(DeviceTest, givenDeviceWhenQueryingCmdListMemWaitOnMemDataSizeThenReturnV
     EXPECT_EQ(l0GfxCoreHelper.getCmdListWaitOnMemoryDataSize(), sizeProps.cmdListWaitOnMemoryDataSizeInBytes);
 }
 
-TEST_F(DeviceTest, givenDeviecWhenQueryingMediaPropertiesThenReturnZero) {
+TEST_F(DeviceTest, givenDeviceWhenQueryingMediaPropertiesThenReturnZero) {
     ze_device_properties_t devProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_intel_device_media_exp_properties_t mediaProps = {ZE_STRUCTURE_TYPE_INTEL_DEVICE_MEDIA_EXP_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     mediaProps.numDecoderCores = 123;

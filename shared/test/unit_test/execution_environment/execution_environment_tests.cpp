@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -664,7 +664,7 @@ TEST(ExecutionEnvironmentDeviceHierarchy, givenExecutionEnvironmentWithCombinedD
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
-    EXPECT_FALSE(executionEnvironment.isExposingSubDevicesAsDevices());
+    EXPECT_TRUE(executionEnvironment.isExposingSubDevicesAsDevices());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSetErrorDescriptionIsCalledThenGetErrorDescriptionGetsStringCorrectly) {

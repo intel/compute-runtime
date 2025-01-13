@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -212,15 +212,15 @@ TEST_F(FabricVertexFixture, GivenDevicesAreCreatedWhenFabricVertexIsNotSetToDevi
     EXPECT_EQ(hVertex, nullptr);
 }
 
-class FabricVertexFlatDeviceTestFixture : public MultiDeviceFixtureHierarchy,
+class FabricVertexFlatDeviceTestFixture : public MultiDeviceFixtureFlatHierarchy,
                                           public ::testing::Test {
     void SetUp() override {
         NEO::debugManager.flags.ZE_AFFINITY_MASK.set("0,1.1,2");
-        MultiDeviceFixtureHierarchy::setUp();
+        MultiDeviceFixtureFlatHierarchy::setUp();
     }
 
     void TearDown() override {
-        MultiDeviceFixtureHierarchy::tearDown();
+        MultiDeviceFixtureFlatHierarchy::tearDown();
     }
     DebugManagerStateRestore restorer;
 };

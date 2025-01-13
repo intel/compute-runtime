@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,8 +23,6 @@ class SubDevice : public Device {
     bool isSubDevice() const override { return true; }
 
   protected:
-    bool genericSubDevicesAllowed() override { return false; };
-
     RootDevice &rootDevice;
     const uint32_t subDeviceIndex;
 };
