@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -192,10 +192,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     size_t getKernelArgsNumber() const {
         return kernelArguments.size();
-    }
-
-    bool usesBindfulAddressingForBuffers() const {
-        return KernelDescriptor::BindfulAndStateless == kernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode;
     }
 
     inline const KernelDescriptor &getDescriptor() const {
