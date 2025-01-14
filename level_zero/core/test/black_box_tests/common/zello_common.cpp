@@ -416,7 +416,7 @@ bool counterBasedEventsExtensionPresent(ze_driver_handle_t &driverHandle) {
     std::string cbEventsExtensionString("ZE_experimental_event_pool_counter_based");
     ze_driver_extension_properties_t cbEventsExtension{};
 
-    strncpy(cbEventsExtension.name, cbEventsExtensionString.c_str(), cbEventsExtensionString.size());
+    std::snprintf(cbEventsExtension.name, sizeof(cbEventsExtension.name), "%s", cbEventsExtensionString.c_str());
     cbEventsExtension.version = ZE_EVENT_POOL_COUNTER_BASED_EXP_VERSION_CURRENT;
 
     std::vector<ze_driver_extension_properties_t> extensionsToCheck;
