@@ -3321,6 +3321,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     const auto bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
+    const bool useGlobalHeaps = bindlessHeapsHelper != nullptr;
 
     KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
 
@@ -3333,8 +3334,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::surfaceState)) {
             auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::surfaceState);
             if (ssh) {
-                currentSurfaceStateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper);
-                currentSurfaceStateSize = NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper);
+                currentSurfaceStateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps);
+                currentSurfaceStateSize = NEO::getStateSizeForSsh(*ssh, useGlobalHeaps);
 
                 currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
                 currentBindingTablePoolSize = currentSurfaceStateSize;
@@ -3347,8 +3348,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::dynamicState))) {
             auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::dynamicState);
 
-            currentDynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper);
-            currentDynamicStateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
+            currentDynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, useGlobalHeaps);
+            currentDynamicStateSize = NEO::getStateSize(*dsh, useGlobalHeaps);
 
             checkDsh = true;
         }

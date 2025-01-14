@@ -1654,6 +1654,7 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     auto &streamProperties = this->csr->getStreamProperties();
 
     const auto bindlessHeapsHelper = device->getNEODevice()->getBindlessHeapsHelper();
+    const bool useGlobalHeaps = bindlessHeapsHelper != nullptr;
 
     auto &commandContainer = lastCommandList->getCmdContainer();
 
@@ -1664,8 +1665,8 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     } else {
         auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::dynamicState);
         if (dsh != nullptr) {
-            auto stateBaseAddress = NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper);
-            auto stateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
+            auto stateBaseAddress = NEO::getStateBaseAddress(*dsh, useGlobalHeaps);
+            auto stateSize = NEO::getStateSize(*dsh, useGlobalHeaps);
 
             csrHw->getDshState().updateAndCheck(dsh, stateBaseAddress, stateSize);
             streamProperties.stateBaseAddress.setPropertiesDynamicState(stateBaseAddress, stateSize);
@@ -1673,8 +1674,8 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 
         auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
         if (ssh != nullptr) {
-            auto stateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper);
-            auto stateSize = NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper);
+            auto stateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps);
+            auto stateSize = NEO::getStateSizeForSsh(*ssh, useGlobalHeaps);
 
             csrHw->getSshState().updateAndCheck(ssh, stateBaseAddress, stateSize);
             streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(stateBaseAddress,

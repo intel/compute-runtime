@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1575,6 +1575,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
                                                                         bool stateBaseAddressDirty) {
 
     const auto bindlessHeapsHelper = device.getBindlessHeapsHelper();
+    const bool useGlobalHeaps = bindlessHeapsHelper != nullptr;
 
     auto &hwInfo = this->peekHwInfo();
 
@@ -1582,15 +1583,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStateBaseAddress(const In
     int64_t dynamicStateBaseAddress = 0;
     size_t dynamicStateSize = 0;
     if (hasDsh) {
-        dynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, bindlessHeapsHelper);
+        dynamicStateBaseAddress = NEO::getStateBaseAddress(*dsh, useGlobalHeaps);
         dynamicStateSize = NEO::getStateSize(*dsh, bindlessHeapsHelper);
     }
 
     int64_t surfaceStateBaseAddress = 0;
     size_t surfaceStateSize = 0;
     if (ssh != nullptr) {
-        surfaceStateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, bindlessHeapsHelper);
-        surfaceStateSize = NEO::getStateSizeForSsh(*ssh, bindlessHeapsHelper);
+        surfaceStateBaseAddress = NEO::getStateBaseAddressForSsh(*ssh, useGlobalHeaps);
+        surfaceStateSize = NEO::getStateSizeForSsh(*ssh, useGlobalHeaps);
     }
 
     bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh, dynamicStateBaseAddress, dynamicStateSize) : false;
