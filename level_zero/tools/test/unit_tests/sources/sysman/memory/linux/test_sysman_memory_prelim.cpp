@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,6 @@ namespace ult {
 constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
 constexpr uint32_t memoryHandleComponentCount = 1u;
-const std::string sampleGuid1 = "0xb15a0edc";
 
 class SysmanMemoryMockIoctlHelper : public NEO::MockIoctlHelper {
 
