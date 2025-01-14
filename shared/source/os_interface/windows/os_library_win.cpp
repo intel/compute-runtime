@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,7 +186,7 @@ bool getLoadedLibVersion(const std::string &libName, const std::string &regexVer
 
         auto sdata = truncateWstringToString(data);
         if (std::regex_search(sdata, versionPattern)) {
-            outVersion = sdata;
+            outVersion = std::move(sdata);
             return true;
         }
     }
