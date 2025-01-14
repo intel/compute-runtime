@@ -2616,34 +2616,42 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    if (immCmdList->isHeaplessModeEnabled()) {
-        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), sdiItor);
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
 
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-        ASSERT_NE(nullptr, sdiCmd);
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
 
-        EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
-        EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
-    }
+    EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
     auto eventBaseGpuVa = events[0]->getPacketAddress(device);
+    auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([eventBaseGpuVa](auto &&walker) {
+    std::visit([eventBaseGpuVa, eventEndGpuVa, &immCmdList, &sdiCmd](auto &&walker) {
         auto &postSync = walker->getPostSync();
         using PostSyncType = std::decay_t<decltype(postSync)>;
 
         EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
         EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
-        ASSERT_EQ(nullptr, semaphoreCmd);
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(walker);
-        ASSERT_EQ(nullptr, sdiCmd);
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+        ASSERT_NE(nullptr, sdiCmd);
+
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+        EXPECT_EQ(1u, sdiCmd->getDataDword0());
     },
                walkerVariant);
 }
@@ -2752,23 +2760,21 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), immCmdList->flushData[1]));
 
-        if (immCmdList->isHeaplessModeEnabled()) {
-            auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-            ASSERT_NE(cmdList.end(), sdiItor);
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), sdiItor);
 
-            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-            ASSERT_NE(nullptr, sdiCmd);
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+        ASSERT_NE(nullptr, sdiCmd);
 
-            EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
-            EXPECT_EQ(0u, sdiCmd->getStoreQword());
-            EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
+        EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-            auto sdiOffset = ptrDiff(sdiCmd, cmdStream->getCpuBase());
-            EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
-            EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
-        }
+        auto sdiOffset = ptrDiff(sdiCmd, cmdStream->getCpuBase());
+        EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
+        EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto eventBaseGpuVa = events[0]->getPacketAddress(device);
@@ -5292,37 +5298,6 @@ HWTEST2_F(InOrderCmdListTests, givenMitigateHostVisibleSignalWhenCallingSynchron
 
     zeEventDestroy(handle);
     context->freeMem(hostAddress);
-}
-
-HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported, MatchAny) {
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
-
-    ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
-
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
-
-    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
-    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-
-    auto eventObj = Event::fromHandle(handle);
-    *static_cast<Event::State *>(ptrOffset(eventObj->getHostAddress(), eventObj->getContextEndOffset())) = Event::State::STATE_SIGNALED;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
-
-    if (device->getProductHelper().isDcFlushAllowed()) {
-        EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
-        EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
-    } else {
-        EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
-        EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    }
-
-    zeEventDestroy(handle);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign, MatchAny) {

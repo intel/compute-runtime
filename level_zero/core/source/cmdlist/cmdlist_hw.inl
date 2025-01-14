@@ -428,7 +428,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
                                             event, launchParams);
 
     if (!launchParams.skipInOrderNonWalkerSignaling) {
-        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event) && !(event && event->isCounterBased() && event->isUsingContextEndOffset()), false);
+        handleInOrderDependencyCounter(event, isInOrderNonWalkerSignalingRequired(event), false);
     }
 
     appendSynchronizedDispatchCleanupSection();

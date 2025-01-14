@@ -304,9 +304,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
                         eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
                     }
-                    if ((!compactEvent && this->heaplessModeEnabled) || this->asMutable() || !eventForInOrderExec->isCounterBased()) {
+                    if (!compactEvent || this->asMutable() || !compactEvent->isCounterBased()) {
                         dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
-                    } else if (compactEvent) {
+                    } else {
                         eventAddress = eventForInOrderExec->getPacketAddress(this->device);
                         isTimestampEvent = true;
                         if (!launchParams.omitAddingEventResidency) {
@@ -415,7 +415,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
-            if (!launchParams.skipInOrderNonWalkerSignaling && (!(eventForInOrderExec->isCounterBased() && eventForInOrderExec->isUsingContextEndOffset()) || this->asMutable())) {
+            if (!launchParams.skipInOrderNonWalkerSignaling) {
                 if (compactEvent && (compactEvent->isCounterBased() && !this->asMutable())) {
                     auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
