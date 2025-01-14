@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
