@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5518,7 +5518,8 @@ TEST_F(ImportFdUncachedTests,
 
 TEST_F(ImportFdUncachedTests,
        givenCallToImportFdHandleWithBothUncachedFlagsThenLocallyUncachedResourceIsSet) {
-    ze_ipc_memory_flags_t flags = ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED | ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED;
+    ze_ipc_memory_flags_t flags = static_cast<ze_ipc_memory_flags_t>(ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_UNCACHED) |
+                                  static_cast<ze_ipc_memory_flags_t>(ZE_IPC_MEMORY_FLAG_BIAS_UNCACHED);
     uint64_t handle = 1;
     NEO::SvmAllocationData allocDataInternal(device->getNEODevice()->getRootDeviceIndex());
     void *ptr = driverHandle->importFdHandle(device->getNEODevice(), flags, handle, NEO::AllocationType::buffer, nullptr, nullptr, allocDataInternal);
