@@ -66,6 +66,8 @@ bool isParamEnabled(int argc, char *argv[], const char *shortName, const char *l
 int getParamValue(int argc, char *argv[], const char *shortName, const char *longName, int defaultValue) {
     char **arg = &argv[1];
     char **argE = &argv[argc];
+    char *end = nullptr;
+    int base = 0;
 
     for (; arg != argE; ++arg) {
         if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
@@ -73,7 +75,7 @@ int getParamValue(int argc, char *argv[], const char *shortName, const char *lon
             if (arg == argE) {
                 break;
             }
-            return atoi(*arg);
+            return static_cast<int>(strtol(*arg, &end, base));
         }
     }
 
@@ -84,16 +86,13 @@ uint32_t getParamValue(int argc, char *argv[], const char *shortName, const char
     char **arg = &argv[1];
     char **argE = &argv[argc];
     char *end = nullptr;
-    int base = 10;
+    int base = 0;
 
     for (; arg != argE; ++arg) {
         if ((0 == strcmp(*arg, shortName)) || (0 == strcmp(*arg, longName))) {
             arg++;
             if (arg == argE) {
                 break;
-            }
-            if (strlen(*arg) > 2 && *arg[0] == '0' && *arg[1] == 'x') {
-                base = 16;
             }
             return static_cast<uint32_t>(strtoul(*arg, &end, base));
         }
