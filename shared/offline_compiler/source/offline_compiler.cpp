@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,7 +247,7 @@ std::string formatNameVersionString(std::vector<NameVersionPair> extensions, boo
     for (const auto &ext : extensions) {
         formatedExtensions.push_back({});
         auto it = formatedExtensions.rbegin();
-        bool needsQuoutes = (nullptr != strstr(ext.name, " "));
+        bool needsQuoutes = (nullptr != strchr(ext.name, ' '));
         it->reserve(strnlen_s(ext.name, sizeof(ext.name)) + (needsQuoutes ? 2 : 0) + (needVersions ? 16 : 0));
         if (needsQuoutes) {
             it->append("\"");
@@ -888,7 +888,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     if (options.empty()) {
         // try to read options from file if not provided by commandline
-        size_t extStart = inputFile.find_last_of(".");
+        size_t extStart = inputFile.find_last_of('.');
         if (extStart != std::string::npos) {
             std::string oclocOptionsFileName = inputFile.substr(0, extStart);
             oclocOptionsFileName.append("_ocloc_options.txt");
@@ -1236,7 +1236,7 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
 
 std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
     size_t slashPos = filePath.find_last_of("\\/", filePath.size()) + 1;
-    size_t extPos = filePath.find_last_of(".", filePath.size());
+    size_t extPos = filePath.find_last_of('.', filePath.size());
     if (extPos == std::string::npos) {
         extPos = filePath.size();
     }
@@ -1576,7 +1576,7 @@ void OfflineCompiler::writeOutAllFiles() {
             if (outputFile.empty()) {
                 elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin");
             } else {
-                size_t extPos = fileBase.find_last_of(".", fileBase.size());
+                size_t extPos = fileBase.find_last_of('.', fileBase.size());
                 std::string fileExt = ".bin";
                 if (extPos != std::string::npos) {
                     auto existingExt = fileBase.substr(extPos, fileBase.size());
