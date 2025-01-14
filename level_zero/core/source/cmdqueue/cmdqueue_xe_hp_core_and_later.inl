@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,13 +142,8 @@ void CommandQueueHw<gfxCoreFamily>::handleScratchSpace(NEO::HeapContainer &sshHe
                                                        csr->getOsContext(), gsbaState, frontEndState);
         }
 
-        NEO::Device *neoDevice = device->getNEODevice();
-        auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-        auto &productHelper = neoDevice->getProductHelper();
-
         if (sshHeaps.size() > 0) {
-            uint32_t offsetIndex = gfxCoreHelper.getMaxPtssIndex(productHelper) * csr->getOsContext().getEngineType() + 1u;
-            scratchController->programHeaps(sshHeaps, offsetIndex, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size,
+            scratchController->programHeaps(sshHeaps, 1u, perThreadScratchSpaceSlot0Size, perThreadScratchSpaceSlot1Size,
                                             csr->getOsContext(), gsbaState, frontEndState);
         }
 
