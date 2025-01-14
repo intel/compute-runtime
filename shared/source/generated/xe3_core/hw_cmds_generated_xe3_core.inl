@@ -6950,7 +6950,8 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t Reserved_37 : BITFIELD_RANGE(5, 6);
             uint32_t AsyncComputeThreadLimit : BITFIELD_RANGE(7, 9);
             uint32_t EnableVariableRegisterSizeAllocation_Vrt : BITFIELD_RANGE(10, 10);
-            uint32_t Reserved_43 : BITFIELD_RANGE(11, 12);
+            uint32_t Reserved_43 : BITFIELD_RANGE(11, 11);
+            uint32_t EnablePipelinedEuThreadArbitration : BITFIELD_RANGE(12, 12);
             uint32_t EuThreadSchedulingMode : BITFIELD_RANGE(13, 14);
             uint32_t LargeGrfMode : BITFIELD_RANGE(15, 15);
             uint32_t Mask1 : BITFIELD_RANGE(16, 31);
@@ -6959,7 +6960,7 @@ typedef struct tagSTATE_COMPUTE_MODE {
             uint32_t MidthreadPreemptionOverdispatchThreadGroupCount : BITFIELD_RANGE(3, 4);
             uint32_t MidthreadPreemptionOverdispatchTestMode : BITFIELD_RANGE(5, 5);
             uint32_t UavCoherencyMode : BITFIELD_RANGE(6, 6);
-            uint32_t Reserved_76 : BITFIELD_RANGE(7, 15);
+            uint32_t Reserved_71 : BITFIELD_RANGE(7, 15);
             uint32_t Mask2 : BITFIELD_RANGE(16, 31);
         } Common;
         uint32_t RawData[3];
@@ -7075,6 +7076,12 @@ typedef struct tagSTATE_COMPUTE_MODE {
     }
     inline bool getEnableVariableRegisterSizeAllocationVrt() const {
         return TheStructure.Common.EnableVariableRegisterSizeAllocation_Vrt;
+    }
+    inline void setEnablePipelinedEuThreadArbitration(const bool value) {
+        TheStructure.Common.EnablePipelinedEuThreadArbitration = value;
+    }
+    inline bool getEnablePipelinedEuThreadArbitration() const {
+        return TheStructure.Common.EnablePipelinedEuThreadArbitration;
     }
     inline void setEuThreadSchedulingMode(const EU_THREAD_SCHEDULING_MODE value) {
         TheStructure.Common.EuThreadSchedulingMode = value;

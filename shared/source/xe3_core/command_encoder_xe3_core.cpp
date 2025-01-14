@@ -32,7 +32,10 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
     auto maskBits = stateComputeMode.getMask1();
     auto maskBits2 = stateComputeMode.getMask2();
 
-    if (properties.threadArbitrationPolicy.isDirty) {
+    if (properties.isPipelinedEuThreadArbitrationEnabled()) {
+        stateComputeMode.setEnablePipelinedEuThreadArbitration(true);
+        maskBits |= Family::stateComputeModePipelinedEuThreadArbitrationMask;
+    } else if (properties.threadArbitrationPolicy.isDirty) {
         switch (properties.threadArbitrationPolicy.value) {
         case ThreadArbitrationPolicy::RoundRobin:
             stateComputeMode.setEuThreadSchedulingMode(STATE_COMPUTE_MODE::EU_THREAD_SCHEDULING_MODE::EU_THREAD_SCHEDULING_MODE_ROUND_ROBIN);

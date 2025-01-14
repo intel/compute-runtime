@@ -153,7 +153,7 @@ XE3_CORETEST_F(ComputeModeRequirementsXe3Core, giventhreadArbitrationPolicyWitho
         hwParser.parseCommands<FamilyType>(getCsrHw<FamilyType>()->commandStream, startOffset);
         bool foundOne = false;
 
-        uint32_t expectedMask = FamilyType::stateComputeModeEuThreadSchedulingModeOverrideMask;
+        uint32_t expectedMask = FamilyType::stateComputeModePipelinedEuThreadArbitrationMask;
 
         for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
             auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*it);

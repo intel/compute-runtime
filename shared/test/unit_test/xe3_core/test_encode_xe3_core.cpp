@@ -382,6 +382,31 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDefaultSettingForFenceWhenKernelUse
     EXPECT_TRUE(postSyncData.getSystemMemoryFenceRequest());
 }
 
+XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagSetWhenSetPropertiesAllCalledThenDisablePipelinedThreadArbitrationPolicy) {
+    DebugManagerStateRestore restore;
+
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    {
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        EXPECT_TRUE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
+    }
+
+    {
+        debugManager.flags.PipelinedEuThreadArbitration.set(0);
+
+        StreamProperties streamProperties{};
+        streamProperties.initSupport(rootDeviceEnvironment);
+
+        streamProperties.stateComputeMode.setPropertiesAll(false, 0, 0, PreemptionMode::Disabled);
+        EXPECT_FALSE(streamProperties.stateComputeMode.isPipelinedEuThreadArbitrationEnabled());
+    }
+}
+
 XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenDebugFlagWhenProgrammingStateComputeModeThenEnableVrtFieldIsCorrectlySet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
 

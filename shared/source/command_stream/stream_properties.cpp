@@ -179,6 +179,10 @@ void StateComputeModeProperties::setPropertiesPerContext(bool requiresCoherency,
         this->enableVariableRegisterSizeAllocation.set(this->scmPropertiesSupport.enableVariableRegisterSizeAllocation);
     }
 
+    if (this->scmPropertiesSupport.pipelinedEuThreadArbitration) {
+        setPipelinedEuThreadArbitration();
+    }
+
     setPropertiesExtraPerContext();
     if (clearDirtyState) {
         clearIsDirtyPerContext();
@@ -533,4 +537,12 @@ void StateBaseAddressProperties::clearIsDirty() {
     surfaceStateBaseAddress.isDirty = false;
     dynamicStateBaseAddress.isDirty = false;
     indirectObjectBaseAddress.isDirty = false;
+}
+
+void StateComputeModeProperties::setPipelinedEuThreadArbitration() {
+    this->pipelinedEuThreadArbitration = true;
+}
+
+bool StateComputeModeProperties::isPipelinedEuThreadArbitrationEnabled() const {
+    return pipelinedEuThreadArbitration;
 }

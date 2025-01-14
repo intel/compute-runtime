@@ -31,6 +31,15 @@ void ProductHelperHw<gfxProduct>::fillScmPropertiesSupportStructure(StateCompute
         propertiesSupport.enableVariableRegisterSizeAllocation = !!debugManager.flags.EnableXe3VariableRegisterSizeAllocation.get();
     }
     propertiesSupport.largeGrfMode = !propertiesSupport.enableVariableRegisterSizeAllocation;
+
+    bool pipelinedEuThreadArbitration = true;
+    if (debugManager.flags.PipelinedEuThreadArbitration.get() != -1) {
+        pipelinedEuThreadArbitration = !!debugManager.flags.PipelinedEuThreadArbitration.get();
+    }
+
+    if (pipelinedEuThreadArbitration) {
+        propertiesSupport.pipelinedEuThreadArbitration = true;
+    }
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct Xe3Core {
 #include "shared/source/generated/xe3_core/hw_cmds_generated_xe3_core.inl"
 
     static constexpr uint32_t stateComputeModeEnableVariableRegisterSizeAllocationMask = (1u << 10);
+    static constexpr uint32_t stateComputeModePipelinedEuThreadArbitrationMask = (1u << 12);
     static constexpr uint32_t stateComputeModeEuThreadSchedulingModeOverrideMask = (0b11u << 13);
     static constexpr uint32_t stateComputeModeLargeGrfModeMask = (1u << 15);
     // DW2

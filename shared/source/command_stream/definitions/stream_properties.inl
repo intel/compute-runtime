@@ -21,6 +21,7 @@ struct StateComputeModePropertiesSupport {
     bool devicePreemptionMode = false;
     bool allocationForScratchAndMidthreadPreemption = false;
     bool enableVariableRegisterSizeAllocation = false;
+    bool pipelinedEuThreadArbitration = false;
 };
 
 struct StateComputeModeProperties {
@@ -42,6 +43,8 @@ struct StateComputeModeProperties {
 
     void copyPropertiesAll(const StateComputeModeProperties &properties);
     void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
+    void setPipelinedEuThreadArbitration();
+    bool isPipelinedEuThreadArbitrationEnabled() const;
 
     bool isDirty() const;
     void clearIsDirty();
@@ -64,6 +67,7 @@ struct StateComputeModeProperties {
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
     int32_t defaultThreadArbitrationPolicy = 0;
     bool propertiesSupportLoaded = false;
+    bool pipelinedEuThreadArbitration = false;
 };
 
 struct FrontEndPropertiesSupport {
