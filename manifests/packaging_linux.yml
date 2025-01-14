@@ -1,7 +1,7 @@
 components:
   cal:
     dest_dir: cal
-    version: 1056
+    version: 1065
   ci_l0_loader:
     dest_dir: level_zero
     version: v1.20.1
