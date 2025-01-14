@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2116,52 +2116,66 @@ uint32_t Kernel::getSurfaceStateIndexForBindlessOffset(NEO::CrossThreadDataOffse
     return std::numeric_limits<uint32_t>::max();
 }
 
-void Kernel::patchBindlessOffsetsForImplicitArgs(uint64_t bindlessSurfaceStateBaseOffset) const {
+template <bool heaplessEnabled>
+void Kernel::patchBindlessSurfaceStatesForImplicitArgs(uint64_t bindlessSurfaceStatesBaseAddress) const {
     auto implicitArgsVec = kernelInfo.kernelDescriptor.getImplicitArgBindlessCandidatesVec();
 
     auto &gfxCoreHelper = this->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto *crossThreadDataPtr = reinterpret_cast<uint8_t *>(getCrossThreadData());
 
     for (size_t i = 0; i < implicitArgsVec.size(); i++) {
         if (NEO::isValidOffset(implicitArgsVec[i]->bindless)) {
-            auto patchLocation = ptrOffset(getCrossThreadData(), implicitArgsVec[i]->bindless);
+            auto patchLocation = ptrOffset(crossThreadDataPtr, implicitArgsVec[i]->bindless);
             auto index = getSurfaceStateIndexForBindlessOffset(implicitArgsVec[i]->bindless);
 
             if (index < std::numeric_limits<uint32_t>::max()) {
-                auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
-                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
 
-                patchWithRequiredSize(reinterpret_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+                auto surfaceStateAddress = bindlessSurfaceStatesBaseAddress + (index * surfaceStateSize);
+
+                if constexpr (heaplessEnabled) {
+                    uint64_t patchValue = surfaceStateAddress;
+                    patchWithRequiredSize(patchLocation, sizeof(uint64_t), patchValue);
+                } else {
+                    uint32_t patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateAddress));
+                    patchWithRequiredSize(patchLocation, sizeof(uint32_t), patchValue);
+                }
             }
         }
     }
 }
 
-void Kernel::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceStateBaseOffset) const {
+template <bool heaplessEnabled>
+void Kernel::patchBindlessSurfaceStatesInCrossThreadData(uint64_t bindlessSurfaceStatesBaseAddress) const {
     auto &gfxCoreHelper = this->getGfxCoreHelper();
     auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+    auto *crossThreadDataPtr = reinterpret_cast<uint8_t *>(getCrossThreadData());
 
-    for (size_t argIndex = 0; argIndex < kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.size(); argIndex++) {
-        const auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex];
+    for (auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
 
-        auto crossThreadOffset = NEO::undefined<NEO::CrossThreadDataOffset>;
+        auto offset = NEO::undefined<NEO::CrossThreadDataOffset>;
         if (arg.type == NEO::ArgDescriptor::argTPointer) {
-            crossThreadOffset = arg.as<NEO::ArgDescPointer>().bindless;
+            offset = arg.as<NEO::ArgDescPointer>().bindless;
         } else if (arg.type == NEO::ArgDescriptor::argTImage) {
-            crossThreadOffset = arg.as<NEO::ArgDescImage>().bindless;
+            offset = arg.as<NEO::ArgDescImage>().bindless;
         } else {
             continue;
         }
 
-        if (NEO::isValidOffset(crossThreadOffset)) {
-            auto patchLocation = ptrOffset(getCrossThreadData(), crossThreadOffset);
-            auto index = getSurfaceStateIndexForBindlessOffset(crossThreadOffset);
+        if (NEO::isValidOffset(offset)) {
+            auto index = getSurfaceStateIndexForBindlessOffset(offset);
 
             if (index < std::numeric_limits<uint32_t>::max()) {
-                auto surfaceStateOffset = static_cast<uint32_t>(bindlessSurfaceStateBaseOffset + index * surfaceStateSize);
-                auto patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateOffset));
+                auto patchLocation = ptrOffset(crossThreadDataPtr, offset);
+                auto surfaceStateAddress = bindlessSurfaceStatesBaseAddress + (index * surfaceStateSize);
 
-                patchWithRequiredSize(reinterpret_cast<uint8_t *>(patchLocation), sizeof(patchValue), patchValue);
+                if constexpr (heaplessEnabled) {
+                    uint64_t patchValue = surfaceStateAddress;
+                    patchWithRequiredSize(patchLocation, sizeof(uint64_t), patchValue);
+                } else {
+                    uint32_t patchValue = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(surfaceStateAddress));
+                    patchWithRequiredSize(patchLocation, sizeof(uint32_t), patchValue);
+                }
             }
         }
     }
@@ -2169,7 +2183,7 @@ void Kernel::patchBindlessOffsetsInCrossThreadData(uint64_t bindlessSurfaceState
     const auto bindlessHeapsHelper = getDevice().getDevice().getBindlessHeapsHelper();
 
     if (!bindlessHeapsHelper) {
-        patchBindlessOffsetsForImplicitArgs(bindlessSurfaceStateBaseOffset);
+        patchBindlessSurfaceStatesForImplicitArgs<heaplessEnabled>(bindlessSurfaceStatesBaseAddress);
     }
 }
 
@@ -2362,5 +2376,11 @@ size_t Kernel::getLocalIdsSizePerThread() const {
     UNRECOVERABLE_IF(localIdsCache.get() == nullptr);
     return localIdsCache->getLocalIdsSizePerThread();
 }
+
+template void Kernel::patchBindlessSurfaceStatesForImplicitArgs<false>(uint64_t bindlessSurfaceStatesBaseAddress) const;
+template void Kernel::patchBindlessSurfaceStatesForImplicitArgs<true>(uint64_t bindlessSurfaceStatesBaseAddress) const;
+
+template void Kernel::patchBindlessSurfaceStatesInCrossThreadData<false>(uint64_t bindlessSurfaceStatesBaseAddress) const;
+template void Kernel::patchBindlessSurfaceStatesInCrossThreadData<true>(uint64_t bindlessSurfaceStatesBaseAddress) const;
 
 } // namespace NEO

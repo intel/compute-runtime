@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,43 +245,46 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
     // Copy the kernel over to the ISH
     constexpr bool heaplessModeEnabled = GfxFamily::template isHeaplessMode<WalkerType>();
+    constexpr bool bindfulAllowed = !heaplessModeEnabled;
 
     size_t dstBindingTablePointer = 0;
     uint32_t samplerCount = 0;
     uint32_t samplerStateOffset = 0;
     uint32_t bindingTablePrefetchSize = 0;
 
-    if constexpr (heaplessModeEnabled == false) {
+    ssh.align(GfxFamily::cacheLineSize);
+    dstBindingTablePointer = HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
 
-        ssh.align(GfxFamily::cacheLineSize);
-        dstBindingTablePointer = HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
+    const auto &kernelInfo = kernel.getKernelInfo();
+    // Copy our sampler state if it exists
+    const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
+    if (isValidOffset(samplerTable.tableOffset) && isValidOffset(samplerTable.borderColor)) {
+        samplerCount = samplerTable.numSamplers;
+        samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
+                                                                       samplerCount, samplerTable.borderColor,
+                                                                       kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
+                                                                       device.getRootDeviceEnvironment());
+    }
 
-        const auto &kernelInfo = kernel.getKernelInfo();
-        // Copy our sampler state if it exists
-        const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
-        if (isValidOffset(samplerTable.tableOffset) && isValidOffset(samplerTable.borderColor)) {
-            samplerCount = samplerTable.numSamplers;
-            samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
-                                                                           samplerCount, samplerTable.borderColor,
-                                                                           kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
-                                                                           device.getRootDeviceEnvironment());
-        }
-
+    if constexpr (bindfulAllowed) {
         if (EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch()) {
             bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
         }
+    }
 
-        const bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernel.getKernelInfo().kernelDescriptor);
-        if (isBindlessKernel) {
-            uint64_t bindlessSurfaceStateBaseOffset = ptrDiff(ssh.getSpace(0), ssh.getCpuBase());
-
-            auto sshHeapSize = kernel.getSurfaceStateHeapSize();
-            // Allocate space for new ssh data
-            auto dstSurfaceState = ssh.getSpace(sshHeapSize);
-            memcpy_s(dstSurfaceState, sshHeapSize, kernel.getSurfaceStateHeap(), sshHeapSize);
-
-            kernel.patchBindlessOffsetsInCrossThreadData(bindlessSurfaceStateBaseOffset);
+    const bool isBindlessKernel = NEO::KernelDescriptor::isBindlessAddressingKernel(kernel.getKernelInfo().kernelDescriptor);
+    if (isBindlessKernel) {
+        uint64_t bindlessSurfaceStatesBaseAddress = ptrDiff(ssh.getSpace(0), ssh.getCpuBase());
+        if constexpr (heaplessModeEnabled) {
+            bindlessSurfaceStatesBaseAddress += ssh.getGraphicsAllocation()->getGpuAddress();
         }
+
+        auto sshHeapSize = kernel.getSurfaceStateHeapSize();
+        // Allocate space for new ssh data
+        auto dstSurfaceState = ssh.getSpace(sshHeapSize);
+        memcpy_s(dstSurfaceState, sshHeapSize, kernel.getSurfaceStateHeap(), sshHeapSize);
+
+        kernel.patchBindlessSurfaceStatesInCrossThreadData<heaplessModeEnabled>(bindlessSurfaceStatesBaseAddress);
     }
 
     auto &gfxCoreHelper = device.getGfxCoreHelper();

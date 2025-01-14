@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -500,7 +500,7 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCo
     auto patchValue3 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 2 * surfaceStateSize));
     auto patchValue4 = gfxCoreHelper.getBindlessSurfaceExtendedMessageDescriptorValue(static_cast<uint32_t>(baseAddress + 3 * surfaceStateSize));
 
-    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+    mockKernel.patchBindlessSurfaceStatesInCrossThreadData<false>(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
     memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
@@ -510,6 +510,65 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchingCrossThreadDataThenCo
     EXPECT_EQ(0u, crossThreadData[2]);
     EXPECT_EQ(patchValue3, crossThreadData[3]);
     EXPECT_EQ(patchValue4, crossThreadData[4]);
+}
+
+TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInCrossThreadDataThenCorrectAddressesAreWritten) {
+    auto argDescriptorImg1 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    argDescriptorImg1.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
+    argDescriptorImg1.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorImg1.as<NEO::ArgDescImage>().bindless = 0x0;
+
+    auto argDescriptorImg2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTImage);
+    argDescriptorImg2.as<NEO::ArgDescImage>() = NEO::ArgDescImage();
+    argDescriptorImg2.as<NEO::ArgDescImage>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorImg2.as<NEO::ArgDescImage>().bindless = sizeof(uint64_t);
+
+    auto argDescriptorPtr = NEO::ArgDescriptor(NEO::ArgDescriptor::argTPointer);
+    argDescriptorPtr.as<NEO::ArgDescPointer>() = NEO::ArgDescPointer();
+    argDescriptorPtr.as<NEO::ArgDescPointer>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorPtr.as<NEO::ArgDescPointer>().stateless = 2 * sizeof(uint64_t);
+
+    KernelInfo kernelInfo = {};
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::Stateless;
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;
+
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorImg1);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorImg2);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorPtr);
+
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.bindless = 3 * sizeof(uint64_t);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.bindless = 4 * sizeof(uint64_t);
+
+    MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+
+    pProgram->mockKernelInfo.kernelDescriptor.initBindlessOffsetToSurfaceState();
+
+    mockKernel.crossThreadData = new char[5 * sizeof(uint64_t)];
+    mockKernel.crossThreadDataSize = 5 * sizeof(uint64_t);
+    memset(mockKernel.crossThreadData, 0x00, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = 0x00ff'ffff'0000'1000;
+    ASSERT_TRUE(baseAddress > std::numeric_limits<uint32_t>::max());
+
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
+
+    auto bindlessSufaceState1Address = baseAddress;
+    auto bindlessSufaceState2Address = baseAddress + 1 * surfaceStateSize;
+    auto globalVariablesSurfaceAddress = baseAddress + 2 * surfaceStateSize;
+    auto globalConstantsSurfaceAddress = baseAddress + 3 * surfaceStateSize;
+
+    constexpr bool heaplessEnabled = true;
+    mockKernel.patchBindlessSurfaceStatesInCrossThreadData<heaplessEnabled>(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(bindlessSufaceState1Address, crossThreadData[0]);
+    EXPECT_EQ(bindlessSufaceState2Address, crossThreadData[1]);
+    EXPECT_EQ(0u, crossThreadData[2]);
+    EXPECT_EQ(globalVariablesSurfaceAddress, crossThreadData[3]);
+    EXPECT_EQ(globalConstantsSurfaceAddress, crossThreadData[4]);
 }
 
 TEST_F(BindlessKernelTests, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
@@ -531,7 +590,7 @@ TEST_F(BindlessKernelTests, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThr
     memset(mockKernel.crossThreadData, 0, mockKernel.crossThreadDataSize);
 
     const uint64_t baseAddress = 0x1000;
-    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+    mockKernel.patchBindlessSurfaceStatesInCrossThreadData<false>(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
     memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
@@ -555,7 +614,7 @@ TEST_F(BindlessKernelTests, givenNoStatefulArgsWhenPatchingBindlessOffsetsInCros
     memset(mockKernel.crossThreadData, 0, mockKernel.crossThreadDataSize);
 
     const uint64_t baseAddress = 0x1000;
-    mockKernel.patchBindlessOffsetsInCrossThreadData(baseAddress);
+    mockKernel.patchBindlessSurfaceStatesInCrossThreadData<false>(baseAddress);
 
     auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
     memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
