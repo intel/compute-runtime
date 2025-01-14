@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/common_types.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -43,6 +45,6 @@ struct alignas(32) ImplicitArgs {
 static_assert(std::alignment_of_v<ImplicitArgs> == 32, "Implicit args size need to be aligned to 32");
 static_assert(sizeof(ImplicitArgs) == (32 * sizeof(uint32_t)));
 static_assert(ImplicitArgs::getSize() == (28 * sizeof(uint32_t)));
-static_assert(std::is_pod<ImplicitArgs>::value);
+static_assert(NEO::TypeTraits::isPodV<ImplicitArgs>);
 
 } // namespace NEO
