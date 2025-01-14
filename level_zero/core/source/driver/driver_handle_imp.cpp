@@ -298,17 +298,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     driverHandle->enableProgramDebugging = static_cast<NEO::DebuggingMode>(envVariables.programDebugging);
     driverHandle->enableSysman = envVariables.sysman;
     driverHandle->enablePciIdDeviceOrder = envVariables.pciIdDeviceOrder;
-    char const *preferredDeviceHierarchy = envVariables.deviceHierarchyMode.c_str();
-    if ((strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyUnk) == 0) || ((strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyComposite) != 0) && (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyFlat) != 0) && (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyCombined) != 0))) {
-        preferredDeviceHierarchy = devices[0]->getGfxCoreHelper().getDefaultDeviceHierarchy();
-    }
-    if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyComposite) == 0) {
-        driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE;
-    } else if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyFlat) == 0) {
-        driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
-    } else if (strcmp(preferredDeviceHierarchy, NEO::deviceHierarchyCombined) == 0) {
-        driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED;
-    }
+
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {
         delete driverHandle;
@@ -338,12 +328,9 @@ void DriverHandleImp::initHostUsmAllocPool() {
 }
 
 ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
-    bool exposeSubDevices = false;
 
     // If the user has requested FLAT or COMBINED device hierarchy model, then report all the sub devices as devices.
-    if (this->deviceHierarchyMode != L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMPOSITE) {
-        exposeSubDevices = true;
-    }
+    bool exposeSubDevices = (this->devices.size() && this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::COMPOSITE);
 
     uint32_t numDevices = 0;
     if (exposeSubDevices) {
@@ -871,10 +858,7 @@ ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vert
         this->initializeVertexes();
     }
 
-    bool exposeSubDevices = false;
-    if (deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
-        exposeSubDevices = true;
-    }
+    bool exposeSubDevices = this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::COMPOSITE;
 
     if (*pCount == 0) {
         if (exposeSubDevices) {

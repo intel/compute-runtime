@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,6 @@ struct L0EnvVariables {
     bool sysman;
     bool pciIdDeviceOrder;
     bool fp64Emulation;
-    std::string deviceHierarchyMode;
 };
 
 } // namespace L0

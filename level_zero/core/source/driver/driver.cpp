@@ -53,8 +53,6 @@ void DriverImp::initialize(ze_result_t *result) {
         envReader.getSetting("ZE_ENABLE_PCI_ID_DEVICE_ORDER", false);
     envVariables.fp64Emulation =
         envReader.getSetting("NEO_FP64_EMULATION", false);
-    envVariables.deviceHierarchyMode =
-        envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(NEO::deviceHierarchyUnk));
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);

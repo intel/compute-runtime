@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -663,9 +663,8 @@ ze_result_t DeviceImp::getP2PProperties(ze_device_handle_t hPeerDevice,
 }
 
 ze_result_t DeviceImp::getRootDevice(ze_device_handle_t *phRootDevice) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
     // Given FLAT device Hierarchy mode, then nullptr is returned for the root device since no traversal is allowed.
-    if (driverHandleImp->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+    if (this->neoDevice->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::FLAT) {
         *phRootDevice = nullptr;
         return ZE_RESULT_SUCCESS;
     }
@@ -1006,11 +1005,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
         pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_INTEGRATED;
     }
 
-    if (isSubdevice) {
-        DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
-        if (driverHandleImp->deviceHierarchyMode != L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
-            pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
-        }
+    if (isSubdevice && this->neoDevice->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::FLAT) {
+        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
     }
 
     if (this->neoDevice->getDeviceInfo().errorCorrectionSupport) {
@@ -1198,9 +1194,8 @@ ze_result_t DeviceImp::getGlobalTimestampsUsingOsInterface(uint64_t *hostTimesta
 }
 
 ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) {
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(driverHandle);
     // Given FLAT device Hierarchy mode, then a count of 0 is returned since no traversal is allowed.
-    if (driverHandleImp->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
+    if (this->neoDevice->getExecutionEnvironment()->getDeviceHierarchyMode() == NEO::DeviceHierarchyMode::FLAT) {
         *pCount = 0;
         return ZE_RESULT_SUCCESS;
     }

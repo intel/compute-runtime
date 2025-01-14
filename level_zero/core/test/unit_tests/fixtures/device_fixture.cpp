@@ -131,11 +131,7 @@ void MultiDeviceFixtureHierarchy::setUp() {
         executionEnvironment->rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
     }
 
-    if (driverHandle->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT) {
-        executionEnvironment->setExposeSubDevicesAsDevices(true);
-    } else if (driverHandle->deviceHierarchyMode == L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_COMBINED) {
-        executionEnvironment->setCombinedDeviceHierarchy(true);
-    }
+    executionEnvironment->setDeviceHierarchyMode(deviceHierarchyMode);
 
     auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     if (devices.size()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         }
     }
 
-    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.parseAffinityMask();
     executionEnvironment.adjustCcsCount();
     executionEnvironment.calculateMaxOsContextCount();
@@ -214,7 +214,7 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
         return false;
     }
 
-    executionEnvironment.setDeviceHierarchy(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    executionEnvironment.setDeviceHierarchyMode(executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
     executionEnvironment.adjustRootDeviceEnvironments();

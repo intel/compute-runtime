@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
         UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
-    executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    executionEnvironment->setDeviceHierarchyMode(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment->calculateMaxOsContextCount();
     return executionEnvironment;
 }
@@ -160,7 +160,7 @@ ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo
     UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[0]);
 
-    executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    executionEnvironment->setDeviceHierarchyMode(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
 
     MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->initializeMemoryManager();

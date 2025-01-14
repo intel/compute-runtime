@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,5 +113,5 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, whenGetDefaultDeviceHierarchyThenR
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
-    EXPECT_STREQ("FLAT", defaultDeviceHierarchy);
+    EXPECT_EQ(FLAT, defaultDeviceHierarchy);
 }

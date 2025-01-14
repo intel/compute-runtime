@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
+#include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/stackvec.h"
@@ -48,11 +49,6 @@ class AILConfiguration;
 
 using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
-
-extern const char *deviceHierarchyComposite;
-extern const char *deviceHierarchyFlat;
-extern const char *deviceHierarchyCombined;
-extern const char *deviceHierarchyUnk;
 
 class GfxCoreHelper {
   public:
@@ -171,7 +167,7 @@ class GfxCoreHelper {
     virtual bool isRelaxedOrderingSupported() const = 0;
     virtual uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const = 0;
-    virtual char const *getDefaultDeviceHierarchy() const = 0;
+    virtual DeviceHierarchyMode getDefaultDeviceHierarchy() const = 0;
     static bool isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper);
 
     virtual bool areSecondaryContextsSupported() const = 0;
@@ -408,7 +404,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool isRelaxedOrderingSupported() const override;
     uint32_t calculateNumThreadsPerThreadGroup(uint32_t simd, uint32_t totalWorkItems, uint32_t grfCount, bool isHwLocalIdGeneration, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
     uint32_t overrideMaxWorkGroupSize(uint32_t maxWG) const override;
-    char const *getDefaultDeviceHierarchy() const override;
+    DeviceHierarchyMode getDefaultDeviceHierarchy() const override;
 
     bool areSecondaryContextsSupported() const override;
     uint32_t getContextGroupContextsCount() const override;

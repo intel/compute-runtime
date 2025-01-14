@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debugger/debugger.h"
+#include "shared/source/helpers/device_hierarchy_mode.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include <mutex>
@@ -38,7 +39,11 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void adjustCcsCount();
     void adjustCcsCount(const uint32_t rootDeviceIndex) const;
     void sortNeoDevices();
-    void setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper);
+    void setDeviceHierarchyMode(const GfxCoreHelper &gfxCoreHelper);
+    void setDeviceHierarchyMode(const DeviceHierarchyMode deviceHierarchyMode) {
+        this->deviceHierarchyMode = deviceHierarchyMode;
+    }
+    DeviceHierarchyMode getDeviceHierarchyMode() const { return deviceHierarchyMode; }
     void adjustRootDeviceEnvironments();
     void prepareForCleanup() const;
     void configureCcsMode();
@@ -50,15 +55,6 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void setMetricsEnabled(bool value) {
         this->metricsEnabled = value;
     }
-    void setExposeSubDevicesAsDevices(bool value) {
-        this->subDevicesAsDevices = value;
-    }
-    void setCombinedDeviceHierarchy(bool value) {
-        this->subDevicesAsDevices = value;
-        this->combinedDeviceHierarchy = value;
-    }
-    bool isExposingSubDevicesAsDevices() const { return this->subDevicesAsDevices; }
-    bool isCombinedDeviceHierarchy() const { return this->combinedDeviceHierarchy; }
     void getErrorDescription(const char **ppString);
     bool getSubDeviceHierarchy(uint32_t index, std::tuple<uint32_t, uint32_t, uint32_t> *subDeviceMap);
     bool areMetricsEnabled() { return this->metricsEnabled; }
@@ -90,9 +86,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void restoreCcsMode();
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
-    bool subDevicesAsDevices = false;
-    bool combinedDeviceHierarchy = false;
 
+    DeviceHierarchyMode deviceHierarchyMode = COMPOSITE;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
     std::mutex initializeDirectSubmissionControllerMutex;

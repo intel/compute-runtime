@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ TEST_F(PciBusInfoTest, givenSuccessfulReadingOfBusValuesThenCorrectValuesAreRetu
     }
 }
 
-TEST_P(PciBusOrderingTest, givenMultipleDevicesAndZePcieIdOrderingSetThenDevicesAndVerticesAreInCorrectOrder) {
+TEST_P(PciBusOrderingTest, givenMultipleDevicesWithCompositeHierarchyAndZePcieIdOrderingSetThenDevicesAndVerticesAreInCorrectOrder) {
     constexpr uint32_t numRootDevices = 6u;
     constexpr uint32_t numSubDevices = 2u;
     const NEO::PhysicalDevicePciBusInfo busInfos[numRootDevices] = {{2, 0, 3, 0}, {2, 0, 1, 9}, {0, 0, 0, 1}, {0, 3, 5, 0}, {1, 3, 5, 0}, {0, 4, 1, 0}};
@@ -76,6 +76,7 @@ TEST_P(PciBusOrderingTest, givenMultipleDevicesAndZePcieIdOrderingSetThenDevices
     debugManager.flags.EnableChipsetUniqueUUID.set(0);
 
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
+    executionEnvironment->setDeviceHierarchyMode(COMPOSITE);
     auto memoryManager = new MockMemoryManagerOsAgnosticContext(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);

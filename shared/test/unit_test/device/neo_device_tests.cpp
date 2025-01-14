@@ -171,7 +171,7 @@ TEST(Device, WhenCreatingDeviceThenCapsInitilizedBeforeEnginesAreCreated) {
         executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
-    executionEnvironment->setDeviceHierarchy(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
+    executionEnvironment->setDeviceHierarchyMode(executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>());
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->initializeMemoryManager();
 

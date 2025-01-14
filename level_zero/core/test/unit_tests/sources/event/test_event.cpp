@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2810,9 +2810,9 @@ TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyRetur
     EXPECT_EQ(0u, resultTimestamp.global.kernelEnd);
 }
 
-TEST_F(EventPoolCreateMultiDevice, givenFlatHierarchyWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
-    this->driverHandle->deviceHierarchyMode = L0::L0DeviceHierarchyMode::L0_DEVICE_HIERARCHY_FLAT;
+using EventPoolCreateMultiDeviceFlatHierarchy = Test<MultiDeviceFixtureFlatHierarchy>;
 
+TEST_F(EventPoolCreateMultiDeviceFlatHierarchy, givenFlatHierarchyWhenCallZeGetDevicesThenSubDevicesAreReturnedAsSeparateDevices) {
     uint32_t deviceCount = 0;
     ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -4310,6 +4310,8 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
     void testSingleDevice() {
         ze_result_t result = ZE_RESULT_SUCCESS;
+
+        device->getNEODevice()->getExecutionEnvironment()->setDeviceHierarchyMode(COMPOSITE);
 
         auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();

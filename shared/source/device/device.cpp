@@ -93,7 +93,7 @@ bool Device::genericSubDevicesAllowed() {
     deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
-    if (numSubDevices == 1 && (!executionEnvironment->isCombinedDeviceHierarchy() || subDeviceCount == 1)) {
+    if (numSubDevices == 1 && (executionEnvironment->getDeviceHierarchyMode() != COMBINED || subDeviceCount == 1)) {
         numSubDevices = 0;
     }
 

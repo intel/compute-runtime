@@ -220,7 +220,7 @@ void ExecutionEnvironment::parseAffinityMask() {
     }
 
     // If the user has requested FLAT or COMBINED device hierarchy models, then report all the sub devices as devices.
-    bool exposeSubDevicesAsApiDevices = isExposingSubDevicesAsDevices();
+    bool exposeSubDevices = this->deviceHierarchyMode != COMPOSITE;
 
     // Reserve at least for a size equal to rootDeviceEnvironments.size() times four,
     // which is enough for typical configurations
@@ -231,7 +231,7 @@ void ExecutionEnvironment::parseAffinityMask() {
     mapOfIndices.reserve(reservedSizeForIndices);
     uint32_t hwSubDevicesCount = 0u;
 
-    if (exposeSubDevicesAsApiDevices) {
+    if (exposeSubDevices) {
         for (uint32_t currentRootDevice = 0u; currentRootDevice < numRootDevices; currentRootDevice++) {
             auto hwInfo = rootDeviceEnvironments[currentRootDevice]->getHardwareInfo();
 
@@ -258,7 +258,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
         if (entryIndex >= numDevices) {
             continue;
-        } else if (exposeSubDevicesAsApiDevices) {
+        } else if (exposeSubDevices) {
             // tiles as devices
             // so ignore X.Y
             if (subEntries.size() > 1) {
@@ -312,17 +312,17 @@ void ExecutionEnvironment::sortNeoDevices() {
     std::sort(rootDeviceEnvironments.begin(), rootDeviceEnvironments.end(), comparePciIdBusNumber);
 }
 
-void ExecutionEnvironment::setDeviceHierarchy(const GfxCoreHelper &gfxCoreHelper) {
+void ExecutionEnvironment::setDeviceHierarchyMode(const GfxCoreHelper &gfxCoreHelper) {
     NEO::EnvironmentVariableReader envReader;
-    std::string hierarchyModel = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(gfxCoreHelper.getDefaultDeviceHierarchy()));
-    if (strcmp(hierarchyModel.c_str(), "COMPOSITE") == 0) {
-        setExposeSubDevicesAsDevices(false);
-    }
-    if (strcmp(hierarchyModel.c_str(), "FLAT") == 0) {
-        setExposeSubDevicesAsDevices(true);
-    }
-    if (strcmp(hierarchyModel.c_str(), "COMBINED") == 0) {
-        setCombinedDeviceHierarchy(true);
+    std::string deviceHierarchyMode = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(""));
+    if (strcmp(deviceHierarchyMode.c_str(), "COMPOSITE") == 0) {
+        this->deviceHierarchyMode = COMPOSITE;
+    } else if (strcmp(deviceHierarchyMode.c_str(), "FLAT") == 0) {
+        this->deviceHierarchyMode = FLAT;
+    } else if (strcmp(deviceHierarchyMode.c_str(), "COMBINED") == 0) {
+        this->deviceHierarchyMode = COMBINED;
+    } else {
+        this->deviceHierarchyMode = gfxCoreHelper.getDefaultDeviceHierarchy();
     }
 }
 

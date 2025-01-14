@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace L0 {
 namespace ult {
 
-TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesWhenOnlyTileOneIsEnabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
+TEST_F(SysmanMultiDeviceInfoFixture, givenDeviceWithMultipleTilesWhenOnlyTileOneIsEnabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
     neoDevice->deviceBitfield.reset();
     neoDevice->deviceBitfield.set(1);
     uint32_t subdeviceId = 0;
@@ -24,7 +24,7 @@ TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesWhenOnlyTileOne
     EXPECT_TRUE(onSubdevice);
 }
 
-TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesWhenOnlyTileOneIsEnabledAndMultiArchIsDisabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
+TEST_F(SysmanMultiDeviceInfoFixture, givenDeviceWithMultipleTilesWhenOnlyTileOneIsEnabledAndMultiArchIsDisabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
     neoDevice->deviceBitfield.reset();
     neoDevice->deviceBitfield.set(1);
     uint32_t subdeviceId = 0;
@@ -34,7 +34,8 @@ TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesWhenOnlyTileOne
     EXPECT_FALSE(onSubdevice);
 }
 
-TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesEnabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
+TEST_F(SysmanMultiDeviceInfoFixture, givenDeviceWithMultipleTilesEnabledAndCompositeHierarchyThenGetSysmanDeviceInfoReturnsExpectedValues) {
+    neoDevice->getExecutionEnvironment()->setDeviceHierarchyMode(NEO::DeviceHierarchyMode::COMPOSITE);
     uint32_t subDeviceCount = 0;
     std::vector<ze_device_handle_t> deviceHandles;
     Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);

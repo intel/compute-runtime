@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1693,10 +1693,10 @@ HWTEST_F(GfxCoreHelperTest, givenFlagRemoveRestrictionsOnNumberOfThreadsInGpgpuT
     }
 }
 
-HWTEST2_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnFlatHierarchy, IsNotXeHpcCore) {
+HWTEST2_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnCompositeHierarchy, IsNotXeHpcCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
-    EXPECT_STREQ("COMPOSITE", defaultDeviceHierarchy);
+    EXPECT_EQ(COMPOSITE, defaultDeviceHierarchy);
 }
 
 HWTEST_F(GfxCoreHelperTest, givenContextGroupDisabledWhenContextGroupContextsCountAndSecondaryContextsSupportQueriedThenZeroCountAndFalseIsReturned) {
