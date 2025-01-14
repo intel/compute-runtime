@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -290,6 +290,16 @@ class CommandQueueHw : public CommandQueue {
                               cl_uint numEventsInWaitList,
                               const cl_event *eventWaitList,
                               cl_event *event) override;
+
+    cl_int enqueueWriteBufferImpl(Buffer *buffer,
+                                  cl_bool blockingWrite,
+                                  size_t offset,
+                                  size_t cb,
+                                  const void *ptr,
+                                  GraphicsAllocation *mapAllocation,
+                                  cl_uint numEventsInWaitList,
+                                  const cl_event *eventWaitList,
+                                  cl_event *event, CommandStreamReceiver &csr) override;
 
     cl_int enqueueWriteBufferRect(Buffer *buffer,
                                   cl_bool blockingWrite,

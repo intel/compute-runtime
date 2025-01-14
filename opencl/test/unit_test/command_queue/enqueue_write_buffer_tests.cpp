@@ -630,3 +630,104 @@ HWTEST_F(EnqueueWriteBufferHw, givenHostPtrIsFromMappedBufferWhenWriteBufferIsCa
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, csr.createAllocationForHostSurfaceCalled);
 }
+
+struct WriteBufferStagingBufferTest : public EnqueueWriteBufferHw {
+    void SetUp() override {
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
+        EnqueueWriteBufferHw::SetUp();
+    }
+
+    void TearDown() override {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
+            return;
+        }
+        EnqueueWriteBufferHw::TearDown();
+    }
+    constexpr static size_t chunkSize = MemoryConstants::megaByte * 2;
+
+    unsigned char ptr[MemoryConstants::cacheLineSize];
+    MockBuffer buffer;
+    cl_queue_properties props = {};
+};
+
+HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledThenReturnSuccess) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, buffer.getSize(), ptr, nullptr);
+    EXPECT_TRUE(mockCommandQueueHw.flushCalled);
+    EXPECT_EQ(res, CL_SUCCESS);
+    EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteBufferCounter);
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledWithLargeSizeThenSplitTransfer) {
+    auto hostPtr = new unsigned char[chunkSize * 4];
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    auto retVal = CL_SUCCESS;
+    std::unique_ptr<Buffer> buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(),
+                                                                            0,
+                                                                            chunkSize * 4,
+                                                                            nullptr,
+                                                                            retVal));
+    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(buffer.get(), false, 0, chunkSize * 4, hostPtr, nullptr);
+    EXPECT_TRUE(mockCommandQueueHw.flushCalled);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(res, CL_SUCCESS);
+    EXPECT_EQ(4ul, mockCommandQueueHw.enqueueWriteBufferCounter);
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
+
+    delete[] hostPtr;
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledWithEventThenReturnValidEvent) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_WRITE_BUFFER;
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    cl_event event;
+    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(expectedLastCmd, mockCommandQueueHw.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingWriteBufferCalledWithSingleTransferThenNoBarrierEnqueued) {
+    constexpr cl_command_type expectedLastCmd = CL_COMMAND_WRITE_BUFFER;
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.setOoqEnabled();
+    cl_event event;
+    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(expectedLastCmd, mockCommandQueueHw.lastCommandType);
+    EXPECT_EQ(expectedLastCmd, pEvent->getCommandType());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStagingWriteBufferThenTimestampsSetCorrectly) {
+    cl_event event;
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.setProfilingEnabled();
+    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
+    EXPECT_EQ(res, CL_SUCCESS);
+
+    auto pEvent = (Event *)event;
+    EXPECT_FALSE(pEvent->isCPUProfilingPath());
+    EXPECT_TRUE(pEvent->isProfilingEnabled());
+
+    clReleaseEvent(event);
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferFailedThenPropagateErrorCode) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    mockCommandQueueHw.enqueueWriteBufferCallBase = false;
+    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, nullptr);
+
+    EXPECT_EQ(res, CL_INVALID_OPERATION);
+    EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteBufferCounter);
+}

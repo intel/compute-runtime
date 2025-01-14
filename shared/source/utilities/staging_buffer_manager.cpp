@@ -163,6 +163,33 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
     return result;
 }
 
+StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead) {
+    StagingQueue stagingQueue;
+    auto copiesNum = globalSize / chunkSize;
+    auto remainder = globalSize % chunkSize;
+    auto chunkOffset = globalOffset;
+    StagingTransferStatus result{};
+    for (auto i = 0u; i < copiesNum; i++) {
+        auto chunkPtr = ptrOffset(ptr, i * chunkSize);
+        result = performChunkTransfer(isRead, const_cast<void *>(chunkPtr), chunkSize, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, chunkSize);
+        if (result.chunkCopyStatus != 0) {
+            return result;
+        }
+        chunkOffset += chunkSize;
+    }
+
+    if (remainder != 0) {
+        auto chunkPtr = ptrOffset(ptr, copiesNum * chunkSize);
+        result = performChunkTransfer(isRead, const_cast<void *>(chunkPtr), remainder, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, remainder);
+        if (result.chunkCopyStatus != 0) {
+            return result;
+        }
+    }
+
+    result.waitStatus = drainAndReleaseStagingQueue(stagingQueue);
+    return result;
+}
+
 /*
  * This method is used for read transfers. It waits for oldest transfer to finish
  * and copies data associated with that transfer to host allocation.

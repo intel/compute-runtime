@@ -94,6 +94,27 @@ cl_int CommandQueue::enqueueStagingReadImage(Image *srcImage, cl_bool blockingCo
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, CL_COMMAND_READ_IMAGE);
 }
 
+cl_int CommandQueue::enqueueStagingWriteBuffer(Buffer *buffer, cl_bool blockingCopy, size_t offset, size_t size, const void *ptr, cl_event *event) {
+    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_WRITE_BUFFER, {}, buffer, this->getDevice().getRootDeviceIndex(), &size};
+    CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+    cl_event profilingEvent = nullptr;
+
+    bool isSingleTransfer = false;
+    ChunkTransferBufferFunc chunkWrite = [&](void *stagingBuffer, size_t chunkOffset, size_t chunkSize) -> int32_t {
+        auto isFirstTransfer = (chunkOffset == offset);
+        auto isLastTransfer = (offset + size == chunkOffset + chunkSize);
+        isSingleTransfer = isFirstTransfer && isLastTransfer;
+        cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
+
+        auto ret = this->enqueueWriteBufferImpl(buffer, false, chunkOffset, chunkSize, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        ret |= this->flush();
+        return ret;
+    };
+    auto stagingBufferManager = this->context->getStagingBufferManager();
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, offset, size, chunkWrite, &csr, false);
+    return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, CL_COMMAND_WRITE_BUFFER);
+}
+
 /*
  * If there's single transfer, use user event.
  * Otherwise, first transfer uses profiling event to obtain queue/submit/start timestamps.

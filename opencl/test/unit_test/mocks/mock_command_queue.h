@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,6 +104,12 @@ class MockCommandQueue : public CommandQueue {
         writeBufferPtr = const_cast<void *>(ptr);
         writeMapAllocation = mapAllocation;
         return writeBufferRetValue;
+    }
+
+    cl_int enqueueWriteBufferImpl(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t cb,
+                                  const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                  const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) override {
+        return CL_SUCCESS;
     }
 
     WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
@@ -416,11 +422,14 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         cpuDataTransferHandlerCalled = true;
         return BaseClass::cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     }
-    cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size,
-                              const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+    cl_int enqueueWriteBufferImpl(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size, const void *ptr, GraphicsAllocation *mapAllocation,
+                                  cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) override {
         enqueueWriteBufferCounter++;
         blockingWriteBuffer = blockingWrite == CL_TRUE;
-        return BaseClass::enqueueWriteBuffer(buffer, blockingWrite, offset, size, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event);
+        if (enqueueWriteBufferCallBase) {
+            return BaseClass::enqueueWriteBufferImpl(buffer, blockingWrite, offset, size, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event, csr);
+        }
+        return CL_INVALID_OPERATION;
     }
 
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
@@ -529,6 +538,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     size_t enqueueReadImageCounter = 0;
     bool enqueueReadImageCallBase = true;
     size_t enqueueWriteBufferCounter = 0;
+    bool enqueueWriteBufferCallBase = true;
     size_t requestedCmdStreamSize = 0;
     bool blockingWriteBuffer = false;
     bool storeMultiDispatchInfo = false;

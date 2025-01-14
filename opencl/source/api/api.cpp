@@ -2545,16 +2545,26 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
-        retVal = pCommandQueue->enqueueWriteBuffer(
-            pBuffer,
-            blockingWrite,
-            offset,
-            cb,
-            ptr,
-            nullptr,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
+        if (pCommandQueue->isValidForStagingTransfer(pBuffer, ptr, numEventsInWaitList > 0)) {
+            retVal = pCommandQueue->enqueueStagingWriteBuffer(
+                pBuffer,
+                blockingWrite,
+                offset,
+                cb,
+                ptr,
+                event);
+        } else {
+            retVal = pCommandQueue->enqueueWriteBuffer(
+                pBuffer,
+                blockingWrite,
+                offset,
+                cb,
+                ptr,
+                nullptr,
+                numEventsInWaitList,
+                eventWaitList,
+                event);
+        }
     }
 
     DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));

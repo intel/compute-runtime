@@ -161,6 +161,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                      const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
                                      const cl_event *eventWaitList, cl_event *event) = 0;
 
+    virtual cl_int enqueueWriteBufferImpl(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t cb,
+                                          const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
+                                          const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) = 0;
+
     virtual cl_int enqueueWriteImageImpl(Image *dstImage, cl_bool blockingWrite, const size_t *origin,
                                          const size_t *region, size_t inputRowPitch, size_t inputSlicePitch,
                                          const void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
@@ -403,6 +407,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                     size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
     cl_int enqueueStagingReadImage(Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
                                    size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
+    cl_int enqueueStagingWriteBuffer(Buffer *buffer, cl_bool blockingCopy, size_t offset, size_t size, const void *ptr, cl_event *event);
 
     bool isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
     bool isValidForStagingTransfer(MemObj *memObj, const void *ptr, bool hasDependencies);
