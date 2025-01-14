@@ -968,9 +968,8 @@ int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vecto
 
 bool IoctlHelperXe::isPageFaultSupported() {
     xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, false);
-
     return false;
-};
+}
 
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
@@ -985,7 +984,8 @@ std::unique_ptr<uint8_t[]> IoctlHelperXe::createVmControlExtRegion(const std::op
 uint32_t IoctlHelperXe::getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) {
     xeLog(" -> IoctlHelperXe::%s %d,%d,%d\n", __FUNCTION__, disableScratch, enablePageFault, useVmBind);
     uint32_t flags = DRM_XE_VM_CREATE_FLAG_LR_MODE;
-    if (enablePageFault) {
+    bool debuggingEnabled = drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled();
+    if (enablePageFault || debuggingEnabled) {
         flags |= DRM_XE_VM_CREATE_FLAG_FAULT_MODE;
     }
     if (!disableScratch) {
