@@ -193,6 +193,7 @@ bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, bo
     switch (memObj->peekClMemObjType()) {
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE2D:
+    case CL_MEM_OBJECT_BUFFER:
         return stagingBufferManager->isValidForStagingTransfer(this->getDevice(), ptr, hasDependencies);
     default:
         return false;
