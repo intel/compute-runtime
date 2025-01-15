@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,22 +78,21 @@ class SysmanDeviceSchedulerFixtureI915 : public SysmanDeviceSchedulerFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pSysfsAccess->engineSchedFilePropertiesMap.clear();
         pSysfsAccess->cleanUpMap();
-        for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-                 [=](std::string engineName) {
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultpreemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaulttimesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultheartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+        for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultpreemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaulttimesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultheartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
 
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultpreemptTimeout, defaultTimeout);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaulttimesliceDuration, defaultTimeslice);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultheartbeatInterval, defaultHeartbeat);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->preemptTimeout, timeout);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->timesliceDuration, timeslice);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->heartbeatInterval, heartbeat);
-                 });
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultpreemptTimeout, defaultTimeout);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaulttimesliceDuration, defaultTimeslice);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultheartbeatInterval, defaultHeartbeat);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->preemptTimeout, timeout);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->timesliceDuration, timeslice);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->heartbeatInterval, heartbeat);
+        }
         pSysmanDeviceImp->pSchedulerHandleContext->handleList.clear();
         device = pSysmanDevice;
         getSchedHandles(0);
@@ -365,10 +364,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenHeartBeatSettingFailsThenVerifyzesSchedulerSetTimeoutModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -380,10 +378,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenGetCurrentModeFailsThenVerifyzesSchedulerSetTimeoutModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -395,10 +392,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenPreEmptTimeoutNoPermissionThenVerifyzesSchedulerSetTimeoutModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -410,10 +406,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenTimeSliceDurationNoPermissionThenVerifyzesSchedulerSetTimeoutModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -455,10 +450,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeWhenNoAccessToTimeSliceDurationThenVerifyzesSchedulerSetTimesliceModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -471,10 +465,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeWhenNoAccessToHeartBeatIntervalThenVerifyzesSchedulerSetTimesliceModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -499,10 +492,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeWhenPreEmptTimeoutNotAvailableThenVerifyzesSchedulerSetExclusiveModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -512,10 +504,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeWhenTimeSliceDurationNotAvailableThenVerifyzesSchedulerSetExclusiveModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -525,10 +516,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerSetExclusiveModeWhenTimeSliceDurationHasNoPermissionsThenVerifyzesSchedulerSetExclusiveModeCallFails) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -538,10 +528,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerGetCurrentModeWhenPreEmptTimeOutNotAvailableThenFailureIsReturned) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_sched_mode_t mode;
@@ -551,10 +540,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerGetCurrentModeWhenTimeSliceDurationNotAvailableThenFailureIsReturned) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_sched_mode_t mode;
@@ -564,10 +552,9 @@ TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSch
 }
 
 TEST_F(SysmanDeviceSchedulerFixtureI915, GivenValidDeviceHandleWhenCallingzesSchedulerGetCurrentModeWhenTimeSliceDurationHasNoPermissionThenFailureIsReturned) {
-    for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-             [=](std::string engineName) {
-                 pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRGRP | S_IROTH | S_IWUSR);
-             });
+    for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+        pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRGRP | S_IROTH | S_IWUSR);
+    }
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_sched_mode_t mode;
@@ -684,24 +671,23 @@ class SysmanDeviceSchedulerFixtureXe : public SysmanDeviceSchedulerFixture {
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockSchedulerSysfsAccessXe>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-        for_each(pSysfsAccess->listOfMockedEngines.begin(), pSysfsAccess->listOfMockedEngines.end(),
-                 [=](std::string engineName) {
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultpreemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaulttimesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultheartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-                     pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultMaximumJobTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+        for (const auto &engineName : pSysfsAccess->listOfMockedEngines) {
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultpreemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaulttimesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultheartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->preemptTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->timesliceDuration, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->heartbeatInterval, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+            pSysfsAccess->setFileProperties(engineName, pSysfsAccess->defaultMaximumJobTimeout, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
 
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultpreemptTimeout, defaultTimeout);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaulttimesliceDuration, defaultTimeslice);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultheartbeatInterval, defaultHeartbeat);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->preemptTimeout, timeout);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->timesliceDuration, timeslice);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->heartbeatInterval, heartbeat);
-                     pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultMaximumJobTimeout, heartbeat);
-                 });
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultpreemptTimeout, defaultTimeout);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaulttimesliceDuration, defaultTimeslice);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultheartbeatInterval, defaultHeartbeat);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->preemptTimeout, timeout);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->timesliceDuration, timeslice);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->heartbeatInterval, heartbeat);
+            pSysfsAccess->write(pSysfsAccess->engineDir + "/" + engineName + "/" + pSysfsAccess->defaultMaximumJobTimeout, heartbeat);
+        }
         pSysmanDeviceImp->pSchedulerHandleContext->handleList.clear();
         device = pSysmanDevice;
         getSchedHandles(0);
