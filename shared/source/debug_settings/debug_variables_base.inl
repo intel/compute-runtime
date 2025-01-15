@@ -385,7 +385,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, AllowZeroCopyWithoutCoherency, -1, "Use cachelin
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, MaxHwThreadsPercent, 0, "If not zero then maximum number of used HW threads is capped to max * MaxHwThreadsPercent / 100")
 DECLARE_DEBUG_VARIABLE(int32_t, MinHwThreadsUnoccupied, 0, "If not zero then maximum number of used HW threads is reduced by MinHwThreadsUnoccupied")
-DECLARE_DEBUG_VARIABLE(int32_t, MaxKernelManagedPrivateMemoryPercent, 0, "If not zero then maximum amount of kernel-managed private memory is capped to MaxGlobalMemory * MaxKernelManagedPrivateMemoryPercent / 100")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushEveryEnqueueCount, -1, "If greater than 0, driver performs implicit flush every N submissions.")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForNewResource, -1, "-1: platform specific, 0: force disable, 1: force enable")
 DECLARE_DEBUG_VARIABLE(int32_t, PerformImplicitFlushForIdleGpu, -1, "-1: platform specific, 0: force disable, 1: force enable")

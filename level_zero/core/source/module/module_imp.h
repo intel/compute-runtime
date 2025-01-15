@@ -16,6 +16,7 @@
 
 #include "igfxfmid.h"
 
+#include <list>
 #include <memory>
 #include <set>
 #include <string>
@@ -215,7 +216,6 @@ struct ModuleImp : public Module {
     uint32_t profileFlags = 0;
     uint64_t moduleLoadAddress = std::numeric_limits<uint64_t>::max();
     size_t isaAllocationPageSize = 0;
-    size_t privateMemorySize = 0;
 
     NEO::Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;

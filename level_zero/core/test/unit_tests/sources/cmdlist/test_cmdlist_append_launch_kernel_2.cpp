@@ -16,6 +16,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
+#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -1304,14 +1305,12 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogethe
     }
 }
 
-HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExceedGlobalMemSizePercentWhenAppendLaunchKernelWithParamsIsCalledThenNoAllocationIsDone, MatchAny) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledThenNoAllocationIsDone, MatchAny) {
 
-    debugManager.flags.MaxKernelManagedPrivateMemoryPercent.set(33);
     auto devInfo = device->getNEODevice()->getDeviceInfo();
     auto kernelsNb = 2u;
     uint32_t margin128KB = 131072u;
-    auto maxModulePrivateMemorySize = static_cast<uint64_t>(devInfo.globalMemSize * (debugManager.flags.MaxKernelManagedPrivateMemoryPercent.get() / 100.0f));
-    auto underAllocSize = static_cast<uint32_t>(maxModulePrivateMemorySize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
+    auto underAllocSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
     auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
 
     auto &kernelImmDatas = this->module->kernelImmDatas;
@@ -1341,37 +1340,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExc
         EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
     }
 }
-
-HWTEST2_F(CommandListAppendLaunchKernel, givenKernelPrivateAllocWhichExceedGlobalMemSizePercentWhenAppendLaunchKernelWithParamsIsCalledThenAllocationIsDone, MatchAny) {
-
-    debugManager.flags.MaxKernelManagedPrivateMemoryPercent.set(80);
-    auto devInfo = device->getNEODevice()->getDeviceInfo();
-    auto kernelPrivateMemorySize = static_cast<uint64_t>(devInfo.globalMemSize * ((debugManager.flags.MaxKernelManagedPrivateMemoryPercent.get() + 1) / 100.0f));
-    auto underAllocSize = static_cast<uint32_t>(kernelPrivateMemorySize / devInfo.computeUnitsUsedForScratch);
-
-    auto &kernelImmDatas = this->module->kernelImmDatas;
-    auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[0]->getDescriptor());
-    kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;
-    kernelDesc.kernelAttributes.flags.usesPrintf = false;
-    kernelDesc.kernelMetadata.kernelName = "test1";
-
-    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
-    this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
-    EXPECT_TRUE(this->module->shouldAllocatePrivateMemoryPerDispatch());
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->device = this->module->getDevice();
-    auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
-    memoryMgr->turnOnFakingBigAllocations();
-
-    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::KernelImp>>>();
-    EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
-    kernels.push_back(this->createKernelWithName("test1"));
-    pCommandList->allocateOrReuseKernelPrivateMemoryIfNeeded(kernels[0].get(),
-                                                             kernels[0]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
-    EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 1u);
-}
-
 HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, MatchAny) {
     DebugManagerStateRestore restorer;
     debugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
