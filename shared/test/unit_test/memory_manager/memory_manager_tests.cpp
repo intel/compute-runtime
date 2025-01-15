@@ -2351,7 +2351,8 @@ HWTEST_F(GraphicsAllocationDestroyTests, givenAllocationUsedOnlyByNonDefaultCsrW
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
     EXPECT_NE(nullptr, nonDefaultCsr->getInternalAllocationStorage()->getDeferredAllocations().peekHead());
-    (*nonDefaultCsr->getTagAddress())++;
+    auto newTag = *nonDefaultCsr->getTagAddress() + 1;
+    (*nonDefaultCsr->getTagAddress()) = newTag;
     // no need to call freeGraphicsAllocation
 }
 
@@ -2374,7 +2375,8 @@ HWTEST_F(GraphicsAllocationDestroyTests, givenAllocationUsedOnlyByNonDefaultDevi
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
     EXPECT_FALSE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getDeferredAllocations().peekIsEmpty());
     EXPECT_TRUE(nonDefaultCommandStreamReceiver.getInternalAllocationStorage()->getTemporaryAllocations().peekIsEmpty());
-    (*nonDefaultCommandStreamReceiver.getTagAddress())++;
+    auto newTag = *nonDefaultCommandStreamReceiver.getTagAddress() + 1;
+    (*nonDefaultCommandStreamReceiver.getTagAddress()) = newTag;
     // no need to call freeGraphicsAllocation
 }
 

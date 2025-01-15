@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -380,7 +380,8 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(3u, taskCount);
 
-    (*pTagMemory)++;
+    auto newTag = *pTagMemory + 1;
+    (*pTagMemory) = newTag;
     retVal = clEnqueueUnmapMemObject(
         pCmdQ,
         image,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -339,7 +339,8 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
 
     auto callbackCalled = 0u;
 
-    *pTagMemory += 4;
+    auto newTag = *pTagMemory + 4;
+    *pTagMemory = newTag;
 
     clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)&callbackCalled);
 

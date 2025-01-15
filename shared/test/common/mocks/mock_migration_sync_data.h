@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,8 @@ namespace NEO {
 struct MockMigrationSyncDataWithYield : public MigrationSyncData {
     using MigrationSyncData::MigrationSyncData;
     void yield() const override {
-        (*this->tagAddress)++;
+        auto newTag = *this->tagAddress + 1;
+        *this->tagAddress = newTag;
         MigrationSyncData::yield();
     }
 };
