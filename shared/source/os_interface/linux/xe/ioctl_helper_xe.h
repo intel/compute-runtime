@@ -190,9 +190,9 @@ class IoctlHelperXe : public IoctlHelper {
 
     std::unique_ptr<XeDrm::drm_xe_engine_class_instance> defaultEngine;
     struct DebugMetadata {
+        DrmResourceClass type;
         uint64_t offset;
         uint64_t size;
-        DrmResourceClass type;
         bool isCookie;
     };
 

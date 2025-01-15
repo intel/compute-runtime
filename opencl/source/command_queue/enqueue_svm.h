@@ -25,20 +25,20 @@ using SvmFreeClbT = void(CL_CALLBACK *)(cl_command_queue queue,
                                         void *userData);
 
 struct SvmFreeUserData {
+    cl_uint numSvmPointers;
     void **svmPointers;
     SvmFreeClbT clb;
     void *userData;
-    cl_uint numSvmPointers;
     bool ownsEventDeletion;
 
     SvmFreeUserData(cl_uint numSvmPointers,
                     void **svmPointers, SvmFreeClbT clb,
                     void *userData,
                     bool ownsEventDeletion)
-        : svmPointers(svmPointers),
+        : numSvmPointers(numSvmPointers),
+          svmPointers(svmPointers),
           clb(clb),
           userData(userData),
-          numSvmPointers(numSvmPointers),
           ownsEventDeletion(ownsEventDeletion){};
 };
 

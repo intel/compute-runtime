@@ -1559,7 +1559,7 @@ TEST(ImageConvertDescriptorTest, givenClImageDescWhenConvertedThenCorrectImageDe
 }
 
 TEST(ImageConvertDescriptorTest, givenImageDescriptorWhenConvertedThenCorrectClImageDescIsReturned) {
-    ImageDescriptor desc = {16, 24, 1, 1, 1024, 2048, ImageType::image2D, 1, 3, false};
+    ImageDescriptor desc = {ImageType::image2D, 16, 24, 1, 1, 1024, 2048, 1, 3, false};
     auto clDesc = Image::convertDescriptor(desc);
 
     EXPECT_EQ(clDesc.image_type, static_cast<cl_mem_object_type>(CL_MEM_OBJECT_IMAGE2D));

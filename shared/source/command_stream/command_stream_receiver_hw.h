@@ -25,10 +25,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     struct ImmediateFlushData {
-        void *endPtr = nullptr;
-        size_t estimatedSize = 0;
-        size_t csrStartOffset = 0;
         PipelineSelectArgs pipelineSelectArgs{};
+        size_t estimatedSize = 0;
+        void *endPtr = nullptr;
+        size_t csrStartOffset = 0;
 
         bool pipelineSelectFullConfigurationNeeded = false;
         bool pipelineSelectDirty = false;

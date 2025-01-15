@@ -55,7 +55,7 @@ HWTEST_F(CommandQueueHwTest, whenCallingIsCompletedThenTestTaskCountValue) {
     bcsCsr->setupContext(*osContext);
     bcsCsr->initializeTagAllocation();
     EngineControl control(bcsCsr.get(), osContext.get());
-    CopyEngineState state{1, aub_stream::EngineType::ENGINE_BCS, false};
+    CopyEngineState state{aub_stream::EngineType::ENGINE_BCS, 1, false};
 
     MockCommandQueueHw<FamilyType> cmdQ(context, pClDevice, nullptr);
 

@@ -47,7 +47,7 @@ HWTEST_F(ClTbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessC
     cmdQ.clearBcsEngines();
     cmdQ.bcsEngines[0] = &engineControl1;
 
-    cmdQ.bcsStates[0] = {0, aub_stream::ENGINE_BCS, false};
+    cmdQ.bcsStates[0] = {aub_stream::ENGINE_BCS, 0, false};
 
     cl_int error = CL_SUCCESS;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, error));

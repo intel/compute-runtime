@@ -51,9 +51,9 @@ struct AllocationRequirements {
 struct FragmentStorage {
     const void *fragmentCpuPointer = nullptr;
     size_t fragmentSize = 0;
+    int refCount = 0;
     OsHandle *osInternalStorage = nullptr;
     ResidencyData *residency = nullptr;
-    int refCount = 0;
     bool driverAllocation = false;
 };
 

@@ -1251,7 +1251,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, whenWaitUntilCompletionCalledThenW
     uint32_t gpgpuTaskCount = 123;
     uint32_t bcsTaskCount = 123;
 
-    CopyEngineState bcsState{bcsTaskCount, bcsCsr->getOsContext().getEngineType()};
+    CopyEngineState bcsState{bcsCsr->getOsContext().getEngineType(), bcsTaskCount};
     commandQueue->waitUntilComplete(gpgpuTaskCount, Range{&bcsState}, 0, false);
 
     EXPECT_EQ(gpgpuTaskCount, static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());

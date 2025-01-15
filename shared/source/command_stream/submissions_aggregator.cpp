@@ -99,11 +99,11 @@ NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_
                               size_t usedSize, LinearStream *stream, void *endCmdPtr, uint32_t numCsrClients, bool hasStallingCmds,
                               bool hasRelaxedOrderingDependencies, bool dispatchMonitorFence, bool taskCountUpdateOnly)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
-      chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), stream(stream), endCmdPtr(endCmdPtr),
-      numCsrClients(numCsrClients), hasStallingCmds(hasStallingCmds), hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies),
-      dispatchMonitorFence(dispatchMonitorFence), taskCountUpdateOnly(taskCountUpdateOnly), lowPriority(lowPriority), throttle(throttle),
-      chainedBatchBuffer(chainedBatchBuffer), sliceCount(sliceCount),
-      usedSize(usedSize) {}
+      chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), chainedBatchBuffer(chainedBatchBuffer),
+      lowPriority(lowPriority),
+      throttle(throttle), sliceCount(sliceCount),
+      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), numCsrClients(numCsrClients), hasStallingCmds(hasStallingCmds),
+      hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies), dispatchMonitorFence(dispatchMonitorFence), taskCountUpdateOnly(taskCountUpdateOnly) {}
 
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {
     flushStamp.reset(new FlushStampTracker(false));
