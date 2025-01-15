@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,7 +52,8 @@ zeIntelGetDriverVersionString(
     L0::DriverHandle::fromHandle(toInternalType(hDriver))->getApiVersion(&apiVersion);
     std::string driverVersionString = std::to_string(ZE_MAJOR_VERSION(apiVersion)) + "." + std::to_string(ZE_MINOR_VERSION(apiVersion)) + "." + std::to_string(NEO_VERSION_BUILD);
     if (NEO_VERSION_HOTFIX > 0) {
-        driverVersionString += "+" + std::to_string(NEO_VERSION_HOTFIX);
+        driverVersionString.append("+");
+        driverVersionString.append(std::to_string(NEO_VERSION_HOTFIX));
     }
     if (*pVersionSize == 0) {
         *pVersionSize = strlen(driverVersionString.c_str());
