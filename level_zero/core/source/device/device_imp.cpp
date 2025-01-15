@@ -2024,11 +2024,15 @@ bool DeviceImp::toApiSliceId(const NEO::TopologyMap &topologyMap, uint32_t &slic
 }
 
 NEO::Device *DeviceImp::getActiveDevice() const {
-    if (neoDevice->getNumGenericSubDevices() > 1u) {
+    if (neoDevice->getNumGenericSubDevices() > 0u) {
         if (isImplicitScalingCapable()) {
             return this->neoDevice;
         }
-        return this->neoDevice->getSubDevice(0);
+        for (auto subDevice : this->neoDevice->getSubDevices()) {
+            if (subDevice) {
+                return subDevice;
+            }
+        }
     }
     return this->neoDevice;
 }

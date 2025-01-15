@@ -5984,6 +5984,21 @@ TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetAndEmptyAffin
     multiDeviceFixture.tearDown();
 }
 
+TEST(DeviceReturnCombinedHierarchyTest, GivenCombinedHierarchyIsSetWithMaskThenActiveDeviceIsCorrect) {
+    DebugManagerStateRestore restorer;
+    NEO::debugManager.flags.ZE_AFFINITY_MASK.set("1");
+    MultiDeviceFixtureCombinedHierarchy multiDeviceFixture{};
+    multiDeviceFixture.setUp();
+
+    auto device = multiDeviceFixture.driverHandle->devices[0];
+    auto deviceImp = static_cast<L0::DeviceImp *>(device);
+
+    auto activeDevice = deviceImp->getActiveDevice();
+    EXPECT_EQ(activeDevice, device->getNEODevice()->getSubDevice(1u));
+
+    multiDeviceFixture.tearDown();
+}
+
 TEST(DeviceReturnFlatHierarchyTest, GivenFlatHierarchyIsSetThenFlagsOfDevicePropertiesIsCorrect) {
 
     MultiDeviceFixtureFlatHierarchy multiDeviceFixture{};
