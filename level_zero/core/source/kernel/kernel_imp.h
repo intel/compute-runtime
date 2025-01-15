@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -225,6 +225,14 @@ struct KernelImp : Kernel {
         return internalResidencyContainer[regionGroupBarrierIndex];
     }
 
+    const std::vector<uint32_t> &getSlmArgSizes() {
+        return slmArgSizes;
+    }
+    const std::vector<uint32_t> &getSlmArgOffsetValues() {
+        return slmArgOffsetValues;
+    }
+    uint8_t getRequiredSlmAlignment(uint32_t argIndex) const;
+
   protected:
     KernelImp() = default;
 
@@ -273,6 +281,7 @@ struct KernelImp : Kernel {
 
     UnifiedMemoryControls unifiedMemoryControls;
     std::vector<uint32_t> slmArgSizes;
+    std::vector<uint32_t> slmArgOffsetValues;
     uint32_t slmArgsTotalSize = 0U;
     uint32_t requiredWorkgroupOrder = 0u;
 

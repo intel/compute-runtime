@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -272,6 +272,7 @@ KernelImp::~KernelImp() {
     }
 
     slmArgSizes.clear();
+    slmArgOffsetValues.clear();
     crossThreadData.reset();
     surfaceStateHeapData.reset();
     dynamicStateHeapData.reset();
@@ -724,6 +725,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
         kernelArgInfos[argIndex] = KernelArgInfo{nullptr, 0, 0, false};
         UNRECOVERABLE_IF(NEO::isUndefinedOffset(currArg.as<NEO::ArgDescPointer>().slmOffset));
         auto slmOffset = *reinterpret_cast<uint32_t *>(crossThreadData.get() + currArg.as<NEO::ArgDescPointer>().slmOffset);
+        slmArgOffsetValues[argIndex] = slmOffset;
         slmOffset += static_cast<uint32_t>(argSize);
         ++argIndex;
         while (argIndex < kernelImmData->getDescriptor().payloadMappings.explicitArgs.size()) {
@@ -1089,6 +1091,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     }
 
     slmArgSizes.resize(this->kernelArgHandlers.size(), 0);
+    slmArgOffsetValues.resize(this->kernelArgHandlers.size(), 0);
     kernelArgInfos.resize(this->kernelArgHandlers.size(), {});
     isArgUncached.resize(this->kernelArgHandlers.size(), 0);
     isBindlessOffsetSet.resize(this->kernelArgHandlers.size(), 0);
@@ -1516,6 +1519,13 @@ bool KernelImp::checkKernelContainsStatefulAccess() {
     auto isGeneratedByIgc = moduleImp->getTranslationUnit()->isGeneratedByIgc;
     auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(getKernelDescriptor(), false);
     return containsStatefulAccess && isUserKernel && isGeneratedByIgc;
+}
+
+uint8_t KernelImp::getRequiredSlmAlignment(uint32_t argIndex) const {
+    const auto &allArgs = kernelImmData->getDescriptor().payloadMappings.explicitArgs;
+    UNRECOVERABLE_IF(allArgs[argIndex].getTraits().getAddressQualifier() != NEO::KernelArgMetadata::AddrLocal);
+    const auto &nextArg = allArgs[argIndex].as<NEO::ArgDescPointer>();
+    return nextArg.requiredSlmAlignment;
 }
 
 } // namespace L0

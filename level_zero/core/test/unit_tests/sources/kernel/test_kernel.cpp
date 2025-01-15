@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -3397,6 +3397,60 @@ HWTEST2_F(SetKernelArg, givenBindlessKernelAndNoAvailableSpaceOnSshWhenSetArgBuf
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, ret);
 
     svmAllocsManager->freeSVMAlloc(svmAllocation);
+}
+
+HWTEST2_F(SetKernelArg, givenSlmPointerWhenSettingKernelArgThenPropertyIsSaved, MatchAny) {
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+    WhiteBoxKernelHw<gfxCoreFamily> mockKernel;
+    mockKernel.module = module.get();
+    mockKernel.initialize(&desc);
+
+    {
+        auto &baseArg = const_cast<NEO::ArgDescriptor &>(mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[0]);
+        ArgTypeTraits &traits = const_cast<NEO::ArgTypeTraits &>(baseArg.getTraits());
+        traits.addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrLocal);
+
+        auto &arg = const_cast<NEO::ArgDescPointer &>(baseArg.template as<NEO::ArgDescPointer>());
+        arg.stateless = undefined<SurfaceStateHeapOffset>;
+        arg.bindless = undefined<SurfaceStateHeapOffset>;
+        arg.bindful = undefined<SurfaceStateHeapOffset>;
+        arg.requiredSlmAlignment = 4;
+        arg.slmOffset = 0x20;
+    }
+
+    {
+        auto &baseArg = mockKernel.kernelImmData->getDescriptor().payloadMappings.explicitArgs[1];
+        ArgTypeTraits &traits = const_cast<NEO::ArgTypeTraits &>(baseArg.getTraits());
+        traits.addressQualifier = static_cast<uint8_t>(NEO::KernelArgMetadata::AddrLocal);
+
+        auto &arg = const_cast<NEO::ArgDescPointer &>(baseArg.template as<NEO::ArgDescPointer>());
+        arg.stateless = undefined<SurfaceStateHeapOffset>;
+        arg.bindless = undefined<SurfaceStateHeapOffset>;
+        arg.bindful = undefined<SurfaceStateHeapOffset>;
+        arg.requiredSlmAlignment = 8;
+        arg.slmOffset = 0x40;
+    }
+
+    auto ret = mockKernel.setArgBuffer(0, 64, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ret = mockKernel.setArgBuffer(1, 32, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto slmArgOffsetValues = mockKernel.getSlmArgOffsetValues();
+    EXPECT_EQ(0u, slmArgOffsetValues[0]);
+    EXPECT_EQ(64u, slmArgOffsetValues[1]);
+
+    auto slmArgSizes = mockKernel.getSlmArgSizes();
+    EXPECT_EQ(64u, slmArgSizes[0]);
+    EXPECT_EQ(32u, slmArgSizes[1]);
+
+    auto argSlmAlignment = mockKernel.getRequiredSlmAlignment(0);
+    EXPECT_EQ(4u, argSlmAlignment);
+
+    argSlmAlignment = mockKernel.getRequiredSlmAlignment(1);
+    EXPECT_EQ(8u, argSlmAlignment);
 }
 
 HWTEST2_F(SetKernelArg, givenImageAndBindfulKernelWhenSetArgImageThenCopySurfaceStateToSSHCalledWithCorrectArgs, ImageSupport) {
