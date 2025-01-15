@@ -57,6 +57,6 @@ XE3_CORETEST_F(Xe3CoreProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrat
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
-XE3_CORETEST_F(Xe3CoreProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
+XE3_CORETEST_F(Xe3CoreProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
 }

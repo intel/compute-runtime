@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,11 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     enableBlitterOperationsSupport(hwInfo);
 
     return 0;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
+    return true;
 }
 
 template class ProductHelperHw<gfxProduct>;
