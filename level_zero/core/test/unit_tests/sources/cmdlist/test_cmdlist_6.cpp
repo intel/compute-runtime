@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2913,10 +2913,9 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     auto otherCsr = std::unique_ptr<UltCommandStreamReceiver<FamilyType>>(static_cast<UltCommandStreamReceiver<FamilyType> *>(createCommandStream(*device->getNEODevice()->getExecutionEnvironment(), 0, 1)));
 
     otherCsr->setupContext(*neoDevice->getDefaultEngine().osContext);
-    otherCsr->initializeResources(false);
+    otherCsr->initializeResources(false, neoDevice->getPreemptionMode());
     otherCsr->initializeTagAllocation();
     otherCsr->createGlobalFenceAllocation();
-    otherCsr->createPreemptionAllocation();
     otherCsr->createGlobalStatelessHeap();
 
     ze_command_queue_desc_t desc = {};

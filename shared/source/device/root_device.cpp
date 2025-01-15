@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,14 +91,11 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     osContext->setIsPrimaryEngine(isPrimaryEngine);
 
     rootCommandStreamReceiver->setupContext(*osContext);
-    rootCommandStreamReceiver->initializeResources(false);
+    rootCommandStreamReceiver->initializeResources(false, preemptionMode);
     rootCsrCreated = true;
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     rootCommandStreamReceiver->createWorkPartitionAllocation(*this);
-    if (preemptionMode == PreemptionMode::MidThread) {
-        rootCommandStreamReceiver->createPreemptionAllocation();
-    }
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
 
     EngineControl engine{commandStreamReceivers.back().get(), osContext};

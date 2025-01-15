@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,12 @@ struct Xe2MidThreadPreemptionTests : public Xe2PreemptionTests {
         preemptionMode = PreemptionMode::MidThread;
 
         Xe2PreemptionTests::SetUp();
+
+        auto &csr = device->getGpgpuCommandStreamReceiver();
+        if (device->getPreemptionMode() == NEO::PreemptionMode::MidThread &&
+            !csr.getPreemptionAllocation()) {
+            csr.createPreemptionAllocation();
+        }
     }
     void TearDown() override {
         Xe2PreemptionTests::TearDown();

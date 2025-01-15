@@ -284,7 +284,7 @@ class CommandStreamReceiver {
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
     uint8_t getUmdPowerHintValue() const;
-    bool initializeResources(bool allocateInterrupt);
+    bool initializeResources(bool allocateInterrupt, const PreemptionMode preemptionMode);
     TagAllocatorBase *getEventTsAllocator();
     TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);
     virtual TagAllocatorBase *getTimestampPacketAllocator() = 0;

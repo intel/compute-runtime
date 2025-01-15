@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,15 @@ void HostPointerManagerFixure::setUp() {
     hostDriverHandle = std::make_unique<L0::ult::DriverHandle>();
     hostDriverHandle->initialize(std::move(devices));
     device = hostDriverHandle->devices[0];
+    if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+        for (auto &engine : neoDevice->getAllEngines()) {
+            NEO::CommandStreamReceiver *csr = engine.commandStreamReceiver;
+            if (!csr->getPreemptionAllocation()) {
+                csr->createPreemptionAllocation();
+            }
+        }
+    }
+
     openHostPointerManager = static_cast<L0::ult::HostPointerManager *>(hostDriverHandle->hostPointerManager.get());
 
     heapPointer = hostDriverHandle->getMemoryManager()->allocateSystemMemory(heapSize, MemoryConstants::pageSize);

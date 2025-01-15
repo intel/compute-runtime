@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
     if (this->latestFlushedTaskCount > 0) {
         return SubmissionStatus::success;
     }
+
     auto status = flushTagUpdate();
 
     if (isTbxMode() && (status == SubmissionStatus::success)) {

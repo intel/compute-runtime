@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -442,6 +442,10 @@ HWTEST_F(MidThreadPreemptionTests, GivenNoWaWhenCreatingCsrSurfaceThenSurfaceIsC
     ASSERT_NE(nullptr, mockDevice.get());
 
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+    if (mockDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread &&
+        !csr.getPreemptionAllocation()) {
+        ASSERT_TRUE(csr.createPreemptionAllocation());
+    }
     MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionAllocation());
     ASSERT_NE(nullptr, csrSurface);
     EXPECT_FALSE(csrSurface->uncacheable);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -331,12 +331,16 @@ uint8_t CommandStreamReceiver::getUmdPowerHintValue() const {
     return this->osContext ? this->osContext->getUmdPowerHintValue() : 0u;
 }
 
-bool CommandStreamReceiver::initializeResources(bool allocateInterrupt) {
+bool CommandStreamReceiver::initializeResources(bool allocateInterrupt, const PreemptionMode preemptionMode) {
     if (!resourcesInitialized) {
         auto lock = obtainUniqueOwnership();
         if (!resourcesInitialized) {
             if (!osContext->ensureContextInitialized(allocateInterrupt)) {
                 return false;
+            }
+            if (preemptionMode == NEO::PreemptionMode::MidThread &&
+                !this->getPreemptionAllocation()) {
+                this->createPreemptionAllocation();
             }
             this->fillReusableAllocationsList();
             this->resourcesInitialized = true;

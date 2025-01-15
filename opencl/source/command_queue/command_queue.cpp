@@ -238,7 +238,7 @@ void CommandQueue::initializeGpgpuInternals() const {
         }
     }
 
-    gpgpuEngine->commandStreamReceiver->initializeResources(false);
+    gpgpuEngine->commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
     gpgpuEngine->commandStreamReceiver->requestPreallocation();
     gpgpuEngine->commandStreamReceiver->initDirectSubmission();
 
@@ -421,7 +421,7 @@ void CommandQueue::constructBcsEnginesForSplit() {
 
             if (bcsEngines[i]) {
                 bcsQueueEngineType = engineType;
-                bcsEngines[i]->commandStreamReceiver->initializeResources(false);
+                bcsEngines[i]->commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
                 bcsEngines[i]->commandStreamReceiver->initDirectSubmission();
             }
         }

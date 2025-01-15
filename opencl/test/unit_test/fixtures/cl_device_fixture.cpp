@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,10 @@ void ClDeviceFixture::setUpImpl(const NEO::HardwareInfo *hardwareInfo) {
     pTagMemory = commandStreamReceiver.getTagAddress();
     ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
     this->osContext = pDevice->getDefaultEngine().osContext;
+    if (pDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread &&
+        !commandStreamReceiver.getPreemptionAllocation()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
 }
 
 void ClDeviceFixture::tearDown() {

@@ -53,6 +53,14 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
     executionEnvironment.incRefInternal();
+    if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+        for (auto &engine : neoDevice->getAllEngines()) {
+            NEO::CommandStreamReceiver *csr = engine.commandStreamReceiver;
+            if (!csr->getPreemptionAllocation()) {
+                csr->createPreemptionAllocation();
+            }
+        }
+    }
 }
 
 void DeviceFixture::tearDown() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,13 @@ void CommandStreamReceiverFixture::setUp() {
     requiredStreamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     immediateFlushTaskFlags.requiredState = &requiredStreamProperties;
     immediateFlushTaskFlags.sshCpuBase = sshBuffer;
+
+    if (pDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+        auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
+        if (!commandStreamReceiver.getPreemptionAllocation()) {
+            ASSERT_TRUE(commandStreamReceiver.createPreemptionAllocation());
+        }
+    }
 }
 
 void CommandStreamReceiverFixture::tearDown() {

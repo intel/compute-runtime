@@ -137,9 +137,9 @@ HWTEST_F(CommandStreamReceiverTest, WhenInitializeResourcesThenCallFillReusableA
     ultCsr.fillReusableAllocationsListCalled = 0u;
     ultCsr.resourcesInitialized = false;
 
-    commandStreamReceiver->initializeResources(false);
+    commandStreamReceiver->initializeResources(false, pDevice->getPreemptionMode());
     EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
-    commandStreamReceiver->initializeResources(false);
+    commandStreamReceiver->initializeResources(false, pDevice->getPreemptionMode());
     EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
 }
 
@@ -161,7 +161,7 @@ HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRIn
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.resourcesInitialized = false;
     ultCsr.setupContext(osContext);
-    bool ret = ultCsr.initializeResources(false);
+    bool ret = ultCsr.initializeResources(false, pDevice->getPreemptionMode());
     EXPECT_FALSE(ret);
 }
 

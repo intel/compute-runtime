@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *devi
     auto &engines = device->getAllEngines();
     MemoryOperationsStatus result = MemoryOperationsStatus::success;
     for (const auto &engine : engines) {
-        engine.commandStreamReceiver->initializeResources(false);
+        engine.commandStreamReceiver->initializeResources(false, device->getPreemptionMode());
         result = this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
         if (result != MemoryOperationsStatus::success) {
             break;

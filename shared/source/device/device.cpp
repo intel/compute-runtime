@@ -477,7 +477,7 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     commandStreamReceiver->setupContext(*osContext);
 
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
-        if (!commandStreamReceiver->initializeResources(false)) {
+        if (!commandStreamReceiver->initializeResources(false, this->getPreemptionMode())) {
             return false;
         }
     }
@@ -487,10 +487,6 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     }
 
     if (!commandStreamReceiver->createGlobalFenceAllocation()) {
-        return false;
-    }
-
-    if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
         return false;
     }
 
@@ -534,7 +530,7 @@ bool Device::initializeEngines() {
         bool initializeDevice = (engine.osContext->isPartOfContextGroup() || isHeaplessStateInit) && !firstSubmissionDone;
 
         if (initializeDevice) {
-            engine.commandStreamReceiver->initializeResources(false);
+            engine.commandStreamReceiver->initializeResources(false, this->getPreemptionMode());
 
             if (debugManager.flags.DeferStateInitSubmissionToFirstRegularUsage.get() != 1) {
                 engine.commandStreamReceiver->initializeDeviceWithFirstSubmission(*this);
@@ -604,7 +600,7 @@ EngineControl *Device::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bo
 
             EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
 
-            if (!commandStreamReceiver->initializeResources(allocateInterrupt)) {
+            if (!commandStreamReceiver->initializeResources(allocateInterrupt, this->getPreemptionMode())) {
                 return nullptr;
             }
 

@@ -753,6 +753,14 @@ struct DeviceTest : public ::testing::Test {
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
+        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+            for (auto &engine : neoDevice->getAllEngines()) {
+                NEO::CommandStreamReceiver *csr = engine.commandStreamReceiver;
+                if (!csr->getPreemptionAllocation()) {
+                    csr->createPreemptionAllocation();
+                }
+            }
+        }
     }
 
     void TearDown() override {
@@ -1799,6 +1807,14 @@ struct GlobalTimestampTest : public ::testing::Test {
     void SetUp() override {
         debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), rootDeviceIndex);
+        if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+            for (auto &engine : neoDevice->getAllEngines()) {
+                NEO::CommandStreamReceiver *csr = engine.commandStreamReceiver;
+                if (!csr->getPreemptionAllocation()) {
+                    csr->createPreemptionAllocation();
+                }
+            }
+        }
     }
 
     DebugManagerStateRestore restorer;
@@ -2467,6 +2483,12 @@ struct MultipleDevicesFixture : public ::testing::Test {
             auto neoDevice = device->getNEODevice();
             context->rootDeviceIndices.pushUnique(neoDevice->getRootDeviceIndex());
             context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+            if (neoDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+                auto &csr = neoDevice->getInternalEngine().commandStreamReceiver;
+                if (!csr->getPreemptionAllocation()) {
+                    csr->createPreemptionAllocation();
+                }
+            }
         }
     }
 

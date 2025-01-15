@@ -47,7 +47,16 @@ UltDeviceFactory::UltDeviceFactory(uint32_t rootDevicesCount, uint32_t subDevice
         pCreatedDevice->incRefInternal();
         if (pCreatedDevice->getNumSubDevices() > 1) {
             for (uint32_t i = 0; i < pCreatedDevice->getNumSubDevices(); i++) {
-                this->subDevices.push_back(static_cast<SubDevice *>(pCreatedDevice->getSubDevice(i)));
+                auto *pDevice = static_cast<SubDevice *>(pCreatedDevice->getSubDevice(i));
+                this->subDevices.push_back(pDevice);
+            }
+        }
+        if (pCreatedDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
+            for (auto &engine : pCreatedDevice->getAllEngines()) {
+                NEO::CommandStreamReceiver *csr = engine.commandStreamReceiver;
+                if (!csr->getPreemptionAllocation()) {
+                    csr->createPreemptionAllocation();
+                }
             }
         }
         this->rootDevices.push_back(static_cast<MockDevice *>(pCreatedDevice.release()));

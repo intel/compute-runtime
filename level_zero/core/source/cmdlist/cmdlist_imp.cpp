@@ -221,7 +221,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             bool enabledCmdListSharing = !NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && commandList->isFlushTaskSubmissionEnabled;
             commandList->immediateCmdListHeapSharing = L0GfxCoreHelper::enableImmediateCmdListHeapSharing(rootDeviceEnvironment, enabledCmdListSharing);
         }
-        csr->initializeResources(false);
+        csr->initializeResources(false, device->getDevicePreemptionMode());
         csr->initDirectSubmission();
 
         auto commandQueue = CommandQueue::create(productFamily, device, csr, &cmdQdesc, NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType), internalUsage, true, returnValue);
