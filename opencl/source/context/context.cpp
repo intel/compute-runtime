@@ -285,7 +285,7 @@ bool Context::createImpl(const cl_context_properties *properties,
                 engine.commandStreamReceiver->ensureTagAllocationForRootDeviceIndex(rootDeviceIndex);
             }
         }
-        deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+        deviceBitfields.emplace(rootDeviceIndex, deviceBitfield);
     }
 
     if (devices.size() > 0) {

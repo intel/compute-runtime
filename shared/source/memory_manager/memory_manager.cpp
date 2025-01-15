@@ -372,7 +372,7 @@ bool MemoryManager::isMemoryBudgetExhausted() const {
 
 void MemoryManager::updateLatestContextIdForRootDevice(uint32_t rootDeviceIndex) {
     // rootDeviceIndexToContextId map would contain the first entry for context for each rootDevice
-    auto entry = rootDeviceIndexToContextId.insert(std::pair<uint32_t, uint32_t>(rootDeviceIndex, latestContextId));
+    auto entry = rootDeviceIndexToContextId.emplace(rootDeviceIndex, latestContextId);
     if (entry.second == false) {
         if (latestContextId == std::numeric_limits<uint32_t>::max()) {
             // If we are here, it means we are reinitializing the contextId.
