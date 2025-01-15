@@ -113,7 +113,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchDataParameterSt
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchKernelAttributesInfo &token) {
     constexpr ConstStringRef attributeReqdSubGroupSizeBeg = "intel_reqd_sub_group_size(";
-    const auto &attributes = std::string(reinterpret_cast<const char *>(&token + 1), token.AttributesSize);
+    std::string attributes = std::string(reinterpret_cast<const char *>(&token + 1), token.AttributesSize).c_str();
     dst.kernelMetadata.kernelLanguageAttributes = attributes;
     auto it = attributes.find(attributeReqdSubGroupSizeBeg.begin());
     if (it != std::string::npos) {
@@ -460,7 +460,7 @@ void populateArgDescriptor(KernelDescriptor &dst, size_t argNum, const PatchToke
 
 void populateKernelDescriptor(KernelDescriptor &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes) {
     UNRECOVERABLE_IF(nullptr == src.header);
-    dst.kernelMetadata.kernelName = std::string(src.name.begin(), src.name.end());
+    dst.kernelMetadata.kernelName = std::string(src.name.begin(), src.name.end()).c_str();
     populateKernelDescriptorIfNotNull(dst, src.tokens.executionEnvironment);
     populateKernelDescriptorIfNotNull(dst, src.tokens.samplerStateArray);
     populateKernelDescriptorIfNotNull(dst, src.tokens.bindingTableState);

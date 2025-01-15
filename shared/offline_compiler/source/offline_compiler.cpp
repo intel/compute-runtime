@@ -936,7 +936,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         }
     }
 
-    retVal = deviceName.empty() ? OCLOC_SUCCESS : initHardwareInfo(deviceName);
+    retVal = deviceName.empty() ? OCLOC_SUCCESS : initHardwareInfo(deviceName.c_str());
     if (retVal != OCLOC_SUCCESS) {
         argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
         return retVal;

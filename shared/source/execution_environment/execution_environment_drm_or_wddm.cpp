@@ -42,16 +42,16 @@ void ExecutionEnvironment::configureCcsMode() {
         return;
     }
 
-    const std::string &drmPath = "/sys/class/drm";
+    const std::string drmPath = "/sys/class/drm";
     std::string expectedFilePrefix = drmPath + "/card";
-    const auto &files = Directory::getFiles(drmPath);
+    auto files = Directory::getFiles(drmPath.c_str());
     for (const auto &file : files) {
         if (file.find(expectedFilePrefix.c_str()) == std::string::npos) {
             continue;
         }
 
         std::string gtPath = file + "/gt";
-        const auto &gtFiles = Directory::getFiles(gtPath);
+        auto gtFiles = Directory::getFiles(gtPath.c_str());
         expectedFilePrefix = gtPath + "/gt";
         for (const auto &gtFile : gtFiles) {
             if (gtFile.find(expectedFilePrefix.c_str()) == std::string::npos) {
