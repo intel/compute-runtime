@@ -124,21 +124,20 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenEnqueueSignalFailsWhenExterna
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
     auto hProxyEvent = proxyEvent->toHandle();
 
-    externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
 
     proxyEvent->hostSignal(false);
-    externalSemaphoreController->startThread();
+    driverHandleImp->externalSemaphoreController->startThread();
 
     auto externalSemaphore = static_cast<ExternalSemaphoreImp *>(ExternalSemaphore::fromHandle(hSemaphore));
     auto neoExternalSemaphore = externalSemaphore->neoExternalSemaphore.get();
 
-    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
-    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (externalSemaphoreController->proxyEvents.empty()); });
+    std::unique_lock<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+    driverHandleImp->externalSemaphoreController->semControllerCv.wait(lock, [&] { return (driverHandleImp->externalSemaphoreController->proxyEvents.empty()); });
     EXPECT_EQ(neoExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Initial);
     lock.unlock();
 
@@ -169,21 +168,20 @@ HWTEST2_F(WddmExternalSemaphoreTest, DISABLED_givenSemaphoreSignalOperationEvent
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
     auto hProxyEvent = proxyEvent->toHandle();
 
-    externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(hSemaphore)), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
 
     proxyEvent->hostSignal(false);
-    externalSemaphoreController->startThread();
+    driverHandleImp->externalSemaphoreController->startThread();
 
     auto externalSemaphore = static_cast<ExternalSemaphoreImp *>(ExternalSemaphore::fromHandle(hSemaphore));
     auto neoExternalSemaphore = externalSemaphore->neoExternalSemaphore.get();
 
-    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
-    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (externalSemaphoreController->proxyEvents.empty()); });
+    std::unique_lock<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+    driverHandleImp->externalSemaphoreController->semControllerCv.wait(lock, [&] { return (driverHandleImp->externalSemaphoreController->proxyEvents.empty()); });
     EXPECT_EQ(neoExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Signaled);
     lock.unlock();
 

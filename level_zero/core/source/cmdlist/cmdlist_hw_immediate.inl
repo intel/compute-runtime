@@ -983,11 +983,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
     }
 
     auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     for (uint32_t i = 0; i < numExternalSemaphores; i++) {
         ze_event_handle_t proxyWaitEvent = nullptr;
-        ret = externalSemaphoreController->allocateProxyEvent(hSemaphores[i], this->device->toHandle(), this->hContext, params[i].value, &proxyWaitEvent, ExternalSemaphoreController::SemaphoreOperation::Wait);
+        ret = driverHandleImp->externalSemaphoreController->allocateProxyEvent(hSemaphores[i], this->device->toHandle(), this->hContext, params[i].value, &proxyWaitEvent, ExternalSemaphoreController::SemaphoreOperation::Wait);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -998,7 +997,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
         }
     }
 
-    externalSemaphoreController->semControllerCv.notify_one();
+    driverHandleImp->externalSemaphoreController->semControllerCv.notify_one();
 
     bool relaxedOrderingDispatch = false;
     if (hSignalEvent) {
@@ -1029,11 +1028,10 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
     }
 
     auto driverHandleImp = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     for (size_t i = 0; i < numExternalSemaphores; i++) {
         ze_event_handle_t proxySignalEvent = nullptr;
-        ret = externalSemaphoreController->allocateProxyEvent(hSemaphores[i], this->device->toHandle(), this->hContext, params[i].value, &proxySignalEvent, ExternalSemaphoreController::SemaphoreOperation::Signal);
+        ret = driverHandleImp->externalSemaphoreController->allocateProxyEvent(hSemaphores[i], this->device->toHandle(), this->hContext, params[i].value, &proxySignalEvent, ExternalSemaphoreController::SemaphoreOperation::Signal);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -1044,7 +1042,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalS
         }
     }
 
-    externalSemaphoreController->semControllerCv.notify_one();
+    driverHandleImp->externalSemaphoreController->semControllerCv.notify_one();
 
     bool relaxedOrderingDispatch = false;
     if (hSignalEvent) {

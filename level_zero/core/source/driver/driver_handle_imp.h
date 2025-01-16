@@ -150,7 +150,7 @@ struct DriverHandleImp : public DriverHandle {
     std::unique_ptr<NEO::OsLibrary> rtasLibraryHandle;
     bool rtasLibraryUnavailable = false;
 
-    ExternalSemaphoreController *externalSemaphoreController = nullptr;
+    std::unique_ptr<ExternalSemaphoreController> externalSemaphoreController;
     std::mutex externalSemaphoreControllerMutex;
 
     uint32_t numDevices = 0;

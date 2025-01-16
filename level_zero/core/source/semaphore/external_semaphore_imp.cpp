@@ -114,10 +114,8 @@ ze_result_t ExternalSemaphoreImp::releaseExternalSemaphore() {
     return ZE_RESULT_SUCCESS;
 }
 
-ExternalSemaphoreController *ExternalSemaphoreController::create() {
-    auto externalSemaphoreController = new ExternalSemaphoreController();
-
-    return externalSemaphoreController;
+std::unique_ptr<ExternalSemaphoreController> ExternalSemaphoreController::create() {
+    return std::make_unique<ExternalSemaphoreController>();
 }
 
 ze_result_t ExternalSemaphoreController::allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, ExternalSemaphoreController::SemaphoreOperation operation) {

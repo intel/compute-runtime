@@ -438,18 +438,17 @@ HWTEST2_F(ExternalSemaphoreTest, givenExternalSemaphoreControllerWhenAllocatePro
     l0Device->setDriverHandle(driverHandleImp.get());
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     ze_event_handle_t proxyEvent1 = {};
     ze_event_handle_t proxyEvent2 = {};
 
-    ze_result_t result = externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent1, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent1, ExternalSemaphoreController::SemaphoreOperation::Wait);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
 
-    result = externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent2, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent2, ExternalSemaphoreController::SemaphoreOperation::Wait);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 2u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 2u);
 }
 
 HWTEST2_F(ExternalSemaphoreTest, givenMaxEventsInPoolCreatedWhenAllocateProxyEventCalledThenEventPoolSizeIncreases, MatchAny) {
@@ -463,22 +462,21 @@ HWTEST2_F(ExternalSemaphoreTest, givenMaxEventsInPoolCreatedWhenAllocateProxyEve
     l0Device->setDriverHandle(driverHandleImp.get());
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
-    EXPECT_EQ(externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 0u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 0u);
 
     ze_event_handle_t proxyEvent1 = {};
     ze_event_handle_t proxyEvent2 = {};
 
-    ze_result_t result = externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent1, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    ze_result_t result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent1, ExternalSemaphoreController::SemaphoreOperation::Wait);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
-    EXPECT_EQ(externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 1u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 1u);
 
-    externalSemaphoreController->eventsCreatedFromLatestPoolMap[l0Device->toHandle()] = 20;
-    result = externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent2, ExternalSemaphoreController::SemaphoreOperation::Wait);
+    driverHandleImp->externalSemaphoreController->eventsCreatedFromLatestPoolMap[l0Device->toHandle()] = 20;
+    result = driverHandleImp->externalSemaphoreController->allocateProxyEvent(externalSemaphore1->toHandle(), l0Device->toHandle(), context->toHandle(), 1u, &proxyEvent2, ExternalSemaphoreController::SemaphoreOperation::Wait);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 2u);
-    EXPECT_EQ(externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 2u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 2u);
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->eventPoolsMap[l0Device->toHandle()].size(), 2u);
 }
 
 class MockNEOExternalSemaphore : public NEO::ExternalSemaphore {
@@ -528,21 +526,20 @@ HWTEST2_F(ExternalSemaphoreTest, DISABLED_givenSemaphoreSignalOperationEventWhen
     l0Device->setDriverHandle(driverHandleImp.get());
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
     auto hProxyEvent = proxyEvent->toHandle();
 
-    externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
 
     proxyEvent->hostSignal(false);
-    externalSemaphoreController->startThread();
+    driverHandleImp->externalSemaphoreController->startThread();
 
     auto mockNEOExternalSemaphore = static_cast<MockNEOExternalSemaphore *>(externalSemaphore->neoExternalSemaphore.get());
 
-    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
-    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (mockNEOExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled); });
+    std::unique_lock<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+    driverHandleImp->externalSemaphoreController->semControllerCv.wait(lock, [&] { return (mockNEOExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Signaled); });
     EXPECT_EQ(mockNEOExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Signaled);
     lock.unlock();
 }
@@ -558,22 +555,21 @@ HWTEST2_F(ExternalSemaphoreTest, DISABLED_givenHostSynchronizeFailsWhenExternalS
     l0Device->setDriverHandle(driverHandleImp.get());
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
 
     auto proxyEvent = std::make_unique<MockExternalSemaphoreEvent>();
     auto hProxyEvent = proxyEvent->toHandle();
     proxyEvent->failHostSynchronize = true;
 
-    externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
-    EXPECT_EQ(externalSemaphoreController->proxyEvents.size(), 1u);
+    driverHandleImp->externalSemaphoreController->proxyEvents.push_back(std::make_tuple(Event::fromHandle(hProxyEvent), static_cast<ExternalSemaphore *>(ExternalSemaphore::fromHandle(externalSemaphore->toHandle())), 1u, ExternalSemaphoreController::SemaphoreOperation::Signal));
+    EXPECT_EQ(driverHandleImp->externalSemaphoreController->proxyEvents.size(), 1u);
 
     proxyEvent->hostSignal(false);
-    externalSemaphoreController->startThread();
+    driverHandleImp->externalSemaphoreController->startThread();
 
     auto mockNEOExternalSemaphore = static_cast<MockNEOExternalSemaphore *>(externalSemaphore->neoExternalSemaphore.get());
 
-    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
-    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (externalSemaphoreController->proxyEvents.empty()); });
+    std::unique_lock<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+    driverHandleImp->externalSemaphoreController->semControllerCv.wait(lock, [&] { return (driverHandleImp->externalSemaphoreController->proxyEvents.empty()); });
     EXPECT_EQ(mockNEOExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Initial);
     lock.unlock();
 
@@ -600,8 +596,7 @@ HWTEST2_F(ExternalSemaphoreTest, DISABLED_givenNEOExternalSemaphoreWhenAppendWai
     cmdList.setCmdListContext(context);
 
     driverHandleImp->externalSemaphoreController = ExternalSemaphoreController::create();
-    auto externalSemaphoreController = driverHandleImp->externalSemaphoreController;
-    externalSemaphoreController->startThread();
+    driverHandleImp->externalSemaphoreController->startThread();
 
     auto mockNEOExternalSemaphore = static_cast<MockNEOExternalSemaphore *>(externalSemaphore->neoExternalSemaphore.get());
     EXPECT_EQ(mockNEOExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Initial);
@@ -614,13 +609,13 @@ HWTEST2_F(ExternalSemaphoreTest, DISABLED_givenNEOExternalSemaphoreWhenAppendWai
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 1u);
     EXPECT_EQ(cmdList.appendSignalEventCalledTimes, 0u);
 
-    std::unique_lock<std::mutex> lock(externalSemaphoreController->semControllerMutex);
-    externalSemaphoreController->semControllerCv.wait(lock, [&] { return (mockNEOExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Waiting); });
+    std::unique_lock<std::mutex> lock(driverHandleImp->externalSemaphoreController->semControllerMutex);
+    driverHandleImp->externalSemaphoreController->semControllerCv.wait(lock, [&] { return (mockNEOExternalSemaphore->getState() == NEO::ExternalSemaphore::SemaphoreState::Waiting); });
     EXPECT_EQ(mockNEOExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Waiting);
 
     mockNEOExternalSemaphore->state = NEO::ExternalSemaphore::SemaphoreState::Signaled;
     lock.unlock();
-    externalSemaphoreController->semControllerCv.notify_all();
+    driverHandleImp->externalSemaphoreController->semControllerCv.notify_all();
 
     EXPECT_EQ(mockNEOExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Signaled);
 }

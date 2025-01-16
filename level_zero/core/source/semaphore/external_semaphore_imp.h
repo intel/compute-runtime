@@ -41,7 +41,11 @@ class ExternalSemaphoreController {
         Signal
     };
 
-    static ExternalSemaphoreController *create();
+    static std::unique_ptr<ExternalSemaphoreController> create();
+
+    ~ExternalSemaphoreController() {
+        releaseResources();
+    }
 
     void startThread() {
         if (!extSemThread.joinable()) {
@@ -74,8 +78,6 @@ class ExternalSemaphoreController {
                 eventPool->destroy();
             }
         }
-
-        delete this;
     }
 
     ze_result_t allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, SemaphoreOperation operation);
