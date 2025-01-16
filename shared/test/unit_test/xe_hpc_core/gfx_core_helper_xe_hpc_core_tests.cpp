@@ -113,5 +113,5 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, whenGetDefaultDeviceHierarchyThenR
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
-    EXPECT_EQ(FLAT, defaultDeviceHierarchy);
+    EXPECT_EQ(DeviceHierarchyMode::flat, defaultDeviceHierarchy);
 }

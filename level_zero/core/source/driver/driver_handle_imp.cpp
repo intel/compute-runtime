@@ -330,7 +330,7 @@ void DriverHandleImp::initHostUsmAllocPool() {
 ze_result_t DriverHandleImp::getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) {
 
     // If the user has requested FLAT or COMBINED device hierarchy model, then report all the sub devices as devices.
-    bool exposeSubDevices = (this->devices.size() && this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::COMPOSITE);
+    bool exposeSubDevices = (this->devices.size() && this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::composite);
 
     uint32_t numDevices = 0;
     if (exposeSubDevices) {
@@ -858,7 +858,7 @@ ze_result_t DriverHandleImp::fabricVertexGetExp(uint32_t *pCount, ze_fabric_vert
         this->initializeVertexes();
     }
 
-    bool exposeSubDevices = this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::COMPOSITE;
+    bool exposeSubDevices = this->devices[0]->getNEODevice()->getExecutionEnvironment()->getDeviceHierarchyMode() != NEO::DeviceHierarchyMode::composite;
 
     if (*pCount == 0) {
         if (exposeSubDevices) {

@@ -110,7 +110,7 @@ TEST(SubDevicesTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceApiRefCo
     UnitTestSetter::disableHeaplessStateInit(restorer);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
-    DeviceHierarchyMode deviceHierarchyModes[] = {FLAT, COMBINED};
+    DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};
     for (auto deviceHierarchyMode : deviceHierarchyModes) {
         initPlatform();
         platform()->peekExecutionEnvironment()->setDeviceHierarchyMode(deviceHierarchyMode);

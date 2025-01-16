@@ -87,7 +87,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool metricsEnabled = false;
     bool fp64EmulationEnabled = false;
 
-    DeviceHierarchyMode deviceHierarchyMode = COMPOSITE;
+    DeviceHierarchyMode deviceHierarchyMode = DeviceHierarchyMode::composite;
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
     std::mutex initializeDirectSubmissionControllerMutex;

@@ -558,7 +558,7 @@ TEST(ExecutionEnvironment, givenCorrectZeAffinityMaskWithFlatOrCombinedHierarchy
 
     auto hwInfo = *defaultHwInfo;
 
-    DeviceHierarchyMode deviceHierarchyModes[] = {FLAT, COMBINED};
+    DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};
     for (auto deviceHierarchyMode : deviceHierarchyModes) {
         MockExecutionEnvironment executionEnvironment(&hwInfo);
         executionEnvironment.incRefInternal();
@@ -579,7 +579,7 @@ TEST(ExecutionEnvironment, givenIncorrectZeAffinityMaskWithFlatOrCombinedHierarc
 
     auto hwInfo = *defaultHwInfo;
 
-    DeviceHierarchyMode deviceHierarchyModes[] = {FLAT, COMBINED};
+    DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};
     for (auto deviceHierarchyMode : deviceHierarchyModes) {
         MockExecutionEnvironment executionEnvironment(&hwInfo);
         executionEnvironment.incRefInternal();

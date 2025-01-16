@@ -682,7 +682,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateNumThreadsPerThreadGroup(uint32_t 
 
 template <typename GfxFamily>
 DeviceHierarchyMode GfxCoreHelperHw<GfxFamily>::getDefaultDeviceHierarchy() const {
-    return COMPOSITE;
+    return DeviceHierarchyMode::composite;
 }
 
 template <typename GfxFamily>

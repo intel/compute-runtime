@@ -220,7 +220,7 @@ void ExecutionEnvironment::parseAffinityMask() {
     }
 
     // If the user has requested FLAT or COMBINED device hierarchy models, then report all the sub devices as devices.
-    bool exposeSubDevices = this->deviceHierarchyMode != COMPOSITE;
+    bool exposeSubDevices = this->deviceHierarchyMode != DeviceHierarchyMode::composite;
 
     // Reserve at least for a size equal to rootDeviceEnvironments.size() times four,
     // which is enough for typical configurations
@@ -316,11 +316,11 @@ void ExecutionEnvironment::setDeviceHierarchyMode(const GfxCoreHelper &gfxCoreHe
     NEO::EnvironmentVariableReader envReader;
     std::string deviceHierarchyMode = envReader.getSetting("ZE_FLAT_DEVICE_HIERARCHY", std::string(""));
     if (strcmp(deviceHierarchyMode.c_str(), "COMPOSITE") == 0) {
-        this->deviceHierarchyMode = COMPOSITE;
+        this->deviceHierarchyMode = DeviceHierarchyMode::composite;
     } else if (strcmp(deviceHierarchyMode.c_str(), "FLAT") == 0) {
-        this->deviceHierarchyMode = FLAT;
+        this->deviceHierarchyMode = DeviceHierarchyMode::flat;
     } else if (strcmp(deviceHierarchyMode.c_str(), "COMBINED") == 0) {
-        this->deviceHierarchyMode = COMBINED;
+        this->deviceHierarchyMode = DeviceHierarchyMode::combined;
     } else {
         this->deviceHierarchyMode = gfxCoreHelper.getDefaultDeviceHierarchy();
     }

@@ -300,7 +300,7 @@ bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
 
 template <>
 DeviceHierarchyMode GfxCoreHelperHw<Family>::getDefaultDeviceHierarchy() const {
-    return FLAT;
+    return DeviceHierarchyMode::flat;
 }
 
 } // namespace NEO

@@ -130,7 +130,7 @@ struct MultiDeviceFixture {
     uint32_t numRootDevices = 4u;
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
-    NEO::DeviceHierarchyMode deviceHierarchyMode = NEO::DeviceHierarchyMode::COMPOSITE;
+    NEO::DeviceHierarchyMode deviceHierarchyMode = NEO::DeviceHierarchyMode::composite;
 
     VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
     VariableBackup<uint32_t> driverCountBackup{&driverCount};
@@ -144,14 +144,14 @@ struct MultiDeviceFixtureCompositeHierarchy : public MultiDeviceFixtureHierarchy
 
 struct MultiDeviceFixtureFlatHierarchy : public MultiDeviceFixtureHierarchy {
     void setUp() {
-        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::FLAT;
+        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::flat;
         MultiDeviceFixtureHierarchy::setUp();
     }
 };
 
 struct MultiDeviceFixtureCombinedHierarchy : public MultiDeviceFixtureHierarchy {
     void setUp() {
-        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::COMBINED;
+        this->deviceHierarchyMode = NEO::DeviceHierarchyMode::combined;
         MultiDeviceFixtureHierarchy::setUp();
     }
 };

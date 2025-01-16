@@ -4311,7 +4311,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
     void testSingleDevice() {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
-        device->getNEODevice()->getExecutionEnvironment()->setDeviceHierarchyMode(COMPOSITE);
+        device->getNEODevice()->getExecutionEnvironment()->setDeviceHierarchyMode(DeviceHierarchyMode::composite);
 
         auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();

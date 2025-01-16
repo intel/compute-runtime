@@ -35,7 +35,7 @@ TEST_F(SysmanMultiDeviceInfoFixture, givenDeviceWithMultipleTilesWhenOnlyTileOne
 }
 
 TEST_F(SysmanMultiDeviceInfoFixture, givenDeviceWithMultipleTilesEnabledAndCompositeHierarchyThenGetSysmanDeviceInfoReturnsExpectedValues) {
-    neoDevice->getExecutionEnvironment()->setDeviceHierarchyMode(NEO::DeviceHierarchyMode::COMPOSITE);
+    neoDevice->getExecutionEnvironment()->setDeviceHierarchyMode(NEO::DeviceHierarchyMode::composite);
     uint32_t subDeviceCount = 0;
     std::vector<ze_device_handle_t> deviceHandles;
     Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);

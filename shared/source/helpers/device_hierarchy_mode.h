@@ -8,9 +8,9 @@
 #pragma once
 
 namespace NEO {
-enum DeviceHierarchyMode {
-    COMPOSITE,
-    FLAT,
-    COMBINED
+enum class DeviceHierarchyMode : uint32_t {
+    composite,
+    flat,
+    combined
 };
 };

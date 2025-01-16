@@ -76,7 +76,7 @@ TEST_P(PciBusOrderingTest, givenMultipleDevicesWithCompositeHierarchyAndZePcieId
     debugManager.flags.EnableChipsetUniqueUUID.set(0);
 
     auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-    executionEnvironment->setDeviceHierarchyMode(COMPOSITE);
+    executionEnvironment->setDeviceHierarchyMode(DeviceHierarchyMode::composite);
     auto memoryManager = new MockMemoryManagerOsAgnosticContext(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
