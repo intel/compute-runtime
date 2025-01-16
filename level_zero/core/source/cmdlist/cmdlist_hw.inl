@@ -1717,6 +1717,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
             if ((!signalEvent || !signalEvent->getAllocation(this->device)) && !isCopyOnlyEnabled) {
                 NEO::PipeControlArgs args;
                 args.dcFlushEnable = dcFlush;
+
+                NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
             appendSignalInOrderDependencyCounter(signalEvent, isCopyOnlyEnabled, false);
@@ -2264,6 +2266,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             if (!signalEvent || !signalEvent->getAllocation(this->device)) {
                 NEO::PipeControlArgs args;
                 args.dcFlushEnable = dcFlush;
+                NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
                 NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
             }
             appendSignalInOrderDependencyCounter(signalEvent, false, false);
