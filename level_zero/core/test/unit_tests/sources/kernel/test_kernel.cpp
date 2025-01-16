@@ -3611,20 +3611,30 @@ class KernelProgramBinaryTests : public ModuleFixture, public ::testing::Test {
     L0::Kernel *kernel = nullptr;
 };
 
-TEST_F(KernelProgramBinaryTests, givenCallToGetKernelProgramBinaryThenCorrectSizeAndDataReturned) {
-
+TEST_F(KernelProgramBinaryTests, givenCallTozeKernelGetBinaryExpThenCorrectSizeAndDataReturned) {
     size_t kernelBinarySize = 0;
-    char *kernelBinaryRetrieved = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize, kernelBinaryRetrieved));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, nullptr));
     EXPECT_GT(kernelBinarySize, 0u);
-    kernelBinaryRetrieved = new char[kernelBinarySize];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize, kernelBinaryRetrieved));
+    std::unique_ptr<uint8_t[]> kernelBinaryRetrieved = std::make_unique<uint8_t[]>(kernelBinarySize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zeKernelGetBinaryExp(kernelHandle, &kernelBinarySize, reinterpret_cast<uint8_t *>(kernelBinaryRetrieved.get())));
 
     auto &kernelImmutableData = this->module->kernelImmDatas.front();
     EXPECT_EQ(kernelBinarySize, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);
     const char *heapPtr = reinterpret_cast<const char *>(kernelImmutableData->getKernelInfo()->heapInfo.pKernelHeap);
-    EXPECT_EQ(0, memcmp(kernelBinaryRetrieved, heapPtr, kernelBinarySize));
-    delete[] kernelBinaryRetrieved;
+    EXPECT_EQ(0, memcmp(kernelBinaryRetrieved.get(), heapPtr, kernelBinarySize));
+}
+
+TEST_F(KernelProgramBinaryTests, givenCallToGetKernelProgramBinaryThenCorrectSizeAndDataReturned) {
+    size_t kernelBinarySize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize, nullptr));
+    EXPECT_GT(kernelBinarySize, 0u);
+    std::unique_ptr<char[]> kernelBinaryRetrieved = std::make_unique<char[]>(kernelBinarySize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->getKernelProgramBinary(&kernelBinarySize, reinterpret_cast<char *>(kernelBinaryRetrieved.get())));
+
+    auto &kernelImmutableData = this->module->kernelImmDatas.front();
+    EXPECT_EQ(kernelBinarySize, kernelImmutableData->getKernelInfo()->heapInfo.kernelHeapSize);
+    const char *heapPtr = reinterpret_cast<const char *>(kernelImmutableData->getKernelInfo()->heapInfo.pKernelHeap);
+    EXPECT_EQ(0, memcmp(kernelBinaryRetrieved.get(), heapPtr, kernelBinarySize));
 }
 
 TEST_F(KernelProgramBinaryTests, givenCallToGetKernelProgramBinaryWithSmallSizeThenSmallSizeReturned) {

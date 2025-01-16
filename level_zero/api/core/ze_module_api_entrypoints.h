@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -138,6 +138,13 @@ ze_result_t zeKernelGetProperties(
     ze_kernel_handle_t hKernel,
     ze_kernel_properties_t *pKernelProperties) {
     return L0::Kernel::fromHandle(hKernel)->getProperties(pKernelProperties);
+}
+
+ze_result_t zeKernelGetBinaryExp(
+    ze_kernel_handle_t hKernel,
+    size_t *pSize,
+    uint8_t *pKernelBinary) {
+    return L0::Kernel::fromHandle(hKernel)->getKernelProgramBinary(pSize, reinterpret_cast<char *>(pKernelBinary));
 }
 
 ze_result_t zeCommandListAppendLaunchKernel(
@@ -437,6 +444,16 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetProperties(
     return L0::zeKernelGetProperties(
         hKernel,
         pKernelProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetBinaryExp(
+    ze_kernel_handle_t hKernel,
+    size_t *pSize,
+    uint8_t *pKernelBinary) {
+    return L0::zeKernelGetBinaryExp(
+        hKernel,
+        pSize,
+        pKernelBinary);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetName(

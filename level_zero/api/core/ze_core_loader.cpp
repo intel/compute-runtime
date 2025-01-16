@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -662,6 +662,7 @@ zeGetKernelExpProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnSetGlobalOffsetExp, L0::zeKernelSetGlobalOffsetExp, version, ZE_API_VERSION_1_1);
     fillDdiEntry(pDdiTable->pfnSchedulingHintExp, L0::zeKernelSchedulingHintExp, version, ZE_API_VERSION_1_2);
+    fillDdiEntry(pDdiTable->pfnGetBinaryExp, L0::zeKernelGetBinaryExp, version, ZE_API_VERSION_1_11);
     driverDdiTable.coreDdiTable.KernelExp = *pDdiTable;
     return result;
 }
