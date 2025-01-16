@@ -128,7 +128,9 @@ void PrintFormatter::adjustFormatString<int64_t>(std::string &formatString) {
     UNRECOVERABLE_IF(formatString.size() - 1 == longPosition);
 
     if (formatString.at(longPosition + 1) != 'l') {
-        formatString.insert(longPosition, "l");
+        formatString.append(1, '\0');
+        std::move_backward(formatString.begin() + longPosition, formatString.end() - 1, formatString.end());
+        formatString[longPosition] = 'l';
     }
 }
 
