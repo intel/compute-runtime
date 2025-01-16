@@ -60,8 +60,8 @@ struct EuDebugEventExecQueuePlacements {
     uint64_t vmHandle;
     uint64_t execQueueHandle;
     uint64_t lrcHandle;
-    uint64_t numPlacements;
-    uint64_t pad;
+    uint32_t numPlacements;
+    uint32_t pad;
     uint64_t instances[];
 };
 
@@ -158,6 +158,13 @@ struct DebugMetadataCreate {
 struct DebugMetadataDestroy {
     uint64_t extensions;
     uint32_t metadataId;
+};
+
+struct XeEngineClassInstance {
+    uint16_t engineClass;
+    uint16_t engineInstance;
+    uint16_t gtId;
+    uint16_t pad;
 };
 
 struct XeUserExtension {

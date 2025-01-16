@@ -362,9 +362,8 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
                                 static_cast<uint32_t>(execQueuePlacements->numPlacements));
 
         UNRECOVERABLE_IF(execQueuePlacements->numPlacements == 0);
-        auto engine = reinterpret_cast<NEO::EngineClassInstance *>(&(execQueuePlacements->instances[0]));
-        NEO::EngineClassInstance engineClassInstance = {engine->engineClass, engine->engineInstance};
-        auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
+        auto engine = reinterpret_cast<NEO::XeEngineClassInstance *>(&(execQueuePlacements->instances[0]));
+        auto tileIndex = engine->gtId;
 
         auto &vmToTile = clientHandleToConnection[execQueuePlacements->clientHandle]->vmToTile;
         if (vmToTile.find(execQueuePlacements->vmHandle) != vmToTile.end()) {

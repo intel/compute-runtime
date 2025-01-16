@@ -2871,7 +2871,7 @@ TEST_F(DebugApiLinuxTestXe, GivenExecQueuePlacementEventWhenHandlingThenVmToTile
 
     EXPECT_NE(session->clientHandleToConnection[client1.clientHandle]->vmToTile.end(),
               session->clientHandleToConnection[client1.clientHandle]->vmToTile.find(vmHandle));
-    EXPECT_EQ(0u, session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle]);
+    EXPECT_EQ(1u, session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle]);
 }
 
 TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleWithDifferentTileIndexWhenHandlingThenErrorReported) {
@@ -2909,7 +2909,7 @@ TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleW
     auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
     engineClassInstance[0].engine_class = 0;
     engineClassInstance[0].engine_instance = 1;
-    engineClassInstance[0].gt_id = 1;
+    engineClassInstance[0].gt_id = 0;
 
     ::testing::internal::CaptureStderr();
     session->handleEvent(&execQueuePlacements->base);
