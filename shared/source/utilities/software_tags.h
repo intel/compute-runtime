@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,9 @@ enum class Component : uint32_t {
     common = 1
 };
 
+inline constexpr uint32_t reservedDefault = 0u;
+inline constexpr uint32_t driverDebugDefault = 1u;
+
 struct BXMLHeapInfo {
     const uint32_t magicNumber = 0xDEB06D0C;
     const uint32_t heapSize;
@@ -49,9 +52,9 @@ struct SWTagHeapInfo {
 struct BaseTag {
   public:
     BaseTag(OpCode code, size_t size) : opcode(static_cast<uint32_t>(code)),
-                                        reserved(0),
+                                        reserved(reservedDefault),
                                         component(static_cast<uint32_t>(Component::common)),
-                                        driverDebug(1),
+                                        driverDebug(driverDebugDefault),
                                         dwordCount(static_cast<uint32_t>(size / sizeof(uint32_t) - 2)) {}
 
     OpCode getOpCode() const { return static_cast<OpCode>(opcode); }
