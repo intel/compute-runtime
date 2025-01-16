@@ -1546,3 +1546,59 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsNotAvailableTh
 
     memoryManager->freeGraphicsMemory(gfxAlloc1);
 }
+
+HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsAvailableThenTbxFaultableTypesShouldReturnTrue) {
+    DebugManagerStateRestore stateRestore;
+    debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
+    debugManager.flags.EnableTbxPageFaultManager.set(true);
+    std::unique_ptr<MockTbxCsrForPageFaultTests<FamilyType>> tbxCsr(new MockTbxCsrForPageFaultTests<FamilyType>(*pDevice->executionEnvironment, pDevice->getDeviceBitfield()));
+    tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    NEO::GraphicsAllocation *gfxAlloc1 = memoryManager->allocateGraphicsMemoryWithProperties(
+        {pDevice->getRootDeviceIndex(),
+         MemoryConstants::pageSize,
+         AllocationType::bufferHostMemory,
+         pDevice->getDeviceBitfield()});
+
+    auto backupAllocType = gfxAlloc1->getAllocationType();
+
+    std::array onceWritableTypes{
+        AllocationType::pipe,
+        AllocationType::constantSurface,
+        AllocationType::globalSurface,
+        AllocationType::kernelIsa,
+        AllocationType::kernelIsaInternal,
+        AllocationType::privateSurface,
+        AllocationType::scratchSurface,
+        AllocationType::workPartitionSurface,
+        AllocationType::buffer,
+        AllocationType::image,
+        AllocationType::timestampPacketTagBuffer,
+        AllocationType::externalHostPtr,
+        AllocationType::mapAllocation,
+        AllocationType::svmGpu,
+        AllocationType::gpuTimestampDeviceBuffer,
+        AllocationType::assertBuffer,
+        AllocationType::tagBuffer,
+        AllocationType::syncDispatchToken,
+        AllocationType::bufferHostMemory,
+    };
+
+    std::set unsupportedOnceWritableTypes{AllocationType::gpuTimestampDeviceBuffer};
+
+    for (const auto &allocType : onceWritableTypes) {
+        gfxAlloc1->setAllocationType(allocType);
+        auto isSupportedOnceWritableType = unsupportedOnceWritableTypes.count(allocType) == 0;
+        if (isSupportedOnceWritableType) {
+            EXPECT_TRUE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
+        } else {
+            EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
+        }
+    }
+
+    gfxAlloc1->setAllocationType(backupAllocType);
+
+    memoryManager->freeGraphicsMemory(gfxAlloc1);
+}

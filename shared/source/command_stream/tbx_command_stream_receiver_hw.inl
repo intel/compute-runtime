@@ -89,7 +89,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::isAllocTbxFaultable(GraphicsAllocati
         return false;
     }
     auto allocType = gfxAlloc->getAllocationType();
-    return allocType == AllocationType::bufferHostMemory;
+    return AubHelper::isOneTimeAubWritableAllocationType(allocType) && allocType != AllocationType::gpuTimestampDeviceBuffer;
 }
 
 template <typename GfxFamily>
