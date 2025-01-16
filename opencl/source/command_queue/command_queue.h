@@ -403,10 +403,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isBcs() const { return isCopyOnly; };
 
     cl_int enqueueStagingBufferMemcpy(cl_bool blockingCopy, void *dstPtr, const void *srcPtr, size_t size, cl_event *event);
-    cl_int enqueueStagingWriteImage(Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
-                                    size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
-    cl_int enqueueStagingReadImage(Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
-                                   size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
+    cl_int enqueueStagingImageTransfer(cl_command_type commandType, Image *dstImage, cl_bool blockingCopy, const size_t *globalOrigin, const size_t *globalRegion,
+                                       size_t inputRowPitch, size_t inputSlicePitch, const void *ptr, cl_event *event);
     cl_int enqueueStagingWriteBuffer(Buffer *buffer, cl_bool blockingCopy, size_t offset, size_t size, const void *ptr, cl_event *event);
 
     bool isValidForStagingBufferCopy(Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies);
