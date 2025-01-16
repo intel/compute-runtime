@@ -61,10 +61,6 @@ BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
-BMGTEST_F(BmgProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
-}
-
 BMGTEST_F(BmgProductHelperLinux, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

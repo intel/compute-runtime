@@ -60,10 +60,6 @@ LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationSuppor
     EXPECT_FALSE(productHelper->isKmdMigrationSupported());
 }
 
-LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
-}
-
 LNLTEST_F(LnlProductHelperLinux, givenProductHelperWhenCheckDirectSubmissionSupportedThenFalseIsReturned) {
     EXPECT_FALSE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }

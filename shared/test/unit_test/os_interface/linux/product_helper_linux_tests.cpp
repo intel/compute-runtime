@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -347,4 +347,8 @@ HWTEST2_F(HwConfigLinux, givenPlatformWithPlatformQuerySupportedWhenItIsCalledTh
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtLeastMtl) {
 
     EXPECT_TRUE(productHelper->isPlatformQuerySupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIsDisableScratchPagesSupportedThenReturnTrue, IsAtLeastXeHpcCore) {
+    EXPECT_TRUE(productHelper->isDisableScratchPagesSupported());
 }
