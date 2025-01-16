@@ -89,7 +89,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::isAllocTbxFaultable(GraphicsAllocati
         return false;
     }
     auto allocType = gfxAlloc->getAllocationType();
-    return AubHelper::isOneTimeAubWritableAllocationType(allocType) && allocType != AllocationType::gpuTimestampDeviceBuffer;
+    return AubHelper::isOneTimeAubWritableAllocationType(allocType) && GraphicsAllocation::isLockable(allocType);
 }
 
 template <typename GfxFamily>

@@ -39,7 +39,6 @@ void TbxPageFaultManager::handlePageFault(void *ptr, PageFaultDataTbx &faultData
     } else {
         graphicsAllocation.setTbxWritable(true, bank);
         this->allowCPUMemoryAccess(ptr, size);
-        this->memoryDataTbx.erase(ptr);
     }
 }
 
