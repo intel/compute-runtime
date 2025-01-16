@@ -547,7 +547,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaitingForTaskCountThenGpuHa
     csr.activePartitions = 1;
     csr.gpuHangCheckPeriod = 0us;
 
-    volatile TagAddressType tasksCount[16] = {};
+    TagAddressType tasksCount[16] = {};
     csr.tagAddress = tasksCount;
 
     constexpr auto taskCountToWait = 1;
@@ -625,7 +625,7 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangAndNonEmptyAllocationsListWhenCa
     csr.activePartitions = 1;
     csr.gpuHangCheckPeriod = 0us;
 
-    volatile TagAddressType tasksCount[16] = {};
+    TagAddressType tasksCount[16] = {};
     VariableBackup<volatile TagAddressType *> csrTagAddressBackup(&csr.tagAddress);
     csr.tagAddress = tasksCount;
 
