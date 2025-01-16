@@ -470,7 +470,7 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampEventWhenQueryingTimest
                 *completionAddress = 0x123;
             }
 
-            EventImp<uint64_t>::assignKernelEventCompletionData(address);
+            L0::EventImp<uint64_t>::assignKernelEventCompletionData(address);
         }
     };
 
