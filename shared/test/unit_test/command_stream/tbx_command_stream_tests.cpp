@@ -1586,7 +1586,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxModeWhenPageFaultManagerIsAvailableThenT
         AllocationType::bufferHostMemory,
     };
 
-    std::set unsupportedOnceWritableTypes{AllocationType::gpuTimestampDeviceBuffer};
+    std::set<AllocationType> unsupportedOnceWritableTypes{AllocationType::gpuTimestampDeviceBuffer};
 
     for (const auto &allocType : onceWritableTypes) {
         gfxAlloc1->setAllocationType(allocType);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1215,7 +1215,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
 
     struct MockCsrHwDirectSubmission : public MockCsrHw2<FamilyType> {
         using MockCsrHw2<FamilyType>::MockCsrHw2;
-        using MockCsrHw2<FamilyType>::directSubmission;
         bool isDirectSubmissionEnabled() const override {
             return true;
         }
