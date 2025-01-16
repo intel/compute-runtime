@@ -1539,7 +1539,7 @@ struct DrmMockCheckPageFault : public DrmMock {
 
 using DrmDisableScratchPagesDefaultTest = ::testing::Test;
 HWTEST2_F(DrmDisableScratchPagesDefaultTest,
-          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultValueAndScratchPageIsDisabled, IsPVC) {
+          givenDefaultDisableScratchPagesThenCheckingGpuFaultCheckIsSetToDefaultValueAndScratchPageIsDisabled, IsAtLeastXeHpcCore) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMockCheckPageFault drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.configureScratchPagePolicy();
