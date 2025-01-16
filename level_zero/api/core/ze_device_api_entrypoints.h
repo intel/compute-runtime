@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,7 +108,7 @@ ze_result_t zeDeviceGetGlobalTimestamps(
     ze_device_handle_t hDevice,
     uint64_t *hostTimestamp,
     uint64_t *deviceTimestamp) {
-    return L0::Device::fromHandle(hDevice)->getGlobalTimestamps(hostTimestamp, deviceTimestamp);
+    return L0::Device::fromHandle(hDevice)->getGlobalTimestamps(hostTimestamp, deviceTimestamp, true);
 }
 
 ze_result_t zeDeviceReserveCacheExt(

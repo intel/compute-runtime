@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1001,7 +1001,7 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
     uint64_t hostTimestamp;
     uint64_t deviceTimestamp;
 
-    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
+    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp, false);
     if (result != ZE_RESULT_SUCCESS) {
         *globalTimestamp = 0;
         *metricTimestamp = 0;

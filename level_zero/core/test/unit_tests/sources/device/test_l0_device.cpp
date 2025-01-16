@@ -1692,20 +1692,20 @@ TEST_F(DeviceTest, givenInvalidPciBusInfoWhenPciPropertiesIsCalledThenUninitiali
     }
 }
 
-TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithOsInterfaceThenSuccessIsReturnedAndValuesSetCorrectly) {
+TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithOsInterfaceViaDebugVariableThenSuccessIsReturnedAndValuesSetCorrectly) {
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
     debugManager.flags.EnableGlobalTimestampViaSubmission.set(0);
 
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_NE(0u, hostTs);
     EXPECT_NE(0u, deviceTs);
 }
 
-TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionThenSuccessIsReturned) {
+TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionViaDebugVariableThenSuccessIsReturned) {
 
     debugManager.flags.EnableGlobalTimestampViaSubmission.set(1);
 
@@ -1713,12 +1713,28 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithSubmissionThenSuccessIsRetu
     uint64_t deviceTs = 0u;
 
     // First time to hit the if case of initialization of internal structures.
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(0u, hostTs);
 
     // Second time to hit the false case for initialization of internal structures as they are already initialized.
-    result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, hostTs);
+}
+
+TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledWithUseSubmissionAsTrueThenSuccessIsReturned) {
+
+    uint64_t hostTs = 0u;
+    uint64_t deviceTs = 0u;
+
+    // First time to hit the if case of initialization of internal structures.
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(0u, hostTs);
+
+    // Second time to hit the false case for initialization of internal structures as they are already initialized.
+    result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(0u, hostTs);
 }
@@ -1736,7 +1752,7 @@ TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUs
     uint64_t deviceTs = 0u;
 
     // First time to hit the if case of initialization of internal structures.
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(0u, hostTs);
 
@@ -1750,7 +1766,7 @@ TEST_F(DeviceTest, givenAppendWriteGlobalTimestampFailsWhenGetGlobalTimestampsUs
 
     L0::CommandList::fromHandle(deviceImp->globalTimestampCommandList)->appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr);
 
-    result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
     // Swap back the command list.
@@ -1789,7 +1805,7 @@ TEST_F(DeviceTest, givenCreateHostUnifiedMemoryAllocationFailsWhenGetGlobalTimes
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 
     mockDriverHandleImp->setSVMAllocsManager(nullptr);
@@ -1820,6 +1836,7 @@ struct GlobalTimestampTest : public ::testing::Test {
 };
 
 TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetGpuCpuTimeIsDeviceLostReturnError) {
+
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
@@ -1830,7 +1847,7 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetGpuCpuTimeIsDevice
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
 
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
@@ -1846,7 +1863,7 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetGpuCpuTimeIsUnsupp
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -1972,11 +1989,12 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampsUsingSubmissionAndGetCpuTimeH
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, true);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
 }
 
 TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseReturnArbitraryValues) {
+
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
 
@@ -1987,14 +2005,14 @@ TEST_F(GlobalTimestampTest, whenGetGlobalTimestampCalledAndGetCpuTimeIsFalseRetu
     driverHandle->initialize(std::move(devices));
     device = driverHandle->devices[0];
 
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, hostTs);
     EXPECT_NE(0u, deviceTs);
 }
 
 TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetWhenGetGlobalTimestampIsCalledThenOutputStringIsAsExpected) {
-    DebugManagerStateRestore restorer;
+
     debugManager.flags.PrintGlobalTimestampInNs.set(true);
     uint64_t hostTs = 0u;
     uint64_t deviceTs = 0u;
@@ -2011,7 +2029,7 @@ TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetWhenGetGlobalTimestampIsCalledT
     capabilityTable.kernelTimestampValidBits = 32;
 
     testing::internal::CaptureStdout();
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::string output = testing::internal::GetCapturedStdout();
     // Considering kernelTimestampValidBits(32)
@@ -2042,7 +2060,7 @@ TEST_F(DeviceTest, givenPrintGlobalTimestampIsSetAnd64bitTimestampWhenGetGlobalT
     uint64_t deviceTs = 0u;
 
     testing::internal::CaptureStdout();
-    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs);
+    ze_result_t result = device->getGlobalTimestamps(&hostTs, &deviceTs, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     std::string output = testing::internal::GetCapturedStdout();
     const std::string expectedString("Host timestamp in ns : 0 | Device timestamp in ns : " +
