@@ -300,8 +300,8 @@ if(NOT NEO_BINARY_DIR)
   set(NEO_BINARY_DIR ${CMAKE_BINARY_DIR})
 endif()
 
-# we use c++20
-set(CMAKE_CXX_STANDARD 20)
+# we use c++17
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # we force using response files
