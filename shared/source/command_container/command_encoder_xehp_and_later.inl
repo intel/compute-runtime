@@ -411,7 +411,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.requiresSystemMemoryFence()};               // requiresMemoryFence
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, walkerArgs);
-    EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(walkerCmd, &idd, rootDeviceEnvironment, walkerArgs);
 
     EncodeDispatchKernel<Family>::overrideDefaultValues(walkerCmd, idd);
 

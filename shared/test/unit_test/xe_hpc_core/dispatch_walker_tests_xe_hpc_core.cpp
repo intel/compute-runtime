@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ using WalkerDispatchTestsXeHpcCore = ::testing::Test;
 
 XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWalkerFieldsIsCalledThenComputeDispatchAllIsCorrectlySet) {
     DebugManagerStateRestore debugRestorer;
+    MockExecutionEnvironment executionEnvironment;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     KernelDescriptor kernelDescriptor;
@@ -28,13 +29,13 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     walkerArgs.requiredSystemFence = true;
 
     {
-        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
     {
         debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
-        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 }

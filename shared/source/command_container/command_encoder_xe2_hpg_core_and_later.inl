@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,9 +30,13 @@ uint32_t EncodeDispatchKernel<Family>::alignPreferredSlmSize(uint32_t slmSize) {
 }
 
 template <typename Family>
-template <typename WalkerType>
-void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    bool computeDispatchAllWalkerEnable = walkerArgs.kernelExecutionType == KernelExecutionType::concurrent;
+template <typename WalkerType, typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(WalkerType &walkerCmd, const InterfaceDescriptorType *idd, const RootDeviceEnvironment &rootDeviceEnvironment, const EncodeWalkerArgs &walkerArgs) {
+    bool computeDispatchAllWalkerEnable = walkerArgs.kernelExecutionType == KernelExecutionType::concurrent || (rootDeviceEnvironment.getNonLimitedNumberOfCcs() == 1u &&
+                                                                                                                rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.SliceCount > 2u &&
+                                                                                                                idd &&
+                                                                                                                idd->getThreadGroupDispatchSize() == InterfaceDescriptorType::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 &&
+                                                                                                                walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension() * idd->getNumberOfThreadsInGpgpuThreadGroup() < walkerArgs.maxFrontEndThreads);
     int32_t overrideComputeDispatchAllWalkerEnable = debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.get();
     if (overrideComputeDispatchAllWalkerEnable != -1) {
         computeDispatchAllWalkerEnable = !!overrideComputeDispatchAllWalkerEnable;
