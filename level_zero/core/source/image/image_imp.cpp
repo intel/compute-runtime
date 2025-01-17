@@ -25,9 +25,38 @@
 #include "igfxfmid.h"
 
 namespace L0 {
-
 ImageAllocatorFn imageFactory[IGFX_MAX_PRODUCT] = {};
-bool getImageDescriptor(const ze_image_desc_t *origImgDesc, ze_image_desc_t *imgDesc);
+
+bool isImportedWin32Handle(const ze_image_desc_t *imgDesc) {
+    const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(imgDesc->pNext);
+    bool importedWin32Handle = false;
+    while (extendedDesc) {
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32) {
+            importedWin32Handle = true;
+        }
+        extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);
+    }
+    return importedWin32Handle;
+}
+
+void getImageDescriptorFor3ChEmulation(const ze_image_desc_t *origImgDesc, ze_image_desc_t *imgDesc) {
+    *imgDesc = *origImgDesc;
+    if (origImgDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_16_16_16) {
+        imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
+        imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+        imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+        imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+        imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    }
+    if (origImgDesc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_8_8_8) {
+        imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+        imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
+        imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
+        imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
+        imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    }
+    return;
+}
 
 ImageImp::~ImageImp() {
     if ((isImageView() || imageFromBuffer) && this->device != nullptr) {
@@ -87,20 +116,30 @@ ze_result_t ImageImp::createView(Device *device, const ze_image_desc_t *desc, ze
     image->imgInfo = this->imgInfo;
     image->imageFromBuffer = this->imageFromBuffer;
 
-    ze_image_desc_t imgDesc = {};
-    bool modified = getImageDescriptor(desc, &imgDesc);
     auto result = ZE_RESULT_SUCCESS;
-    if (modified && this->isMimickedImage()) {
-        image->setMimickedImage(true);
-        result = image->initialize(device, &imgDesc);
-    } else {
+    switch (desc->format.layout) {
+    default:
         result = image->initialize(device, desc);
+        break;
+    case ZE_IMAGE_FORMAT_LAYOUT_32_32_32:
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        break;
+    case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
+    case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
+        if (isImportedWin32Handle(desc)) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        } else {
+            ze_image_desc_t imgDesc = {};
+            getImageDescriptorFor3ChEmulation(desc, &imgDesc);
+            image->setMimickedImage(true);
+            result = image->initialize(device, &imgDesc);
+        }
+        break;
     }
     if (result != ZE_RESULT_SUCCESS) {
         image->destroy();
         image = nullptr;
     }
-
     *pImage = image;
 
     return result;
@@ -136,58 +175,6 @@ NEO::SurfaceStateInHeapInfo *ImageImp::getBindlessSlot() {
     return bindlessInfo.get();
 }
 
-bool getImageDescriptor(const ze_image_desc_t *origImgDesc, ze_image_desc_t *imgDesc) {
-    bool modified = false;
-    *imgDesc = *origImgDesc;
-    if (origImgDesc->pNext) {
-        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(origImgDesc->pNext);
-        if (extendedDesc->stype != ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32) {
-            switch (origImgDesc->format.layout) {
-            default:
-                break;
-            case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
-                imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
-                imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
-                imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
-                imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
-                imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-                modified = true;
-                break;
-            case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
-                imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-                imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
-                imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
-                imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
-                imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-                modified = true;
-                break;
-            }
-        }
-    } else {
-        switch (origImgDesc->format.layout) {
-        default:
-            break;
-        case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
-            imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16;
-            imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
-            imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
-            imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
-            imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-            modified = true;
-            break;
-        case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
-            imgDesc->format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
-            imgDesc->format.x = ZE_IMAGE_FORMAT_SWIZZLE_R;
-            imgDesc->format.y = ZE_IMAGE_FORMAT_SWIZZLE_G;
-            imgDesc->format.z = ZE_IMAGE_FORMAT_SWIZZLE_B;
-            imgDesc->format.w = ZE_IMAGE_FORMAT_SWIZZLE_1;
-            modified = true;
-            break;
-        }
-    }
-    return modified;
-}
-
 ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     ImageAllocatorFn allocator = nullptr;
@@ -198,15 +185,25 @@ ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image
     ImageImp *image = nullptr;
     if (allocator) {
         image = static_cast<ImageImp *>((*allocator)());
-        ze_image_desc_t imgDesc = {};
-        bool modified = getImageDescriptor(desc, &imgDesc);
-        if (modified) {
-            image->setMimickedImage(true);
-            result = image->initialize(device, &imgDesc);
-        } else {
+        switch (desc->format.layout) {
+        default:
             result = image->initialize(device, desc);
+            break;
+        case ZE_IMAGE_FORMAT_LAYOUT_8_8_8:
+        case ZE_IMAGE_FORMAT_LAYOUT_16_16_16:
+            if (isImportedWin32Handle(desc)) {
+                result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            } else {
+                ze_image_desc_t imgDesc = {};
+                getImageDescriptorFor3ChEmulation(desc, &imgDesc);
+                image->setMimickedImage(true);
+                result = image->initialize(device, &imgDesc);
+            }
+            break;
+        case ZE_IMAGE_FORMAT_LAYOUT_32_32_32:
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            break;
         }
-
         if (result != ZE_RESULT_SUCCESS) {
             image->destroy();
             image = nullptr;
