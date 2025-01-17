@@ -41,7 +41,7 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
         event->setEventTimestampFlag(true);
         event->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, NEO::TimestampPacketConstants::preferredPacketCount>::getSinglePacketSize());
     }
-    event->hasKerneMappedTsCapability = eventDescriptor.kerneMappedTsPoolFlag;
+    event->hasKernelMappedTsCapability = eventDescriptor.kernelMappedTsPoolFlag;
 
     event->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
@@ -118,19 +118,19 @@ Event *Event::create(const EventDescriptor &eventDescriptor, Device *device, ze_
 template <typename TagSizeT>
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
     EventDescriptor eventDescriptor = {
-        &eventPool->getAllocation(),                  // eventPoolAllocation
-        desc->pNext,                                  // extensions
-        eventPool->getEventSize(),                    // totalEventSize
-        eventPool->getMaxKernelCount(),               // maxKernelCount
-        eventPool->getEventMaxPackets(),              // maxPacketsCount
-        eventPool->getCounterBasedFlags(),            // counterBasedFlags
-        desc->index,                                  // index
-        desc->signal,                                 // signalScope
-        desc->wait,                                   // waitScope
-        eventPool->isEventPoolTimestampFlagSet(),     // timestampPool
-        eventPool->isEventPoolKerneMappedTsFlagSet(), // kerneMappedTsPoolFlag
-        eventPool->getImportedIpcPool(),              // importedIpcPool
-        eventPool->isIpcPoolFlagSet(),                // ipcPool
+        &eventPool->getAllocation(),                   // eventPoolAllocation
+        desc->pNext,                                   // extensions
+        eventPool->getEventSize(),                     // totalEventSize
+        eventPool->getMaxKernelCount(),                // maxKernelCount
+        eventPool->getEventMaxPackets(),               // maxPacketsCount
+        eventPool->getCounterBasedFlags(),             // counterBasedFlags
+        desc->index,                                   // index
+        desc->signal,                                  // signalScope
+        desc->wait,                                    // waitScope
+        eventPool->isEventPoolTimestampFlagSet(),      // timestampPool
+        eventPool->isEventPoolKernelMappedTsFlagSet(), // kernelMappedTsPoolFlag
+        eventPool->getImportedIpcPool(),               // importedIpcPool
+        eventPool->isIpcPoolFlagSet(),                 // ipcPool
     };
 
     if (eventPool->getCounterBasedFlags() != 0 && standaloneInOrderTimestampAllocationEnabled()) {
@@ -886,7 +886,8 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
         return static_cast<uint64_t>((deviceTs & maxClampedTsValue) * resolution);
     };
 
-    auto deviceTsInNs = convertDeviceTsToNanoseconds(referenceTs.gpuTimeStamp);
+    NEO::TimeStampData *referenceTs = static_cast<NEO::TimeStampData *>(ptrOffset(getHostAddress(), maxPacketCount * singlePacketSize));
+    auto deviceTsInNs = convertDeviceTsToNanoseconds(referenceTs->gpuTimeStamp);
 
     auto getDuration = [&](uint64_t startTs, uint64_t endTs) {
         const uint64_t maxValue = maxKernelTsValue;
@@ -901,7 +902,7 @@ void EventImp<TagSizeT>::getSynchronizedKernelTimestamps(ze_synchronized_timesta
         }
     };
 
-    const auto &referenceHostTsInNs = referenceTs.cpuTimeinNS;
+    const auto &referenceHostTsInNs = referenceTs->cpuTimeinNS;
 
     // High Level Approach:
     // startTimeStamp = (referenceHostTsInNs - submitDeviceTs) + kernelDeviceTsStart
@@ -955,7 +956,7 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestampsExt(Device *device, uint32_
 
     ze_result_t status = queryTimestampsExp(device, pCount, pResults->pKernelTimestampsBuffer);
 
-    if (status == ZE_RESULT_SUCCESS && hasKerneMappedTsCapability) {
+    if (status == ZE_RESULT_SUCCESS && hasKernelMappedTsCapability) {
         getSynchronizedKernelTimestamps(pResults->pSynchronizedTimestampsBuffer, *pCount, pResults->pKernelTimestampsBuffer);
     }
     return status;

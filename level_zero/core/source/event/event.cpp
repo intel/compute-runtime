@@ -210,7 +210,13 @@ void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t
         eventPackets = driver.getEventMaxPacketCount(numDevices, deviceHandles);
         maxKernelCount = driver.getEventMaxKernelCount(numDevices, deviceHandles);
     }
-    setEventSize(static_cast<uint32_t>(alignUp(eventPackets * gfxCoreHelper.getSingleTimestampPacketSize(), eventAlignment)));
+
+    auto eventSize = eventPackets * gfxCoreHelper.getSingleTimestampPacketSize();
+    if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
+        eventSize += sizeof(NEO::TimeStampData);
+    }
+
+    setEventSize(static_cast<uint32_t>(alignUp(eventSize, eventAlignment)));
 
     eventPoolSize = alignUp<size_t>(this->numEvents * eventSize, MemoryConstants::pageSize64k);
 }
@@ -311,7 +317,7 @@ ze_result_t Event::openCounterBasedIpcHandle(const IpcCounterBasedEventData &ipc
         ipcData.signalScopeFlags,          // signalScope
         ipcData.waitScopeFlags,            // waitScope
         false,                             // timestampPool
-        false,                             // kerneMappedTsPoolFlag
+        false,                             // kernelMappedTsPoolFlag
         true,                              // importedIpcPool
         false,                             // ipcPool
     };
@@ -385,6 +391,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     poolData.isImplicitScalingCapable = this->isImplicitScalingCapable;
     poolData.maxEventPackets = this->getEventMaxPackets();
     poolData.numDevices = static_cast<uint32_t>(this->devices.size());
+    poolData.isEventPoolKernelMappedTsFlagSet = this->isEventPoolKernelMappedTsFlagSet();
 
     auto memoryManager = this->context->getDriverHandle()->getMemoryManager();
     auto allocation = this->eventPoolAllocations->getDefaultGraphicsAllocation();
@@ -402,6 +409,9 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     const IpcEventPoolData &poolData = *reinterpret_cast<const IpcEventPoolData *>(ipcEventPoolHandle.data);
 
     ze_event_pool_desc_t desc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    if (poolData.isEventPoolKernelMappedTsFlagSet) {
+        desc.flags |= ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP;
+    }
     desc.count = static_cast<uint32_t>(poolData.numEvents);
     auto eventPool = std::make_unique<EventPool>(&desc);
     eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
@@ -640,10 +650,11 @@ void Event::unsetCmdQueue() {
 }
 
 void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
+    NEO::TimeStampData *referenceTs = static_cast<NEO::TimeStampData *>(ptrOffset(getHostAddress(), maxPacketCount * singlePacketSize));
     const auto recalculate =
-        (currentCpuTimeStamp - referenceTs.cpuTimeinNS) > timestampRefreshIntervalInNanoSec;
-    if (referenceTs.cpuTimeinNS == 0 || recalculate) {
-        device->getNEODevice()->getOSTime()->getGpuCpuTime(&referenceTs, true);
+        (currentCpuTimeStamp - referenceTs->cpuTimeinNS) > timestampRefreshIntervalInNanoSec;
+    if (referenceTs->cpuTimeinNS == 0 || recalculate) {
+        device->getNEODevice()->getOSTime()->getGpuCpuTime(referenceTs, true);
     }
 }
 

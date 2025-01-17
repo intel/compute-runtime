@@ -98,7 +98,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
             0,                                 // signalScope
             0,                                 // waitScope
             false,                             // timestampPool
-            false,                             // kerneMappedTsPoolFlag
+            false,                             // kernelMappedTsPoolFlag
             false,                             // importedIpcPool
             false,                             // ipcPool
         };
