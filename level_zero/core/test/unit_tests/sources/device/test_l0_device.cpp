@@ -1360,17 +1360,14 @@ TEST_F(DeviceTest, WhenRequestingZeEuCountThenExpectedEUsAreReturned) {
     ze_eu_count_ext_t zeEuCountDesc = {ZE_STRUCTURE_TYPE_EU_COUNT_EXT};
     deviceProperties.pNext = &zeEuCountDesc;
 
-    uint32_t maxEuPerSubSlice = 48;
-    uint32_t subSliceCount = 8;
-    uint32_t sliceCount = 1;
+    uint32_t maxEuPerSubSlice = 8;
+    uint32_t subSliceCount = 18;
+    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount;
 
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = subSliceCount;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = sliceCount;
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.EUCount = expectedEUs;
 
     device->getProperties(&deviceProperties);
-
-    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount * sliceCount;
 
     EXPECT_EQ(expectedEUs, zeEuCountDesc.numTotalEUs);
 }
@@ -1383,15 +1380,12 @@ TEST_F(DeviceTest, WhenRequestingZeEuCountWithoutStypeCorrectThenNoEusAreReturne
 
     uint32_t maxEuPerSubSlice = 48;
     uint32_t subSliceCount = 8;
-    uint32_t sliceCount = 1;
+    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount;
 
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = subSliceCount;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = sliceCount;
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.EUCount = expectedEUs;
 
     device->getProperties(&deviceProperties);
-
-    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount * sliceCount;
 
     EXPECT_NE(expectedEUs, zeEuCountDesc.numTotalEUs);
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), zeEuCountDesc.numTotalEUs);
@@ -2524,16 +2518,13 @@ TEST_F(MultipleDevicesEnabledImplicitScalingTest, WhenRequestingZeEuCountThenExp
 
     uint32_t maxEuPerSubSlice = 48;
     uint32_t subSliceCount = 8;
-    uint32_t sliceCount = 1;
+    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount;
 
     L0::Device *device = driverHandle->devices[0];
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.MaxEuPerSubSlice = maxEuPerSubSlice;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SubSliceCount = subSliceCount;
-    device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->gtSystemInfo.SliceCount = sliceCount;
+    auto hwInfo = device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->gtSystemInfo.EUCount = expectedEUs;
 
     device->getProperties(&deviceProperties);
-
-    uint32_t expectedEUs = maxEuPerSubSlice * subSliceCount * sliceCount;
 
     EXPECT_EQ(expectedEUs * numSubDevices, zeEuCountDesc.numTotalEUs);
 }

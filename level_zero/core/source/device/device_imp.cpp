@@ -1042,7 +1042,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                 }
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EU_COUNT_EXT) {
                 ze_eu_count_ext_t *zeEuCountDesc = reinterpret_cast<ze_eu_count_ext_t *>(extendedProperties);
-                uint32_t numTotalEUs = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice * hardwareInfo.gtSystemInfo.SubSliceCount * hardwareInfo.gtSystemInfo.SliceCount;
+                uint32_t numTotalEUs = hardwareInfo.gtSystemInfo.EUCount;
 
                 if (isImplicitScalingCapable()) {
                     numTotalEUs *= neoDevice->getNumGenericSubDevices();
