@@ -218,6 +218,7 @@ class IoctlHelper {
 
     virtual void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) = 0;
     virtual bool isPreemptionSupported() = 0;
+    virtual int getTileIdFromGtId(int gtId) const = 0;
 
     virtual bool allocateInterrupt(uint32_t &outHandle) { return false; }
     virtual bool releaseInterrupt(uint32_t handle) { return false; }
@@ -270,6 +271,7 @@ class IoctlHelperI915 : public IoctlHelper {
     bool getGemTiling(void *setTiling) override;
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
+    int getTileIdFromGtId(int gtId) const override { return -1; }
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

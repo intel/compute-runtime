@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1010,6 +1010,15 @@ TEST_F(IoctlPrelimHelperTests, whenCallingGetStatusAndFlagsForResetStatsThenExpe
 
     EXPECT_TRUE(ioctlHelper.validPageFault(static_cast<uint16_t>(I915_RESET_STATS_FAULT_VALID)));
     EXPECT_FALSE(ioctlHelper.validPageFault(0u));
+}
+
+TEST_F(IoctlPrelimHelperTests, whenCallingGetTileIdFromGtIdThenMinusOneIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    MockIoctlHelperPrelim20 ioctlHelper{*drm};
+
+    EXPECT_EQ(-1, ioctlHelper.getTileIdFromGtId(0));
+    EXPECT_EQ(-1, ioctlHelper.getTileIdFromGtId(1));
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionThenCorrectValueReturned) {

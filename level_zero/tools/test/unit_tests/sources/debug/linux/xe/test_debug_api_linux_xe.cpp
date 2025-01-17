@@ -1468,7 +1468,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEventTypeExecQueuePlacementsAndClientHandleIsIn
     auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
     engineClassInstance[0].engine_class = 0;
     engineClassInstance[0].engine_instance = 1;
-    engineClassInstance[0].gt_id = 1;
+    engineClassInstance[0].gt_id = 2;
 
     auto memory = std::make_unique<uint64_t[]>(size / sizeof(uint64_t));
     memcpy(memory.get(), memoryExecQueuePlacements, size);
@@ -1515,7 +1515,7 @@ TEST_F(DebugApiLinuxTestXe, GivenEventTypeExecQueuePlacementsWhenHandleInternalE
     auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
     engineClassInstance[0].engine_class = 0;
     engineClassInstance[0].engine_instance = 1;
-    engineClassInstance[0].gt_id = 1;
+    engineClassInstance[0].gt_id = 2;
 
     auto memory = std::make_unique<uint64_t[]>(size / sizeof(uint64_t));
     memcpy(memory.get(), memoryExecQueuePlacements, size);
@@ -2864,7 +2864,7 @@ TEST_F(DebugApiLinuxTestXe, GivenExecQueuePlacementEventWhenHandlingThenVmToTile
     auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
     engineClassInstance[0].engine_class = 0;
     engineClassInstance[0].engine_instance = 1;
-    engineClassInstance[0].gt_id = 1;
+    engineClassInstance[0].gt_id = 2;
 
     session->handleEvent(&execQueuePlacements->base);
     alignedFree(memory);
@@ -2894,7 +2894,7 @@ TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleW
     constexpr uint64_t vmHandle = 10;
     session->clientHandleToConnection[client1.clientHandle]->vmToTile[vmHandle] = 1;
     // Allocate memory for the structure including the flexible array member
-    constexpr auto size = sizeof(NEO::EuDebugEventExecQueuePlacements) + sizeof(drm_xe_engine_class_instance) * 1;
+    constexpr auto size = sizeof(NEO::EuDebugEventExecQueuePlacements) + sizeof(NEO::XeEngineClassInstance) * 1;
     auto memory = alignedMalloc(size, sizeof(NEO::EuDebugEventExecQueuePlacements));
     auto execQueuePlacements = static_cast<NEO::EuDebugEventExecQueuePlacements *>(memory);
     memset(execQueuePlacements, 0, size);
@@ -2906,10 +2906,10 @@ TEST_F(DebugApiLinuxTestXe, GivenMultipleExecQueuePlacementEventForSameVmHandleW
     execQueuePlacements->lrcHandle = 10;
     execQueuePlacements->numPlacements = 1;
 
-    auto engineClassInstance = reinterpret_cast<drm_xe_engine_class_instance *>(&(execQueuePlacements->instances[0]));
-    engineClassInstance[0].engine_class = 0;
-    engineClassInstance[0].engine_instance = 1;
-    engineClassInstance[0].gt_id = 0;
+    auto engineClassInstance = reinterpret_cast<NEO::XeEngineClassInstance *>(&(execQueuePlacements->instances[0]));
+    engineClassInstance[0].engineClass = 0;
+    engineClassInstance[0].engineInstance = 1;
+    engineClassInstance[0].gtId = 0;
 
     ::testing::internal::CaptureStderr();
     session->handleEvent(&execQueuePlacements->base);

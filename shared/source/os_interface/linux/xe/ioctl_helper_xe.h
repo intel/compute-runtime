@@ -133,6 +133,9 @@ class IoctlHelperXe : public IoctlHelper {
     bool resourceRegistrationEnabled() override { return true; }
     bool isPreemptionSupported() override { return true; }
     bool isTimestampsRefreshEnabled() override { return true; }
+    int getTileIdFromGtId(int gtId) const override {
+        return gtIdToTileId[gtId];
+    }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;

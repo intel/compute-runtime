@@ -363,18 +363,19 @@ void DebugSessionLinuxXe::handleEvent(NEO::EuDebugEvent *event) {
 
         UNRECOVERABLE_IF(execQueuePlacements->numPlacements == 0);
         auto engine = reinterpret_cast<NEO::XeEngineClassInstance *>(&(execQueuePlacements->instances[0]));
-        auto tileIndex = engine->gtId;
+        auto tileIndex = DrmHelper::getTileIdFromGtId(connectedDevice, engine->gtId);
+        UNRECOVERABLE_IF(tileIndex < 0);
 
         auto &vmToTile = clientHandleToConnection[execQueuePlacements->clientHandle]->vmToTile;
         if (vmToTile.find(execQueuePlacements->vmHandle) != vmToTile.end()) {
-            if (vmToTile[execQueuePlacements->vmHandle] != tileIndex) {
-                PRINT_DEBUGGER_ERROR_LOG("vmToTile map: For vm_handle = %lu tileIndex = %u already present. Attempt to overwrite with tileIndex = %u\n",
+            if (vmToTile[execQueuePlacements->vmHandle] != static_cast<uint32_t>(tileIndex)) {
+                PRINT_DEBUGGER_ERROR_LOG("vmToTile map: For vm_handle = %lu tileIndex = %u already present. Attempt to overwrite with tileIndex = %d\n",
                                          static_cast<uint64_t>(execQueuePlacements->vmHandle), vmToTile[execQueuePlacements->vmHandle], tileIndex);
                 DEBUG_BREAK_IF(true);
             }
         } else {
             clientHandleToConnection[execQueuePlacements->clientHandle]->vmToTile[execQueuePlacements->vmHandle] = tileIndex;
-            PRINT_DEBUGGER_INFO_LOG("clientHandleToConnection[%" SCNx64 "]->vmToTile[%" SCNx64 "] = %u\n",
+            PRINT_DEBUGGER_INFO_LOG("clientHandleToConnection[%" SCNx64 "]->vmToTile[%" SCNx64 "] = %d\n",
                                     static_cast<uint64_t>(execQueuePlacements->clientHandle), static_cast<uint64_t>(execQueuePlacements->vmHandle), tileIndex);
         }
     } else if (type == euDebugInterface->getParamValue(NEO::EuDebugParam::eventTypePagefault)) {

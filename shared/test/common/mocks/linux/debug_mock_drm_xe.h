@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,53 @@ struct DrmMockXeDebug : public DrmMockCustom {
         drm->reset();
 
         drm->ioctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+
+        auto xeQueryConfig = reinterpret_cast<drm_xe_query_config *>(drm->queryConfig);
+        xeQueryConfig->num_params = 6;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] = 0; // this should be queried by ioctl sys call
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_VA_BITS] = 48;
+        xeQueryConfig->info[DRM_XE_QUERY_CONFIG_MAX_EXEC_QUEUE_PRIORITY] = mockMaxExecQueuePriority;
+
+        drm->queryGtList.resize(49); // 1 qword for num gts and 12 qwords per gt
+        auto xeQueryGtList = reinterpret_cast<drm_xe_query_gt_list *>(drm->queryGtList.begin());
+        xeQueryGtList->num_gt = 4;
+        xeQueryGtList->gt_list[0] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            0,                         // tile_id
+            0,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
+        };
+        xeQueryGtList->gt_list[1] = {
+            DRM_XE_QUERY_GT_TYPE_MEDIA, // type
+            1,                          // tile_id
+            1,                          // gt_id
+            {0},                        // padding
+            mockTimestampFrequency,     // reference_clock
+            0b001,                      // native mem regions
+            0x110,                      // slow mem regions
+        };
+        xeQueryGtList->gt_list[2] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            1,                         // tile_id
+            2,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b010,                     // native mem regions
+            0x101,                     // slow mem regions
+        };
+        xeQueryGtList->gt_list[3] = {
+            DRM_XE_QUERY_GT_TYPE_MAIN, // type
+            2,                         // tile_id
+            3,                         // gt_id
+            {0},                       // padding
+            mockTimestampFrequency,    // reference_clock
+            0b100,                     // native mem regions
+            0x011,                     // slow mem regions
+        };
+
         drm->ioctlHelper->initialize();
         EXPECT_EQ(1, drm->ioctlHelper->getEuDebugSysFsEnable());
         auto xeQueryEngines = reinterpret_cast<drm_xe_query_engines *>(drm->queryEngines);
@@ -107,6 +154,18 @@ struct DrmMockXeDebug : public DrmMockCustom {
                     memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryEngines, sizeof(queryEngines));
                 }
                 deviceQuery->size = sizeof(queryEngines);
+                break;
+            case DRM_XE_DEVICE_QUERY_CONFIG:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryConfig, sizeof(queryConfig));
+                }
+                deviceQuery->size = sizeof(queryConfig);
+                break;
+            case DRM_XE_DEVICE_QUERY_GT_LIST:
+                if (deviceQuery->data) {
+                    memcpy_s(reinterpret_cast<void *>(deviceQuery->data), deviceQuery->size, queryGtList.begin(), sizeof(queryGtList[0]) * queryGtList.size());
+                }
+                deviceQuery->size = static_cast<uint32_t>(sizeof(queryGtList[0]) * queryGtList.size());
                 break;
             };
             ret = 0;
@@ -217,6 +276,10 @@ struct DrmMockXeDebug : public DrmMockCustom {
     // Debugger ioctls
     int debuggerOpenRetval = 10; // debugFd
     uint32_t debuggerOpenVersion = 0;
+    StackVec<uint64_t, 49> queryGtList{}; // 1 qword for num gts and 12 qwords per gt
+    static constexpr uint32_t mockTimestampFrequency = 12500000;
+    uint64_t queryConfig[7]{}; // 1 qword for num params and 1 qwords per param
+    static constexpr int32_t mockMaxExecQueuePriority = 3;
 
   protected:
     // Don't call directly, use the create() function
