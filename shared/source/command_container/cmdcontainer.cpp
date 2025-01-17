@@ -525,6 +525,7 @@ void CommandContainer::fillReusableAllocationLists() {
         return;
     }
 
+    this->getResidencyContainer().reserve(amountToFill);
     for (auto i = 0u; i < amountToFill; i++) {
         auto allocToReuse = obtainNextCommandBufferAllocation();
         this->immediateReusableAllocationList->pushTailOne(*allocToReuse);
