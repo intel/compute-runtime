@@ -83,7 +83,7 @@ zexCounterBasedEventCreate2(ze_context_handle_t hContext, ze_device_handle_t hDe
         signalScope,                       // signalScope
         desc->waitScope,                   // waitScope
         timestampFlag,                     // timestampPool
-        mappedTimestampFlag,               // kernelMappedTsPoolFlag
+        mappedTimestampFlag,               // kerneMappedTsPoolFlag
         false,                             // importedIpcPool
         ipcFlag,                           // ipcPool
     };
