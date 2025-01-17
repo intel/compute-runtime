@@ -7,7 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/implicit_scaling_xehp_and_later.inl"
-#include "shared/source/command_container/walker_partition_xehp_and_later.inl"
+#include "shared/source/command_container/walker_partition_from_xe_hpg_core_to_xe3_core.inl"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
 namespace NEO {
