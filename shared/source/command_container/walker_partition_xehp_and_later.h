@@ -526,15 +526,11 @@ void *programPartitionedWalker(void *&inputAddress, uint32_t &totalBytesProgramm
             inputWalker->setPartitionSize(Math::divideAndRoundUp(workgroupCount, args.partitionCount));
         }
 
-        uint32_t threadGroupCount = inputWalker->getThreadGroupIdXDimension() *
-                                    inputWalker->getThreadGroupIdYDimension() *
-                                    inputWalker->getThreadGroupIdZDimension();
-
         NEO::EncodeDispatchKernel<GfxFamily>::setWalkerRegionSettings(*inputWalker,
                                                                       device,
                                                                       args.partitionCount,
                                                                       args.workgroupSize,
-                                                                      threadGroupCount,
+                                                                      args.threadGroupCount,
                                                                       args.maxWgCountPerTile,
                                                                       args.isRequiredDispatchWorkGroupOrder);
 

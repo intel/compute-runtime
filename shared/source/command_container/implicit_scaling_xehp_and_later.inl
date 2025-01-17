@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,6 +50,7 @@ WalkerPartition::WalkerPartitionArgs prepareWalkerPartitionArgs(ImplicitScalingD
     args.blockDispatchToCommandBuffer = dispatchCommandArgs.blockDispatchToCommandBuffer;
 
     args.workgroupSize = dispatchCommandArgs.workgroupSize;
+    args.threadGroupCount = dispatchCommandArgs.threadGroupCount;
     args.maxWgCountPerTile = dispatchCommandArgs.maxWgCountPerTile;
     args.isRequiredDispatchWorkGroupOrder = dispatchCommandArgs.isRequiredDispatchWorkGroupOrder;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -434,6 +434,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
     WalkerPartition::WalkerPartitionArgs args = {};
     args.partitionCount = 2;
     args.tileCount = 2;
+    args.threadGroupCount = 7 * 10 * 11;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, args, *device);
     auto walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
@@ -448,6 +449,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
     args = {};
     args.partitionCount = 2;
     args.tileCount = 2;
+    args.threadGroupCount = 7 * 10 * 11;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, args, *device);
     walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
@@ -460,6 +462,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
     args = {};
     args.partitionCount = 2;
     args.tileCount = 2;
+    args.threadGroupCount = 7 * 10 * 11;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, args, *device);
     walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
@@ -473,6 +476,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
     args = {};
     args.partitionCount = 1;
     args.tileCount = 2;
+    args.threadGroupCount = 7 * 10 * 11;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, args, *device);
     walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
 
@@ -1793,6 +1797,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenForceExecutionOnSingleTi
     WalkerPartition::WalkerPartitionArgs args = {};
     args.partitionCount = 2;
     args.tileCount = 2;
+    args.threadGroupCount = 32;
     args.forceExecutionOnSingleTile = forceExecutionOnSingleTile;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, args, *device);
     auto walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);
@@ -1807,6 +1812,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenForceExecutionOnSingleTi
     args = {};
     args.partitionCount = 2;
     args.tileCount = 2;
+    args.threadGroupCount = 32;
     args.forceExecutionOnSingleTile = forceExecutionOnSingleTile;
     programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, args, *device);
     walkerCommand = genCmdCast<WalkerType *>(walkerCommandAddress);

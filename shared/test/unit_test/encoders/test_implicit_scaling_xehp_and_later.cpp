@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCm
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(0, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -175,6 +176,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenDi
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -228,6 +230,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenStaticPartitioningWhenPa
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -408,6 +411,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenDynamicPartitioningPrefe
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -458,6 +462,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
     dispatchArgs.apiSelfCleanup = true;
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -528,6 +533,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
     dispatchArgs.apiSelfCleanup = true;
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -589,6 +595,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
     dispatchArgs.apiSelfCleanup = true;
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -649,6 +656,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
     dispatchArgs.apiSelfCleanup = true;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
@@ -717,6 +725,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
     dispatchArgs.apiSelfCleanup = true;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
@@ -781,6 +790,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -846,6 +856,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -914,6 +925,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
     dispatchArgs.apiSelfCleanup = true;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
@@ -982,6 +994,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
 
     ImplicitScalingDispatch<FamilyType>::dispatchCommands(commandStream, walker, twoTile, dispatchArgs);
     totalBytesProgrammed = commandStream.getUsed();
@@ -1601,6 +1614,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     uint32_t partitionCount = 0;
     auto dispatchArgs = createDispatchCommandArgs(workPartitionAllocationAddress, partitionCount);
+    dispatchArgs.threadGroupCount = 32;
     dispatchArgs.blockDispatchToCommandBuffer = true;
     dispatchArgs.outWalkerPtr = &outWalkerPtr;
 

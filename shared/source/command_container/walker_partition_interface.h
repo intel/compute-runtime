@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ struct WalkerPartitionArgs {
     uint32_t partitionCount = 0;
     uint32_t tileCount = 0;
     uint32_t workgroupSize = 0;
+    uint32_t threadGroupCount = 0;
     uint32_t maxWgCountPerTile = 0;
     bool emitBatchBufferEnd = false;
     bool secondaryBatchBuffer = false;

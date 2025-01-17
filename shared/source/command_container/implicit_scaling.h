@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,7 @@ struct ImplicitScalingDispatchCommandArgs {
     RequiredPartitionDim requiredPartitionDim = RequiredPartitionDim::none;
     uint32_t partitionCount = 0;
     uint32_t workgroupSize = 0;
+    uint32_t threadGroupCount = 0;
     uint32_t maxWgCountPerTile = 0;
 
     bool useSecondaryBatchBuffer = false;

@@ -186,6 +186,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
             requiredPartitionDim,                // requiredPartitionDim
             partitionCount,                      // partitionCount
             workgroupSize,                       // workgroupSize
+            threadGroupCount,                    // threadGroupCount
             maxWgCountPerTile,                   // maxWgCountPerTile
             false,                               // useSecondaryBatchBuffer
             false,                               // apiSelfCleanup
