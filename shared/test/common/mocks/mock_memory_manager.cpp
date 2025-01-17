@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -297,6 +297,23 @@ OsContext *MockMemoryManagerOsAgnosticContext::createAndRegisterOsContext(Comman
     auto osContext = new OsContext(commandStreamReceiver->getRootDeviceIndex(), 0, engineDescriptor);
     osContext->incRefInternal();
     allRegisteredEngines[commandStreamReceiver->getRootDeviceIndex()].emplace_back(commandStreamReceiver, osContext);
+    return osContext;
+}
+
+OsContext *MockMemoryManagerOsAgnosticContext::createAndRegisterSecondaryOsContext(const OsContext *primaryContext, CommandStreamReceiver *commandStreamReceiver,
+                                                                                   const EngineDescriptor &engineDescriptor) {
+    auto rootDeviceIndex = commandStreamReceiver->getRootDeviceIndex();
+
+    auto osContext = new OsContext(rootDeviceIndex, 0, engineDescriptor);
+    osContext->incRefInternal();
+
+    osContext->setPrimaryContext(primaryContext);
+
+    UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
+
+    secondaryEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
+    allRegisteredEngines[rootDeviceIndex].emplace_back(commandStreamReceiver, osContext);
+
     return osContext;
 }
 

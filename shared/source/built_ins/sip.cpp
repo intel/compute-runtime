@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,15 +247,6 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
         std::make_unique<SipKernel>(type, sipAllocation, std::move(emptyStateSaveAreaHeader));
 
     return true;
-}
-
-void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager) {
-    for (auto &sipKernel : rootDeviceEnvironment->sipKernels) {
-        if (sipKernel.get()) {
-            memoryManager->freeGraphicsMemory(sipKernel->getSipAllocation());
-            sipKernel.reset();
-        }
-    }
 }
 
 void SipKernel::selectSipClassType(std::string &fileName, Device &device) {

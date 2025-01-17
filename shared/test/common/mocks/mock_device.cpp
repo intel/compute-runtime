@@ -60,6 +60,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
     UnitTestSetter::setRcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     UnitTestSetter::setCcsExposure(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
+    executionEnvironment->calculateMaxOsContextCount();
 
     if (!executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface) {
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
@@ -96,6 +97,17 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
 
     registeredEngine.commandStreamReceiver = newCsr;
     allEngines[engineIndex].commandStreamReceiver = newCsr;
+
+    if (osContext->isPartOfContextGroup()) {
+        auto &secondaryEnginesForType = secondaryEngines[osContext->getEngineType()];
+        for (size_t i = 0; i < secondaryEnginesForType.engines.size(); i++) {
+            if (secondaryEnginesForType.engines[i].commandStreamReceiver == commandStreamReceivers[engineIndex].get()) {
+                secondaryEnginesForType.engines[i].commandStreamReceiver = newCsr;
+                break;
+            }
+        }
+    }
+
     const_cast<EngineControlContainer &>(memoryManager->getRegisteredEngines(rootDeviceIndex)).emplace_back(registeredEngine);
     osContext->incRefInternal();
     newCsr->setupContext(*osContext);

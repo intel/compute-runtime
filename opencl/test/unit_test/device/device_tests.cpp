@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -257,6 +257,8 @@ TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCal
 }
 
 TEST(DeviceCreation, GiveNonExistingFclWhenCreatingDeviceThenCompilerInterfaceIsNotCreated) {
+    DebugManagerStateRestore restore{};
+    debugManager.flags.ForcePreemptionMode.set(PreemptionMode::Disabled);
     VariableBackup<const char *> frontEndDllName(&Os::frontEndDllName);
     Os::frontEndDllName = "_fake_fcl1_so";
 

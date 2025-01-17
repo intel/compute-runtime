@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -473,6 +473,8 @@ class MockMemoryManagerOsAgnosticContext : public MockMemoryManager {
     MockMemoryManagerOsAgnosticContext(NEO::ExecutionEnvironment &executionEnvironment) : MockMemoryManager(executionEnvironment) {}
     OsContext *createAndRegisterOsContext(CommandStreamReceiver *commandStreamReceiver,
                                           const EngineDescriptor &engineDescriptor) override;
+    OsContext *createAndRegisterSecondaryOsContext(const OsContext *primaryContext, CommandStreamReceiver *commandStreamReceiver,
+                                                   const EngineDescriptor &engineDescriptor) override;
 };
 
 class MockMemoryManagerWithDebuggableOsContext : public MockMemoryManager {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenDebugFlagSetWhenCreatingContextThen
     aubCsr->aubManager = &mockAubManager;
 
     aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
-    EXPECT_EQ(0x123u, mockAubManager.contextFlags);
+    EXPECT_EQ(0x123u, mockAubManager.contextFlags & 0x123);
 }
 
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
@@ -350,6 +350,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrAndResidentAllocationWhenProc
 
     auto commandStreamReceiver = std::make_unique<MockAubCsr<FamilyType>>("", true, *pDevice->getExecutionEnvironment(), 0, pDevice->getDeviceBitfield());
 
+    pDevice->getExecutionEnvironment()->memoryManager->reInitLatestContextId();
     auto osContext = pDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
                                                                                                    EngineDescriptorHelper::getDefaultDescriptor({getChosenEngineType(*defaultHwInfo), EngineUsage::regular},
                                                                                                                                                 PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));

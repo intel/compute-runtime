@@ -504,6 +504,7 @@ TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryMan
 
 TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasProperValue) {
     DebugManagerStateRestore restore;
+    debugManager.flags.ContextGroupSize.set(0);
     VariableBackup<uint32_t> osContextCountBackup(&MemoryManager::maxOsContextCount, 0);
     uint32_t numRootDevices = 17u;
     uint32_t expectedOsContextCount = 0u;
