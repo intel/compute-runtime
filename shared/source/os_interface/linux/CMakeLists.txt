@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -43,6 +43,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/external_semaphore_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_descriptor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper_linux.cpp

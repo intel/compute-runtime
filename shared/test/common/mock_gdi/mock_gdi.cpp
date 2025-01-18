@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -670,6 +670,10 @@ NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromGpu(IN CONST D3DKMT_
 }
 
 NTSTATUS __stdcall mockD3DKMTOpenSyncObjectFromNtHandle2(IN OUT D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTOpenSyncObjectNtHandleFromName(IN OUT D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *) {
     return STATUS_SUCCESS;
 }
 

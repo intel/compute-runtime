@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -231,6 +231,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     }
     if (procName == "D3DKMTOpenSyncObjectFromNtHandle2") {
         return reinterpret_cast<void *>(mockD3DKMTOpenSyncObjectFromNtHandle2);
+    }
+    if (procName == "D3DKMTOpenSyncObjectNtHandleFromName") {
+        return reinterpret_cast<void *>(mockD3DKMTOpenSyncObjectNtHandleFromName);
     }
     if (procName == "D3DKMTFreeGpuVirtualAddress") {
         return reinterpret_cast<void *>(mockD3DKMTFreeGpuVirtualAddress);

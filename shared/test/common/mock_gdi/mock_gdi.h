@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,6 +74,7 @@ NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromCpu(IN CONST D3DKMT_
 NTSTATUS __stdcall mockD3DKMTWaitForSynchronizationObjectFromGpu(IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *);
 NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromGpu(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMGPU *);
 NTSTATUS __stdcall mockD3DKMTOpenSyncObjectFromNtHandle2(IN OUT D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *);
+NTSTATUS __stdcall mockD3DKMTOpenSyncObjectNtHandleFromName(IN OUT D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *);
 NTSTATUS __stdcall mockD3DKMTFreeGpuVirtualAddress(IN CONST D3DKMT_FREEGPUVIRTUALADDRESS *);
 NTSTATUS __stdcall mockD3DKMTUpdateGpuVirtualAddress(IN CONST D3DKMT_UPDATEGPUVIRTUALADDRESS *);
 NTSTATUS __stdcall mockD3DKMTSubmitCommand(IN CONST D3DKMT_SUBMITCOMMAND *);

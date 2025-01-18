@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,6 +66,7 @@ bool Gdi::getAllProcAddresses() {
     waitForSynchronizationObjectFromGpu = gdiDll->getProcAddress("D3DKMTWaitForSynchronizationObjectFromGpu");
     signalSynchronizationObjectFromGpu = gdiDll->getProcAddress("D3DKMTSignalSynchronizationObjectFromGpu");
     openSyncObjectFromNtHandle2 = gdiDll->getProcAddress("D3DKMTOpenSyncObjectFromNtHandle2");
+    openSyncObjectNtHandleFromName = gdiDll->getProcAddress("D3DKMTOpenSyncObjectNtHandleFromName");
     createPagingQueue = gdiDll->getProcAddress("D3DKMTCreatePagingQueue");
     destroyPagingQueue = gdiDll->getProcAddress("D3DKMTDestroyPagingQueue");
     lock2 = gdiDll->getProcAddress("D3DKMTLock2");

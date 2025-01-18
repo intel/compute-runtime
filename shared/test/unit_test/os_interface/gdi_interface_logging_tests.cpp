@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1033,6 +1033,30 @@ TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenSyncObject
 
     testing::internal::CaptureStdout();
     GdiLogging::logExit<D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *>(status, &param);
+    std::string logExitStr = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
+}
+
+TEST_F(GdiInterfaceLoggingTest, WhenGdiLoggingIsEnabledWhenLoggingOpenSyncObjectNtHandleFromNameThenExpectCorrectStrings) {
+    D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME param = {};
+
+    std::stringstream expectedOutput;
+    expectedOutput << logEnterBegin
+                   << "D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME"
+                   << std::endl;
+
+    testing::internal::CaptureStdout();
+    GdiLogging::logEnter<D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *>(&param);
+    std::string logEnterStr = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(expectedOutput.str().c_str(), logEnterStr.c_str());
+
+    expectedOutput.str(std::string());
+    expectedOutput << logExitBegin
+                   << std::hex << status
+                   << " " << std::endl;
+
+    testing::internal::CaptureStdout();
+    GdiLogging::logExit<D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *>(status, &param);
     std::string logExitStr = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(expectedOutput.str().c_str(), logExitStr.c_str());
 }
