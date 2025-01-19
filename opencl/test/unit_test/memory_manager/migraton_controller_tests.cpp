@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,6 +86,9 @@ HWTEST2_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLo
     EXPECT_FALSE(srcAllocation->isAllocationLockable());
     EXPECT_FALSE(dstAllocation->isAllocationLockable());
 
+    const auto csr0LatestFlushedTaskCountBefore = pCsr0->peekLatestFlushedTaskCount();
+    const auto csr1LatestFlushedTaskCountBefore = pCsr1->peekLatestFlushedTaskCount();
+
     pImage->getMultiGraphicsAllocation().getMigrationSyncData()->setCurrentLocation(0);
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     MigrationController::handleMigration(context, *pCsr1, pImage.get());
@@ -93,8 +96,8 @@ HWTEST2_F(MigrationControllerTests, givenNotLockableImageAllocationWithDefinedLo
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
-    EXPECT_EQ(1u, pCsr1->peekLatestFlushedTaskCount());
-    EXPECT_EQ(1u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr0LatestFlushedTaskCountBefore + 1, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(csr1LatestFlushedTaskCountBefore + 1, pCsr1->peekLatestFlushedTaskCount());
 }
 
 HWTEST2_F(MigrationControllerTests, givenNotLockableBufferAllocationWithDefinedLocationWhenHandleMigrationToDifferentLocationThenMigrateMemoryViaReadWriteBuffer, MatchAny) {

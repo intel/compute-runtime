@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -408,15 +409,15 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
     *pTagMemory = 5;
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
+    const auto commandStreamReceiverTaskCountBefore = commandStreamReceiver.peekTaskCount();
 
-    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
-
+    EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u, commandStreamReceiver.peekTaskCount());
     auto ptr = pCmdQ->enqueueMapImage(image, false, mapFlags, origin, region, nullptr, nullptr, 0,
                                       nullptr, &mapEventReturned, retVal);
 
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(2u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiverTaskCountBefore + 1, commandStreamReceiver.peekTaskCount());
 
     auto mapEvent = castToObject<Event>(mapEventReturned);
     EXPECT_TRUE(CL_COMMAND_MAP_IMAGE == mapEvent->getCommandType());
@@ -427,7 +428,7 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
     retVal = clEnqueueUnmapMemObject(pCmdQ, image, ptr, 0, nullptr, &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(2u, commandStreamReceiver.peekTaskCount());
+    EXPECT_EQ(commandStreamReceiverTaskCountBefore + 1, commandStreamReceiver.peekTaskCount());
 
     auto unmapEvent = castToObject<Event>(unmapEventReturned);
     EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
