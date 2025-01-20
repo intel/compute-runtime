@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -209,7 +209,14 @@ HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImage
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
 
-    const EBuiltInOps::Type builtInType = pCmdQ->getDevice().getCompilerProductHelper().isForceToStatelessRequired() ? EBuiltInOps::copyImage3dToBufferStateless : EBuiltInOps::copyImage3dToBuffer;
+    const auto &compilerProductHelper = pCmdQ->getDevice().getCompilerProductHelper();
+
+    EBuiltInOps::Type builtInType = EBuiltInOps::copyImage3dToBuffer;
+    if (compilerProductHelper.isHeaplessModeEnabled()) {
+        builtInType = EBuiltInOps::copyImage3dToBufferHeapless;
+    } else if (compilerProductHelper.isForceToStatelessRequired()) {
+        builtInType = EBuiltInOps::copyImage3dToBufferStateless;
+    }
 
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         builtInType,
