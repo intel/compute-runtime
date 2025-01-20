@@ -314,6 +314,15 @@ class MockCommandStreamReceiverWithFailingFlush : public MockCommandStreamReceiv
     }
 };
 
+template <bool isRelaxedOrderingEnabled>
+class MockCommandStreamReceiverWithDirectSubmissionRelaxedOrdering : public MockCommandStreamReceiver {
+  public:
+    using MockCommandStreamReceiver::MockCommandStreamReceiver;
+    bool directSubmissionRelaxedOrderingEnabled() const override {
+        return isRelaxedOrderingEnabled;
+    }
+};
+
 template <typename GfxFamily>
 class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
   public:
