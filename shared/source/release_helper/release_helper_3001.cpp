@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,6 +46,17 @@ template <>
 bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
     return !(hardwareIpVersion.value == AOT::PTL_U_A0);
 }
+
+template <>
+bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
+    return false;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isGlobalBindlessAllocatorEnabled() const {
+    return true;
+}
+
 } // namespace NEO
 
 #include "shared/source/release_helper/release_helper_common_xe3_and_later.inl"

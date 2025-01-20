@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,8 @@ TEST_F(ReleaseHelper3001Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_TRUE(releaseHelper->isResolvingSubDeviceIDNeeded());
         EXPECT_FALSE(releaseHelper->isDirectSubmissionSupported());
         EXPECT_TRUE(releaseHelper->isRcsExposureDisabled());
-        EXPECT_TRUE(releaseHelper->isBindlessAddressingDisabled());
+        EXPECT_FALSE(releaseHelper->isBindlessAddressingDisabled());
+        EXPECT_TRUE(releaseHelper->isGlobalBindlessAllocatorEnabled());
         EXPECT_EQ(10u, releaseHelper->getNumThreadsPerEu());
         EXPECT_TRUE(releaseHelper->isRayTracingSupported());
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
