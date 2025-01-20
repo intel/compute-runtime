@@ -20,8 +20,8 @@ DEVICE(0xB0A0, PtlHwConfig)
 #if SUPPORT_XE2_HPG_CORE
 #ifdef SUPPORT_BMG
 DEVICE(0xE202, BmgHwConfig)
-DEVICE(0xE20B, BmgHwConfig)
-DEVICE(0xE20C, BmgHwConfig)
+NAMEDDEVICE(0xE20B, BmgHwConfig, "Intel(R) Arc(TM) B580 Graphics")
+NAMEDDEVICE(0xE20C, BmgHwConfig, "Intel(R) Arc(TM) B570 Graphics")
 DEVICE(0xE20D, BmgHwConfig)
 DEVICE(0xE212, BmgHwConfig)
 #endif
@@ -97,8 +97,8 @@ NAMEDDEVICE(0x7D45, MtlHwConfig, "Intel(R) Graphics")
 #endif
 #ifdef SUPPORT_ARL
 NAMEDDEVICE(0x7D67, ArlHwConfig, "Intel(R) Graphics")
-DEVICE(0x7D51, ArlHwConfig)
-DEVICE(0x7DD1, ArlHwConfig)
+NAMEDDEVICE(0x7D51, ArlHwConfig, "Intel(R) Arc(TM) Graphics")
+NAMEDDEVICE(0x7DD1, ArlHwConfig, "Intel(R) Graphics")
 DEVICE(0x7D41, ArlHwConfig)
 #endif
 #endif
