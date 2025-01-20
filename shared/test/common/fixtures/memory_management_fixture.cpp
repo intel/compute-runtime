@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,7 +141,7 @@ void MemoryManagementFixture::checkForLeaks() {
                 auto invalidLeakIndexValues = MemoryManagement::invalidLeakIndex;
                 EXPECT_EQ(leakEventIndex, invalidLeakIndexValues);
             } while (leakEventIndex != MemoryManagement::invalidLeakIndex);
-        } else {
+        } else if (!testResult->Skipped()) {
             printf("*** WARNING: Leaks found but dumping disabled during test failure ***\n");
         }
     }
