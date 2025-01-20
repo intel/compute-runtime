@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/timestamp_packet_constants.h"
 #include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
@@ -61,6 +62,7 @@ struct IpcEventPoolData {
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;
     bool isImplicitScalingCapable = false;
+    bool isEventPoolKernelMappedTsFlagSet = false;
 };
 
 struct IpcCounterBasedEventData {
@@ -95,7 +97,7 @@ struct EventDescriptor {
     uint32_t signalScope = 0;
     uint32_t waitScope = 0;
     bool timestampPool = false;
-    bool kerneMappedTsPoolFlag = false;
+    bool kernelMappedTsPoolFlag = false;
     bool importedIpcPool = false;
     bool ipcPool = false;
 };
@@ -303,11 +305,11 @@ struct Event : _ze_event_handle_t {
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {
-        return &referenceTs;
+        return static_cast<NEO::TimeStampData *>(ptrOffset(getHostAddress(), getMaxPacketsCount() * getSinglePacketSize()));
     }
     void setReferenceTs(uint64_t currentCpuTimeStamp);
     const CommandQueue *getLatestUsedCmdQueue() const { return latestUsedCmdQueue; }
-    bool hasKerneMappedTsCapability = false;
+    bool hasKernelMappedTsCapability = false;
     std::shared_ptr<NEO::InOrderExecInfo> &getInOrderExecInfo() { return inOrderExecInfo; }
     void enableKmdWaitMode() { kmdWaitMode = true; }
     void enableInterruptMode() { interruptMode = true; }
@@ -348,7 +350,6 @@ struct Event : _ze_event_handle_t {
     uint64_t globalEndTS = 1;
     uint64_t contextStartTS = 1;
     uint64_t contextEndTS = 1;
-    NEO::TimeStampData referenceTs{};
 
     uint64_t inOrderExecSignalValue = 0;
     uint32_t inOrderAllocationOffset = 0;
@@ -446,7 +447,7 @@ struct EventPool : _ze_event_pool_handle_t {
         return false;
     }
 
-    bool isEventPoolKerneMappedTsFlagSet() const {
+    bool isEventPoolKernelMappedTsFlagSet() const {
         if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
             return true;
         }

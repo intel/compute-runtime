@@ -329,7 +329,7 @@ void CommandListImp::storeReferenceTsToMappedEvents(bool isClearEnabled) {
 }
 
 void CommandListImp::addToMappedEventList(Event *event) {
-    if (event && event->hasKerneMappedTsCapability) {
+    if (event && event->hasKernelMappedTsCapability) {
         if (std::find(mappedTsEventList.begin(), mappedTsEventList.end(), event) == mappedTsEventList.end()) {
             mappedTsEventList.push_back(event);
         }
