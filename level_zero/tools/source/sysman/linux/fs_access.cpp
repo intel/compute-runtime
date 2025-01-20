@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -252,7 +252,7 @@ ze_result_t FsAccess::getRealPath(const std::string path, std::string &val) {
 
 ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::string> &list) {
     list.clear();
-    ::DIR *procDir = ::opendir(path.c_str());
+    ::DIR *procDir = NEO::SysCalls::opendir(path.c_str());
     if (!procDir) {
         return getResult(errno);
     }
@@ -260,7 +260,7 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
     int err = 0;
     // readdir doesn't clear errno, so make sure it is clear
     errno = 0;
-    while (NULL != (ent = ::readdir(procDir))) {
+    while (NULL != (ent = NEO::SysCalls::readdir(procDir))) {
         // Ignore . and ..
         std::string name = std::string(ent->d_name);
         if (!name.compare(".") || !name.compare("..")) {
@@ -271,7 +271,7 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
         errno = 0;
     }
     err = errno;
-    ::closedir(procDir);
+    NEO::SysCalls::closedir(procDir);
     // Check if in above while loop, readdir encountered any error.
     if ((err != 0) && (err != ENOENT)) {
         list.clear();

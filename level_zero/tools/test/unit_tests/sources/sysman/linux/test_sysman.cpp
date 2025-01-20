@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -411,6 +411,25 @@ TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingSysfsAccessExistsThenSu
 }
 
 TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndValidDirectoryWhenCallingscanDirEntriesThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0xc001);
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int callCount = 0;
+            callCount++;
+            if (callCount > 1) {
+                return nullptr;
+            }
+            static struct dirent mockEntry = {0, 0, 0, 0, "mockDir"};
+            return &mockEntry;
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+
     PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
@@ -754,6 +773,27 @@ TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAcces
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessGetFileDescriptorsThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0xc001);
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int callCount = 0;
+            if (callCount > 2) {
+                return nullptr;
+            }
+            static struct dirent mockEntry[] = {
+                {0, 0, 0, 0, "mockDir"},
+                {0, 0, 0, 0, "mockDir2"},
+                {0, 0, 0, 0, "mockDir3"},
+            };
+            return &mockEntry[callCount++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
     auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
     ::pid_t processID = getpid();
@@ -762,6 +802,28 @@ TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessGetFileDescripto
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidProcfsAccessHandleWhenCallingListProcessesThenSuccessIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpendir)> mockOpendir(&NEO::SysCalls::sysCallsOpendir, [](const char *name) -> DIR * {
+        return reinterpret_cast<DIR *>(0xc001);
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReaddir)> mockReaddir(
+        &NEO::SysCalls::sysCallsReaddir, [](DIR * dir) -> struct dirent * {
+            static int callCount = 0;
+            if (callCount > 2) {
+                return nullptr;
+            }
+            static struct dirent mockEntry[] = {
+                {0, 0, 0, 0, "mockDir"},
+                {0, 0, 0, 0, "mockDir2"},
+                {0, 0, 0, 0, "mockDir3"},
+            };
+            return &mockEntry[callCount++];
+        });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsClosedir)> mockClosedir(&NEO::SysCalls::sysCallsClosedir, [](DIR *dir) -> int {
+        return 0;
+    });
+
     auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
     std::vector<::pid_t> listPid;
