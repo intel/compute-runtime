@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/code_type.h"
@@ -101,6 +102,12 @@ struct TranslationOutput {
 struct SpecConstantInfo {
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> idsBuffer;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> sizesBuffer;
+};
+
+enum class CachingMode {
+    none,
+    direct,
+    preProcess
 };
 
 class CompilerInterface {
@@ -245,9 +252,14 @@ class CompilerCacheHelper {
   public:
     static void packAndCacheBinary(CompilerCache &compilerCache, const std::string &kernelFileHash, const NEO::TargetDevice &targetDevice, const NEO::TranslationOutput &translationOutput);
     static bool loadCacheAndSetOutput(CompilerCache &compilerCache, const std::string &kernelFileHash, NEO::TranslationOutput &output, const NEO::Device &device);
+    static CachingMode getCachingMode(CompilerCache *compilerCache, IGC::CodeType::CodeType_t srcCodeType, const ArrayRef<const char> source);
 
   protected:
     static bool processPackedCacheBinary(ArrayRef<const uint8_t> archive, TranslationOutput &output, const NEO::Device &device);
+
+    using WhitelistedIncludesVec = StackVec<std::string_view, 1>;
+    static bool validateIncludes(const ArrayRef<const char> source, const WhitelistedIncludesVec &whitelistedIncludes);
+    static WhitelistedIncludesVec whitelistedIncludes;
 };
 
 } // namespace NEO

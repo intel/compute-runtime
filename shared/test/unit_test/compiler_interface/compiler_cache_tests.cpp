@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -826,4 +826,143 @@ TEST_F(CompilerInterfaceOclElfCacheTest, GivenBinaryAndDebugDataWhenBuildingThen
     EXPECT_EQ(0, std::strncmp(debugDataToReturn.c_str(), outputFromCache.debugData.mem.get(), debugDataToReturn.size()));
 
     gEnvironment->fclPopDebugVars();
+}
+
+class CompilerCacheHelperWhitelistedTest : public ::testing::Test, public CompilerCacheHelper {
+  public:
+    using CompilerCacheHelper::whitelistedIncludes;
+
+    bool isValidIncludeFormat(const std::string_view &entry) {
+        size_t spacePos = entry.find(' ');
+        if (spacePos == std::string_view::npos) {
+            return false;
+        }
+
+        std::string_view firstWord = entry.substr(0, spacePos);
+        if (firstWord != "#include") {
+            return false;
+        }
+
+        std::string_view secondPart = entry.substr(spacePos + 1);
+        if (secondPart.empty()) {
+            return false;
+        }
+
+        return true;
+    }
+};
+
+TEST_F(CompilerCacheHelperWhitelistedTest, GivenWhitelistedIncludesWhenCheckingFormatThenExpectValidIncludeFormat) {
+    for (const auto &entry : whitelistedIncludes) {
+        EXPECT_TRUE(isValidIncludeFormat(entry))
+            << "Invalid format in whitelisted include: " << entry;
+    }
+}
+
+TEST_F(CompilerCacheHelperWhitelistedTest, GivenWhitelistedIncludesWhenCheckingContentsThenExpectCorrectEntries) {
+    std::vector<std::string_view> expectedEntries;
+
+    for (const auto &expectedEntry : expectedEntries) {
+        auto it = std::find(whitelistedIncludes.begin(), whitelistedIncludes.end(), expectedEntry);
+        EXPECT_NE(it, whitelistedIncludes.end())
+            << "Expected entry '" << expectedEntry << "' not found in whitelistedIncludes.";
+    }
+
+    EXPECT_EQ(whitelistedIncludes.size(), expectedEntries.size())
+        << "whitelistedIncludes contains unexpected entries.";
+}
+
+class CompilerCacheHelperMockedWhitelistedIncludesTests : public ::testing::Test, public CompilerCacheHelper {
+  public:
+    using CompilerCacheHelper::whitelistedIncludes;
+
+    CompilerCacheHelperMockedWhitelistedIncludesTests() : backup(&whitelistedIncludes, {"#include <whitelisted>"}) {}
+
+    void SetUp() override {}
+    void TearDown() override {}
+
+    VariableBackup<decltype(whitelistedIncludes)> backup;
+};
+
+TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenSourceWithWhitelistedIncludeWhenCheckingWhitelistedIncludesThenReturnsTrue) {
+    const StackVec<const char *, 6> sources = {
+        "__kernel void k() {}",                                                 // no includes
+        "#include <whitelisted>\n__kernel void k() {}",                         // whitelisted include
+        "",                                                                     // empty source
+        "    #include <whitelisted>\n__kernel void k() {}",                     // leading spaces
+        "\t#include <whitelisted>\n__kernel void k() {}",                       // leading tabs
+        "#include <whitelisted>\n#include <whitelisted>\n__kernel void k() {}", // multiple whitelisted
+        "\n#include <whitelisted>\n__kernel void k() {}",                       // leading newline
+        "\r\n#include <whitelisted>\n__kernel void k() {}"                      // leading carriage return + newline
+    };
+
+    for (const auto &source : sources) {
+        ArrayRef<const char> sourceRef(source, strlen(source));
+        EXPECT_TRUE(CompilerCacheHelper::validateIncludes(sourceRef, CompilerCacheHelper::whitelistedIncludes))
+            << "Failed for source: " << source;
+    }
+}
+
+TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenSourceWithNonWhitelistedIncludeWhenCheckingWhitelistedIncludesThenReturnsFalse) {
+    const StackVec<const char *, 3> sources = {
+        "#include <unknown/unknown.h>\n__kernel void k() {}",                         // non-whitelisted include
+        "#include <whitelisted>\n#include <unknown/unknown.h>\n__kernel void k() {}", // mixed includes - first whitelisted, second non-whitelisted
+        "#include <unknown/unknown.h>\n#include <whitelisted>\n__kernel void k() {}"  // mixed includes - first non-whitelisted, second whitelisted
+    };
+
+    for (const auto &source : sources) {
+        ArrayRef<const char> sourceRef(source, strlen(source));
+        EXPECT_FALSE(CompilerCacheHelper::validateIncludes(sourceRef, CompilerCacheHelper::whitelistedIncludes))
+            << "Failed for source: " << source;
+    }
+}
+
+TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenDisabledOrNullCacheWhenGettingCachingModeThenReturnsCachingModeNone) {
+    CompilerCache cache(CompilerCacheConfig{false, "", "", 0});
+    const StackVec<std::pair<const char *, IGC::CodeType::CodeType_t>, 3> testCases = {
+        {"#include <whitelisted>\n__kernel void k() {}", IGC::CodeType::oclC},      // disabled cache
+        {"__kernel void k() {}", IGC::CodeType::oclC},                              // disabled cache, no includes
+        {"#include <unknown/unknown.h>\n__kernel void k() {}", IGC::CodeType::oclC} // disabled cache, non-whitelisted include
+    };
+
+    for (const auto &testCase : testCases) {
+        ArrayRef<const char> sourceRef(testCase.first, strlen(testCase.first));
+        EXPECT_EQ(CachingMode::none, CompilerCacheHelper::getCachingMode(&cache, testCase.second, sourceRef))
+            << "Failed for source: " << testCase.first;
+    }
+
+    EXPECT_EQ(CachingMode::none, CompilerCacheHelper::getCachingMode(nullptr, IGC::CodeType::oclC, ArrayRef<const char>()))
+        << "Failed for nullptr CompilerCache";
+}
+
+TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenEnabledCacheAndOclCWithWhitelistedIncludesWhenGettingCachingModeThenReturnsCachingModeDirect) {
+    CompilerCache cache(CompilerCacheConfig{true, "", "", 0});
+    const StackVec<std::pair<const char *, IGC::CodeType::CodeType_t>, 2> testCases = {
+        {"__kernel void k() {}", IGC::CodeType::oclC},                        // no includes
+        {"#include <whitelisted>\n__kernel void k() {}", IGC::CodeType::oclC} // only whitelisted include
+    };
+
+    for (const auto &testCase : testCases) {
+        ArrayRef<const char> sourceRef(testCase.first, strlen(testCase.first));
+        EXPECT_EQ(CachingMode::direct, CompilerCacheHelper::getCachingMode(&cache, testCase.second, sourceRef))
+            << "Failed for source: " << testCase.first;
+    }
+}
+
+TEST_F(CompilerCacheHelperMockedWhitelistedIncludesTests, GivenEnabledCacheAndNonWhitelistedIncludesOrNonOclCWhenGettingCachingModeThenReturnsCachingModePreProcess) {
+    CompilerCache cache(CompilerCacheConfig{true, "", "", 0});
+    const StackVec<std::pair<const char *, IGC::CodeType::CodeType_t>, 6> testCases = {
+        {"#include <unknown/unknown.h>\n__kernel void k() {}", IGC::CodeType::oclC},                         // non-whitelisted include
+        {"#include <whitelisted>\n#include <unknown/unknown.h>\n__kernel void k() {}", IGC::CodeType::oclC}, // mixed includes
+        {"#include <unknown/unknown.h>\n#include <whitelisted>\n__kernel void k() {}", IGC::CodeType::oclC}, // mixed includes different order
+        {"__kernel void k() {}", IGC::CodeType::spirV},                                                      // non-oclC type
+        {"#include <whitelisted>\n__kernel void k() {}", IGC::CodeType::spirV},                              // non-oclC type with whitelisted include
+        {"#include <unknown/unknown.h>\n__kernel void k() {}", IGC::CodeType::spirV}                         // non-oclC type with non-whitelisted include
+    };
+
+    for (const auto &testCase : testCases) {
+        ArrayRef<const char> sourceRef(testCase.first, strlen(testCase.first));
+        EXPECT_EQ(CachingMode::preProcess, CompilerCacheHelper::getCachingMode(&cache, testCase.second, sourceRef))
+            << "Failed for source: " << testCase.first;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,12 +32,6 @@
 
 namespace NEO {
 SpinLock CompilerInterface::spinlock;
-
-enum CachingMode {
-    None,
-    Direct,
-    PreProcess
-};
 
 void TranslationOutput::makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src) {
     if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
@@ -73,19 +67,11 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         intermediateCodeType = input.preferredIntermediateType;
     }
 
-    CachingMode cachingMode = None;
-
-    if (cache != nullptr && cache->getConfig().enabled) {
-        if ((srcCodeType == IGC::CodeType::oclC) && (std::strstr(input.src.begin(), "#include") == nullptr)) {
-            cachingMode = CachingMode::Direct;
-        } else {
-            cachingMode = CachingMode::PreProcess;
-        }
-    }
+    CachingMode cachingMode = CompilerCacheHelper::getCachingMode(cache.get(), srcCodeType, input.src);
 
     std::string kernelFileHash;
     const auto &igc = *getIgc(&device);
-    if (cachingMode == CachingMode::Direct) {
+    if (cachingMode == CachingMode::direct) {
         kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
                                                   input.src,
                                                   input.apiOptions,
@@ -141,7 +127,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
         intermediateCodeType = srcCodeType;
     }
 
-    if (cachingMode == CachingMode::PreProcess) {
+    if (cachingMode == CachingMode::preProcess) {
         const ArrayRef<const char> irRef(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>());
         const ArrayRef<const char> specIdsRef(idsBuffer->GetMemory<char>(), idsBuffer->GetSize<char>());
         const ArrayRef<const char> specValuesRef(valuesBuffer->GetMemory<char>(), valuesBuffer->GetSize<char>());
@@ -736,4 +722,48 @@ bool CompilerCacheHelper::processPackedCacheBinary(ArrayRef<const uint8_t> archi
 
     return false;
 }
+
+CachingMode CompilerCacheHelper::getCachingMode(CompilerCache *compilerCache, IGC::CodeType::CodeType_t srcCodeType, const ArrayRef<const char> source) {
+    if (compilerCache == nullptr || !compilerCache->getConfig().enabled) {
+        return CachingMode::none;
+    }
+
+    if (srcCodeType == IGC::CodeType::oclC &&
+        validateIncludes(source, CompilerCacheHelper::whitelistedIncludes)) {
+        return CachingMode::direct;
+    }
+
+    return CachingMode::preProcess;
+}
+
+bool CompilerCacheHelper::validateIncludes(const ArrayRef<const char> source, const WhitelistedIncludesVec &whitelistedIncludes) {
+    const char *sourcePtr = source.begin();
+    const char *sourceEnd = source.end();
+
+    while (sourcePtr < sourceEnd) {
+        const char *includePos = std::strstr(sourcePtr, "#include");
+        if (includePos == nullptr) {
+            break;
+        }
+
+        bool isKnownInclude = false;
+        for (const auto &knownInclude : whitelistedIncludes) {
+            if (std::strncmp(includePos, knownInclude.data(), knownInclude.size()) == 0) {
+                isKnownInclude = true;
+                break;
+            }
+        }
+
+        if (!isKnownInclude) {
+            return false;
+        }
+
+        sourcePtr = includePos + 1;
+    }
+
+    return true;
+}
+
+CompilerCacheHelper::WhitelistedIncludesVec CompilerCacheHelper::whitelistedIncludes{};
+
 } // namespace NEO
