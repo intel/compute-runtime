@@ -39,7 +39,7 @@ MMIOList AubHelper::splitMMIORegisters(const std::string &registers, char delimi
                 }
                 token.clear();
                 if (!firstElementInPair) {
-                    result.push_back(std::pair<uint32_t, uint32_t>(registerOffset, registerValue));
+                    result.emplace_back(registerOffset, registerValue);
                     registerValue = 0;
                     registerOffset = 0;
                 }

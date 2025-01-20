@@ -398,13 +398,11 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
         str << std::endl;
 
         if (patchInfoData.sourceAllocation) {
-            allocationsMap.insert(std::pair<uint64_t, uint64_t>(patchInfoData.sourceAllocation,
-                                                                ppgtt->map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1, 0, MemoryBanks::mainBank)));
+            allocationsMap.emplace(patchInfoData.sourceAllocation, ppgtt->map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1, 0, MemoryBanks::mainBank));
         }
 
         if (patchInfoData.targetAllocation) {
-            allocationsMap.insert(std::pair<uint64_t, uintptr_t>(patchInfoData.targetAllocation,
-                                                                 ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1, 0, MemoryBanks::mainBank)));
+            allocationsMap.emplace(patchInfoData.targetAllocation, ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1, 0, MemoryBanks::mainBank));
         }
     }
     bool result = getAubStream()->addComment(str.str().c_str());

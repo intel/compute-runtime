@@ -182,7 +182,7 @@ std::vector<NameVersionPair> OfflineCompiler::getOpenCLCFeatures(ConstStringRef 
 
     std::vector<NameVersionPair> allSupportedFeatures;
     for (auto &feature : availableFeatures) {
-        allSupportedFeatures.push_back({feature.name, feature.version});
+        allSupportedFeatures.emplace_back(feature.name, feature.version);
     }
     return allSupportedFeatures;
 }
@@ -245,7 +245,7 @@ std::string formatNameVersionString(std::vector<NameVersionPair> extensions, boo
     std::vector<std::string> formatedExtensions;
     formatedExtensions.reserve(extensions.size());
     for (const auto &ext : extensions) {
-        formatedExtensions.push_back({});
+        formatedExtensions.emplace_back();
         auto it = formatedExtensions.rbegin();
         bool needsQuoutes = (nullptr != strstr(ext.name, " "));
         it->reserve(strnlen_s(ext.name, sizeof(ext.name)) + (needsQuoutes ? 2 : 0) + (needVersions ? 16 : 0));
