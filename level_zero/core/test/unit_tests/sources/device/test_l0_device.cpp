@@ -1274,6 +1274,13 @@ TEST_F(MultiSubDeviceCachePropertiesTest, givenDeviceWithSubDevicesWhenQueriedFo
 }
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
+
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+
+    hwInfo.gtSystemInfo.SliceCount = 3;
+    hwInfo.gtSystemInfo.SubSliceCount = 5;
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 8;
+
     ze_device_properties_t deviceProperties, devicePropertiesBefore;
     deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
 
@@ -1317,6 +1324,10 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.kernelTimestampValidBits, devicePropertiesBefore.kernelTimestampValidBits);
     EXPECT_NE(0, memcmp(&deviceProperties.name, &devicePropertiesBefore.name, sizeof(devicePropertiesBefore.name)));
     EXPECT_NE(deviceProperties.maxMemAllocSize, devicePropertiesBefore.maxMemAllocSize);
+
+    EXPECT_EQ(8u, deviceProperties.numEUsPerSubslice);
+    EXPECT_EQ(2u, deviceProperties.numSubslicesPerSlice);
+    EXPECT_EQ(3u, deviceProperties.numSlices);
 }
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDriverInfoIsEmptyThenDeviceNameTheSameAsInDeviceInfo) {
