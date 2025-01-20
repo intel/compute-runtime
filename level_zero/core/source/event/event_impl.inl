@@ -665,7 +665,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     }
 
     TaskCountType taskCountToWaitForL3Flush = 0;
-    if (this->mitigateHostVisibleSignal && this->device->getProductHelper().isDcFlushAllowed()) {
+    if (((this->isCounterBased() && this->inOrderTimestampNode) || this->mitigateHostVisibleSignal) && this->device->getProductHelper().isDcFlushAllowed()) {
         auto lock = this->csrs[0]->obtainUniqueOwnership();
         this->csrs[0]->flushTagUpdate();
         taskCountToWaitForL3Flush = this->csrs[0]->peekLatestFlushedTaskCount();
@@ -677,10 +677,19 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     const bool fenceWait = isKmdWaitModeEnabled() && isCounterBased() && csrs[0]->waitUserFenceSupported();
 
     do {
-        if (fenceWait) {
-            ret = waitForUserFence(timeout);
+        if (this->isCounterBased() && this->inOrderTimestampNode) {
+            synchronizeTimestampCompletionWithTimeout();
+            if (this->isTimestampPopulated()) {
+                inOrderExecInfo->setLastWaitedCounterValue(getInOrderExecSignalValueWithSubmissionCounter());
+                handleSuccessfulHostSynchronization();
+                ret = ZE_RESULT_SUCCESS;
+            }
         } else {
-            ret = queryStatus();
+            if (fenceWait) {
+                ret = waitForUserFence(timeout);
+            } else {
+                ret = queryStatus();
+            }
         }
         if (ret == ZE_RESULT_SUCCESS) {
             if (this->getKernelWithPrintfDeviceMutex() != nullptr) {
@@ -790,8 +799,10 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) {
     ze_kernel_timestamp_result_t &result = *dstptr;
 
-    if (queryStatus() != ZE_RESULT_SUCCESS) {
-        return ZE_RESULT_NOT_READY;
+    if (!this->isCounterBased() || !this->inOrderTimestampNode) {
+        if (queryStatus() != ZE_RESULT_SUCCESS) {
+            return ZE_RESULT_NOT_READY;
+        }
     }
 
     assignKernelEventCompletionData(getHostAddress());
@@ -799,6 +810,11 @@ ze_result_t EventImp<TagSizeT>::queryKernelTimestamp(ze_kernel_timestamp_result_
 
     if (!isTimestampPopulated()) {
         synchronizeTimestampCompletionWithTimeout();
+        if (this->inOrderTimestampNode) {
+            if (!isTimestampPopulated()) {
+                return ZE_RESULT_NOT_READY;
+            }
+        }
     }
 
     auto eventTsSetFunc = [&](uint64_t &timestampFieldToCopy, uint64_t &timestampFieldForWriting) {

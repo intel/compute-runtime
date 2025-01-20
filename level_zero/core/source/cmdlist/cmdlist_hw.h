@@ -194,6 +194,7 @@ struct CommandListCoreFamily : public CommandListImp {
                                        bool skipAddingWaitEventsToResidency, bool noopDispatch, bool copyOffloadOperation);
     void appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall);
     void handleInOrderDependencyCounter(Event *signalEvent, bool nonWalkerInOrderCmdsChaining, bool copyOffloadOperation);
+    void handleInOrderCounterOverflow(bool copyOffloadOperation);
 
     ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
@@ -384,11 +385,13 @@ struct CommandListCoreFamily : public CommandListImp {
     bool isDeviceToHostBcsCopy(NEO::GraphicsAllocation *srcAllocation, NEO::GraphicsAllocation *dstAllocation, bool copyEngineOperation) const;
     bool singleEventPacketRequired(bool inputSinglePacketEventRequest) const;
     void programEventL3Flush(Event *event);
+    virtual ze_result_t flushInOrderCounterSignal(bool copyOffload) { return ZE_RESULT_SUCCESS; };
     bool isCopyOffloadAllowed(const NEO::GraphicsAllocation &srcAllocation, const NEO::GraphicsAllocation &dstAllocation) const;
     void setAdditionalKernelLaunchParams(CmdListKernelLaunchParams &launchParams, Kernel &kernel) const;
 
     NEO::InOrderPatchCommandsContainer<GfxFamily> inOrderPatchCmds;
 
+    bool latestOperationHasOptimizedCbEvent = false;
     bool latestOperationRequiredNonWalkerInOrderCmdsChaining = false;
     bool duplicatedInOrderCounterStorageEnabled = false;
     bool inOrderAtomicSignalingEnabled = false;

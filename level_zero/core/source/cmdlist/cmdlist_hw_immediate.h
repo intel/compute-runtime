@@ -222,6 +222,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::inOrderExecInfo;
 
     void printKernelsPrintfOutput(bool hangDetected);
+    ze_result_t flushInOrderCounterSignal(bool copyOffload) override;
     MOCKABLE_VIRTUAL ze_result_t synchronizeInOrderExecution(uint64_t timeout, bool copyOffloadSync) const;
     ze_result_t hostSynchronize(uint64_t timeout, bool handlePostWaitOperations);
     bool hasStallingCmdsForRelaxedOrdering(uint32_t numWaitEvents, bool relaxedOrderingDispatch) const;
