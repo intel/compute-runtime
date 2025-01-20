@@ -1196,6 +1196,19 @@ TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedO
     }
 }
 
+TEST(ExposedIpVersionOverrideTest, givenGetDeviceInfoWhenDeviceIpOverrideIsSetThenReturnOverridenValue) {
+    HardwareInfo hwInfoWithOverride = *defaultHwInfo;
+    uint32_t versionExpected = 7U;
+    hwInfoWithOverride.ipVersionOverrideExposedToTheApplication.value = versionExpected;
+
+    auto deviceWithOverride = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoWithOverride));
+    uint32_t versionGot = 0;
+    auto retVal = deviceWithOverride->getDeviceInfo(CL_DEVICE_IP_VERSION_INTEL, sizeof(uint32_t), &versionGot, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(versionExpected, versionGot);
+}
+
 cl_device_info deviceAttributeQueryParams[] = {
     CL_DEVICE_IP_VERSION_INTEL,
     CL_DEVICE_ID_INTEL,

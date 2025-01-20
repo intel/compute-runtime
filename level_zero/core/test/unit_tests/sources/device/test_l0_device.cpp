@@ -773,7 +773,7 @@ struct DeviceTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::ExecutionEnvironment *execEnv;
-    NEO::Device *neoDevice = nullptr;
+    NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
     const uint32_t rootDeviceIndex = 1u;
     const uint32_t numRootDevices = 2u;
@@ -1481,11 +1481,33 @@ TEST_F(DeviceTest, givenDeviceIpVersionWhenGetDevicePropertiesThenCorrectResultI
     deviceProperties.pNext = &zeDeviceIpVersion;
 
     auto &compilerProductHelper = device->getCompilerProductHelper();
+
     auto expectedIpVersion = compilerProductHelper.getHwIpVersion(device->getHwInfo());
 
     device->getProperties(&deviceProperties);
     EXPECT_NE(std::numeric_limits<uint32_t>::max(), zeDeviceIpVersion.ipVersion);
     EXPECT_EQ(expectedIpVersion, zeDeviceIpVersion.ipVersion);
+}
+
+TEST_F(DeviceTest, givenDeviceIpVersionOverrideWhenGetDevicePropertiesThenReturnedOverridenIpVersion) {
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
+    zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
+    deviceProperties.pNext = &zeDeviceIpVersion;
+
+    auto &compilerProductHelper = device->getCompilerProductHelper();
+    auto originalIpVersion = compilerProductHelper.getHwIpVersion(device->getHwInfo());
+    auto overridenHwInfo = device->getHwInfo();
+    overridenHwInfo.ipVersionOverrideExposedToTheApplication.value = originalIpVersion + 1;
+
+    NEO::DeviceVector neoDevices;
+    neoDevices.push_back(std::unique_ptr<NEO::Device>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&overridenHwInfo, rootDeviceIndex)));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(neoDevices));
+    auto l0DeviceWithOverride = driverHandle->devices[0];
+
+    l0DeviceWithOverride->getProperties(&deviceProperties);
+    EXPECT_EQ(overridenHwInfo.ipVersionOverrideExposedToTheApplication.value, zeDeviceIpVersion.ipVersion);
 }
 
 TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCorrectlyReturned) {

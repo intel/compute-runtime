@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -258,8 +258,12 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        auto &compilerProductHelper = device.getCompilerProductHelper();
-        param.uint = static_cast<cl_version>(compilerProductHelper.getHwIpVersion(getHardwareInfo()));
+        uint32_t hwIpVersion = getHardwareInfo().ipVersionOverrideExposedToTheApplication.value;
+        if (0 == hwIpVersion) {
+            auto &compilerProductHelper = device.getCompilerProductHelper();
+            hwIpVersion = compilerProductHelper.getHwIpVersion(getHardwareInfo());
+        }
+        param.uint = static_cast<cl_version>(hwIpVersion);
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);
         break;

@@ -1082,7 +1082,10 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                 ze_device_ip_version_ext_t *zeDeviceIpVersion = reinterpret_cast<ze_device_ip_version_ext_t *>(extendedProperties);
                 NEO::Device *activeDevice = getActiveDevice();
                 auto &compilerProductHelper = activeDevice->getCompilerProductHelper();
-                zeDeviceIpVersion->ipVersion = compilerProductHelper.getHwIpVersion(hardwareInfo);
+                zeDeviceIpVersion->ipVersion = hardwareInfo.ipVersionOverrideExposedToTheApplication.value;
+                if (0 == zeDeviceIpVersion->ipVersion) {
+                    zeDeviceIpVersion->ipVersion = compilerProductHelper.getHwIpVersion(hardwareInfo);
+                }
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_PROPERTIES) {
                 ze_event_query_kernel_timestamps_ext_properties_t *kernelTimestampExtProperties = reinterpret_cast<ze_event_query_kernel_timestamps_ext_properties_t *>(extendedProperties);
                 kernelTimestampExtProperties->flags = ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_KERNEL | ZE_EVENT_QUERY_KERNEL_TIMESTAMPS_EXT_FLAG_SYNCHRONIZED;
