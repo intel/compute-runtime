@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,8 +32,10 @@ class MockSipKernel : public SipKernel {
     const std::vector<char> &getStateSaveAreaHeader() const override;
 
     void createMockSipAllocation();
+    void createTempSipAllocation(size_t osContextCount);
 
     std::unique_ptr<MemoryAllocation> mockSipMemoryAllocation;
+    std::unique_ptr<MemoryAllocation> tempSipMemoryAllocation;
     std::vector<char> mockStateSaveAreaHeader = {'s', 's', 'a', 'h'};
     MockExecutionEnvironment executionEnvironment;
 };

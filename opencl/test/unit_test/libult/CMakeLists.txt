@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -37,6 +37,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_ult.cpp
     ${NEO_SOURCE_DIR}/shared/test/common/helpers/custom_event_listener.h
     ${NEO_SOURCE_DIR}/shared/test/common/common_main.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_sip_listener.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/command_queue/command_queue_fixture.h

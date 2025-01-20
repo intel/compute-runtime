@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,9 @@ std::vector<char> MockSipKernel::getDummyGenBinary() {
 }
 
 GraphicsAllocation *MockSipKernel::getSipAllocation() const {
+    if (tempSipMemoryAllocation) {
+        return tempSipMemoryAllocation.get();
+    }
     return mockSipMemoryAllocation.get();
 }
 
@@ -49,6 +52,18 @@ void MockSipKernel::createMockSipAllocation() {
                                            MemoryConstants::pageSize,
                                            MemoryPool::system4KBPages,
                                            256u);
+}
+void MockSipKernel::createTempSipAllocation(size_t osContextCount) {
+    this->tempSipMemoryAllocation =
+        std::make_unique<MemoryAllocation>(0u,
+                                           1u /*num gmms*/,
+                                           AllocationType::kernelIsaInternal,
+                                           nullptr,
+                                           MemoryConstants::pageSize * 10u,
+                                           0u,
+                                           MemoryConstants::pageSize,
+                                           MemoryPool::system4KBPages,
+                                           osContextCount);
 }
 
 } // namespace NEO

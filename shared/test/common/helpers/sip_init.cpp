@@ -237,6 +237,8 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
         MockSipData::called = true;
 
         MockSipData::mockSipKernel->mockSipMemoryAllocation->clearUsageInfo();
+        MockSipData::mockSipKernel->createTempSipAllocation(MemoryManager::maxOsContextCount);
+
         return MockSipData::returned;
     } else {
         return SipKernel::initSipKernelImpl(type, device, nullptr);
@@ -244,6 +246,11 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
 }
 
 void SipKernel::freeSipKernels(RootDeviceEnvironment *rootDeviceEnvironment, MemoryManager *memoryManager) {
+
+    if (MockSipData::mockSipKernel) {
+        MockSipData::mockSipKernel->tempSipMemoryAllocation.reset(nullptr);
+    }
+
     for (auto &sipKernel : rootDeviceEnvironment->sipKernels) {
         if (sipKernel.get()) {
             memoryManager->freeGraphicsMemory(sipKernel->getSipAllocation());

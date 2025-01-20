@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2024 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,6 +14,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
        ${CMAKE_CURRENT_SOURCE_DIR}/aub_hello_world_test.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_sip_listener.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
   )
 

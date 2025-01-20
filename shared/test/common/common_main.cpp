@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
+#include "shared/test/common/helpers/mock_sip_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/virtual_file_system_listener.h"
@@ -387,6 +388,7 @@ int main(int argc, char **argv) {
                 listeners.Append(customEventListener);
             }
 
+            listeners.Append(new MockSipListener);
             listeners.Append(new MemoryLeakListener);
             listeners.Append(new NEO::VirtualFileSystemListener);
 

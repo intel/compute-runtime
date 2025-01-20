@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2024 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,6 +21,7 @@ add_executable(neo_shared_tests
                ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
                ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/common_main.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_sip_listener.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
                $<TARGET_OBJECTS:mock_aubstream>
