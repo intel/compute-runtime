@@ -257,7 +257,7 @@ class CompilerCacheHelper {
   protected:
     static bool processPackedCacheBinary(ArrayRef<const uint8_t> archive, TranslationOutput &output, const NEO::Device &device);
 
-    using WhitelistedIncludesVec = StackVec<std::string_view, 1>;
+    using WhitelistedIncludesVec = StackVec<std::string_view, 2>;
     static bool validateIncludes(const ArrayRef<const char> source, const WhitelistedIncludesVec &whitelistedIncludes);
     static WhitelistedIncludesVec whitelistedIncludes;
 };

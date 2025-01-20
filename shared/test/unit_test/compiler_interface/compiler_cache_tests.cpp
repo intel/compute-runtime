@@ -860,7 +860,9 @@ TEST_F(CompilerCacheHelperWhitelistedTest, GivenWhitelistedIncludesWhenCheckingF
 }
 
 TEST_F(CompilerCacheHelperWhitelistedTest, GivenWhitelistedIncludesWhenCheckingContentsThenExpectCorrectEntries) {
-    std::vector<std::string_view> expectedEntries;
+    std::vector<std::string_view> expectedEntries{
+        "#include <cm/cm.h>",
+        "#include <cm/cmtl.h>"};
 
     for (const auto &expectedEntry : expectedEntries) {
         auto it = std::find(whitelistedIncludes.begin(), whitelistedIncludes.end(), expectedEntry);

@@ -764,6 +764,8 @@ bool CompilerCacheHelper::validateIncludes(const ArrayRef<const char> source, co
     return true;
 }
 
-CompilerCacheHelper::WhitelistedIncludesVec CompilerCacheHelper::whitelistedIncludes{};
+CompilerCacheHelper::WhitelistedIncludesVec CompilerCacheHelper::whitelistedIncludes{
+    "#include <cm/cm.h>",
+    "#include <cm/cmtl.h>"};
 
 } // namespace NEO
