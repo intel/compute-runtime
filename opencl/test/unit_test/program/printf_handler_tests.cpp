@@ -246,7 +246,6 @@ HWTEST_F(PrintfHandlerTests, givenPrintfHandlerWhenEnqueueIsBlockedThenDontUsePr
     class MyMockCommandQueueHw : public CommandQueueHw<FamilyType> {
       public:
         using CommandQueueHw<FamilyType>::CommandQueueHw;
-        using CommandQueueHw<FamilyType>::enqueueKernel;
 
         WaitStatus waitForAllEngines(bool blockedQueue, PrintfHandler *printfHandler, bool cleanTemporaryAllocationsList) override {
             waitCalled = true;
