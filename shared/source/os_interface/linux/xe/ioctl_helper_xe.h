@@ -136,6 +136,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getTileIdFromGtId(int gtId) const override {
         return gtIdToTileId[gtId];
     }
+    bool isKmdMigrationSupported() override { return false; }
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
