@@ -1,9 +1,16 @@
 /*
- * Copyright (C) 2025 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/definitions/engine_group_types.h"
+#include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
@@ -25,14 +32,10 @@ void L0GfxCoreHelperHw<Family>::getAttentionBitmaskForSingleThreads(const std::v
 
     for (auto &thread : threads) {
         uint8_t *sliceData = ptrOffset(bitmask.get(), threadsSizePerSlice * thread.slice);
-
         uint8_t *subsliceData = ptrOffset(sliceData, numEuPerSubslice * bytesPerEu * thread.subslice);
-        UNRECOVERABLE_IF(thread.thread > 9);
-
-        auto euByteNum = (thread.thread / 8);
-        uint8_t *euData = ptrOffset(subsliceData, euByteNum * numEuPerSubslice + thread.eu);
-
-        *euData |= 1 << ((thread.thread) % 8);
+        uint8_t *euData = ptrOffset(subsliceData, bytesPerEu * thread.eu);
+        UNRECOVERABLE_IF(thread.thread > 7);
+        *euData |= (1 << thread.thread);
     }
 }
 
@@ -41,7 +44,6 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-
     const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
     const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
     const uint32_t threadsSizePerSubSlice = numEuPerSubslice * bytesPerEu;
@@ -52,7 +54,6 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     for (uint32_t slice = 0; slice < std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported); slice++) {
         for (uint32_t subslice = 0; subslice < numSubslicesPerSlice; subslice++) {
             for (uint32_t eu = 0; eu < hwInfo.gtSystemInfo.MaxEuPerSubSlice; eu++) {
-
                 size_t offset = slice * threadsSizePerSlice + subslice * threadsSizePerSubSlice + eu * bytesPerEu;
 
                 if (offset >= bitmaskSize) {
@@ -64,7 +65,7 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
                     std::bitset<8> bits(bitmask[offset + byte]);
                     for (uint32_t i = 0; i < 8; i++) {
                         if (bits.test(i)) {
-                            threads.emplace_back(tile, slice, subslice, (((eu % (numEuPerSubslice / bytesPerEu)) * bytesPerEu)) + byte, i + 8 * (eu / (numEuPerSubslice / bytesPerEu)));
+                            threads.emplace_back(tile, slice, subslice, eu, i + 8 * byte);
                         }
                     }
                 }
@@ -73,15 +74,5 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     }
 
     return threads;
-}
-
-template <typename Family>
-ze_rtas_format_exp_t L0GfxCoreHelperHw<Family>::getSupportedRTASFormat() const {
-    return static_cast<ze_rtas_format_exp_t>(RTASDeviceFormatInternal::version2);
-}
-
-template <typename Family>
-zet_debug_regset_type_intel_gpu_t L0GfxCoreHelperHw<Family>::getRegsetTypeForLargeGrfDetection() const {
-    return ZET_DEBUG_REGSET_TYPE_SR_INTEL_GPU;
 }
 } // namespace L0

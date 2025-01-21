@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -5749,7 +5749,7 @@ HWTEST2_F(DebugApiLinuxTest, GivenErrorFromSynchronousAttScanWhenMultipleThreads
     l0GfxCoreHelperBackup.release();
 }
 
-TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask) {
+HWTEST2_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask, IsAtMostXe2HpgCore) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 

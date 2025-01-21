@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenAskingForUsmCompressionSu
     EXPECT_FALSE(l0GfxCoreHelper.usmCompressionSupported(hwInfo));
 }
 
-HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned) {
+HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned, IsAtMostXe2HpgCore) {
 
     auto printAttentionBitmask = [](uint8_t *expected, uint8_t *actual, uint32_t maxSlices, uint32_t maxSubSlicesPerSlice, uint32_t maxEuPerSubslice, uint32_t threadsPerEu, bool printBitmask = false) {
         auto bytesPerThread = threadsPerEu > 8 ? 2u : 1u;
@@ -215,7 +215,7 @@ HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmask
     EXPECT_EQ(0, memcmp(bitmask.get(), expectedBitmask.get(), size));
 }
 
-HWTEST_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBitsAreSet) {
+HWTEST2_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBitsAreSet, IsAtMostXe2HpgCore) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
@@ -237,6 +237,153 @@ HWTEST_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBit
     EXPECT_EQ(1u, data[numBytesPerThread]);
 
     EXPECT_TRUE(memoryZeroed(&data[numBytesPerThread + 1], size - numBytesPerThread - 1));
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBitsAreSet, IsXe3Core) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 4u;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 16u;
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
+    }
+    hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
+
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back({0, 0, 0, 0, 8});
+    threads.push_back({0, 0, 0, 1, 9});
+
+    threads.push_back({0, 1, 0, 0, 0});
+    threads.push_back({0, 1, 0, 1, 1});
+    threads.push_back({0, 1, 0, 0, 8});
+    threads.push_back({0, 1, 0, 1, 9});
+
+    threads.push_back({0, 1, 1, 0, 0});
+    threads.push_back({0, 1, 1, 1, 1});
+    threads.push_back({0, 1, 1, 0, 8});
+    threads.push_back({0, 1, 1, 1, 9});
+
+    threads.push_back({0, 2, 1, 0, 0});
+    threads.push_back({0, 2, 1, 1, 1});
+    threads.push_back({0, 2, 1, 0, 8});
+    threads.push_back({0, 2, 1, 1, 9});
+
+    threads.push_back({0, 1, 2, 0, 0});
+    threads.push_back({0, 1, 2, 1, 1});
+    threads.push_back({0, 1, 2, 0, 8});
+    threads.push_back({0, 1, 2, 1, 9});
+
+    auto maxSlice = hwInfo.gtSystemInfo.MaxSlicesSupported - 1;
+    threads.push_back({0, maxSlice, 2, 3, 0});
+    threads.push_back({0, maxSlice, 2, 3, 1});
+    threads.push_back({0, maxSlice, 2, 3, 8});
+    threads.push_back({0, maxSlice, 2, 3, 9});
+
+    auto maxSubSlice = numSubslicesPerSlice - 1;
+    threads.push_back({0, 1, maxSubSlice, 3, 0});
+    threads.push_back({0, 1, maxSubSlice, 3, 1});
+    threads.push_back({0, 1, maxSubSlice, 3, 8});
+    threads.push_back({0, 1, maxSubSlice, 3, 9});
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+
+    auto data = bitmask.get();
+    EXPECT_EQ(1u, data[8]);
+    EXPECT_EQ(1u << 1, data[9]);
+
+    auto sliceOffset = threadsSizePerSlice;
+    EXPECT_EQ(1u, data[sliceOffset]);
+    EXPECT_EQ(1u << 1, data[sliceOffset + 1]);
+
+    EXPECT_EQ(1u, data[sliceOffset + 8]);
+    EXPECT_EQ(1u << 1, data[sliceOffset + 9]);
+
+    auto subSliceOffset = sliceOffset + numEuPerSubslice * bytesPerEu;
+    EXPECT_EQ(1u, data[subSliceOffset]);
+    EXPECT_EQ(1u << 1, data[subSliceOffset + 1]);
+
+    EXPECT_EQ(1u, data[subSliceOffset + 8]);
+    EXPECT_EQ(1u << 1, data[subSliceOffset + 9]);
+
+    size_t threadCount = 0;
+    for (size_t i = 0; i < size; i++) {
+        while (data[i]) {
+            if (data[i] & 0x01) {
+                threadCount++;
+            }
+            data[i] = data[i] >> 1;
+        }
+    }
+    EXPECT_EQ(threadCount, threads.size());
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmaskThenCorrectBitmaskIsReturned, IsXe3Core) {
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+
+    hwInfo.gtSystemInfo.MaxEuPerSubSlice = 16u;
+    hwInfo.gtSystemInfo.EUCount = hwInfo.gtSystemInfo.MaxEuPerSubSlice * hwInfo.gtSystemInfo.SubSliceCount;
+    hwInfo.gtSystemInfo.ThreadCount = hwInfo.gtSystemInfo.EUCount * threadsPerEu;
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+    auto sliceOffset = threadsSizePerSlice;
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back({0, 0, 0, 0, 6});
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+
+    auto expectedBitmask = std::make_unique<uint8_t[]>(size);
+    memset(expectedBitmask.get(), 0, size);
+
+    auto returnedBitmask = bitmask.get();
+    EXPECT_EQ(uint8_t(1u << 6), returnedBitmask[0]);
+
+    threads.clear();
+    threads.push_back({0, 0, 0, 1, 3});
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+
+    returnedBitmask = bitmask.get();
+    EXPECT_EQ(uint8_t(1u << 3), returnedBitmask[1]);
+
+    threads.clear();
+    threads.push_back({0, 0, 1, 1, 8});
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+
+    returnedBitmask = bitmask.get();
+    EXPECT_EQ(1u, returnedBitmask[25]);
+
+    threads.clear();
+    threads.push_back({0, 1, 0, 0, 8});
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
+
+    returnedBitmask = bitmask.get();
+    EXPECT_EQ(1u, returnedBitmask[sliceOffset + 8]);
 }
 
 HWTEST_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForSingleThreadWhenGettingThreadsThenSingleCorrectThreadReturned) {
@@ -275,6 +422,48 @@ HWTEST_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForSingleThreadWhenGe
     EXPECT_EQ(threadID, threads[0].thread);
 
     EXPECT_EQ(1u, threads[0].tileIndex);
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForSingleThreadWhenGettingThreadsThenSingleCorrectThreadReturned, IsXe3Core) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    uint32_t subslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    uint32_t subsliceID = subslicesPerSlice > 2 ? subslicesPerSlice - 2 : 0;
+
+    uint32_t threadID = 8;
+    std::vector<EuThread::ThreadId> threadsWithAtt;
+    threadsWithAtt.push_back({0, 0, subsliceID, 0, threadID});
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
+
+    auto threads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
+
+    ASSERT_EQ(1u, threads.size());
+    EXPECT_EQ(0u, threads[0].slice);
+    EXPECT_EQ(subsliceID, threads[0].subslice);
+    EXPECT_EQ(0u, threads[0].eu);
+    EXPECT_EQ(threadID, threads[0].thread);
+
+    EXPECT_EQ(0u, threads[0].tileIndex);
+
+    std::memset(bitmask.get(), 0, size);
+    threadsWithAtt.clear();
+    threadID = 9;
+    threadsWithAtt.push_back({0, 0, 1, 5, threadID});
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threadsWithAtt, hwInfo, bitmask, size);
+    threads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
+
+    ASSERT_EQ(1u, threads.size());
+    EXPECT_EQ(0u, threads[0].slice);
+    EXPECT_EQ(1u, threads[0].subslice);
+    EXPECT_EQ(5u, threads[0].eu);
+    EXPECT_EQ(threadID, threads[0].thread);
 }
 
 HWTEST_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForAllSubslicesWhenGettingThreadsThenCorrectThreadsAreReturned) {
@@ -340,7 +529,7 @@ HWTEST_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForAllEUsWhenGettingT
     }
 }
 
-HWTEST_F(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned) {
+HWTEST2_F(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, IsXeHpcCoreOrXe2HpgCore) {
     auto hwInfo = *NEO::defaultHwInfo.get();
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
@@ -365,6 +554,118 @@ HWTEST_F(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThe
         {0, 0, 1, 3}};
 
     for (uint32_t i = 0; i < 8u; i++) {
+        EXPECT_EQ(expectedThreads[i].slice, threads[i].slice);
+        EXPECT_EQ(expectedThreads[i].subslice, threads[i].subslice);
+        EXPECT_EQ(expectedThreads[i].eu, threads[i].eu);
+        EXPECT_EQ(expectedThreads[i].thread, threads[i].thread);
+
+        EXPECT_EQ(0u, threads[i].tileIndex);
+    }
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenEu0To1Threads6To10BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, IsXe3Core) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    const uint32_t numEuPerSubslice = std::min(hwInfo.gtSystemInfo.MaxEuPerSubSlice, 8u);
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
+    const uint32_t bytesPerEu = alignUp(numThreadsPerEu, 8) / 8;
+    const uint32_t threadsSizePerSlice = numSubslicesPerSlice * numEuPerSubslice * bytesPerEu;
+
+    auto subsliceOffset = numEuPerSubslice * bytesPerEu;
+    auto sliceOffset = threadsSizePerSlice;
+
+    uint8_t data[1024] = {};
+    data[0] = 0xC0;
+    data[1] = 0xC0;
+    data[8] = 0x03;
+    data[9] = 0x03;
+    data[subsliceOffset + 8] = 0x03;
+    data[subsliceOffset + 9] = 0x03;
+    data[sliceOffset + subsliceOffset + 8] = 0x03;
+    data[sliceOffset + subsliceOffset + 9] = 0x03;
+
+    ze_device_thread_t expectedThreads[] = {
+        {0, 0, 0, 6},
+        {0, 0, 0, 7},
+        {0, 0, 1, 6},
+        {0, 0, 1, 7},
+        {0, 0, 0, 8},
+        {0, 0, 0, 9},
+        {0, 0, 1, 8},
+        {0, 0, 1, 9},
+        // subslice > 0
+        {0, 1, 0, 8},
+        {0, 1, 0, 9},
+        {0, 1, 1, 8},
+        {0, 1, 1, 9},
+        // slice > 0
+        {1, 1, 0, 8},
+        {1, 1, 0, 9},
+        {1, 1, 1, 8},
+        {1, 1, 1, 9}};
+
+    auto threads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, data, sizeof(data));
+    ASSERT_EQ(16u, threads.size());
+
+    for (uint32_t i = 0; i < 16u; i++) {
+        EXPECT_EQ(expectedThreads[i].slice, threads[i].slice);
+        EXPECT_EQ(expectedThreads[i].subslice, threads[i].subslice);
+        EXPECT_EQ(expectedThreads[i].eu, threads[i].eu);
+        EXPECT_EQ(expectedThreads[i].thread, threads[i].thread);
+        EXPECT_EQ(0u, threads[i].tileIndex);
+    }
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenThreadsToBitmaskThenSameThreadsReturnedParsingBitmask, IsXe3Core) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    MockExecutionEnvironment executionEnvironment;
+    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 4u;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 16u;
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
+    }
+    hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t size = 0;
+
+    // ordering is important, byte0 of every EU is before byte1 of any EU
+    std::vector<EuThread::ThreadId> expectedThreads = {
+        {0, 0, 0, 0, 6},
+        {0, 0, 0, 0, 7},
+        {0, 0, 0, 1, 6},
+        {0, 0, 0, 1, 7},
+        {0, 0, 0, 0, 8},
+        {0, 0, 0, 0, 9},
+        {0, 0, 0, 1, 8},
+        {0, 0, 0, 1, 9},
+        {0, 0, 1, 0, 8},
+        {0, 0, 1, 0, 9},
+        {0, 0, 1, 1, 8},
+        {0, 0, 1, 1, 9},
+        {0, 1, 1, 3, 5},
+        {0, 1, 1, 6, 7},
+        {0, 1, 1, 0, 8},
+        {0, 1, 1, 0, 9},
+        {0, 1, 1, 1, 8},
+        {0, 1, 1, 1, 9},
+        {0, 1, 1, 2, 8},
+        {0, 1, 1, 4, 9},
+        {0, 2, 1, 0, 0},
+        {0, 2, 2, 3, 5}};
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(expectedThreads, hwInfo, bitmask, size);
+
+    auto threads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, bitmask.get(), size);
+
+    for (uint32_t i = 0; i < expectedThreads.size(); i++) {
         EXPECT_EQ(expectedThreads[i].slice, threads[i].slice);
         EXPECT_EQ(expectedThreads[i].subslice, threads[i].subslice);
         EXPECT_EQ(expectedThreads[i].eu, threads[i].eu);
