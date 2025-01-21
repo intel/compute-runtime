@@ -142,16 +142,14 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     } else {
         kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
     }
-    bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
-    auto maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads;
 
     EncodeWalkerArgs encodeWalkerArgs{
-        kernel.getExecutionType(),                                     // kernelExecutionType
-        kernelAttributes.dispatchWalkOrder,                            // requiredDispatchWalkOrder
-        kernelAttributes.localRegionSize,                              // localRegionSize
-        maxFrontEndThreads,                                            // maxFrontEndThreads
-        requiredSystemFence,                                           // requiredSystemFence
-        kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample}; // hasSample
+        .kernelExecutionType = kernel.getExecutionType(),
+        .requiredDispatchWalkOrder = kernelAttributes.dispatchWalkOrder,
+        .localRegionSize = kernelAttributes.localRegionSize,
+        .maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads,
+        .requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr,
+        .hasSample = kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample};
 
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, encodeWalkerArgs);

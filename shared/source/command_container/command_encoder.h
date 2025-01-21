@@ -104,17 +104,6 @@ enum class CompareOperation : uint32_t {
 };
 
 struct EncodeWalkerArgs {
-    EncodeWalkerArgs() = delete;
-
-    EncodeWalkerArgs(KernelExecutionType kernelExecutionType, NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder,
-                     uint32_t localRegionSize, uint32_t maxFrontEndThreads, bool requiredSystemFence, bool hasSample)
-        : kernelExecutionType(kernelExecutionType),
-          requiredDispatchWalkOrder(requiredDispatchWalkOrder),
-          localRegionSize(localRegionSize),
-          maxFrontEndThreads(maxFrontEndThreads),
-          requiredSystemFence(requiredSystemFence),
-          hasSample(hasSample) {}
-
     KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;

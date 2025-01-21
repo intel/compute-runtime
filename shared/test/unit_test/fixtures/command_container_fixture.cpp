@@ -83,13 +83,14 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
 }
 
 EncodeWalkerArgs CommandEncodeStatesFixture::createDefaultEncodeWalkerArgs(const KernelDescriptor &kernelDescriptor) {
+
     EncodeWalkerArgs args{
-        NEO::KernelExecutionType::defaultType,              // kernelExecutionType
-        NEO::RequiredDispatchWalkOrder::none,               // requiredDispatchWalkOrder
-        0,                                                  // localRegionSize
-        0,                                                  // maxFrontEndThreads
-        false,                                              // requiresMemoryFence
-        kernelDescriptor.kernelAttributes.flags.hasSample}; // hasSample
+        .kernelExecutionType = KernelExecutionType::defaultType,
+        .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
+        .localRegionSize = 0,
+        .maxFrontEndThreads = 0,
+        .requiredSystemFence = false,
+        .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample};
 
     return args;
 }

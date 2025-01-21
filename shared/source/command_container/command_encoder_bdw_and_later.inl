@@ -279,12 +279,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(idd, *args.device, hwInfo, threadGroupDims, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired, numThreadsPerThreadGroup, cmd);
 
     EncodeWalkerArgs walkerArgs{
-        KernelExecutionType::defaultType,                // kernelExecutionType
-        args.requiredDispatchWalkOrder,                  // requiredDispatchWalkOrder
-        args.localRegionSize,                            // localRegionSize
-        args.device->getDeviceInfo().maxFrontEndThreads, // maxFrontEndThreads
-        args.requiresSystemMemoryFence(),                // requiresSystemFence
-        false};                                          // hasSample
+        .kernelExecutionType = KernelExecutionType::defaultType,
+        .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
+        .localRegionSize = args.localRegionSize,
+        .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
+        .requiredSystemFence = args.requiresSystemMemoryFence(),
+        .hasSample = false};
+
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, cmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(cmd, walkerArgs);
     EncodeDispatchKernel<Family>::template encodeComputeDispatchAllWalker<WalkerType, INTERFACE_DESCRIPTOR_DATA>(cmd, nullptr, rootDeviceEnvironment, walkerArgs);

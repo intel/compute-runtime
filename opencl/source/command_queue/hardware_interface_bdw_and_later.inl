@@ -84,12 +84,13 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         commandQueue.getDevice());
 
     EncodeWalkerArgs encodeWalkerArgs{
-        kernel.getExecutionType(),       // kernelExecutionType
-        RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
-        0,                               // localRegionSize
-        0,                               // maxFrontEndThreads
-        false,                           // requiredSystemFence
-        false};                          // hasSample
+        .kernelExecutionType = kernel.getExecutionType(),
+        .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
+        .localRegionSize = 0,
+        .maxFrontEndThreads = 0,
+        .requiredSystemFence = false,
+        .hasSample = false};
+
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }

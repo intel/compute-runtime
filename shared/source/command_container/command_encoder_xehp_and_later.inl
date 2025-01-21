@@ -402,13 +402,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                         args.dispatchInterface->getSlmPolicy());
 
     auto kernelExecutionType = args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
+
     EncodeWalkerArgs walkerArgs{
-        kernelExecutionType,                                // kernelExecutionType
-        args.requiredDispatchWalkOrder,                     // requiredDispatchWalkOrder
-        args.localRegionSize,                               // localRegionSize
-        args.device->getDeviceInfo().maxFrontEndThreads,    // maxFrontEndThreads
-        args.requiresSystemMemoryFence(),                   // requiresMemoryFence
-        kernelDescriptor.kernelAttributes.flags.hasSample}; // hasSample
+        .kernelExecutionType = kernelExecutionType,
+        .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
+        .localRegionSize = args.localRegionSize,
+        .maxFrontEndThreads = args.device->getDeviceInfo().maxFrontEndThreads,
+        .requiredSystemFence = args.requiresSystemMemoryFence(),
+        .hasSample = kernelDescriptor.kernelAttributes.flags.hasSample};
+
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(walkerCmd, &idd, rootDeviceEnvironment, walkerArgs);

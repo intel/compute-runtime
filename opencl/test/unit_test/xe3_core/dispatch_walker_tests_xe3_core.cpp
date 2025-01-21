@@ -27,12 +27,13 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, whenEncodeAdditionalWalkerFieldsIsCal
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
     EncodeWalkerArgs walkerArgs{
-        KernelExecutionType::concurrent,      // kernelExecutionType
-        NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
-        0,                                    // localRegionSize
-        113,                                  // maxFrontEndThreads
-        true,                                 // requiredSystemFence
-        false};                               // hasSample
+        .kernelExecutionType = KernelExecutionType::concurrent,
+        .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
+        .localRegionSize = 0,
+        .maxFrontEndThreads = 113,
+        .requiredSystemFence = true,
+        .hasSample = false};
+
     {
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
@@ -102,12 +103,12 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, givenHasSampleSetWhenEncodingExtraPar
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     EncodeWalkerArgs walkerArgs{
-        KernelExecutionType::defaultType,     // kernelExecutionType
-        NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
-        0,                                    // localRegionSize
-        0,                                    // maxFrontEndThreads
-        false,                                // requiredSystemFence
-        false};                               // hasSample
+        .kernelExecutionType = KernelExecutionType::defaultType,
+        .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
+        .localRegionSize = 0,
+        .maxFrontEndThreads = 0,
+        .requiredSystemFence = false,
+        .hasSample = false};
 
     {
         walkerArgs.hasSample = false;
