@@ -228,7 +228,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithSysmanOnlyInitSetAsTrueThe
 }
 
 TEST_F(SysmanDeviceFixture, GivenSetValidDrmHandleForDeviceWhenDoingOsSysmanDeviceInitThenSameDrmHandleIsRetrieved) {
-    EXPECT_EQ(&pLinuxSysmanImp->getDrm(), device->getOsInterface().getDriverModel()->as<Drm>());
+    EXPECT_EQ(&pLinuxSysmanImp->getDrm(), device->getOsInterface()->getDriverModel()->as<Drm>());
 }
 
 TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenCreatedFsAccessHandleWillBeRetrieved) {
@@ -1011,7 +1011,7 @@ TEST_F(SysmanMultiDeviceFixture, GivenSysmanEnvironmentVariableSetWhenCreateL0De
 using SysmanUnknownDriverModelTest = Test<DeviceFixture>;
 TEST_F(SysmanUnknownDriverModelTest, GivenDriverModelTypeIsNotDrmWhenExecutingSysmanOnLinuxThenErrorIsReturned) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-    auto &osInterface = device->getOsInterface();
+    auto &osInterface = *device->getOsInterface();
     osInterface.setDriverModel(std::make_unique<NEO::MockDriverModel>());
     auto pSysmanDeviceImp = std::make_unique<SysmanDeviceImp>(device->toHandle());
     auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);

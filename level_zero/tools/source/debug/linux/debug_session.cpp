@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,11 @@ DebugSessionLinuxAllocatorFn debugSessionLinuxFactory[DEBUG_SESSION_LINUX_TYPE_M
 
 DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
 
-    if (!device->getOsInterface().isDebugAttachAvailable()) {
+    if (!device->getOsInterface()->isDebugAttachAvailable()) {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         return nullptr;
     }
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto drmVersion = NEO::Drm::getDrmVersion(drm->getFileDescriptor());
 
     DebugSessionLinuxAllocatorFn allocator = nullptr;

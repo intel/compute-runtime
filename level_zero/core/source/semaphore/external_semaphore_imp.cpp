@@ -100,7 +100,7 @@ ze_result_t ExternalSemaphoreImp::initialize(ze_device_handle_t device, const ze
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(&deviceImp->getOsInterface(), externalSemaphoreType, handle, fd);
+    this->neoExternalSemaphore = NEO::ExternalSemaphore::create(deviceImp->getOsInterface(), externalSemaphoreType, handle, fd);
     if (!this->neoExternalSemaphore) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

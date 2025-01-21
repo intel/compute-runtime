@@ -16,33 +16,33 @@
 namespace L0 {
 
 int DrmHelper::ioctl(Device *device, NEO::DrmIoctl request, void *arg) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     return drm->getIoctlHelper()->ioctl(request, arg);
 }
 
 int DrmHelper::getTileIdFromGtId(Device *device, int gtId) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     return drm->getIoctlHelper()->getTileIdFromGtId(gtId);
 }
 
 std::string DrmHelper::getSysFsPciPath(Device *device) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     return drm->getSysFsPciPath();
 }
 
 int DrmHelper::getErrno(Device *device) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     return drm->getErrno();
 }
 
 uint32_t DrmHelper::getEngineTileIndex(Device *device, const NEO::EngineClassInstance &engine) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto engineInfo = drm->getEngineInfo();
     return engineInfo->getEngineTileIndex(engine);
 }
 
 const NEO::EngineClassInstance *DrmHelper::getEngineInstance(Device *device, uint32_t tile, aub_stream::EngineType engineType) {
-    auto drm = device->getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device->getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto engineInfo = drm->getEngineInfo();
     return engineInfo->getEngineInstance(tile, engineType);
 }

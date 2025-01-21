@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ void MetricEnumeration::getMetricsDiscoveryFilename(std::vector<const char *> &n
 }
 
 bool getDrmAdapterId(uint32_t &adapterMajor, uint32_t &adapterMinor, Device &device) {
-    auto &osInterface = device.getOsInterface();
+    auto &osInterface = *device.getOsInterface();
     auto drm = osInterface.getDriverModel()->as<NEO::Drm>();
     auto drmFile = drm->getFileDescriptor();
     struct stat drmStat = {};
@@ -90,7 +90,7 @@ MetricOALinuxImp::MetricOALinuxImp(Device &device) : device(device) {}
 ze_result_t MetricOALinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     int32_t timestampFrequency;
     int32_t ret = drm->getOaTimestampFrequency(timestampFrequency);
     if (ret < 0 || timestampFrequency == 0) {

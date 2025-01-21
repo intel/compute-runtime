@@ -1345,7 +1345,7 @@ ze_result_t DeviceImp::getDeviceImageProperties(ze_device_image_properties_t *pD
 }
 
 ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugProperties) {
-    bool isDebugAttachAvailable = getOsInterface().isDebugAttachAvailable();
+    bool isDebugAttachAvailable = getOsInterface() ? getOsInterface()->isDebugAttachAvailable() : false;
     auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*this->getNEODevice()).getStateSaveAreaHeader();
 
     if (stateSaveAreaHeader.size() == 0) {
@@ -1415,7 +1415,7 @@ const NEO::CompilerProductHelper &DeviceImp::getCompilerProductHelper() {
     return this->neoDevice->getCompilerProductHelper();
 }
 
-NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }
+NEO::OSInterface *DeviceImp::getOsInterface() { return neoDevice->getRootDeviceEnvironment().osInterface.get(); }
 
 uint32_t DeviceImp::getPlatformInfo() const {
     const auto &hardwareInfo = neoDevice->getHardwareInfo();

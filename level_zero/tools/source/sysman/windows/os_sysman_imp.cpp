@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ ze_result_t WddmSysmanImp::init() {
     pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     UNRECOVERABLE_IF(nullptr == pDevice);
 
-    NEO::OSInterface &osInterface = pDevice->getOsInterface();
+    NEO::OSInterface &osInterface = *pDevice->getOsInterface();
     auto driverModel = osInterface.getDriverModel();
     if (driverModel) {
         pWddm = driverModel->as<NEO::Wddm>();

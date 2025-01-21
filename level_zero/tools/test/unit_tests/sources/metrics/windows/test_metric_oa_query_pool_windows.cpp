@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,10 +23,10 @@ class MetricQueryPoolWindowsTest : public MetricContextFixture,
     void SetUp() override {
         MetricContextFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto &osInterface = device->getOsInterface();
+        auto osInterface = device->getOsInterface();
         wddm = new NEO::WddmMock(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
         wddm->init();
-        osInterface.setDriverModel(std::unique_ptr<DriverModel>(wddm));
+        osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
     }
 
     void TearDown() override {
@@ -45,8 +45,8 @@ TEST_F(MetricQueryPoolWindowsTest, givenCorrectArgumentsWhenGetContextDataIsCall
 
     EXPECT_EQ(mockMetricsLibrary->metricsLibraryGetContextData(*device, contextData), true);
 
-    auto &osInterface = device->getOsInterface();
-    auto wddm = osInterface.getDriverModel()->as<NEO::Wddm>();
+    auto osInterface = device->getOsInterface();
+    auto wddm = osInterface->getDriverModel()->as<NEO::Wddm>();
 
     EXPECT_EQ(contextData.ClientData->Windows.KmdInstrumentationEnabled, true);
     EXPECT_EQ(contextData.ClientData->Windows.Device, reinterpret_cast<void *>(static_cast<UINT_PTR>(wddm->getDeviceHandle())));

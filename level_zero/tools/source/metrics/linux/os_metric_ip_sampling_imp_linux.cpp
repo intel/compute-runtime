@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ ze_result_t MetricIpSamplingLinuxImp::getNearestSupportedSamplingUnit(uint32_t &
 
 ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) {
 
-    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
 
     uint32_t samplingUnit = 0;
     if (getNearestSupportedSamplingUnit(samplingPeriodNs, samplingUnit) != ZE_RESULT_SUCCESS) {
@@ -104,7 +104,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
 }
 
 ze_result_t MetricIpSamplingLinuxImp::stopMeasurement() {
-    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto ioctlHelper = drm->getIoctlHelper();
     bool result = ioctlHelper->perfDisableEuStallStream(&stream);
 
@@ -174,7 +174,7 @@ bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
         return false;
     }
 
-    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto ioctlHelper = drm->getIoctlHelper();
     return ioctlHelper->isEuStallSupported();
 }
@@ -182,7 +182,7 @@ bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
 ze_result_t MetricIpSamplingLinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     int32_t gpuTimeStampfrequency = 0;
     int32_t ret = drm->getTimestampFrequency(gpuTimeStampfrequency);
     if (ret < 0 || gpuTimeStampfrequency == 0) {

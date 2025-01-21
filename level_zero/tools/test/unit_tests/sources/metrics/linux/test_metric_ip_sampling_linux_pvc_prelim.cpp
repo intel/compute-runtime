@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,7 +123,7 @@ class MetricIpSamplingLinuxTestPrelim : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto &osInterface = device->getOsInterface();
+        auto &osInterface = *device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmPrelimMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
 
         metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*device));
@@ -147,7 +147,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenCorrectArgumentsWhenStartMeasure
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetTimestampFrequencyFailsWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
 
-    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     VariableBackup<int> backupCsTimeStampFrequency(&drm->storedCsTimestampFrequency, 0);
     VariableBackup<int> backupStoredRetVal(&drm->storedRetVal, -1);
 
@@ -157,7 +157,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetTimestampFrequencyFailsWhenSt
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetTimestampFrequencyReturnsFrequencyEqualZeroWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
 
-    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     VariableBackup<int> backupCsTimeStampFrequency(&drm->storedCsTimestampFrequency, 0);
 
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
@@ -191,7 +191,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlEnableFailsWhenStar
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetEuStallPropertiesWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
 
-    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     drm->setIoctlHelperPrelim20Mock();
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
@@ -326,7 +326,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
     auto rootDevice = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
     auto metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*rootDevice));
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
-    auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     drm->queryEngineInfo();
     VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl, [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         if (request == DRM_IOCTL_I915_PERF_OPEN) {
@@ -353,7 +353,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenCombinationOfAffinityMaskWh
     rootDevice->getSubDevices(&subDeviceCount, subDevices);
     auto metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*subDevices[0]));
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
-    auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     drm->queryEngineInfo();
 
     {
@@ -392,7 +392,7 @@ HWTEST2_F(MetricIpSamplingLinuxMultiDeviceTest, GivenEngineInfoIsNullWhenStartMe
     auto rootDevice = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), deviceFactory->rootDevices[0], false, &returnValue));
     auto metricIpSamplingOsInterface = MetricIpSamplingOsInterface::create(static_cast<L0::Device &>(*rootDevice));
     uint32_t notifyEveryNReports = 0, samplingPeriodNs = 10000;
-    auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmPrelimMock *>(rootDevice->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     drm->queryEngineInfo1SubDevice();
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
 }

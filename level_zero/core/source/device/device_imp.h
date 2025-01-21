@@ -83,7 +83,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     const NEO::ProductHelper &getProductHelper() override;
     const NEO::CompilerProductHelper &getCompilerProductHelper() override;
     const NEO::HardwareInfo &getHwInfo() const override;
-    NEO::OSInterface &getOsInterface() override;
+    NEO::OSInterface *getOsInterface() override;
     uint32_t getPlatformInfo() const override;
     MetricDeviceContext &getMetricDeviceContext() override;
     DebugSession *getDebugSession(const zet_debug_config_t &config) override;

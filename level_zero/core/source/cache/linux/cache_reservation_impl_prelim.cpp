@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ std::unique_ptr<CacheReservation> CacheReservation::create(Device &device) {
 }
 
 bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
-    auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
 
     auto cacheInfo = drm->getL3CacheInfo();
 
@@ -58,7 +58,7 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t reg
         return false;
     }
 
-    auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
 
     auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
     auto drmAllocation = static_cast<NEO::DrmAllocation *>(gpuAllocation);
@@ -67,7 +67,7 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t reg
 }
 
 size_t CacheReservationImpl::getMaxCacheReservationSize() {
-    auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
+    auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
 
     auto cacheInfo = drm->getL3CacheInfo();
     return cacheInfo->getMaxReservationCacheSize();

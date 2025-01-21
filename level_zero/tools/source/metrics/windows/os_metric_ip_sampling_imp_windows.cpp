@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ std::unique_ptr<MetricIpSamplingOsInterface> MetricIpSamplingOsInterface::create
 MetricIpSamplingWindowsImp::MetricIpSamplingWindowsImp(Device &device) : device(device) {}
 
 ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) {
-    const auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
 
     uint32_t samplingUnit = 0u;
     if (getNearestSupportedSamplingUnit(samplingPeriodNs, samplingUnit) != ZE_RESULT_SUCCESS) {
@@ -62,14 +62,14 @@ ze_result_t MetricIpSamplingWindowsImp::startMeasurement(uint32_t &notifyEveryNR
 }
 
 ze_result_t MetricIpSamplingWindowsImp::readData(uint8_t *pRawData, size_t *pRawDataSize) {
-    const auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     bool result = wddm->perfReadEuStallStream(pRawData, pRawDataSize);
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
 ze_result_t MetricIpSamplingWindowsImp::stopMeasurement() {
-    const auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     bool result = wddm->perfDisableEuStallStream();
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
@@ -88,7 +88,7 @@ uint32_t MetricIpSamplingWindowsImp::getUnitReportSize() {
 
 bool MetricIpSamplingWindowsImp::isNReportsAvailable() {
     size_t bytesAvailable = 0u;
-    const auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     bool result = wddm->perfReadEuStallStream(nullptr, &bytesAvailable);
     if (!result) {
         METRICS_LOG_ERR("wddm perfReadEuStallStream() call falied.");
@@ -108,7 +108,7 @@ bool MetricIpSamplingWindowsImp::isDependencyAvailable() {
 ze_result_t MetricIpSamplingWindowsImp::getMetricsTimerResolution(uint64_t &timerResolution) {
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    const auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    const auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     uint32_t gpuTimeStampfrequency = 0;
     gpuTimeStampfrequency = wddm->getTimestampFrequency();
     if (gpuTimeStampfrequency == 0) {

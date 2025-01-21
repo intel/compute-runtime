@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : c
 }
 
 const NEO::TopologyMap &DebugSession::getTopologyMap() {
-    return connectedDevice->getOsInterface().getDriverModel()->getTopologyMap();
+    return connectedDevice->getOsInterface()->getDriverModel()->getTopologyMap();
 };
 
 void DebugSession::createEuThreads() {

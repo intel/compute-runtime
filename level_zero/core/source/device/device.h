@@ -111,7 +111,7 @@ struct Device : _ze_device_handle_t {
         return implicitScalingCapable;
     }
     virtual const NEO::HardwareInfo &getHwInfo() const = 0;
-    virtual NEO::OSInterface &getOsInterface() = 0;
+    virtual NEO::OSInterface *getOsInterface() = 0;
     virtual uint32_t getPlatformInfo() const = 0;
     virtual MetricDeviceContext &getMetricDeviceContext() = 0;
     virtual DebugSession *getDebugSession(const zet_debug_config_t &config) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ class MetricQueryPoolLinuxTest : public MetricContextFixture,
     void SetUp() override {
         MetricContextFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto &osInterface = device->getOsInterface();
+        auto &osInterface = *device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
@@ -57,7 +57,7 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenGetContextDataIsCalled
 
     EXPECT_EQ(mockMetricsLibrary->metricsLibraryGetContextData(*device, contextData), true);
 
-    auto &osInterface = device->getOsInterface();
+    auto &osInterface = *device->getOsInterface();
 
     EXPECT_EQ(contextData.ClientData->Linux.Adapter->DrmFileDescriptor, osInterface.getDriverModel()->as<Drm>()->getFileDescriptor());
     EXPECT_EQ(contextData.ClientData->Linux.Adapter->Type, LinuxAdapterType::DrmFileDescriptor);
@@ -248,7 +248,7 @@ class MetricEnumerationTestLinux : public MetricContextFixture,
     void SetUp() override {
         MetricContextFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
-        auto &osInterface = device->getOsInterface();
+        auto &osInterface = *device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
@@ -271,7 +271,7 @@ TEST_F(MetricEnumerationTestLinux, givenDrmFailureWhenGettingOATimerResolutionTh
     std::unique_ptr<MetricOAOsInterface> oaOsInterface = MetricOAOsInterface::create(*device);
     uint64_t timerResolution;
     oaOsInterface->getMetricsTimerResolution(timerResolution);
-    auto drm = static_cast<DrmMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
+    auto drm = static_cast<DrmMock *>(device->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     drm->storedRetVal = -1;
 
     EXPECT_EQ(oaOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNKNOWN);

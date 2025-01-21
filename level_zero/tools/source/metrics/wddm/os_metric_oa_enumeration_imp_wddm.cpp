@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace L0 {
 
 bool getWddmAdapterId(uint32_t &major, uint32_t &minor, Device &device) {
-    auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     auto luid = wddm->getAdapterLuid();
 
     major = luid.HighPart;

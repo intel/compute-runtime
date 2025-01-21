@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ const char *MetricsLibrary::getFilename() { return METRICS_LIBRARY_NAME; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
 
-    auto wddm = device.getOsInterface().getDriverModel()->as<NEO::Wddm>();
+    auto wddm = device.getOsInterface()->getDriverModel()->as<NEO::Wddm>();
     auto &osData = contextData.ClientData->Windows;
 
     // Copy escape data (adapter/device/escape function).
