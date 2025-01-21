@@ -26,6 +26,12 @@
 #include <vector>
 bool verbose = true;
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+// ignoring stringop-oveflow due to false positive warning on GCC13 after enabling C++20
+#endif
+
 typedef struct {
     zes_firmware_handle_t firmwareHandle;
     std::mutex firmwareProgressMutex;
@@ -1933,3 +1939,7 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
