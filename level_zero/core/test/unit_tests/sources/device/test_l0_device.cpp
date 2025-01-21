@@ -1012,6 +1012,12 @@ HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDontInitialize) {
     EXPECT_EQ(data[1], tag->tagForCpuAccess->getGlobalStartValue(0));
     EXPECT_EQ(data[2], tag->tagForCpuAccess->getContextEndValue(0));
     EXPECT_EQ(data[3], tag->tagForCpuAccess->getGlobalEndValue(0));
+
+    auto tag3 = static_cast<NEO::TagNode<TimestampPacketsT> *>(allocator->getTag());
+
+    auto minSize = alignUp(TimestampPacketsT::getSinglePacketSize() * 2, neoMockDevice->getGfxCoreHelper().getTimestampPacketAllocatorAlignment());
+
+    EXPECT_TRUE(ptrDiff(tag3->getCpuBase(), tag2->getCpuBase()) >= minSize);
 }
 
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {

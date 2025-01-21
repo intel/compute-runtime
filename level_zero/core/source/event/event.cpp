@@ -211,7 +211,9 @@ void EventPool::initializeSizeParameters(uint32_t numDevices, ze_device_handle_t
         maxKernelCount = driver.getEventMaxKernelCount(numDevices, deviceHandles);
     }
 
-    auto eventSize = eventPackets * gfxCoreHelper.getSingleTimestampPacketSize();
+    const uint32_t minimalPacketCount = isEventPoolTimestampFlagSet() ? 2 : 1;
+
+    auto eventSize = std::max(eventPackets, minimalPacketCount) * gfxCoreHelper.getSingleTimestampPacketSize();
     if (eventPoolFlags & ZE_EVENT_POOL_FLAG_KERNEL_MAPPED_TIMESTAMP) {
         eventSize += sizeof(NEO::TimeStampData);
     }
