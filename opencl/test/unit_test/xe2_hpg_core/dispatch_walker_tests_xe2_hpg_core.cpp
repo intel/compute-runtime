@@ -25,14 +25,13 @@ XE2_HPG_CORETEST_F(WalkerDispatchTestsXe2HpGCore, whenEncodeAdditionalWalkerFiel
     MockExecutionEnvironment executionEnvironment;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{
-        kernelDescriptor,                     // kernelDescriptor
         KernelExecutionType::concurrent,      // kernelExecutionType
         NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
         0,                                    // localRegionSize
         113,                                  // maxFrontEndThreads
-        true};                                // requiredSystemFence
+        true,                                 // requiresMemoryFence
+        false};                               // hasSample
     {
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());

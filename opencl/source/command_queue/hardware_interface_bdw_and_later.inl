@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,12 +84,12 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         commandQueue.getDevice());
 
     EncodeWalkerArgs encodeWalkerArgs{
-        kernel.getKernelInfo().kernelDescriptor, // kernelDescriptor
-        kernel.getExecutionType(),               // kernelExecutionType
-        RequiredDispatchWalkOrder::none,         // requiredDispatchWalkOrder
-        0,                                       // localRegionSize
-        0,                                       // maxFrontEndThreads
-        false};                                  // requiredSystemFence
+        kernel.getExecutionType(),       // kernelExecutionType
+        RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
+        0,                               // localRegionSize
+        0,                               // maxFrontEndThreads
+        false,                           // requiredSystemFence
+        false};                          // hasSample
     EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }

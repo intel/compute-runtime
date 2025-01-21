@@ -26,14 +26,13 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, whenEncodeAdditionalWalkerFieldsIsCal
     MockExecutionEnvironment executionEnvironment;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
 
-    KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{
-        kernelDescriptor,                     // kernelDescriptor
         KernelExecutionType::concurrent,      // kernelExecutionType
         NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
         0,                                    // localRegionSize
         113,                                  // maxFrontEndThreads
-        true};                                // requiredSystemFence
+        true,                                 // requiredSystemFence
+        false};                               // hasSample
     {
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
@@ -102,24 +101,23 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, givenHasSampleSetWhenEncodingExtraPar
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
-    KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{
-        kernelDescriptor,                     // kernelDescriptor
         KernelExecutionType::defaultType,     // kernelExecutionType
         NEO::RequiredDispatchWalkOrder::none, // requiredDispatchWalkOrder
         0,                                    // localRegionSize
         0,                                    // maxFrontEndThreads
-        false};                               // requiredSystemFence
+        false,                                // requiredSystemFence
+        false};                               // hasSample
 
     {
-        kernelDescriptor.kernelAttributes.flags.hasSample = false;
+        walkerArgs.hasSample = false;
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_NE(DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK, walkerCmd.getDispatchWalkOrder());
         EXPECT_EQ(THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_1, walkerCmd.getThreadGroupBatchSize());
     }
 
     {
-        kernelDescriptor.kernelAttributes.flags.hasSample = true;
+        walkerArgs.hasSample = true;
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_EQ(DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK, walkerCmd.getDispatchWalkOrder());
         EXPECT_EQ(THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_4, walkerCmd.getThreadGroupBatchSize());

@@ -403,12 +403,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     auto kernelExecutionType = args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
     EncodeWalkerArgs walkerArgs{
-        kernelDescriptor,                                // kernelDescriptor
-        kernelExecutionType,                             // kernelExecutionType
-        args.requiredDispatchWalkOrder,                  // requiredDispatchWalkOrder
-        args.localRegionSize,                            // localRegionSize
-        args.device->getDeviceInfo().maxFrontEndThreads, // maxFrontEndThreads
-        args.requiresSystemMemoryFence()};               // requiresMemoryFence
+        kernelExecutionType,                                // kernelExecutionType
+        args.requiredDispatchWalkOrder,                     // requiredDispatchWalkOrder
+        args.localRegionSize,                               // localRegionSize
+        args.device->getDeviceInfo().maxFrontEndThreads,    // maxFrontEndThreads
+        args.requiresSystemMemoryFence(),                   // requiresMemoryFence
+        kernelDescriptor.kernelAttributes.flags.hasSample}; // hasSample
     EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeWalkerPostSyncFields(walkerCmd, walkerArgs);
     EncodeDispatchKernel<Family>::encodeComputeDispatchAllWalker(walkerCmd, &idd, rootDeviceEnvironment, walkerArgs);

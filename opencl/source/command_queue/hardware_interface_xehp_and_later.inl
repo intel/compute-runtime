@@ -146,12 +146,12 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto maxFrontEndThreads = device.getDeviceInfo().maxFrontEndThreads;
 
     EncodeWalkerArgs encodeWalkerArgs{
-        kernelInfo.kernelDescriptor,        // kernelDescriptor
-        kernel.getExecutionType(),          // kernelExecutionType
-        kernelAttributes.dispatchWalkOrder, // requiredDispatchWalkOrder
-        kernelAttributes.localRegionSize,   // localRegionSize
-        maxFrontEndThreads,                 // maxFrontEndThreads
-        requiredSystemFence};               // requiredSystemFence
+        kernel.getExecutionType(),                                     // kernelExecutionType
+        kernelAttributes.dispatchWalkOrder,                            // requiredDispatchWalkOrder
+        kernelAttributes.localRegionSize,                              // localRegionSize
+        maxFrontEndThreads,                                            // maxFrontEndThreads
+        requiredSystemFence,                                           // requiredSystemFence
+        kernelInfo.kernelDescriptor.kernelAttributes.flags.hasSample}; // hasSample
 
     EncodeDispatchKernel<GfxFamily>::template encodeAdditionalWalkerFields<WalkerType>(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     EncodeDispatchKernel<GfxFamily>::template encodeWalkerPostSyncFields<WalkerType>(walkerCmd, encodeWalkerArgs);
