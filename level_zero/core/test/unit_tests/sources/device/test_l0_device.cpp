@@ -980,7 +980,7 @@ TEST_F(DeviceTest, whenCreatingDeviceThenCreateInOrderCounterAllocatorOnDemandAn
     }
 }
 
-HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDoInitialize) {
+HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDontInitialize) {
     using TimestampPacketType = typename FamilyType::TimestampPacketType;
     using TimestampPacketsT = NEO::TimestampPackets<TimestampPacketType, 1>;
 
@@ -1008,10 +1008,10 @@ HWTEST_F(DeviceTest, givenTsAllocatorWhenGettingNewTagThenDoInitialize) {
     auto tag2 = static_cast<NEO::TagNode<TimestampPacketsT> *>(allocator->getTag());
     EXPECT_EQ(tag, tag2);
 
-    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), tag->tagForCpuAccess->getContextStartValue(0));
-    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), tag->tagForCpuAccess->getGlobalStartValue(0));
-    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), tag->tagForCpuAccess->getContextEndValue(0));
-    EXPECT_EQ(static_cast<uint32_t>(Event::STATE_INITIAL), tag->tagForCpuAccess->getGlobalEndValue(0));
+    EXPECT_EQ(data[0], tag->tagForCpuAccess->getContextStartValue(0));
+    EXPECT_EQ(data[1], tag->tagForCpuAccess->getGlobalStartValue(0));
+    EXPECT_EQ(data[2], tag->tagForCpuAccess->getContextEndValue(0));
+    EXPECT_EQ(data[3], tag->tagForCpuAccess->getGlobalEndValue(0));
 }
 
 TEST_F(DeviceTest, givenMoreThanOneExtendedPropertiesStructuresWhenKernelPropertiesCalledThenSuccessIsReturnedAndPropertiesAreSet) {

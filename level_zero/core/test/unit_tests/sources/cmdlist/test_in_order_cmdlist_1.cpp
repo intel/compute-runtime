@@ -261,8 +261,8 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
 
     immCmdList1->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(1u + (heapless ? 1u : 0u), immCmdList0->cmdQImmediate->getTaskCount());
-    EXPECT_EQ(2u + (heapless ? 1u : 0u), immCmdList1->cmdQImmediate->getTaskCount());
+    EXPECT_EQ(heapless ? 2u : 1u, immCmdList0->cmdQImmediate->getTaskCount());
+    EXPECT_EQ(heapless ? 3u : 2u, immCmdList1->cmdQImmediate->getTaskCount());
 
     // explicit wait
     {
@@ -294,17 +294,17 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
         CmdListMemoryCopyParams copyParams = {};
         immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
-        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport || !heapless ? 1u : 2u;
+        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport ? 1u : 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || !heapless ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         immCmdList1->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
         expectedLatestTaskCount = 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || !heapless ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         context->freeMem(deviceAlloc);
     }
@@ -2616,34 +2616,42 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingTimestampEventThen
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
 
-    if (immCmdList->isHeaplessModeEnabled()) {
-        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), sdiItor);
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
 
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-        ASSERT_NE(nullptr, sdiCmd);
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+    ASSERT_NE(nullptr, sdiCmd);
 
-        EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
-        EXPECT_EQ(0u, sdiCmd->getStoreQword());
-        EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
-    }
+    EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
     auto eventBaseGpuVa = events[0]->getPacketAddress(device);
+    auto eventEndGpuVa = events[0]->getCompletionFieldGpuAddress(device);
 
-    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+    auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
     ASSERT_NE(cmdList.end(), walkerItor);
 
     WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-    std::visit([eventBaseGpuVa](auto &&walker) {
+    std::visit([eventBaseGpuVa, eventEndGpuVa, &immCmdList, &sdiCmd](auto &&walker) {
         auto &postSync = walker->getPostSync();
         using PostSyncType = std::decay_t<decltype(postSync)>;
 
         EXPECT_EQ(PostSyncType::OPERATION::OPERATION_WRITE_TIMESTAMP, postSync.getOperation());
         EXPECT_EQ(eventBaseGpuVa, postSync.getDestinationAddress());
         auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(++walker);
-        ASSERT_EQ(nullptr, semaphoreCmd);
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(walker);
-        ASSERT_EQ(nullptr, sdiCmd);
+        ASSERT_NE(nullptr, semaphoreCmd);
+
+        EXPECT_EQ(static_cast<uint32_t>(Event::State::STATE_CLEARED), semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(eventEndGpuVa, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+        sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(++semaphoreCmd);
+        ASSERT_NE(nullptr, sdiCmd);
+
+        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+        EXPECT_EQ(immCmdList->isQwordInOrderCounter(), sdiCmd->getStoreQword());
+        EXPECT_EQ(1u, sdiCmd->getDataDword0());
     },
                walkerVariant);
 }
@@ -2752,23 +2760,21 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), immCmdList->flushData[1]));
 
-        if (immCmdList->isHeaplessModeEnabled()) {
-            auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-            ASSERT_NE(cmdList.end(), sdiItor);
+        auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), sdiItor);
 
-            auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-            ASSERT_NE(nullptr, sdiCmd);
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+        ASSERT_NE(nullptr, sdiCmd);
 
-            EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
-            EXPECT_EQ(0u, sdiCmd->getStoreQword());
-            EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
+        EXPECT_EQ(events[0]->getCompletionFieldGpuAddress(device), sdiCmd->getAddress());
+        EXPECT_EQ(0u, sdiCmd->getStoreQword());
+        EXPECT_EQ(Event::STATE_CLEARED, sdiCmd->getDataDword0());
 
-            auto sdiOffset = ptrDiff(sdiCmd, cmdStream->getCpuBase());
-            EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
-            EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
-        }
+        auto sdiOffset = ptrDiff(sdiCmd, cmdStream->getCpuBase());
+        EXPECT_TRUE(sdiOffset >= immCmdList->flushData[0]);
+        EXPECT_TRUE(sdiOffset < immCmdList->flushData[1]);
 
-        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
+        auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(sdiItor, cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         auto eventBaseGpuVa = events[0]->getPacketAddress(device);
@@ -3074,7 +3080,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
 
     immCmdList->hostSynchronize(0, false);
 
-    if (immCmdList->dcFlushSupport || !immCmdList->isHeaplessModeEnabled()) {
+    if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3088,10 +3094,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
 
     immCmdList->hostSynchronize(0, false);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else if (immCmdList->dcFlushSupport) {
+    if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3102,10 +3105,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
     // handle post sync operations
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else if (immCmdList->dcFlushSupport) {
+    if (immCmdList->dcFlushSupport) {
         EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3134,25 +3134,15 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else {
-        EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    }
+    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(0u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 
     internalAllocStorage->storeAllocationWithTaskCount(std::move(mockAlloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION, 123);
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    } else {
-        EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
-        EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
-    }
+    EXPECT_EQ(1u, immCmdList->synchronizeInOrderExecutionCalled);
+    EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenNonPostSyncWalkerWhenPatchingThenThrow, IsGen12LP) {
@@ -4722,11 +4712,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenCallingSyncThenHandleCompleti
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        GTEST_SKIP();
-    }
-
     immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -4826,11 +4811,6 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
     uint32_t counterOffset = 64;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
-
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        GTEST_SKIP();
-    }
-
     immCmdList->inOrderExecInfo->setAllocationOffset(counterOffset);
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
@@ -4920,9 +4900,6 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenCallingSyncThenHandleComplet
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenDoingCpuCopyThenSynchronize, IsAtLeastXeHpCore) {
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->copyThroughLockedPtrEnabled = true;
-    if (!immCmdList->isHeaplessModeEnabled()) {
-        GTEST_SKIP();
-    }
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     auto eventPool = createEvents<FamilyType>(1, false);
@@ -5048,16 +5025,15 @@ HWTEST2_F(InOrderCmdListTests, givenAubModeWhenSyncCalledAlwaysPollForCompletion
 
     immCmdList->hostSynchronize(0, false);
 
-    auto expectPollForCompletion = immCmdList->isHeaplessModeEnabled() ? 1u : 0u;
-    EXPECT_EQ(expectPollForCompletion++, ultCsr->pollForAubCompletionCalled);
+    EXPECT_EQ(1u, ultCsr->pollForAubCompletionCalled);
 
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
-    EXPECT_EQ(expectPollForCompletion++, ultCsr->pollForAubCompletionCalled);
+    EXPECT_EQ(2u, ultCsr->pollForAubCompletionCalled);
 
     ultCsr->commandStreamReceiverType = CommandStreamReceiverType::hardwareWithAub;
 
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());
-    EXPECT_EQ(expectPollForCompletion, ultCsr->pollForAubCompletionCalled);
+    EXPECT_EQ(3u, ultCsr->pollForAubCompletionCalled);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenProfilingEventWhenDoingCpuCopyThenSetProfilingData, IsAtLeastXeHpCore) {
@@ -5328,37 +5304,6 @@ HWTEST2_F(InOrderCmdListTests, givenMitigateHostVisibleSignalWhenCallingSynchron
     context->freeMem(hostAddress);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCallingSynchronizeOnCbEventThenFlushDcIfSupported, MatchAny) {
-    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
-
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP | ZEX_COUNTER_BASED_EVENT_FLAG_HOST_VISIBLE;
-    counterBasedDesc.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
-
-    ze_event_handle_t handle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
-
-    auto immCmdList = createImmCmdList<gfxCoreFamily>();
-    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
-
-    EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
-    EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-
-    auto eventObj = Event::fromHandle(handle);
-    *static_cast<Event::State *>(ptrOffset(eventObj->getHostAddress(), eventObj->getContextEndOffset())) = Event::State::STATE_SIGNALED;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
-
-    if (device->getProductHelper().isDcFlushAllowed()) {
-        EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
-        EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
-    } else {
-        EXPECT_FALSE(ultCsr->waitForTaskCountCalled);
-        EXPECT_FALSE(ultCsr->flushTagUpdateCalled);
-    }
-
-    zeEventDestroy(handle);
-}
-
 HWTEST2_F(InOrderCmdListTests, givenStandaloneCbEventWhenPassingExternalInterruptIdThenAssign, MatchAny) {
     zex_intel_event_sync_mode_exp_desc_t syncModeDesc = {ZEX_INTEL_STRUCTURE_TYPE_EVENT_SYNC_MODE_EXP_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     syncModeDesc.externalInterruptId = 123;
@@ -5558,8 +5503,6 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathT
     uint32_t hostCopyData = 0;
 
     ultCsr->forceReturnGpuHang = true;
-    ultCsr->returnWaitForCompletionWithTimeout = NEO::WaitStatus::gpuHang;
-    ultCsr->callBaseWaitForCompletionWithTimeout = false;
 
     auto status = immCmdList->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, status);

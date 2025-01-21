@@ -310,9 +310,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                     if (!eventForInOrderExec->getAllocation(this->device) && Event::standaloneInOrderTimestampAllocationEnabled()) {
                         eventForInOrderExec->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
                     }
-                    if (this->asMutable() || !eventForInOrderExec->isCounterBased()) {
+                    if (!compactEvent || this->asMutable() || !compactEvent->isCounterBased()) {
                         dispatchEventPostSyncOperation(eventForInOrderExec, nullptr, launchParams.outListCommands, Event::STATE_CLEARED, false, false, false, false, false);
-                    } else if (compactEvent) {
+                    } else {
                         eventAddress = eventForInOrderExec->getPacketAddress(this->device);
                         isTimestampEvent = true;
                         if (!launchParams.omitAddingEventResidency) {
@@ -422,18 +422,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (inOrderExecSignalRequired) {
         if (inOrderNonWalkerSignalling) {
             if (!launchParams.skipInOrderNonWalkerSignaling) {
-                if (!(eventForInOrderExec->isCounterBased() && eventForInOrderExec->isUsingContextEndOffset()) || this->asMutable()) {
-                    if (compactEvent && (compactEvent->isCounterBased() && !this->asMutable())) {
-                        auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
-                        inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true);
-                        addCmdForPatching(nullptr, pcCmdPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
-                    } else {
-                        appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
-                        appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false);
-                    }
+                if (compactEvent && (compactEvent->isCounterBased() && !this->asMutable())) {
+                    auto pcCmdPtr = this->commandContainer.getCommandStream()->getSpace(0u);
+                    inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
+                    appendSignalInOrderDependencyCounter(eventForInOrderExec, false, true);
+                    addCmdForPatching(nullptr, pcCmdPtr, nullptr, inOrderCounterValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::pipeControl);
                 } else {
-                    this->latestOperationHasOptimizedCbEvent = true;
+                    appendWaitOnSingleEvent(eventForInOrderExec, launchParams.outListCommands, false, false, CommandToPatch::CbEventTimestampPostSyncSemaphoreWait);
+                    appendSignalInOrderDependencyCounter(eventForInOrderExec, false, false);
                 }
             }
         } else {

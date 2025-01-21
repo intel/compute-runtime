@@ -81,7 +81,7 @@ std::unique_ptr<NEO::TagAllocatorBase> L0GfxCoreHelperHw<Family>::getInOrderTime
 
     size_t size = sizeof(TimestampPacketsT) * packetsCountPerElement;
 
-    return std::make_unique<NEO::TagAllocator<TimestampPacketsT>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, size, Event::State::STATE_CLEARED, false, true, deviceBitfield);
+    return std::make_unique<NEO::TagAllocator<TimestampPacketsT>>(rootDeviceIndices, memoryManager, initialTagCount, tagAlignment, size, 0, false, false, deviceBitfield);
 }
 
 template <typename Family>
