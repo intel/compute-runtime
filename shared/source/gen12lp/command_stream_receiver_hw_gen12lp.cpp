@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,7 +128,7 @@ void BlitCommandsHelper<Family>::dispatchBlitMemoryColorFill(NEO::GraphicsAlloca
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename Family::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<Family>::appendBlitMemoryOptionsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename Family::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 template <>
 void BlitCommandsHelper<Family>::appendTilingEnable(typename Family::XY_COLOR_BLT &blitCmd) {}

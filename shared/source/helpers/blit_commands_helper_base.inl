@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -283,7 +283,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         tmpCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
 
-        appendBlitCommandsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
+        appendBlitMemoryOptionsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
+        appendBlitFillCommand(tmpCmd);
 
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
         *cmd = tmpCmd;
@@ -549,5 +550,8 @@ size_t BlitCommandsHelper<GfxFamily>::getWaCmdsSize(const BlitPropertiesContaine
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::adjustControlSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendBlitFillCommand(typename GfxFamily::XY_COLOR_BLT &blitCmd) {}
 
 } // namespace NEO
