@@ -1066,6 +1066,7 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenDispatchingWorkThenRegisterCsr
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    pDevice->disableSecondaryEngines = true;
 
     size_t gws = 1;
 

@@ -182,6 +182,8 @@ class MockDevice : public RootDevice {
         return getGlobalMemorySizeReturn;
     }
 
+    EngineControl *getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) override;
+
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
@@ -195,6 +197,7 @@ class MockDevice : public RootDevice {
     AILConfiguration *mockAilConfigurationHelper = nullptr;
     uint64_t getGlobalMemorySizeReturn = 0u;
     bool callBaseGetGlobalMemorySize = true;
+    bool disableSecondaryEngines = false;
 };
 
 template <>

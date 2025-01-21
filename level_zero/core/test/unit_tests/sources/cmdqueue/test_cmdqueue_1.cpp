@@ -795,7 +795,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenLowPriorityDescWhenCreateCommandQueueI
 
 TEST_F(DeviceCreateCommandQueueTest, givenCopyOrdinalWhenCreateCommandQueueWithLowPriorityDescIsCalledThenCopyCsrIsAssigned) {
     auto copyCsr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
-    EngineDescriptor copyEngineDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false);
+    EngineDescriptor copyEngineDescriptor({aub_stream::ENGINE_BCS, EngineUsage::lowPriority}, neoDevice->getDeviceBitfield(), neoDevice->getPreemptionMode(), false);
     auto copyOsContext = neoDevice->getExecutionEnvironment()->memoryManager->createAndRegisterOsContext(copyCsr.get(), copyEngineDescriptor);
     copyCsr->setupContext(*copyOsContext);
 
@@ -919,6 +919,7 @@ TEST_F(DeviceCreateCommandQueueTest, givenNormalPriorityDescWhenCreateCommandQue
 
     ze_command_queue_handle_t commandQueueHandle = {};
 
+    neoDevice->disableSecondaryEngines = true;
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));
@@ -939,6 +940,7 @@ TEST_F(DeviceCreateCommandQueueTest,
 
     ze_command_queue_handle_t commandQueueHandle = {};
 
+    neoDevice->disableSecondaryEngines = true;
     ze_result_t res = device->createCommandQueue(&desc, &commandQueueHandle);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     auto commandQueue = static_cast<CommandQueueImp *>(L0::CommandQueue::fromHandle(commandQueueHandle));

@@ -3241,20 +3241,24 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     returnValue = cmdListObject->close();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
+    auto sizeBeforeDestroy = csrStream.getUsed();
+
     returnValue = cmdListObject->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_EQ(0u, csrStream.getUsed());
+    EXPECT_EQ(sizeBeforeDestroy, csrStream.getUsed());
 }
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenTaskCountZeroAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
     ze_result_t returnValue;
     L0::ult::CommandList *cmdListObject = CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false));
+
+    auto sizeBeforeDestroy = csrStream.getUsed();
 
     returnValue = cmdListObject->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
@@ -3264,7 +3268,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     returnValue = cmdListObject->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_EQ(0u, csrStream.getUsed());
+    EXPECT_EQ(sizeBeforeDestroy, csrStream.getUsed());
 }
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,

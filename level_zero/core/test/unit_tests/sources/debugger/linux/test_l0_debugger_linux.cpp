@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -440,7 +440,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAnd
     neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().ensureContextInitialized(false);
     drmMock->ioctlCallsCount = 0;
 
-    ze_command_queue_desc_t queueDesc = {};
+    ze_command_queue_desc_t queueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, 0, 0, 0, ZE_COMMAND_QUEUE_MODE_DEFAULT, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
     ze_result_t returnValue;
 
     ze_command_list_handle_t commandList1 = nullptr;
@@ -453,11 +453,11 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAnd
 
     returnValue = device->createCommandListImmediate(&queueDesc, &commandList2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, drmMock->notifyFirstCommandQueueCreatedCallsCount);
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueCreatedCount);
 
     CommandList::fromHandle(commandList1)->destroy();
-    EXPECT_EQ(1u, drmMock->ioctlCallsCount);
+    EXPECT_EQ(1u, drmMock->notifyFirstCommandQueueCreatedCallsCount);
     EXPECT_EQ(1u, debuggerL0Hw->commandQueueDestroyedCount);
 
     CommandList::fromHandle(commandList2)->destroy();

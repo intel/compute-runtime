@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -395,6 +395,7 @@ class DrmMockResources : public DrmMock {
 
     uint32_t notifyFirstCommandQueueCreated(const void *data, size_t size) override {
         ioctlCallsCount++;
+        notifyFirstCommandQueueCreatedCallsCount++;
         capturedCmdQData = std::make_unique<uint64_t[]>((size + sizeof(uint64_t) - 1) / sizeof(uint64_t));
         capturedCmdQSize = size;
         memcpy(capturedCmdQData.get(), data, size);
@@ -409,6 +410,7 @@ class DrmMockResources : public DrmMock {
 
     uint32_t unregisteredHandle = 0;
     uint32_t unregisterCalledCount = 0;
+    uint32_t notifyFirstCommandQueueCreatedCallsCount = 0;
     DrmResourceClass registeredClass = DrmResourceClass::maxSize;
     bool registerClassesCalled = false;
     uint64_t registeredData[128];

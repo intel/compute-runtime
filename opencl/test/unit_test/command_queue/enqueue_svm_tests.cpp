@@ -2515,7 +2515,7 @@ HWTEST_F(StagingBufferTest, givenOutOfOrderCmdQueueWhenEnqueueStagingBufferMemcp
 HWTEST_F(StagingBufferTest, givenEnqueueStagingBufferMemcpyWhenTaskCountNotReadyThenCopySucessfullAndBuffersNotReused) {
     MockCommandQueueHw<FamilyType> myCmdQ(context, pClDevice, 0);
     auto initialUsmAllocs = svmManager->getNumAllocs();
-    auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
+    auto &csr = myCmdQ.getGpgpuCommandStreamReceiver();
     *csr.getTagAddress() = csr.peekTaskCount();
     retVal = myCmdQ.enqueueStagingBufferMemcpy(
         false,    // cl_bool blocking_copy

@@ -193,6 +193,13 @@ AILConfiguration *MockDevice::getAilConfigurationHelper() const {
     return Device::getAilConfigurationHelper();
 }
 
+EngineControl *MockDevice::getSecondaryEngineCsr(EngineTypeUsage engineTypeUsage, bool allocateInterrupt) {
+    if (disableSecondaryEngines) {
+        return nullptr;
+    }
+    return RootDevice::getSecondaryEngineCsr(engineTypeUsage, allocateInterrupt);
+}
+
 bool MockSubDevice::createEngine(EngineTypeUsage engineTypeUsage) {
     if (failOnCreateEngine) {
         return false;

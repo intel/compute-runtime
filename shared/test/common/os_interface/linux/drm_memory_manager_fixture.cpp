@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,6 +89,10 @@ void DrmMemoryManagerFixture::tearDown() {
 
     for (auto &engineContainer : memoryManager->getRegisteredEngines()) {
         enginesCount += engineContainer.size();
+    }
+
+    for (auto &engineContainer : memoryManager->secondaryEngines) {
+        enginesCount -= engineContainer.size();
     }
 
     mock->ioctlExpected.contextDestroy = enginesCount;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -342,6 +342,7 @@ void ImmediateCmdListSharedHeapsFixture::tearDown() {
 void ImmediateCmdListSharedHeapsFlushTaskFixtureInit::setUp(int32_t useImmediateFlushTask) {
     this->useImmediateFlushTask = useImmediateFlushTask;
     debugManager.flags.UseImmediateFlushTask.set(useImmediateFlushTask);
+    debugManager.flags.ContextGroupSize.set(0);
 
     ImmediateCmdListSharedHeapsFixture::setUp();
 }
