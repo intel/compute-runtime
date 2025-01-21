@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -150,7 +150,10 @@ class SVMAllocsManager {
     struct SvmCacheAllocationInfo {
         size_t allocationSize;
         void *allocation;
-        SvmCacheAllocationInfo(size_t allocationSize, void *allocation) : allocationSize(allocationSize), allocation(allocation) {}
+        std::chrono::high_resolution_clock::time_point saveTime;
+        SvmCacheAllocationInfo(size_t allocationSize, void *allocation) : allocationSize(allocationSize), allocation(allocation) {
+            saveTime = std::chrono::high_resolution_clock::now();
+        }
         bool operator<(SvmCacheAllocationInfo const &other) const {
             return allocationSize < other.allocationSize;
         }
@@ -170,6 +173,8 @@ class SVMAllocsManager {
         bool isInUse(SvmAllocationData *svmData);
         void *get(size_t size, const UnifiedMemoryProperties &unifiedMemoryProperties);
         void trim();
+        void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint);
+        void cleanup();
 
         std::vector<SvmCacheAllocationInfo> allocations;
         std::mutex mtx;
@@ -215,6 +220,7 @@ class SVMAllocsManager {
     MOCKABLE_VIRTUAL void freeSVMAllocDeferImpl();
     MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
+    void cleanupUSMAllocCaches();
     void trimUSMDeviceAllocCache();
     void trimUSMHostAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);

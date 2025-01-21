@@ -191,7 +191,7 @@ DriverHandleImp::~DriverHandleImp() {
     if (memoryManager != nullptr) {
         memoryManager->peekExecutionEnvironment().prepareForCleanup();
         if (this->svmAllocsManager) {
-            this->svmAllocsManager->trimUSMDeviceAllocCache();
+            this->svmAllocsManager->cleanupUSMAllocCaches();
             this->usmHostMemAllocPool.cleanup();
         }
     }
@@ -219,7 +219,6 @@ DriverHandleImp::~DriverHandleImp() {
     this->fabricIndirectEdges.clear();
 
     if (this->svmAllocsManager) {
-        this->svmAllocsManager->trimUSMDeviceAllocCache();
         delete this->svmAllocsManager;
         this->svmAllocsManager = nullptr;
     }

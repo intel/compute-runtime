@@ -19,6 +19,7 @@
 
 namespace NEO {
 class DirectSubmissionController;
+class UnifiedMemoryReuseCleaner;
 class GfxCoreHelper;
 class MemoryManager;
 struct OsEnvironment;
@@ -65,8 +66,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
 
     DirectSubmissionController *initializeDirectSubmissionController();
+    void initializeUnifiedMemoryReuseCleaner();
 
     std::unique_ptr<MemoryManager> memoryManager;
+    std::unique_ptr<UnifiedMemoryReuseCleaner> unifiedMemoryReuseCleaner;
     std::unique_ptr<DirectSubmissionController> directSubmissionController;
     std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
@@ -91,6 +94,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     DebuggingMode debuggingEnabledMode = DebuggingMode::disabled;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
     std::mutex initializeDirectSubmissionControllerMutex;
+    std::mutex initializeUnifiedMemoryReuseCleanerMutex;
     std::vector<std::tuple<std::string, uint32_t>> deviceCcsModeVec;
 };
 } // namespace NEO

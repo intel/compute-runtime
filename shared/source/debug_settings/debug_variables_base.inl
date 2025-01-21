@@ -586,6 +586,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableCustomLocalMemoryAlignment, 0,
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableDeviceAllocationCache, -1, "Experimentally enable device usm allocation cache. Use X% of device memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalEnableHostAllocationCache, -1, "Experimentally enable host usm allocation cache. Use X% of shared system memory.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUSMAllocationReuseVersion, -1, "Version of mechanism to use for usm allocation reuse.")
+DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalUSMAllocationReuseCleaner, -1, "Enable usm allocation reuse cleaner. -1: default, 0: disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalH2DCpuCopyThreshold, -1, "Override default threshold (in bytes) for H2D CPU copy.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalD2HCpuCopyThreshold, -1, "Override default threshold (in bytes) for D2H CPU copy.")
 DECLARE_DEBUG_VARIABLE(int32_t, ExperimentalCopyThroughLock, -1, "Experimentally copy memory through locked ptr. -1: default 0: disable 1: enable ")

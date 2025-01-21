@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -59,6 +59,8 @@ set(NEO_CORE_MEMORY_MANAGER
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_pooling.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse_cleaner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_memory_reuse_cleaner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.h
     ${CMAKE_CURRENT_SOURCE_DIR}/page_table.inl

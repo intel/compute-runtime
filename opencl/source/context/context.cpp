@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,8 +78,7 @@ Context::~Context() {
     }
     if (svmAllocsManager) {
         this->stagingBufferManager.reset();
-        svmAllocsManager->trimUSMDeviceAllocCache();
-        svmAllocsManager->trimUSMHostAllocCache();
+        svmAllocsManager->cleanupUSMAllocCaches();
         delete svmAllocsManager;
     }
     if (driverDiagnostics) {

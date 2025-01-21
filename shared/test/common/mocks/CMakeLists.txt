@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -95,6 +95,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_packet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_usm_memory_reuse_cleaner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_usm_memory_pool.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_controller.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp

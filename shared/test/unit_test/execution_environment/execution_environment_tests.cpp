@@ -18,6 +18,7 @@
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -297,6 +298,30 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenIniti
     EXPECT_EQ(controller, nullptr);
 }
 
+TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetWhenInitializeUnifiedMemoryReuseCleanerThenNotNull) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalUSMAllocationReuseCleaner.set(1);
+
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
+    MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner();
+    auto cleaner = executionEnvironment.unifiedMemoryReuseCleaner.get();
+
+    EXPECT_NE(cleaner, nullptr);
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner();
+    EXPECT_EQ(cleaner, executionEnvironment.unifiedMemoryReuseCleaner.get());
+}
+
+TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetZeroWhenInitializeUnifiedMemoryReuseCleanerThenNull) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalUSMAllocationReuseCleaner.set(0);
+
+    MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner();
+
+    EXPECT_EQ(nullptr, executionEnvironment.unifiedMemoryReuseCleaner.get());
+}
+
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
     const std::unordered_map<std::string, int32_t> config = {
         {"UseKmdMigration", 0},
@@ -364,11 +389,12 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManager>) +
                                                   sizeof(std::unique_ptr<DirectSubmissionController>) +
+                                                  sizeof(std::unique_ptr<UnifiedMemoryReuseCleaner>) +
                                                   sizeof(std::unique_ptr<OsEnvironment>) +
                                                   sizeof(std::vector<std::unique_ptr<RootDeviceEnvironment>>) +
                                                   sizeof(std::unordered_map<uint32_t, std::tuple<uint32_t, uint32_t, uint32_t>>) +
                                                   sizeof(std::unordered_map<std::thread::id, std::string>) +
-                                                  sizeof(std::mutex) +
+                                                  2 * sizeof(std::mutex) +
                                                   2 * sizeof(bool) +
                                                   sizeof(DeviceHierarchyMode) +
                                                   sizeof(DebuggingMode) +
@@ -381,11 +407,14 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<MemoryManag
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
 
-    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 7> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 8> {
         MemoryMangerMock(uint32_t &destructorId, ExecutionEnvironment &executionEnvironment) : DestructorCounted(destructorId, executionEnvironment) {
             callBaseAllocateGraphicsMemoryForNonSvmHostPtr = false;
             callBasePopulateOsHandles = false;
         }
+    };
+    struct UnifiedMemoryReuseCleanerMock : public DestructorCounted<UnifiedMemoryReuseCleaner, 7> {
+        UnifiedMemoryReuseCleanerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct DirectSubmissionControllerMock : public DestructorCounted<DirectSubmissionController, 6> {
         DirectSubmissionControllerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -418,9 +447,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->rootDeviceEnvironments[0]->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->directSubmissionController = std::make_unique<DirectSubmissionControllerMock>(destructorId);
+    executionEnvironment->unifiedMemoryReuseCleaner = std::make_unique<UnifiedMemoryReuseCleanerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(8u, destructorId);
+    EXPECT_EQ(9u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMemoryManager) {

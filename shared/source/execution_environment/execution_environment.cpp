@@ -20,6 +20,7 @@
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 #include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_environment.h"
@@ -49,6 +50,9 @@ void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvir
 ExecutionEnvironment::~ExecutionEnvironment() {
     if (directSubmissionController) {
         directSubmissionController->stopThread();
+    }
+    if (unifiedMemoryReuseCleaner) {
+        unifiedMemoryReuseCleaner->stopThread();
     }
     if (memoryManager) {
         memoryManager->commonCleanup();
@@ -141,6 +145,20 @@ DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionCont
     }
 
     return directSubmissionController.get();
+}
+
+void ExecutionEnvironment::initializeUnifiedMemoryReuseCleaner() {
+    std::lock_guard<std::mutex> lock(initializeUnifiedMemoryReuseCleanerMutex);
+    auto initializeUnifiedMemoryReuseCleaner = UnifiedMemoryReuseCleaner::isSupported();
+
+    if (debugManager.flags.ExperimentalUSMAllocationReuseCleaner.get() != -1) {
+        initializeUnifiedMemoryReuseCleaner = debugManager.flags.ExperimentalUSMAllocationReuseCleaner.get() == 1;
+    }
+
+    if (initializeUnifiedMemoryReuseCleaner && nullptr == this->unifiedMemoryReuseCleaner) {
+        this->unifiedMemoryReuseCleaner = std::make_unique<UnifiedMemoryReuseCleaner>();
+        this->unifiedMemoryReuseCleaner->startThread();
+    }
 }
 
 void ExecutionEnvironment::prepareRootDeviceEnvironments(uint32_t numRootDevices) {
