@@ -42,6 +42,12 @@ bool AILConfigurationHw<IGFX_ARROWLAKE>::isBufferPoolEnabled() {
     return iterator == applicationsBufferPoolDisabledXe.end();
 }
 
+template <>
+bool AILConfigurationHw<IGFX_ARROWLAKE>::limitAmountOfDeviceMemoryForRecycling() {
+    auto iterator = applicationsDeviceUSMRecyclingLimited.find(processName);
+    return iterator != applicationsDeviceUSMRecyclingLimited.end();
+}
+
 template class AILConfigurationHw<IGFX_ARROWLAKE>;
 
 } // namespace NEO
