@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/aub/aub_helper_bdw_and_later.inl"
+#include "shared/source/aub/aub_helper_base.inl"
 #include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "shared/source/aub_mem_dump/aub_mem_dump.inl"
 #include "shared/source/gen12lp/aub_mapper.h"
@@ -32,6 +32,26 @@ template struct AubPageTableHelper64<Traits<device, 48>>;
 
 namespace NEO {
 using Family = Gen12LpFamily;
+
+template <typename GfxFamily>
+int AubHelperHw<GfxFamily>::getDataHintForPml4Entry() const {
+    return AubMemDump::DataTypeHintValues::TraceNotype;
+}
+
+template <typename GfxFamily>
+int AubHelperHw<GfxFamily>::getDataHintForPdpEntry() const {
+    return AubMemDump::DataTypeHintValues::TraceNotype;
+}
+
+template <typename GfxFamily>
+int AubHelperHw<GfxFamily>::getDataHintForPdEntry() const {
+    return AubMemDump::DataTypeHintValues::TraceNotype;
+}
+
+template <typename GfxFamily>
+int AubHelperHw<GfxFamily>::getDataHintForPtEntry() const {
+    return AubMemDump::DataTypeHintValues::TraceNotype;
+}
 
 static const AubMemDump::LrcaHelperRcs rcs(0x002000);
 static const AubMemDump::LrcaHelperBcs bcs(0x022000);

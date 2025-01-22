@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
-#include "shared/source/helpers/cache_policy_bdw_and_later.inl"
+#include "shared/source/helpers/cache_policy_tgllp_and_later.inl"
 #include "shared/source/helpers/enable_product.inl"
 #include "shared/source/os_interface/product_helper.h"
 

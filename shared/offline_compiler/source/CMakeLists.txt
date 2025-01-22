@@ -66,7 +66,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy.h
-    ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_bdw_and_later.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_tgllp_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy_dg2_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp

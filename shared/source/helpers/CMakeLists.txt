@@ -36,7 +36,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/casts.h
     ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper.h
@@ -131,7 +131,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/populate_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/preamble_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.h

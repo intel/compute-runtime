@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper.inl"
-#include "shared/source/os_interface/product_helper_bdw_and_later.inl"
+#include "shared/source/os_interface/product_helper_tgllp_and_later.inl"
 
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_N;
 
