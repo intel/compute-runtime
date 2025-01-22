@@ -849,6 +849,11 @@ if(NOT MSVC)
     endif()
   else()
     # gcc only
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+      # Disable specific warnings due to GCC bug for versions >= 13
+      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111073
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-stringop-overflow")
+    endif()
   endif()
 
   if(USE_SANITIZE_UB)
