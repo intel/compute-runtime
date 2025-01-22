@@ -220,6 +220,8 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     template <bool heaplessEnabled>
     void patchBindlessSurfaceStatesInCrossThreadData(uint64_t bindlessSurfaceStatesBaseAddress) const;
 
+    void patchBindlessSamplerStatesInCrossThreadData(uint64_t bindlessSamplerStatesBaseAddress) const;
+
     // Helpers
     cl_int setArg(uint32_t argIndex, uint32_t argValue);
     cl_int setArg(uint32_t argIndex, uint64_t argValue);

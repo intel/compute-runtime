@@ -264,6 +264,11 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
                                                                        samplerCount, samplerTable.borderColor,
                                                                        kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
                                                                        device.getRootDeviceEnvironment());
+        if constexpr (heaplessModeEnabled) {
+            uint64_t bindlessSamplerStateAddress = samplerStateOffset;
+            bindlessSamplerStateAddress += dsh.getGraphicsAllocation()->getGpuAddress();
+            kernel.patchBindlessSamplerStatesInCrossThreadData(bindlessSamplerStateAddress);
+        }
     }
 
     if constexpr (bindfulAllowed) {

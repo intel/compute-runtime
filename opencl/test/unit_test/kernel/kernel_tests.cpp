@@ -571,6 +571,66 @@ TEST_F(BindlessKernelTests, givenBindlessKernelWhenPatchBindlessSurfaceStatesInC
     EXPECT_EQ(globalConstantsSurfaceAddress, crossThreadData[4]);
 }
 
+HWTEST_F(BindlessKernelTests, givenBindlessKernelAndSamplersWhenPatchBindlessSamplerStatesInCrossThreadDataThenCorrectAddressesAreWritten) {
+    auto argDescriptorSampler1 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler1.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler1.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorSampler1.as<NEO::ArgDescSampler>().bindless = 0x0;
+    argDescriptorSampler1.as<NEO::ArgDescSampler>().size = 8;
+    argDescriptorSampler1.as<NEO::ArgDescSampler>().index = 0;
+
+    auto argDescriptorSampler2 = NEO::ArgDescriptor(NEO::ArgDescriptor::argTSampler);
+    argDescriptorSampler2.as<NEO::ArgDescSampler>() = NEO::ArgDescSampler();
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().bindful = NEO::undefined<NEO::SurfaceStateHeapOffset>;
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().bindless = sizeof(uint64_t);
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().size = 8;
+    argDescriptorSampler2.as<NEO::ArgDescSampler>().index = 1;
+
+    KernelInfo kernelInfo = {};
+    pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.samplerAddressingMode = NEO::KernelDescriptor::Bindless;
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler1);
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.explicitArgs.push_back(argDescriptorSampler2);
+
+    auto &inlineSampler = pProgram->mockKernelInfo.kernelDescriptor.inlineSamplers.emplace_back();
+    inlineSampler.addrMode = NEO::KernelDescriptor::InlineSampler::AddrMode::repeat;
+    inlineSampler.filterMode = NEO::KernelDescriptor::InlineSampler::FilterMode::nearest;
+    inlineSampler.isNormalized = false;
+    inlineSampler.bindless = 2 * sizeof(uint64_t);
+    inlineSampler.samplerIndex = 2;
+    inlineSampler.size = 8;
+
+    const uint32_t borderColorSize = inlineSampler.borderColorStateSize;
+    pProgram->mockKernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset = borderColorSize;
+
+    MockKernel mockKernel(pProgram, pProgram->mockKernelInfo, *pClDevice);
+    using SamplerState = typename FamilyType::SAMPLER_STATE;
+    std::array<uint8_t, 64 + 3 * sizeof(SamplerState)> dsh = {0};
+    pProgram->mockKernelInfo.heapInfo.pDsh = dsh.data();
+    pProgram->mockKernelInfo.heapInfo.dynamicStateHeapSize = static_cast<uint32_t>(dsh.size());
+    mockKernel.crossThreadData = new char[3 * sizeof(uint64_t)];
+    mockKernel.crossThreadDataSize = 3 * sizeof(uint64_t);
+    memset(mockKernel.crossThreadData, 0x00, mockKernel.crossThreadDataSize);
+
+    const uint64_t baseAddress = reinterpret_cast<uint64_t>(dsh.data()) + borderColorSize;
+
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+
+    auto bindlessSamplerState1Address = baseAddress;
+    auto bindlessSamplerState2Address = baseAddress + 1 * samplerStateSize;
+    auto bindlessInlineSamplerStateAddress = baseAddress + inlineSampler.samplerIndex * samplerStateSize;
+
+    mockKernel.setInlineSamplers();
+    mockKernel.patchBindlessSamplerStatesInCrossThreadData(baseAddress);
+
+    auto crossThreadData = std::make_unique<uint64_t[]>(mockKernel.crossThreadDataSize / sizeof(uint64_t));
+    memcpy(crossThreadData.get(), mockKernel.crossThreadData, mockKernel.crossThreadDataSize);
+
+    EXPECT_EQ(bindlessSamplerState1Address, crossThreadData[0]);
+    EXPECT_EQ(bindlessSamplerState2Address, crossThreadData[1]);
+    EXPECT_EQ(bindlessInlineSamplerStateAddress, crossThreadData[2]);
+}
+
 TEST_F(BindlessKernelTests, givenNoEntryInBindlessOffsetsMapWhenPatchingCrossThreadDataThenMemoryIsNotPatched) {
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.bufferAddressingMode = NEO::KernelDescriptor::BindlessAndStateless;
     pProgram->mockKernelInfo.kernelDescriptor.kernelAttributes.imageAddressingMode = NEO::KernelDescriptor::Bindless;

@@ -68,6 +68,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <ranges>
 #include <vector>
 
 using namespace iOpenCL;
@@ -1335,7 +1336,18 @@ void Kernel::setInlineSamplers() {
                                                                 errCode));
         UNRECOVERABLE_IF(errCode != CL_SUCCESS);
 
-        auto samplerState = ptrOffset(getDynamicStateHeap(), static_cast<size_t>(inlineSampler.getSamplerBindfulOffset()));
+        void *samplerState = nullptr;
+        auto dsh = const_cast<void *>(getDynamicStateHeap());
+
+        if (isValidOffset(inlineSampler.bindless)) {
+            auto samplerStateIndex = inlineSampler.samplerIndex;
+            auto &gfxCoreHelper = this->getGfxCoreHelper();
+            auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+            auto offset = inlineSampler.borderColorStateSize;
+            samplerState = ptrOffset(dsh, (samplerStateIndex * samplerStateSize) + offset);
+        } else {
+            samplerState = ptrOffset(dsh, static_cast<size_t>(inlineSampler.getSamplerBindfulOffset()));
+        }
         sampler->setArg(const_cast<void *>(samplerState), clDevice.getRootDeviceEnvironment());
     }
 }
@@ -1792,8 +1804,19 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
 
         storeKernelArg(argIndex, SAMPLER_OBJ, clSamplerObj, argVal, argSize);
 
+        void *samplerState = nullptr;
         auto dsh = getDynamicStateHeap();
-        auto samplerState = ptrOffset(dsh, argAsSmp.bindful);
+
+        if (isValidOffset(argAsSmp.bindless)) {
+            auto samplerStateIndex = argAsSmp.index;
+            auto &gfxCoreHelper = this->getGfxCoreHelper();
+            auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+            const auto offset = kernelInfo.kernelDescriptor.payloadMappings.samplerTable.tableOffset;
+            samplerState = ptrOffset(const_cast<void *>(dsh), (samplerStateIndex * samplerStateSize) + offset);
+        } else {
+            DEBUG_BREAK_IF(isUndefinedOffset(argAsSmp.bindful));
+            samplerState = ptrOffset(const_cast<void *>(dsh), argAsSmp.bindful);
+        }
 
         pSampler->setArg(const_cast<void *>(samplerState), clDevice.getRootDeviceEnvironment());
 
@@ -2184,6 +2207,35 @@ void Kernel::patchBindlessSurfaceStatesInCrossThreadData(uint64_t bindlessSurfac
 
     if (!bindlessHeapsHelper) {
         patchBindlessSurfaceStatesForImplicitArgs<heaplessEnabled>(bindlessSurfaceStatesBaseAddress);
+    }
+}
+
+void Kernel::patchBindlessSamplerStatesInCrossThreadData(uint64_t bindlessSamplerStatesBaseAddress) const {
+    auto &gfxCoreHelper = this->getGfxCoreHelper();
+    const auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+    auto *crossThreadDataPtr = reinterpret_cast<uint8_t *>(getCrossThreadData());
+
+    auto samplerArgs = std::ranges::subrange(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) | std::views::filter([](const auto &arg) {
+                           return (arg.type == NEO::ArgDescriptor::argTSampler) && NEO::isValidOffset(arg.template as<NEO::ArgDescSampler>().bindless);
+                       });
+
+    for (auto &arg : samplerArgs) {
+        auto &sampler = arg.template as<NEO::ArgDescSampler>();
+        auto patchLocation = ptrOffset(crossThreadDataPtr, sampler.bindless);
+        auto samplerStateAddress = static_cast<uint64_t>(bindlessSamplerStatesBaseAddress + sampler.index * samplerStateSize);
+        auto patchValue = samplerStateAddress;
+        patchWithRequiredSize(patchLocation, sampler.size, patchValue);
+    }
+
+    auto inlineSamplers = kernelInfo.kernelDescriptor.inlineSamplers | std::views::filter([](const auto &sampler) {
+                              return (NEO::isValidOffset(sampler.bindless));
+                          });
+
+    for (auto &sampler : inlineSamplers) {
+        auto patchLocation = ptrOffset(crossThreadDataPtr, sampler.bindless);
+        auto samplerStateAddress = static_cast<uint64_t>(bindlessSamplerStatesBaseAddress + sampler.samplerIndex * samplerStateSize);
+        auto patchValue = samplerStateAddress;
+        patchWithRequiredSize(patchLocation, sampler.size, patchValue);
     }
 }
 
