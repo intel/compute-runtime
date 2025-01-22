@@ -1358,9 +1358,7 @@ HWTEST2_F(ImageCreate, givenImageSizeZeroThenDummyImageIsCreated, IsAtMostXeHpgC
     image->destroy();
 }
 
-using IsAtMostProductDG2 = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG2>;
-
-HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenFilterFlagsAreValid, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenFilterFlagsAreValid, IsAtMostDg2) {
     ze_image_properties_t properties;
 
     ze_image_desc_t desc = {};
@@ -1384,7 +1382,7 @@ HWTEST2_F(ImageCreate, WhenGettingImagePropertiesThenFilterFlagsAreValid, IsAtMo
     EXPECT_TRUE(samplerFilterFlagsValid);
 }
 
-HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostDg2) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -1399,7 +1397,7 @@ HWTEST2_F(ImageCreate, WhenDestroyingImageThenSuccessIsReturned, IsAtMostProduct
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostDg2) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -1413,7 +1411,7 @@ HWTEST2_F(ImageCreate, WhenCreatingImageThenNonNullPointerIsReturned, IsAtMostPr
     image->destroy();
 }
 
-HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostDg2) {
     ze_image_desc_t desc = {};
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
     L0::Image *imagePtr;
@@ -1425,7 +1423,7 @@ HWTEST2_F(ImageCreate, givenInvalidProductFamilyThenNullIsReturned, IsAtMostProd
     ASSERT_EQ(nullptr, image);
 }
 
-HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostDg2) {
     ze_image_desc_t desc = {};
 
     desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
@@ -1450,7 +1448,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesAllocation, IsAtMostProd
     image->destroy();
 }
 
-HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostDg2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -1490,7 +1488,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurface, IsAtMostProduct
     delete imageCore;
 }
 
-HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostDg2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     ze_image_desc_t desc = {};
@@ -1526,7 +1524,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescSwizzlesMatchSurface, IsAtMostP
     delete imageCore;
 }
 
-HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMostDg2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
 
@@ -1600,7 +1598,7 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
     }
 }
 
-HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMostProductDG2) {
+HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMostDg2) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     uint8_t mockSSH[sizeof(RENDER_SURFACE_STATE) * 4] = {0};
 

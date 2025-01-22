@@ -305,7 +305,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
     }
 }
 
-using ModuleTestSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using ModuleTestSupport = IsGen12LP;
 
 HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;

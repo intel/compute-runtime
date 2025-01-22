@@ -312,7 +312,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenExecutingCommandListsThenEndingPip
     commandQueue->destroy();
 }
 
-using CommandQueueExecuteSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using CommandQueueExecuteSupport = IsGen12LP;
 HWTEST2_F(CommandQueueExecuteCommandLists, givenCommandQueueHaving2CommandListsThenMVSIsProgrammedWithMaxPTSS, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

@@ -84,7 +84,7 @@ struct CommandQueueProgramSBATest : public ::testing::Test {
     const uint32_t numRootDevices = 2u;
 };
 
-using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using CommandQueueSBASupport = IsGen12LP;
 HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialized, CommandQueueSBASupport) {
     ze_command_queue_desc_t desc = {};
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());

@@ -1398,7 +1398,7 @@ HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThen
     commandList1->destroy();
 }
 
-using CommandQueueExecuteSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using CommandQueueExecuteSupport = IsGen12LP;
 HWTEST2_F(ExecuteCommandListTests, givenCommandQueueHavingTwoB2BCommandListsThenMVSIsProgrammedOnlyOnce, CommandQueueExecuteSupport) {
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

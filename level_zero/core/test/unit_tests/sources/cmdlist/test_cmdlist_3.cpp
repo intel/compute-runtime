@@ -360,10 +360,9 @@ HWTEST2_F(CommandListCreateTests,
     device->getNEODevice()->getMemoryManager()->freeSystemMemory(cmdListHostBuffer);
 }
 
-using PlatformSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(CommandListCreateTests,
           givenCommandListWhenMemoryCopyRegionHavingHostMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlsWithDcFlushIsFound,
-          PlatformSupport) {
+          IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -420,7 +419,7 @@ HWTEST2_F(CommandListCreateTests,
 
 HWTEST2_F(CommandListCreateTests,
           givenCommandListWhenMemoryCopyRegionHavingDeviceMemoryWithNoSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound,
-          PlatformSupport) {
+          IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -484,7 +483,7 @@ HWTEST2_F(CommandListCreateTests,
 
 HWTEST2_F(CommandListCreateTests,
           givenCommandListWhenMemoryFillHavingDeviceMemoryWithSignalAndNoWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound,
-          PlatformSupport) {
+          IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -540,7 +539,7 @@ HWTEST2_F(CommandListCreateTests,
 
 HWTEST2_F(CommandListCreateTests,
           givenCommandListWhenMemoryFillHavingSharedMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlsWithDcFlushIsFound,
-          PlatformSupport) {
+          IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -597,7 +596,7 @@ HWTEST2_F(CommandListCreateTests,
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingHostMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound, PlatformSupport) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingHostMemoryWithSignalAndWaitScopeEventsUsingRenderEngineThenPipeControlWithDcFlushIsFound, IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -651,7 +650,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingHostMemory
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsAddedAndPCDueToSignalEventIsAddedWithDCFlush, PlatformSupport) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsAddedAndPCDueToSignalEventIsAddedWithDCFlush, IsGen12LP) {
     using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -710,7 +709,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWith
     context->freeMem(dstBuffer);
 }
 
-HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithDCFlush, PlatformSupport) {
+HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryFillHavingEventsWithDeviceScopeThenPCDueToWaitEventIsNotAddedAndPCDueToSignalEventIsAddedWithDCFlush, IsGen12LP) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     ze_result_t result = ZE_RESULT_SUCCESS;

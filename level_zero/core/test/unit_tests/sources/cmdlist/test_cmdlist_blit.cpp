@@ -85,7 +85,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillToNotD
     EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-using MemFillPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using MemFillPlatforms = IsGen12LP;
 
 HWTEST2_F(AppendMemoryCopyTests, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, MemFillPlatforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
@@ -322,7 +322,7 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTimestampPassedToImageC
     EXPECT_EQ(cmd->getRegisterAddress(), RegisterOffsets::bcs0Base + RegisterOffsets::globalTimestampLdw);
 }
 
-using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using ImageSupport = IsGen12LP;
 HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenCopyFromImagBlitThenCommandAddedToStream, ImageSupport) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;

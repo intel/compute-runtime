@@ -18,9 +18,7 @@
 
 #include "encode_surface_state_args.h"
 
-using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
-
-HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsBetweenSklAndTgllp) {
+HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsGen12LP) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     STATE_BASE_ADDRESS stateBaseAddress;

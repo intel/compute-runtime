@@ -783,7 +783,7 @@ HWTEST2_F(CommandListCreateTests, givenCommandListWhenMemoryCopyWithSignalEventS
     EXPECT_EQ(1u, postSyncFound);
 }
 
-using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using ImageSupport = IsGen12LP;
 
 HWTEST2_F(CommandListAppend, givenCommandListWhenAppendImageCopyFromMemoryCalledWithNullSrcPtrThenAppendImageCopyFromMemoryReturnsError, ImageSupport) {
     MockCommandListHw<FamilyType::gfxCoreFamily> cmdList;
@@ -1376,7 +1376,7 @@ HWTEST2_F(DirectSubmissionCommandListTest, givenComputeCommandListWhenCopyImageT
     ASSERT_NE(itorWalker, genCmdList.end());
 }
 
-using BlitBlockCopyPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using BlitBlockCopyPlatforms = IsGen12LP;
 HWTEST2_F(CommandListCreateTests, givenCopyCommandListWhenCopyRegionWithinMaxBlitSizeThenOneBlitCommandHasBeenSpown, BlitBlockCopyPlatforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<FamilyType::gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
@@ -1598,8 +1598,7 @@ HWTEST2_F(CommandListCreateTests, givenPitchAndSlicePitchWhenMemoryCopyRegionCal
     EXPECT_EQ(cmdList.srcSize.y, slicePitch / pitch);
 }
 
-using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
-HWTEST2_F(CommandListCreateTests, givenCommandListThenSshCorrectlyReserved, SupportedPlatforms) {
+HWTEST2_F(CommandListCreateTests, givenCommandListThenSshCorrectlyReserved, IsGen12LP) {
     MockCommandListHw<FamilyType::gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
     auto &gfxCoreHelper = commandList.device->getGfxCoreHelper();

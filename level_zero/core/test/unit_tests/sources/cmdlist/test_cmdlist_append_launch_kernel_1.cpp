@@ -886,7 +886,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenDshIsNotDe
     EXPECT_NE(initialAllocation, reallocatedAllocation);
 }
 
-using TimestampEventSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using TimestampEventSupport = IsGen12LP;
 HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernelThenSRMAndPCEncoded, TimestampEventSupport) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -1106,8 +1106,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
     EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
 }
 
-using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
-HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelSeveralTimesThenAlwaysFirstEventPacketIsUsed, SupportedPlatforms) {
+HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelSeveralTimesThenAlwaysFirstEventPacketIsUsed, IsGen12LP) {
     createKernel();
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));

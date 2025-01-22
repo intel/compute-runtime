@@ -30,7 +30,7 @@ const auto samplerIsNormalized = ::testing::Values(
     true,
     false);
 
-using SamplerCreateSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using SamplerCreateSupport = IsGen12LP;
 
 class SamplerCreateTest
     : public Test<DeviceFixture>,

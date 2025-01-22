@@ -99,8 +99,7 @@ TEST_F(ClGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceForSpillWh
     EXPECT_EQ(paramValue, spillMemorySize);
 }
 
-using matcher = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
-HWTEST2_F(ClGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, matcher) {
+HWTEST2_F(ClGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned, IsGen12LP) {
     size_t paramValueSizeRet;
     cl_ulong paramValue;
     auto pDevice = castToObject<ClDevice>(testedClDevice);

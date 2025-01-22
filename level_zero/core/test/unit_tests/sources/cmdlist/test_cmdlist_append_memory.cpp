@@ -765,10 +765,8 @@ HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenForcingTlbFlushBeforeCo
     EXPECT_TRUE(tlbFlushFound);
 }
 
-using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
 HWTEST2_F(AppendMemoryCopyTests,
-          givenCommandListUsesTimestampPassedToMemoryCopyWhenTwoKernelsAreUsedThenAppendProfilingCalledForSinglePacket, SupportedPlatforms) {
-
+          givenCommandListUsesTimestampPassedToMemoryCopyWhenTwoKernelsAreUsedThenAppendProfilingCalledForSinglePacket, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
@@ -827,8 +825,7 @@ HWTEST2_F(AppendMemoryCopyTests,
 }
 
 HWTEST2_F(AppendMemoryCopyTests,
-          givenCommandListUsesTimestampPassedToMemoryCopyWhenThreeKernelsAreUsedThenAppendProfilingCalledForSinglePacket, SupportedPlatforms) {
-
+          givenCommandListUsesTimestampPassedToMemoryCopyWhenThreeKernelsAreUsedThenAppendProfilingCalledForSinglePacket, IsGen12LP) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockCommandListCoreFamily<FamilyType::gfxCoreFamily> commandList;
