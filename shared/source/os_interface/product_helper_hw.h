@@ -91,6 +91,7 @@ class ProductHelperHw : public ProductHelper {
     void adjustScratchSize(size_t &requiredScratchSize) const override;
     size_t getSvmCpuAlignment() const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
+    bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
     bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override;
     bool isGrfNumReportedWithScm() const override;

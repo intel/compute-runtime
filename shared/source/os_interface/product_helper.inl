@@ -543,6 +543,11 @@ size_t ProductHelperHw<gfxProduct>::getSvmCpuAlignment() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
     return getFrontEndPropertyComputeDispatchAllWalkerSupport();
 }

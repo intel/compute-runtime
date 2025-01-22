@@ -148,6 +148,7 @@ class ProductHelper {
     virtual void adjustScratchSize(size_t &requiredScratchSize) const = 0;
     virtual size_t getSvmCpuAlignment() const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual bool adjustDispatchAllRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
     virtual bool isIpSamplingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGrfNumReportedWithScm() const = 0;

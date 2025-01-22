@@ -95,8 +95,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
     const ProductHelper &getProductHelper() const;
     GraphicsAllocation *getDummyAllocation() const;
     void releaseDummyAllocation();
-    void setNonLimitedNumberOfCcs(uint32_t numberOfCss) { this->nonLimitedNumberOfCcs = numberOfCss; };
-    uint32_t getNonLimitedNumberOfCcs() const { return this->nonLimitedNumberOfCcs; };
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::count)];
     std::unique_ptr<GmmHelper> gmmHelper;
@@ -126,7 +124,6 @@ struct RootDeviceEnvironment : NonCopyableClass {
   protected:
     using GraphicsAllocationUniquePtrType = std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>>;
     GraphicsAllocationUniquePtrType dummyAllocation = nullptr;
-    uint32_t nonLimitedNumberOfCcs = 0u;
 
     bool limitedNumberOfCcs = false;
     bool isWddmOnLinuxEnable = false;

@@ -46,6 +46,11 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::adjustDispatchAllRequired(const HardwareInfo &hwInfo) const {
+    return hwInfo.gtSystemInfo.SliceCount > 2u;
+}
+
+template <>
 void ProductHelperHw<gfxProduct>::adjustScratchSize(size_t &requiredScratchSize) const {
     requiredScratchSize *= 2;
 }

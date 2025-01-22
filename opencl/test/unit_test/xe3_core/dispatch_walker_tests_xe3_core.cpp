@@ -39,20 +39,18 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, whenEncodeAdditionalWalkerFieldsIsCal
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
-    auto backupCcsNumber = executionEnvironment.rootDeviceEnvironments[0]->getNonLimitedNumberOfCcs();
-    executionEnvironment.rootDeviceEnvironments[0]->setNonLimitedNumberOfCcs(1);
     VariableBackup<uint32_t> sliceCountBackup(&executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->gtSystemInfo.SliceCount, 4);
-
-    {
-        walkerCmd.getInterfaceDescriptor().setThreadGroupDispatchSize(FamilyType::INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
-        EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
-    }
 
     {
         walkerArgs.kernelExecutionType = KernelExecutionType::defaultType;
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
-        EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
+    }
+
+    {
+        walkerCmd.getInterfaceDescriptor().setThreadGroupDispatchSize(FamilyType::INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
+        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
+        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
     {
@@ -79,14 +77,6 @@ XE3_CORETEST_F(WalkerDispatchTestsXe3Core, whenEncodeAdditionalWalkerFieldsIsCal
     }
 
     {
-        walkerCmd.getInterfaceDescriptor().setThreadGroupDispatchSize(FamilyType::INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-        executionEnvironment.rootDeviceEnvironments[0]->setNonLimitedNumberOfCcs(2);
-        EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
-        EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
-    }
-
-    {
-        executionEnvironment.rootDeviceEnvironments[0]->setNonLimitedNumberOfCcs(backupCcsNumber);
         debugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
         EncodeDispatchKernel<FamilyType>::encodeComputeDispatchAllWalker(walkerCmd, &walkerCmd.getInterfaceDescriptor(), *executionEnvironment.rootDeviceEnvironments[0], walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
