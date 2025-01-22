@@ -6,12 +6,14 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -1534,4 +1536,37 @@ HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsP
     EXPECT_EQ(builder.paramsToUse.elws.x, dispatchInfo->getEnqueuedWorkgroupSize().x);
     EXPECT_EQ(builder.paramsToUse.offset.x, dispatchInfo->getOffset().x);
     EXPECT_EQ(builder.paramsToUse.kernel, dispatchInfo->getKernel());
+}
+
+HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStopRegularBcs) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    auto &engine = pDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
+    auto mockCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    mockCsr->blitterDirectSubmissionAvailable = true;
+    mockCsr->blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(*mockCsr);
+    auto directSubmission = reinterpret_cast<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> *>(mockCsr->blitterDirectSubmission.get());
+    directSubmission->initialize(true, false);
+
+    EXPECT_TRUE(directSubmission->ringStart);
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
+    EXPECT_FALSE(directSubmission->ringStart);
+}
+
+HWTEST_F(IoqCommandQueueHwBlitTest, givenBufferWithHostPtrWhenCreateBufferThenStopRegularBcs) {
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::cpuAccessDisallowed));
+
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->localMemorySupported[pDevice->getRootDeviceIndex()] = true;
+
+    auto &engine = pDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular);
+    auto mockCsr = reinterpret_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    mockCsr->blitterDirectSubmissionAvailable = true;
+    mockCsr->blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(*mockCsr);
+    auto directSubmission = reinterpret_cast<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> *>(mockCsr->blitterDirectSubmission.get());
+    directSubmission->initialize(true, false);
+
+    EXPECT_TRUE(directSubmission->ringStart);
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(context));
+    EXPECT_FALSE(directSubmission->ringStart);
 }

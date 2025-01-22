@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,6 +234,7 @@ bool inline copyHostPointer(Buffer *buffer,
             auto blitMemoryToAllocationResult = BlitOperationResult::unsupported;
 
             if (productHelper.isBlitterFullySupported(hwInfo) && (isLocalMemory || isGpuCopyRequiredForDcFlushMitigation)) {
+                device.stopDirectSubmissionForCopyEngine();
                 blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
             }
 
