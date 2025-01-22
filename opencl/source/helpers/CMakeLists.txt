@@ -34,7 +34,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/helper_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.cpp

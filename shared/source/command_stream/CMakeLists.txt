@@ -18,7 +18,6 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_common_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_simulated_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump.inl
