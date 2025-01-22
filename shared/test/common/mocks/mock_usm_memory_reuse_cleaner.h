@@ -10,8 +10,24 @@
 namespace NEO {
 struct MockUnifiedMemoryReuseCleaner : public UnifiedMemoryReuseCleaner {
   public:
+    using UnifiedMemoryReuseCleaner::keepCleaning;
+    using UnifiedMemoryReuseCleaner::runCleaning;
     using UnifiedMemoryReuseCleaner::svmAllocationCaches;
-    using UnifiedMemoryReuseCleaner::trimOldInCaches;
-    void startThread() override{};
+    using UnifiedMemoryReuseCleaner::unifiedMemoryReuseCleanerThread;
+
+    void trimOldInCaches() override {
+        trimOldInCachesCalled = true;
+        if (callBaseTrimOldInCaches) {
+            UnifiedMemoryReuseCleaner::trimOldInCaches();
+        }
+    }
+    void startThread() override {
+        if (callBaseStartThread) {
+            UnifiedMemoryReuseCleaner::startThread();
+        }
+    };
+    bool trimOldInCachesCalled = false;
+    bool callBaseStartThread = false;
+    bool callBaseTrimOldInCaches = true;
 };
 } // namespace NEO

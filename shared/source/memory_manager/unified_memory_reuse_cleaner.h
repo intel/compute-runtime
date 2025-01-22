@@ -35,7 +35,7 @@ class UnifiedMemoryReuseCleaner {
   protected:
     void startCleaning() { runCleaning.store(true); };
     static void *cleanUnifiedMemoryReuse(void *self);
-    void trimOldInCaches();
+    MOCKABLE_VIRTUAL void trimOldInCaches();
     std::unique_ptr<Thread> unifiedMemoryReuseCleanerThread;
 
     std::vector<SvmAllocationCache *> svmAllocationCaches;
