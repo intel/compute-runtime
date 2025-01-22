@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2023 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,6 @@ if(NOT DISABLED_GTPIN_SUPPORT)
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper.h
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper_bdw_and_later.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.h
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
