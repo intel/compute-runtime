@@ -10,7 +10,6 @@ set(NEO_CORE_COMMAND_CONTAINER
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdcontainer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_enablers.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/encode_alu_helper.h
