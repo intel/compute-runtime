@@ -831,7 +831,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, QueueThrottle throttle) override {
         return WaitStatus::ready;
     }
-    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) override { return taskCount; };
+    TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, Device &device) override { return taskCount; };
 
     CompletionStamp flushTask(
         LinearStream &commandStream,

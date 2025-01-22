@@ -307,7 +307,7 @@ class CommandStreamReceiver {
         this->latestFlushedTaskCount = latestFlushedTaskCount;
     }
 
-    virtual TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) = 0;
+    virtual TaskCountType flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, Device &device) = 0;
 
     virtual SubmissionStatus flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;

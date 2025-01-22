@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,7 +60,7 @@ void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
                                                                      printfBuffer->getGpuAddress(),
                                                                      0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
 
-            const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *selectedDevice);
+            const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, *selectedDevice);
             if (newTaskCount == NEO::CompletionStamp::gpuHang) {
                 PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Failed to copy printf buffer.\n", "");
                 printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());

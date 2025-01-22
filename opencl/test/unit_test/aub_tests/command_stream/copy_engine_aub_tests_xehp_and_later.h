@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ struct CopyEngineXeHPAndLater : public MulticontextOclAubFixture, public ::testi
     void executeBlitCommand(const BlitProperties &blitProperties, bool blocking) {
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
-        bcsCsr->flushBcsTask(blitPropertiesContainer, blocking, false, rootDevice->getDevice());
+        bcsCsr->flushBcsTask(blitPropertiesContainer, blocking, rootDevice->getDevice());
     }
 
     template <typename FamilyType>

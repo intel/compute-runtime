@@ -979,7 +979,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::getDirectSubmissionRelaxedOrderingQ
 }
 
 template <typename GfxFamily>
-TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
+TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, Device &device) {
     auto lock = obtainUniqueOwnership();
     bool blitterDirectSubmission = this->isBlitterDirectSubmissionEnabled();
     auto debugPauseEnabled = PauseOnGpuProperties::featureEnabled(debugManager.flags.PauseOnBlitCopy.get());
@@ -989,7 +989,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     const bool hasStallingCmds = updateTag || !this->isEnginePrologueSent;
     const bool relaxedOrderingAllowed = bcsRelaxedOrderingAllowed(blitPropertiesContainer, hasStallingCmds);
 
-    auto estimatedCsSize = BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, profilingEnabled, debugPauseEnabled, blitterDirectSubmission,
+    auto estimatedCsSize = BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, blitPropertiesContainer[0].blitSyncProperties.isTimestampMode(), debugPauseEnabled, blitterDirectSubmission,
                                                                                    relaxedOrderingAllowed, *rootDeviceEnvironment.get());
     auto &commandStream = getCS(estimatedCsSize);
 
@@ -1037,8 +1037,8 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         BlitCommandsHelper<GfxFamily>::encodeWa(commandStream, blitProperties, latestSentBcsWaValue);
 
-        if (blitProperties.outputTimestampPacket && profilingEnabled) {
-            BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(commandStream, *blitProperties.outputTimestampPacket);
+        if (blitProperties.blitSyncProperties.outputTimestampPacket && blitProperties.blitSyncProperties.isTimestampMode()) {
+            BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(commandStream, *blitProperties.blitSyncProperties.outputTimestampPacket);
         }
 
         if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
@@ -1051,7 +1051,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, *waArgs.rootDeviceEnvironment);
 
-        if (blitProperties.outputTimestampPacket) {
+        if (blitProperties.blitSyncProperties.outputTimestampPacket) {
             bool deviceToHostPostSyncFenceRequired = getProductHelper().isDeviceToHostCopySignalingFenceRequired() &&
                                                      !blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() &&
                                                      blitProperties.srcAllocation->isAllocatedInLocalMemoryPool();
@@ -1060,16 +1060,16 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
                 MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
             }
 
-            if (profilingEnabled) {
+            if (blitProperties.blitSyncProperties.isTimestampMode()) {
                 EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, 0llu, newTaskCount, args);
-                BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(commandStream, *blitProperties.outputTimestampPacket);
+                BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(commandStream, *blitProperties.blitSyncProperties.outputTimestampPacket);
             } else {
-                auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
+                auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.blitSyncProperties.outputTimestampPacket);
                 args.commandWithPostSync = true;
 
                 EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, timestampPacketGpuAddress, 0, args);
             }
-            makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
+            makeResident(*blitProperties.blitSyncProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }
 
         blitProperties.csrDependencies.makeResident(*this);

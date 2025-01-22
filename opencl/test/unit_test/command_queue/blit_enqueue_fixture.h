@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ struct BlitEnqueueTests : public ::testing::Test {
 
                 BlitPropertiesContainer container;
                 container.push_back(blitProperties);
-                bcsCsr->flushBcsTask(container, true, false, const_cast<Device &>(device));
+                bcsCsr->flushBcsTask(container, true, const_cast<Device &>(device));
 
                 return BlitOperationResult::success;
             };

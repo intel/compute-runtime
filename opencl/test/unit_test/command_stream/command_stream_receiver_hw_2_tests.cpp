@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -479,7 +479,7 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    csr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -528,7 +528,7 @@ HWTEST_F(BcsTests, whenBlitBufferThenCommandBufferHasProperTaskCount) {
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    csr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
     EXPECT_EQ(csr.getCS(0u).getGraphicsAllocation()->getTaskCount(csr.getOsContext().getContextId()), csr.peekTaskCount());
     EXPECT_EQ(csr.getCS(0u).getGraphicsAllocation()->getResidencyTaskCount(csr.getOsContext().getContextId()), csr.peekTaskCount());
@@ -559,7 +559,7 @@ HWTEST_F(BcsTests, givenUpdateTaskCountFromWaitWhenBlitBufferThenCsrHasProperTas
 
     auto taskCount = csr.peekTaskCount();
 
-    csr.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     EXPECT_EQ(csr.peekTaskCount(), taskCount + 1);
     EXPECT_EQ(csr.peekLatestFlushedTaskCount(), taskCount);
@@ -587,12 +587,13 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstru
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     MockTimestampPacketContainer timestamp(*bcsCsr->getTimestampPacketAllocator(), 1u);
-    blitProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.syncMode = BlitSyncMode::timestamp;
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
@@ -639,12 +640,12 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferAndForceTlbFlushAfterCopyT
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     MockTimestampPacketContainer timestamp(*bcsCsr->getTimestampPacketAllocator(), 1u);
-    blitProperties.outputTimestampPacket = timestamp.getNode(0);
-
+    blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.syncMode = BlitSyncMode::timestamp;
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
@@ -696,7 +697,7 @@ HWTEST_F(BcsTests, givenProfilingDisabledWhenBlitBufferAndForceTlbFlushAfterCopy
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
@@ -737,12 +738,13 @@ HWTEST_F(BcsTests, givenNotInitializedOsContextWhenBlitBufferIsCalledThenInitial
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     MockTimestampPacketContainer timestamp(*bcsCsr->getTimestampPacketAllocator(), 1u);
-    blitProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.syncMode = BlitSyncMode::timestamp;
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
     EXPECT_FALSE(bcsOsContext->isInitialized());
-    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, *pDevice);
     EXPECT_TRUE(bcsOsContext->isInitialized());
 }
 
@@ -780,7 +782,7 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    csr.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+    csr.flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     expectedCalled++;
     uint32_t residentAllocationsNum = 5u;
@@ -847,7 +849,7 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    bcsCsr->flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     uint32_t residentAllocationsNum = 6u;
     EXPECT_TRUE(bcsCsr->isMadeResident(graphicsAllocation1));

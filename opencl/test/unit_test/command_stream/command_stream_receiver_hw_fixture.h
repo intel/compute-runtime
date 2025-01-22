@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct BcsTests : public Test<ClDeviceFixture> {
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
 
-        return bcsCsr->flushBcsTask(container, blocking, false, device);
+        return bcsCsr->flushBcsTask(container, blocking, device);
     }
 
     TimestampPacketContainer timestampPacketContainer;

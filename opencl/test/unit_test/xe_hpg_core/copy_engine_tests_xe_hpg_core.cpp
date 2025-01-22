@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ struct BlitXeHpgCoreTests : public ::testing::Test {
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
-        return csr->flushBcsTask(blitPropertiesContainer, blocking, false, device);
+        return csr->flushBcsTask(blitPropertiesContainer, blocking, device);
     }
 
     std::unique_ptr<MockClDevice> clDevice;

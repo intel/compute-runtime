@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1273,7 +1273,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(container, true, false, *pDevice);
+    bcsCsr->flushBcsTask(container, true, *pDevice);
 
     EXPECT_TRUE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
@@ -1282,7 +1282,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     EXPECT_EQ(bcsCsr, pageTableManager->initContextAuxTableRegisterParamsPassed[0].initialBBHandle);
 
     pDevice->resetCommandStreamReceiver(bcsCsr2);
-    bcsCsr2->flushBcsTask(container, true, false, *pDevice);
+    bcsCsr2->flushBcsTask(container, true, *pDevice);
 
     EXPECT_TRUE(bcsCsr2->pageTableManagerInitialized);
 
@@ -1318,11 +1318,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenPageTableManagerPointerWhenCa
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(container, true, false, *pDevice);
+    bcsCsr->flushBcsTask(container, true, *pDevice);
 
     EXPECT_TRUE(bcsCsr->pageTableManagerInitialized);
 
-    bcsCsr->flushBcsTask(container, true, false, *pDevice);
+    bcsCsr->flushBcsTask(container, true, *pDevice);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 
@@ -1359,18 +1359,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNullPageTableManagerWhenCallB
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(container, true, false, *pDevice);
+    bcsCsr->flushBcsTask(container, true, *pDevice);
 
     EXPECT_FALSE(bcsCsr->pageTableManagerInitialized);
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
     pDevice->resetCommandStreamReceiver(bcsCsr2);
-    bcsCsr2->flushBcsTask(container, true, false, *pDevice);
+    bcsCsr2->flushBcsTask(container, true, *pDevice);
 
     EXPECT_FALSE(bcsCsr2->pageTableManagerInitialized);
 
     bcsCsr2->pageTableManagerInitialized = true;
-    EXPECT_NO_THROW(bcsCsr2->flushBcsTask(container, true, false, *pDevice));
+    EXPECT_NO_THROW(bcsCsr2->flushBcsTask(container, true, *pDevice));
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

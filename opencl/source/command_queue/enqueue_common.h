@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -591,7 +591,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
     }
     blitProperties.multiRootDeviceEventSync = multiRootDeviceEventSync;
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
-    blitProperties.outputTimestampPacket = currentTimestampPacketNode;
+    blitProperties.blitSyncProperties.outputTimestampPacket = currentTimestampPacketNode;
+    blitProperties.blitSyncProperties.syncMode = (eventsRequest.outEvent && isProfilingEnabled()) ? BlitSyncMode::timestamp : BlitSyncMode::immediate;
 
     if (commandStream) {
         if (timestampPacketDependencies.cacheFlushNodes.peekNodes().size() > 0) {
@@ -948,7 +949,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
         auto bcsCsr = getBcsForAuxTranslation();
-        const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+        const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, getDevice());
         if (newTaskCount > CompletionStamp::notReady) {
             CompletionStamp completionStamp{};
             completionStamp.taskCount = newTaskCount;
@@ -1219,7 +1220,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     if (enqueueProperties.operation == EnqueueProperties::Operation::blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
         if (bcsCsr) {
-            const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled(), getDevice());
+            const auto newTaskCount = bcsCsr->flushBcsTask(*enqueueProperties.blitPropertiesContainer, false, getDevice());
             if (newTaskCount > CompletionStamp::notReady) {
                 CompletionStamp completionStamp{};
                 completionStamp.taskCount = newTaskCount;

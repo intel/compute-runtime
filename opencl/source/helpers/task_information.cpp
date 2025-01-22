@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -284,7 +284,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
-        const auto newTaskCount = bcsCsrForAuxTranslation->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+        const auto newTaskCount = bcsCsrForAuxTranslation->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.getDevice());
         if (newTaskCount <= CompletionStamp::notReady) {
             commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), newTaskCount);
         } else {
@@ -327,13 +327,14 @@ TaskCountType CommandWithoutKernel::dispatchBlitOperation() {
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->previousEnqueueNodes);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->barrierNodes);
     blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestampPacketDependencies->multiCsrDependencies);
-    blitProperties.outputTimestampPacket = currentTimestampPacketNodes->peekNodes()[0];
+    blitProperties.blitSyncProperties.outputTimestampPacket = currentTimestampPacketNodes->peekNodes()[0];
+    blitProperties.blitSyncProperties.syncMode = (eventsRequest.outEvent && commandQueue.isProfilingEnabled()) ? BlitSyncMode::timestamp : BlitSyncMode::immediate;
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(blitProperties.csrDependencies, *bcsCsr);
     }
 
-    const auto newTaskCount = bcsCsr->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
+    const auto newTaskCount = bcsCsr->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.getDevice());
     if (newTaskCount > CompletionStamp::notReady) {
         return newTaskCount;
     }

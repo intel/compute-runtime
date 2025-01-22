@@ -41,7 +41,7 @@ struct BlitXe3CoreTests : public ::testing::Test {
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
-        return csr->flushBcsTask(blitPropertiesContainer, blocking, false, device);
+        return csr->flushBcsTask(blitPropertiesContainer, blocking, device);
     }
 
     std::unique_ptr<MockClDevice> clDevice;

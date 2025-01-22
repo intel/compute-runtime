@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ bool PrintfHandler::printEnqueueOutput() {
                                                             printfSurface->getGpuAddress(),
                                                             0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
 
-        const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, device);
+        const auto newTaskCount = bcsEngine.commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, device);
         if (newTaskCount > CompletionStamp::notReady) {
             return false;
         }

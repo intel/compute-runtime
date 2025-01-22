@@ -77,18 +77,19 @@ XE2_HPG_CORETEST_F(CommandStreamReceiverXe2HpgCoreTests, givenProfilingEnabledWh
                                                                           0, 0, {1, 1, 1}, 0, 0, 0, 0);
 
     MockTimestampPacketContainer timestamp(*bcsCsr->getTimestampPacketAllocator(), 1u);
-    blitProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
+    blitProperties.blitSyncProperties.syncMode = BlitSyncMode::timestamp;
 
-    auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(*blitProperties.outputTimestampPacket);
-    auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(*blitProperties.outputTimestampPacket);
+    auto timestampContextStartGpuAddress = TimestampPacketHelper::getContextStartGpuAddress(*blitProperties.blitSyncProperties.outputTimestampPacket);
+    auto timestampGlobalStartAddress = TimestampPacketHelper::getGlobalStartGpuAddress(*blitProperties.blitSyncProperties.outputTimestampPacket);
 
-    auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
-    auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(*blitProperties.outputTimestampPacket);
+    auto timestampContextEndGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.blitSyncProperties.outputTimestampPacket);
+    auto timestampGlobalEndAddress = TimestampPacketHelper::getGlobalEndGpuAddress(*blitProperties.blitSyncProperties.outputTimestampPacket);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    bcsCsr->flushBcsTask(blitPropertiesContainer, false, true, *pDevice);
+    bcsCsr->flushBcsTask(blitPropertiesContainer, false, *pDevice);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
@@ -243,7 +244,7 @@ XE2_HPG_CORETEST_F(SystemMemoryFenceViaMiMemFenceTestXe2HpgCore, givenSystemMemo
     EXPECT_FALSE(commandStreamReceiver.isEnginePrologueSent);
 
     BlitPropertiesContainer blitPropertiesContainer;
-    commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+    commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
     HardwareParse hwParser;

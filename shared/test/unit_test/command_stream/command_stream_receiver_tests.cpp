@@ -2975,11 +2975,11 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThen
     container.push_back(blitProperties);
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfHostMemory;
-    EXPECT_EQ(CompletionStamp::outOfHostMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+    EXPECT_EQ(CompletionStamp::outOfHostMemory, commandStreamReceiver.flushBcsTask(container, true, *pDevice));
     commandStreamReceiver.flushReturnValue = SubmissionStatus::outOfMemory;
-    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+    EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, *pDevice));
     commandStreamReceiver.flushReturnValue = SubmissionStatus::failed;
-    EXPECT_EQ(CompletionStamp::failed, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+    EXPECT_EQ(CompletionStamp::failed, commandStreamReceiver.flushBcsTask(container, true, *pDevice));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFlushBcsTaskVerifyLatestSentTaskCountUpdated) {
@@ -3055,13 +3055,13 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
                                                                               bcsCsr, &mockAllocation, nullptr, hostPtr,
                                                                               mockAllocation.getGpuAddress(), 0,
                                                                               0, 0, {1, 1, 1}, 0, 0, 0, 0);
-        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+        blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
         offset = bcsCsr.commandStream.getUsed();
-        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
         EXPECT_TRUE(verify(true));
     }
@@ -3079,7 +3079,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
         blitPropertiesContainer.push_back(blitProperties);
 
         offset = bcsCsr.commandStream.getUsed();
-        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
         EXPECT_TRUE(verify(false));
     }
@@ -3092,13 +3092,13 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
                                                                               bcsCsr, &mockAllocation, nullptr, hostPtr,
                                                                               mockAllocation.getGpuAddress(), 0,
                                                                               0, 0, {1, 1, 1}, 0, 0, 0, 0);
-        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+        blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
         offset = bcsCsr.commandStream.getUsed();
-        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
         EXPECT_TRUE(verify(false));
     }
@@ -3111,13 +3111,13 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
                                                                               bcsCsr, &mockAllocation, nullptr, hostPtr,
                                                                               mockAllocation.getGpuAddress(), 0,
                                                                               0, 0, {1, 1, 1}, 0, 0, 0, 0);
-        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+        blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
         offset = bcsCsr.commandStream.getUsed();
-        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
         EXPECT_TRUE(verify(false));
     }
@@ -3127,13 +3127,13 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenDeviceToHostCopyWhenFenceIsRequiredT
         mockAllocation.memoryPool = MemoryPool::localMemory;
 
         auto blitProperties = BlitProperties::constructPropertiesForCopy(&mockAllocation, &mockAllocation, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}, 0, 0, 0, 0, nullptr);
-        blitProperties.outputTimestampPacket = timestamp.getNode(0);
+        blitProperties.blitSyncProperties.outputTimestampPacket = timestamp.getNode(0);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(blitProperties);
 
         offset = bcsCsr.commandStream.getUsed();
-        bcsCsr.flushBcsTask(blitPropertiesContainer, true, false, *pDevice);
+        bcsCsr.flushBcsTask(blitPropertiesContainer, true, *pDevice);
 
         EXPECT_TRUE(verify(false));
     }
@@ -3362,7 +3362,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenMultiRootDeviceSyncNodeWhenFlushBcsTa
 
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
-    commandStreamReceiver.flushBcsTask(container, true, false, *pDevice);
+    commandStreamReceiver.flushBcsTask(container, true, *pDevice);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 
@@ -3392,7 +3392,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenNullPtrAsMultiRootDeviceSyncNodeWhenF
 
     BlitPropertiesContainer container;
     container.push_back(blitProperties);
-    commandStreamReceiver.flushBcsTask(container, true, false, *pDevice);
+    commandStreamReceiver.flushBcsTask(container, true, *pDevice);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
 

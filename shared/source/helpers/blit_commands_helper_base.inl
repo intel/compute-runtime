@@ -144,7 +144,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     size_t size = 0;
     EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
     for (auto &blitProperties : blitPropertiesContainer) {
-        auto updateTimestampPacket = blitProperties.outputTimestampPacket != nullptr;
+        auto updateTimestampPacket = blitProperties.blitSyncProperties.outputTimestampPacket != nullptr;
         auto isImage = blitProperties.isImageOperation();
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
                                                                        profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, relaxedOrderingEnabled);

@@ -137,7 +137,7 @@ XE_HPC_CORETEST_F(SystemMemoryFenceViaMiMemFenceTest, givenSystemMemoryFenceGene
     EXPECT_FALSE(commandStreamReceiver.isEnginePrologueSent);
 
     BlitPropertiesContainer blitPropertiesContainer;
-    commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, false, *pDevice);
+    commandStreamReceiver.flushBcsTask(blitPropertiesContainer, false, *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isEnginePrologueSent);
 
     HardwareParse hwParser;

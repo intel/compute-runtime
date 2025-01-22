@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -198,7 +198,7 @@ BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
 
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
-        bcsCsr->flushBcsTask(container, true, false, const_cast<Device &>(device));
+        bcsCsr->flushBcsTask(container, true, const_cast<Device &>(device));
 
         return BlitOperationResult::success;
     };

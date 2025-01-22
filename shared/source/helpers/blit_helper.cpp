@@ -65,7 +65,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
                                                             (memory->getGpuAddress() + offset),
                                                             0, 0, 0, size, 0, 0, 0, 0));
 
-        const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
+        const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, *pDeviceForBlit);
         if (newTaskCount == CompletionStamp::gpuHang) {
             return BlitOperationResult::gpuHang;
         }
