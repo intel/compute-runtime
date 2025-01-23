@@ -457,12 +457,12 @@ class CommandQueueHw : public CommandQueue {
                                                      LinearStream *commandStream,
                                                      EventsRequest &eventsRequest,
                                                      CsrDependencies &csrDeps);
-    BlitProperties processDispatchForBlitEnqueue(CommandStreamReceiver &blitCommandStreamReceiver,
-                                                 const MultiDispatchInfo &multiDispatchInfo,
-                                                 TimestampPacketDependencies &timestampPacketDependencies,
-                                                 const EventsRequest &eventsRequest,
-                                                 LinearStream *commandStream,
-                                                 uint32_t commandType, bool queueBlocked, TagNodeBase *multiRootDeviceEventSync);
+    MOCKABLE_VIRTUAL BlitProperties processDispatchForBlitEnqueue(CommandStreamReceiver &blitCommandStreamReceiver,
+                                                                  const MultiDispatchInfo &multiDispatchInfo,
+                                                                  TimestampPacketDependencies &timestampPacketDependencies,
+                                                                  const EventsRequest &eventsRequest,
+                                                                  LinearStream *commandStream,
+                                                                  uint32_t commandType, bool queueBlocked, bool profilingEnabled, TagNodeBase *multiRootDeviceEventSync);
     void submitCacheFlush(Surface **surfaces,
                           size_t numSurfaces,
                           LinearStream *commandStream,

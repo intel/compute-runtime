@@ -575,7 +575,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
                                                                         const MultiDispatchInfo &multiDispatchInfo,
                                                                         TimestampPacketDependencies &timestampPacketDependencies,
                                                                         const EventsRequest &eventsRequest, LinearStream *commandStream,
-                                                                        uint32_t commandType, bool queueBlocked, TagNodeBase *multiRootDeviceEventSync) {
+                                                                        uint32_t commandType, bool queueBlocked, bool profilingEnabled, TagNodeBase *multiRootDeviceEventSync) {
     auto blitDirection = ClBlitProperties::obtainBlitDirection(commandType);
 
     auto blitProperties = ClBlitProperties::constructProperties(blitDirection, blitCommandStreamReceiver,
@@ -592,7 +592,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
     blitProperties.multiRootDeviceEventSync = multiRootDeviceEventSync;
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
     blitProperties.blitSyncProperties.outputTimestampPacket = currentTimestampPacketNode;
-    blitProperties.blitSyncProperties.syncMode = (eventsRequest.outEvent && isProfilingEnabled()) ? BlitSyncMode::timestamp : BlitSyncMode::immediate;
+    blitProperties.blitSyncProperties.syncMode = profilingEnabled ? BlitSyncMode::timestamp : BlitSyncMode::immediate;
 
     if (commandStream) {
         if (timestampPacketDependencies.cacheFlushNodes.peekNodes().size() > 0) {
@@ -1430,6 +1430,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     }
     eventsRequest.setupBcsCsrForOutputEvent(bcsCsr);
 
+    const bool profilingEnabled = isProfilingEnabled() && pEventBuilder->getEvent();
+
     std::unique_ptr<KernelOperation> blockedCommandsData;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
     if (debugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() != 1) {
@@ -1513,7 +1515,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     }
 
     blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                    eventsRequest, gpgpuCommandStream, cmdType, blockQueue, multiRootEventSyncStamp));
+                                                                    eventsRequest, gpgpuCommandStream, cmdType, blockQueue, profilingEnabled, multiRootEventSyncStamp));
 
     if (!blockQueue) {
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking,

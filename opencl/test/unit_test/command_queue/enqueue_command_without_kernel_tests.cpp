@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -298,7 +298,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
 
     timestampPacketDependencies.cacheFlushNodes.add(mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, false, nullptr);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
@@ -337,7 +337,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKern
     CsrDependencies csrDeps;
 
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, false, nullptr);
 
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
@@ -486,7 +486,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenA
     mockCmdQ->obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, true, bcsCsr);
     timestampPacketDependencies.cacheFlushNodes.add(mockCmdQ->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator()->getTag());
     BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
-                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, nullptr);
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false, false, nullptr);
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
