@@ -14,6 +14,7 @@ DEVICE(0xB083, PtlHwConfig)
 DEVICE(0xB08F, PtlHwConfig)
 DEVICE(0xB090, PtlHwConfig)
 DEVICE(0xB0A0, PtlHwConfig)
+DEVICE(0xB0B0, PtlHwConfig)
 #endif
 #endif
 
