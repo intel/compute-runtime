@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -52,6 +52,8 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     void setUp() {
         ClDeviceFixture::setUp();
         ASSERT_NE(nullptr, pClDevice);
+        pDevice->disableSecondaryEngines = true;
+
         CommandQueueFixture::setUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::setUp(pCmdQ);

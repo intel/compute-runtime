@@ -74,7 +74,9 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChange
 
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
     initPlatform();
-    auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
+    MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
+    auto nonDefaultPlatform = std::make_unique<MockPlatform>(*executionEnvironment);
+
     nonDefaultPlatform->initializeWithNewDevices();
     auto device = nonDefaultPlatform->getClDevice(0);
     auto defaultDevice = platform()->getClDevice(0);
@@ -113,8 +115,10 @@ TEST(SubDevicesTest, givenDeviceWithFlatOrCombinedHierarchyWhenSubDeviceApiRefCo
     DeviceHierarchyMode deviceHierarchyModes[] = {DeviceHierarchyMode::flat, DeviceHierarchyMode::combined};
     for (auto deviceHierarchyMode : deviceHierarchyModes) {
         initPlatform();
-        platform()->peekExecutionEnvironment()->setDeviceHierarchyMode(deviceHierarchyMode);
-        auto nonDefaultPlatform = std::make_unique<MockPlatform>(*platform()->peekExecutionEnvironment());
+        MockExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
+        executionEnvironment->setDeviceHierarchyMode(deviceHierarchyMode);
+
+        auto nonDefaultPlatform = std::make_unique<MockPlatform>(*executionEnvironment);
         nonDefaultPlatform->initializeWithNewDevices();
         auto device = nonDefaultPlatform->getClDevice(0);
         auto defaultDevice = platform()->getClDevice(0);

@@ -884,6 +884,8 @@ using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphicsAllocationIsReused) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());
+    device->device.disableSecondaryEngines = true;
+
     std::unique_ptr<CommandQueue> commandQ(new MockCommandQueue(&context, device.get(), 0, false));
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = commandQ->getHeaplessStateInitEnabled() ? 1 : 0;
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);

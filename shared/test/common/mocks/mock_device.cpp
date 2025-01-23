@@ -103,7 +103,11 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
         for (size_t i = 0; i < secondaryEnginesForType.engines.size(); i++) {
             if (secondaryEnginesForType.engines[i].commandStreamReceiver == commandStreamReceivers[engineIndex].get()) {
                 secondaryEnginesForType.engines[i].commandStreamReceiver = newCsr;
-                break;
+                // only primary csr is replaced
+                EXPECT_EQ(0u, i);
+            }
+            if (i > 0) {
+                secondaryEnginesForType.engines[i].commandStreamReceiver->setPrimaryCsr(newCsr);
             }
         }
     }

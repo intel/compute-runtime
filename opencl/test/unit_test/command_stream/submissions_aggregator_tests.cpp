@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -548,6 +548,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentSliceCountSetti
 struct SubmissionsAggregatorTests : public ::testing::Test {
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        device->device.disableSecondaryEngines = true;
         context.reset(new MockContext(device.get()));
     }
 

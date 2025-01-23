@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -314,6 +314,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
         deleter = new MockDeferredDeleter();
 
         device->allEngines.clear();
+        device->device.secondaryEngines.clear();
         device->device.regularEngineGroups.clear();
         device->injectMemoryManager(memoryManager);
         device->createEngines();

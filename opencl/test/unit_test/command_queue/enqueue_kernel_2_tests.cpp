@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1117,6 +1117,7 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
         ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
 
         EnqueueKernelTest::SetUp();
+        pDevice->disableSecondaryEngines = true;
     }
 
     std::unique_ptr<VariableBackup<UltHwConfig>> ultHwConfigBackup;

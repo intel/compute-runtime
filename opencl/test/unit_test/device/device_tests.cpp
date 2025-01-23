@@ -286,6 +286,10 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
     } else if (device->getNumSubDevices() > 0) {
         numEnginesForDevice += device->getNumSubDevices();
     }
+    for (const auto &secondaryContexts : device->secondaryEngines) {
+        numEnginesForDevice += secondaryContexts.second.engines.size() - 1;
+    }
+
     EXPECT_EQ(numEnginesForDevice, memoryManager->getRegisteredEngines(device->getRootDeviceIndex()).size());
 }
 
@@ -304,20 +308,22 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     MockDevice *devices[] = {device1.get(), device2.get()};
+    MockMemoryManager *memoryManager = static_cast<MockMemoryManager *>(executionEnvironment->memoryManager.get());
 
     auto &gfxCoreHelper = device1->getGfxCoreHelper();
     const auto &numGpgpuEngines = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(device1->getRootDeviceEnvironment()).size());
 
     size_t numExpectedGenericEnginesPerDevice = numGpgpuEngines;
-
     auto expectedTotalRegisteredEnginesPerRootDevice = numExpectedGenericEnginesPerDevice;
 
     uint32_t contextId = 0;
     for (uint32_t i = 0; i < numDevices; i++) {
         uint32_t contextWithinRootDevice = 0;
+        size_t numSecondaryEngines = memoryManager->secondaryEngines[i].size();
+
         auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines(i);
 
-        EXPECT_EQ(expectedTotalRegisteredEnginesPerRootDevice, registeredEngines.size());
+        EXPECT_EQ(expectedTotalRegisteredEnginesPerRootDevice + numSecondaryEngines, registeredEngines.size());
         auto device = devices[i];
 
         for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
@@ -331,6 +337,16 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
 
             contextId++;
             contextWithinRootDevice++;
+        }
+        for (uint32_t j = 0; j < numExpectedGenericEnginesPerDevice; j++) {
+            auto &engine = device->getEngine(j);
+            if (engine.osContext->getIsPrimaryEngine()) {
+                for (size_t secondaryEngineId = 1; secondaryEngineId < device->secondaryEngines[engine.getEngineType()].engines.size(); secondaryEngineId++) {
+
+                    EXPECT_EQ(contextId, device->secondaryEngines[engine.getEngineType()].engines[secondaryEngineId].osContext->getContextId());
+                    contextId++;
+                }
+            }
         }
     }
 }

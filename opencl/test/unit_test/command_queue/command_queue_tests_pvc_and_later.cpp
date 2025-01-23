@@ -231,9 +231,11 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQue
     EXPECT_EQ(1u, queue->countBcsEngines());
 
     queueProperties[3] = 7;
-    queue = std::make_unique<MockCommandQueue>(&context, context.getDevice(0), queueProperties, false);
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS8, queue->bcsEngines[EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS8)]->getEngineType());
-    EXPECT_EQ(1u, queue->countBcsEngines());
+    if (queueProperties[3] < clDevice.device.getRegularEngineGroups()[familyIndex].engines.size()) {
+        queue = std::make_unique<MockCommandQueue>(&context, context.getDevice(0), queueProperties, false);
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS8, queue->bcsEngines[EngineHelpers::getBcsIndex(aub_stream::ENGINE_BCS8)]->getEngineType());
+        EXPECT_EQ(1u, queue->countBcsEngines());
+    }
 }
 
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenDeferCmdQBcsInitializationEnabledWhenCreateCommandQueueThenBcsCountIsZero, IsAtLeastXeHpcCore) {
@@ -864,8 +866,20 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenMultipleEnginesInQueueWhenSelec
 }
 
 HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenHighPriorityQueueAndNoHpCopyEngineWhenSelectingCsrForNonLocalToLocalOperationThenRegularBcsIsUsed, IsAtLeastXeHpcCore) {
+    context.reset(nullptr);
+    clDevice.reset(nullptr);
+
     DebugManagerStateRestore restore{};
     debugManager.flags.EnableBlitterForEnqueueOperations.set(1);
+    debugManager.flags.ContextGroupSize.set(0);
+
+    HardwareInfo hwInfo = *::defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(5);
+
+    device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
+    clDevice = std::make_unique<MockClDevice>(device);
+    context = std::make_unique<MockContext>(clDevice.get());
 
     MockGraphicsAllocation srcGraphicsAllocation{};
     MockGraphicsAllocation dstGraphicsAllocation{};
@@ -874,8 +888,6 @@ HWTEST2_F(BcsCsrSelectionCommandQueueTests, givenHighPriorityQueueAndNoHpCopyEng
     srcGraphicsAllocation.memoryPool = MemoryPool::system4KBPages;
     dstGraphicsAllocation.memoryPool = MemoryPool::localMemory;
     CsrSelectionArgs args{CL_COMMAND_COPY_BUFFER, &srcMemObj, &dstMemObj, 0u, nullptr};
-
-    device->getRootDeviceEnvironment().getMutableHardwareInfo()->featureTable.ftrBcsInfo = maxNBitValue(5);
 
     const auto &productHelper = device->getRootDeviceEnvironment().getProductHelper();
     auto isBCS0Enabled = (aub_stream::ENGINE_BCS == productHelper.getDefaultCopyEngine());
