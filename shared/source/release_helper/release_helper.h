@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ using createReleaseHelperFunctionType = std::unique_ptr<ReleaseHelper> (*)(Hardw
 inline createReleaseHelperFunctionType *releaseHelperFactory[maxArchitecture]{};
 
 using ThreadsPerEUConfigs = StackVec<uint32_t, 6>;
-using SizeToPreferredSlmValueArray = std::array<SizeToPreferredSlmValue, 12>;
+using SizeToPreferredSlmValueArray = std::array<SizeToPreferredSlmValue, 20>;
 
 class ReleaseHelper {
   public:
