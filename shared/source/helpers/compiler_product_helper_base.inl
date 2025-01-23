@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -85,6 +85,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
                              "cl_khr_subgroup_shuffle_relative "
                              "cl_khr_subgroup_clustered_reduce "
                              "cl_intel_device_attribute_query "
+                             "cl_khr_expect_assume "
                              "cl_khr_extended_bit_ops "
                              "cl_khr_suggested_local_work_size "
                              "cl_intel_split_work_group_barrier ";

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -858,6 +858,13 @@ TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenCreateCommandQueueExtensionIsRe
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_create_command_queue")));
+}
+
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExpectAssumeExtensionIsReported) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_expect_assume")));
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtendedBitOpsExtensionIsReported) {
