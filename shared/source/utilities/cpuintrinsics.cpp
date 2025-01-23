@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,12 @@
 #include <intrin.h>
 #pragma intrinsic(__rdtsc)
 #else
+#if defined(__ARM_ARCH)
+extern "C" uint64_t __rdtsc();
+#else
 #include <immintrin.h>
 #include <x86intrin.h>
+#endif
 #endif
 
 #if defined(__ARM_ARCH)
