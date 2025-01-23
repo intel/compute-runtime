@@ -1134,9 +1134,7 @@ bool Drm::hasPageFaultSupport() const {
 
 bool Drm::hasKmdMigrationSupport() const {
     const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto kmdMigrationSupported = hasPageFaultSupport() &&
-                                 this->ioctlHelper->isKmdMigrationSupported() &&
-                                 productHelper.isKmdMigrationSupported();
+    auto kmdMigrationSupported = hasPageFaultSupport() && productHelper.isKmdMigrationSupported();
 
     if (debugManager.flags.UseKmdMigration.get() != -1) {
         return !!debugManager.flags.UseKmdMigration.get();

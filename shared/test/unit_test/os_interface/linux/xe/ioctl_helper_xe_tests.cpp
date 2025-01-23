@@ -11,7 +11,6 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/linux/mock_os_time_linux.h"
@@ -2596,25 +2595,4 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionThenProperValuesAreSet) {
 
     EXPECT_EQ(mockDeviceId, hwInfo->platform.usDeviceID);
     EXPECT_EQ(mockRevisionId, hwInfo->platform.usRevId);
-}
-
-TEST_F(IoctlHelperXeTest, givenUseKmdMigrationSetWhenCallingHasKmdMigrationSupportThenReturnCorrectValue) {
-    DebugManagerStateRestore restorer;
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-    executionEnvironment->initializeMemoryManager();
-
-    DrmQueryMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    drm.pageFaultSupported = true;
-    drm.ioctlHelper.reset(new IoctlHelperXe(drm));
-
-    for (auto useKmdMigration : {-1, 0, 1}) {
-        debugManager.flags.UseKmdMigration.set(useKmdMigration);
-        if (useKmdMigration == -1) {
-            EXPECT_FALSE(drm.hasKmdMigrationSupport());
-        } else {
-            EXPECT_EQ(useKmdMigration, drm.hasKmdMigrationSupport());
-        }
-    }
 }

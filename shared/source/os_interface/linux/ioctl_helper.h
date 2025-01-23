@@ -139,7 +139,6 @@ class IoctlHelper {
     virtual int execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) = 0;
     virtual bool completionFenceExtensionSupported(const bool isVmBindAvailable) = 0;
     virtual bool isPageFaultSupported() = 0;
-    virtual bool isKmdMigrationSupported() = 0;
     virtual std::unique_ptr<uint8_t[]> createVmControlExtRegion(const std::optional<MemoryClassInstance> &regionInstanceClass) = 0;
     virtual uint32_t getFlagsForVmCreate(bool disableScratch, bool enablePageFault, bool useVmBind) = 0;
     virtual uint32_t createContextWithAccessCounters(GemContextCreateExt &gcc) = 0;
@@ -273,7 +272,6 @@ class IoctlHelperI915 : public IoctlHelper {
     bool setGpuCpuTimes(TimeStampData *pGpuCpuTime, OSTime *osTime) override;
     void insertEngineToContextParams(ContextParamEngines<> &contextParamEngines, uint32_t engineId, const EngineClassInstance *engineClassInstance, uint32_t tileId, bool hasVirtualEngines) override;
     int getTileIdFromGtId(int gtId) const override { return -1; }
-    bool isKmdMigrationSupported() override { return true; }
 
   protected:
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint64_t> &regionInfo);

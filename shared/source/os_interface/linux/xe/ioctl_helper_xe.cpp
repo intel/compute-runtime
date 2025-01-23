@@ -947,10 +947,10 @@ int IoctlHelperXe::queryDistances(std::vector<QueryItem> &queryItems, std::vecto
 }
 
 bool IoctlHelperXe::isPageFaultSupported() {
-    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, supportedFeatures.flags.pageFault == true);
+    xeLog(" -> IoctlHelperXe::%s %d\n", __FUNCTION__, false);
 
-    return supportedFeatures.flags.pageFault;
-}
+    return false;
+};
 
 uint32_t IoctlHelperXe::getEuStallFdParameter() {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
