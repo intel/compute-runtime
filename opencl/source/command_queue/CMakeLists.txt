@@ -13,7 +13,6 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_state.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/csr_selection_args.cpp
@@ -44,7 +43,6 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
     ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource_barrier.h
 )

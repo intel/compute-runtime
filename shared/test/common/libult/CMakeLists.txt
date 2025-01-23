@@ -109,7 +109,6 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper.inl
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_bdw_and_later.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers${BRANCH_DIR_SUFFIX}unit_test_setter.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/abort.cpp

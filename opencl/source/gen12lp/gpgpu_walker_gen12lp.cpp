@@ -7,17 +7,101 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/simd_helper.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/hw_timestamps.h"
 
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
-#include "opencl/source/command_queue/hardware_interface_bdw_and_later.inl"
+#include "opencl/source/command_queue/hardware_interface_base.inl"
 
 namespace NEO {
 
 using Family = Gen12LpFamily;
+
+template <typename GfxFamily>
+inline void HardwareInterface<GfxFamily>::getDefaultDshSpace(
+    const size_t &offsetInterfaceDescriptorTable,
+    CommandQueue &commandQueue,
+    const MultiDispatchInfo &multiDispatchInfo,
+    size_t &totalInterfaceDescriptorTableSize,
+    IndirectHeap *dsh,
+    LinearStream *commandStream) {
+
+    size_t numDispatches = multiDispatchInfo.size();
+    totalInterfaceDescriptorTableSize *= numDispatches;
+
+    dsh->getSpace(totalInterfaceDescriptorTableSize);
+}
+
+template <typename GfxFamily>
+template <typename WalkerType>
+inline void HardwareInterface<GfxFamily>::programWalker(
+    LinearStream &commandStream,
+    Kernel &kernel,
+    CommandQueue &commandQueue,
+    IndirectHeap &dsh,
+    IndirectHeap &ioh,
+    IndirectHeap &ssh,
+    const DispatchInfo &dispatchInfo,
+    HardwareInterfaceWalkerArgs &walkerArgs) {
+
+    auto walkerCmdBuf = allocateWalkerSpace<WalkerType>(commandStream, kernel);
+    WalkerType walkerCmd = GfxFamily::cmdInitGpgpuWalker;
+    uint32_t dim = dispatchInfo.getDim();
+    uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
+    auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
+
+    size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
+    size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
+    auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
+
+    if (walkerArgs.currentTimestampPacketNodes && walkerArgs.currentTimestampPacketNodes->peekNodes().size() > 0 &&
+        commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto timestampPacketNode = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
+    }
+
+    auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
+
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo().kernelDescriptor,
+                                                           startWorkGroups,
+                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
+                                                           false, false, 0u);
+
+    HardwareCommandsHelper<GfxFamily>::template sendIndirectState<WalkerType, INTERFACE_DESCRIPTOR_DATA>(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        kernel,
+        kernel.getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
+        simd,
+        walkerArgs.localWorkSizes,
+        threadGroupCount,
+        walkerArgs.offsetInterfaceDescriptorTable,
+        walkerArgs.interfaceDescriptorIndex,
+        walkerArgs.preemptionMode,
+        &walkerCmd,
+        nullptr,
+        kernelUsesLocalIds,
+        0,
+        commandQueue.getDevice());
+
+    EncodeWalkerArgs encodeWalkerArgs{
+        .kernelExecutionType = kernel.getExecutionType(),
+        .requiredDispatchWalkOrder = RequiredDispatchWalkOrder::none,
+        .localRegionSize = 0,
+        .maxFrontEndThreads = 0,
+        .requiredSystemFence = false,
+        .hasSample = false};
+
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
+    *walkerCmdBuf = walkerCmd;
+}
 
 template <typename GfxFamily>
 template <typename WalkerType>
