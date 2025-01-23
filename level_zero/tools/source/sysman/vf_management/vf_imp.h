@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace L0 {
 class VfImp : public VfManagement, NEO::NonCopyableOrMovableClass {
   public:
     void init();
-    ze_result_t vfGetCapabilities(zes_vf_exp_capabilities_t *pCapability) override;
+    ze_result_t vfGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) override;
     ze_result_t vfGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) override;
     ze_result_t vfGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) override;
 
@@ -31,7 +31,7 @@ class VfImp : public VfManagement, NEO::NonCopyableOrMovableClass {
     std::unique_ptr<OsVf> pOsVf;
 
   private:
-    zes_vf_exp_capabilities_t capability = {};
+    zes_vf_exp2_capabilities_t capability = {};
 };
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,8 +58,8 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenZeroPciAddr
     uint32_t vfId = 1;
     std::unique_ptr<VfManagement> pVfManagement = std::make_unique<VfImp>(pOsSysman, vfId);
     zes_vf_handle_t vfHandle = pVfManagement->toVfManagementHandle();
-    zes_vf_exp_capabilities_t capabilities = {};
-    ze_result_t result = zesVFManagementGetVFCapabilitiesExp(vfHandle, &capabilities);
+    zes_vf_exp2_capabilities_t capabilities = {};
+    ze_result_t result = zesVFManagementGetVFCapabilitiesExp2(vfHandle, &capabilities);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(capabilities.address.domain, (uint32_t)0);
     EXPECT_EQ(capabilities.address.bus, (uint32_t)0);
@@ -70,7 +70,7 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenZeroPciAddr
 TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingOsVfCapabilitiesThenErrorIsReturned) {
 
     auto pWddmVfImp = std::make_unique<WddmVfImp>();
-    zes_vf_exp_capabilities_t capabilities = {};
+    zes_vf_exp2_capabilities_t capabilities = {};
     ze_result_t result = pWddmVfImp->vfOsGetCapabilities(&capabilities);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }

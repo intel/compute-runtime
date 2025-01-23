@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace L0 {
 
-ze_result_t VfImp::vfGetCapabilities(zes_vf_exp_capabilities_t *pCapability) {
+ze_result_t VfImp::vfGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
     *pCapability = capability;
     return ZE_RESULT_SUCCESS;
 }

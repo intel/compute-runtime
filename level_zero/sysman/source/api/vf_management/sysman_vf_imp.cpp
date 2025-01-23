@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,13 +12,15 @@
 namespace L0 {
 namespace Sysman {
 
-ze_result_t VfImp::vfGetCapabilities(zes_vf_exp_capabilities_t *pCapability) {
+ze_result_t VfImp::vfGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
     *pCapability = capability;
     return ZE_RESULT_SUCCESS;
 }
+
 ze_result_t VfImp::vfGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) {
     return pOsVf->vfOsGetMemoryUtilization(pCount, pMemUtil);
 }
+
 ze_result_t VfImp::vfGetEngineUtilization(uint32_t *pCount, zes_vf_util_engine_exp2_t *pEngineUtil) {
     return pOsVf->vfOsGetEngineUtilization(pCount, pEngineUtil);
 }

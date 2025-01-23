@@ -1611,13 +1611,13 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
     VALIDATECALL(zesDeviceEnumEnabledVFExp(device, &count, handles.data()));
 
     for (const auto &handle : handles) {
-        zes_vf_exp_capabilities_t props = {};
-        VALIDATECALL(zesVFManagementGetVFCapabilitiesExp(handle, &props));
+        zes_vf_exp2_capabilities_t props = {};
+        VALIDATECALL(zesVFManagementGetVFCapabilitiesExp2(handle, &props));
         if (verbose) {
             std::cout << std::endl
                       << "----- PCI BDF ------ " << std::endl;
             std::cout << "Domain: Bus: Device: Function = " << props.address.domain << " : " << props.address.bus << " : " << props.address.device << " : " << props.address.function << std::endl;
-            std::cout << "Memory Size in KiloBytes = " << props.vfDeviceMemSize << std::endl;
+            std::cout << "Memory Size in Bytes = " << props.vfDeviceMemSize << std::endl;
             std::cout << "VF Id = " << props.vfID << std::endl;
         }
 
@@ -1631,7 +1631,7 @@ void testSysmanVfTelemetry(ze_device_handle_t &device) {
         for (uint32_t it = 0; it < count; it++) {
             if (verbose) {
                 std::cout << "Location of the Memory = " << getMemoryModuleLocation(memUtils[it].vfMemLocation) << std::endl;
-                std::cout << "Memory Utilized in KiloBytes = " << memUtils[it].vfMemUtilized << std::endl;
+                std::cout << "Memory Utilized in Bytes = " << memUtils[it].vfMemUtilized << std::endl;
             }
         }
 

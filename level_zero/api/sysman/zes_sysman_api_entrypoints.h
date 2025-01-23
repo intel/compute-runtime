@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -909,9 +909,9 @@ ze_result_t zesVFManagementGetVFCapabilitiesExp(
     zes_vf_handle_t hVFhandle,
     zes_vf_exp_capabilities_t *pCapability) {
     if (L0::sysmanInitFromCore) {
-        return L0::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else if (L0::Sysman::sysmanOnlyInit) {
-        return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -938,6 +938,18 @@ ze_result_t zesVFManagementGetVFEngineUtilizationExp2(
         return L0::VfManagement::fromHandle(hVFhandle)->vfGetEngineUtilization(pCount, pEngineUtil);
     } else if (L0::Sysman::sysmanOnlyInit) {
         return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetEngineUtilization(pCount, pEngineUtil);
+    } else {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+}
+
+ze_result_t zesVFManagementGetVFCapabilitiesExp2(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_exp2_capabilities_t *pCapability) {
+    if (L0::sysmanInitFromCore) {
+        return L0::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability);
+    } else if (L0::Sysman::sysmanOnlyInit) {
+        return L0::Sysman::VfManagement::fromHandle(hVFhandle)->vfGetCapabilities(pCapability);
     } else {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
@@ -2127,6 +2139,12 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFEngineUtilizationExp2(
     uint32_t *pCount,
     zes_vf_util_engine_exp2_t *pEngineUtil) {
     return L0::zesVFManagementGetVFEngineUtilizationExp2(hVFhandle, pCount, pEngineUtil);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementGetVFCapabilitiesExp2(
+    zes_vf_handle_t hVFhandle,
+    zes_vf_exp2_capabilities_t *pCapability) {
+    return L0::zesVFManagementGetVFCapabilitiesExp2(hVFhandle, pCapability);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zesVFManagementSetVFTelemetryModeExp(

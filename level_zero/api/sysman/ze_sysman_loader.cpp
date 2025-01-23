@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -402,6 +402,7 @@ zesGetVFManagementExpProcAddrTable(
     fillDdiEntry(pDdiTable->pfnGetVFCapabilitiesExp, L0::zesVFManagementGetVFCapabilitiesExp, version, ZE_API_VERSION_1_11);
     fillDdiEntry(pDdiTable->pfnGetVFMemoryUtilizationExp2, L0::zesVFManagementGetVFMemoryUtilizationExp2, version, ZE_API_VERSION_1_11);
     fillDdiEntry(pDdiTable->pfnGetVFEngineUtilizationExp2, L0::zesVFManagementGetVFEngineUtilizationExp2, version, ZE_API_VERSION_1_11);
+    fillDdiEntry(pDdiTable->pfnGetVFCapabilitiesExp2, L0::zesVFManagementGetVFCapabilitiesExp2, version, ZE_API_VERSION_1_12);
 
     return result;
 }

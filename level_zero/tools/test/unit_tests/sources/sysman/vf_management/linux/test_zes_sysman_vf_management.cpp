@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,8 +78,8 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenPciAddressR
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {
         ASSERT_NE(nullptr, hSysmanVf);
-        zes_vf_exp_capabilities_t capabilities = {};
-        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
         EXPECT_EQ(capabilities.address.domain, mockedDomain);
         EXPECT_EQ(capabilities.address.bus, mockedBus);
         EXPECT_EQ(capabilities.address.device, mockedDevice);
@@ -92,8 +92,8 @@ TEST_F(ZesVfFixture, GivenValidVfHandleAndSysfsGetRealPathFailsWhenQueryingVfCap
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {
         ASSERT_NE(nullptr, hSysmanVf);
-        zes_vf_exp_capabilities_t capabilities = {};
-        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
         EXPECT_EQ(capabilities.address.domain, (uint32_t)0);
         EXPECT_EQ(capabilities.address.bus, (uint32_t)0);
         EXPECT_EQ(capabilities.address.device, (uint32_t)0);
@@ -107,8 +107,8 @@ TEST_F(ZesVfFixture, GivenValidVfHandleAndInvalidBDFWithImproperTokensWhenQueryi
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {
         ASSERT_NE(nullptr, hSysmanVf);
-        zes_vf_exp_capabilities_t capabilities = {};
-        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
         EXPECT_EQ(capabilities.address.domain, (uint32_t)0);
         EXPECT_EQ(capabilities.address.bus, (uint32_t)0);
         EXPECT_EQ(capabilities.address.device, (uint32_t)0);
@@ -122,8 +122,8 @@ TEST_F(ZesVfFixture, GivenValidVfHandleAndInvalidBDFWhenQueryingVfCapabilitiesTh
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {
         ASSERT_NE(nullptr, hSysmanVf);
-        zes_vf_exp_capabilities_t capabilities = {};
-        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
         EXPECT_EQ(capabilities.address.domain, (uint32_t)0);
         EXPECT_EQ(capabilities.address.bus, (uint32_t)0);
         EXPECT_EQ(capabilities.address.device, (uint32_t)0);
@@ -135,9 +135,9 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesThenParamsRetur
     auto handles = getEnabledVfHandles(mockHandleCount);
     for (auto hSysmanVf : handles) {
         ASSERT_NE(nullptr, hSysmanVf);
-        zes_vf_exp_capabilities_t capabilities = {};
-        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(capabilities.vfDeviceMemSize, mockLmemQuota / 1024);
+        zes_vf_exp2_capabilities_t capabilities = {};
+        EXPECT_EQ(zesVFManagementGetVFCapabilitiesExp2(hSysmanVf, &capabilities), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(capabilities.vfDeviceMemSize, mockLmemQuota);
         EXPECT_GT(capabilities.vfID, (uint32_t)0);
     }
 }
@@ -152,7 +152,7 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingMemoryUtilizationThenMemoryPa
         std::vector<zes_vf_util_mem_exp2_t> memUtils(count);
         EXPECT_EQ(zesVFManagementGetVFMemoryUtilizationExp2(hSysmanVf, &count, memUtils.data()), ZE_RESULT_SUCCESS);
         for (uint32_t it = 0; it < count; it++) {
-            EXPECT_EQ(memUtils[it].vfMemUtilized, mockLmemUsed / 1024);
+            EXPECT_EQ(memUtils[it].vfMemUtilized, mockLmemUsed);
             EXPECT_EQ(memUtils[it].vfMemLocation, ZES_MEM_LOC_DEVICE);
         }
     }
@@ -207,7 +207,7 @@ TEST_F(ZesVfFixture, GivenValidVfHandleWhenCallingZesVFManagementGetVFEngineUtil
 TEST_F(ZesVfFixture, GivenValidVfHandleWhenQueryingVfCapabilitiesAndSysfsReadForMemoryQuotaValueFailsThenErrorIsReturned) {
 
     pSysfsAccess->mockError = ZE_RESULT_ERROR_UNKNOWN;
-    zes_vf_exp_capabilities_t capabilities = {};
+    zes_vf_exp2_capabilities_t capabilities = {};
     auto pVfImp = std::make_unique<PublicLinuxVfImp>(pOsSysman, 1);
     EXPECT_EQ(pVfImp->vfOsGetCapabilities(&capabilities), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }

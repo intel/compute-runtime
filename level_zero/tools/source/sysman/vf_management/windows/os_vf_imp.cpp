@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace L0 {
 
 uint32_t WddmVfImp::numEnabledVfs = 0;
 
-ze_result_t WddmVfImp::vfOsGetCapabilities(zes_vf_exp_capabilities_t *pCapability) {
+ze_result_t WddmVfImp::vfOsGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 ze_result_t WddmVfImp::vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_mem_exp2_t *pMemUtil) {

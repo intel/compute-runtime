@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ ze_result_t LinuxVfImp::getVfBDFAddress(uint32_t vfIdMinusOne, zes_pci_address_t
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxVfImp::vfOsGetCapabilities(zes_vf_exp_capabilities_t *pCapability) {
+ze_result_t LinuxVfImp::vfOsGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) {
 
     ze_result_t result = getVfBDFAddress((vfId - 1), &pCapability->address);
     if (result != ZE_RESULT_SUCCESS) {
@@ -61,7 +61,7 @@ ze_result_t LinuxVfImp::vfOsGetCapabilities(zes_vf_exp_capabilities_t *pCapabili
     if (!vfOsGetLocalMemoryQuota(vfLmemQuota)) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    pCapability->vfDeviceMemSize = static_cast<uint32_t>(vfLmemQuota / 1024);
+    pCapability->vfDeviceMemSize = vfLmemQuota;
     pCapability->vfID = vfId;
 
     return ZE_RESULT_SUCCESS;
@@ -83,7 +83,7 @@ ze_result_t LinuxVfImp::vfOsGetMemoryUtilization(uint32_t *pCount, zes_vf_util_m
     if (pMemUtil != nullptr) {
         for (uint32_t i = 0; i < *pCount; i++) {
             pMemUtil[i].vfMemLocation = ZES_MEM_LOC_DEVICE;
-            pMemUtil[i].vfMemUtilized = vfLmemUsed / 1024;
+            pMemUtil[i].vfMemUtilized = vfLmemUsed;
         }
     }
 
