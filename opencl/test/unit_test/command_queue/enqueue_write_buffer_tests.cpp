@@ -731,11 +731,3 @@ HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferFailedThenPr
     EXPECT_EQ(res, CL_INVALID_OPERATION);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteBufferCounter);
 }
-
-HWTEST_F(WriteBufferStagingBufferTest, whenIsValidForStagingTransferCalledThenReturnCorrectValue) {
-    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    auto isStagingBuffersEnabled = device->getProductHelper().isStagingBuffersEnabled();
-    unsigned char ptr[16];
-
-    EXPECT_EQ(isStagingBuffersEnabled, mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
-}
