@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,20 +51,22 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::initHardwareInfo;
     using OfflineCompiler::initHardwareInfoForProductConfig;
     using OfflineCompiler::initialize;
+    using OfflineCompiler::inputCodeType;
     using OfflineCompiler::inputFile;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
+    using OfflineCompiler::intermediateRepresentation;
     using OfflineCompiler::internalOptions;
     using OfflineCompiler::irBinary;
     using OfflineCompiler::irBinarySize;
     using OfflineCompiler::irHash;
-    using OfflineCompiler::isSpirV;
     using OfflineCompiler::onlySpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;
     using OfflineCompiler::outputNoSuffix;
     using OfflineCompiler::parseCommandLine;
+    using OfflineCompiler::parseCommandLineExt;
     using OfflineCompiler::parseDebugSettings;
     using OfflineCompiler::perDeviceOptions;
     using OfflineCompiler::releaseHelper;
@@ -74,8 +76,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::storeBinary;
     using OfflineCompiler::updateBuildLog;
     using OfflineCompiler::useGenFile;
-    using OfflineCompiler::useLlvmBc;
-    using OfflineCompiler::useLlvmText;
     using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler();
@@ -88,7 +88,7 @@ class MockOfflineCompiler : public OfflineCompiler {
 
     int build() override;
 
-    int buildIrBinary() override;
+    int buildToIrBinary() override;
 
     int buildSourceCode() override;
 
@@ -101,8 +101,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     void createDir(const std::string &path) override;
 
     std::map<std::string, std::string> filesMap{};
-    int buildIrBinaryStatus = 0;
-    bool overrideBuildIrBinaryStatus = false;
+    int buildToIrBinaryStatus = 0;
+    bool overrideBuildToIrBinaryStatus = false;
     int buildSourceCodeStatus = 0;
     bool overrideBuildSourceCodeStatus = false;
     uint32_t generateElfBinaryCalled = 0u;

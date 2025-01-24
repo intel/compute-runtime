@@ -32,6 +32,7 @@
 #include "shared/source/helpers/validators.h"
 #include "shared/source/release_helper/release_helper.h"
 
+#include "offline_compiler_ext.h"
 #include "platforms.h"
 
 #include <iomanip>
@@ -489,13 +490,8 @@ struct OfflineCompiler::BuildInfo {
     IGC::CodeType::CodeType_t intermediateRepresentation;
 };
 
-int OfflineCompiler::buildIrBinary() {
+int OfflineCompiler::buildToIrBinary() {
     int retVal = OCLOC_SUCCESS;
-    pBuildInfo->intermediateRepresentation = preferredIntermediateRepresentation;
-    if (inputFileLlvm) {
-        pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
-    }
-    isSpirV = pBuildInfo->intermediateRepresentation == IGC::CodeType::spirV;
 
     if (allowCaching) {
         const std::string igcRevision = igcFacade->getIgcRevision();
@@ -541,7 +537,7 @@ int OfflineCompiler::buildIrBinary() {
         fclSrc = fclFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size() + 1);
     }
 
-    auto fclTranslationCtx = fclFacade->createTranslationContext(srcType, pBuildInfo->intermediateRepresentation, err.get());
+    auto fclTranslationCtx = fclFacade->createTranslationContext(srcType, intermediateRepresentation, err.get());
 
     if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
         updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
@@ -572,6 +568,7 @@ int OfflineCompiler::buildIrBinary() {
         return retVal;
     }
 
+    pBuildInfo->intermediateRepresentation = intermediateRepresentation;
     storeBinary(irBinary, irBinarySize, pBuildInfo->fclOutput->GetOutput()->GetMemory<char>(), pBuildInfo->fclOutput->GetOutput()->GetSizeRaw());
 
     updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
@@ -616,18 +613,14 @@ int OfflineCompiler::buildSourceCode() {
     if (sourceCode.empty()) {
         return OCLOC_INVALID_PROGRAM;
     }
-    auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
+    auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm(), inputFileSpirV());
     this->argHelper->printf(inputTypeWarnings.c_str());
-    bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
-    if (inputIsIntermediateRepresentation) {
-
+    if (isIntermediateRepresentation(this->inputCodeType)) {
         storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
-        auto asBitcode = ArrayRef<const uint8_t>::fromAny(irBinary, irBinarySize);
-        isSpirV = NEO::isSpirVBitcode(asBitcode);
-
-        pBuildInfo->intermediateRepresentation = isSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc;
+        pBuildInfo->intermediateRepresentation = this->inputCodeType;
     } else {
-        retVal = buildIrBinary();
+        pBuildInfo->intermediateRepresentation = (this->intermediateRepresentation != IGC::CodeType::undefined) ? this->intermediateRepresentation : this->preferredIntermediateRepresentation;
+        retVal = buildToIrBinary();
         if (retVal != OCLOC_SUCCESS)
             return retVal;
     }
@@ -709,16 +702,16 @@ int OfflineCompiler::build() {
     if (sourceFromFileSize == 0) {
         return OCLOC_INVALID_FILE;
     }
-    if (inputFileLlvm || inputFileSpirV) {
-        // use the binary input "as is"
-        sourceCode.assign(sourceFromFile.get(), sourceFromFileSize);
-    } else {
+    if (this->inputCodeType == IGC::CodeType::oclC) {
         // for text input, we also accept files used as runtime builtins
         source = strstr((const char *)sourceFromFile.get(), "R\"===(");
         sourceCode = (source != nullptr) ? getStringWithinDelimiters(sourceFromFile.get()) : sourceFromFile.get();
+    } else {
+        // use the binary input "as is"
+        sourceCode.assign(sourceFromFile.get(), sourceFromFileSize);
     }
 
-    if ((inputFileSpirV == false) && (inputFileLlvm == false)) {
+    if (this->inputCodeType == IGC::CodeType::oclC) {
         const auto fclInitializationResult = fclFacade->initialize(hwInfo);
         if (fclInitializationResult != OCLOC_SUCCESS) {
             argHelper->printf("Error! FCL initialization failure. Error code = %d\n", fclInitializationResult);
@@ -733,6 +726,10 @@ int OfflineCompiler::build() {
         preferredIntermediateRepresentation = IGC::CodeType::spirV;
     }
 
+    if (intermediateRepresentation == IGC::CodeType::undefined) {
+        intermediateRepresentation = preferredIntermediateRepresentation;
+    }
+
     const auto igcInitializationResult = igcFacade->initialize(hwInfo);
     if (igcInitializationResult != OCLOC_SUCCESS) {
         argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
@@ -741,7 +738,7 @@ int OfflineCompiler::build() {
 
     int retVal = OCLOC_SUCCESS;
     if (isOnlySpirV()) {
-        retVal = buildIrBinary();
+        retVal = buildToIrBinary();
     } else {
         retVal = buildSourceCode();
     }
@@ -952,7 +949,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         enforceFormat(formatToEnforce);
     }
     if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
-        if (false == inputFileSpirV && false == CompilerOptions::contains(options, CompilerOptions::generateSourcePath) && false == CompilerOptions::contains(options, CompilerOptions::useCMCompiler)) {
+        if (false == inputFileSpirV() && false == CompilerOptions::contains(options, CompilerOptions::generateSourcePath) && false == CompilerOptions::contains(options, CompilerOptions::useCMCompiler)) {
             auto sourcePathStringOption = CompilerOptions::generateSourcePath.str();
             sourcePathStringOption.append(" ");
             sourcePathStringOption.append(CompilerOptions::wrapInQuotes(inputFile));
@@ -1015,13 +1012,21 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             deviceName = argv[argIndex + 1];
             argIndex++;
         } else if ("-llvm_text" == currArg) {
-            useLlvmText = true;
+            if (this->inputCodeType == IGC::CodeType::llvmBc) {
+                this->inputCodeType = IGC::CodeType::llvmLl;
+            }
+            this->intermediateRepresentation = IGC::CodeType::llvmLl;
         } else if ("-llvm_bc" == currArg) {
-            useLlvmBc = true;
+            if (this->inputCodeType == IGC::CodeType::llvmLl) {
+                this->inputCodeType = IGC::CodeType::llvmBc;
+            }
+            this->intermediateRepresentation = IGC::CodeType::llvmBc;
         } else if ("-llvm_input" == currArg) {
-            inputFileLlvm = true;
+            this->inputCodeType = (this->intermediateRepresentation == IGC::CodeType::llvmLl) ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
+            this->intermediateRepresentation = this->inputCodeType;
         } else if ("-spirv_input" == currArg) {
-            inputFileSpirV = true;
+            this->inputCodeType = IGC::CodeType::spirV;
+            this->intermediateRepresentation = IGC::CodeType::spirV;
         } else if ("-cpp_file" == currArg) {
             useCppFile = true;
         } else if ("-gen_file" == currArg) {
@@ -1099,9 +1104,11 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-allow_caching" == currArg) {
             allowCaching = true;
         } else {
-            argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
-            retVal = OCLOC_INVALID_COMMAND_LINE;
-            break;
+            retVal = parseCommandLineExt(numArgs, argv, argIndex);
+            if (OCLOC_INVALID_COMMAND_LINE == retVal) {
+                argHelper->printf("Invalid option (arg %u): %s\n", argIndex, argv[argIndex].c_str());
+                break;
+            }
         }
     }
 
@@ -1432,13 +1439,14 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -config                                   Target hardware info config for a single device,
                                             e.g 1x4x8.
-
+%s
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )OCLOC_HELP",
                       getSupportedDevices(argHelper).c_str(),
-                      getDeprecatedDevices(argHelper).c_str());
+                      getDeprecatedDevices(argHelper).c_str(),
+                      getOfflineCompilerOptionsExt().c_str());
 }
 
 void OfflineCompiler::storeBinary(
@@ -1500,7 +1508,7 @@ bool OfflineCompiler::generateElfBinary() {
     }
 
     if (!binary.intermediateRepresentation.empty() && !excludeIr) {
-        if (isSpirV) {
+        if (this->intermediateRepresentation == IGC::CodeType::spirV) {
             elfEncoder.appendSection(SHT_OPENCL_SPIRV, SectionNamesOpenCl::spirvObject, binary.intermediateRepresentation);
         } else {
             elfEncoder.appendSection(SHT_OPENCL_LLVM_BINARY, SectionNamesOpenCl::llvmObject, binary.intermediateRepresentation);
@@ -1566,7 +1574,7 @@ void OfflineCompiler::writeOutAllFiles() {
         return;
     }
 
-    if (irBinary && !inputFileSpirV) {
+    if (irBinary && (this->inputCodeType != IGC::CodeType::spirV)) {
         std::string irOutputFileName = generateFilePathForIr(fileBase) + generateOptsSuffix();
 
         argHelper->saveOutput(irOutputFileName, irBinary, irBinarySize);

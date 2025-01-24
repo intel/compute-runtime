@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,11 +50,11 @@ int MockOfflineCompiler::build() {
     return OfflineCompiler::build();
 }
 
-int MockOfflineCompiler::buildIrBinary() {
-    if (overrideBuildIrBinaryStatus) {
-        return buildIrBinaryStatus;
+int MockOfflineCompiler::buildToIrBinary() {
+    if (overrideBuildToIrBinaryStatus) {
+        return buildToIrBinaryStatus;
     }
-    return OfflineCompiler::buildIrBinary();
+    return OfflineCompiler::buildToIrBinary();
 }
 
 int MockOfflineCompiler::buildSourceCode() {

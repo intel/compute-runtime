@@ -1200,8 +1200,7 @@ TEST_F(OfflineCompilerTests, GivenFlagStringWhenParsingThenInternalBooleanIsSetA
 
     const std::array flagsToTest = {
         std::pair{"-options_name"s, &MockOfflineCompiler::useOptionsSuffix},
-        std::pair{"-gen_file"s, &MockOfflineCompiler::useGenFile},
-        std::pair{"-llvm_bc"s, &MockOfflineCompiler::useLlvmBc}};
+        std::pair{"-gen_file"s, &MockOfflineCompiler::useGenFile}};
 
     for (const auto &[flagString, memberBoolean] : flagsToTest) {
         const std::vector<std::string> argv = {
@@ -1219,6 +1218,62 @@ TEST_F(OfflineCompilerTests, GivenFlagStringWhenParsingThenInternalBooleanIsSetA
         EXPECT_EQ(OCLOC_SUCCESS, result);
 
         EXPECT_TRUE(mockOfflineCompiler.*memberBoolean);
+    }
+}
+
+TEST_F(OfflineCompilerTests, WhenPickingFormatFromCommandLineThenCodeTypeIsSetAccordingly) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "compile",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    {
+        argv.push_back("-llvm_bc");
+        MockOfflineCompiler mockOfflineCompiler{};
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.parseCommandLine(argv.size(), argv));
+        EXPECT_EQ(IGC::CodeType::oclC, mockOfflineCompiler.inputCodeType);
+        EXPECT_EQ(IGC::CodeType::llvmBc, mockOfflineCompiler.intermediateRepresentation);
+        argv.pop_back();
+    }
+
+    {
+        argv.push_back("-llvm_text");
+        MockOfflineCompiler mockOfflineCompiler{};
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.parseCommandLine(argv.size(), argv));
+        EXPECT_EQ(IGC::CodeType::oclC, mockOfflineCompiler.inputCodeType);
+        EXPECT_EQ(IGC::CodeType::llvmLl, mockOfflineCompiler.intermediateRepresentation);
+        argv.pop_back();
+    }
+
+    {
+        argv.push_back("-spirv_input");
+        MockOfflineCompiler mockOfflineCompiler{};
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.parseCommandLine(argv.size(), argv));
+        EXPECT_EQ(IGC::CodeType::spirV, mockOfflineCompiler.inputCodeType);
+        EXPECT_EQ(IGC::CodeType::spirV, mockOfflineCompiler.intermediateRepresentation);
+        argv.pop_back();
+    }
+
+    argv.push_back("-llvm_input");
+    {
+        argv.push_back("-llvm_bc");
+        MockOfflineCompiler mockOfflineCompiler{};
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.parseCommandLine(argv.size(), argv));
+        EXPECT_EQ(IGC::CodeType::llvmBc, mockOfflineCompiler.inputCodeType);
+        EXPECT_EQ(IGC::CodeType::llvmBc, mockOfflineCompiler.intermediateRepresentation);
+        argv.pop_back();
+    }
+
+    {
+        argv.push_back("-llvm_text");
+        MockOfflineCompiler mockOfflineCompiler{};
+        EXPECT_EQ(OCLOC_SUCCESS, mockOfflineCompiler.parseCommandLine(argv.size(), argv));
+        EXPECT_EQ(IGC::CodeType::llvmLl, mockOfflineCompiler.inputCodeType);
+        EXPECT_EQ(IGC::CodeType::llvmLl, mockOfflineCompiler.intermediateRepresentation);
+        argv.pop_back();
     }
 }
 
@@ -2453,7 +2508,7 @@ TEST(OfflineCompilerTest, GivenAllowCachingWhenBuildingThenBinaryIsCached) {
     EXPECT_NE(cacheMock->cacheInvoked, 0u);
 }
 
-TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildIrBinaryThenIrBinaryIsLoaded) {
+TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildToIrBinaryThenIrBinaryIsLoaded) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -2471,7 +2526,7 @@ TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildIrBinaryThenIrBinaryIsLoaded
     auto cacheMock = new CompilerCacheMock();
     cacheMock->loadResult = true;
     mockOfflineCompiler->cache.reset(cacheMock);
-    retVal = mockOfflineCompiler->buildIrBinary();
+    retVal = mockOfflineCompiler->buildToIrBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, mockOfflineCompiler->irBinary);
     EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->irBinarySize));
@@ -2588,7 +2643,7 @@ TEST(OfflineCompilerTest, givenAllowCachingWhenBuildSourceCodeThenGenBinaryIsCac
     ASSERT_NE(nullptr, mockOfflineCompiler->irBinary);
     ASSERT_NE(0u, mockOfflineCompiler->irBinarySize);
 
-    // 0 - buildIrBinary   > irBinary
+    // 0 - buildToIrBinary > irBinary
     // 1 - buildSourceCode > genBinary
     // 2 - buildSourceCode > debugDataBinary
     const auto givenCacheBinaryGenHash = cacheMock->cacheBinaryKernelFileHashes[1];
@@ -3103,7 +3158,7 @@ TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFi
 
     EXPECT_NE(0u, output.size());
 
-    bool llvmFileOption = mockOfflineCompiler->inputFileLlvm;
+    bool llvmFileOption = mockOfflineCompiler->inputFileLlvm();
     EXPECT_TRUE(llvmFileOption);
 }
 
@@ -3111,7 +3166,7 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    bool llvmFileOption = mockOfflineCompiler->inputFileLlvm;
+    bool llvmFileOption = mockOfflineCompiler->inputFileLlvm();
     EXPECT_FALSE(llvmFileOption);
 }
 
@@ -3125,12 +3180,12 @@ TEST(OfflineCompilerTest, givenSpirvInputOptionPassedWhenCmdLineParsedThenInputF
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
 
-    EXPECT_TRUE(mockOfflineCompiler->inputFileSpirV);
+    EXPECT_TRUE(mockOfflineCompiler->inputFileSpirV());
 }
 
 TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChangedThenSpirvInputFileIsFalse) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
+    EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV());
 }
 
 TEST(OfflineCompilerTest, givenSpirvRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUsed) {
@@ -3143,7 +3198,8 @@ TEST(OfflineCompilerTest, givenSpirvRepresentationInputWhenBuildSourceCodeIsCall
         "-file",
         "some_file.spv",
         "-device",
-        gEnvironment->devicePrefix.c_str()};
+        gEnvironment->devicePrefix.c_str(),
+        "-spirv_input"};
 
     testing::internal::CaptureStdout();
     struct StdoutCaptureRAII {
@@ -3159,7 +3215,6 @@ TEST(OfflineCompilerTest, givenSpirvRepresentationInputWhenBuildSourceCodeIsCall
     mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    mockOfflineCompiler.inputFileSpirV = true;
     retVal = mockOfflineCompiler.build();
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
@@ -3177,7 +3232,9 @@ TEST(OfflineCompilerTest, givenLlvmBcRepresentationInputWhenBuildSourceCodeIsCal
         "-file",
         "some_file.bc",
         "-device",
-        gEnvironment->devicePrefix.c_str()};
+        gEnvironment->devicePrefix.c_str(),
+        "-llvm_input",
+    };
 
     testing::internal::CaptureStdout();
     struct StdoutCaptureRAII {
@@ -3193,13 +3250,12 @@ TEST(OfflineCompilerTest, givenLlvmBcRepresentationInputWhenBuildSourceCodeIsCal
     mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    mockOfflineCompiler.inputFileLlvm = true;
     mockIgcOclDeviceCtx->requestedTranslationCtxs.clear();
     retVal = mockOfflineCompiler.build();
 
     ASSERT_EQ(mockOfflineCompiler.irBinarySize, mockOfflineCompiler.sourceCode.size());
     EXPECT_EQ(0, memcmp(mockOfflineCompiler.irBinary, mockOfflineCompiler.sourceCode.data(), mockOfflineCompiler.sourceCode.size()));
-    EXPECT_FALSE(mockOfflineCompiler.isSpirV);
+    EXPECT_NE(IGC::CodeType::spirV, mockOfflineCompiler.intermediateRepresentation);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
     NEO::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
@@ -3212,6 +3268,8 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
         "ocloc",
         "-file",
         clFiles + "emptykernel.cl",
+        "-llvm_input",
+        "-llvm_bc",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
@@ -3221,9 +3279,7 @@ TEST(OfflineCompilerTest, givenUseLlvmBcFlagWhenBuildingIrBinaryThenProperTransl
     auto mockFclOclDeviceCtx = new NEO::MockFclOclDeviceCtx();
     mockOfflineCompiler.mockFclFacade->fclDeviceCtx = CIF::RAII::Pack<IGC::FclOclDeviceCtxTagOCL>(mockFclOclDeviceCtx);
 
-    mockOfflineCompiler.inputFileLlvm = true;
-    mockOfflineCompiler.useLlvmBc = true;
-    const auto buildResult = mockOfflineCompiler.buildIrBinary();
+    const auto buildResult = mockOfflineCompiler.buildToIrBinary();
     EXPECT_EQ(CL_SUCCESS, buildResult);
 
     ASSERT_EQ(1U, mockFclOclDeviceCtx->requestedTranslationCtxs.size());
@@ -3277,8 +3333,6 @@ TEST(OfflineCompilerTest, givenSpirvInputFileWhenCmdLineHasOptionsThenCorrectOpt
     auto mockIgcOclDeviceCtx = new NEO::MockIgcOclDeviceCtx();
     mockOfflineCompiler.mockIgcFacade->igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxTagOCL>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
-
-    mockOfflineCompiler.inputFileSpirV = true;
 
     retVal = mockOfflineCompiler.build();
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -4083,7 +4137,7 @@ TEST(OfflineCompilerTest, givenNonEmptyDirectoryWithoutTrailingSlashWhenGenerate
 
 TEST(OfflineCompilerTest, givenSpirvPathWhenGenerateFilePathForIrIsCalledThenProperExtensionIsReturned) {
     MockOfflineCompiler compiler;
-    compiler.isSpirV = true;
+    compiler.intermediateRepresentation = IGC::CodeType::spirV;
     compiler.outputDirectory = "d";
     std::string path = compiler.generateFilePathForIr("a");
     EXPECT_STREQ("d/a.spv", path.c_str());
@@ -4091,7 +4145,7 @@ TEST(OfflineCompilerTest, givenSpirvPathWhenGenerateFilePathForIrIsCalledThenPro
 
 TEST(OfflineCompilerTest, givenLlvmBcPathWhenGenerateFilePathForIrIsCalledThenProperExtensionIsReturned) {
     MockOfflineCompiler compiler;
-    compiler.isSpirV = false;
+    compiler.intermediateRepresentation = IGC::CodeType::llvmBc;
     compiler.outputDirectory = "d";
     std::string path = compiler.generateFilePathForIr("a");
     EXPECT_STREQ("d/a.bc", path.c_str());
@@ -4099,14 +4153,9 @@ TEST(OfflineCompilerTest, givenLlvmBcPathWhenGenerateFilePathForIrIsCalledThenPr
 
 TEST(OfflineCompilerTest, givenLlvmTextPathWhenGenerateFilePathForIrIsCalledThenProperExtensionIsReturned) {
     MockOfflineCompiler compiler;
-    compiler.isSpirV = false;
-    compiler.useLlvmText = true;
+    compiler.intermediateRepresentation = IGC::CodeType::llvmLl;
     compiler.outputDirectory = "d";
     std::string path = compiler.generateFilePathForIr("a");
-    EXPECT_STREQ("d/a.ll", path.c_str());
-
-    compiler.isSpirV = true;
-    path = compiler.generateFilePathForIr("a");
     EXPECT_STREQ("d/a.ll", path.c_str());
 }
 
@@ -4354,8 +4403,13 @@ TEST(OclocCompile, whenDetectedPotentialInputTypeMismatchThenEmitsWarning) {
 
             testing::internal::CaptureStdout();
 
-            ocloc.inputFileLlvm = c.isLlvm;
-            ocloc.inputFileSpirV = c.isSpirv;
+            ocloc.inputCodeType = IGC::CodeType::oclC;
+            if (c.isLlvm) {
+                ocloc.inputCodeType = IGC::CodeType::llvmBc;
+            }
+            if (c.isSpirv) {
+                ocloc.inputCodeType = IGC::CodeType::spirV;
+            }
             ocloc.inputFile = "src";
             ocloc.uniqueHelper->filesMap["src"] = c.input;
             ocloc.uniqueHelper->callBaseFileExists = false;

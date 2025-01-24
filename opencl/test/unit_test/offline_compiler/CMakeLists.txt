@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -83,6 +83,7 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_validator_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/offline_compiler_ext_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdout_capturer.h

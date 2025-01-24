@@ -100,6 +100,8 @@ set(CLOC_LIB_SRCS_LIB
     ${OCLOC_DIRECTORY}/source/multi_command.h
     ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_api.h
+    ${OCLOC_DIRECTORY}/source/offline_compiler_ext.h
+    ${OCLOC_DIRECTORY}/source${BRANCH_DIR_SUFFIX}/offline_compiler_ext.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
     ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
     ${OCLOC_DIRECTORY}/source/ocloc_concat.cpp
