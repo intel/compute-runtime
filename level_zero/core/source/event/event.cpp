@@ -581,7 +581,7 @@ NEO::GraphicsAllocation *Event::getAllocation(Device *device) const {
 
 void Event::setGpuStartTimestamp() {
     if (isEventTimestampFlagSet()) {
-        this->device->getGlobalTimestamps(&cpuStartTimestamp, &gpuStartTimestamp, false);
+        this->device->getGlobalTimestamps(&cpuStartTimestamp, &gpuStartTimestamp);
         cpuStartTimestamp = cpuStartTimestamp / this->device->getNEODevice()->getDeviceInfo().outProfilingTimerResolution;
     }
 }

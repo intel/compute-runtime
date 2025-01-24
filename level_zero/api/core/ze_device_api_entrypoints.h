@@ -108,7 +108,7 @@ ze_result_t zeDeviceGetGlobalTimestamps(
     ze_device_handle_t hDevice,
     uint64_t *hostTimestamp,
     uint64_t *deviceTimestamp) {
-    return L0::Device::fromHandle(hDevice)->getGlobalTimestamps(hostTimestamp, deviceTimestamp, true);
+    return L0::Device::fromHandle(hDevice)->getGlobalTimestamps(hostTimestamp, deviceTimestamp);
 }
 
 ze_result_t zeDeviceReserveCacheExt(

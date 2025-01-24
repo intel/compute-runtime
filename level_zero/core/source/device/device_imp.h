@@ -71,7 +71,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
                                                ze_command_queue_group_properties_t *pCommandQueueGroupProperties) override;
     ze_result_t getExternalMemoryProperties(ze_device_external_memory_properties_t *pExternalMemoryProperties) override;
-    ze_result_t getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp, const bool useSubmissionMethod) override;
+    ze_result_t getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) override;
     ze_result_t getDebugProperties(zet_device_debug_properties_t *pDebugProperties) override;
 
     ze_result_t systemBarrier() override;

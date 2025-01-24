@@ -1001,7 +1001,7 @@ ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronize
     uint64_t hostTimestamp;
     uint64_t deviceTimestamp;
 
-    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp, false);
+    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
     if (result != ZE_RESULT_SUCCESS) {
         *globalTimestamp = 0;
         *metricTimestamp = 0;
