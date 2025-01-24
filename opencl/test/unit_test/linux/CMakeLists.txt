@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -26,6 +26,7 @@ add_executable(igdrcl_${target_name}
                ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_drm.cpp
                ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
                ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
+               ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux${BRANCH_DIR_SUFFIX}/options_linux.cpp
                ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.inl

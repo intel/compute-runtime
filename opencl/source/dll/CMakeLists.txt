@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,6 +19,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
     ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
     ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_command_stream.cpp
     ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp

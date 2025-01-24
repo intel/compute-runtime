@@ -27,7 +27,7 @@ class UnifiedMemoryReuseCleaner {
     MOCKABLE_VIRTUAL void startThread();
     void stopThread();
 
-    static bool isSupported() { return false; }
+    static bool isSupported();
 
     void registerSvmAllocationCache(SvmAllocationCache *cache);
     void unregisterSvmAllocationCache(SvmAllocationCache *cache);

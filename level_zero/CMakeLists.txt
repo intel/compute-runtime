@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -221,6 +221,7 @@ if(BUILD_WITH_L0)
               ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
               ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
               ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/unified_memory_reuse_cleaner_enabled.cpp
               ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr.cpp
               ${NEO_SHARED_DIRECTORY}/gmm_helper/resource_info.cpp
               ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2024 Intel Corporation
+# Copyright (C) 2021-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -202,6 +202,7 @@ set(neo_libult_SRCS_LINUX
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/linux/mock_drm_memory_manager.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/device_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_direct_submission_controller_enabled.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_unified_memory_reuse_cleaner_enabled.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/create_drm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_memory_manager_fixture.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/drm_neo_create.cpp
@@ -216,6 +217,7 @@ set(neo_libult_SRCS_WINDOWS
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/os_interface.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/device_ult.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_direct_submission_controller_enabled.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_unified_memory_reuse_cleaner_enabled.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/create_wddm_memory_manager.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows${BRANCH_DIR_SUFFIX}/options.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/options.inl
