@@ -36,8 +36,7 @@ class IoctlHelperXe : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
     static std::unique_ptr<IoctlHelperXe> create(Drm &drmArg);
-    static bool queryDeviceIdAndRevision(const Drm &drm);
-
+    static bool queryDeviceIdAndRevision(Drm &drm);
     IoctlHelperXe(Drm &drmArg);
     ~IoctlHelperXe() override;
     int ioctl(DrmIoctl request, void *arg) override;

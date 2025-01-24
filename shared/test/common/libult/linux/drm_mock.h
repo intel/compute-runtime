@@ -38,6 +38,7 @@ class DrmMock : public Drm {
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
     using Drm::ioctlHelper;
+    using Drm::isSharedSystemAllocEnabled;
     using Drm::l3CacheInfo;
     using Drm::memoryInfo;
     using Drm::memoryInfoQueried;
@@ -51,6 +52,7 @@ class DrmMock : public Drm {
     using Drm::queryDeviceIdAndRevision;
     using Drm::requirePerContextVM;
     using Drm::setPairAvailable;
+    using Drm::setSharedSystemAllocEnable;
     using Drm::setupIoctlHelper;
     using Drm::sliceCountChangeSupported;
     using Drm::systemInfo;

@@ -45,6 +45,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/api_intercept.h"
+#include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/utilities/io_functions.h"
 
@@ -54,6 +55,10 @@
 #include <fstream>
 #include <map>
 #include <sstream>
+
+#ifndef DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR
+#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR (1 << 4)
+#endif
 
 namespace NEO {
 
@@ -1449,6 +1454,8 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         vmBind.offset = 0;
         vmBind.start = bo->peekAddress();
         vmBind.userptr = bo->getUserptr();
+        vmBind.sharedSystemUsmEnabled = drm->isSharedSystemAllocEnabled();
+        vmBind.sharedSystemUsmBind = false;
 
         if (bo->getColourWithBind()) {
             vmBind.length = bo->getColourChunk();
@@ -1562,6 +1569,26 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
 
     if (ret == 0) {
         drmVmId = ctl.vmId;
+        if (isSharedSystemAllocEnabled()) {
+            VmBindParams vmBind{};
+            vmBind.vmId = static_cast<uint32_t>(ctl.vmId);
+            vmBind.flags = DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR;
+            vmBind.length = (0x1ull << ((NEO::CpuInfo::getInstance().getVirtualAddressSize()) - 1));
+            vmBind.sharedSystemUsmEnabled = true;
+            vmBind.sharedSystemUsmBind = true;
+            VmBindExtUserFenceT vmBindExtUserFence{};
+            ioctlHelper->fillVmBindExtUserFence(vmBindExtUserFence,
+                                                castToUint64(ioctlHelper->getPagingFenceAddress(0, nullptr)),
+                                                getNextFenceVal(0),
+                                                vmBind.extensions);
+            ioctlHelper->setVmBindUserFence(vmBind, vmBindExtUserFence);
+
+            if (ioctlHelper->vmBind(vmBind)) {
+                setSharedSystemAllocEnable(false);
+                printDebugString(debugManager.flags.PrintDebugMessages.get(), stderr,
+                                 "INFO:  Shared System USM capability not detected\n");
+            }
+        }
         if (ctl.vmId == 0) {
             // 0 is reserved for invalid/unassigned ppgtt
             return -1;

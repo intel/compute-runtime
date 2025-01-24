@@ -75,6 +75,8 @@ struct VmBindParams {
     uint64_t userFence;
     uint64_t patIndex;
     uint64_t userptr;
+    bool sharedSystemUsmEnabled;
+    bool sharedSystemUsmBind;
 };
 
 struct UuidRegisterResult {
@@ -245,8 +247,7 @@ class IoctlHelperI915 : public IoctlHelper {
   public:
     using IoctlHelper::IoctlHelper;
 
-    static bool queryDeviceIdAndRevision(const Drm &drm);
-
+    static bool queryDeviceIdAndRevision(Drm &drm);
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) override;
     void logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) override;
     void fillExecBuffer(ExecBuffer &execBuffer, uintptr_t buffersPtr, uint32_t bufferCount, uint32_t startOffset, uint32_t size, uint64_t flags, uint32_t drmContextId) override;

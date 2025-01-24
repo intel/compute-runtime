@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -678,7 +678,7 @@ bool IoctlHelperI915::isPreemptionSupported() {
     return retVal == 0 && (schedulerCap & I915_SCHEDULER_CAP_PREEMPTION);
 }
 
-bool IoctlHelperI915::queryDeviceIdAndRevision(const Drm &drm) {
+bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
 
     HardwareInfo *hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();
     auto fileDescriptor = drm.getFileDescriptor();
@@ -707,4 +707,5 @@ bool IoctlHelperI915::queryDeviceIdAndRevision(const Drm &drm) {
     hwInfo->platform.usRevId = param;
     return true;
 }
+
 } // namespace NEO
