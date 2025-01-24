@@ -1148,6 +1148,7 @@ struct drm_xe_exec_queue_create {
 	/** @vm_id: VM to use for this exec queue */
 	__u32 vm_id;
 
+#define DRM_XE_EXEC_QUEUE_LOW_LATENCY_HINT	(1 << 0)
 	/** @flags: MBZ */
 	__u32 flags;
 
