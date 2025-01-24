@@ -1904,7 +1904,7 @@ ze_result_t DeviceImp::getCsrForHighPriority(NEO::CommandStreamReceiver **csr, b
 }
 
 bool DeviceImp::isSuitableForLowPriority(ze_command_queue_priority_t priority, bool copyOnly) {
-    bool engineSuitable = copyOnly ? getGfxCoreHelper().getContextGroupContextsCount() > 0 : !this->implicitScalingCapable;
+    bool engineSuitable = copyOnly ? getGfxCoreHelper().areSecondaryContextsSupported() : !this->implicitScalingCapable;
 
     return (priority == ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_LOW && engineSuitable);
 }

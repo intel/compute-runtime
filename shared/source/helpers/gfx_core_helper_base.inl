@@ -728,6 +728,11 @@ void GfxCoreHelperHw<GfxFamily>::initializeDefaultHpCopyEngine(const HardwareInf
 }
 
 template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::initializeFromProductHelper(const ProductHelper &productHelper) {
+    secondaryContextsEnabled = productHelper.areSecondaryContextsSupported();
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::is48ResourceNeededForCmdBuffer() const {
     return true;
 }

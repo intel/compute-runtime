@@ -3252,18 +3252,24 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenTaskCountZeroAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
           HeapfulSupportedMatch) {
-    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ContextGroupSize.set(0);
+    NEO::MockDevice *mockNeoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    MockDeviceImp l0Device(mockNeoDevice, mockNeoDevice->getExecutionEnvironment());
+
+    auto &csr = mockNeoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
     ze_result_t returnValue;
-    L0::ult::CommandList *cmdListObject = CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false));
+    L0::ult::CommandList *cmdListObject = CommandList::whiteboxCast(CommandList::create(productFamily, &l0Device, engineGroupType, 0u, returnValue, false));
 
     auto sizeBeforeDestroy = csrStream.getUsed();
 
     returnValue = cmdListObject->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    cmdListObject = CommandList::whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue, false));
+    cmdListObject = CommandList::whiteboxCast(CommandList::create(productFamily, &l0Device, engineGroupType, 0u, returnValue, false));
 
     returnValue = cmdListObject->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);

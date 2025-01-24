@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -458,8 +458,17 @@ HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResu
             EXPECT_FALSE(largeGrfValues[3]);
         }
     } else {
-        ASSERT_EQ(1u, largeGrfValues.size());
-        EXPECT_FALSE(largeGrfValues[0]);
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        if (gfxCoreHelper.areSecondaryContextsSupported() == false) {
+            ASSERT_EQ(1u, largeGrfValues.size());
+            EXPECT_FALSE(largeGrfValues[0]);
+        } else {
+            EXPECT_EQ(0u, largeGrfValues.size());
+            largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(*this->csr,
+                                                                                          this->csr->getCS(0));
+            ASSERT_NE(0u, largeGrfValues.size());
+            EXPECT_FALSE(largeGrfValues[0]);
+        }
     }
 
     expectMemory<FamilyType>(

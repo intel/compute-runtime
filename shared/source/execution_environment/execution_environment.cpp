@@ -115,7 +115,7 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
 
         uint32_t numRootContexts = hasRootCsr ? 1 : 0;
         uint32_t numSecondaryContexts = 0;
-        if (gfxCoreHelper.getContextGroupContextsCount() > 0) {
+        if (gfxCoreHelper.areSecondaryContextsSupported()) {
             numSecondaryContexts += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
             numSecondaryContexts += numHpEngines * gfxCoreHelper.getContextGroupContextsCount();
             osContextCount -= (numRegularEngines + numHpEngines);

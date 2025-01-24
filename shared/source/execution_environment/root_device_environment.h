@@ -84,6 +84,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
     void initHelpers();
     void initGfxCoreHelper();
     void initializeGfxCoreHelperFromHwInfo();
+    void initializeGfxCoreHelperFromProductHelper();
     void initApiGfxCoreHelper();
     void initCompilerProductHelper();
     void initReleaseHelper();

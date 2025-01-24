@@ -158,6 +158,7 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
 void RootDeviceEnvironment::initHelpers() {
     initProductHelper();
     initGfxCoreHelper();
+    initializeGfxCoreHelperFromProductHelper();
     initializeGfxCoreHelperFromHwInfo();
     initApiGfxCoreHelper();
     initCompilerProductHelper();
@@ -168,6 +169,12 @@ void RootDeviceEnvironment::initHelpers() {
 void RootDeviceEnvironment::initializeGfxCoreHelperFromHwInfo() {
     if (gfxCoreHelper != nullptr) {
         gfxCoreHelper->initializeDefaultHpCopyEngine(*this->getHardwareInfo());
+    }
+}
+
+void RootDeviceEnvironment::initializeGfxCoreHelperFromProductHelper() {
+    if (this->productHelper) {
+        gfxCoreHelper->initializeFromProductHelper(*this->productHelper.get());
     }
 }
 
