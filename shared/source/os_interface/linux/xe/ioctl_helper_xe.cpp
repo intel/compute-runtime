@@ -665,6 +665,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
+    create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
 
     printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
                      create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
@@ -707,6 +708,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     }
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
+    create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
 
     printDebugString(debugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Performing DRM_IOCTL_XE_GEM_CREATE with {vmid=0x%x size=0x%lx flags=0x%x placement=0x%x caching=%hu }",
                      create.vm_id, create.size, create.flags, create.placement, create.cpu_caching);
