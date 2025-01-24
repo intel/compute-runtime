@@ -235,8 +235,6 @@ class IoctlHelper {
 
     virtual bool isTimestampsRefreshEnabled() { return false; }
 
-    virtual bool makeResidentBeforeLockNeeded() { return false; }
-
   protected:
     Drm &drm;
     ExternalCtx *externalCtx = nullptr;
