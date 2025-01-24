@@ -369,7 +369,7 @@ TEST_F(EventPoolCreate, GivenDeviceThenEventPoolIsCreated) {
     if (l0GfxCoreHelper.alwaysAllocateEventInLocalMem()) {
         EXPECT_EQ(NEO::AllocationType::gpuTimestampDeviceBuffer, eventPool->getAllocation().getAllocationType());
     } else {
-        EXPECT_EQ(NEO::AllocationType::bufferHostMemory, eventPool->getAllocation().getAllocationType());
+        EXPECT_EQ(NEO::AllocationType::tagBuffer, eventPool->getAllocation().getAllocationType());
     }
     eventPool->destroy();
 }
