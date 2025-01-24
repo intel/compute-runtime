@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,13 +28,12 @@ inline void BlitterDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmd
                                                                uint64_t gpuAddress,
                                                                uint64_t immediateData,
                                                                const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                               bool useNotifyEnable,
                                                                bool partitionedWorkload,
                                                                bool dcFlushRequired) {
     NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
     MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.notifyEnable = useNotifyEnable;
+    args.notifyEnable = true;
 
     EncodeMiFlushDW<GfxFamily>::programWithWa(cmdBuffer, gpuAddress, immediateData, args);
 }

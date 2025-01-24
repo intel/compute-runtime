@@ -1545,7 +1545,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenImageWithHostPtrWhenCreateImageThenStop
     mockCsr->blitterDirectSubmissionAvailable = true;
     mockCsr->blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(*mockCsr);
     auto directSubmission = reinterpret_cast<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> *>(mockCsr->blitterDirectSubmission.get());
-    directSubmission->initialize(true, false);
+    directSubmission->initialize(true);
 
     EXPECT_TRUE(directSubmission->ringStart);
     std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
@@ -1564,7 +1564,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenBufferWithHostPtrWhenCreateBufferThenSt
     mockCsr->blitterDirectSubmissionAvailable = true;
     mockCsr->blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(*mockCsr);
     auto directSubmission = reinterpret_cast<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> *>(mockCsr->blitterDirectSubmission.get());
-    directSubmission->initialize(true, false);
+    directSubmission->initialize(true);
 
     EXPECT_TRUE(directSubmission->ringStart);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(context));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,7 +92,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
 
     EXPECT_EQ(1u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
 
-    bool ret = wddmDirectSubmission->initialize(true, false);
+    bool ret = wddmDirectSubmission->initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(wddmDirectSubmission->ringStart);
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[0].ringBuffer);
@@ -128,7 +128,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedWithMiMemFenc
 
     EXPECT_EQ(1u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
 
-    bool ret = wddmDirectSubmission->initialize(true, false);
+    bool ret = wddmDirectSubmission->initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(wddmDirectSubmission->ringStart);
 
@@ -154,7 +154,7 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
 
     EXPECT_EQ(0u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
 
-    bool ret = wddmDirectSubmission->initialize(false, false);
+    bool ret = wddmDirectSubmission->initialize(false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(wddmDirectSubmission->ringStart);
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[0].ringBuffer);
@@ -182,7 +182,7 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSubmitingCmdBufferThenExpectPassWddmContextAndProperHeader) {
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = wddmDirectSubmission.initialize(false, false);
+    bool ret = wddmDirectSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
     uint64_t gpuAddress = 0xFF00FF000;
@@ -315,7 +315,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = wddmDirectSubmission.initialize(true, false);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffers[0].ringBuffer->getGpuAddress() + usedSpace;
@@ -341,7 +341,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = wddmDirectSubmission.initialize(false, false);
+    bool ret = wddmDirectSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
@@ -366,7 +366,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorF
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = wddmDirectSubmission.initialize(false, false);
+    bool ret = wddmDirectSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
     wddmDirectSubmission.flushMonitorFence();
@@ -382,7 +382,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenH
     debugManager.flags.DirectSubmissionNewResourceTlbFlush.set(1);
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = wddmDirectSubmission.initialize(false, false);
+    bool ret = wddmDirectSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
@@ -401,7 +401,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
 
     VariableBackup<uint64_t> cpuFenceBackup(&cpuFence, 0);
 
-    bool ret = wddmDirectSubmission.initialize(true, false);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
     uint64_t expectedWaitFence = 0x10ull;
     wddmDirectSubmission.ringBuffers[1u].completionFence = expectedWaitFence;
@@ -435,7 +435,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
 
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = wddmDirectSubmission.initialize(true, false);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
     uint64_t expectedWaitFence = 0x10ull;
     wddmDirectSubmission.ringBuffers[1u].completionFence = expectedWaitFence;
@@ -771,9 +771,8 @@ HWTEST_F(WddmDirectSubmissionTest,
     EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
     wddmDirectSubmission.disableMonitorFence = true;
 
-    bool ret = wddmDirectSubmission.initialize(true, true);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
 
     size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
     ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -837,9 +836,8 @@ HWTEST_F(WddmDirectSubmissionTest,
     EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
     wddmDirectSubmission.disableMonitorFence = true;
 
-    bool ret = wddmDirectSubmission.initialize(true, true);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
 
     size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
     ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -946,9 +944,8 @@ HWTEST_F(WddmDirectSubmissionTest,
     EXPECT_FALSE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
     wddmDirectSubmission.disableMonitorFence = true;
 
-    bool ret = wddmDirectSubmission.initialize(true, true);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
 
     size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
     ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -1009,9 +1006,8 @@ HWTEST_F(WddmDirectSubmissionTest,
     EXPECT_TRUE(wddmDirectSubmission.inputMonitorFenceDispatchRequirement);
     wddmDirectSubmission.disableMonitorFence = true;
 
-    bool ret = wddmDirectSubmission.initialize(true, true);
+    bool ret = wddmDirectSubmission.initialize(true);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(wddmDirectSubmission.useNotifyForPostSync);
 
     size_t sizeUsedBefore = wddmDirectSubmission.ringCommandStream.getUsed();
     ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -1066,7 +1062,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
-    wddmDirectSubmission.initialize(true, true);
+    wddmDirectSubmission.initialize(true);
 
     bool ret = wddmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
@@ -1164,7 +1160,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionWhenUnblockPagingFenceSe
     auto mockedPagingFence = 20u;
 
     MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    wddmDirectSubmission.initialize(false, false);
+    wddmDirectSubmission.initialize(false);
     EXPECT_EQ(0u, wddmDirectSubmission.semaphoreData->pagingFenceCounter);
     wddm->mockPagingFence = mockedPagingFence;
 

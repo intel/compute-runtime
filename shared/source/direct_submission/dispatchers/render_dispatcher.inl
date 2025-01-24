@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,13 +29,12 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               uint64_t gpuAddress,
                                                               uint64_t immediateData,
                                                               const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                              bool useNotifyEnable,
                                                               bool partitionedWorkload,
                                                               bool dcFlushRequired) {
     PipeControlArgs args;
     args.dcFlushEnable = dcFlushRequired;
     args.workloadPartitionOffset = partitionedWorkload;
-    args.notifyEnable = useNotifyEnable;
+    args.notifyEnable = true;
     args.textureCacheInvalidationEnable = true;
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(

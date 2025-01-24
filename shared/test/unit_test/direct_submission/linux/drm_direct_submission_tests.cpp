@@ -101,7 +101,6 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::switchRingBuffers;
     using BaseClass::tagAddress;
     using BaseClass::updateTagValue;
-    using BaseClass::useNotifyForPostSync;
     using BaseClass::wait;
     using BaseClass::workPartitionAllocation;
 };
@@ -154,7 +153,7 @@ HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsRet
     auto directSubmission = DirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::create(*device->getDefaultEngine().commandStreamReceiver);
     EXPECT_NE(directSubmission.get(), nullptr);
 
-    bool ret = directSubmission->initialize(false, false);
+    bool ret = directSubmission->initialize(false);
     EXPECT_TRUE(ret);
 }
 
@@ -998,7 +997,7 @@ HWTEST_F(DrmDirectSubmissionTest,
 
     FlushStampTracker flushStamp(true);
 
-    EXPECT_TRUE(drmDirectSubmission.initialize(false, false));
+    EXPECT_TRUE(drmDirectSubmission.initialize(false));
 
     BatchBuffer batchBuffer = {};
     GraphicsAllocation *commandBuffer = nullptr;
@@ -1056,7 +1055,7 @@ HWTEST_F(DrmDirectSubmissionTest,
 
     FlushStampTracker flushStamp(true);
 
-    EXPECT_TRUE(drmDirectSubmission.initialize(false, false));
+    EXPECT_TRUE(drmDirectSubmission.initialize(false));
 
     BatchBuffer batchBuffer = {};
     GraphicsAllocation *commandBuffer = nullptr;

@@ -1394,12 +1394,12 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             if (!this->isAnyDirectSubmissionEnabled()) {
                 if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
                     blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(*this);
-                    ret = blitterDirectSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
+                    ret = blitterDirectSubmission->initialize(submitOnInit);
                     completionFenceValuePointer = blitterDirectSubmission->getCompletionValuePointer();
 
                 } else {
                     directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(*this);
-                    ret = directSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
+                    ret = directSubmission->initialize(submitOnInit);
                     completionFenceValuePointer = directSubmission->getCompletionValuePointer();
                 }
                 auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
     uint64_t gpuVa = 0xFF00FF0000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, false, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
@@ -127,7 +127,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
     uint64_t gpuVa = 0xBADA550000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, true, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), true, false);
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
@@ -144,6 +144,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
             EXPECT_TRUE(pipeControl->getWorkloadPartitionIdOffsetEnable());
             EXPECT_FALSE(pipeControl->getTlbInvalidate());
             EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
+            EXPECT_TRUE(pipeControl->getNotifyEnable());
             break;
         }
     }
@@ -154,37 +155,6 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenCheckingForMultiTileSynchronizatio
     EXPECT_TRUE(RenderDispatcher<FamilyType>::isMultiTileSynchronizationSupported());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
-            givenRenderDispatcherNotifyFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndNotifyParameter) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
-
-    uint64_t gpuAddress = 0xADD35500ull;
-    uint64_t value = 0x102030;
-
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuAddress, value, this->pDevice->getRootDeviceEnvironment(), true, false, false);
-
-    HardwareParse hwParse;
-    hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(cmdBuffer);
-    hwParse.findHardwareCommands<FamilyType>();
-
-    bool foundMonitorFence = false;
-    for (auto &it : hwParse.pipeControlList) {
-        PIPE_CONTROL *pipeControl = reinterpret_cast<PIPE_CONTROL *>(it);
-        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
-            foundMonitorFence = true;
-            EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
-            EXPECT_EQ(value, pipeControl->getImmediateData());
-            EXPECT_TRUE(pipeControl->getNotifyEnable());
-            EXPECT_FALSE(pipeControl->getTlbInvalidate());
-            EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
-            break;
-        }
-    }
-    EXPECT_TRUE(foundMonitorFence);
-}
-
 HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValueAndDcFlushParameter) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -192,7 +162,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFe
     uint64_t gpuVa = 0xFF00FF0000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, false, true);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, true);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);

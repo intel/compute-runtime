@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,12 +82,12 @@ struct MockWddmCsrL0 : public WddmCommandStreamReceiver<GfxFamily> {
             if (!initBlitterDirectSubmission) {
                 directSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(*this);
-                ret = directSubmission->initialize(true, false);
+                ret = directSubmission->initialize(true);
                 this->dispatchMode = DispatchMode::immediateDispatch;
             } else {
                 blitterDirectSubmission = std::make_unique<
                     MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(*this);
-                blitterDirectSubmission->initialize(true, false);
+                blitterDirectSubmission->initialize(true);
             }
         }
         return ret;

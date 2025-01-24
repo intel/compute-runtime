@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,7 +81,7 @@ class DirectSubmissionHw {
 
     virtual ~DirectSubmissionHw();
 
-    bool initialize(bool submitOnInit, bool useNotify);
+    bool initialize(bool submitOnInit);
 
     MOCKABLE_VIRTUAL bool stopRingBuffer(bool blocking);
 
@@ -253,7 +253,6 @@ class DirectSubmissionHw {
     bool disableMonitorFence = false;
     bool partitionedMode = false;
     bool partitionConfigSet = true;
-    bool useNotifyForPostSync = false;
     bool miMemFenceRequired = false;
     bool systemMemoryFenceAddressSet = false;
     bool completionFenceSupported = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
 
     uint64_t expectedGpuAddress = 0x5100ull;
     uint64_t expectedValue = 0x1234ull;
-    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getRootDeviceEnvironment(), false, false, false);
+    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getRootDeviceEnvironment(), false, false);
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 

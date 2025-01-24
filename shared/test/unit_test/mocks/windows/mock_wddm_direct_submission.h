@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,6 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::switchRingBuffers;
     using BaseClass::updateMonitorFenceValueForResidencyList;
     using BaseClass::updateTagValue;
-    using BaseClass::useNotifyForPostSync;
     using BaseClass::wddm;
     using BaseClass::WddmDirectSubmission;
     using typename BaseClass::RingBufferUse;

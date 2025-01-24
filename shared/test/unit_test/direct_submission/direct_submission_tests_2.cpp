@@ -126,7 +126,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenIni
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
     EXPECT_EQ(heaplessStateInit && miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
-    EXPECT_TRUE(directSubmission.initialize(true, false));
+    EXPECT_TRUE(directSubmission.initialize(true));
 
     EXPECT_EQ(miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
@@ -142,7 +142,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenDis
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
     EXPECT_EQ(heaplessStateInit && miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
-    EXPECT_TRUE(directSubmission.initialize(false, false));
+    EXPECT_TRUE(directSubmission.initialize(false));
 
     EXPECT_EQ(heaplessStateInit && miMemFenceSupported, directSubmission.systemMemoryFenceAddressSet);
 
@@ -160,7 +160,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenMiMemFenceSupportedWhenSys
     EXPECT_EQ(miMemFenceSupported, directSubmission.miMemFenceRequired);
     directSubmission.systemMemoryFenceAddressSet = true;
 
-    EXPECT_TRUE(directSubmission.initialize(false, false));
+    EXPECT_TRUE(directSubmission.initialize(false));
 
     EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 
@@ -173,7 +173,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenPciBarrierPtrSetWhenUnbloc
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     uint32_t pciBarrierMock = 1;
     directSubmission.pciBarrierPtr = &pciBarrierMock;
-    EXPECT_TRUE(directSubmission.initialize(false, false));
+    EXPECT_TRUE(directSubmission.initialize(false));
 
     directSubmission.unblockGpu();
 
@@ -189,7 +189,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToFalseWhenCre
     EXPECT_FALSE(directSubmission.miMemFenceRequired);
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
 
-    EXPECT_TRUE(directSubmission.initialize(true, false));
+    EXPECT_TRUE(directSubmission.initialize(true));
 
     EXPECT_FALSE(directSubmission.miMemFenceRequired);
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
@@ -208,7 +208,7 @@ HWTEST_F(DirectSubmissionDispatchMiMemFenceTest, givenDebugFlagSetToTrueWhenCrea
     EXPECT_TRUE(directSubmission.miMemFenceRequired);
     EXPECT_FALSE(directSubmission.systemMemoryFenceAddressSet);
 
-    EXPECT_TRUE(directSubmission.initialize(true, false));
+    EXPECT_TRUE(directSubmission.initialize(true));
 
     EXPECT_TRUE(directSubmission.systemMemoryFenceAddressSet);
     EXPECT_TRUE(directSubmission.miMemFenceRequired);
@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     directSubmission.partitionedMode = true;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
-    bool ret = directSubmission.initialize(true, false);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
@@ -308,7 +308,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenCopyCommandBufferIntoRingWhenD
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
 
-    bool ret = directSubmission.initialize(true, false);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
 
     size_t sizeUsed = directSubmission.ringCommandStream.getUsed();
@@ -619,7 +619,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = directSubmission.initialize(true, false);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -663,7 +663,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = directSubmission.initialize(false, false);
+    bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
     EXPECT_EQ(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -699,7 +699,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = directSubmission.initialize(true, false);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     GraphicsAllocation *oldRingAllocation = directSubmission.ringCommandStream.getGraphicsAllocation();
@@ -740,7 +740,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    bool ret = directSubmission.initialize(false, false);
+    bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
     EXPECT_EQ(0u, directSubmission.semaphoreData->queueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
@@ -779,7 +779,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintBuffersWh
 
     testing::internal::CaptureStdout();
 
-    bool ret = directSubmission.initialize(false, false);
+    bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
     EXPECT_TRUE(ret);
@@ -806,7 +806,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDirectSubmissionPrintSemaphore
 
         testing::internal::CaptureStdout();
 
-        bool ret = directSubmission.initialize(false, false);
+        bool ret = directSubmission.initialize(false);
         EXPECT_TRUE(ret);
         ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
         EXPECT_TRUE(ret);
@@ -844,7 +844,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     directSubmission.partitionConfigSet = false;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
-    bool ret = directSubmission.initialize(true, false);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.partitionConfigSet);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
@@ -915,7 +915,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
     directSubmission.partitionConfigSet = false;
     directSubmission.workPartitionAllocation = ultCsr->getWorkPartitionAllocation();
 
-    bool ret = directSubmission.initialize(false, false);
+    bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
     EXPECT_FALSE(directSubmission.partitionConfigSet);
     EXPECT_FALSE(directSubmission.ringStart);
@@ -950,7 +950,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenRenderDirectSubmissionUsingNotifyEnabledWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithNotifyFlag) {
+         givenRenderDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithNotifyFlag) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using Dispatcher = RenderDispatcher<FamilyType>;
@@ -960,9 +960,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.disableMonitorFence = false;
 
-    bool ret = directSubmission.initialize(true, true);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(directSubmission.useNotifyForPostSync);
 
     size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -995,9 +994,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.disableMonitorFence = false;
 
-    bool ret = directSubmission.initialize(true, true);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(directSubmission.useNotifyForPostSync);
 
     size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
     ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
@@ -1023,7 +1021,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenRingBufferRestartRequestWhenDispatchCommandBuffer) {
     FlushStampTracker flushStamp(true);
     MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    bool ret = directSubmission.initialize(true, true);
+    bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
     EXPECT_EQ(directSubmission.submitCount, 1u);
 
@@ -1043,7 +1041,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenDispatchingWor
         debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
 
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        EXPECT_TRUE(directSubmission.initialize(true, true));
+        EXPECT_TRUE(directSubmission.initialize(true));
 
         auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
 
@@ -1066,7 +1064,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
         debugManager.flags.DirectSubmissionInsertSfenceInstructionPriorToSubmission.set(debugFlag);
 
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        EXPECT_TRUE(directSubmission.initialize(true, true));
+        EXPECT_TRUE(directSubmission.initialize(true));
 
         auto initialCounterValue = CpuIntrinsicsTests::sfenceCounter.load();
 
@@ -1554,7 +1552,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenAllocatingResourcesThenCreate
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.callBaseResident = true;
 
-    directSubmission.initialize(false, false);
+    directSubmission.initialize(false);
 
     auto allocsIter = mockMemoryOperations->gfxAllocationsForMakeResident.rbegin();
 
@@ -1575,7 +1573,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatching
     debugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.set(123);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
 
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
@@ -1588,7 +1586,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
 
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier, directSubmission.currentRelaxedOrderingQueueSize);
@@ -1662,14 +1660,14 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStat
 
     {
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(false, false);
+        directSubmission.initialize(false);
 
         EXPECT_EQ(0u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     }
 
     {
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
         EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
@@ -1679,7 +1677,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStat
 
     {
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(false, false);
+        directSubmission.initialize(false);
         EXPECT_EQ(0u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
 
         directSubmission.dispatchUllsState();
@@ -1733,7 +1731,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenPreinitialize
 
     {
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(false, false);
+        directSubmission.initialize(false);
         EXPECT_FALSE(verifyInitRegisters(directSubmission.ringCommandStream, 0));
 
         EXPECT_EQ(0u, directSubmission.preinitializeRelaxedOrderingSectionsCalled);
@@ -1744,7 +1742,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenPreinitialize
 
     {
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
         EXPECT_TRUE(verifyInitRegisters(directSubmission.ringCommandStream, 0));
 
         EXPECT_EQ(1u, directSubmission.preinitializeRelaxedOrderingSectionsCalled);
@@ -1762,7 +1760,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenPreinitialize
 
     {
         MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(false, false);
+        directSubmission.initialize(false);
         EXPECT_EQ(0u, directSubmission.preinitializeRelaxedOrderingSectionsCalled);
 
         directSubmission.dispatchUllsState();
@@ -1787,7 +1785,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     auto offset = directSubmission.ringCommandStream.getUsed() + directSubmission.getSizeStartSection() + RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>();
 
     batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -1857,7 +1855,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSe
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     directSubmission.ringCommandStream.getUsed();
 
     auto sizeToConsume = directSubmission.ringCommandStream.getAvailableSpace() -
@@ -1877,7 +1875,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchS
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     auto offset = directSubmission.ringCommandStream.getUsed();
 
     uint64_t staticSchedulerGpuAddress = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress();
@@ -1906,7 +1904,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispa
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     size_t offset = directSubmission.ringCommandStream.getUsed();
 
     uint64_t staticSchedulerGpuAddress = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress();
@@ -1968,7 +1966,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenFirstBbWithStallingCmdsWhen
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     size_t offset = directSubmission.ringCommandStream.getUsed();
 
     uint64_t staticSchedulerGpuAddress = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress();
@@ -2008,7 +2006,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     size_t offset = directSubmission.ringCommandStream.getUsed();
 
     uint64_t staticSchedulerGpuAddress = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress();
@@ -2069,7 +2067,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, WhenStoppingRingWithoutSubmissio
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
     size_t offset = directSubmission.ringCommandStream.getUsed();
 
     uint64_t staticSchedulerGpuAddress = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress();
@@ -2253,7 +2251,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenProgrammingEndingCmdsThenSet
     ultCsr->directSubmissionAvailable = true;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    directSubmission->initialize(true, false);
+    directSubmission->initialize(true);
 
     ultCsr->directSubmission.reset(directSubmission);
 
@@ -2286,7 +2284,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDep
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    directSubmission->initialize(true, false);
+    directSubmission->initialize(true);
 
     ultCsr->directSubmission.reset(directSubmission);
 
@@ -2311,7 +2309,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkloadSectionTh
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
 
     auto offset = directSubmission.ringCommandStream.getUsed();
 
@@ -2337,7 +2335,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDep
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
 
     auto offset = directSubmission.ringCommandStream.getUsed();
 
@@ -2351,7 +2349,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithoutRelaxedOrderingDep
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDependenciesWhenDispatchingNextCmdBufferThenProgramSchedulerIfNeeded, IsAtLeastXeHpcCore) {
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
@@ -2374,7 +2372,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDepend
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2390,7 +2388,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDepend
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2406,7 +2404,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDepend
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2422,7 +2420,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDepend
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2438,7 +2436,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndDepend
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDependenciesWhenDispatchingNextCmdBufferThenProgramSchedulerIfNeeded, IsAtLeastXeHpcCore) {
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
@@ -2461,7 +2459,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDep
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2477,7 +2475,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDep
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2493,7 +2491,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDep
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2509,7 +2507,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDep
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = true;
@@ -2525,7 +2523,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndDep
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithoutDependenciesWhenDispatchingNextCmdBufferThenProgramSchedulerIfNeeded, IsAtLeastXeHpcCore) {
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
@@ -2548,7 +2546,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithou
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2564,7 +2562,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithou
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2580,7 +2578,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithou
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2596,7 +2594,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithou
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = true;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2612,7 +2610,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsAndWithou
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWithoutDependenciesWhenDispatchingNextCmdBufferThenProgramSchedulerIfNeeded, IsAtLeastXeHpcCore) {
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingSchedulerSectionCalled);
         EXPECT_EQ(0u, directSubmission.dispatchRelaxedOrderingQueueStallCalled);
@@ -2635,7 +2633,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWit
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2651,7 +2649,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWit
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2667,7 +2665,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWit
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2683,7 +2681,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithNonStallingCmdsAndWit
 
     {
         MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-        directSubmission.initialize(true, false);
+        directSubmission.initialize(true);
 
         batchBuffer.hasStallingCmds = false;
         batchBuffer.hasRelaxedOrderingDependencies = false;
@@ -2728,7 +2726,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenSchedulerRequiredWhenDispat
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    directSubmission.initialize(true, false);
+    directSubmission.initialize(true);
 
     uint64_t returnPtr = 0x800100123000;
     uint64_t returnPtr2 = returnPtr + RelaxedOrderingHelper::getSizeTaskStoreSection<FamilyType>();
@@ -2791,7 +2789,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhen
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    EXPECT_TRUE(directSubmission.initialize(false, true));
+    EXPECT_TRUE(directSubmission.initialize(false));
     directSubmission.submitReturn = false;
 
     EXPECT_FALSE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
@@ -2804,7 +2802,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenNotStartedDirectSubmissionWhen
     FlushStampTracker flushStamp(true);
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    EXPECT_TRUE(directSubmission.initialize(false, true));
+    EXPECT_TRUE(directSubmission.initialize(false));
     directSubmission.updateTagValueReturn = std::numeric_limits<uint64_t>::max();
 
     EXPECT_FALSE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
@@ -2817,7 +2815,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDispatchBufferNotRequiresBlock
     HardwareParse hwParse;
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    EXPECT_TRUE(directSubmission.initialize(false, true));
+    EXPECT_TRUE(directSubmission.initialize(false));
     EXPECT_TRUE(directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
     size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
     directSubmission.handleResidencyCount = 0u;

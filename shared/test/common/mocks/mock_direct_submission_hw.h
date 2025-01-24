@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,7 +86,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::switchRingBuffersNeeded;
     using BaseClass::systemMemoryFenceAddressSet;
     using BaseClass::unblockGpu;
-    using BaseClass::useNotifyForPostSync;
     using BaseClass::workloadMode;
     using BaseClass::workloadModeOneExpectedValue;
     using BaseClass::workloadModeOneStoreAddress;
