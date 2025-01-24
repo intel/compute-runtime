@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -309,8 +309,26 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
     EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
-TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
+TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsSet) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
+    EXPECT_TRUE(drm.disableScratch);
+
+    uint32_t vmId = 0;
+    drm.createDrmVirtualMemory(vmId);
+
+    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+}
+
+TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesDebugKeyOffAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(0);
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
@@ -323,23 +341,6 @@ TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagS
     drm.createDrmVirtualMemory(vmId);
 
     EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
-}
-
-TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.DisableScratchPages.set(1);
-    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
-
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.configureScratchPagePolicy();
-    drm.configureGpuFaultCheckThreshold();
-
-    uint32_t vmId = 0;
-    drm.createDrmVirtualMemory(vmId);
-
-    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
 }
 
 TEST(DrmBufferObjectTestPrelim, givenLocalMemoryDisabledWhenCreateDrmVirtualMemoryThenVmRegionExtensionIsNotPassed) {
