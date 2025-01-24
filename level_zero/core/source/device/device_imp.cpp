@@ -1092,18 +1092,14 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp, const bool useSubmissionMethod) {
+ze_result_t DeviceImp::getGlobalTimestamps(uint64_t *hostTimestamp, uint64_t *deviceTimestamp) {
 
-    bool getGlobalTimestampUsingSubmissionMethod = true;
-
-    if (!useSubmissionMethod) {
-        // It needs to be set as false because if `useSubmissionMethod` is false then it takes precedence to the debug variable `EnableGlobalTimestampViaSubmission`.
-        getGlobalTimestampUsingSubmissionMethod = false;
-    } else if (NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() != -1) {
-        getGlobalTimestampUsingSubmissionMethod = !!NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get();
+    bool method = 0;
+    if (NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get() != -1) {
+        method = NEO::debugManager.flags.EnableGlobalTimestampViaSubmission.get();
     }
 
-    if (!getGlobalTimestampUsingSubmissionMethod) {
+    if (method == 0) {
         auto ret = getGlobalTimestampsUsingOsInterface(hostTimestamp, deviceTimestamp);
         if (ret != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {
             return ret;
