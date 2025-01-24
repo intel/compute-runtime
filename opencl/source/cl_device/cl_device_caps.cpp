@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/source/helpers/hw_info_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/kernel_properties.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -404,7 +405,9 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.hostMemCapabilities = productHelper.getHostMemCapabilities(&hwInfo);
     deviceInfo.deviceMemCapabilities = productHelper.getDeviceMemCapabilities();
-    deviceInfo.singleDeviceSharedMemCapabilities = productHelper.getSingleDeviceSharedMemCapabilities();
+
+    const bool isKmdMigrationAvailable{getMemoryManager()->isKmdMigrationAvailable(getRootDeviceIndex())};
+    deviceInfo.singleDeviceSharedMemCapabilities = productHelper.getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable);
     deviceInfo.crossDeviceSharedMemCapabilities = productHelper.getCrossDeviceSharedMemCapabilities();
     deviceInfo.sharedSystemMemCapabilities = productHelper.getSharedSystemMemCapabilities(&hwInfo);
 

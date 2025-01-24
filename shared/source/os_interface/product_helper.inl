@@ -148,10 +148,10 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemCapabilities() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities() const {
+uint64_t ProductHelperHw<gfxProduct>::getSingleDeviceSharedMemCapabilities(bool isKmdMigrationAvailable) const {
     uint64_t capabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::atomicAccess;
 
-    if (isKmdMigrationSupported() || getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::sharedSingleDevice)) {
+    if (isKmdMigrationAvailable || getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities::sharedSingleDevice)) {
         capabilities |= UnifiedSharedMemoryFlags::concurrentAccess | UnifiedSharedMemoryFlags::concurrentAtomicAccess;
     }
 

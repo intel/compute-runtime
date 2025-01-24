@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,7 @@ PVCTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInf
 PVCTEST_F(GetDeviceInfoMemCapabilitiesTest, GivenEnableUsmConcurrentAccessSupportWhenGetDeviceInfoIsCalledForPVCThenClSuccessIsReturned) {
     DebugManagerStateRestore restorer;
     debugManager.flags.EnableUsmConcurrentAccessSupport.set(0b1110);
+    debugManager.flags.UseKmdMigration.set(true);
 
     std::vector<TestParams> params = {
         {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL, CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL},

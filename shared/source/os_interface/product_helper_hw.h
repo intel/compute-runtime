@@ -24,7 +24,7 @@ class ProductHelperHw : public ProductHelper {
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const override;
     uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override;
     uint64_t getDeviceMemCapabilities() const override;
-    uint64_t getSingleDeviceSharedMemCapabilities() const override;
+    uint64_t getSingleDeviceSharedMemCapabilities(bool isKmdMigrationAvailable) const override;
     uint64_t getCrossDeviceSharedMemCapabilities() const override;
     uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const override;
     std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const override;

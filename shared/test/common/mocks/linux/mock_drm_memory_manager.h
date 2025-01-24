@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -172,6 +172,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
         return DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size, rootDeviceIndex, heapIndex, alignment);
     }
     ADDMETHOD(isLimitedRange, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
+    ADDMETHOD(isKmdMigrationAvailable, bool, true, false, (uint32_t rootDeviceIndex), (rootDeviceIndex));
 
     DeviceBitfield computeStorageInfoMemoryBanks(const AllocationProperties &properties, DeviceBitfield preferredBank, DeviceBitfield allBanks) override {
         ++computeStorageInfoMemoryBanksCalled;

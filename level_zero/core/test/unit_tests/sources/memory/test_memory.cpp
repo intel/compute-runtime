@@ -1105,7 +1105,7 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeWithInsufficientCapability
         uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const override {
             return 0;
         }
-        uint64_t getSingleDeviceSharedMemCapabilities() const override {
+        uint64_t getSingleDeviceSharedMemCapabilities(bool) const override {
             return 0;
         }
     };
@@ -1218,7 +1218,7 @@ TEST_F(MemoryTest, whenCallingSetAtomicAccessAttributeForSystemAccessSharedSingl
 
     struct MockProductHelperAtomic : NEO::ProductHelperHw<IGFX_UNKNOWN> {
         MockProductHelperAtomic() = default;
-        uint64_t getSingleDeviceSharedMemCapabilities() const override {
+        uint64_t getSingleDeviceSharedMemCapabilities(bool) const override {
             return 15;
         }
     };

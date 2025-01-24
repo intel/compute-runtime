@@ -26,6 +26,7 @@ struct KmdNotifyProperties;
 struct AllocationData;
 class CommandStreamReceiver;
 class Device;
+class Drm;
 enum class LocalMemoryAccessMode;
 struct FrontEndPropertiesSupport;
 struct HardwareInfo;
@@ -82,7 +83,7 @@ class ProductHelper {
     virtual void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const = 0;
     virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) const = 0;
     virtual uint64_t getDeviceMemCapabilities() const = 0;
-    virtual uint64_t getSingleDeviceSharedMemCapabilities() const = 0;
+    virtual uint64_t getSingleDeviceSharedMemCapabilities(bool isKmdMigrationAvailable) const = 0;
     virtual uint64_t getCrossDeviceSharedMemCapabilities() const = 0;
     virtual uint64_t getSharedSystemMemCapabilities(const HardwareInfo *hwInfo) const = 0;
     virtual std::vector<int32_t> getKernelSupportedThreadArbitrationPolicies() const = 0;

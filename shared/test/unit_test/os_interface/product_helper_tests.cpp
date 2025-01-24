@@ -115,7 +115,8 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
             }
         }
 
-        auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities();
+        constexpr bool isKmdMigrationAvailable{false};
+        auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable);
         if (singleDeviceSharedMemCapabilities > 0) {
             if (capabilityBitset.test(static_cast<uint32_t>(UsmAccessCapabilities::sharedSingleDevice))) {
                 EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities);
@@ -142,11 +143,15 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenGettingMemoryCapabilitiesThenC
 }
 
 HWTEST_F(ProductHelperTest, givenProductHelperAndSingleDeviceSharedMemAccessConcurrentAtomicEnabledIfKmdMigrationEnabled) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableUsmConcurrentAccessSupport.set(0);
 
-    auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities();
-    if ((singleDeviceSharedMemCapabilities > 0) && (productHelper->isKmdMigrationSupported())) {
-        EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities);
-        EXPECT_TRUE(UnifiedSharedMemoryFlags::concurrentAtomicAccess & singleDeviceSharedMemCapabilities);
+    for (const bool isKmdMigrationAvailable : std::array<bool, 2>{false, true}) {
+        auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable);
+        if (singleDeviceSharedMemCapabilities > 0) {
+            EXPECT_EQ(isKmdMigrationAvailable, !!(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities));
+            EXPECT_EQ(isKmdMigrationAvailable, !!(UnifiedSharedMemoryFlags::concurrentAtomicAccess & singleDeviceSharedMemCapabilities));
+        }
     }
 }
 

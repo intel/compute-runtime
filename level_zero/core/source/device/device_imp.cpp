@@ -768,21 +768,23 @@ ze_result_t DeviceImp::getMemoryProperties(uint32_t *pCount, ze_device_memory_pr
 ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) {
     auto &hwInfo = this->getHwInfo();
     auto &productHelper = this->getProductHelper();
+
     pMemAccessProperties->hostAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getHostMemCapabilities(&hwInfo));
 
     pMemAccessProperties->deviceAllocCapabilities =
         static_cast<ze_memory_access_cap_flags_t>(productHelper.getDeviceMemCapabilities());
 
+    auto memoryManager{this->getDriverHandle()->getMemoryManager()};
+    const bool isKmdMigrationAvailable{memoryManager->isKmdMigrationAvailable(this->getRootDeviceIndex())};
     pMemAccessProperties->sharedSingleDeviceAllocCapabilities =
-        static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities());
+        static_cast<ze_memory_access_cap_flags_t>(productHelper.getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable));
 
     pMemAccessProperties->sharedCrossDeviceAllocCapabilities = {};
     if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAccessSupported) {
         pMemAccessProperties->sharedCrossDeviceAllocCapabilities = ZE_MEMORY_ACCESS_CAP_FLAG_RW;
 
-        auto memoryManager = this->getDriverHandle()->getMemoryManager();
-        if (memoryManager->isKmdMigrationAvailable(this->getRootDeviceIndex()) &&
+        if (isKmdMigrationAvailable &&
             memoryManager->hasPageFaultsEnabled(*this->getNEODevice()) &&
             NEO::debugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.get() == 1) {
             pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
