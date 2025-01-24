@@ -18,15 +18,6 @@
 typedef VOID(NTAPI *_RtlInitUnicodeString)(PUNICODE_STRING destinationString, PCWSTR sourceString);
 typedef VOID(NTAPI *_NtOpenDirectoryObject)(PHANDLE directoryHandle, ACCESS_MASK desiredAccess, POBJECT_ATTRIBUTES objectAttributes);
 
-typedef wchar_t SharedSyncName[9 + 2 * (sizeof(uint32_t) + sizeof(uint64_t))];
-
-struct SharedMemoryContentHeader {
-    alignas(8) uint64_t lastSignaledValue;
-    SharedSyncName sharedSyncName;
-    uint32_t access;
-    uint32_t serializedSecurityDescriptorStringSize;
-};
-
 namespace NEO {
 
 std::unique_ptr<ExternalSemaphore> ExternalSemaphore::create(OSInterface *osInterface, ExternalSemaphore::Type type, void *handle, int fd) {
@@ -85,11 +76,12 @@ bool ExternalSemaphoreWindows::importSemaphore(void *extHandle, int fd, uint32_t
         InitializeObjectAttributes(&objectAttributesRootDirectory, pUnicodeNameRootDirectory, 0, nullptr, nullptr);
         ntOpenDirectoryObject(&rootDirectory, 0x0004 /* DIRECTORY_CREATE_OBJECT */, &objectAttributesRootDirectory);
 
-        auto pCpuAddress = MapViewOfFile(syncNtHandle, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
+        this->pCpuAddress = MapViewOfFile(syncNtHandle, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0);
 
-        auto sharedMemoryContentHeader = *reinterpret_cast<SharedMemoryContentHeader *>(pCpuAddress);
-        auto access = sharedMemoryContentHeader.access;
-        auto pSyncName = &sharedMemoryContentHeader.sharedSyncName[0];
+        auto sharedMemoryContentHeader = this->getSharedMemoryContentHeader();
+        auto access = sharedMemoryContentHeader->access;
+        auto pSyncName = &sharedMemoryContentHeader->sharedSyncName[0];
+        this->pLastSignaledValue = &sharedMemoryContentHeader->lastSignaledValue;
         syncNtHandle = nullptr;
 
         OBJECT_ATTRIBUTES objectAttributes;
@@ -141,6 +133,15 @@ bool ExternalSemaphoreWindows::enqueueWait(uint64_t *fenceValue) {
     wait.hDevice = wddm->getDeviceHandle();
     wait.ObjectCount = 1;
     wait.ObjectHandleArray = &this->syncHandle;
+
+    uint64_t lastSignaledValue = 0;
+    if (this->type == ExternalSemaphore::OpaqueWin32) {
+        lastSignaledValue = *this->pLastSignaledValue;
+        wait.FenceValueArray = &lastSignaledValue;
+    } else {
+        wait.FenceValueArray = fenceValue;
+    }
+
     wait.FenceValueArray = fenceValue;
     wait.hAsyncEvent = nullptr;
     wait.Flags = waitFlags;
@@ -162,13 +163,23 @@ bool ExternalSemaphoreWindows::enqueueSignal(uint64_t *fenceValue) {
     signal.hDevice = wddm->getDeviceHandle();
     signal.ObjectCount = 1;
     signal.ObjectHandleArray = &this->syncHandle;
-    signal.FenceValueArray = fenceValue;
+
+    uint64_t lastSignaledValue = 0;
+    if (this->type == ExternalSemaphore::OpaqueWin32) {
+        lastSignaledValue = *this->pLastSignaledValue + 2;
+        signal.FenceValueArray = &lastSignaledValue;
+    } else {
+        signal.FenceValueArray = fenceValue;
+    }
 
     auto status = wddm->getGdi()->signalSynchronizationObjectFromCpu(&signal);
     if (status != STATUS_SUCCESS) {
         return false;
     }
 
+    if (this->type == ExternalSemaphore::OpaqueWin32) {
+        *this->pLastSignaledValue += 2;
+    }
     this->state = SemaphoreState::Signaled;
 
     return true;
