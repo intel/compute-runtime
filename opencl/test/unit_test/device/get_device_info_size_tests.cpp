@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/string.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -26,8 +27,10 @@ using namespace NEO;
 
 struct GetDeviceInfoSize : public ::testing::TestWithParam<std::pair<uint32_t /*cl_device_info*/, size_t>> {
     void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(0);
         param = GetParam();
     }
+    DebugManagerStateRestore restorer;
 
     std::pair<uint32_t, size_t> param;
 };

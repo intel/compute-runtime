@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 
 namespace NEO {
 void PlatformFixture::setUp() {
+    debugManager.flags.ContextGroupSize.set(0);
     pPlatform = constructPlatform();
     ASSERT_EQ(0u, pPlatform->getNumDevices());
 
