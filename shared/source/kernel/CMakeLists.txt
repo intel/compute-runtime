@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2023 Intel Corporation
+# Copyright (C) 2019-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,6 +15,7 @@ set(NEO_CORE_KERNEL
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_descriptor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_descriptor_extended_vme.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_metadata.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_DIR_SUFFIX}kernel_descriptor_ext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_descriptor_from_patchtokens.cpp

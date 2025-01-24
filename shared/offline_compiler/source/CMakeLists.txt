@@ -51,7 +51,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin/zebin_decoder.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin/zeinfo_decoder.cpp
     ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin/zeinfo_decoder.h
-    ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin/${BRANCH_DIR_SUFFIX}zeinfo_extra.cpp
+    ${NEO_SHARED_DIRECTORY}/device_binary_format/zebin/${BRANCH_DIR_SUFFIX}zeinfo_decoder_ext.cpp
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}devices.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/devices_base.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/product_config.inl
@@ -76,6 +76,7 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/path.h
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
+    ${NEO_SHARED_DIRECTORY}/kernel/${BRANCH_DIR_SUFFIX}kernel_descriptor_ext.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp

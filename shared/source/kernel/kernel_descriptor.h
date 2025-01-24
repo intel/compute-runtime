@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,10 @@ using StringMap = std::unordered_map<uint32_t, std::string>;
 using BindlessToSurfaceStateMap = std::unordered_map<CrossThreadDataOffset, uint32_t>;
 using InstructionsSegmentOffset = uint16_t;
 
+struct KernelDescriptorExt;
+KernelDescriptorExt *allocateKernelDescriptorExt();
+void freeKernelDescriptorExt(KernelDescriptorExt *);
+
 struct KernelDescriptor {
     static bool isBindlessAddressingKernel(const KernelDescriptor &desc);
 
@@ -40,8 +44,15 @@ struct KernelDescriptor {
         BindlessAndStateless
     };
 
-    KernelDescriptor() = default;
-    virtual ~KernelDescriptor() = default;
+    KernelDescriptor() {
+        kernelDescriptorExt = allocateKernelDescriptorExt();
+    }
+
+    virtual ~KernelDescriptor() {
+        freeKernelDescriptorExt(kernelDescriptorExt);
+    }
+
+    KernelDescriptorExt *kernelDescriptorExt = nullptr;
 
     void updateCrossThreadDataSize();
     void initBindlessOffsetToSurfaceState();

@@ -25,4 +25,7 @@ void freeExecEnvExt(ExecutionEnvExt *envExt) {
 }
 } // namespace Types::Kernel::ExecutionEnv
 
+void populateKernelExecutionEnvironmentExt(KernelDescriptor &dst, const KernelExecutionEnvBaseT &execEnv, const Types::Version &srcZeInfoVersion) {
+}
+
 } // namespace NEO::Zebin::ZeInfo

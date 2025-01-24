@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder_ext.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_enum_lookup.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
@@ -756,6 +757,8 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
         dst.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;
         break;
     }
+
+    populateKernelExecutionEnvironmentExt(dst, execEnv, srcZeInfoVersion);
 }
 
 DecodeError decodeZeInfoKernelUserAttributes(KernelDescriptor &dst, Yaml::YamlParser &parser, const ZeInfoKernelSections &kernelSections, std::string &outErrReason, std::string &outWarning) {

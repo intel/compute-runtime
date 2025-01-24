@@ -403,9 +403,7 @@ struct ExecutionEnvBaseT final {
         execEnvExt = allocateExecEnvExt();
     }
     ~ExecutionEnvBaseT() {
-        if (execEnvExt) {
-            freeExecEnvExt(execEnvExt);
-        }
+        freeExecEnvExt(execEnvExt);
     }
     ExecutionEnvExt *execEnvExt = nullptr;
 

@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#pragma once
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/yaml/yaml_parser.h"
