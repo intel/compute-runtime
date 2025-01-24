@@ -394,7 +394,21 @@ inline constexpr ConstStringRef required[] = {
     Tags::Kernel::ExecutionEnv::grfCount,
     Tags::Kernel::ExecutionEnv::simdSize};
 
-struct ExecutionEnvBaseT {
+struct ExecutionEnvExt;
+ExecutionEnvExt *allocateExecEnvExt();
+void freeExecEnvExt(ExecutionEnvExt *);
+
+struct ExecutionEnvBaseT final {
+    ExecutionEnvBaseT() {
+        execEnvExt = allocateExecEnvExt();
+    }
+    ~ExecutionEnvBaseT() {
+        if (execEnvExt) {
+            freeExecEnvExt(execEnvExt);
+        }
+    }
+    ExecutionEnvExt *execEnvExt = nullptr;
+
     BarrierCountT barrierCount = Defaults::barrierCount;
     DisableMidThreadPreemptionT disableMidThreadPreemption = Defaults::disableMidThreadPreemption;
     EuThreadCountT euThreadCount = Defaults::euThreadCount;

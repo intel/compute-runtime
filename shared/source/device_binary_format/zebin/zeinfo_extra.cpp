@@ -8,7 +8,6 @@
 #include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 
 #include <sstream>
-
 namespace NEO::Zebin::ZeInfo {
 void readZeInfoValueCheckedExtra(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &execEnvMetadataNd, KernelExecutionEnvBaseT &kernelExecEnv, ConstStringRef context,
                                  ConstStringRef key, std::string &outErrReason, std::string &outWarning, bool &validExecEnv, DecodeError &error) {
@@ -17,4 +16,13 @@ void readZeInfoValueCheckedExtra(const NEO::Yaml::YamlParser &parser, const NEO:
     entry << "\"" << key.str() << "\" in context of " << context.str();
     encounterUnknownZeInfoAttribute(entry.str(), outErrReason, outWarning, error);
 }
+
+namespace Types::Kernel::ExecutionEnv {
+ExecutionEnvExt *allocateExecEnvExt() {
+    return nullptr;
+}
+void freeExecEnvExt(ExecutionEnvExt *envExt) {
+}
+} // namespace Types::Kernel::ExecutionEnv
+
 } // namespace NEO::Zebin::ZeInfo
