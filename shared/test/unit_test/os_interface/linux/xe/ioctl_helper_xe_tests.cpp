@@ -140,7 +140,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndNoLocalMemoryThe
     EXPECT_TRUE(xeIoctlHelper->bindInfo.empty());
 
     EXPECT_EQ(size, drm->createParamsSize);
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING), (drm->createParamsFlags & DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING));
+    EXPECT_EQ(0u, drm->createParamsFlags);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
     EXPECT_EQ(1u, drm->createParamsPlacement);
 
@@ -171,7 +171,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateWhenMemoryBanksZero
 
     EXPECT_EQ(size, drm->createParamsSize);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING), (drm->createParamsFlags & DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING));
+    EXPECT_EQ(0u, drm->createParamsFlags);
     EXPECT_EQ(1u, drm->createParamsPlacement);
 
     // dummy mock handle
@@ -201,7 +201,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallGemCreateAndLocalMemoryThenP
 
     EXPECT_EQ(size, drm->createParamsSize);
     EXPECT_EQ(DRM_XE_GEM_CPU_CACHING_WC, drm->createParamsCpuCaching);
-    EXPECT_EQ(static_cast<uint32_t>(DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING), (drm->createParamsFlags & DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING));
+    EXPECT_EQ(0u, drm->createParamsFlags);
     EXPECT_EQ(6u, drm->createParamsPlacement);
 
     // dummy mock handle
@@ -2513,13 +2513,6 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenIsTimestampsRefreshEnabledCalled
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
     EXPECT_TRUE(xeIoctlHelper->isTimestampsRefreshEnabled());
-}
-
-TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenMakeResidentBeforeLockNeededIsCalledThenVerifyTrueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
-    EXPECT_TRUE(xeIoctlHelper->makeResidentBeforeLockNeeded());
 }
 
 TEST_F(IoctlHelperXeTest, whenIoctlFailsOnQueryConfigSizeThenQueryDeviceIdAndRevisionFails) {

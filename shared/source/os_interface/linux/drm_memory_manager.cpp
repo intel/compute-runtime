@@ -1518,17 +1518,8 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
         return cpuPtr;
     }
 
-    auto rootDeviceIndex = graphicsAllocation.getRootDeviceIndex();
-    auto ioctlHelper = this->getDrm(rootDeviceIndex).getIoctlHelper();
-
-    if (ioctlHelper->makeResidentBeforeLockNeeded()) {
-        auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
-        auto graphicsAllocationPtr = &graphicsAllocation;
-        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false) == MemoryOperationsStatus::success;
-        DEBUG_BREAK_IF(!ret);
-    }
-
     auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
+
     if (graphicsAllocation.getAllocationType() == AllocationType::writeCombined) {
         auto addr = lockBufferObject(bo);
         auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);
