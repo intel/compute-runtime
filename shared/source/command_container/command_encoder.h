@@ -170,7 +170,7 @@ struct EncodeDispatchKernel {
     static bool inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc);
 
     template <typename InterfaceDescriptorType>
-    static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
+    static void programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor, const KernelDescriptor &kernelDescriptor, const HardwareInfo &hwInfo);
 
     template <typename WalkerType, typename InterfaceDescriptorType>
     static void encodeThreadGroupDispatch(InterfaceDescriptorType &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo,

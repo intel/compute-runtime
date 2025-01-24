@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,10 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenVariousValuesWhenCallingSetBarr
 
     uint32_t barrierCounts[] = {0, 1};
 
+    KernelDescriptor kd = {};
     for (auto barrierCount : barrierCounts) {
-        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, barrierCount, *defaultHwInfo);
+        kd.kernelAttributes.barrierCount = barrierCount;
+        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, *defaultHwInfo);
 
         EXPECT_EQ(barrierCount, idd.getNumberOfBarriers());
     }

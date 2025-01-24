@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1398,14 +1398,17 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, InterfaceDescriptorDataTests, givenVariousValuesW
     INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
     MockDevice device;
     auto hwInfo = device.getHardwareInfo();
-
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 0, hwInfo);
+    KernelDescriptor kd = {};
+    kd.kernelAttributes.barrierCount = 0;
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
     EXPECT_FALSE(idd.getBarrierEnable());
 
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 1, hwInfo);
+    kd.kernelAttributes.barrierCount = 1;
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
     EXPECT_TRUE(idd.getBarrierEnable());
 
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 2, hwInfo);
+    kd.kernelAttributes.barrierCount = 2;
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
     EXPECT_TRUE(idd.getBarrierEnable());
 }
 

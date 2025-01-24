@@ -49,11 +49,11 @@ void EncodeDispatchKernel<Family>::encodeThreadGroupDispatch(InterfaceDescriptor
 
 template <>
 template <>
-void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo) {
+void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const KernelDescriptor &kernelDescriptor, const HardwareInfo &hwInfo) {
     using BARRIERS = INTERFACE_DESCRIPTOR_DATA::NUMBER_OF_BARRIERS;
     static const LookupArray<uint32_t, BARRIERS, 2> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
                                                                          {1, BARRIERS::NUMBER_OF_BARRIERS_B1}}});
-    BARRIERS numBarriers = barrierLookupArray.lookUp(value);
+    BARRIERS numBarriers = barrierLookupArray.lookUp(kernelDescriptor.kernelAttributes.barrierCount);
     interfaceDescriptor.setNumberOfBarriers(numBarriers);
 }
 

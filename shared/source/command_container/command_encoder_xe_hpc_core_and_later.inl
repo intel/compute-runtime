@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ inline void EncodeAtomic<Family>::setMiAtomicAddress(MI_ATOMIC &atomic, uint64_t
 template <typename Family>
 template <typename InterfaceDescriptorType>
 void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType &interfaceDescriptor,
-                                                        uint32_t value,
+                                                        const KernelDescriptor &kernelDescriptor,
                                                         const HardwareInfo &hwInfo) {
     using BARRIERS = typename InterfaceDescriptorType::NUMBER_OF_BARRIERS;
     static const LookupArray<uint32_t, BARRIERS, 8> barrierLookupArray({{{0, BARRIERS::NUMBER_OF_BARRIERS_NONE},
@@ -52,7 +52,7 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(InterfaceDescriptorType 
                                                                          {16, BARRIERS::NUMBER_OF_BARRIERS_B16},
                                                                          {24, BARRIERS::NUMBER_OF_BARRIERS_B24},
                                                                          {32, BARRIERS::NUMBER_OF_BARRIERS_B32}}});
-    BARRIERS numBarriers = barrierLookupArray.lookUp(value);
+    BARRIERS numBarriers = barrierLookupArray.lookUp(kernelDescriptor.kernelAttributes.barrierCount);
     interfaceDescriptor.setNumberOfBarriers(numBarriers);
 }
 

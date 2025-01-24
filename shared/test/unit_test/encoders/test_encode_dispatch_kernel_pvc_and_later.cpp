@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,8 +73,10 @@ HWTEST2_F(CommandEncodeStatesTestPvcAndLater, givenVariousValuesWhenCallingSetBa
                                                           {16, 5},
                                                           {24, 6},
                                                           {32, 7}};
+    KernelDescriptor kd = {};
     for (auto &[barrierCount, numBarriersEnum] : barriers) {
-        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, barrierCount, hwInfo);
+        kd.kernelAttributes.barrierCount = barrierCount;
+        EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, kd, hwInfo);
         EXPECT_EQ(numBarriersEnum, idd.getNumberOfBarriers());
     }
 }
