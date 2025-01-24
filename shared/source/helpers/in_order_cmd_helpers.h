@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class DeviceAllocNodeType {
 
     static constexpr size_t defaultAllocatorTagCount = 128;
 
-    static constexpr AllocationType getAllocationType() { return deviceAlloc ? NEO::AllocationType::timestampPacketTagBuffer : NEO::AllocationType::bufferHostMemory; }
+    static constexpr AllocationType getAllocationType() { return deviceAlloc ? NEO::AllocationType::timestampPacketTagBuffer : NEO::AllocationType::tagBuffer; }
 
     static constexpr TagNodeType getTagNodeType() { return TagNodeType::counter64b; }
 

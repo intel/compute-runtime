@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -482,7 +482,7 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSet
     EXPECT_EQ(AllocationType::profilingTagBuffer, hwTimeStampsTag->getBaseGraphicsAllocation()->getAllocationType());
     EXPECT_EQ(AllocationType::profilingTagBuffer, hwPerfCounterTag->getBaseGraphicsAllocation()->getAllocationType());
     EXPECT_EQ(AllocationType::timestampPacketTagBuffer, inOrderDeviceTag->getBaseGraphicsAllocation()->getAllocationType());
-    EXPECT_EQ(AllocationType::bufferHostMemory, inOrderHostTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::tagBuffer, inOrderHostTag->getBaseGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMultiGraphicsAllocation) {
