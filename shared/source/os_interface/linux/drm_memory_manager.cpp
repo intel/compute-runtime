@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1509,8 +1509,17 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
         return cpuPtr;
     }
 
-    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
+    auto rootDeviceIndex = graphicsAllocation.getRootDeviceIndex();
+    auto ioctlHelper = this->getDrm(rootDeviceIndex).getIoctlHelper();
 
+    if (ioctlHelper->makeResidentBeforeLockNeeded()) {
+        auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
+        auto graphicsAllocationPtr = &graphicsAllocation;
+        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false) == MemoryOperationsStatus::success;
+        DEBUG_BREAK_IF(!ret);
+    }
+
+    auto bo = static_cast<DrmAllocation &>(graphicsAllocation).getBO();
     if (graphicsAllocation.getAllocationType() == AllocationType::writeCombined) {
         auto addr = lockBufferObject(bo);
         auto alignedAddr = alignUp(addr, MemoryConstants::pageSize64k);

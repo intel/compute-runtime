@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,6 +234,8 @@ class IoctlHelper {
     virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
 
     virtual bool isTimestampsRefreshEnabled() { return false; }
+
+    virtual bool makeResidentBeforeLockNeeded() { return false; }
 
   protected:
     Drm &drm;
