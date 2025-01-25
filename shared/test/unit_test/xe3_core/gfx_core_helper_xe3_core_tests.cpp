@@ -844,3 +844,20 @@ XE3_CORETEST_F(ProductHelperTestXe3, when64bAddressingIsEnabledForRTThenResource
     debugManager.flags.Enable64bAddressingForRayTracing.set(false);
     EXPECT_TRUE(productHelper->is48bResourceNeededForRayTracing());
 }
+
+using GfxCoreHelperTestsXe3CoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
+
+XE3_CORETEST_F(GfxCoreHelperTestsXe3CoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsIsNotAvailable) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0));
+
+    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    EXPECT_EQ(device->allEngines.size(), engines.size());
+
+    for (size_t idx = 0; idx < engines.size(); idx++) {
+        countEngine(engines[idx].first, engines[idx].second);
+    }
+
+    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
+}

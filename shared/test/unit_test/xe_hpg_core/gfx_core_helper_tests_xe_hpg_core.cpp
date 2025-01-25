@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -322,4 +322,22 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenComputeSlmSi
     for (auto &testInput : computeSlmValuesXeHpgTestsInput) {
         EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hardwareInfo, testInput.slmSize));
     }
+}
+
+using GfxCoreHelperTestsXeHpgCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
+
+XE_HPG_CORETEST_F(GfxCoreHelperTestsXeHpgCoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsAndCccsAreNotAvailable) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0));
+
+    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    EXPECT_EQ(device->allEngines.size(), engines.size());
+
+    for (size_t idx = 0; idx < engines.size(); idx++) {
+        countEngine(engines[idx].first, engines[idx].second);
+    }
+
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_RCS, EngineUsage::regular));
+    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
+    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
 }

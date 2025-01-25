@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -108,10 +109,28 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenAskingForRel
 
     EXPECT_TRUE(gfxCoreHelper.isRelaxedOrderingSupported());
 }
+
 XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, whenGetDefaultDeviceHierarchyThenReturnFlatHierarchy) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     auto defaultDeviceHierarchy = gfxCoreHelper.getDefaultDeviceHierarchy();
     EXPECT_EQ(DeviceHierarchyMode::flat, defaultDeviceHierarchy);
+}
+
+using GfxCoreHelperTestsXeHpcCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
+
+XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsIsNotAvailable) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0));
+
+    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    EXPECT_EQ(device->allEngines.size(), engines.size());
+
+    for (size_t idx = 0; idx < engines.size(); idx++) {
+        countEngine(engines[idx].first, engines[idx].second);
+    }
+
+    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
 }

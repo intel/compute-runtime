@@ -850,3 +850,20 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, whenGettingMetricsLibraryGenIdT
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Xe2HPG), gfxCoreHelper.getMetricsLibraryGenId());
 }
+
+using GfxCoreHelperTestsXe2HpgCoreWithEnginesCheck = GfxCoreHelperTestWithEnginesCheck;
+
+XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCoreWithEnginesCheck, whenGetEnginesCalledThenRegularCcsIsNotAvailable) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0));
+
+    auto &engines = device->getGfxCoreHelper().getGpgpuEngineInstances(device->getRootDeviceEnvironment());
+
+    EXPECT_EQ(device->allEngines.size(), engines.size());
+
+    for (size_t idx = 0; idx < engines.size(); idx++) {
+        countEngine(engines[idx].first, engines[idx].second);
+    }
+
+    EXPECT_EQ(0u, getEngineCount(aub_stream::ENGINE_CCS, EngineUsage::regular));
+    EXPECT_EQ(1u, getEngineCount(aub_stream::ENGINE_CCCS, EngineUsage::regular));
+}
