@@ -42,6 +42,7 @@ using namespace NEO;
 
 struct DeviceGetCapsTest : public ::testing::Test {
     void SetUp() override {
+        debugManager.flags.ContextGroupSize.set(0);
         MockSipData::clearUseFlags();
         backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, true);
     }
@@ -130,6 +131,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
 
+    DebugManagerStateRestore restorer;
     std::unique_ptr<VariableBackup<bool>> backupSipInitType;
 };
 
