@@ -1469,6 +1469,39 @@ class MockIoctlHelperResetStats : public MockIoctlHelper {
     ResetStatsFault resetStatsFaultReturnValue{};
 };
 
+TEST(DrmTest, GivenResetStatsWithValidFaultAndDebuggingEnabledWhenIsGpuHangIsCalledThenProcessNotTerminated) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.DisableScratchPages.set(true);
+
+    MockExecutionEnvironment executionEnvironment{};
+    DrmMock drm{*executionEnvironment.rootDeviceEnvironments[0]};
+    executionEnvironment.setDebuggingMode(NEO::DebuggingMode::online);
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
+    uint32_t contextId{0};
+    EngineDescriptor engineDescriptor{EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::regular})};
+    auto ioctlHelper = std::make_unique<MockIoctlHelperResetStats>(drm);
+
+    MockOsContextLinux mockOsContextLinux{drm, 0, contextId, engineDescriptor};
+    mockOsContextLinux.drmContextIds.push_back(0);
+
+    ResetStats resetStatsExpected{};
+    ResetStatsFault resetStatsFaultExpected{};
+    resetStatsExpected.contextId = 0;
+    drm.resetStatsToReturn.push_back(resetStatsExpected);
+
+    resetStatsFaultExpected.flags = 1;
+    resetStatsFaultExpected.addr = 0x1234;
+    resetStatsFaultExpected.type = 2;
+    resetStatsFaultExpected.level = 3;
+
+    ioctlHelper->statusReturnValue = 2u;
+    ioctlHelper->resetStatsFaultReturnValue = resetStatsFaultExpected;
+
+    drm.ioctlHelper = std::move(ioctlHelper);
+    EXPECT_FALSE(drm.isGpuHangDetected(mockOsContextLinux));
+}
+
 TEST(DrmDeathTest, GivenResetStatsWithValidFaultWhenIsGpuHangIsCalledThenProcessTerminated) {
     DebugManagerStateRestore restore;
     debugManager.flags.DisableScratchPages.set(true);

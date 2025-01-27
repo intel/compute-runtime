@@ -253,7 +253,8 @@ bool Drm::checkResetStatus(OsContext &osContext) {
         uint32_t status = 0;
         const auto retVal{ioctlHelper->getResetStats(resetStats, &status, &fault)};
         UNRECOVERABLE_IF(retVal != 0);
-        if (checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
+        auto debuggingEnabled = rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
+        if (!debuggingEnabled && checkToDisableScratchPage() && ioctlHelper->validPageFault(fault.flags)) {
             bool banned = ((status & ioctlHelper->getStatusForResetStats(true)) != 0);
             IoFunctions::fprintf(stderr, "Segmentation fault from GPU at 0x%llx, ctx_id: %u (%s) type: %d (%s), level: %d (%s), access: %d (%s), banned: %d, aborting.\n",
                                  fault.addr,
