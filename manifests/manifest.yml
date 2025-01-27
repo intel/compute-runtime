@@ -2,7 +2,7 @@ components:
   aub_configs:
     branch: aub_configs
     dest_dir: aub_configs
-    revision: dad4b3e6a1a3f72a5e8a11b167373b50f38b8218
+    revision: c61eb321f2751d50e890a900d9301f9e995ffdcd
     type: git
   aub_stream:
     branch: master
@@ -41,7 +41,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 3304-3465
+    revision: 3304-3481
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf

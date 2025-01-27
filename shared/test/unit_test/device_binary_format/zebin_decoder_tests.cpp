@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -81,9 +81,10 @@ TEST(ZebinValidateTargetTest, givenTargetDeviceCreatedUsingHelperFunctionWhenVal
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto targetDevice = getTargetDevice(rootDeviceEnvironment);
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     compilerProductHelper.adjustHwInfoForIgc(hwInfo);
+
+    auto targetDevice = getTargetDevice(rootDeviceEnvironment);
 
     EXPECT_TRUE(validateTargetDevice(targetDevice, NEO::Elf::EI_CLASS_32, hwInfo.platform.eProductFamily, hwInfo.platform.eRenderCoreFamily, AOT::UNKNOWN_ISA, {}));
 }
