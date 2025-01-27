@@ -18,4 +18,10 @@ template <>
 bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
     return false;
 }
+
+template <>
+std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferredAllocationMethod(AllocationType allocationType) const {
+    return GfxMemoryAllocationMethod::allocateByKmd;
+}
+
 } // namespace NEO
