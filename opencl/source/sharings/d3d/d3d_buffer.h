@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
 
