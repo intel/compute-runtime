@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1627,6 +1627,8 @@ TEST_F(EventSynchronizeTest, GivenGpuHangWhenHostSynchronizeIsCalledThenDeviceLo
 }
 
 TEST_F(EventSynchronizeTest, GivenHangHappenedBeforePeriodicHangCheckAndForceGpuStatusCheckDuringHostSynchronizeThenHangIsDetected) {
+    NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(1);
+
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->isGpuHangDetectedReturnValue = true;
 
@@ -1640,22 +1642,9 @@ TEST_F(EventSynchronizeTest, GivenHangHappenedBeforePeriodicHangCheckAndForceGpu
 }
 
 TEST_F(EventSynchronizeTest, GivenEventCompletedAndForceGpuStatusCheckThenHostSynchronizeReturnsSuccess) {
-    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-
-    event->csrs[0] = csr.get();
-    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
-    *hostAddr = Event::STATE_SIGNALED;
-
-    auto result = event->hostSynchronize(0);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(EventSynchronizeTest, GivenHangHappenedBeforePeriodicHangCheckAndForceGpuStatusCheckDuringHostSynchronizeDisabledThenSuccessIsReturned) {
-    NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(0);
+    NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.set(1);
 
     const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
-    csr->isGpuHangDetectedReturnValue = true;
 
     event->csrs[0] = csr.get();
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());

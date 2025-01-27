@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -687,7 +687,7 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
             if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
                 device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
             }
-            if (NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.get() != 0) {
+            if (NEO::debugManager.flags.ForceGpuStatusCheckOnSuccessfulEventHostSynchronize.get() == 1) {
                 const bool hangDetected = this->csrs[0]->isGpuHangDetected();
                 if (hangDetected) {
                     return ZE_RESULT_ERROR_DEVICE_LOST;
