@@ -93,9 +93,6 @@ TEST_F(EnqueueMapImageTest, GivenTiledImageWhenMappingImageThenPointerIsReused) 
 }
 
 HWTEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalledThenReturnDifferentPointers) {
-    if (!defaultHwInfo->capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
     std::unique_ptr<Image> img(Image2dHelper<Image2dDefaults>::create(context));
     auto mapFlags = CL_MAP_READ;
     const size_t origin1[3] = {0, 0, 0};
@@ -196,9 +193,6 @@ struct MockedImage : public ImageHw<GfxFamily> {
 };
 
 HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSetWithImageMutexTaken) {
-    if (!defaultHwInfo->capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
     auto imageFormat = image->getImageFormat();
     auto imageDesc = image->getImageDesc();
     auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
@@ -315,9 +309,6 @@ TEST_F(EnqueueMapImageTest, GivenCmdqAndValidArgsWhenMappingImageThenSuccessIsRe
 }
 
 HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEventAndIncraseTaskCountFromWriteImage) {
-    if (!defaultHwInfo->capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
@@ -403,9 +394,6 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
 }
 
 HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAndDontIncraseTaskCountFromWriteImage) {
-    if (!defaultHwInfo->capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
     DebugManagerStateRestore dbgRestore;
     debugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
@@ -448,9 +436,6 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
 }
 
 HWTEST_F(EnqueueMapImageTest, GivenPtrToReturnEventWhenMappingImageThenEventIsNotNull) {
-    if (!defaultHwInfo->capabilityTable.supportsImages) {
-        GTEST_SKIP();
-    }
     cl_event eventReturned = nullptr;
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
