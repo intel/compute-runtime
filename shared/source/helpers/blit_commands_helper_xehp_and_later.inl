@@ -77,26 +77,6 @@ void BlitCommandsHelper<GfxFamily>::appendBlitMemoryOptionsForFillBuffer(NEO::Gr
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment) {
-    switch (patternSize) {
-    case 1:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<1>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
-        break;
-    case 2:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<2>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
-        break;
-    case 4:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<4>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
-        break;
-    case 8:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<8>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
-        break;
-    default:
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill<16>(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
-    }
-}
-
-template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
 

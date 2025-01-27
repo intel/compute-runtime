@@ -210,12 +210,14 @@ endif()
 
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_pvc_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_pvc_and_later.inl
   )
 endif()
 
 if(SUPPORT_XE2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xe2_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xe2_and_later.inl
   )
 endif()

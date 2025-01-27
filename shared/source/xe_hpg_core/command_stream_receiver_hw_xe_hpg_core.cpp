@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,6 +148,14 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
         }
     }
 }
+
+template <>
+void BlitCommandsHelper<Family>::dispatchBlitMemoryByteFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment) {
+    NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR, 1);
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendBlitMemSetCompressionFormat(void *blitCmd, NEO::GraphicsAllocation *dstAlloc, uint32_t compressionFormat) {}
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;

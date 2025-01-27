@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@ using Family = NEO::XeHpcCoreFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/blit_commands_helper_pvc_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/populate_factory.h"
@@ -136,64 +137,27 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 }
 
 template <>
-template <>
-void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment, COLOR_DEPTH depth) {
+void BlitCommandsHelper<Family>::appendBlitMemSetCompressionFormat(void *blitCmd, NEO::GraphicsAllocation *dstAlloc, uint32_t compressionFormat) {
     using MEM_SET = typename Family::MEM_SET;
-    auto blitCmd = Family::cmdInitMemSet;
 
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
-        mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
-    }
-
-    blitCmd.setDestinationMOCS(mocs);
+    auto memSetCmd = reinterpret_cast<MEM_SET *>(blitCmd);
 
     if (dstAlloc->isCompressionEnabled()) {
-        auto resourceFormat = dstAlloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        auto compressionFormat = rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat);
-        blitCmd.setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-        blitCmd.setCompressionFormat40(compressionFormat);
+        memSetCmd->setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
+        memSetCmd->setCompressionFormat40(compressionFormat);
     }
+
     if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
         if (!MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
-            blitCmd.setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
-            blitCmd.setCompressionFormat40(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
+            memSetCmd->setDestinationCompressible(MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE);
+            memSetCmd->setCompressionFormat40(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
         }
     }
 
-    if (blitCmd.getDestinationCompressible() == MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE) {
-        blitCmd.setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
+    if (memSetCmd->getDestinationCompressible() == MEM_SET::DESTINATION_COMPRESSIBLE::DESTINATION_COMPRESSIBLE_COMPRESSIBLE) {
+        memSetCmd->setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_ENABLE);
     } else {
-        blitCmd.setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
-    }
-    blitCmd.setFillData(*pattern);
-
-    auto sizeToFill = size;
-    while (sizeToFill != 0) {
-        auto tmpCmd = blitCmd;
-        tmpCmd.setDestinationStartAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
-        size_t height = 0;
-        size_t width = 0;
-        if (sizeToFill <= BlitterConstants::maxBlitSetWidth) {
-            width = sizeToFill;
-            height = 1;
-        } else {
-            width = BlitterConstants::maxBlitSetWidth;
-            height = std::min<size_t>((sizeToFill / width), BlitterConstants::maxBlitSetHeight);
-            if (height > 1) {
-                tmpCmd.setFillType(MEM_SET::FILL_TYPE::FILL_TYPE_MATRIX_FILL);
-            }
-        }
-        tmpCmd.setFillWidth(static_cast<uint32_t>(width));
-        tmpCmd.setFillHeight(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
-
-        auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
-        *cmd = tmpCmd;
-
-        auto blitSize = width * height;
-        offset += blitSize;
-        sizeToFill -= blitSize;
+        memSetCmd->setDestinationCompressionEnable(MEM_SET::DESTINATION_COMPRESSION_ENABLE::DESTINATION_COMPRESSION_ENABLE_DISABLE);
     }
 }
 

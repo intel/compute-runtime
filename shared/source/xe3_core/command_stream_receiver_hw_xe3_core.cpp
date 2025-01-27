@@ -14,6 +14,8 @@ using Family = NEO::Xe3CoreFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_heap_addressing.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/blit_commands_helper_pvc_and_later.inl"
+#include "shared/source/helpers/blit_commands_helper_xe2_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/populate_factory.h"
@@ -182,62 +184,6 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     blitCmd.setCompressionFormat(static_cast<COMPRESSION_FORMAT30>(compressionFormat));
 
     DEBUG_BREAK_IF(AuxTranslationDirection::none != blitProperties.auxTranslationDirection);
-}
-
-template <>
-template <>
-void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment, COLOR_DEPTH depth) {
-    using MEM_SET = typename Family::MEM_SET;
-    using COMPRESSION_FORMAT30 = typename MEM_SET::COMPRESSION_FORMAT30;
-    auto blitCmd = Family::cmdInitMemSet;
-
-    auto mocs = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
-    if (debugManager.flags.OverrideBlitterMocs.get() != -1) {
-        mocs = static_cast<uint32_t>(debugManager.flags.OverrideBlitterMocs.get());
-    }
-    blitCmd.setDestinationMOCS(mocs);
-
-    if (dstAlloc->isCompressionEnabled()) {
-        auto resourceFormat = dstAlloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
-        auto compressionFormat = static_cast<COMPRESSION_FORMAT30>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
-        blitCmd.setCompressionFormat(compressionFormat);
-    }
-
-    if (debugManager.flags.EnableStatelessCompressionWithUnifiedMemory.get()) {
-        if (!MemoryPoolHelper::isSystemMemoryPool(dstAlloc->getMemoryPool())) {
-            blitCmd.setCompressionFormat(debugManager.flags.FormatForStatelessCompressionWithUnifiedMemory.get());
-        }
-    }
-
-    blitCmd.setFillData(*pattern);
-
-    auto sizeToFill = size;
-    while (sizeToFill != 0) {
-        auto tmpCmd = blitCmd;
-        tmpCmd.setDestinationStartAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
-        size_t height = 0;
-        size_t width = 0;
-        if (sizeToFill <= BlitterConstants::maxBlitSetWidth) {
-            width = sizeToFill;
-            height = 1;
-        } else {
-            width = BlitterConstants::maxBlitSetWidth;
-            height = std::min<size_t>((sizeToFill / width), BlitterConstants::maxBlitSetHeight);
-            if (height > 1) {
-                tmpCmd.setFillType(MEM_SET::FILL_TYPE::FILL_TYPE_MATRIX_FILL);
-            }
-        }
-        tmpCmd.setFillWidth(static_cast<uint32_t>(width));
-        tmpCmd.setFillHeight(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
-
-        auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
-        *cmd = tmpCmd;
-
-        auto blitSize = width * height;
-        offset += blitSize;
-        sizeToFill -= blitSize;
-    }
 }
 
 template <>
