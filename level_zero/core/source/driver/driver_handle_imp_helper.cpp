@@ -8,6 +8,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/driver_experimental/zex_common.h"
 #include "level_zero/ze_intel_gpu.h"
+#include "level_zero/zet_intel_gpu_metric.h"
 
 namespace L0 {
 const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsSupported = {
@@ -43,5 +44,8 @@ const std::vector<std::pair<std::string, uint32_t>> DriverHandleImp::extensionsS
     {ZEX_INTEL_EVENT_SYNC_MODE_EXP_NAME, ZEX_INTEL_EVENT_SYNC_MODE_EXP_VERSION_CURRENT},
     {ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_NAME, ZE_INTEL_GET_DRIVER_VERSION_STRING_EXP_VERSION_CURRENT},
     {ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_NAME, ZE_INTEL_DEVICE_BLOCK_ARRAY_EXP_PROPERTIES_VERSION_CURRENT},
-    {ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME, ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_VERSION_CURRENT}};
+    {ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_NAME, ZE_INTEL_KERNEL_GET_PROGRAM_BINARY_EXP_VERSION_CURRENT},
+
+    // Metrics Driver experimental extensions
+    {ZET_INTEL_METRIC_APPEND_MARKER_EXP_NAME, ZET_INTEL_METRIC_APPEND_MARKER_EXP_VERSION_CURRENT}};
 } // namespace L0

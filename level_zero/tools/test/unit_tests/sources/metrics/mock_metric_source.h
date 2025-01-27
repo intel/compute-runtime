@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,10 @@ class MockMetricSource : public L0::MetricSource {
                                           uint32_t *pCountPerConcurrentGroup) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+    ze_result_t appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     void setType(uint32_t type) {
         this->type = type;
     }

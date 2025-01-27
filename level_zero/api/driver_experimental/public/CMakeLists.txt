@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 Intel Corporation
+# Copyright (C) 2020-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,4 +14,5 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_event.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_memory.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/zex_module.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/zex_metric.cpp
 )

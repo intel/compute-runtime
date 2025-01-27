@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,6 +62,7 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zeIntelCommandListAppendWaitExternalSemaphoresExp);
     RETURN_FUNC_PTR_IF_EXIST(zeIntelCommandListAppendSignalExternalSemaphoresExp);
     RETURN_FUNC_PTR_IF_EXIST(zeIntelDeviceReleaseExternalSemaphoreExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelCommandListAppendMarkerExp);
 
 #undef RETURN_FUNC_PTR_IF_EXIST
 

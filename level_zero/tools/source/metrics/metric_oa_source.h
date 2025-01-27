@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,6 +59,9 @@ class OaMetricSourceImp : public MetricSource {
                                               const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
                                               uint32_t *maxMetricGroupCount,
                                               std::vector<zet_metric_group_handle_t> &metricGroupList) override;
+    ze_result_t appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     void metricGroupCreate(const char name[ZET_MAX_METRIC_GROUP_NAME],
                            const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
                            zet_metric_group_sampling_type_flag_t samplingType,
