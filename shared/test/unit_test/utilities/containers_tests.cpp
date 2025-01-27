@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
+#include "shared/source/utilities/lookup_array.h"
 #include "shared/source/utilities/range.h"
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
@@ -1914,4 +1915,57 @@ TEST(ArrayRef, WhenClearedThenEmpty) {
     auto arrayRefU32 = ArrayRef<const uint32_t>::fromAny(x, 2);
     arrayRefU32.clear();
     EXPECT_TRUE(arrayRefU32.empty());
+}
+
+TEST(LookupArrayFindGreaterEqual, WhenLookingForElementThenReturnFirstThatIsEqualOrGreater) {
+    LookupArray<int, int, 3> arr({{{1, 10}, {4, 40}, {9, 90}}});
+    auto res = arr.findGreaterEqual(0);
+    ASSERT_TRUE(res.has_value());
+    EXPECT_EQ(10, res.value());
+
+    res = arr.findGreaterEqual(1);
+    ASSERT_TRUE(res.has_value());
+    EXPECT_EQ(10, res.value());
+
+    res = arr.findGreaterEqual(2);
+    ASSERT_TRUE(res.has_value());
+    EXPECT_EQ(40, res.value());
+
+    res = arr.findGreaterEqual(3);
+    ASSERT_TRUE(res.has_value());
+    EXPECT_EQ(40, res.value());
+
+    res = arr.findGreaterEqual(4);
+    ASSERT_TRUE(res.has_value());
+    EXPECT_EQ(40, res.value());
+
+    res = arr.findGreaterEqual(9);
+    ASSERT_TRUE(res.has_value());
+    EXPECT_EQ(90, res.value());
+
+    res = arr.findGreaterEqual(10);
+    EXPECT_FALSE(res.has_value());
+}
+
+TEST(LookupArrayLookUpGreaterEqual, WhenLookingForElementThenReturnFirstThatIsEqualOrGreater) {
+    LookupArray<int, int, 3> arr({{{1, 10}, {4, 40}, {9, 90}}});
+    auto res = arr.lookUpGreaterEqual(0);
+    EXPECT_EQ(10, res);
+
+    res = arr.lookUpGreaterEqual(1);
+    EXPECT_EQ(10, res);
+
+    res = arr.lookUpGreaterEqual(2);
+    EXPECT_EQ(40, res);
+
+    res = arr.lookUpGreaterEqual(3);
+    EXPECT_EQ(40, res);
+
+    res = arr.lookUpGreaterEqual(4);
+    EXPECT_EQ(40, res);
+
+    res = arr.lookUpGreaterEqual(9);
+    EXPECT_EQ(90, res);
+
+    EXPECT_THROW(res = arr.lookUpGreaterEqual(10), std::exception);
 }

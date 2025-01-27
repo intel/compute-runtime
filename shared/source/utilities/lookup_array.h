@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,23 @@ struct LookupArray {
         return std::nullopt;
     }
 
+    constexpr std::optional<ValueT> findGreaterEqual(const KeyT &keyToFind) const {
+        for (auto &[key, value] : lookupArray) {
+            if (key >= keyToFind) {
+                return value;
+            }
+        }
+        return std::nullopt;
+    }
+
     constexpr ValueT lookUp(const KeyT &keyToFind) const {
         auto value = find(keyToFind);
+        UNRECOVERABLE_IF(false == value.has_value());
+        return *value;
+    }
+
+    constexpr ValueT lookUpGreaterEqual(const KeyT &keyToFind) const {
+        auto value = findGreaterEqual(keyToFind);
         UNRECOVERABLE_IF(false == value.has_value());
         return *value;
     }
