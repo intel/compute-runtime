@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -3372,6 +3373,8 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
+    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1u : 0u;
+
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
@@ -3379,7 +3382,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyTh
 
     immCmdList->appendMemoryCopy(&copyData, &copyData, copySize, nullptr, 0, nullptr, copyParams);
 
-    EXPECT_TRUE(verifySplit(1));
+    EXPECT_TRUE(verifySplit(bcsMiFlushCount + 1u));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -3485,6 +3488,8 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
 
+    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1u : 0u;
+
     uint32_t copyData = 0;
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
@@ -3494,7 +3499,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenBcsSplitEnabledWhenDispatchingCopyRe
 
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, copyParams);
 
-    EXPECT_TRUE(verifySplit(1));
+    EXPECT_TRUE(verifySplit(bcsMiFlushCount + 1u));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -3522,6 +3527,8 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
 
     auto eventPool = createEvents<FamilyType>(1, true);
 
+    const auto bcsMiFlushCount = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1u : 0u;
+
     auto eventHandle = events[0]->toHandle();
     constexpr size_t copySize = 8 * MemoryConstants::megaByte;
 
@@ -3536,7 +3543,7 @@ HWTEST2_F(BcsSplitInOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithR
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     }
 
-    EXPECT_TRUE(verifySplit(1));
+    EXPECT_TRUE(verifySplit(bcsMiFlushCount + 1u));
 }
 
 } // namespace ult
