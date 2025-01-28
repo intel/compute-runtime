@@ -25,5 +25,6 @@ struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
     ADDMETHOD_CONST_NOBASE(isHostUsmAllocationReuseSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isUsmPoolAllocatorSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(is2MBLocalMemAlignmentEnabled, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDisableScratchPagesRequiredForDebugger, bool, true, ());
 };
 } // namespace NEO

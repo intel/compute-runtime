@@ -471,6 +471,10 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsS
     EXPECT_FALSE(productHelper->isDisableScratchPagesSupported());
 }
 
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedForDebuggerThenReturnTrue, IsNotDG2) {
+    EXPECT_TRUE(productHelper->isDisableScratchPagesRequiredForDebugger());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckBlitEnqueuePreferredThenReturnTrue) {
     EXPECT_TRUE(productHelper->blitEnqueuePreferred(false));
 }

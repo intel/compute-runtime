@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,10 @@ struct Dg2ProductHelperLinux : ProductHelperTestLinux {
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     }
 };
+
+DG2TEST_F(Dg2ProductHelperLinux, givenProductHelperWhenAskedIfDisableScratchPagesIsSupportedForDebuggerThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isDisableScratchPagesRequiredForDebugger());
+}
 
 DG2TEST_F(Dg2ProductHelperLinux, WhenConfiguringHwInfoThenZeroIsReturned) {
 

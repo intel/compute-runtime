@@ -76,6 +76,7 @@ using IsNotDG1 = IsNotWithinProducts<IGFX_DG1, IGFX_DG1>;
 using IsAtLeastPVC = IsAtLeastProduct<IGFX_PVC>;
 using IsAtMostPVC = IsAtMostProduct<IGFX_PVC>;
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;
+using IsNotDG2 = IsNotWithinProducts<IGFX_DG2, IGFX_DG2>;
 using IsNotPvcOrDg2 = IsNotWithinProducts<IGFX_DG2, IGFX_PVC>;
 
 using IsAtMostArl = IsAtMostProduct<IGFX_ARROWLAKE>;

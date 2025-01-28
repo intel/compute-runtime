@@ -442,6 +442,11 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDisableScratchPagesRequiredForDebugger() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::areSecondaryContextsSupported() const {
     return false;
 }

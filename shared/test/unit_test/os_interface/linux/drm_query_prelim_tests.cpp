@@ -15,6 +15,7 @@
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -311,6 +312,42 @@ TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemo
 
 TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
     DebugManagerStateRestore restorer;
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(productHelper.release());
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
+    EXPECT_TRUE(drm.disableScratch);
+    uint32_t vmId = 0;
+    drm.createDrmVirtualMemory(vmId);
+    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+}
+
+TEST(DrmBufferObjectPrelim, givenDebuggingEnabledWithDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->isDisableScratchPagesRequiredForDebuggerResult = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(productHelper.release());
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::online);
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.configureScratchPagePolicy();
+    drm.configureGpuFaultCheckThreshold();
+    EXPECT_FALSE(drm.disableScratch);
+    uint32_t vmId = 0;
+    drm.createDrmVirtualMemory(vmId);
+    EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+}
+
+TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesDebugKeyOffAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.DisableScratchPages.set(0);
     debugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();

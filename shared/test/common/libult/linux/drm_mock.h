@@ -31,6 +31,7 @@ class DrmMock : public Drm {
     using Drm::chunkingMode;
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
+    using Drm::disableScratch;
     using Drm::engineInfo;
     using Drm::engineInfoQueried;
     using Drm::fenceVal;

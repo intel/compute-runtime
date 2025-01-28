@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,11 @@ bool ProductHelperHw<gfxProduct>::getUuid(NEO::DriverModel *driverModel, const u
     memcpy_s(uuid.data(), uuid.size(), &uuidValue, sizeof(uuidValue));
 
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDisableScratchPagesRequiredForDebugger() const {
+    return false;
 }
 
 template class ProductHelperHw<gfxProduct>;
