@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,6 +123,7 @@ class OSInterface : public NonCopyableClass {
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;
     static bool requiresSupportForWddmTrimNotification;
+    static bool isSemaphoreDependantResourceUCRequired;
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
 

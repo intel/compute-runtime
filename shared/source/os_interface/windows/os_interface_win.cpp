@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@ bool OSInterface::osEnabled64kbPages = true;
 bool OSInterface::newResourceImplicitFlush = true;
 bool OSInterface::gpuIdleImplicitFlush = false;
 bool OSInterface::requiresSupportForWddmTrimNotification = true;
+bool OSInterface::isSemaphoreDependantResourceUCRequired = true;
 
 bool OSInterface::isDebugAttachAvailable() const {
     if (driverModel) {
