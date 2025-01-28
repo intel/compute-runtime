@@ -10,7 +10,9 @@
 
 namespace NEO {
 
-using Family = Xe3CoreFamily;
-
-#include "shared/source/image/image_skl_and_later.inl"
+using GfxFamily = Xe3CoreFamily;
+}
+#include "shared/source/image/image_surface_state.inl"
+namespace NEO {
+template class ImageSurfaceStateHelper<GfxFamily>;
 } // namespace NEO

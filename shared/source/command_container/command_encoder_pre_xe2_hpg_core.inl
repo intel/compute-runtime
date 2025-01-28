@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
@@ -70,7 +72,7 @@ void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfac
     setFlagsForMediaCompression(surfaceState, gmm);
 
     setClearColorParams(surfaceState, gmm);
-    setUnifiedAuxBaseAddress<Family>(surfaceState, gmm);
+    ImageSurfaceStateHelper<Family>::setUnifiedAuxBaseAddress(surfaceState, gmm);
 }
 
 template <typename Family>

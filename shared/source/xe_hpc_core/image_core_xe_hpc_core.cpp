@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,9 @@
 
 namespace NEO {
 
-using Family = XeHpcCoreFamily;
-
-#include "shared/source/image/image_skl_and_later.inl"
+using GfxFamily = XeHpcCoreFamily;
+}
+#include "shared/source/image/image_surface_state.inl"
+namespace NEO {
+template class ImageSurfaceStateHelper<GfxFamily>;
 } // namespace NEO

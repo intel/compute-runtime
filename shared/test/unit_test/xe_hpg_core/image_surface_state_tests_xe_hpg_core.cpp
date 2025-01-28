@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,11 +47,11 @@ XE_HPG_CORETEST_F(ImageSurfaceStateTestsXeHpgCore, givenGmmWithMediaCompressedWh
     auto surfaceState = std::make_unique<char[]>(size);
     auto castSurfaceState = reinterpret_cast<typename FamilyType::RENDER_SURFACE_STATE *>(surfaceState.get());
 
-    setMipTailStartLOD<FamilyType>(castSurfaceState, nullptr);
+    ImageSurfaceStateHelper<FamilyType>::setMipTailStartLOD(castSurfaceState, nullptr);
 
     EXPECT_EQ(castSurfaceState->getMipTailStartLOD(), 0u);
 
-    setMipTailStartLOD<FamilyType>(castSurfaceState, mockGmm.get());
+    ImageSurfaceStateHelper<FamilyType>::setMipTailStartLOD(castSurfaceState, mockGmm.get());
 
     EXPECT_EQ(castSurfaceState->getMipTailStartLOD(), mockGmm->gmmResourceInfo->getMipTailStartLODSurfaceState());
 }

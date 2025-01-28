@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -192,14 +192,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
         uint32_t minArrayElement, renderTargetViewExtent, depth;
-        NEO::setImageSurfaceState<GfxFamily>(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
-                                             this->allocation->getGpuAddress(), surfaceOffsets,
-                                             isMediaFormatLayout, minArrayElement, renderTargetViewExtent);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
+                                                                      this->allocation->getGpuAddress(), surfaceOffsets,
+                                                                      isMediaFormatLayout, minArrayElement, renderTargetViewExtent);
 
-        NEO::setImageSurfaceStateDimensions<GfxFamily>(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType, depth);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType, depth);
         surfaceState.setSurfaceMinLOD(0u);
         surfaceState.setMIPCountLOD(0u);
-        NEO::setMipTailStartLOD<GfxFamily>(&surfaceState, gmm);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&surfaceState, gmm);
 
         if (!isMediaFormatLayout) {
             surfaceState.setShaderChannelSelectRed(
@@ -316,14 +316,14 @@ ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_
         redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         uint32_t minArrayElement, renderTargetViewExtent, depth;
-        NEO::setImageSurfaceState<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper,
-                                             __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets,
-                                             desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12, minArrayElement, renderTargetViewExtent);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(&redescribedSurfaceState, imgInfoRedescirebed, gmm, *gmmHelper,
+                                                                      __GMM_NO_CUBE_MAP, this->allocation->getGpuAddress(), surfaceOffsets,
+                                                                      desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12, minArrayElement, renderTargetViewExtent);
 
-        NEO::setImageSurfaceStateDimensions<GfxFamily>(&redescribedSurfaceState, imgInfoRedescirebed, __GMM_NO_CUBE_MAP, surfaceType, depth);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(&redescribedSurfaceState, imgInfoRedescirebed, __GMM_NO_CUBE_MAP, surfaceType, depth);
         redescribedSurfaceState.setSurfaceMinLOD(0u);
         redescribedSurfaceState.setMIPCountLOD(0u);
-        NEO::setMipTailStartLOD<GfxFamily>(&redescribedSurfaceState, gmm);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(&redescribedSurfaceState, gmm);
 
         if (imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R8_UINT_TYPE ||
             imgInfoRedescirebed.surfaceFormat->gmmSurfaceFormat == GMM_FORMAT_R16_UINT_TYPE ||
@@ -364,7 +364,7 @@ void ImageCoreFamily<gfxCoreFamily>::copySurfaceStateToSSH(void *surfaceStateHea
              &surfaceState, sizeof(RENDER_SURFACE_STATE));
     if (isMediaBlockArg) {
         RENDER_SURFACE_STATE *dstRss = static_cast<RENDER_SURFACE_STATE *>(destSurfaceState);
-        NEO::setWidthForMediaBlockSurfaceState<GfxFamily>(dstRss, imgInfo);
+        NEO::ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(dstRss, imgInfo);
     }
 }
 

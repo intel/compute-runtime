@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/image/image_surface_state.h"
@@ -41,7 +42,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     uint32_t renderTargetViewExtent = 0;
     uint32_t minArrayElement = 0;
 
-    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, isNV12Image(&this->getImageFormat()), minArrayElement, renderTargetViewExtent);
+    ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, isNV12Image(&this->getImageFormat()), minArrayElement, renderTargetViewExtent);
 
     uint32_t depth = 0;
 
@@ -58,16 +59,16 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         surfaceState->setSurfacePitch(static_cast<uint32_t>(getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes));
         surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
     } else {
-        setImageSurfaceStateDimensions<GfxFamily>(surfaceState, imgInfo, cubeFaceIndex, surfaceType, depth);
+        ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceStateDimensions(surfaceState, imgInfo, cubeFaceIndex, surfaceType, depth);
         if (setAsMediaBlockImage) {
-            setWidthForMediaBlockSurfaceState<GfxFamily>(surfaceState, imgInfo);
+            ImageSurfaceStateHelper<GfxFamily>::setWidthForMediaBlockSurfaceState(surfaceState, imgInfo);
         }
     }
 
     uint32_t mipCount = this->mipCount > 0 ? this->mipCount - 1 : 0;
     surfaceState->setSurfaceMinLOD(this->baseMipLevel + mipLevel);
     surfaceState->setMIPCountLOD(mipCount);
-    setMipTailStartLOD<GfxFamily>(surfaceState, gmm);
+    ImageSurfaceStateHelper<GfxFamily>::setMipTailStartLOD(surfaceState, gmm);
 
     cl_channel_order imgChannelOrder = getSurfaceFormatInfo().oclImageFormat.image_channel_order;
     int shaderChannelValue = ImageHw<GfxFamily>::getShaderChannelValue(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, imgChannelOrder);
@@ -119,7 +120,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
             surfaceState->setAuxiliarySurfacePitch(mcsGmm->getUnifiedAuxPitchTiles());
             surfaceState->setAuxiliarySurfaceQPitch(mcsGmm->getAuxQPitch());
             EncodeSurfaceState<GfxFamily>::setClearColorParams(surfaceState, mcsGmm);
-            setUnifiedAuxBaseAddress<GfxFamily>(surfaceState, mcsGmm);
+            ImageSurfaceStateHelper<GfxFamily>::setUnifiedAuxBaseAddress(surfaceState, mcsGmm);
         } else if (mcsGmm->unifiedAuxTranslationCapable()) {
             EncodeSurfaceState<GfxFamily>::setImageAuxParamsForCCS(surfaceState, mcsGmm);
         } else {
