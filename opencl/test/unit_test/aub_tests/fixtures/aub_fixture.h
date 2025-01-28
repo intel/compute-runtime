@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         auto pDevice = MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex);
         device = std::make_unique<MockClDevice>(pDevice);
+        pDevice->disableSecondaryEngines = true;
 
         this->csr = pDevice->getDefaultEngine().commandStreamReceiver;
 

@@ -459,7 +459,7 @@ HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResu
         }
     } else {
         auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        if (gfxCoreHelper.areSecondaryContextsSupported() == false) {
+        if (gfxCoreHelper.areSecondaryContextsSupported() == false || device->device.disableSecondaryEngines) {
             ASSERT_EQ(1u, largeGrfValues.size());
             EXPECT_FALSE(largeGrfValues[0]);
         } else {
