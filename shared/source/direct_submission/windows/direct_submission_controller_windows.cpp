@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,4 +17,9 @@ bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     SysCalls::timeEndPeriod(1u);
     return returnValue;
 }
+
+std::chrono::microseconds DirectSubmissionController::getDefaultTimeout() {
+    return std::chrono::microseconds{1'000};
+}
+
 } // namespace NEO

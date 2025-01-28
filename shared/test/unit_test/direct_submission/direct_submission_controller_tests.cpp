@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,12 +193,12 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorD
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
 
         auto previousTimestamp = controller.lastTerminateCpuTimestamp;
-        controller.cpuTimestamp += std::chrono::microseconds(5'000);
+        controller.cpuTimestamp += DirectSubmissionController::getDefaultTimeout();
         controller.checkNewSubmissions();
-        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), 5'000);
+        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), DirectSubmissionController::getDefaultTimeout().count());
         EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
         EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
-        EXPECT_EQ(controller.timeout.count(), 5'000);
+        EXPECT_EQ(controller.timeout.count(), DirectSubmissionController::getDefaultTimeout().count());
         EXPECT_EQ(controller.maxTimeout.count(), 200'000);
     }
     {
@@ -440,23 +440,23 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr4.setupContext(*osContext4.get());
 
     DirectSubmissionControllerMock controller;
-
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    auto timeout = DirectSubmissionController::getDefaultTimeout().count();
+    EXPECT_EQ(controller.timeout.count(), timeout);
 
     controller.registerDirectSubmission(&csr);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), timeout);
 
     controller.registerDirectSubmission(&csr3);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), timeout);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), timeout);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), timeout);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), timeout);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);
@@ -472,8 +472,9 @@ TEST(DirectSubmissionControllerTests, givenPowerSavingUintWhenCallingGetThrottle
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegisterCsrsFromDifferentSubdevicesThenTimeoutIsAdjusted) {
+    static constexpr size_t divisor = 4;
     DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerDivisor.set(4);
+    debugManager.flags.DirectSubmissionControllerDivisor.set(divisor);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.initializeMemoryManager();
@@ -547,38 +548,41 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     csr10.setupContext(*osContext10.get());
 
     DirectSubmissionControllerMock controller;
-
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    auto defaultTimeout = DirectSubmissionController::getDefaultTimeout().count();
+    EXPECT_EQ(controller.timeout.count(), defaultTimeout);
 
     controller.registerDirectSubmission(&csr);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), defaultTimeout);
 
     controller.registerDirectSubmission(&csr5);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), defaultTimeout);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout.count(), 1'250);
+    int64_t newTimeout = defaultTimeout / divisor;
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout.count(), 312);
+    newTimeout /= divisor;
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout.count(), 312);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr6);
-    EXPECT_EQ(controller.timeout.count(), 312);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr7);
-    EXPECT_EQ(controller.timeout.count(), 312);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr9);
-    EXPECT_EQ(controller.timeout.count(), 312);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
+    newTimeout /= divisor;
     controller.registerDirectSubmission(&csr8);
-    EXPECT_EQ(controller.timeout.count(), 78);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr10);
-    EXPECT_EQ(controller.timeout.count(), 78);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);
@@ -588,8 +592,9 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmissionControllerDivisorSetWhenRegisterCsrsThenTimeoutIsAdjusted) {
+    static constexpr size_t divisor = 5;
     DebugManagerStateRestore restorer;
-    debugManager.flags.DirectSubmissionControllerDivisor.set(5);
+    debugManager.flags.DirectSubmissionControllerDivisor.set(divisor);
 
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
@@ -627,23 +632,25 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmi
     csr4.setupContext(*osContext4.get());
 
     DirectSubmissionControllerMock controller;
-
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    auto defaultTimeout = DirectSubmissionController::getDefaultTimeout().count();
+    EXPECT_EQ(controller.timeout.count(), defaultTimeout);
 
     controller.registerDirectSubmission(&csr);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), defaultTimeout);
 
     controller.registerDirectSubmission(&csr3);
-    EXPECT_EQ(controller.timeout.count(), 5'000);
+    EXPECT_EQ(controller.timeout.count(), defaultTimeout);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout.count(), 1'000);
+    int64_t newTimeout = defaultTimeout / divisor;
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout.count(), 200);
+    newTimeout /= divisor;
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout.count(), 200);
+    EXPECT_EQ(controller.timeout.count(), newTimeout);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);

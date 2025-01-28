@@ -46,11 +46,6 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const {
-    return true;
-}
-
-template <>
 TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const {
     TimeoutParams params{};
     if (acLineConnected) {
@@ -64,8 +59,8 @@ TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutP
             params.timeout = std::chrono::microseconds{4'500};
             break;
         case NEO::HIGH:
-            params.maxTimeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
-            params.timeout = std::chrono::microseconds{DirectSubmissionController::defaultTimeout};
+            params.maxTimeout = DirectSubmissionController::getDefaultTimeout();
+            params.timeout = DirectSubmissionController::getDefaultTimeout();
             break;
         default:
             break;
