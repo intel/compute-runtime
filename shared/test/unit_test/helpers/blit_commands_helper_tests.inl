@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -53,7 +54,9 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
                                               canonizedGpuAddress);
         uint32_t patternToCommand[4];
         memset(patternToCommand, 4, patternSize);
-        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), device->getRootDeviceEnvironmentRef());
+        auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, mockAllocation.getUnderlyingBufferSize(), patternToCommand, patternSize, 0);
+
+        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, device->getRootDeviceEnvironmentRef());
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
             cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));

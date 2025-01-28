@@ -43,6 +43,7 @@ struct BlitSyncProperties {
 };
 
 struct BlitProperties {
+    static BlitProperties constructPropertiesForMemoryFill(GraphicsAllocation *dstAllocation, size_t size, uint32_t *pattern, size_t patternSize, size_t offset);
     static BlitProperties constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
                                                           CommandStreamReceiver &commandStreamReceiver,
                                                           GraphicsAllocation *memObjAllocation,
@@ -75,6 +76,7 @@ struct BlitProperties {
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
     GraphicsAllocation *clearColorAllocation = nullptr;
+    uint32_t *fillPattern = nullptr;
     uint64_t dstGpuAddress = 0;
     uint64_t srcGpuAddress = 0;
 
@@ -86,6 +88,7 @@ struct BlitProperties {
     size_t dstSlicePitch = 0;
     size_t srcRowPitch = 0;
     size_t srcSlicePitch = 0;
+    size_t fillPatternSize = 0;
     Vec3<size_t> dstSize = 0;
     Vec3<size_t> srcSize = 0;
     size_t bytesPerPixel = 1;
