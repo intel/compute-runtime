@@ -1153,9 +1153,9 @@ void Drm::configureScratchPagePolicy() {
         disableScratch = !!debugManager.flags.DisableScratchPages.get();
         return;
     }
-
     const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    disableScratch = productHelper.isDisableScratchPagesSupported() || rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled();
+    disableScratch = (productHelper.isDisableScratchPagesSupported() &&
+                      !rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled());
 }
 
 void Drm::configureGpuFaultCheckThreshold() {
