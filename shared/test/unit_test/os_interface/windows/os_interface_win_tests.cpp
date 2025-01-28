@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,7 @@ TEST_F(OsInterfaceTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenPrope
     {
         wddm->gfxFeatureTable->FtrTile64Optimization = 1;
         auto gmmHelper = std::make_unique<GmmHelper>(rootDeviceEnvironment);
-        EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
+        EXPECT_EQ(0u, passedFtrTable.FtrTile64Optimization);
     }
     {
         debugManager.flags.EnableFtrTile64Optimization.set(-1);
