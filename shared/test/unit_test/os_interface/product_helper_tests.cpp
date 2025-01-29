@@ -148,9 +148,14 @@ HWTEST_F(ProductHelperTest, givenProductHelperAndSingleDeviceSharedMemAccessConc
 
     for (const bool isKmdMigrationAvailable : std::array<bool, 2>{false, true}) {
         auto singleDeviceSharedMemCapabilities = productHelper->getSingleDeviceSharedMemCapabilities(isKmdMigrationAvailable);
-        if (singleDeviceSharedMemCapabilities > 0) {
-            EXPECT_EQ(isKmdMigrationAvailable, !!(UnifiedSharedMemoryFlags::concurrentAccess & singleDeviceSharedMemCapabilities));
-            EXPECT_EQ(isKmdMigrationAvailable, !!(UnifiedSharedMemoryFlags::concurrentAtomicAccess & singleDeviceSharedMemCapabilities));
+        EXPECT_EQ((singleDeviceSharedMemCapabilities & UnifiedSharedMemoryFlags::access), UnifiedSharedMemoryFlags::access);
+        EXPECT_EQ((singleDeviceSharedMemCapabilities & UnifiedSharedMemoryFlags::atomicAccess), UnifiedSharedMemoryFlags::atomicAccess);
+        if (isKmdMigrationAvailable) {
+            EXPECT_EQ((singleDeviceSharedMemCapabilities & UnifiedSharedMemoryFlags::concurrentAccess), UnifiedSharedMemoryFlags::concurrentAccess);
+            EXPECT_EQ((singleDeviceSharedMemCapabilities & UnifiedSharedMemoryFlags::concurrentAtomicAccess), UnifiedSharedMemoryFlags::concurrentAtomicAccess);
+        } else {
+            EXPECT_EQ((singleDeviceSharedMemCapabilities & UnifiedSharedMemoryFlags::concurrentAccess), 0UL);
+            EXPECT_EQ((singleDeviceSharedMemCapabilities & UnifiedSharedMemoryFlags::concurrentAtomicAccess), 0UL);
         }
     }
 }
