@@ -367,7 +367,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream
 
         appendTilingEnable(blitCmd);
         appendBlitMemoryOptionsForFillBuffer(dummyAllocation, blitCmd, *rootDeviceEnvironment);
-        appendBlitFillCommand(blitCmd);
+
+        BlitProperties blitProperties = {};
+
+        appendBlitFillCommand(blitProperties, blitCmd);
 
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
         *cmd = blitCmd;

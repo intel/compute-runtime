@@ -2327,15 +2327,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             }
         }
 
-        uint64_t offset = getAllocationOffsetForAppendBlitFill(ptr, *gpuAllocation);
+        auto offset = getAllocationOffsetForAppendBlitFill(ptr, *gpuAllocation);
 
         commandContainer.addToResidencyContainer(gpuAllocation);
         uint32_t patternToCommand[4] = {};
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(gpuAllocation, offset, patternToCommand, patternSize,
-                                                                        *commandContainer.getCommandStream(),
-                                                                        size,
-                                                                        neoDevice->getRootDeviceEnvironmentRef());
+
+        auto blitProperties = NEO::BlitProperties::constructPropertiesForMemoryFill(gpuAllocation, size, patternToCommand, patternSize, offset);
+
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(blitProperties, *commandContainer.getCommandStream(), neoDevice->getRootDeviceEnvironmentRef());
         dummyBlitWa.isWaRequired = true;
 
         appendSignalEventPostWalker(signalEvent, nullptr, nullptr, false, false, true);
