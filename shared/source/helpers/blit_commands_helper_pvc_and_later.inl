@@ -12,7 +12,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_SET = typename Family::MEM_SET;
     auto blitCmd = Family::cmdInitMemSet;
 
@@ -23,20 +23,19 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
     blitCmd.setDestinationMOCS(mocs);
 
     uint32_t compressionFormat = 0;
-    if (blitProperties.dstAllocation->isCompressionEnabled()) {
-        auto resourceFormat = blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
+    if (dstAlloc->isCompressionEnabled()) {
+        auto resourceFormat = dstAlloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat();
         compressionFormat = static_cast<uint32_t>(rootDeviceEnvironment.getGmmClientContext()->getSurfaceStateCompressionFormat(resourceFormat));
     }
 
-    appendBlitMemSetCompressionFormat(&blitCmd, blitProperties.dstAllocation, compressionFormat);
+    appendBlitMemSetCompressionFormat(&blitCmd, dstAlloc, compressionFormat);
 
-    blitCmd.setFillData(*blitProperties.fillPattern);
+    blitCmd.setFillData(*pattern);
 
-    auto sizeToFill = blitProperties.copySize.x;
-    uint64_t offset = blitProperties.dstOffset.x;
+    auto sizeToFill = size;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
-        tmpCmd.setDestinationStartAddress(ptrOffset(blitProperties.dstAllocation->getGpuAddress(), static_cast<size_t>(offset)));
+        tmpCmd.setDestinationStartAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
         size_t height = 0;
         size_t width = 0;
         if (sizeToFill <= BlitterConstants::maxBlitSetWidth) {
@@ -53,7 +52,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(const BlitPropert
         tmpCmd.setFillHeight(static_cast<uint32_t>(height));
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
 
-        appendBlitMemSetCommand(blitProperties, &tmpCmd);
+        appendBlitMemSetCommand(&tmpCmd);
 
         auto cmd = linearStream.getSpaceForCmd<MEM_SET>();
         *cmd = tmpCmd;

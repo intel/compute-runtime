@@ -13,18 +13,6 @@
 
 namespace NEO {
 
-BlitProperties BlitProperties::constructPropertiesForMemoryFill(GraphicsAllocation *dstAllocation, size_t size, uint32_t *pattern, size_t patternSize, size_t offset) {
-    return {
-        .blitDirection = BlitterConstants::BlitDirection::fill,
-        .dstAllocation = dstAllocation,
-        .fillPattern = pattern,
-        .copySize = {size, 1, 1},
-        .dstOffset = {offset, 0, 0},
-        .srcOffset = {0, 0, 0},
-        .fillPatternSize = patternSize,
-        .isSystemMemoryPoolUsed = MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool())};
-}
-
 BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection blitDirection,
                                                                CommandStreamReceiver &commandStreamReceiver,
                                                                GraphicsAllocation *memObjAllocation,

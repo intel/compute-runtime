@@ -70,10 +70,9 @@ enum class BlitDirection : uint32_t {
     bufferToHostPtr,
     hostPtrToBuffer,
     bufferToBuffer,
-    fill,
     hostPtrToImage,
     imageToHostPtr,
-    imageToImage,
+    imageToImage
 };
 
 enum PostBlitMode : int32_t {

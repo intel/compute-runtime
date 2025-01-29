@@ -11,7 +11,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/timestamp_packet.h"
-#include "shared/source/utilities/lookup_array.h"
 
 #include <cmath>
 
@@ -254,31 +253,22 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitMemSetCommand(const BlitProperties &blitProperties, void *blitCmd) {}
+void BlitCommandsHelper<GfxFamily>::appendBlitMemSetCommand(void *blitCmd) {}
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment, COLOR_DEPTH depth, size_t patternSize) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     auto blitCmd = GfxFamily::cmdInitXyColorBlt;
     const auto maxWidth = getMaxBlitWidth(rootDeviceEnvironment);
     const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, true);
 
-    const LookupArray<size_t, COLOR_DEPTH, 5> colorDepthSize({{
-        {1, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR},
-        {2, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR},
-        {4, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR},
-        {8, COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR},
-        {16, COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR},
-    }});
+    blitCmd.setFillColor(pattern);
+    blitCmd.setColorDepth(depth);
 
-    blitCmd.setFillColor(blitProperties.fillPattern);
-    blitCmd.setColorDepth(colorDepthSize.lookUp(blitProperties.fillPatternSize));
-
-    uint64_t sizeToFill = blitProperties.copySize.x / blitProperties.fillPatternSize;
-    uint64_t offset = blitProperties.dstOffset.x;
+    uint64_t sizeToFill = size / patternSize;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
-        tmpCmd.setDestinationBaseAddress(ptrOffset(blitProperties.dstAllocation->getGpuAddress(), static_cast<size_t>(offset)));
+        tmpCmd.setDestinationBaseAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
         uint64_t height = 0;
         uint64_t width = 0;
         if (sizeToFill <= maxWidth) {
@@ -293,15 +283,15 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const BlitProperties 
         }
         tmpCmd.setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
         tmpCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * blitProperties.fillPatternSize));
+        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
 
-        appendBlitMemoryOptionsForFillBuffer(blitProperties.dstAllocation, tmpCmd, rootDeviceEnvironment);
-        appendBlitFillCommand(blitProperties, tmpCmd);
+        appendBlitMemoryOptionsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
+        appendBlitFillCommand(tmpCmd);
 
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
         *cmd = tmpCmd;
         auto blitSize = width * height;
-        offset += (blitSize * blitProperties.fillPatternSize);
+        offset += (blitSize * patternSize);
         sizeToFill -= blitSize;
     }
 }
@@ -564,14 +554,25 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::adjustControlSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {}
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::appendBlitFillCommand(const BlitProperties &blitProperties, typename GfxFamily::XY_COLOR_BLT &blitCmd) {}
+void BlitCommandsHelper<GfxFamily>::appendBlitFillCommand(typename GfxFamily::XY_COLOR_BLT &blitCmd) {}
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (blitProperties.fillPatternSize == 1) {
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(blitProperties, linearStream, rootDeviceEnvironment);
-    } else {
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(blitProperties, linearStream, rootDeviceEnvironment);
+void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, RootDeviceEnvironment &rootDeviceEnvironment) {
+    switch (patternSize) {
+    case 1:
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryByteFill(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment);
+        break;
+    case 2:
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR, 2);
+        break;
+    case 4:
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR, 4);
+        break;
+    case 8:
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, 8);
+        break;
+    default:
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(dstAlloc, offset, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR, 16);
     }
 }
 
