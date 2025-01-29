@@ -54,21 +54,21 @@ ze_result_t CommandListImp::destroy() {
         getCsr(false)->waitForCompletionWithTimeout(NEO::WaitParams{false, false, false, timeoutMicroseconds}, getCsr(false)->peekTaskCount());
     }
 
-    if (!isImmediateType() &&
-        !isCopyOnly(false) &&
-        this->stateBaseAddressTracking &&
+    auto flushCachesForDebugger = this->getDevice() && this->getDevice()->getL0Debugger() && this->getDevice()->getProductHelper().isDcFlushAllowed();
+    if (!isCopyOnly(false) &&
+        ((!isImmediateType() && this->stateBaseAddressTracking) || flushCachesForDebugger) &&
         this->cmdListHeapAddressModel == NEO::HeapAddressModel::privateHeaps) {
 
         auto surfaceStateHeap = this->commandContainer.getIndirectHeap(NEO::HeapType::surfaceState);
-        if (surfaceStateHeap) {
-            auto heapAllocation = surfaceStateHeap->getGraphicsAllocation();
 
+        if (flushCachesForDebugger || surfaceStateHeap) {
             auto rootDeviceIndex = device->getRootDeviceIndex();
             auto &deviceEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines(rootDeviceIndex);
             for (auto &engine : deviceEngines) {
                 if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
                     auto contextId = engine.osContext->getContextId();
-                    if (heapAllocation->isUsedByOsContext(contextId) && engine.osContext->isInitialized() && heapAllocation->getTaskCount(contextId) > 0) {
+                    if (engine.osContext->isInitialized() &&
+                        ((flushCachesForDebugger && engine.commandStreamReceiver->isDirectSubmissionEnabled()) || (surfaceStateHeap && surfaceStateHeap->getGraphicsAllocation()->isUsedByOsContext(contextId) && surfaceStateHeap->getGraphicsAllocation()->getTaskCount(contextId) > 0))) {
                         engine.commandStreamReceiver->sendRenderStateCacheFlush();
                     }
                 }

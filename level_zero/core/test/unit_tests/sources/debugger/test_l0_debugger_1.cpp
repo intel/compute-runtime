@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_bindless_heaps_helper.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -76,6 +77,37 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingStateSaveAreaHeaderThenValidSip
     auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
 
     EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
+}
+
+HWTEST_F(L0DebuggerTest, givenL0DebuggerAndDirectSubmissionWhenDestroyCmdListThenFlushTagUpdateOnDcFlushPlatform) {
+    auto &engine = device->getNEODevice()->getDefaultEngine();
+    engine.osContext->ensureContextInitialized(false);
+    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+    csr->directSubmissionAvailable = true;
+    csr->callBaseSendRenderStateCacheFlush = false;
+    csr->flushReturnValue = NEO::SubmissionStatus::success;
+
+    ze_result_t returnValue{};
+    L0::CommandList *commandList = L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+    commandList->destroy();
+
+    if (device->getProductHelper().isDcFlushAllowed()) {
+        EXPECT_TRUE(csr->renderStateCacheFlushed);
+    } else {
+        EXPECT_FALSE(csr->renderStateCacheFlushed);
+    }
+}
+
+HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenDestroyCmdListThenDoNotFlushTagUpdate) {
+    auto &engine = device->getNEODevice()->getDefaultEngine();
+    engine.osContext->ensureContextInitialized(false);
+    auto csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(engine.commandStreamReceiver);
+
+    ze_result_t returnValue{};
+    L0::CommandList *commandList = L0::CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false);
+    commandList->destroy();
+
+    EXPECT_FALSE(csr->renderStateCacheFlushed);
 }
 
 TEST_F(L0DebuggerTest, givenProgramDebuggingEnabledWhenDebuggerIsCreatedThenFusedEusAreDisabled) {
