@@ -13,10 +13,10 @@
 
 namespace NEO {
 
-void MockSipListener::OnTestEnd(const testing::TestInfo &) {
+void MockSipListener::OnTestEnd(const testing::TestInfo &testInfo) {
     if (MockSipData::mockSipKernel) {
         if (MockSipData::mockSipKernel->tempSipMemoryAllocation) {
-            printf("*** WARNING: test did not free sip kernels ***\n");
+            printf("*** WARNING: test did not free sip kernels, test name: %s ***\n", testInfo.name());
             MockSipData::mockSipKernel->tempSipMemoryAllocation.reset(nullptr);
         }
     }
