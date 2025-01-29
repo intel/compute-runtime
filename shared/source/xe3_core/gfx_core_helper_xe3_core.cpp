@@ -25,8 +25,6 @@ using Family = NEO::Xe3CoreFamily;
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/simd_helper.h"
 
-#include "gfx_core_helper_xe3_core_additional.inl"
-
 namespace NEO {
 template <>
 const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::none;
