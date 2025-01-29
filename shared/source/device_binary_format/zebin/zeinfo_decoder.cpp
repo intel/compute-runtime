@@ -77,7 +77,10 @@ DecodeError extractZeInfoSections(const Yaml::YamlParser &parser, ZeInfoSections
         } else if (Tags::functions == key) {
             outZeInfoSections.functions.push_back(&globalScopeNd);
         } else {
-            encounterUnknownZeInfoAttribute("\"" + parser.readKey(globalScopeNd).str() + "\" in global scope of .ze_info", outErrReason, outWarning, err);
+            std::ostringstream entryStream;
+
+            entryStream << "\"" << parser.readKey(globalScopeNd).str() << "\" in global scope of .ze_info";
+            encounterUnknownZeInfoAttribute(entryStream.str(), outErrReason, outWarning, err);
         }
     }
     return err;
@@ -288,7 +291,10 @@ DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::
                 err = execEnvErr;
             }
         } else {
-            encounterUnknownZeInfoAttribute("\"" + yamlParser.readKey(functionMetadataNd).str() + "\" in context of : external functions", outErrReason, outWarning, err);
+            std::ostringstream entryStream;
+
+            entryStream << "\"" << yamlParser.readKey(functionMetadataNd).str() << "\" in context of : external functions";
+            encounterUnknownZeInfoAttribute(entryStream.str(), outErrReason, outWarning, err);
         }
     }
 
