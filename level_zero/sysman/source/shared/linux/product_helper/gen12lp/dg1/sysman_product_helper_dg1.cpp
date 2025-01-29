@@ -164,6 +164,14 @@ bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }
 
+template <>
+bool SysmanProductHelperHw<gfxProduct>::isPmtNodeAvailableForEnergyCounter(zes_power_domain_t powerDomain) {
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        return true;
+    }
+    return false;
+}
+
 template class SysmanProductHelperHw<gfxProduct>;
 
 } // namespace Sysman

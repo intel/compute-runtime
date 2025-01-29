@@ -40,6 +40,11 @@ static int mockReadLinkSingleTelemetryNodesSuccess(const char *path, char *buf, 
     return -1;
 }
 
+inline static int mockStatSuccess(const std::string &filePath, struct stat *statbuf) noexcept {
+    statbuf->st_mode = S_IWUSR | S_IRUSR | S_IFREG;
+    return 0;
+}
+
 static int mockOpenSuccess(const char *pathname, int flags) {
     int returnValue = -1;
     std::string strPathName(pathname);
@@ -1022,6 +1027,7 @@ HWTEST2_F(SysmanProductHelperTemperatureTest, GivenValidTemperatureHandleWhenZes
     static uint32_t validTemperatureHandleCount = 3u;
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSingleTelemetryNodesSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {

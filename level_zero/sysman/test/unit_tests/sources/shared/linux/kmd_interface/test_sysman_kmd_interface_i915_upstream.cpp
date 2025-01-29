@@ -162,8 +162,8 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCalli
     EXPECT_EQ(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerTimeout));
     EXPECT_EQ(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerTimeslice));
     EXPECT_EQ(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerWatchDogTimeout));
-    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSustainedPowerLimit));
-    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameDefaultPowerLimit));
+    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit));
+    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageDefaultPowerLimit));
 }
 
 TEST_F(SysmanFixtureDeviceI915Upstream, GivenGroupEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdIsCalledThenInvalidFdIsReturned) {
@@ -252,6 +252,20 @@ TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceInstanceWhenCalli
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_STREQ("/sys/bus/pci/drivers/i915/bind", pSysmanKmdInterface->getGpuBindEntry().c_str());
     EXPECT_STREQ("/sys/bus/pci/drivers/i915/unbind", pSysmanKmdInterface->getGpuUnBindEntry().c_str());
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenGetEnergyCounterNodeFilePathIsCalledForDifferentPowerDomainsThenProperPathIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::string expectedFilePath = "energy1_input";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(ZES_POWER_DOMAIN_PACKAGE));
+    expectedFilePath = "";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(ZES_POWER_DOMAIN_CARD));
+}
+
+TEST_F(SysmanFixtureDeviceI915Upstream, GivenSysmanKmdInterfaceWhenIsPowerSupportForSubdeviceAvailableIsCalledForDifferentPowerDomainsThenProperValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_TRUE(pSysmanKmdInterface->isPowerSupportForSubdeviceAvailable(ZES_POWER_DOMAIN_PACKAGE));
+    EXPECT_FALSE(pSysmanKmdInterface->isPowerSupportForSubdeviceAvailable(ZES_POWER_DOMAIN_CARD));
 }
 
 } // namespace ult

@@ -121,8 +121,8 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCallingGetNativ
     EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerTimeslice));
     EXPECT_EQ(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerWatchDogTimeout));
     EXPECT_EQ(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSchedulerWatchDogTimeoutMaximum));
-    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameSustainedPowerLimit));
-    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameDefaultPowerLimit));
+    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardSustainedPowerLimit));
+    EXPECT_EQ(SysfsValueUnit::micro, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNameCardDefaultPowerLimit));
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceAndIsIntegratedDeviceInstanceWhenGetEventsIsCalledThenValidEventTypeIsReturned) {
@@ -171,6 +171,22 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingSupport
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCheckingWhetherClientInfoAvailableInFdInfoThenTrueValueIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
     EXPECT_TRUE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenGetEnergyCounterNodeFilePathIsCalledForDifferentPowerDomainsThenProperPathIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::string expectedFilePath = "energy1_input";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(ZES_POWER_DOMAIN_CARD));
+    expectedFilePath = "energy2_input";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(ZES_POWER_DOMAIN_PACKAGE));
+    expectedFilePath = "";
+    EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFilePath(ZES_POWER_DOMAIN_UNKNOWN));
+}
+
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenIsPowerSupportForSubdeviceAvailableIsCalledForDifferentPowerDomainsThenFalseValueIsReturned) {
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    EXPECT_FALSE(pSysmanKmdInterface->isPowerSupportForSubdeviceAvailable(ZES_POWER_DOMAIN_PACKAGE));
+    EXPECT_FALSE(pSysmanKmdInterface->isPowerSupportForSubdeviceAvailable(ZES_POWER_DOMAIN_CARD));
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenGroupEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdIsCalledThenInValidFdIsReturned) {
