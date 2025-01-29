@@ -5,6 +5,11 @@ components:
     repository: https://github.com/intel/aubstream
     revision: 45a500472bafd94a96d5b3b634314a481f1654d7
     type: git
+  aub_configs:
+    branch: aub_configs
+    dest_dir: aub_configs
+    revision: dad4b3e6a1a3f72a5e8a11b167373b50f38b8218
+    type: git
   gmmlib:
     asset_name: gmmlib
     dest_dir: gmmlib
