@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -404,67 +404,4 @@ TEST_F(WddmTestWithMockGdiDll, givenSetThreadPriorityStateEnabledWhenInitWddmThe
     wddm->init();
     EXPECT_EQ(1u, SysCalls::setThreadPriorityCalled);
     EXPECT_EQ(SysCalls::ThreadPriority::AboveNormal, SysCalls::setThreadPriorityLastValue);
-}
-
-TEST_F(WddmTestWithMockGdiDll, whenIsReadOnlyMemoryCalledThenCorrectValueReturned) {
-    EXPECT_FALSE(wddm->isReadOnlyMemory(nullptr));
-
-    static int mem[10];
-    SysCalls::virtualQueryMemoryBasicInformation.Protect = PAGE_READWRITE;
-    EXPECT_FALSE(wddm->isReadOnlyMemory(mem));
-
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    SysCalls::virtualQueryMemoryBasicInformation.Protect = PAGE_READONLY;
-    EXPECT_TRUE(wddm->isReadOnlyMemory(constMem));
-}
-
-TEST_F(WddmTestWithMockGdiDll, givenReadOnlyHostMemoryPassedToCreateAllocationThenAllocationCreatedWithRetryAndReadOnlyFlagPassed) {
-    wddm->init();
-    setCreateAllocation2ReadOnlyFailConfigFcn(true);
-
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    SysCalls::virtualQueryMemoryBasicInformation.Protect = PAGE_READONLY;
-
-    D3DKMT_HANDLE handle, resHandle;
-    GmmRequirements gmmRequirements{};
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), constMem, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-
-    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(constMem, &gmm, handle, resHandle, nullptr));
-    bool readOnlyFlagWasPassed = false;
-    uint32_t createAllocation2NumCalled = 0;
-    getCreateAllocation2ReadOnlyFailConfigFcn(readOnlyFlagWasPassed, createAllocation2NumCalled);
-    EXPECT_TRUE(readOnlyFlagWasPassed);
-    EXPECT_EQ(2u, createAllocation2NumCalled);
-}
-
-TEST_F(WddmTestWithMockGdiDll, givenReadOnlyHostMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocationCreatedWithRetryAndReadOnlyFlagPassed) {
-    wddm->init();
-    wddm->callBaseMapGpuVa = false;
-    setCreateAllocation2ReadOnlyFailConfigFcn(true);
-
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    SysCalls::virtualQueryMemoryBasicInformation.Protect = PAGE_READONLY;
-
-    GmmRequirements gmmRequirements{};
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), constMem, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
-
-    OsHandleStorage handleStorage;
-    OsHandleWin osHandle;
-    auto maxOsContextCount = 1u;
-    ResidencyData residency(maxOsContextCount);
-
-    handleStorage.fragmentCount = 1;
-    handleStorage.fragmentStorageData[0].cpuPtr = constMem;
-    handleStorage.fragmentStorageData[0].fragmentSize = 10;
-    handleStorage.fragmentStorageData[0].freeTheFragment = false;
-    handleStorage.fragmentStorageData[0].osHandleStorage = &osHandle;
-    handleStorage.fragmentStorageData[0].residency = &residency;
-    osHandle.gmm = &gmm;
-
-    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocationsAndMapGpuVa(handleStorage));
-    bool readOnlyFlagWasPassed = false;
-    uint32_t createAllocation2NumCalled = 0;
-    getCreateAllocation2ReadOnlyFailConfigFcn(readOnlyFlagWasPassed, createAllocation2NumCalled);
-    EXPECT_TRUE(readOnlyFlagWasPassed);
-    EXPECT_EQ(2u, createAllocation2NumCalled);
 }

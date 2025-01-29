@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -257,7 +257,6 @@ class Wddm : public DriverModel {
     void setNewResourceBoundToPageTable();
     void setProcessPowerThrottling();
     void setThreadPriority();
-    bool isReadOnlyMemory(const void *ptr);
 
     GMM_GFX_PARTITIONING gfxPartition{};
     ADAPTER_BDF adapterBDF{};

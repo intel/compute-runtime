@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,6 @@ struct MockWddmLinux : NEO::Wddm {
     using Wddm::gfxPartition;
     using Wddm::gfxPlatform;
     using Wddm::gmmMemory;
-    using Wddm::isReadOnlyMemory;
 };
 
 struct MockGmmMemoryWddmLinux : NEO::GmmMemory {
@@ -794,16 +793,6 @@ TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsLostTh
     EXPECT_EQ(0, this->wddm->getGdi()->destroyDevice(nullptr));
     EXPECT_EQ(0, this->wddm->getGdi()->closeAdapter(nullptr));
     EXPECT_EQ(1, gdiMockConfig.getDeviceStateClb.callCount);
-}
-
-TEST_F(WddmLinuxTest, whenIsReadOnlyMemoryCalledThenCorrectValueReturned) {
-    EXPECT_FALSE(wddm->isReadOnlyMemory(nullptr));
-
-    static int mem[10];
-    EXPECT_FALSE(wddm->isReadOnlyMemory(mem));
-
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    EXPECT_FALSE(wddm->isReadOnlyMemory(constMem));
 }
 
 class MockOsTimeLinux : public NEO::OSTimeLinux {
