@@ -464,11 +464,6 @@ SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitNativ
 }
 
 template <>
-bool SysmanProductHelperHw<gfxProduct>::isDiagnosticsSupported() {
-    return true;
-}
-
-template <>
 bool SysmanProductHelperHw<gfxProduct>::isUpstreamPortConnected() {
     return true;
 }

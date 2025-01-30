@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 namespace L0 {
 namespace ult {
 
-uint32_t mockDiagHandleCount = 2;
 const std::string mockQuiescentGpuFile("quiesce_gpu");
 const std::string mockinvalidateLmemFile("invalidate_lmem_mmaps");
 const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUITE2"};

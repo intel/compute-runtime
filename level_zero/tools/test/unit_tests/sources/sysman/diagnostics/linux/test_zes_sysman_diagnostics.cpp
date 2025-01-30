@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,7 +160,9 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     }
 };
 
-HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds, IsPVC) {
+TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingZesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyZesDeviceEnumDiagnosticTestSuitesCallSucceeds) {
+
+    constexpr uint32_t mockDiagHandleCount = 0;
     std::vector<zes_diag_handle_t> diagnosticsHandle{};
     uint32_t count = 0;
 
@@ -181,15 +183,20 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnum
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);
+}
 
-    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
-    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+TEST_F(ZesDiagnosticsFixture, GivenOneSupportedDiagnosticTestWhenCallingZesDeviceEnumDiagnosticTestSuitesThenOneCountIsReturnedAndVerifyZesDeviceEnumDiagnosticTestSuitesCallSucceeds) {
+
+    constexpr uint32_t mockDiagHandleCount = 1;
+    std::vector<zes_diag_handle_t> diagnosticsHandle{};
+    uint32_t count = 0;
+    pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.push_back(mockSupportedDiagTypes[0]);
+    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);
 
-    testCount = count;
+    uint32_t testCount = count;
 
     diagnosticsHandle.resize(testCount);
     result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &testCount, diagnosticsHandle.data());
@@ -199,30 +206,6 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnum
     EXPECT_EQ(testCount, mockDiagHandleCount);
 
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-}
-
-HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds, IsNotPVC) {
-    mockDiagHandleCount = 0;
-    std::vector<zes_diag_handle_t> diagnosticsHandle{};
-    uint32_t count = 0;
-
-    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, mockDiagHandleCount);
-
-    uint32_t testCount = count + 1;
-
-    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &testCount, nullptr);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(testCount, count);
-
-    diagnosticsHandle.resize(count);
-    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, diagnosticsHandle.data());
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, mockDiagHandleCount);
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsPropertiesThenCallSucceeds) {
@@ -777,27 +760,10 @@ TEST_F(ZesDiagnosticsFixture, GivenSysmanImpPointerWhenCallingReleaseResourcesTh
     EXPECT_NE(nullptr, executionEnvironment->memoryManager->getGfxPartition(rootIndex));
 }
 
-HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds, IsPVC) {
+TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenZeroCountIsReturnedAndVerifyZesDeviceEnumDiagnosticTestSuitesSucceeds) {
+
+    constexpr uint32_t mockDiagHandleCount = 0;
     uint32_t count = 0;
-    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, mockDiagHandleCount);
-
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
-    pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
-
-    pLinuxSysmanImp->diagnosticsReset = false;
-    pLinuxSysmanImp->reInitSysmanDeviceResources();
-
-    count = 0;
-    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, mockDiagHandleCount);
-}
-
-HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds, IsNotPVC) {
-    uint32_t count = 0;
-    mockDiagHandleCount = 0;
     ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);

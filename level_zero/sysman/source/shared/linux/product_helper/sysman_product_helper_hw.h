@@ -56,9 +56,6 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     std::string getCardCriticalPowerLimitFile() override;
     SysfsValueUnit getCardCriticalPowerLimitNativeUnit() override;
 
-    // Diagnostics
-    bool isDiagnosticsSupported() override;
-
     // standby
     bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override;
 
