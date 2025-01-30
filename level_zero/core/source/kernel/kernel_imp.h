@@ -233,6 +233,10 @@ struct KernelImp : Kernel {
     }
     uint8_t getRequiredSlmAlignment(uint32_t argIndex) const;
 
+    const std::vector<KernelArgInfo> &getKernelArgInfos() const {
+        return kernelArgInfos;
+    }
+
   protected:
     KernelImp() = default;
 
