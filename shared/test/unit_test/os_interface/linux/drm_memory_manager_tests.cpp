@@ -31,6 +31,7 @@
 #include "shared/test/common/mocks/mock_gmm_client_context_base.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
@@ -7350,6 +7351,32 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenForced2MBSizeAlignmentWhen
     }
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenEnabled2MBSizeAlignmentWhenAllocatingAllocationThenUseProperAlignment) {
+    auto mockProductHelper = new MockProductHelper;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    ASSERT_TRUE(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper->is2MBLocalMemAlignmentEnabled());
+
+    AllocationData allocationData;
+    allocationData.allFlags = 0;
+    allocationData.flags.allocateMemory = true;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.type = AllocationType::buffer;
+    allocationData.flags.resource48Bit = true;
+    MemoryManager::AllocationStatus allocationStatus;
+
+    allocationData.size = 2 * MemoryConstants::megaByte + 1;
+    auto memoryManager = createMemoryManager();
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocationData, allocationStatus);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, allocationStatus);
+    EXPECT_TRUE(isAllocationWithinHeap(*memoryManager, *allocation, HeapIndex::heapStandard2MB));
+    EXPECT_EQ(4 * MemoryConstants::megaByte, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(4 * MemoryConstants::megaByte, allocation->getReservedAddressSize());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
@@ -7598,6 +7625,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     if (!memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapExtended)) {
         GTEST_SKIP();
     }
+    auto &productHelper = this->device->getProductHelper();
 
     auto size = 8 * MemoryConstants::gigaByte;
 
@@ -7614,12 +7642,20 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     EXPECT_TRUE(allocation->getGpuAddress() % size == 0u);
 
     size = 8 * MemoryConstants::gigaByte + MemoryConstants::pageSize64k;
+    size_t expectedSize = size;
+
+    if (productHelper.is2MBLocalMemAlignmentEnabled()) {
+        expectedSize = alignUp(size, MemoryConstants::pageSize2M);
+    } else {
+        expectedSize = alignUp(size, MemoryConstants::pageSize64k);
+    }
+
     allocData.size = size;
     auto allocation2 = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
     ASSERT_NE(nullptr, allocation2);
-    EXPECT_EQ(allocData.size, allocation2->getUnderlyingBufferSize());
-    EXPECT_EQ(allocData.size, static_cast<DrmAllocation *>(allocation2)->getBO()->peekSize());
+    EXPECT_EQ(expectedSize, allocation2->getUnderlyingBufferSize());
+    EXPECT_EQ(expectedSize, static_cast<DrmAllocation *>(allocation2)->getBO()->peekSize());
     EXPECT_TRUE(allocation2->getGpuAddress() % MemoryConstants::pageSize2M == 0u);
 
     memoryManager->freeGraphicsMemory(allocation);

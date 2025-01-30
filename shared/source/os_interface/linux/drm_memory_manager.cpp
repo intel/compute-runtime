@@ -2073,6 +2073,13 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         } else {
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
+
+        auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+        if (productHelper.is2MBLocalMemAlignmentEnabled() &&
+            allocationData.size >= MemoryConstants::pageSize2M) {
+            sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
+        }
+
         if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
             sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
         }

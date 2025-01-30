@@ -1114,3 +1114,7 @@ HWTEST_F(ProductHelperTest, whenAdjustScratchSizeThenSizeIsNotChanged) {
     productHelper->adjustScratchSize(scratchSize);
     EXPECT_EQ(initialScratchSize, scratchSize);
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIs2MBLocalMemAlignmentEnabledThenCorrectValueIsReturned) {
+    EXPECT_FALSE(productHelper->is2MBLocalMemAlignmentEnabled());
+}

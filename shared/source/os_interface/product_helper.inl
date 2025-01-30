@@ -224,6 +224,11 @@ bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationDa
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::is2MBLocalMemAlignmentEnabled() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
