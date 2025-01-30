@@ -41,7 +41,7 @@ TEST_F(ReleaseHelper3001Tests, whenGettingCapabilitiesThenCorrectPropertiesAreRe
         EXPECT_EQ(0u, releaseHelper->getStackSizePerRay());
         EXPECT_EQ(revision == 0, releaseHelper->isDisablingMsaaRequired());
         EXPECT_TRUE(releaseHelper->isNumRtStacksPerDssFixedValue());
-        EXPECT_EQ(revision != 0, releaseHelper->getFtrXe2Compression());
+        EXPECT_TRUE(releaseHelper->getFtrXe2Compression());
     }
 }
 

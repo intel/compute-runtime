@@ -43,11 +43,6 @@ bool ReleaseHelperHw<release>::isDisablingMsaaRequired() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::getFtrXe2Compression() const {
-    return !(hardwareIpVersion.value == AOT::PTL_U_A0);
-}
-
-template <>
 bool ReleaseHelperHw<release>::isBindlessAddressingDisabled() const {
     return false;
 }
