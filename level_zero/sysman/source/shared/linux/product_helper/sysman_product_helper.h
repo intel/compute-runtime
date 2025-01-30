@@ -78,12 +78,8 @@ class SysmanProductHelper {
     virtual uint64_t setPowerLimitValue(int32_t value) = 0;
     virtual zes_limit_unit_t getPowerLimitUnit() = 0;
     virtual bool isPowerSetLimitSupported() = 0;
-    virtual std::string getI915PackageCriticalPowerLimitFile() = 0;
     virtual std::string getCardCriticalPowerLimitFile() = 0;
     virtual SysfsValueUnit getCardCriticalPowerLimitNativeUnit() = 0;
-    virtual std::string getPackageCriticalPowerLimitFile() = 0;
-    virtual SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() = 0;
-    virtual bool isPmtNodeAvailableForEnergyCounter(zes_power_domain_t powerDomain) = 0;
 
     // Diagnostics
     virtual bool isDiagnosticsSupported() = 0;

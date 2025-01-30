@@ -53,12 +53,8 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     uint64_t setPowerLimitValue(int32_t value) override;
     zes_limit_unit_t getPowerLimitUnit() override;
     bool isPowerSetLimitSupported() override;
-    std::string getI915PackageCriticalPowerLimitFile() override;
     std::string getCardCriticalPowerLimitFile() override;
     SysfsValueUnit getCardCriticalPowerLimitNativeUnit() override;
-    std::string getPackageCriticalPowerLimitFile() override;
-    SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() override;
-    bool isPmtNodeAvailableForEnergyCounter(zes_power_domain_t powerDomain) override;
 
     // Diagnostics
     bool isDiagnosticsSupported() override;

@@ -45,14 +45,13 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     SysFsAccessInterface *pSysfsAccess = nullptr;
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
     SysmanProductHelper *pSysmanProductHelper = nullptr;
-    void getPowerLimitFiles();
+    bool isTelemetrySupportAvailable = false;
 
   private:
     std::string intelGraphicsHwmonDir = {};
-    std::string criticalPowerLimitFile = {};
-    std::string sustainedPowerLimitFile = {};
-    std::string sustainedPowerLimitIntervalFile = {};
-    std::string energyCounterNodeFile = {};
+    std::string criticalPowerLimit = {};
+    std::string sustainedPowerLimit = {};
+    std::string sustainedPowerLimitInterval = {};
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
