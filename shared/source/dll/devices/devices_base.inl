@@ -24,7 +24,10 @@ DEVICE(0xE202, BmgHwConfig)
 NAMEDDEVICE(0xE20B, BmgHwConfig, "Intel(R) Arc(TM) B580 Graphics")
 NAMEDDEVICE(0xE20C, BmgHwConfig, "Intel(R) Arc(TM) B570 Graphics")
 DEVICE(0xE20D, BmgHwConfig)
+DEVICE(0xE210, BmgHwConfig)
 DEVICE(0xE212, BmgHwConfig)
+DEVICE(0xE215, BmgHwConfig)
+DEVICE(0xE216, BmgHwConfig)
 #endif
 #ifdef SUPPORT_LNL
 NAMEDDEVICE(0x6420, LnlHwConfig, "Intel(R) Graphics")
