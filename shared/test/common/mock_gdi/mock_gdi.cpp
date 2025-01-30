@@ -156,20 +156,19 @@ inline void *getStaticStorage(uint32_t slot) {
     return ptrOffset(baseAddress, slot * singleStorageSize);
 }
 
-static bool createAllocation2FailOnReadOnlyAllocation = false;
-static bool createAllocation2ReadOnlyFlagWasPassed = false;
+static D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+static bool captureCreateAllocationFlags = false;
 static uint32_t createAllocation2NumCalled = 0;
 
-void setCreateAllocation2ReadOnlyFailConfig(bool fail) {
-    createAllocation2FailOnReadOnlyAllocation = fail;
-    createAllocation2ReadOnlyFlagWasPassed = false;
+void setCapturingCreateAllocationFlags() {
+    captureCreateAllocationFlags = true;
     createAllocation2NumCalled = 0;
 }
 
-void getCreateAllocation2ReadOnlyFailConfig(bool &readOnlyFlagWasPassed, uint32_t &numCalled) {
-    readOnlyFlagWasPassed = createAllocation2ReadOnlyFlagWasPassed;
+void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCreateAllocationFlags, uint32_t &numCalled) {
+    capturedCreateAllocationFlags = createAllocationFlags;
     numCalled = createAllocation2NumCalled;
-    setCreateAllocation2ReadOnlyFailConfig(false);
+    captureCreateAllocationFlags = false;
 }
 
 NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
@@ -187,14 +186,10 @@ NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *a
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (createAllocation2FailOnReadOnlyAllocation) {
+    if (captureCreateAllocationFlags) {
+        createAllocationFlags = pallocation.Flags;
         createAllocation2NumCalled++;
-        if (pallocation.Flags.ReadOnly) {
-            createAllocation2ReadOnlyFlagWasPassed = true;
-            return STATUS_SUCCESS;
-        } else {
-            return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
-        }
+        return STATUS_SUCCESS;
     }
 
     numOfAllocations = allocation->NumAllocations;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,5 +15,9 @@ NTSTATUS Wddm::createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHan
     objAttr.Length = sizeof(OBJECT_ATTRIBUTES);
 
     return getGdi()->shareObjects(1, resourceHandle, &objAttr, SHARED_ALLOCATION_WRITE, ntHandle);
+}
+
+bool Wddm::getReadOnlyFlagValue(const void *alignedCpuPtr) const {
+    return alignedCpuPtr != nullptr;
 }
 } // namespace NEO

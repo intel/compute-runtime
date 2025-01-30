@@ -1000,4 +1000,53 @@ TEST_F(WddmTests, whenInitializeFailureThenInitOsInterfaceWddmFails) {
 
     EXPECT_FALSE(rootDeviceEnvironment->initOsInterface(std::move(hwDeviceId), 0u));
 }
+
+TEST_F(WddmTests, givenHostMemoryPassedToCreateAllocationThenAllocationCreatedWithReadOnlyFlagPassed) {
+    wddm->init();
+    setCapturingCreateAllocationFlagsFcn();
+
+    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    D3DKMT_HANDLE handle, resHandle;
+    GmmRequirements gmmRequirements{};
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), constMem, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(constMem, &gmm, handle, resHandle, nullptr));
+    D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+    uint32_t createAllocation2NumCalled = 0;
+    getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
+    EXPECT_EQ(createAllocationFlags.ReadOnly, wddm->getReadOnlyFlagValue(constMem));
+    EXPECT_EQ(1u, createAllocation2NumCalled);
+}
+
+TEST_F(WddmTests, givenHostMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocationCreatedWithReadOnlyFlagPassed) {
+    wddm->init();
+    wddm->callBaseMapGpuVa = false;
+    setCapturingCreateAllocationFlagsFcn();
+
+    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    GmmRequirements gmmRequirements{};
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), constMem, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    OsHandleStorage handleStorage;
+    OsHandleWin osHandle;
+    auto maxOsContextCount = 1u;
+    ResidencyData residency(maxOsContextCount);
+
+    handleStorage.fragmentCount = 1;
+    handleStorage.fragmentStorageData[0].cpuPtr = constMem;
+    handleStorage.fragmentStorageData[0].fragmentSize = 10;
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &osHandle;
+    handleStorage.fragmentStorageData[0].residency = &residency;
+    osHandle.gmm = &gmm;
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocationsAndMapGpuVa(handleStorage));
+    D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+    uint32_t createAllocation2NumCalled = 0;
+    getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
+    EXPECT_EQ(createAllocationFlags.ReadOnly, wddm->getReadOnlyFlagValue(constMem));
+    EXPECT_EQ(1u, createAllocation2NumCalled);
+}
 } // namespace NEO

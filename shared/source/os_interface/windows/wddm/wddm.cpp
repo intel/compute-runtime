@@ -665,6 +665,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     createAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
     createAllocation.Flags.NtSecuritySharing = outSharedHandle ? TRUE : FALSE;
     createAllocation.Flags.CreateResource = outSharedHandle ? TRUE : FALSE;
+    createAllocation.Flags.ReadOnly = getReadOnlyFlagValue(alignedCpuPtr);
     createAllocation.pAllocationInfo2 = &allocationInfo;
     createAllocation.hDevice = device;
 
@@ -677,12 +678,6 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     }
 
     status = getGdi()->createAllocation2(&createAllocation);
-    if (status != STATUS_SUCCESS) {
-        if (isReadOnlyMemory(alignedCpuPtr)) {
-            createAllocation.Flags.ReadOnly = true;
-            status = getGdi()->createAllocation2(&createAllocation);
-        }
-    }
     if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF(true);
         return status;
@@ -777,18 +772,12 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     createAllocation.Flags.CreateShared = FALSE;
     createAllocation.Flags.RestrictSharedAccess = FALSE;
     createAllocation.Flags.CreateResource = FALSE;
+    createAllocation.Flags.ReadOnly = getReadOnlyFlagValue(allocationInfo[0].pSystemMem);
     createAllocation.pAllocationInfo2 = allocationInfo;
     createAllocation.hDevice = device;
 
     while (status == STATUS_UNSUCCESSFUL) {
         status = getGdi()->createAllocation2(&createAllocation);
-
-        if (status != STATUS_SUCCESS) {
-            if (isReadOnlyMemory(allocationInfo[0].pSystemMem)) {
-                createAllocation.Flags.ReadOnly = true;
-                status = getGdi()->createAllocation2(&createAllocation);
-            }
-        }
 
         if (status != STATUS_SUCCESS) {
             PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);

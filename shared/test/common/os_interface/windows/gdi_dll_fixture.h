@@ -61,8 +61,8 @@ struct GdiDllFixture {
             reinterpret_cast<decltype(&setAdapterBDF)>(mockGdiDll->getProcAddress("setAdapterBDF"));
         setMockDeviceExecutionStateFcn = reinterpret_cast<decltype(&setMockDeviceExecutionState)>(mockGdiDll->getProcAddress("setMockDeviceExecutionState"));
         setMockGetDeviceStateReturnValueFcn = reinterpret_cast<decltype(&setMockGetDeviceStateReturnValue)>(mockGdiDll->getProcAddress("setMockGetDeviceStateReturnValue"));
-        getCreateAllocation2ReadOnlyFailConfigFcn = reinterpret_cast<decltype(&getCreateAllocation2ReadOnlyFailConfig)>(mockGdiDll->getProcAddress("getCreateAllocation2ReadOnlyFailConfig"));
-        setCreateAllocation2ReadOnlyFailConfigFcn = reinterpret_cast<decltype(&setCreateAllocation2ReadOnlyFailConfig)>(mockGdiDll->getProcAddress("setCreateAllocation2ReadOnlyFailConfig"));
+        getCapturedCreateAllocationFlagsFcn = reinterpret_cast<decltype(&getCapturedCreateAllocationFlags)>(mockGdiDll->getProcAddress("getCapturedCreateAllocationFlags"));
+        setCapturingCreateAllocationFlagsFcn = reinterpret_cast<decltype(&setCapturingCreateAllocationFlags)>(mockGdiDll->getProcAddress("setCapturingCreateAllocationFlags"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
@@ -111,6 +111,6 @@ struct GdiDllFixture {
     decltype(&setAdapterBDF) setAdapterBDFFcn = nullptr;
     decltype(&setMockDeviceExecutionState) setMockDeviceExecutionStateFcn = nullptr;
     decltype(&setMockGetDeviceStateReturnValue) setMockGetDeviceStateReturnValueFcn = nullptr;
-    decltype(&getCreateAllocation2ReadOnlyFailConfig) getCreateAllocation2ReadOnlyFailConfigFcn = nullptr;
-    decltype(&setCreateAllocation2ReadOnlyFailConfig) setCreateAllocation2ReadOnlyFailConfigFcn = nullptr;
+    decltype(&setCapturingCreateAllocationFlags) setCapturingCreateAllocationFlagsFcn = nullptr;
+    decltype(&getCapturedCreateAllocationFlags) getCapturedCreateAllocationFlagsFcn = nullptr;
 };

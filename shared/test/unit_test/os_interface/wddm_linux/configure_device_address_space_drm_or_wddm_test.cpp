@@ -62,10 +62,10 @@ struct MockWddmLinux : NEO::Wddm {
     std::vector<void *> validAddressRangeReleases;
 
     using Wddm::featureTable;
+    using Wddm::getReadOnlyFlagValue;
     using Wddm::gfxPartition;
     using Wddm::gfxPlatform;
     using Wddm::gmmMemory;
-    using Wddm::isReadOnlyMemory;
 };
 
 struct MockGmmMemoryWddmLinux : NEO::GmmMemory {
@@ -796,14 +796,11 @@ TEST_F(WddmLinuxTest, whenCheckedIfResourcesCleanupCanBeSkippedAndDeviceIsLostTh
     EXPECT_EQ(1, gdiMockConfig.getDeviceStateClb.callCount);
 }
 
-TEST_F(WddmLinuxTest, whenIsReadOnlyMemoryCalledThenCorrectValueReturned) {
-    EXPECT_FALSE(wddm->isReadOnlyMemory(nullptr));
+TEST_F(WddmLinuxTest, whenGettingReadOnlyFlagThenAlwaysReturnFalse) {
+    void *ptr = reinterpret_cast<void *>(0x1000);
+    EXPECT_FALSE(wddm->getReadOnlyFlagValue(ptr));
 
-    static int mem[10];
-    EXPECT_FALSE(wddm->isReadOnlyMemory(mem));
-
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    EXPECT_FALSE(wddm->isReadOnlyMemory(constMem));
+    EXPECT_FALSE(wddm->getReadOnlyFlagValue(nullptr));
 }
 
 class MockOsTimeLinux : public NEO::OSTimeLinux {

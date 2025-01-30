@@ -47,13 +47,13 @@ class WddmMock : public Wddm {
     using Wddm::featureTable;
     using Wddm::forceEvictOnlyIfNecessary;
     using Wddm::getDeviceState;
+    using Wddm::getReadOnlyFlagValue;
     using Wddm::getSystemInfo;
     using Wddm::gfxFeatureTable;
     using Wddm::gfxPlatform;
     using Wddm::gfxWorkaroundTable;
     using Wddm::gmmMemory;
     using Wddm::hwDeviceId;
-    using Wddm::isReadOnlyMemory;
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
