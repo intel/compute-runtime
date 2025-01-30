@@ -13,9 +13,4 @@ namespace NEO {
 bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     return NEO::waitOnConditionWithPredicate(condVar, lock, getSleepValue(), [&] { return !pagingFenceRequests.empty(); });
 }
-
-std::chrono::microseconds DirectSubmissionController::getDefaultTimeout() {
-    return std::chrono::microseconds{5'000};
-}
-
 } // namespace NEO

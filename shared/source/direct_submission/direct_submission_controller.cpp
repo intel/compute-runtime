@@ -22,8 +22,6 @@
 namespace NEO {
 
 DirectSubmissionController::DirectSubmissionController() {
-    timeout = DirectSubmissionController::getDefaultTimeout();
-    maxTimeout = DirectSubmissionController::getDefaultTimeout();
     if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
         timeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerTimeout.get()};
     }

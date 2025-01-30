@@ -40,10 +40,5 @@ bool ProductHelperHw<gfxProduct>::isDisableScratchPagesSupported() const {
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const {
-    return true;
-}
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

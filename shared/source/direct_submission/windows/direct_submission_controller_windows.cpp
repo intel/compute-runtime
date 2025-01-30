@@ -17,9 +17,4 @@ bool DirectSubmissionController::sleep(std::unique_lock<std::mutex> &lock) {
     SysCalls::timeEndPeriod(1u);
     return returnValue;
 }
-
-std::chrono::microseconds DirectSubmissionController::getDefaultTimeout() {
-    return std::chrono::microseconds{1'000};
-}
-
 } // namespace NEO

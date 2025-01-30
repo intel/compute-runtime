@@ -49,6 +49,7 @@ enum class TimeoutElapsedMode {
 
 class DirectSubmissionController {
   public:
+    static constexpr size_t defaultTimeout = 5'000;
     static constexpr size_t timeToPollTagUpdateNS = 20'000;
     DirectSubmissionController();
     virtual ~DirectSubmissionController();
@@ -62,7 +63,6 @@ class DirectSubmissionController {
     void stopThread();
 
     static bool isSupported();
-    static std::chrono::microseconds getDefaultTimeout();
 
     void enqueueWaitForPagingFence(CommandStreamReceiver *csr, uint64_t pagingFenceValue);
     void drainPagingFenceQueue();
@@ -97,6 +97,7 @@ class DirectSubmissionController {
     bool isDirectSubmissionIdle(CommandStreamReceiver *csr, std::unique_lock<std::recursive_mutex> &csrLock);
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
+
     void adjustTimeout(CommandStreamReceiver *csr);
     void recalculateTimeout();
     void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
@@ -119,8 +120,8 @@ class DirectSubmissionController {
     SteadyClock::time_point timeSinceLastCheck{};
     SteadyClock::time_point lastTerminateCpuTimestamp{};
     HighResolutionClock::time_point lastHangCheckTime{};
-    std::chrono::microseconds maxTimeout;
-    std::chrono::microseconds timeout;
+    std::chrono::microseconds maxTimeout{defaultTimeout};
+    std::chrono::microseconds timeout{defaultTimeout};
     int32_t timeoutDivisor = 1;
     int32_t bcsTimeoutDivisor = 1;
     std::unordered_map<size_t, TimeoutParams> timeoutParamsMap;
