@@ -12,8 +12,10 @@
 #include <intrin.h>
 #pragma intrinsic(__rdtsc)
 #else
+#if defined(__x86_64__)
 #include <immintrin.h>
 #include <x86intrin.h>
+#endif
 #endif
 
 #if defined(__ARM_ARCH)
@@ -59,9 +61,28 @@ void umonitor(void *a) {
 #endif
 }
 
+#ifdef __ARM_ARCH_ISA_A64
+// Adapted from: https://github.com/cloudius-systems/osv/blob/master/arch/aarch64/arm-clock.cc
 uint64_t rdtsc() {
-    return __rdtsc();
+    uint64_t cntvct;
+    asm volatile ("mrs %0, cntvct_el0; " : "=r"(cntvct) :: "memory");
+    return cntvct;
 }
+
+uint64_t rdtsc_barrier() {
+    uint64_t cntvct;
+    asm volatile ("isb; mrs %0, cntvct_el0; isb; " : "=r"(cntvct) :: "memory");
+    return cntvct;
+}
+
+uint32_t rdtsc_freq() {
+    uint32_t freq_hz;
+    asm volatile ("mrs %0, cntfrq_el0; isb; " : "=r"(freq_hz) :: "memory");
+    return freq_hz;
+}
+#else
+uint64_t rdtsc(){ return __rdtsc(); }
+#endif
 
 } // namespace CpuIntrinsics
 } // namespace NEO

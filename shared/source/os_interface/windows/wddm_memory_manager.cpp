@@ -44,7 +44,11 @@
 #include "shared/source/utilities/logger_neo_only.h"
 
 #include <algorithm>
+#if defined(__ARM_ARCH)
+#include <sse2neon.h>
+#else
 #include <emmintrin.h>
+#endif
 
 namespace NEO {
 
