@@ -24,4 +24,9 @@ std::optional<GfxMemoryAllocationMethod> ProductHelperHw<gfxProduct>::getPreferr
     return GfxMemoryAllocationMethod::allocateByKmd;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *releaseHelper) const {
+    return true;
+}
+
 } // namespace NEO

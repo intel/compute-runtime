@@ -40,3 +40,7 @@ PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
     hwInfo.featureTable.flags.ftrWalkerMTP = true;
     EXPECT_EQ(wmtpSupported, compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
+
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}

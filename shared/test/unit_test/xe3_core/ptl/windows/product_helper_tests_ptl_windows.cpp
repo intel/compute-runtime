@@ -18,10 +18,6 @@ using namespace NEO;
 
 using PtlProductHelperWindows = ProductHelperTest;
 
-PTLTEST_F(PtlProductHelperWindows, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
-
 PTLTEST_F(PtlProductHelperWindows, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenTheFlagDerivedValueIsReturned) {
     DebugManagerStateRestore restorer;
 
