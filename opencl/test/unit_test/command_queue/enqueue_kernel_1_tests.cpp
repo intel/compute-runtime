@@ -1790,6 +1790,25 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
     }
 
     template <typename FamilyType>
+    bool verifyPipeControlNoPostSync(const GenCmdList::iterator &iterator) {
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*iterator);
+        const auto dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->pDevice->getRootDeviceEnvironment());
+
+        if (0u == pipeControlCmd->getImmediateData() && 0u == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd) && dcFlushEnable == pipeControlCmd->getDcFlushEnable()) {
+
+            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+
+            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_NO_WRITE, pipeControlCmd->getPostSyncOperation());
+
+            return true;
+        }
+
+        return false;
+    }
+
+    template <typename FamilyType>
     bool verifyLoadRegImm(const GenCmdList::iterator &iterator) {
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
         uint32_t expectedRegisterOffset = debugManager.flags.GpuScratchRegWriteRegisterOffset.get();
@@ -1854,6 +1873,33 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
         }
     }
 
+    template <typename FamilyType>
+    void findPipeControlsBeforeLoadRegImm(GenCmdList &cmdList) {
+        using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        auto itWalkers = NEO::UnitTestHelper<FamilyType>::findAllWalkerTypeCmds(cmdList.begin(), cmdList.end());
+        for (auto walkerId = 0u; walkerId < itWalkers.size(); walkerId++) {
+
+            auto threshold = walkerId + 1 < itWalkers.size() ? itWalkers[walkerId + 1] : cmdList.end();
+            auto walker = itWalkers[walkerId];
+            auto loadRegImm = find<MI_LOAD_REGISTER_IMM *>(walker, threshold);
+            if (loadRegImm == threshold) {
+                continue;
+            }
+
+            if (verifyLoadRegImm<FamilyType>(loadRegImm)) {
+                auto pipeControl = find<PIPE_CONTROL *>(walker, loadRegImm);
+                while (pipeControl != loadRegImm) {
+                    if (verifyPipeControlNoPostSync<FamilyType>(pipeControl)) {
+                        pipeControlsBeforeLoadRegImm++;
+                    }
+                    pipeControl = find<PIPE_CONTROL *>(++pipeControl, loadRegImm);
+                }
+            }
+        }
+    }
+
     DebugManagerStateRestore restore;
 
     const size_t off[3] = {0, 0, 0};
@@ -1866,6 +1912,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
     uint32_t pipeControlBeforeWalkerFound = 0;
     uint32_t pipeControlAfterWalkerFound = 0;
     uint32_t loadRegImmsFound = 0;
+    uint32_t pipeControlsBeforeLoadRegImm = 0;
     bool heaplessStateInit = false;
 };
 
@@ -2037,8 +2084,8 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchWalkersThenInse
     EXPECT_EQ(pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u, loadRegImmsFound);
 }
 
-HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatcMultiplehWalkersThenInsertLoadRegisterImmCommandOnlyOnce) {
-    debugManager.flags.GpuScratchRegWriteAfterWalker.set(1);
+HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatchMultiplehWalkersThenInsertPipeControlAndLoadRegisterImmCommandsOnlyOnce) {
+    debugManager.flags.GpuScratchRegWriteAfterWalker.set(2);
     debugManager.flags.GpuScratchRegWriteRegisterData.set(0x1234);
     debugManager.flags.GpuScratchRegWriteRegisterOffset.set(0x5678);
 
@@ -2054,8 +2101,10 @@ HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenDispatcMultiplehWalkers
     hwParser.parseCommands<FamilyType>(*pCmdQ);
 
     findLoadRegImms<FamilyType>(hwParser.cmdList);
+    findPipeControlsBeforeLoadRegImm<FamilyType>(hwParser.cmdList);
 
     EXPECT_EQ(1u, loadRegImmsFound);
+    EXPECT_EQ(1u, pipeControlsBeforeLoadRegImm);
 }
 
 HWTEST_F(PauseOnGpuTests, givenGpuScratchWriteEnabledWhenEstimatingCommandStreamSizeThenMiLoadRegisterImmCommandSizeIsIncluded) {
