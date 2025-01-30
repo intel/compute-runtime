@@ -100,8 +100,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 
     initializeSizeParameters(numDevices, deviceHandles, *driverHandleImp, rootDeviceEnvironment);
 
-    NEO::AllocationType allocationType = isEventPoolTimestampFlagSet() ? NEO::AllocationType::timestampPacketTagBuffer
-                                                                       : NEO::AllocationType::tagBuffer;
+    NEO::AllocationType allocationType = NEO::AllocationType::timestampPacketTagBuffer;
     if (this->devices.size() > 1) {
         this->isDeviceEventPoolAllocation = false;
     }
@@ -448,7 +447,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    NEO::AllocationType allocationType = NEO::AllocationType::tagBuffer;
+    NEO::AllocationType allocationType = NEO::AllocationType::timestampPacketTagBuffer;
     if (eventPool->isDeviceEventPoolAllocation) {
         allocationType = NEO::AllocationType::gpuTimestampDeviceBuffer;
     }

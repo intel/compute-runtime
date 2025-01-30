@@ -12,7 +12,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
@@ -88,12 +87,8 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
     case AllocationType::fillPattern:
     case AllocationType::svmCpu:
     case AllocationType::svmZeroCopy:
-        if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-            return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
-        }
-        return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
     case AllocationType::tagBuffer:
-        if (productHelper.isDcFlushAllowed() && OSInterface::isSemaphoreDependantResourceUCRequired) {
+        if (debugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType, productHelper);
         }
         return GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;

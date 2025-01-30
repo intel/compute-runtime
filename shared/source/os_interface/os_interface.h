@@ -123,7 +123,6 @@ class OSInterface : public NonCopyableClass {
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;
     static bool requiresSupportForWddmTrimNotification;
-    static bool isSemaphoreDependantResourceUCRequired;
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath);
 

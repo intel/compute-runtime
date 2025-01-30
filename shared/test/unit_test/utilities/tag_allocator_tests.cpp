@@ -481,8 +481,8 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSet
     EXPECT_EQ(AllocationType::timestampPacketTagBuffer, timestampPacketTag->getBaseGraphicsAllocation()->getAllocationType());
     EXPECT_EQ(AllocationType::profilingTagBuffer, hwTimeStampsTag->getBaseGraphicsAllocation()->getAllocationType());
     EXPECT_EQ(AllocationType::profilingTagBuffer, hwPerfCounterTag->getBaseGraphicsAllocation()->getAllocationType());
-    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, inOrderDeviceTag->getBaseGraphicsAllocation()->getAllocationType());
-    EXPECT_EQ(AllocationType::tagBuffer, inOrderHostTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::gpuTimestampDeviceBuffer, inOrderDeviceTag->getBaseGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(AllocationType::timestampPacketTagBuffer, inOrderHostTag->getBaseGraphicsAllocation()->getAllocationType());
 }
 
 TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMultiGraphicsAllocation) {

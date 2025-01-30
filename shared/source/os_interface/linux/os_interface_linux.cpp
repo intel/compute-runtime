@@ -22,7 +22,6 @@ bool OSInterface::osEnabled64kbPages = false;
 bool OSInterface::newResourceImplicitFlush = true;
 bool OSInterface::gpuIdleImplicitFlush = true;
 bool OSInterface::requiresSupportForWddmTrimNotification = false;
-bool OSInterface::isSemaphoreDependantResourceUCRequired = false;
 
 bool OSInterface::isDebugAttachAvailable() const {
     if (driverModel && driverModel->getDriverModelType() == DriverModelType::drm) {

@@ -9,7 +9,6 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -719,10 +718,8 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
             case AllocationType::fillPattern:
             case AllocationType::svmCpu:
             case AllocationType::svmZeroCopy:
-                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
-                break;
             case AllocationType::tagBuffer:
-                expectedUsage = (forceUncached || (productHelper.isDcFlushAllowed() && OSInterface::isSemaphoreDependantResourceUCRequired)) ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
+                expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER;
                 break;
             default:
                 expectedUsage = forceUncached ? uncachedGmmUsageType : GMM_RESOURCE_USAGE_OCL_BUFFER;
