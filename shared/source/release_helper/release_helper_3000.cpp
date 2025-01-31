@@ -38,11 +38,6 @@ bool ReleaseHelperHw<release>::isLocalOnlyAllowed() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDisablingMsaaRequired() const {
-    return (hardwareIpVersion.value == AOT::PTL_H_A0);
-}
-
-template <>
 uint32_t ReleaseHelperHw<release>::getStackSizePerRay() const {
     return 64u;
 }

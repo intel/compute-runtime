@@ -565,25 +565,12 @@ XE3_CORETEST_F(EncodeKernelXe3CoreTest, givenCommandContainerWhenNumGrfRequiredI
     EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
 }
 
-XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenSurfaceStateAndIsDisablingMsaaRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
+XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenSurfaceStateWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
     auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isDisablingMsaaRequiredResult = true;
-
     EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-}
-
-XE3_CORETEST_F(CommandEncodeXe3CoreTest, givenSurfaceStateAndIsDisablingMsaaRequiredIsFalseWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {
-    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
-    auto originalAuxMode = surfaceState.getAuxiliarySurfaceMode();
-
-    auto releaseHelper = std::make_unique<MockReleaseHelper>();
-    releaseHelper->isDisablingMsaaRequiredResult = false;
-
-    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
-    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), originalAuxMode);
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS);
 }
 
 using Xe3SbaTest = SbaTest;

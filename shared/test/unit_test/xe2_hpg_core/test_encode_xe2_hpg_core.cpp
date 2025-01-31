@@ -624,11 +624,7 @@ XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceMod
     auto originalAuxMode = surfaceState.getAuxiliarySurfaceMode();
 
     EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&surfaceState, releaseHelper.get());
-    if (releaseHelper->isDisablingMsaaRequired()) {
-        EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), EncodeSurfaceState<FamilyType>::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-    } else {
-        EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), originalAuxMode);
-    }
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), originalAuxMode);
 }
 
 XE2_HPG_CORETEST_F(EncodeKernelXe2HpgCoreTest, givenSurfaceStateAndAuxSurfaceModeOverrideRequiredIsTrueWhenAuxParamsForMCSCCSAreSetThenCorrectAuxModeIsSet) {

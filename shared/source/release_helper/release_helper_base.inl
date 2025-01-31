@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,11 +135,6 @@ uint32_t ReleaseHelperHw<releaseType>::getStackSizePerRay() const {
 template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::isLocalOnlyAllowed() const {
     return true;
-}
-
-template <ReleaseType releaseType>
-bool ReleaseHelperHw<releaseType>::isDisablingMsaaRequired() const {
-    return false;
 }
 
 template <ReleaseType releaseType>
