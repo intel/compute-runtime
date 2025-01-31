@@ -124,28 +124,6 @@ void OsContextLinux::waitForBind(uint32_t drmIterator) {
     }
 }
 
-void OsContextLinux::waitForPagingFenceGivenFenceVal(uint64_t fenceValToWait) {
-    for (auto drmIterator = 0u; drmIterator < this->deviceBitfield.size(); drmIterator++) {
-        if (this->deviceBitfield.test(drmIterator)) {
-            this->waitForBindGivenFenceVal(drmIterator, fenceValToWait);
-        }
-    }
-}
-
-void OsContextLinux::waitForBindGivenFenceVal(uint32_t drmIterator, uint64_t fenceValToWait) {
-    if (drm.isPerContextVMRequired()) {
-        if (pagingFence[drmIterator] >= fenceValToWait) {
-            return;
-        }
-
-        auto fenceAddress = castToUint64(&this->pagingFence[drmIterator]);
-        drm.waitUserFence(0u, fenceAddress, fenceValToWait, Drm::ValueWidth::u64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
-
-    } else {
-        drm.waitForBindGivenFenceVal(drmIterator, fenceValToWait);
-    }
-}
-
 void OsContextLinux::reInitializeContext() {}
 
 uint64_t OsContextLinux::getOfflineDumpContextId(uint32_t deviceIndex) const {
