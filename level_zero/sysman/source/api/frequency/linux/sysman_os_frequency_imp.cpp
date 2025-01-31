@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -120,18 +120,6 @@ ze_result_t LinuxFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimi
     return setMax(newMax);
 }
 
-bool LinuxFrequencyImp::getThrottleReasonStatus(void) {
-    uint32_t val = 0;
-    auto result = pSysfsAccess->read(throttleReasonStatusFile, val);
-    if (ZE_RESULT_SUCCESS == result) {
-        return (val == 0 ? false : true);
-    } else {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
-                              "error@<%s> <failed to read file %s> <result: 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
-        return false;
-    }
-}
-
 ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     ze_result_t result;
 
@@ -166,27 +154,8 @@ ze_result_t LinuxFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     pState->pNext = nullptr;
     getCurrentVoltage(pState->currentVoltage);
 
-    pState->throttleReasons = 0u;
-    if (getThrottleReasonStatus()) {
-        uint32_t val = 0;
-        ze_result_t result;
-        result = pSysfsAccess->read(throttleReasonPL1File, val);
-        if (val && (result == ZE_RESULT_SUCCESS)) {
-            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP;
-        }
-        result = pSysfsAccess->read(throttleReasonPL2File, val);
-        if (val && (result == ZE_RESULT_SUCCESS)) {
-            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP;
-        }
-        result = pSysfsAccess->read(throttleReasonPL4File, val);
-        if (val && (result == ZE_RESULT_SUCCESS)) {
-            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT;
-        }
-        result = pSysfsAccess->read(throttleReasonThermalFile, val);
-        if (val && (result == ZE_RESULT_SUCCESS)) {
-            pState->throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
-        }
-    }
+    pState->throttleReasons = pSysmanProductHelper->getThrottleReasons(pLinuxSysmanImp, subdeviceId);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -420,11 +389,6 @@ void LinuxFrequencyImp::init() {
     efficientFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameEfficientFrequency, subdeviceId, baseDirectoryExists);
     maxValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMaxValueFrequency, subdeviceId, baseDirectoryExists);
     minValFreqFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameMinValueFrequency, subdeviceId, baseDirectoryExists);
-    throttleReasonStatusFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, subdeviceId, baseDirectoryExists);
-    throttleReasonPL1File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL1, subdeviceId, baseDirectoryExists);
-    throttleReasonPL2File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, subdeviceId, baseDirectoryExists);
-    throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
-    throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
     canControl = pSysmanProductHelper->isFrequencySetRangeSupported();
 
     if (pSysmanKmdInterface->isDefaultFrequencyAvailable()) {
@@ -442,7 +406,7 @@ void LinuxFrequencyImp::init() {
 }
 
 LinuxFrequencyImp::LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), frequencyDomainNumber(frequencyDomainNumber) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();

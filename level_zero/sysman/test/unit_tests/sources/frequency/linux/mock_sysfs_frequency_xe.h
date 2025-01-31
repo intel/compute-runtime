@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,10 @@ const std::string throttleReasonPL1File("device/tile0/gt0/freq0/throttle/reason_
 const std::string throttleReasonPL2File("device/tile0/gt0/freq0/throttle/reason_pl2");
 const std::string throttleReasonPL4File("device/tile0/gt0/freq0/throttle/reason_pl4");
 const std::string throttleReasonThermalFile("device/tile0/gt0/freq0/throttle/reason_thermal");
+const std::string throttleReasonFile("device/tile0/gt0/freq0/throttle_reason");
 
 struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
+    std::string throttleReason = {};
     double mockMin = 0;
     double mockMax = 0;
     double mockRequest = 0;
@@ -55,6 +57,7 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockReadVal32Result = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteMaxResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWriteMinResult = ZE_RESULT_SUCCESS;
+    ze_result_t mockReadStringResult = ZE_RESULT_SUCCESS;
     bool mockReadPL1Error = false;
     bool mockReadPL2Error = false;
     bool mockReadPL4Error = false;
@@ -197,6 +200,19 @@ struct MockXeFrequencySysfsAccess : public L0::Sysman::SysFsAccessInterface {
 
     ze_result_t write(const std::string file, double val) override {
         return setVal(file, val);
+    }
+
+    ze_result_t read(const std::string file, std::string &val) override {
+
+        if (mockReadStringResult != ZE_RESULT_SUCCESS) {
+            return mockReadStringResult;
+        }
+
+        if (file.compare(throttleReasonFile) == 0) {
+            val = throttleReason;
+        }
+
+        return ZE_RESULT_SUCCESS;
     }
 
     MockXeFrequencySysfsAccess() = default;

@@ -135,6 +135,48 @@ bool SysmanProductHelperHw<gfxProduct>::isFrequencySetRangeSupported() {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+zes_freq_throttle_reason_flags_t SysmanProductHelperHw<gfxProduct>::getThrottleReasons(LinuxSysmanImp *pLinuxSysmanImp, uint32_t subdeviceId) {
+
+    zes_freq_throttle_reason_flags_t throttleReasons = 0u;
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    const std::string baseDir = pSysmanKmdInterface->getBasePath(subdeviceId);
+    bool baseDirectoryExists = false;
+
+    if (pSysfsAccess->directoryExists(baseDir)) {
+        baseDirectoryExists = true;
+    }
+
+    uint32_t val = 0;
+    std::string throttleReasonStatusFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonStatus, subdeviceId, baseDirectoryExists);
+    auto result = pSysfsAccess->read(throttleReasonStatusFile, val);
+    if (ZE_RESULT_SUCCESS == result && val) {
+
+        std::string throttleReasonPL1File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL1, subdeviceId, baseDirectoryExists);
+        std::string throttleReasonPL2File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL2, subdeviceId, baseDirectoryExists);
+        std::string throttleReasonPL4File = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonPL4, subdeviceId, baseDirectoryExists);
+        std::string throttleReasonThermalFile = pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNameThrottleReasonThermal, subdeviceId, baseDirectoryExists);
+
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL1File, val)) && val) {
+            throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_AVE_PWR_CAP;
+        }
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL2File, val)) && val) {
+            throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_BURST_PWR_CAP;
+        }
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonPL4File, val)) && val) {
+            throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_CURRENT_LIMIT;
+        }
+        if ((ZE_RESULT_SUCCESS == pSysfsAccess->read(throttleReasonThermalFile, val)) && val) {
+            throttleReasons |= ZES_FREQ_THROTTLE_REASON_FLAG_THERMAL_LIMIT;
+        }
+    } else {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to read file %s, returning error 0x%x>\n", __func__, throttleReasonStatusFile.c_str(), result);
+    }
+
+    return throttleReasons;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 ze_result_t SysmanProductHelperHw<gfxProduct>::getGlobalMaxTemperature(LinuxSysmanImp *pLinuxSysmanImp, double *pTemperature, uint32_t subdeviceId) {
 
     std::string telemDir = "";
