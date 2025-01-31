@@ -26,4 +26,8 @@ bool OSInterface::isLockablePointer(bool isLockable) const {
     return isLockable;
 }
 
+uint32_t OSInterface::getAggregatedProcessCount() const {
+    return 0;
+}
+
 } // namespace NEO

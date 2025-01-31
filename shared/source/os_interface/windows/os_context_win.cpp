@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 namespace NEO {
 
 OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
-    if (osInterface) {
+    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == DriverModelType::wddm) {
         return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), rootDeviceIndex, contextId, engineDescriptor);
     }
     return new OsContext(rootDeviceIndex, contextId, engineDescriptor);

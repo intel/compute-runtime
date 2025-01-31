@@ -116,11 +116,16 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
         uint32_t numRootContexts = hasRootCsr ? 1 : 0;
         uint32_t numSecondaryContexts = 0;
         if (gfxCoreHelper.areSecondaryContextsSupported()) {
-            numSecondaryContexts += numRegularEngines * gfxCoreHelper.getContextGroupContextsCount();
-            numSecondaryContexts += numHpEngines * gfxCoreHelper.getContextGroupContextsCount();
+
+            auto groupCount = gfxCoreHelper.getContextGroupContextsCount();
+            if (rootDeviceEnvironment->osInterface && rootDeviceEnvironment->osInterface->getAggregatedProcessCount() > 1) {
+                groupCount = std::min(groupCount / rootDeviceEnvironment->osInterface->getAggregatedProcessCount(), 2u);
+            }
+            numSecondaryContexts += numRegularEngines * groupCount;
+            numSecondaryContexts += numHpEngines * groupCount;
             osContextCount -= (numRegularEngines + numHpEngines);
 
-            numRootContexts *= gfxCoreHelper.getContextGroupContextsCount();
+            numRootContexts *= groupCount;
         }
 
         MemoryManager::maxOsContextCount += (numSecondaryContexts + osContextCount) * subDevicesCount + numRootContexts;

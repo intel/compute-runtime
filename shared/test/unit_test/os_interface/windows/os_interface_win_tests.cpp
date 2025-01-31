@@ -62,6 +62,11 @@ TEST_F(OsInterfaceTest, GivenDefaultOsInterfaceThenLocalMemoryEnabled) {
     EXPECT_TRUE(OSInterface::osEnableLocalMemory);
 }
 
+TEST(OsInterfaceSimpleTest, GivenOsInterfaceWhenCallingGetAggregatedProcessCountThenCallReturnsZero) {
+    OSInterface osInterface;
+    EXPECT_EQ(0u, osInterface.getAggregatedProcessCount());
+}
+
 TEST_F(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];

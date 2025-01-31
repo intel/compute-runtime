@@ -58,4 +58,11 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     return true;
 }
 
+uint32_t OSInterface::getAggregatedProcessCount() const {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::drm) {
+        return driverModel->as<Drm>()->getAggregatedProcessCount();
+    }
+    return 0;
+}
+
 } // namespace NEO

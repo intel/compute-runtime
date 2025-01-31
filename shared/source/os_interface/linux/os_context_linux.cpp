@@ -23,7 +23,7 @@
 namespace NEO {
 
 OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
-    if (osInterface) {
+    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == DriverModelType::drm) {
         return new OsContextLinux(*osInterface->getDriverModel()->as<Drm>(), rootDeviceIndex, contextId, engineDescriptor);
     }
     return new OsContext(rootDeviceIndex, contextId, engineDescriptor);

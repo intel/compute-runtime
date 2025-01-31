@@ -235,6 +235,7 @@ class IoctlHelper {
     virtual bool queryDeviceParams(uint32_t *moduleId, uint16_t *serverType) { return false; }
 
     virtual bool isTimestampsRefreshEnabled() { return false; }
+    virtual uint32_t getNumProcesses() { return 1; }
 
     virtual bool makeResidentBeforeLockNeeded() const { return false; }
 

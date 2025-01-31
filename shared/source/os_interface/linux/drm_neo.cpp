@@ -1766,6 +1766,10 @@ bool Drm::queryDeviceIdAndRevision() {
     return IoctlHelperI915::queryDeviceIdAndRevision(*this);
 }
 
+uint32_t Drm::getAggregatedProcessCount() const {
+    return ioctlHelper->getNumProcesses();
+}
+
 template std::vector<uint16_t> Drm::query<uint16_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint32_t> Drm::query<uint32_t>(uint32_t queryId, uint32_t queryItemFlags);
 template std::vector<uint64_t> Drm::query<uint64_t>(uint32_t queryId, uint32_t queryItemFlags);

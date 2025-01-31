@@ -326,15 +326,22 @@ bool Device::createEngines() {
                 highPriorityContextCount = static_cast<uint32_t>(debugManager.flags.OverrideNumHighPriorityContexts.get());
             }
 
-            if (engineGroupType == EngineGroupType::compute && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) {
-                contextCount = contextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-                highPriorityContextCount = highPriorityContextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
-            }
+            if (getRootDeviceEnvironment().osInterface && getRootDeviceEnvironment().osInterface->getAggregatedProcessCount() > 1) {
+                const auto numProcesses = getRootDeviceEnvironment().osInterface->getAggregatedProcessCount();
 
-            if (engineGroupType == EngineGroupType::copy || engineGroupType == EngineGroupType::linkedCopy) {
-                gfxCoreHelper.adjustCopyEngineRegularContextCount(engineGroup->engines.size(), contextCount);
-            }
+                contextCount = std::max(contextCount / numProcesses, 2u);
+                highPriorityContextCount = std::max(contextCount / 2, 1u);
 
+            } else {
+                if (engineGroupType == EngineGroupType::compute && hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1) {
+                    contextCount = contextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+                    highPriorityContextCount = highPriorityContextCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
+                }
+
+                if (engineGroupType == EngineGroupType::copy || engineGroupType == EngineGroupType::linkedCopy) {
+                    gfxCoreHelper.adjustCopyEngineRegularContextCount(engineGroup->engines.size(), contextCount);
+                }
+            }
             for (uint32_t engineIndex = 0; engineIndex < static_cast<uint32_t>(engineGroup->engines.size()); engineIndex++) {
                 auto engineType = engineGroup->engines[engineIndex].getEngineType();
 

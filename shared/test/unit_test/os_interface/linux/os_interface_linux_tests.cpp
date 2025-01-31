@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,18 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenCallingIsDebugAttachAvailableThen
 
     osInterface.setDriverModel(std::unique_ptr<DriverModel>(drm));
     EXPECT_FALSE(osInterface.isDebugAttachAvailable());
+}
+
+TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenCallingGetAggregatedProcessCountThenCallRedirectedToDriverModel) {
+    OSInterface osInterface;
+    EXPECT_EQ(0u, osInterface.getAggregatedProcessCount());
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    DrmMock *drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    osInterface.setDriverModel(std::unique_ptr<DriverModel>(drm));
+    drm->mockProcessCount = 5;
+    EXPECT_EQ(5u, osInterface.getAggregatedProcessCount());
 }
 
 TEST(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {

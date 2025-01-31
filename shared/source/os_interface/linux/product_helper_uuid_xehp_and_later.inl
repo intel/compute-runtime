@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,10 @@ static inline bool uuidReadFromTelem(std::string_view telemDir, std::array<char,
 
 template <>
 bool ProductHelperHw<gfxProduct>::getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const {
+    if (driverModel->getDriverModelType() != DriverModelType::drm) {
+        return false;
+    }
+
     auto pDrm = driverModel->as<Drm>();
     std::optional<std::string> rootPciPath = getPciRootPath(pDrm->getFileDescriptor());
     if (!rootPciPath.has_value()) {

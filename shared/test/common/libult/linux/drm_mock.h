@@ -186,6 +186,10 @@ class DrmMock : public Drm {
         return storedRetValForGetGttSize;
     }
 
+    uint32_t getAggregatedProcessCount() const override {
+        return mockProcessCount;
+    }
+
     static const int mockFd = 33;
 
     bool failRetTopology = false;
@@ -215,6 +219,7 @@ class DrmMock : public Drm {
     int storedRetValForVmId = 1;
     int storedCsTimestampFrequency = 1000;
     int storedOaTimestampFrequency = 123456;
+    uint32_t mockProcessCount = 1;
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;
     bool allowDebugAttachCallBase = false;

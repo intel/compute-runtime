@@ -34,6 +34,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_os_interface.h"
 #include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_release_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
@@ -1565,6 +1566,93 @@ HWTEST_F(DeviceTests, givenContextGroupSizeEnabledWhenMoreHpEnginesCreatedThenFr
             }
         }
     }
+}
+
+HWTEST_F(DeviceTests, givenDeviceWithCCSEngineAndAggregatedProcessesWhenDeviceIsCreatedThenNumberOfSecondaryEnginesIsLimited) {
+    if (defaultHwInfo->capabilityTable.defaultEngineType != aub_stream::EngineType::ENGINE_CCS) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore dbgRestorer;
+
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
+
+    const auto numProcesses = 4u;
+    auto executionEnvironment = new MockExecutionEnvironment(&hwInfo, false, 1);
+    executionEnvironment->incRefInternal();
+    auto osInterface = new MockOsInterface();
+    auto driverModelMock = std::make_unique<MockDriverModel>();
+    osInterface->setDriverModel(std::move(driverModelMock));
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    osInterface->numberOfProcesses = numProcesses;
+
+    uint32_t testedContextGroupSizes[] = {10, 22};
+    uint32_t expectedRegularCounts[] = {1u, 3u};
+    uint32_t expectedHpCounts[] = {1u, 2u};
+
+    for (uint32_t contextGroupSizeIndex = 0; contextGroupSizeIndex < 2; contextGroupSizeIndex++) {
+        debugManager.flags.ContextGroupSize.set(testedContextGroupSizes[contextGroupSizeIndex]);
+
+        auto device = std::unique_ptr<MockDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+        auto &engineGroups = device->getRegularEngineGroups();
+
+        auto engineGroupType = EngineGroupType::compute;
+        size_t computeEnginesCount = 0;
+        for (const auto &engine : engineGroups) {
+            if (engine.engineGroupType == engineGroupType) {
+                computeEnginesCount = engine.engines.size();
+            }
+        }
+
+        ASSERT_EQ(computeEnginesCount, device->secondaryEngines.size());
+        ASSERT_EQ(testedContextGroupSizes[contextGroupSizeIndex] / numProcesses, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size());
+
+        auto defaultEngine = device->getDefaultEngine();
+        EXPECT_EQ(defaultEngine.commandStreamReceiver, device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines[0].commandStreamReceiver);
+
+        const uint32_t regularContextCount = expectedRegularCounts[contextGroupSizeIndex];
+        const uint32_t hpContextCount = expectedHpCounts[contextGroupSizeIndex];
+
+        for (uint32_t ccsIndex = 0; ccsIndex < computeEnginesCount; ccsIndex++) {
+            auto &secondaryEngines = device->secondaryEngines[EngineHelpers::mapCcsIndexToEngineType(ccsIndex)];
+
+            EXPECT_TRUE(secondaryEngines.engines[0].osContext->isPartOfContextGroup());
+            EXPECT_EQ(nullptr, secondaryEngines.engines[0].osContext->getPrimaryContext());
+
+            for (size_t i = 1; i < device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size(); i++) {
+                EXPECT_EQ(secondaryEngines.engines[0].osContext, secondaryEngines.engines[i].osContext->getPrimaryContext());
+                EXPECT_TRUE(secondaryEngines.engines[i].osContext->isPartOfContextGroup());
+            }
+
+            EXPECT_EQ(regularContextCount, secondaryEngines.regularEnginesTotal);
+            EXPECT_EQ(hpContextCount, secondaryEngines.highPriorityEnginesTotal);
+
+            for (size_t contextId = 0; contextId < regularContextCount + 1; contextId++) {
+                auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::regular}, false);
+                ASSERT_NE(nullptr, engine);
+
+                if (contextId == regularContextCount) {
+                    EXPECT_EQ(&secondaryEngines.engines[0], engine);
+                }
+            }
+
+            for (size_t contextId = 0; contextId < hpContextCount; contextId++) {
+                auto engine = device->getSecondaryEngineCsr({EngineHelpers::mapCcsIndexToEngineType(ccsIndex), EngineUsage::highPriority}, false);
+                ASSERT_NE(nullptr, engine);
+
+                EXPECT_EQ(contextId + 1, secondaryEngines.highPriorityCounter.load());
+                if (contextId == testedContextGroupSizes[contextGroupSizeIndex] - regularContextCount) {
+                    EXPECT_EQ(&secondaryEngines.engines[regularContextCount], engine);
+                }
+            }
+        }
+        executionEnvironment->memoryManager->reInitLatestContextId();
+    }
+    executionEnvironment->decRefInternal();
 }
 
 HWTEST_F(DeviceTests, givenDebugFlagSetWhenCreatingSecondaryEnginesThenCreateCorrectNumberOfHighPriorityContexts) {
