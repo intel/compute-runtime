@@ -389,7 +389,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectSetToColourWithBindWhenBindingT
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized(false);
 
-    bo.bind(&osContext, 0, false);
+    bo.bind(&osContext, 0);
     ASSERT_TRUE(drm.context.receivedVmBind);
     EXPECT_EQ(drm.context.receivedVmBind->length, MemoryConstants::pageSize64k);
     EXPECT_EQ(drm.context.receivedVmBind->start, 0xffeeffee);
@@ -461,7 +461,7 @@ TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThen
     osContext.ensureContextInitialized(false);
     bo.markForCapture();
 
-    bo.bind(&osContext, 0, false);
+    bo.bind(&osContext, 0);
     ASSERT_TRUE(drm.context.receivedVmBind);
     EXPECT_TRUE(drm.context.receivedVmBind->flags & DrmPrelimHelper::getCaptureVmBindFlag());
 }
@@ -478,7 +478,7 @@ TEST(DrmBufferObjectTestPrelim, givenNoActiveDirectSubmissionAndForceUseImmediat
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized(false);
 
-    bo.bind(&osContext, 0, false);
+    bo.bind(&osContext, 0);
     ASSERT_TRUE(drm.context.receivedVmBind);
     EXPECT_TRUE(drm.context.receivedVmBind->flags & DrmPrelimHelper::getImmediateVmBindFlag());
     EXPECT_NE(drm.context.receivedVmBind->extensions, 0u);
@@ -495,7 +495,7 @@ TEST(DrmBufferObjectTestPrelim, whenBindingThenImmediateFlagIsSetAndExtensionLis
     osContext.ensureContextInitialized(false);
     osContext.setDirectSubmissionActive();
 
-    bo.bind(&osContext, 0, false);
+    bo.bind(&osContext, 0);
     ASSERT_TRUE(drm.context.receivedVmBind);
     EXPECT_TRUE(drm.context.receivedVmBind->flags & DrmPrelimHelper::getImmediateVmBindFlag());
     EXPECT_NE(drm.context.receivedVmBind->extensions, 0u);

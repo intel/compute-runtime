@@ -23,15 +23,15 @@ DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault(uint32_t ro
 ;
 DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = default;
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
     std::lock_guard<std::mutex> lock(mutex);
     this->residency.insert(gfxAllocations.begin(), gfxAllocations.end());
     return MemoryOperationsStatus::success;
 }
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) {
     OsContext *osContext = nullptr;
-    auto ret = this->makeResidentWithinOsContext(osContext, gfxAllocations, false, forcePagingFence);
+    auto ret = this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
     if (!isDummyExecNeeded || ret != MemoryOperationsStatus::success) {
         return ret;
     }
@@ -53,7 +53,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, A
             bo->requireExplicitLockedMemory(true);
         }
     }
-    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false, false);
+    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {

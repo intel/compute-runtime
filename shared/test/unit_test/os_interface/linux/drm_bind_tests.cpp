@@ -55,45 +55,6 @@ TEST(DrmBindTest, givenBindNotCompleteWhenWaitForBindThenWaitUserFenceIoctlIsCal
     EXPECT_EQ(-1, drm.waitUserFenceParams[0].timeout);
 }
 
-TEST(DrmBindTest, givenBindAlreadyCompleteWhenwaitForBindGivenFenceValThenWaitUserFenceIoctlIsNotCalled) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
-
-    drm.pagingFence[0] = 31u;
-    uint64_t fenceValToWait = 31u;
-
-    drm.waitForBindGivenFenceVal(0u, fenceValToWait);
-
-    EXPECT_EQ(0u, drm.waitUserFenceParams.size());
-
-    drm.pagingFence[0] = 49u;
-
-    drm.waitForBindGivenFenceVal(0u, fenceValToWait);
-
-    EXPECT_EQ(0u, drm.waitUserFenceParams.size());
-}
-
-TEST(DrmBindTest, givenBindNotCompleteWhenwaitForBindGivenFenceValThenWaitUserFenceIoctlIsCalled) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
-    osContext.ensureContextInitialized(false);
-
-    drm.pagingFence[0] = 26u;
-    uint64_t fenceValToWait = 31u;
-
-    drm.waitForBindGivenFenceVal(0u, fenceValToWait);
-
-    EXPECT_EQ(1u, drm.waitUserFenceParams.size());
-    EXPECT_EQ(0u, drm.waitUserFenceParams[0].ctxId);
-    EXPECT_EQ(castToUint64(&drm.pagingFence[0]), drm.waitUserFenceParams[0].address);
-    EXPECT_EQ(drm.ioctlHelper->getWaitUserFenceSoftFlag(), drm.waitUserFenceParams[0].flags);
-    EXPECT_EQ(fenceValToWait, drm.waitUserFenceParams[0].value);
-    EXPECT_EQ(-1, drm.waitUserFenceParams[0].timeout);
-}
-
 TEST(DrmBindTest, whenCheckingVmBindAvailabilityThenIoctlHelperSupportIsUsed) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
