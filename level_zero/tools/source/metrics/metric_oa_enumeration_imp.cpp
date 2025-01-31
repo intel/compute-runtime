@@ -613,7 +613,7 @@ void MetricEnumeration::updateMetricProgrammablesFromPrototypes(
         properties.tierNumber = getMetricTierNumber(metricPrototypeParams->UsageFlagsMask);
         properties.samplingType = getSamplingTypeFromApiMask(metricPrototypeParams->ApiMask);
         properties.parameterCount = metricPrototypeParams->OptionDescriptorCount;
-        properties.sourceId = oaSourceId;
+        properties.sourceId = MetricSource::metricSourceTypeOa;
         auto pMetricProgrammable = OaMetricProgrammableImp::create(properties, concurrentGroup, *metricPrototype, metricSource);
         metricProgrammables.push_back(pMetricProgrammable);
     }

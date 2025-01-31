@@ -93,6 +93,7 @@ class MetricSource {
 
   protected:
     uint32_t type = MetricSource::metricSourceTypeUndefined;
+    void getMetricGroupSourceIdProperty(zet_base_properties_t *property);
 };
 
 class MultiDomainDeferredActivationTracker {

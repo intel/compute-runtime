@@ -8,6 +8,7 @@
 #ifndef _ZET_INTEL_GPU_METRIC_H
 #define _ZET_INTEL_GPU_METRIC_H
 
+#include "level_zero/include/level_zero/ze_stypes.h"
 #include <level_zero/zet_api.h>
 
 #if defined(__cplusplus)
@@ -21,6 +22,29 @@ extern "C" {
 #define ZET_INTEL_GPU_METRIC_VERSION_MINOR 2
 #define ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP 64u
 #define ZET_INTEL_METRIC_PROGRAMMABLE_PARAM_TYPE_GENERIC_EXP (0x7ffffffe)
+
+#ifndef ZET_INTEL_METRIC_SOURCE_ID_EXP_NAME
+/// @brief Extension name for query to read the Intel Level Zero Driver Version String
+#define ZET_INTEL_METRIC_SOURCE_ID_EXP_NAME "ZET_intel_metric_source_id"
+#endif // ZET_INTEL_METRIC_SOURCE_ID_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric Source Id extension Version(s)
+typedef enum _zet_intel_metric_source_id_exp_version_t {
+    ZET_INTEL_METRIC_SOURCE_ID_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),     ///< version 1.0
+    ZET_INTEL_METRIC_SOURCE_ID_EXP_VERSION_CURRENT = ZE_MAKE_VERSION(1, 0), ///< latest known version
+    ZET_INTEL_METRIC_SOURCE_ID_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metric_source_id_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Query an unique identifier representing the source of a metric group
+/// This structure can be passed in the 'pNext' of zet_metric_group_properties_t
+typedef struct _zet_intel_metric_source_id_exp_t {
+    zet_structure_type_t stype; ///< [in] type of this structure
+    const void *pNext;          ///< [in][optional] must be null or a pointer to an extension-specific
+                                ///< structure (i.e. contains stype and pNext).
+    uint32_t sourceId;          ///< [out] Returns an unique source Id of the metric group
+} zet_intel_metric_source_id_exp_t;
 
 #ifndef ZET_INTEL_METRIC_APPEND_MARKER_EXP_NAME
 /// @brief Extension name for query to read the Intel Level Zero Driver Version String

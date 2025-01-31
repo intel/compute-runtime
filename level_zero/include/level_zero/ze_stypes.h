@@ -9,6 +9,7 @@
 #define _ZE_STYPES_H
 
 #include <level_zero/ze_api.h>
+#include <level_zero/zet_api.h>
 
 #define ZE_STRUCTURE_TYPE_PITCHED_ALLOC_DEVICE_EXP_PROPERTIES (ze_structure_type_t)0x0002001D
 #define ZE_STRUCTURE_TYPE_BINDLESS_IMAGE_EXP_DESC (ze_structure_type_t)0x0002001E
@@ -34,4 +35,6 @@
 #define ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_SIGNAL_PARAMS_EXP (ze_structure_type_t)0x00030024
 #define ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_WAIT_PARAMS_EXP (ze_structure_type_t)0x00030025
 
+// Metric structure types
+#define ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP (zet_structure_type_t)0x0001000a // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
 #endif

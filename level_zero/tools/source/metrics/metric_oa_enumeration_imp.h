@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,6 @@ static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize
 static constexpr std::string_view globalSymbolOaMaxTimestamp = "MaxTimestamp";
 
 struct MetricEnumeration {
-    static const uint32_t oaSourceId = 0x0A;
     MetricEnumeration(OaMetricSourceImp &metricSource);
     virtual ~MetricEnumeration();
 

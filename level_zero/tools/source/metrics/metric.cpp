@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,12 @@
 #include <utility>
 
 namespace L0 {
+
+void MetricSource::getMetricGroupSourceIdProperty(zet_base_properties_t *property) {
+
+    zet_intel_metric_source_id_exp_t *groupProperty = reinterpret_cast<zet_intel_metric_source_id_exp_t *>(property);
+    groupProperty->sourceId = type;
+}
 
 MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevice) {
     auto deviceNeo = device.getNEODevice();
