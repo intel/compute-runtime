@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -784,6 +784,8 @@ TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_XE_HP_CORE, IGA_XE_HP},
         std::pair{IGFX_XE_HPG_CORE, IGA_XE_HPG},
         std::pair{IGFX_XE_HPC_CORE, IGA_XE_HPC},
+        std::pair{IGFX_XE2_HPG_CORE, IGA_XE2},
+
         std::pair{IGFX_UNKNOWN_CORE, IGA_GEN_INVALID}};
 
     for (const auto &[input, expectedOutput] : translations) {
@@ -801,6 +803,11 @@ TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_DG1, IGA_XE},
         std::pair{IGFX_DG2, IGA_XE_HPG},
         std::pair{IGFX_PVC, IGA_XE_HPC},
+        std::pair{IGFX_METEORLAKE, IGA_XE_HPG},
+        std::pair{IGFX_ARROWLAKE, IGA_XE_HPG},
+        std::pair{IGFX_BMG, IGA_XE2},
+        std::pair{IGFX_LUNARLAKE, IGA_XE2},
+
         std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
 
     for (const auto &[input, expectedOutput] : translations) {
