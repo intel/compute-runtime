@@ -1090,7 +1090,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
 
-    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible);
+    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && this->heaplessModeEnabled);
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
@@ -1248,6 +1248,19 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     }
 
     return cpuMemCopyEnabled && cpuMemCopyInfo.size <= transferThreshold;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushInOrderCounterSignal(bool waitOnInOrderCounterRequired) {
+    ze_result_t ret = ZE_RESULT_SUCCESS;
+    if (waitOnInOrderCounterRequired && !this->isHeaplessModeEnabled() && this->latestOperationHasOptimizedCbEvent) {
+        this->latestOperationHasOptimizedCbEvent = false;
+        this->appendSignalInOrderDependencyCounter(nullptr, false, true);
+        this->inOrderExecInfo->addCounterValue(this->getInOrderIncrementValue());
+        this->handleInOrderCounterOverflow(false);
+        ret = flushImmediate(ret, false, true, false, false, false, nullptr, false);
+    }
+    return ret;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
