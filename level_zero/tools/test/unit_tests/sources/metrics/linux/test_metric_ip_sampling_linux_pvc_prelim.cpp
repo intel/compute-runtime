@@ -34,8 +34,7 @@ namespace ult {
 class IoctlHelperPrelim20Mock : public NEO::IoctlHelperPrelim20 {
   public:
     using NEO::IoctlHelperPrelim20::IoctlHelperPrelim20;
-    bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
-                              uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override {
+    bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) {
         return false;
     }
 };
@@ -189,7 +188,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenI915PerfIoctlEnableFailsWhenStar
     EXPECT_EQ(metricIpSamplingOsInterface->startMeasurement(notifyEveryNReports, samplingPeriodNs), ZE_RESULT_ERROR_UNKNOWN);
 }
 
-HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenGetEuStallPropertiesWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
+HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenPerfOpenEuStallStreamWhenStartMeasurementIsCalledThenReturnFailure, IsPVC) {
 
     auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface()->getDriverModel()->as<NEO::Drm>());
     drm->setIoctlHelperPrelim20Mock();

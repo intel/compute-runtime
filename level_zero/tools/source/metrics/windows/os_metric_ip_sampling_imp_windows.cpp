@@ -137,7 +137,7 @@ ze_result_t MetricIpSamplingWindowsImp::getNearestSupportedSamplingUnit(uint32_t
         return ret;
     }
 
-    uint64_t gpuClockPeriodNs = nsecPerSec / gpuTimeStampfrequency;
+    uint64_t gpuClockPeriodNs = CommonConstants::nsecPerSec / gpuTimeStampfrequency;
     UNRECOVERABLE_IF(gpuClockPeriodNs == 0);
     uint64_t numberOfClocks = samplingPeriodNs / gpuClockPeriodNs;
 

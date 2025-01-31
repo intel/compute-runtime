@@ -40,46 +40,23 @@ class MetricIpSamplingLinuxImp : public MetricIpSamplingOsInterface {
   private:
     int32_t stream = -1;
     Device &device;
-
-    ze_result_t getNearestSupportedSamplingUnit(uint32_t &samplingPeriodNs, uint32_t &samplingRate);
 };
 
 MetricIpSamplingLinuxImp::MetricIpSamplingLinuxImp(Device &device) : device(device) {}
 
-ze_result_t MetricIpSamplingLinuxImp::getNearestSupportedSamplingUnit(uint32_t &samplingPeriodNs, uint32_t &samplingUnit) {
+ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) {
 
-    static constexpr uint32_t samplingClockGranularity = 251u;
-    static constexpr uint32_t minSamplingUnit = 1u;
-    static constexpr uint32_t maxSamplingUnit = 7u;
-
+    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     uint64_t gpuTimeStampfrequency = 0;
     ze_result_t ret = getMetricsTimerResolution(gpuTimeStampfrequency);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
-    uint64_t gpuClockPeriodNs = nsecPerSec / gpuTimeStampfrequency;
-    uint64_t numberOfClocks = samplingPeriodNs / gpuClockPeriodNs;
-
-    samplingUnit = std::clamp(static_cast<uint32_t>(numberOfClocks / samplingClockGranularity), minSamplingUnit, maxSamplingUnit);
-    samplingPeriodNs = samplingUnit * samplingClockGranularity * static_cast<uint32_t>(gpuClockPeriodNs);
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) {
-
-    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
-
-    uint32_t samplingUnit = 0;
-    if (getNearestSupportedSamplingUnit(samplingPeriodNs, samplingUnit) != ZE_RESULT_SUCCESS) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
     DeviceImp &deviceImp = static_cast<DeviceImp &>(device);
 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t euStallFdParameter = ioctlHelper->getEuStallFdParameter();
-    std::array<uint64_t, 12u> properties;
     auto engineInfo = drm->getEngineInfo();
     if (engineInfo == nullptr) {
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -90,13 +67,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
     }
 
     notifyEveryNReports = std::max(notifyEveryNReports, 1u);
-
-    if (!ioctlHelper->getEuStallProperties(properties, maxDssBufferSize, samplingUnit, defaultPollPeriodNs,
-                                           classInstance->engineInstance, notifyEveryNReports)) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, properties, &stream)) {
+    if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, samplingPeriodNs, classInstance->engineInstance, notifyEveryNReports, gpuTimeStampfrequency, &stream)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 

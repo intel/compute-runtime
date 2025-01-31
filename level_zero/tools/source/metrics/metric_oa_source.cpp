@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ ze_result_t OaMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
         return retVal;
     }
 
-    uint64_t maxTimeStamp = maxNanoSeconds * timerFreqquency / nsecPerSec;
+    uint64_t maxTimeStamp = maxNanoSeconds * timerFreqquency / CommonConstants::nsecPerSec;
 
     auto bits = std::bitset<64>(maxTimeStamp);
     validBits = bits.count();

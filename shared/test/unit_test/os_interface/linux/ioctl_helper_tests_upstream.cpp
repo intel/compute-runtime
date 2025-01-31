@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -523,21 +523,13 @@ TEST(IoctlHelperTestsUpstream, whenCallingIsEuStallSupportedThenFalseIsReturned)
     EXPECT_FALSE(ioctlHelper->isEuStallSupported());
 }
 
-TEST(IoctlHelperTestsUpstream, whenCallingGetEuStallPropertiesThenFailueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto ioctlHelper = drm->getIoctlHelper();
-    std::array<uint64_t, 12u> properties = {};
-    EXPECT_FALSE(ioctlHelper->getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
-}
-
 TEST(IoctlHelperTestsUpstream, whenCallingPerfOpenEuStallStreamThenFailueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     auto ioctlHelper = drm->getIoctlHelper();
     int32_t invalidFd = -1;
-    std::array<uint64_t, 12u> properties = {};
-    EXPECT_FALSE(ioctlHelper->perfOpenEuStallStream(0u, properties, &invalidFd));
+    uint32_t samplingPeridNs = 10000u;
+    EXPECT_FALSE(ioctlHelper->perfOpenEuStallStream(0u, samplingPeridNs, 1, 20u, 10000u, &invalidFd));
 }
 
 TEST(IoctlHelperTestsUpstream, whenCallingPerfDisableEuStallStreamThenFailueIsReturned) {
@@ -675,12 +667,13 @@ TEST(IoctlHelperTestsUpstream, whenVmUnbindIsCalledThenZeroIsReturned) {
     EXPECT_EQ(0, ioctlHelper.vmUnbind(vmBindParams));
 }
 
-TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallPropertiesThenFailureIsReturned) {
+TEST(IoctlHelperTestsUpstream, givenUpstreamWhenCallingPerfOpenEuStallStreamThenFailueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmTipMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     IoctlHelperUpstream ioctlHelper{*drm};
-    std::array<uint64_t, 12u> properties = {};
-    EXPECT_FALSE(ioctlHelper.getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 1));
+    int32_t invalidFd = -1;
+    uint32_t samplingPeridNs = 10000u;
+    EXPECT_FALSE(ioctlHelper.perfOpenEuStallStream(0u, samplingPeridNs, 1, 20u, 10000u, &invalidFd));
 }
 
 TEST(IoctlHelperTestsUpstream, givenUpstreamWhenGettingEuStallFdParameterThenZeroIsReturned) {

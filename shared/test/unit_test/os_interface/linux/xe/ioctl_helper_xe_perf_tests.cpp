@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,23 +17,14 @@
 using namespace NEO;
 using IoctlHelperXeTest = Test<XeConfigFixture>;
 
-TEST_F(IoctlHelperXeTest, whenCallingGetEuStallPropertiesThenFailueIsReturned) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);
-    EXPECT_NE(nullptr, xeIoctlHelper);
-    std::array<uint64_t, 12u> properties = {};
-    EXPECT_FALSE(xeIoctlHelper.get()->getEuStallProperties(properties, 0x101, 0x102, 0x103, 1, 20u));
-}
-
 TEST_F(IoctlHelperXeTest, whenCallingPerfOpenEuStallStreamThenFailueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);
     EXPECT_NE(nullptr, xeIoctlHelper);
     int32_t invalidFd = -1;
-    std::array<uint64_t, 12u> properties = {};
-    EXPECT_FALSE(xeIoctlHelper.get()->perfOpenEuStallStream(0u, properties, &invalidFd));
+    uint32_t samplingPeriodNs = 10000u;
+    EXPECT_FALSE(xeIoctlHelper.get()->perfOpenEuStallStream(0u, samplingPeriodNs, 1, 20u, 10000u, &invalidFd));
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingPerfDisableEuStallStreamThenFailueIsReturned) {

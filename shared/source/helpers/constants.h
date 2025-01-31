@@ -96,4 +96,5 @@ inline constexpr uint32_t maxWorkgroupSize = 1024u;
 inline constexpr uint32_t minimalSyncBufferSize = 12;
 inline constexpr uint32_t gpuHangCheckTimeInUS = 500'000;
 inline constexpr double defaultProfilingTimerResolution = 83.333;
+inline constexpr uint64_t nsecPerSec = 1000000000ull;
 } // namespace CommonConstants

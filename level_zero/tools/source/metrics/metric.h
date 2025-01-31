@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
+
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/zet_intel_gpu_metric.h"
@@ -54,8 +56,6 @@ struct METRICS_LOG_BITMASK {                    // NOLINT(readability-identifier
 struct CommandList;
 struct MetricStreamer;
 struct MetricProgrammable;
-
-static constexpr uint64_t nsecPerSec = 1000000000ull;
 
 class MetricSource {
   public:

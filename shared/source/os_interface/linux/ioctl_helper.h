@@ -152,11 +152,9 @@ class IoctlHelper {
     virtual int vmBind(const VmBindParams &vmBindParams) = 0;
     virtual int vmUnbind(const VmBindParams &vmBindParams) = 0;
     virtual int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) = 0;
-    virtual bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize,
-                                      uint64_t samplingRate, uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) = 0;
     virtual bool isEuStallSupported() = 0;
     virtual uint32_t getEuStallFdParameter() = 0;
-    virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) = 0;
+    virtual bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) = 0;
     virtual bool perfDisableEuStallStream(int32_t *stream) = 0;
     virtual UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) = 0;
     virtual UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) = 0;
@@ -325,10 +323,8 @@ class IoctlHelperUpstream : public IoctlHelperI915 {
     int vmUnbind(const VmBindParams &vmBindParams) override;
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
     bool isEuStallSupported() override;
-    bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
-                              uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
     uint32_t getEuStallFdParameter() override;
-    bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) override;
+    bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
     UuidRegisterResult registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) override;
     UuidRegisterResult registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) override;
@@ -401,9 +397,7 @@ class IoctlHelperPrelim20 : public IoctlHelperI915 {
     int vmBind(const VmBindParams &vmBindParams) override;
     int vmUnbind(const VmBindParams &vmBindParams) override;
     int getResetStats(ResetStats &resetStats, uint32_t *status, ResetStatsFault *resetStatsFault) override;
-    bool getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
-                              uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) override;
-    bool perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) override;
+    bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override;
     bool perfDisableEuStallStream(int32_t *stream) override;
     bool isEuStallSupported() override;
     uint32_t getEuStallFdParameter() override;

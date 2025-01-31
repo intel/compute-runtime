@@ -587,14 +587,35 @@ bool IoctlHelperPrelim20::isEuStallSupported() {
     return true;
 }
 
-bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &properties, uint64_t dssBufferSize, uint64_t samplingRate,
-                                               uint64_t pollPeriod, uint64_t engineInstance, uint64_t notifyNReports) {
+uint32_t IoctlHelperPrelim20::getEuStallFdParameter() {
+    return PRELIM_I915_PERF_FLAG_FD_EU_STALL;
+}
+
+bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) {
+    static constexpr uint32_t maxDssBufferSize = 512 * MemoryConstants::kiloByte;
+    static constexpr uint32_t defaultPollPeriodNs = 10000000u;
+
+    // Get sampling unit.
+    static constexpr uint32_t samplingClockGranularity = 251u;
+    static constexpr uint32_t minSamplingUnit = 1u;
+    static constexpr uint32_t maxSamplingUnit = 7u;
+
+    uint64_t gpuClockPeriodNs = CommonConstants::nsecPerSec / gpuTimeStampfrequency;
+    uint64_t numberOfClocks = samplingPeriodNs / gpuClockPeriodNs;
+
+    uint32_t samplingUnit = 0;
+    samplingUnit = std::clamp(static_cast<uint32_t>(numberOfClocks / samplingClockGranularity), minSamplingUnit, maxSamplingUnit);
+    samplingPeriodNs = samplingUnit * samplingClockGranularity * static_cast<uint32_t>(gpuClockPeriodNs);
+
+    // Populate the EU stall properties.
+    std::array<uint64_t, 12u> properties;
+
     properties[0] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_BUF_SZ;
-    properties[1] = dssBufferSize;
+    properties[1] = maxDssBufferSize;
     properties[2] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_SAMPLE_RATE;
-    properties[3] = samplingRate;
+    properties[3] = samplingUnit;
     properties[4] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_POLL_PERIOD;
-    properties[5] = pollPeriod;
+    properties[5] = defaultPollPeriodNs;
     properties[6] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_CLASS;
     properties[7] = prelim_drm_i915_gem_engine_class::PRELIM_I915_ENGINE_CLASS_COMPUTE;
     properties[8] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_ENGINE_INSTANCE;
@@ -602,14 +623,7 @@ bool IoctlHelperPrelim20::getEuStallProperties(std::array<uint64_t, 12u> &proper
     properties[10] = prelim_drm_i915_eu_stall_property_id::PRELIM_DRM_I915_EU_STALL_PROP_EVENT_REPORT_COUNT;
     properties[11] = notifyNReports;
 
-    return true;
-}
-
-uint32_t IoctlHelperPrelim20::getEuStallFdParameter() {
-    return PRELIM_I915_PERF_FLAG_FD_EU_STALL;
-}
-
-bool IoctlHelperPrelim20::perfOpenEuStallStream(uint32_t euStallFdParameter, std::array<uint64_t, 12u> &properties, int32_t *stream) {
+    // Call perf open ioctl.
     NEO::PrelimI915::drm_i915_perf_open_param param = {};
     param.flags = I915_PERF_FLAG_FD_CLOEXEC |
                   euStallFdParameter |
