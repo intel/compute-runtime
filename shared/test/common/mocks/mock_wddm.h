@@ -53,6 +53,7 @@ class WddmMock : public Wddm {
     using Wddm::gfxWorkaroundTable;
     using Wddm::gmmMemory;
     using Wddm::hwDeviceId;
+    using Wddm::isReadOnlyMemory;
     using Wddm::mapGpuVirtualAddress;
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;

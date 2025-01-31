@@ -109,5 +109,5 @@ void setAdapterBDF(ADAPTER_BDF &adapterBDF);
 void setMockDeviceExecutionState(D3DKMT_DEVICEEXECUTION_STATE newState);
 void setMockGetDeviceStateReturnValue(NTSTATUS newReturnValue, bool execution);
 void initGfxPartition();
-void setCapturingCreateAllocationFlags();
-void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCreateAllocationFlags, uint32_t &numCalled);
+void setCreateAllocation2ReadOnlyFailConfig(bool fail);
+void getCreateAllocation2ReadOnlyFailConfig(bool &readOnlyFlagWasPassed, uint32_t &numCalled);
