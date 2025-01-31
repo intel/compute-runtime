@@ -1,37 +1,175 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-# by default if not on the list test is run on all platforms
+# _default_config:
+#   _default_platform:     -> default config, used if not found config for given platform
+#     envs:                -> dictionary of default environmental variables
+#       ENV1: 'VALUE1'
+#       ENV2: 'VALUE2'
+#     params:              -> list of default parameters, order matters
+#       - --param1 1
+#       - --param2
+#   platform1:             -> platform1 default config, envs dictionary is used as given, params are copied from _default_platform
+#     envs:
+#       ENV3: 'VALUE3'
+#
+#   platform2:             -> platform2 default config, envs dictionary is used as given, params list is empty
+#     envs:
+#       ENV3: 'VALUE3'
+#     params:
+#
+#
+# each test that need to be run MUST have its key and given platforms under it
+# test1:               -> run definition for test1 blackbox test
+#   platform1:         -> 1 run on platform1 with default parameters
+#
+#   platform2:         -> 2 diffrent runs on platform2 with custom parameters, default parameters are ignored
+#     - --other1
+#     - --other2
+#
+#   platform3:         -> 1 run on platform3 with extra NEW_ENV=1 environmental variable, default parameters are ignored
+#     - env:NEW_ENV=1
+#
+#   platform4:         -> 1 run on platform4 with --other1 parameter and ENV1 variable removed, default parameters are ignored
+#     - --other1 env:ENV1=
 
-# include: [list] -> list of platfroms on which test will be run
-# exclude: [list] -> list of platfroms on which test will not be run
-# include and exclude are mutually exclusive
-# skip: [boolean] -> flag to skip test on all platforms
+_default_config:
+  _default_platform:
+    envs:
+      SetCommandStreamReceiver: '2'
+      NEOReadDebugKeys: '1'
+      PrintDebugMessages: '1'
+      EnableDebugBreak: '0'
+    params:
+      - --verbose
 
-zello_ipc_copy_dma_buf:
-  skip: true
-
-zello_ipc_copy_dma_buf_p2p:
-  skip: true
-
-zello_timestamp:
-  skip: true
-
-zello_world_usm:
-  skip: true
-
-zello_metrics:
-  skip: true
+zello_atomic_inc:
+  dg2:
+  pvc.b0:
 
 zello_bindless_kernel:
-  cases:
-    - exclude:
-        - tgllp
+  dg2:
+  pvc.b0:
+
+zello_commandlist_immediate:
+  dg2:
+  pvc.b0:
+
+zello_copy:
+  dg2:
+  pvc.b0:
+
+zello_copy_fence:
+  dg2:
+  pvc.b0:
+
+zello_copy_image:
+  dg2:
+  pvc.b0:
+
+zello_copy_kernel_printf:
+  dg2:
+  pvc.b0:
+
+zello_copy_only:
+  dg2:
+  pvc.b0:
+
+zello_copy_tracing:
+  dg2:
+  pvc.b0:
+
+zello_debug_info:
+  dg2:
+  pvc.b0:
+
+zello_dp_support:
+  dg2:
+  pvc.b0:
+
+zello_dynamic_link:
+  dg2:
+  pvc.b0:
+
+zello_dyn_local_arg:
+  dg2:
+  pvc.b0:
+
+zello_events:
+  dg2:
+  pvc.b0:
+
+zello_fabric:
+  dg2:
+  pvc.b0:
+
+zello_fence:
+  dg2:
+  pvc.b0:
+
+zello_fill:
+  dg2:
+  pvc.b0:
+
+zello_function_pointers_cl:
+  dg2:
+  pvc.b0:
 
 zello_global_bindless_kernel:
-  cases:
-    - exclude:
-        - tgllp
+  dg2:
+  pvc.b0:
+
+zello_host_pointer:
+  dg2:
+  pvc.b0:
+
+zello_image:
+  dg2:
+  pvc.b0:
+
+zello_image_view:
+  dg2:
+  pvc.b0:
+
+zello_immediate:
+  dg2:
+  pvc.b0:
+
+zello_multidev:
+  dg2:
+  pvc.b0:
+
+zello_printf:
+  dg2:
+  pvc.b0:
+
+zello_p2p_copy:
+  dg2:
+  pvc.b0:
+
+zello_sandbox:
+  dg2:
+  pvc.b0:
+
+zello_scratch:
+  dg2:
+  pvc.b0:
+
+zello_sysman:
+  dg2:
+  pvc.b0:
+
+zello_world_global_work_offset:
+  dg2:
+  pvc.b0:
+
+zello_world_gpu:
+  dg2:
+  pvc.b0:
+
+zello_world_jitc_ocloc:
+  dg2:
+  pvc.b0:
