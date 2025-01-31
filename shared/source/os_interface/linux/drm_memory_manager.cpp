@@ -1984,7 +1984,7 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
     auto allocation = this->makeDrmAllocation(allocationData, std::move(gmm), 0u, sizeAligned);
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
 
-    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), 0u, maxOsContextCount)) {
+    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), 0u, maxOsContextCount, MemoryConstants::pageSize64k)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
             delete allocation->getGmm(handleId);
         }
@@ -2060,13 +2060,22 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned = 0;
+    size_t finalAlignment = MemoryConstants::pageSize64k;
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     if (allocationData.type == AllocationType::image) {
         allocationData.imgInfo->useLocalMemory = true;
         gmm = std::make_unique<Gmm>(gmmHelper, *allocationData.imgInfo,
                                     allocationData.storageInfo, allocationData.flags.preferCompressed);
-        sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
+
+        if (productHelper.is2MBLocalMemAlignmentEnabled() &&
+            allocationData.imgInfo->size >= MemoryConstants::pageSize2M) {
+            finalAlignment = MemoryConstants::pageSize2M;
+        }
+
+        sizeAligned = alignUp(allocationData.imgInfo->size, finalAlignment);
+
     } else {
         if (allocationData.type == AllocationType::writeCombined) {
             sizeAligned = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
@@ -2074,15 +2083,16 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
 
-        auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
         if (productHelper.is2MBLocalMemAlignmentEnabled() &&
             allocationData.size >= MemoryConstants::pageSize2M) {
-            sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
+            finalAlignment = MemoryConstants::pageSize2M;
         }
 
         if (debugManager.flags.ExperimentalAlignLocalMemorySizeTo2MB.get()) {
-            sizeAligned = alignUp(sizeAligned, MemoryConstants::pageSize2M);
+            finalAlignment = MemoryConstants::pageSize2M;
         }
+
+        sizeAligned = alignUp(sizeAligned, finalAlignment);
         gmm = this->makeGmmIfSingleHandle(allocationData, sizeAligned);
     }
 
@@ -2100,7 +2110,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
     auto *graphicsAllocation = static_cast<GraphicsAllocation *>(allocation.get());
 
-    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount)) {
+    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount, finalAlignment)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
             delete allocation->getGmm(handleId);
         }
@@ -2262,7 +2272,7 @@ bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *alloc
     return true;
 }
 
-bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
+bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount, size_t preferredAlignment) {
     BufferObjects bos{};
     auto &storageInfo = allocation->storageInfo;
     auto boAddress = gpuAddress;
@@ -2311,7 +2321,7 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
             }
         }
         auto gmm = allocation->getGmm(handleId);
-        auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
+        auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), preferredAlignment);
         bos[handleId] = createBufferObjectInMemoryRegion(allocation->getRootDeviceIndex(), gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount, pairHandle,
                                                          !allocation->isAllocatedInLocalMemoryPool(), allocation->isUsmHostAllocation());
         if (nullptr == bos[handleId]) {

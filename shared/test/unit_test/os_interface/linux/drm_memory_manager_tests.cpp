@@ -7696,6 +7696,60 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenDebugVar
     memoryManager->freeGraphicsMemory(allocation2);
 }
 
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenEnabled2MBSizeAlignmentWhenAllocatingLargeImageAllocationThenUseProperAlignment) {
+    auto mockProductHelper = new MockProductHelper;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper.reset(mockProductHelper);
+    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+    ASSERT_TRUE(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper->is2MBLocalMemAlignmentEnabled());
+
+    ImageDescriptor imgDesc = {};
+    imgDesc.imageType = ImageType::image1D;
+    imgDesc.imageWidth = 2 * MemoryConstants::megaByte + 1;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.type = AllocationType::image;
+    allocData.flags.resource48Bit = true;
+    allocData.imgInfo = &imgInfo;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    EXPECT_TRUE(allocData.imgInfo->useLocalMemory);
+    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
+
+    auto gmm = allocation->getDefaultGmm();
+    EXPECT_NE(nullptr, gmm);
+    EXPECT_EQ(0u, gmm->resourceParams.Flags.Info.NonLocalOnly);
+
+    auto gpuAddress = allocation->getGpuAddress();
+    auto sizeAligned = alignUp(allocData.imgInfo->size, MemoryConstants::pageSize2M);
+
+    EXPECT_NE(0u, gpuAddress);
+
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_LT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::heapStandard2MB)), gpuAddress);
+    EXPECT_GT(gmmHelper->canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::heapStandard2MB)), gpuAddress);
+    EXPECT_EQ(0u, allocation->getGpuBaseAddress());
+    EXPECT_EQ(sizeAligned, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(gpuAddress, reinterpret_cast<uint64_t>(allocation->getReservedAddressPtr()));
+    EXPECT_EQ(sizeAligned, allocation->getReservedAddressSize());
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_NE(nullptr, bo);
+    EXPECT_EQ(gpuAddress, bo->peekAddress());
+    EXPECT_EQ(sizeAligned, bo->peekSize());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 struct DrmMemoryManagerToTestCopyMemoryToAllocationBanks : public DrmMemoryManager {
     DrmMemoryManagerToTestCopyMemoryToAllocationBanks(ExecutionEnvironment &executionEnvironment, size_t lockableLocalMemorySize)
         : DrmMemoryManager(GemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
