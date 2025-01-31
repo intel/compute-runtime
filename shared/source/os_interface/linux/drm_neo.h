@@ -121,7 +121,7 @@ class Drm : public DriverModel {
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId) const;
-    MOCKABLE_VIRTUAL int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo, const bool forcePagingFence);
+    MOCKABLE_VIRTUAL int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     MOCKABLE_VIRTUAL int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(const DeviceDescriptor *, bool);
     void setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo);
@@ -218,7 +218,6 @@ class Drm : public DriverModel {
     std::string getDeviceNode() { return hwDeviceId->getDeviceNode(); }
 
     void waitForBind(uint32_t vmHandleId);
-    void waitForBindGivenFenceVal(uint32_t vmHandleId, uint64_t fenceValToWait);
     uint64_t getNextFenceVal(uint32_t vmHandleId) { return fenceVal[vmHandleId] + 1; }
     void incFenceVal(uint32_t vmHandleId) { fenceVal[vmHandleId]++; }
     uint64_t *getFenceAddr(uint32_t vmHandleId) { return &pagingFence[vmHandleId]; }

@@ -21,9 +21,9 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
     using AubMemoryOperationsHandler::getMemoryBanksBitfield;
     using AubMemoryOperationsHandler::residentAllocations;
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
         makeResidentCalled = true;
-        return AubMemoryOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
+        return AubMemoryOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded);
     }
 
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
@@ -36,9 +36,9 @@ struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
         return AubMemoryOperationsHandler::isResident(device, gfxAllocation);
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
         makeResidentWithinOsContextCalled = true;
-        return AubMemoryOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
+        return AubMemoryOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable);
     }
 
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {

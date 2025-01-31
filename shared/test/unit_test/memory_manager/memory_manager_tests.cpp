@@ -3313,7 +3313,7 @@ TEST(MemoryManagerTest, givenMemoryAllocationWhenFreedThenFreeCalledOnMemoryOper
     auto memoryAllocation = memoryManager.allocateGraphicsMemoryWithProperties(allocationProperties);
     EXPECT_NE(nullptr, memoryAllocation);
 
-    memoryOperationsHandler->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&memoryAllocation, 1), false, false);
+    memoryOperationsHandler->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&memoryAllocation, 1), false);
 
     EXPECT_EQ(1u, memoryOperationsHandler->residentAllocations.size());
 
