@@ -414,9 +414,10 @@ TEST_F(IoctlHelperXeTest, givenDebuggingEnabledWhenCallingVmBindThenWaitUserFenc
     xeIoctlHelper->setVmBindUserFence(vmBindParams, vmBindExtUserFence);
 
     EXPECT_EQ(0, xeIoctlHelper->vmBind(vmBindParams));
-    EXPECT_EQ(0u, drm->waitUserFenceInputs.size());
+    auto &waitUserFence = drm->waitUserFenceInputs[0];
+    EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
     drm->waitUserFenceInputs.clear();
     EXPECT_EQ(0, xeIoctlHelper->vmUnbind(vmBindParams));
-    auto waitUserFence = drm->waitUserFenceInputs[0];
+    waitUserFence = drm->waitUserFenceInputs[0];
     EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
 }
