@@ -98,6 +98,6 @@ class CpuPageFaultManager : public NonCopyableClass {
     gpuDomainHandlerType gpuDomainHandler = &transferAndUnprotectMemory;
 
     std::unordered_map<void *, PageFaultData> memoryData;
-    SpinLock mtx;
+    RecursiveSpinLock mtx;
 };
 } // namespace NEO

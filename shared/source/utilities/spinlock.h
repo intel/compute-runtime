@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,4 +11,5 @@
 
 namespace NEO {
 using SpinLock = std::mutex;
+using RecursiveSpinLock = std::recursive_mutex;
 } // namespace NEO
