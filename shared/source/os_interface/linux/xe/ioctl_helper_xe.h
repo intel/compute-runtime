@@ -133,6 +133,7 @@ class IoctlHelperXe : public IoctlHelper {
     int getTileIdFromGtId(int gtId) const override {
         return gtIdToTileId[gtId];
     }
+    bool makeResidentBeforeLockNeeded() const override;
 
   protected:
     static constexpr uint32_t maxContextSetProperties = 4;
