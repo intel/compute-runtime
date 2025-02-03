@@ -7642,7 +7642,7 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     EXPECT_TRUE(allocation->getGpuAddress() % size == 0u);
 
     size = 8 * MemoryConstants::gigaByte + MemoryConstants::pageSize64k;
-    size_t expectedSize = size;
+    size_t expectedSize{};
 
     if (productHelper.is2MBLocalMemAlignmentEnabled()) {
         expectedSize = alignUp(size, MemoryConstants::pageSize2M);
