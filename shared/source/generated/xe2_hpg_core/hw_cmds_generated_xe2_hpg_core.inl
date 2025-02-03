@@ -4617,7 +4617,7 @@ typedef struct tagXY_FAST_COLOR_BLT {
         return static_cast<CLIENT>(TheStructure.Common.Client);
     }
     inline void setDestinationPitch(const uint32_t value) {
-        UNRECOVERABLE_IF(value > 0x3ffff);
+        UNRECOVERABLE_IF(value > 0x3ffff + 1); // patched
         TheStructure.Common.DestinationPitch = value - 1;
     }
     inline uint32_t getDestinationPitch() const {

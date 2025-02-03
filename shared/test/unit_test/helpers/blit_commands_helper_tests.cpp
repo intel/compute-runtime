@@ -264,6 +264,33 @@ HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST_F(BlitTests, givenUnalignedPatternSizeWhenDispatchingBlitFillThenSetCorrectColorDepth) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    uint32_t pattern[4] = {1, 0, 0, 0};
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    MockGraphicsAllocation mockAllocation(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                          reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                          MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    size_t copySize = 0x800'0000;
+
+    auto blitProperties = BlitProperties::constructPropertiesForMemoryFill(&mockAllocation, copySize, pattern, 3, 0);
+
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(blitProperties, stream, pDevice->getRootDeviceEnvironmentRef());
+    GenCmdList cmdList;
+
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, stream.getCpuBase(), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
+    EXPECT_EQ(cmd->getColorDepth(), XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+    EXPECT_EQ(cmd->getDestinationX2CoordinateRight(), 0x4000u);
+    EXPECT_EQ(cmd->getDestinationY2CoordinateBottom(), 0x200u);
+    EXPECT_EQ(cmd->getDestinationPitch(), 0x4000u * 16u);
+}
+
 HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhenFillPatternWithBlitThenHeightIsOne) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     uint32_t pattern[4] = {1, 0, 0, 0};

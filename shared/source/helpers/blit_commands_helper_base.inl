@@ -264,6 +264,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const BlitProperties 
     const auto maxHeight = getMaxBlitHeight(rootDeviceEnvironment, true);
 
     auto colorDepth = COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR;
+    size_t patternSize = 16;
 
     const LookupArray<size_t, COLOR_DEPTH, 4> colorDepthLookup({{
         {1, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR},
@@ -275,12 +276,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const BlitProperties 
     auto colorDepthV = colorDepthLookup.find(blitProperties.fillPatternSize);
     if (colorDepthV.has_value()) {
         colorDepth = *colorDepthV;
+        patternSize = blitProperties.fillPatternSize;
     }
 
     blitCmd.setFillColor(blitProperties.fillPattern);
     blitCmd.setColorDepth(colorDepth);
 
-    uint64_t sizeToFill = blitProperties.copySize.x / blitProperties.fillPatternSize;
+    uint64_t sizeToFill = blitProperties.copySize.x / patternSize;
     uint64_t offset = blitProperties.dstOffset.x;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
@@ -299,7 +301,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const BlitProperties 
         }
         tmpCmd.setDestinationX2CoordinateRight(static_cast<uint32_t>(width));
         tmpCmd.setDestinationY2CoordinateBottom(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * blitProperties.fillPatternSize));
+        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
 
         appendBlitMemoryOptionsForFillBuffer(blitProperties.dstAllocation, tmpCmd, rootDeviceEnvironment);
         appendBlitFillCommand(blitProperties, tmpCmd);
@@ -307,7 +309,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(const BlitProperties 
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
         *cmd = tmpCmd;
         auto blitSize = width * height;
-        offset += (blitSize * blitProperties.fillPatternSize);
+        offset += (blitSize * patternSize);
         sizeToFill -= blitSize;
     }
 }
