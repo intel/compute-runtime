@@ -138,7 +138,7 @@ This reverts commit <ID of commit being reverted>
 3. Use **type** == **build** when your commit modifies the build flow, but does not modify the codebase of compute-runtime itself
 	* example: updating the header dependencies in third_party folder
 
-4. Use **type** == **test** when your commit modifies _only_ the files in test folders (unit_test, etc.) and not the actual runtime code
+4. Use **type** == **test** when your commit modifies _only_ the files in test folders (unit_test, target_aub_tests, target_unit_tests etc.) and not the actual runtime code. Also, modification of `aub_configs` component in `manifest.yml` is considered as test-only change
 
 5. Use **type** == **performance** when your commit is intended to improve observable performance without affecting functionality, 
     * when in doubt whether to use performance vs. fix as type, performance is usually a better fit
