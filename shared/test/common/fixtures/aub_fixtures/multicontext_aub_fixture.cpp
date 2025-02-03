@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,13 +112,17 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
 
     auto releaseHelper = ReleaseHelper::create(localHwInfo.ipVersion);
 
-    if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPG_CORE) {
+    if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPG_CORE ||
+        localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPC_CORE ||
+        localHwInfo.platform.eRenderCoreFamily == IGFX_XE2_HPG_CORE ||
+        localHwInfo.platform.eRenderCoreFamily == IGFX_XE3_CORE) {
+
+        setupCalled = true;
+        hardwareInfoSetup[localHwInfo.platform.eProductFamily](&localHwInfo, true, 0u, releaseHelper.get());
+
 #ifdef SUPPORT_DG2
         if (localHwInfo.platform.eProductFamily == IGFX_DG2) {
             ASSERT_TRUE(numberOfEnabledTiles == 1);
-            setupCalled = true;
-
-            Dg2HwConfig::setupHardwareInfo(&localHwInfo, true, releaseHelper.get());
 
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;
@@ -130,15 +134,8 @@ void MulticontextAubFixture::overridePlatformConfigForAllEnginesSupport(Hardware
             localHwInfo.gtSystemInfo.CCSInfo.Instances.CCSEnableMask = 0b1111;
         }
 #endif
-    }
-
-    if (localHwInfo.platform.eRenderCoreFamily == IGFX_XE_HPC_CORE) {
 #ifdef SUPPORT_PVC
         if (localHwInfo.platform.eProductFamily == IGFX_PVC) {
-            setupCalled = true;
-
-            PvcHwConfig::setupHardwareInfo(&localHwInfo, true, releaseHelper.get());
-
             // Mock values
             localHwInfo.gtSystemInfo.SliceCount = 8;
             localHwInfo.gtSystemInfo.SubSliceCount = 64;
