@@ -5345,9 +5345,11 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedTimestampHostVisibleSignalWhenCa
 
     auto eventObj = Event::fromHandle(handle);
     *static_cast<Event::State *>(ptrOffset(eventObj->getHostAddress(), eventObj->getContextEndOffset())) = Event::State::STATE_SIGNALED;
+    auto hostAddress = static_cast<uint64_t *>(immCmdList->inOrderExecInfo->getBaseHostAddress());
+    *hostAddress = 1u;
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
 
-    if (device->getProductHelper().isDcFlushAllowed()) {
+    if (device->getProductHelper().isDcFlushAllowed() && !immCmdList->isHeaplessModeEnabled()) {
         EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
         EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
     } else {
