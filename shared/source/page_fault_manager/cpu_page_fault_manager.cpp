@@ -21,7 +21,7 @@ void CpuPageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsMana
     auto initialPlacement = MemoryPropertiesHelper::getUSMInitialPlacement(memoryProperties);
     const auto domain = (initialPlacement == GraphicsAllocation::UsmInitialPlacement::CPU) ? AllocationDomain::cpu : AllocationDomain::none;
 
-    std::unique_lock<SpinLock> lock{mtx};
+    std::unique_lock<RecursiveSpinLock> lock{mtx};
     PageFaultData faultData{};
     faultData.size = size;
     faultData.unifiedMemoryManager = unifiedMemoryManager;
@@ -35,7 +35,7 @@ void CpuPageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsMana
 }
 
 void CpuPageFaultManager::removeAllocation(void *ptr) {
-    std::unique_lock<SpinLock> lock{mtx};
+    std::unique_lock<RecursiveSpinLock> lock{mtx};
     auto alloc = memoryData.find(ptr);
     if (alloc != memoryData.end()) {
         auto &pageFaultData = alloc->second;
@@ -52,7 +52,7 @@ void CpuPageFaultManager::removeAllocation(void *ptr) {
 }
 
 void CpuPageFaultManager::moveAllocationToGpuDomain(void *ptr) {
-    std::unique_lock<SpinLock> lock{mtx};
+    std::unique_lock<RecursiveSpinLock> lock{mtx};
     auto alloc = memoryData.find(ptr);
     if (alloc != memoryData.end()) {
         auto &pageFaultData = alloc->second;
@@ -68,7 +68,7 @@ void CpuPageFaultManager::moveAllocationToGpuDomain(void *ptr) {
 }
 
 void CpuPageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocsManager *unifiedMemoryManager) {
-    std::unique_lock<SpinLock> lock{mtx};
+    std::unique_lock<RecursiveSpinLock> lock{mtx};
     for (auto allocPtr : unifiedMemoryManager->nonGpuDomainAllocs) {
         auto &pageFaultData = this->memoryData[allocPtr];
         this->migrateStorageToGpuDomain(allocPtr, pageFaultData);
@@ -108,7 +108,7 @@ void CpuPageFaultManager::handlePageFault(void *ptr, PageFaultData &faultData) {
 }
 
 bool CpuPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) {
-    std::unique_lock<SpinLock> lock{mtx};
+    std::unique_lock<RecursiveSpinLock> lock{mtx};
     auto allocPtr = getFaultData(memoryData, ptr, handleFault);
     if (allocPtr == nullptr) {
         return false;

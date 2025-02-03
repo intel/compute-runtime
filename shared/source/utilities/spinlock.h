@@ -11,4 +11,5 @@
 
 namespace NEO {
 using SpinLock = std::mutex;
+using RecursiveSpinLock = std::recursive_mutex;
 } // namespace NEO
