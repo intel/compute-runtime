@@ -785,6 +785,7 @@ TEST(DecoderHelperTest, GivenGfxCoreFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_XE_HPG_CORE, IGA_XE_HPG},
         std::pair{IGFX_XE_HPC_CORE, IGA_XE_HPC},
         std::pair{IGFX_XE2_HPG_CORE, IGA_XE2},
+        std::pair{IGFX_XE3_CORE, IGA_XE3},
 
         std::pair{IGFX_UNKNOWN_CORE, IGA_GEN_INVALID}};
 
@@ -807,6 +808,7 @@ TEST(DecoderHelperTest, GivenProductFamilyWhenTranslatingToIgaGenBaseThenExpecte
         std::pair{IGFX_ARROWLAKE, IGA_XE_HPG},
         std::pair{IGFX_BMG, IGA_XE2},
         std::pair{IGFX_LUNARLAKE, IGA_XE2},
+        std::pair{IGFX_PTL, IGA_XE3},
 
         std::pair{IGFX_UNKNOWN, IGA_GEN_INVALID}};
 

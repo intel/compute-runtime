@@ -31,6 +31,8 @@ inline iga_gen_t translateToIgaGenBase(PRODUCT_FAMILY productFamily) {
     case IGFX_BMG:
     case IGFX_LUNARLAKE:
         return IGA_XE2;
+    case IGFX_PTL:
+        return IGA_XE3;
     }
 }
 
@@ -48,6 +50,8 @@ inline iga_gen_t translateToIgaGenBase(GFXCORE_FAMILY coreFamily) {
         return IGA_XE_HPC;
     case IGFX_XE2_HPG_CORE:
         return IGA_XE2;
+    case IGFX_XE3_CORE:
+        return IGA_XE3;
     }
 }
 
