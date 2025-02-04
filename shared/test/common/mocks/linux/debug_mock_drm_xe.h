@@ -33,6 +33,7 @@ struct MockIoctlHelperXeDebug : IoctlHelperXe {
     using IoctlHelperXe::bindInfo;
     using IoctlHelperXe::euDebugInterface;
     using IoctlHelperXe::getEudebugExtProperty;
+    using IoctlHelperXe::getEudebugExtPropertyValue;
     using IoctlHelperXe::IoctlHelperXe;
     using IoctlHelperXe::tileIdToGtId;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,8 @@ uint32_t MockEuDebugInterface::getParamValue(EuDebugParam param) const {
         RETURN_AS_IS(EuDebugParam::euControlCmdResume);
         RETURN_AS_IS(EuDebugParam::euControlCmdStopped);
         RETURN_AS_IS(EuDebugParam::execQueueSetPropertyEuDebug);
+        RETURN_AS_IS(EuDebugParam::execQueueSetPropertyValueEnable);
+        RETURN_AS_IS(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);
         RETURN_AS_IS(EuDebugParam::eventTypeEuAttention);
         RETURN_AS_IS(EuDebugParam::eventTypeExecQueue);
         RETURN_AS_IS(EuDebugParam::eventTypeExecQueuePlacements);

@@ -66,6 +66,21 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetEudebugExtPropertyThen
     EXPECT_EQ(xeIoctlHelper->getEudebugExtProperty(), static_cast<int>(EuDebugParam::execQueueSetPropertyEuDebug));
 }
 
+TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGetEudebugExtPropertyValueThenCorrectValueReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(DebuggingMode::offline);
+    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = static_cast<MockIoctlHelperXeDebug *>(drm->ioctlHelper.get());
+    uint64_t expectedValue = 0;
+    auto mockEuDebugInterface = static_cast<NEO::MockEuDebugInterface *>(xeIoctlHelper->euDebugInterface.get());
+    mockEuDebugInterface->pageFaultEnableSupported = true;
+    expectedValue = static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValueEnable) | static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);
+    EXPECT_EQ(xeIoctlHelper->getEudebugExtPropertyValue(), expectedValue);
+    mockEuDebugInterface->pageFaultEnableSupported = false;
+    expectedValue = static_cast<uint64_t>(EuDebugParam::execQueueSetPropertyValueEnable);
+    EXPECT_EQ(xeIoctlHelper->getEudebugExtPropertyValue(), expectedValue);
+}
+
 using IoctlHelperXeTestFixture = ::testing::Test;
 HWTEST_F(IoctlHelperXeTestFixture, GivenDebuggingDisabledWhenCreateDrmContextThenEuDebuggableContextIsNotRequested) {
     DebugManagerStateRestore restorer;
@@ -139,7 +154,7 @@ HWTEST_F(IoctlHelperXeTestFixture, GivenDebuggingEnabledWhenCreateDrmContextThen
     EXPECT_EQ(ext.base.name, static_cast<uint32_t>(DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY));
     EXPECT_EQ(ext.base.next_extension, 0ULL);
     EXPECT_EQ(ext.property, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyEuDebug));
-    EXPECT_EQ(ext.value, 1ULL);
+    EXPECT_EQ(ext.value, static_cast<uint32_t>(EuDebugParam::execQueueSetPropertyValueEnable));
 }
 
 HWTEST_F(IoctlHelperXeTestFixture, GivenContextCreatedForCopyEngineWhenCreateDrmContextThenEuDebuggableContextIsNotRequested) {

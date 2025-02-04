@@ -56,6 +56,8 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
     case EuDebugParam::execQueueSetPropertyEuDebug:
         return PRELIM_DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG;
+    case EuDebugParam::execQueueSetPropertyValueEnable:
+        return PRELIM_DRM_XE_EXEC_QUEUE_EUDEBUG_FLAG_ENABLE;
     case EuDebugParam::ioctlAckEvent:
         return PRELIM_DRM_XE_EUDEBUG_IOCTL_ACK_EVENT;
     case EuDebugParam::ioctlEuControl:
@@ -82,6 +84,8 @@ uint32_t EuDebugInterfacePrelim::getParamValue(EuDebugParam param) const {
         return PRELIM_WORK_IN_PROGRESS_DRM_XE_DEBUG_METADATA_SIP_AREA;
     case EuDebugParam::vmBindOpExtensionsAttachDebug:
         return PRELIM_XE_VM_BIND_OP_EXTENSIONS_ATTACH_DEBUG;
+    default:
+        return getAdditionalParamValue(param);
     }
     return 0;
 }

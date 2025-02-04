@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 Intel Corporation
+# Copyright (C) 2024-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -16,6 +16,7 @@ if(NEO_ENABLE_XE_EU_DEBUG_SUPPORT)
   if(NEO_ENABLE_XE_PRELIM_DETECTION)
     list(APPEND NEO_CORE_OS_INTERFACE_TESTS_LINUX_XE_EUDEBUG
          ${CMAKE_CURRENT_SOURCE_DIR}/eudebug_interface_prelim_tests.cpp
+         ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}eudebug_interface_prelim_tests_extra.cpp
     )
   endif()
 endif()

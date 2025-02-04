@@ -1647,7 +1647,7 @@ void IoctlHelperXe::setOptionalContextProperties(Drm &drm, void *extProperties, 
             ext[extIndexInOut].base.next_extension = 0;
             ext[extIndexInOut].base.name = DRM_XE_EXEC_QUEUE_EXTENSION_SET_PROPERTY;
             ext[extIndexInOut].property = getEudebugExtProperty();
-            ext[extIndexInOut].value = 1;
+            ext[extIndexInOut].value = getEudebugExtPropertyValue();
             extIndexInOut++;
         }
     }

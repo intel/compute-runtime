@@ -55,6 +55,10 @@ uint32_t EuDebugInterfaceUpstream::getParamValue(EuDebugParam param) const {
         return DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE;
     case EuDebugParam::execQueueSetPropertyEuDebug:
         return DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG;
+    case EuDebugParam::execQueueSetPropertyValueEnable:
+        return DRM_XE_EXEC_QUEUE_EUDEBUG_FLAG_ENABLE;
+    case EuDebugParam::execQueueSetPropertyValuePageFaultEnable:
+        return 0;
     case EuDebugParam::ioctlAckEvent:
         return DRM_XE_EUDEBUG_IOCTL_ACK_EVENT;
     case EuDebugParam::ioctlEuControl:

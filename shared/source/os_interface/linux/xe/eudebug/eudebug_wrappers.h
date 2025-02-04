@@ -204,6 +204,8 @@ enum class EuDebugParam {
     eventTypeVmBindUfence,
     eventVmBindFlagUfence,
     execQueueSetPropertyEuDebug,
+    execQueueSetPropertyValueEnable,
+    execQueueSetPropertyValuePageFaultEnable,
     ioctlAckEvent,
     ioctlEuControl,
     ioctlReadEvent,

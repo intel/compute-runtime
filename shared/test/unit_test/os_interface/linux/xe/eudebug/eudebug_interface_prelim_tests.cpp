@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ TEST(EuDebugInterfacePrelimTest, whenGettingParamValueThenCorrectValueIsReturned
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_VM_BIND_UFENCE), euDebugInterface.getParamValue(EuDebugParam::eventTypeVmBindUfence));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_EVENT_VM_BIND_FLAG_UFENCE), euDebugInterface.getParamValue(EuDebugParam::eventVmBindFlagUfence));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EXEC_QUEUE_SET_PROPERTY_EUDEBUG), euDebugInterface.getParamValue(EuDebugParam::execQueueSetPropertyEuDebug));
+    EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EXEC_QUEUE_EUDEBUG_FLAG_ENABLE), euDebugInterface.getParamValue(EuDebugParam::execQueueSetPropertyValueEnable));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_IOCTL_ACK_EVENT), euDebugInterface.getParamValue(EuDebugParam::ioctlAckEvent));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_IOCTL_EU_CONTROL), euDebugInterface.getParamValue(EuDebugParam::ioctlEuControl));
     EXPECT_EQ(static_cast<uint32_t>(PRELIM_DRM_XE_EUDEBUG_IOCTL_READ_EVENT), euDebugInterface.getParamValue(EuDebugParam::ioctlReadEvent));

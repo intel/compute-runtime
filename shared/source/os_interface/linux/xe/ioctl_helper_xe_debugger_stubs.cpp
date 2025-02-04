@@ -34,6 +34,11 @@ int IoctlHelperXe::getEudebugExtProperty() {
     return 0;
 }
 
+uint64_t IoctlHelperXe::getEudebugExtPropertyValue() {
+    UNRECOVERABLE_IF(true);
+    return 0;
+}
+
 int IoctlHelperXe::getEuDebugSysFsEnable() {
     return 0;
 }

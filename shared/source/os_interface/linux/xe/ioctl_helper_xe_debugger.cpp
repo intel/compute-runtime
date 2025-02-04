@@ -53,6 +53,14 @@ int IoctlHelperXe::getEudebugExtProperty() {
     return euDebugInterface->getParamValue(EuDebugParam::execQueueSetPropertyEuDebug);
 }
 
+uint64_t IoctlHelperXe::getEudebugExtPropertyValue() {
+    uint64_t val = euDebugInterface->getParamValue(EuDebugParam::execQueueSetPropertyValueEnable);
+    if (euDebugInterface->isExecQueuePageFaultEnableSupported()) {
+        val |= euDebugInterface->getParamValue(EuDebugParam::execQueueSetPropertyValuePageFaultEnable);
+    }
+    return val;
+}
+
 int IoctlHelperXe::getEuDebugSysFsEnable() {
     return euDebugInterface != nullptr ? 1 : 0;
 }
