@@ -669,3 +669,33 @@ HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaDisabledThenAddit
     EXPECT_EQ(expectedSize, stream.getUsed());
     EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
 }
+
+struct IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastGfxCore<IGFX_XE_HP_CORE>::isMatched<productFamily>() && !IsXe2HpgCore::isMatched<productFamily>() && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
+    }
+};
+
+HWTEST2_F(BlitTests, givenXeHPOrAboveTiledResourcesWhenAppendSliceOffsetsIsCalledThenIndexesAreSet, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+
+    auto blitCmd = FamilyType::cmdInitXyBlockCopyBlt;
+    blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
+    blitCmd.setDestinationTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE64);
+    MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, AllocationType::internalHostMemory,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    BlitProperties properties{};
+    uint32_t sliceIndex = 1;
+    auto srcSlicePitch = static_cast<uint32_t>(properties.srcSlicePitch);
+    auto dstSlicePitch = static_cast<uint32_t>(properties.dstSlicePitch);
+
+    BlitCommandsHelper<FamilyType>::appendSliceOffsets(properties, blitCmd, sliceIndex, pDevice->getRootDeviceEnvironment(), srcSlicePitch, dstSlicePitch);
+
+    EXPECT_EQ(blitCmd.getDestinationArrayIndex(), sliceIndex + 1);
+    EXPECT_EQ(blitCmd.getSourceArrayIndex(), sliceIndex + 1);
+}

@@ -135,6 +135,54 @@ void BlitCommandsHelper<Family>::appendBlitCommandsBlockCopy(const BlitPropertie
 }
 
 template <>
+void BlitCommandsHelper<Family>::appendBaseAddressOffset(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, const bool isSource) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
+    auto surfaceType = isSource ? blitCmd.getSourceSurfaceType() : blitCmd.getDestinationSurfaceType();
+    if (surfaceType == XY_BLOCK_COPY_BLT::SURFACE_TYPE_SURFTYPE_2D) {
+        // max allowed y1 offset for 2D surface is 0x3fff,
+        // if it's bigger then we need to reduce it by adding offset to base address instead
+        GMM_REQ_OFFSET_INFO offsetInfo = {};
+        offsetInfo.ArrayIndex = isSource ? (blitCmd.getSourceArrayIndex() - 1) : (blitCmd.getDestinationArrayIndex() - 1);
+        offsetInfo.ReqRender = 1;
+
+        if (isSource) {
+            blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
+            blitCmd.setSourceBaseAddress(ptrOffset(blitProperties.srcGpuAddress, offsetInfo.Render.Offset));
+            blitCmd.setSourceXOffset(offsetInfo.Render.XOffset);
+            blitCmd.setSourceYOffset(offsetInfo.Render.YOffset);
+            blitCmd.setSourceSurfaceDepth(1);
+            blitCmd.setSourceArrayIndex(1);
+        } else {
+            blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
+            blitCmd.setDestinationBaseAddress(ptrOffset(blitProperties.dstGpuAddress, offsetInfo.Render.Offset));
+            blitCmd.setDestinationXOffset(offsetInfo.Render.XOffset);
+            blitCmd.setDestinationYOffset(offsetInfo.Render.YOffset);
+            blitCmd.setDestinationSurfaceDepth(1);
+            blitCmd.setDestinationArrayIndex(1);
+        }
+    }
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
+    using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
+    auto srcAddress = blitProperties.srcGpuAddress;
+    auto dstAddress = blitProperties.dstGpuAddress;
+    if (blitCmd.getSourceTiling() == XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR) {
+        blitCmd.setSourceBaseAddress(ptrOffset(srcAddress, srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z)));
+    } else {
+        blitCmd.setSourceArrayIndex(sliceIndex + static_cast<uint32_t>(blitProperties.srcOffset.z) + 1);
+        appendBaseAddressOffset(blitProperties, blitCmd, true);
+    }
+    if (blitCmd.getDestinationTiling() == XY_BLOCK_COPY_BLT::TILING::TILING_LINEAR) {
+        blitCmd.setDestinationBaseAddress(ptrOffset(dstAddress, dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z)));
+    } else {
+        blitCmd.setDestinationArrayIndex(sliceIndex + static_cast<uint32_t>(blitProperties.dstOffset.z) + 1);
+        appendBaseAddressOffset(blitProperties, blitCmd, false);
+    }
+}
+
+template <>
 template <typename T>
 void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, T &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
     appendBlitCommandsMemCopy(blitProperties, blitCmd, rootDeviceEnvironment);
