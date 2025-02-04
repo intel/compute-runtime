@@ -34,7 +34,7 @@ namespace ult {
 class IoctlHelperPrelim20Mock : public NEO::IoctlHelperPrelim20 {
   public:
     using NEO::IoctlHelperPrelim20::IoctlHelperPrelim20;
-    bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) {
+    bool perfOpenEuStallStream(uint32_t euStallFdParameter, uint32_t &samplingPeriodNs, uint64_t engineInstance, uint64_t notifyNReports, uint64_t gpuTimeStampfrequency, int32_t *stream) override {
         return false;
     }
 };
