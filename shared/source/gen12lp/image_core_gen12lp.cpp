@@ -14,6 +14,7 @@ using GfxFamily = Gen12LpFamily;
 }
 
 #include "shared/source/image/image_surface_state.inl"
+#include "shared/source/image/image_surface_state_before_xe2.inl"
 
 namespace NEO {
 template class ImageSurfaceStateHelper<GfxFamily>;

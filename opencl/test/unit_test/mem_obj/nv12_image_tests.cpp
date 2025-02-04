@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/image/image_surface_state.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -394,7 +395,12 @@ HWTEST_F(Nv12ImageTest, givenNv12ImageArrayAndImageArraySizeIsZeroWhenCallingSet
     image->setCubeFaceIndex(__GMM_NO_CUBE_MAP);
 
     image->setImageArg(&surfaceState, false, 0, context.getDevice(0)->getRootDeviceIndex());
-    EXPECT_FALSE(surfaceState.getSurfaceArray());
+
+    if (ImageSurfaceStateHelper<FamilyType>::imageAsArrayWithArraySizeOf1NotPreferred()) {
+        EXPECT_FALSE(surfaceState.getSurfaceArray());
+    } else {
+        EXPECT_TRUE(surfaceState.getSurfaceArray());
+    }
 }
 
 HWTEST_F(Nv12ImageTest, WhenSettingImageArgUvPlaneImageThenOffsetSurfaceBaseAddressAndCorrectTileModeAreSet) {

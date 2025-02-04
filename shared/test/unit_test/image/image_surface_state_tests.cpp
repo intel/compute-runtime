@@ -207,7 +207,12 @@ HWTEST_F(ImageSurfaceStateTests, givenImage2DArrayOfSize1When2dImageWAIsDisabled
     uint32_t minArrayElement, renderTargetViewExtent;
 
     ImageSurfaceStateHelper<FamilyType>::setImageSurfaceState(castSurfaceState, imageInfo, mockGmm.get(), *gmmHelper, cubeFaceIndex, gpuAddress, surfaceOffsets, true, minArrayElement, renderTargetViewExtent);
-    EXPECT_FALSE(castSurfaceState->getSurfaceArray());
+
+    if (ImageSurfaceStateHelper<FamilyType>::imageAsArrayWithArraySizeOf1NotPreferred()) {
+        EXPECT_FALSE(castSurfaceState->getSurfaceArray());
+    } else {
+        EXPECT_TRUE(castSurfaceState->getSurfaceArray());
+    }
 }
 
 HWTEST_F(ImageSurfaceStateTests, givenImage1DWhen2dImageWAIsEnabledThenArrayFlagIsNotSet) {

@@ -27,9 +27,12 @@ void ImageSurfaceStateHelper<GfxFamily>::setImageSurfaceState(RENDER_SURFACE_STA
         imageCount = 1;
     }
 
-    bool isImageArray = imageInfo.imgDesc.imageArraySize > 1 &&
-                        (imageInfo.imgDesc.imageType == ImageType::image2DArray ||
+    bool isImageArray = (imageInfo.imgDesc.imageType == ImageType::image2DArray ||
                          imageInfo.imgDesc.imageType == ImageType::image1DArray);
+
+    if ((imageInfo.imgDesc.imageArraySize == 1) && ImageSurfaceStateHelper<GfxFamily>::imageAsArrayWithArraySizeOf1NotPreferred()) {
+        isImageArray = false;
+    }
 
     isImageArray |= (imageInfo.imgDesc.imageType == ImageType::image2D || imageInfo.imgDesc.imageType == ImageType::image2DArray) && debugManager.flags.Force2dImageAsArray.get() == 1;
 

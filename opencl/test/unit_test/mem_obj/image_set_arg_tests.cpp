@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -227,20 +227,20 @@ struct ImageSetArgSurfaceArrayTest : ImageSetArgTest {
     }
 };
 
-HWTEST_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
-    testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE1D_ARRAY, 0u, false);
-}
-
-HWTEST_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsZeroWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
-    testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE2D_ARRAY, 0u, false);
-}
-
-HWTEST_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeHpcCore) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE1D_ARRAY, 1u, false);
 }
 
-HWTEST_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray) {
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenDoNotProgramSurfaceArray, IsAtMostXeHpcCore) {
     testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE2D_ARRAY, 1u, false);
+}
+
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenProgramSurfaceArray, IsAtLeastXe2HpgCore) {
+    testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE1D_ARRAY, 1u, true);
+}
+
+HWTEST2_F(ImageSetArgSurfaceArrayTest, givenImage2DArrayAndImageArraySizeIsOneWhenCallingSetImageArgThenProgramSurfaceArray, IsAtLeastXe2HpgCore) {
+    testSurfaceArrayProgramming<FamilyType>(CL_MEM_OBJECT_IMAGE2D_ARRAY, 1u, true);
 }
 
 HWTEST_F(ImageSetArgSurfaceArrayTest, givenImage1DArrayAndImageArraySizeIsGreaterThanOneWhenCallingSetImageArgThenProgramSurfaceArray) {
