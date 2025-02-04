@@ -328,7 +328,6 @@ class MemoryManager {
     virtual uint32_t getNumMediaEncoders(uint32_t rootDeviceIndex) const { return 0; }
 
     virtual bool isCompressionSupportedForShareable(bool isShareable) { return true; }
-    virtual bool usmCompressionSupported(Device *device);
 
     size_t getUsedLocalMemorySize(uint32_t rootDeviceIndex) const { return localMemAllocsSize[rootDeviceIndex]; }
     size_t getUsedSystemMemorySize() const { return sysMemAllocsSize; }

@@ -1217,12 +1217,6 @@ uint64_t MemoryManager::adjustToggleBitFlagForGpuVa(AllocationType inputAllocati
     return gpuAddress;
 }
 
-bool MemoryManager::usmCompressionSupported(Device *device) {
-    auto &hwInfo = device->getHardwareInfo();
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    return gfxCoreHelper.usmCompressionSupported(hwInfo);
-}
-
 void MemoryManager::addCustomHeapAllocatorConfig(AllocationType allocationType, bool isFrontWindowPool, const CustomHeapAllocatorConfig &config) {
     customHeapAllocators[{allocationType, isFrontWindowPool}] = config;
 }

@@ -119,7 +119,6 @@ class DrmMemoryManager : public MemoryManager {
     uint32_t getNumMediaEncoders(uint32_t rootDeviceIndex) const override;
 
     bool isCompressionSupportedForShareable(bool isShareable) override;
-    bool usmCompressionSupported(Device *device) override;
     MOCKABLE_VIRTUAL SubmissionStatus emitPinningRequestForBoContainer(BufferObject **bo, uint32_t boCount, uint32_t rootDeviceIndex) const;
 
     void getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) override;

@@ -8612,14 +8612,6 @@ TEST_F(DrmMemoryManagerTest, givenIsCompressionSupportedForShareableThenReturnCo
     EXPECT_TRUE(memoryManager->isCompressionSupportedForShareable(false));
 }
 
-TEST_F(DrmMemoryManagerTest, givenUsmCompressionSupportedThenReturnFalse) {
-    DebugManagerStateRestore dbgState;
-    EXPECT_FALSE(memoryManager->usmCompressionSupported(device));
-
-    debugManager.flags.RenderCompressedBuffersEnabled.set(1);
-    EXPECT_TRUE(memoryManager->usmCompressionSupported(device));
-}
-
 TEST_F(DrmMemoryManagerTest, givenVmAdviseAtomicAttributeEqualZeroWhenCreateSharedUnifiedMemoryAllocationIsCalledThenNullptrReturned) {
     std::vector<MemoryRegion> regionInfo(1);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};

@@ -2966,13 +2966,6 @@ bool DrmMemoryManager::isCompressionSupportedForShareable(bool isShareable) {
     return !isShareable;
 }
 
-bool DrmMemoryManager::usmCompressionSupported(Device *device) {
-    if (NEO::debugManager.flags.RenderCompressedBuffersEnabled.get() != -1) {
-        return !!NEO::debugManager.flags.RenderCompressedBuffersEnabled.get();
-    }
-    return false;
-}
-
 void DrmMemoryManager::getExtraDeviceProperties(uint32_t rootDeviceIndex, uint32_t *moduleId, uint16_t *serverType) {
     getDrm(rootDeviceIndex).getIoctlHelper()->queryDeviceParams(moduleId, serverType);
 }

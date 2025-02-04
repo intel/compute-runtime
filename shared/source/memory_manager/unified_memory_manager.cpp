@@ -767,7 +767,9 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     gpuProperties.alignment = alignment;
     auto compressionSupported = false;
     if (unifiedMemoryProperties.device) {
-        compressionSupported = memoryManager->usmCompressionSupported(unifiedMemoryProperties.device);
+        auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
+        auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
+        compressionSupported = gfxCoreHelper.usmCompressionSupported(hwInfo);
         compressionSupported &= memoryManager->isCompressionSupportedForShareable(unifiedMemoryProperties.allocationFlags.flags.shareable);
     }
     gpuProperties.flags.preferCompressed = compressionSupported;
@@ -960,7 +962,9 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::writeCombined;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            if (CompressionSelector::allowStatelessCompression() || memoryManager->usmCompressionSupported(unifiedMemoryProperties.device)) {
+            auto &gfxCoreHelper = unifiedMemoryProperties.device->getGfxCoreHelper();
+            auto &hwInfo = unifiedMemoryProperties.device->getHardwareInfo();
+            if (CompressionSelector::allowStatelessCompression() || gfxCoreHelper.usmCompressionSupported(hwInfo)) {
                 compressionEnabled = true;
             }
             if (unifiedMemoryProperties.requestedAllocationType != AllocationType::unknown) {
