@@ -45,6 +45,127 @@ ze_result_t ZE_APICALL zetIntelCommandListAppendMarkerExp(zet_command_list_handl
                                                           zet_metric_group_handle_t hMetricGroup,
                                                           uint32_t value);
 
+typedef zet_metric_tracer_exp_desc_t zet_intel_metric_tracer_exp_desc_t;
+typedef zet_metric_tracer_exp_handle_t zet_intel_metric_tracer_exp_handle_t;
+typedef zet_metric_decoder_exp_handle_t zet_intel_metric_decoder_exp_handle_t;
+typedef zet_metric_entry_exp_t zet_intel_metric_entry_exp_t;
+
+ze_result_t ZE_APICALL zetIntelMetricTracerCreateExp(
+    zet_context_handle_t hContext,                       ///< [in] handle of the context object
+    zet_device_handle_t hDevice,                         ///< [in] handle of the device
+    uint32_t metricGroupCount,                           ///< [in] metric group count
+    zet_metric_group_handle_t *phMetricGroups,           ///< [in][range(0, metricGroupCount )] handles of the metric groups to
+                                                         ///< trace
+    zet_intel_metric_tracer_exp_desc_t *desc,            ///< [in,out] metric tracer descriptor
+    ze_event_handle_t hNotificationEvent,                ///< [in][optional] event used for report availability notification. Note:
+                                                         ///< If buffer is not drained when the event it flagged, there is a risk of
+                                                         ///< HW event buffer being overrun
+    zet_intel_metric_tracer_exp_handle_t *phMetricTracer ///< [out] handle of the metric tracer
+);
+
+ze_result_t ZE_APICALL zetIntelMetricTracerDestroyExp(
+    zet_intel_metric_tracer_exp_handle_t hMetricTracer ///< [in] handle of the metric tracer
+);
+
+ze_result_t ZE_APICALL zetIntelMetricTracerEnableExp(
+    zet_intel_metric_tracer_exp_handle_t hMetricTracer, ///< [in] handle of the metric tracer
+    ze_bool_t synchronous                               ///< [in] request synchronous behavior. Confirmation of successful
+                                                        ///< asynchronous operation is done by calling ::zetMetricTracerReadDataExp()
+                                                        ///< and checking the return status: ::ZE_RESULT_NOT_READY will be returned
+                                                        ///< when the tracer is inactive. ::ZE_RESULT_SUCCESS will be returned
+                                                        ///< when the tracer is active.
+);
+
+ze_result_t ZE_APICALL zetIntelMetricTracerDisableExp(
+    zet_intel_metric_tracer_exp_handle_t hMetricTracer, ///< [in] handle of the metric tracer
+    ze_bool_t synchronous                               ///< [in] request synchronous behavior. Confirmation of successful
+                                                        ///< asynchronous operation is done by calling ::zetMetricTracerReadDataExp()
+                                                        ///< and checking the return status: ::ZE_RESULT_SUCCESS will be returned
+                                                        ///< when the tracer is active or when it is inactive but still has data.
+                                                        ///< ::ZE_RESULT_NOT_READY will be returned when the tracer is inactive and
+                                                        ///< has no more data to be retrieved.
+);
+
+ze_result_t ZE_APICALL zetIntelMetricTracerReadDataExp(
+    zet_intel_metric_tracer_exp_handle_t hMetricTracer, ///< [in] handle of the metric tracer
+    size_t *pRawDataSize,                               ///< [in,out] pointer to size in bytes of raw data requested to read.
+                                                        ///< if size is zero, then the driver will update the value with the total
+                                                        ///< size in bytes needed for all data available.
+                                                        ///< if size is non-zero, then driver will only retrieve that amount of
+                                                        ///< data.
+                                                        ///< if size is larger than size needed for all data, then driver will
+                                                        ///< update the value with the actual size needed.
+    uint8_t *pRawData                                   ///< [in,out][optional][range(0, *pRawDataSize)] buffer containing tracer
+                                                        ///< data in raw format
+);
+
+ze_result_t ZE_APICALL zetIntelMetricDecoderCreateExp(
+    zet_intel_metric_tracer_exp_handle_t hMetricTracer,    ///< [in] handle of the metric tracer
+    zet_intel_metric_decoder_exp_handle_t *phMetricDecoder ///< [out] handle of the metric decoder object
+);
+
+ze_result_t ZE_APICALL zetIntelMetricDecoderDestroyExp(
+    zet_intel_metric_decoder_exp_handle_t phMetricDecoder ///< [in] handle of the metric decoder object
+);
+
+ze_result_t ZE_APICALL zetIntelMetricDecoderGetDecodableMetricsExp(
+    zet_intel_metric_decoder_exp_handle_t hMetricDecoder, ///< [in] handle of the metric decoder object
+    uint32_t *pCount,                                     ///< [in,out] pointer to number of decodable metric in the hMetricDecoder
+                                                          ///< handle. If count is zero, then the driver shall
+                                                          ///< update the value with the total number of decodable metrics available
+                                                          ///< in the decoder. if count is greater than zero
+                                                          ///< but less than the total number of decodable metrics available in the
+                                                          ///< decoder, then only that number will be returned.
+                                                          ///< if count is greater than the number of decodable metrics available in
+                                                          ///< the decoder, then the driver shall update the
+                                                          ///< value with the actual number of decodable metrics available.
+    zet_metric_handle_t *phMetrics                        ///< [in,out] [range(0, *pCount)] array of handles of decodable metrics in
+                                                          ///< the hMetricDecoder handle provided.
+);
+
+ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(
+    zet_intel_metric_decoder_exp_handle_t phMetricDecoder, ///< [in] handle of the metric decoder object
+    size_t *pRawDataSize,                                  ///< [in,out] size in bytes of raw data buffer. If pMetricEntriesCount is
+                                                           ///< greater than zero but less than total number of
+                                                           ///< decodable metrics available in the raw data buffer, then driver shall
+                                                           ///< update this value with actual number of raw
+                                                           ///< data bytes processed.
+    uint8_t *pRawData,                                     ///< [in,out][optional][range(0, *pRawDataSize)] buffer containing tracer
+                                                           ///< data in raw format
+    uint32_t metricsCount,                                 ///< [in] number of decodable metrics in the tracer for which the
+                                                           ///< hMetricDecoder handle was provided. See
+                                                           ///< ::zetMetricDecoderGetDecodableMetricsExp(). If metricCount is greater
+                                                           ///< than zero but less than the number decodable
+                                                           ///< metrics available in the raw data buffer, then driver shall only
+                                                           ///< decode those.
+    zet_metric_handle_t *phMetrics,                        ///< [in] [range(0, metricsCount)] array of handles of decodable metrics in
+                                                           ///< the decoder for which the hMetricDecoder handle was
+                                                           ///< provided. Metrics handles are expected to be for decodable metrics,
+                                                           ///< see ::zetMetricDecoderGetDecodableMetricsExp()
+    uint32_t *pSetCount,                                   ///< [in,out] pointer to number of metric sets. If count is zero, then the
+                                                           ///< driver shall update the value with the total
+                                                           ///< number of metric sets to be decoded. If count is greater than the
+                                                           ///< number available in the raw data buffer, then the
+                                                           ///< driver shall update the value with the actual number of metric sets to
+                                                           ///< be decoded. There is a 1:1 relation between
+                                                           ///< the number of sets and sub-devices returned in the decoded entries.
+    uint32_t *pMetricEntriesCountPerSet,                   ///< [in,out][optional][range(0, *pSetCount)] buffer of metric entries
+                                                           ///< counts per metric set, one value per set.
+    uint32_t *pMetricEntriesCount,                         ///< [in,out]  pointer to the total number of metric entries decoded, for
+                                                           ///< all metric sets. If count is zero, then the
+                                                           ///< driver shall update the value with the total number of metric entries
+                                                           ///< to be decoded. If count is greater than zero
+                                                           ///< but less than the total number of metric entries available in the raw
+                                                           ///< data, then user provided number will be decoded.
+                                                           ///< If count is greater than the number available in the raw data buffer,
+                                                           ///< then the driver shall update the value with
+                                                           ///< the actual number of decodable metric entries decoded. If set to null,
+                                                           ///< then driver will only update the value of
+                                                           ///< pSetCount.
+    zet_intel_metric_entry_exp_t *pMetricEntries           ///< [in,out][optional][range(0, *pMetricEntriesCount)] buffer containing
+                                                           ///< decoded metric entries
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
