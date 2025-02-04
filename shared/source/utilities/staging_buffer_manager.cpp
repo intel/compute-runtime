@@ -10,9 +10,13 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/heap_allocator.h"
+
 namespace NEO {
 
 StagingBuffer::StagingBuffer(void *baseAddress, size_t size) : baseAddress(baseAddress) {
@@ -285,11 +289,7 @@ void *StagingBufferManager::allocateStagingBuffer(size_t size) {
     return hostPtr;
 }
 
-bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const {
-    auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
-    if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
-        stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
-    }
+bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) {
     auto usmDstData = svmAllocsManager->getSVMAlloc(dstPtr);
     auto usmSrcData = svmAllocsManager->getSVMAlloc(srcPtr);
     bool hostToUsmCopy = usmSrcData == nullptr && usmDstData != nullptr;
@@ -297,16 +297,25 @@ bool StagingBufferManager::isValidForCopy(const Device &device, void *dstPtr, co
     if (usmDstData) {
         isUsedByOsContext = usmDstData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex())->isUsedByOsContext(osContextId);
     }
-    return stagingCopyEnabled && hostToUsmCopy && !hasDependencies && (isUsedByOsContext || size <= chunkSize);
+    return this->isValidForStaging(device, srcPtr, size, hasDependencies) && hostToUsmCopy && (isUsedByOsContext || size <= chunkSize);
 }
 
-bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const void *ptr, bool hasDependencies) const {
+bool StagingBufferManager::isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
+    auto nonUsmPtr = ptr != nullptr && svmAllocsManager->getSVMAlloc(ptr) == nullptr;
+    return this->isValidForStaging(device, ptr, size, hasDependencies) && nonUsmPtr;
+}
+
+// Common checks for usm, buffers and images
+bool StagingBufferManager::isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies) {
     auto stagingCopyEnabled = device.getProductHelper().isStagingBuffersEnabled();
     if (debugManager.flags.EnableCopyWithStagingBuffers.get() != -1) {
         stagingCopyEnabled = debugManager.flags.EnableCopyWithStagingBuffers.get();
     }
-    auto nonUsmPtr = ptr != nullptr && svmAllocsManager->getSVMAlloc(ptr) == nullptr;
-    return stagingCopyEnabled && !hasDependencies && nonUsmPtr;
+    auto isIntegrated = device.getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice;
+    auto osInterface = device.getRootDeviceEnvironment().osInterface.get();
+    bool sizeWithinThreshold = osInterface ? osInterface->isSizeWithinThresholdForStaging(size, isIntegrated) : true;
+    auto detectedHostPtr = this->registerHostPtr(ptr);
+    return stagingCopyEnabled && !hasDependencies && !detectedHostPtr && sizeWithinThreshold;
 }
 
 void StagingBufferManager::clearTrackedChunks() {
@@ -323,6 +332,18 @@ void StagingBufferManager::clearTrackedChunks() {
 void StagingBufferManager::trackChunk(const StagingBufferTracker &tracker) {
     auto lock = std::lock_guard<std::mutex>(mtx);
     trackers.push_back(tracker);
+}
+
+bool StagingBufferManager::registerHostPtr(const void *ptr) {
+    auto lock = std::lock_guard<std::mutex>(mtx);
+    auto isHostPtrDetected = detectedHostPtrs.find(ptr) != detectedHostPtrs.end();
+    detectedHostPtrs.insert(ptr);
+    return isHostPtrDetected;
+}
+
+void StagingBufferManager::resetDetectedPtrs() {
+    auto lock = std::lock_guard<std::mutex>(mtx);
+    detectedHostPtrs.clear();
 }
 
 } // namespace NEO

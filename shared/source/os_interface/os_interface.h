@@ -117,6 +117,7 @@ class OSInterface : public NonCopyableClass {
 
     MOCKABLE_VIRTUAL bool isDebugAttachAvailable() const;
     MOCKABLE_VIRTUAL bool isLockablePointer(bool isLockable) const;
+    MOCKABLE_VIRTUAL bool isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const;
     MOCKABLE_VIRTUAL uint32_t getAggregatedProcessCount() const;
 
     static bool osEnabled64kbPages;

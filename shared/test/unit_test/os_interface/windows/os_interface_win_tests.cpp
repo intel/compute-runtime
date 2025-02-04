@@ -153,3 +153,14 @@ TEST_F(OsInterfaceTest, givenEnableFtrTile64OptimizationDebugKeyWhenSetThenPrope
         EXPECT_EQ(1u, passedFtrTable.FtrTile64Optimization);
     }
 }
+
+TEST_F(OsInterfaceTest, whenGetThresholdForStagingCalledThenReturnNoThreshold) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto wddm = new WddmMock(rootDeviceEnvironment);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
+    wddm->init();
+    EXPECT_NE(nullptr, rootDeviceEnvironment.osInterface.get());
+    EXPECT_TRUE(rootDeviceEnvironment.osInterface->isSizeWithinThresholdForStaging(MemoryConstants::gigaByte, false));
+    EXPECT_TRUE(rootDeviceEnvironment.osInterface->isSizeWithinThresholdForStaging(MemoryConstants::gigaByte, true));
+}

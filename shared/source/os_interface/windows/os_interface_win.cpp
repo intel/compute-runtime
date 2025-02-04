@@ -26,6 +26,10 @@ bool OSInterface::isLockablePointer(bool isLockable) const {
     return isLockable;
 }
 
+bool OSInterface::isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const {
+    return true;
+}
+
 uint32_t OSInterface::getAggregatedProcessCount() const {
     return 0;
 }

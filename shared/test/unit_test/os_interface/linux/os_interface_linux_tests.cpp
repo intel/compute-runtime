@@ -94,4 +94,15 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
 
+TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenGetThresholdForStagingCalledThenReturnThresholdForIntegratedDevices) {
+    OSInterface osInterface;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock *drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    osInterface.setDriverModel(std::unique_ptr<DriverModel>(drm));
+    EXPECT_TRUE(osInterface.isSizeWithinThresholdForStaging(MemoryConstants::gigaByte, false));
+    EXPECT_FALSE(osInterface.isSizeWithinThresholdForStaging(MemoryConstants::gigaByte, true));
+}
+
 } // namespace NEO

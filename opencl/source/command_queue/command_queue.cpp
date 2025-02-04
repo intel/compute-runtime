@@ -29,6 +29,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/api_intercept.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -548,7 +549,9 @@ WaitStatus CommandQueue::waitUntilComplete(TaskCountType gpgpuTaskCountToWait, R
                      : getGpgpuCommandStreamReceiver().waitForTaskCount(gpgpuTaskCountToWait);
 
     WAIT_LEAVE()
-
+    if (this->context->getStagingBufferManager()) {
+        this->context->getStagingBufferManager()->resetDetectedPtrs();
+    }
     return waitStatus;
 }
 

@@ -660,6 +660,45 @@ HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledThenRe
     EXPECT_EQ(0u, csr.createAllocationForHostSurfaceCalled);
 }
 
+HWTEST_F(WriteBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUntilEventCompleted) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+
+    cl_event event;
+    auto retVal = mockCommandQueueHw.enqueueWriteBuffer(&buffer,
+                                                        CL_FALSE,
+                                                        0,
+                                                        MemoryConstants::cacheLineSize,
+                                                        ptr,
+                                                        nullptr,
+                                                        0,
+                                                        nullptr,
+                                                        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto pEvent = castToObjectOrAbort<Event>(event);
+
+    EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
+    EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
+
+    pEvent->updateExecutionStatus();
+    EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
+
+    pEvent->release();
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, whenHostPtrRegisteredThenDontUseStagingUntilFinishCalled) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableCopyWithStagingBuffers.set(1);
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+
+    EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
+    EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
+
+    mockCommandQueueHw.finish();
+    EXPECT_TRUE(mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
+}
+
 HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledWithLargeSizeThenSplitTransfer) {
     auto hostPtr = new unsigned char[chunkSize * 4];
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
@@ -730,4 +769,12 @@ HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferFailedThenPr
 
     EXPECT_EQ(res, CL_INVALID_OPERATION);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteBufferCounter);
+}
+
+HWTEST_F(WriteBufferStagingBufferTest, whenIsValidForStagingTransferCalledThenReturnCorrectValue) {
+    MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
+    auto isStagingBuffersEnabled = device->getProductHelper().isStagingBuffersEnabled();
+    unsigned char ptr[16];
+
+    EXPECT_EQ(isStagingBuffersEnabled, mockCommandQueueHw.isValidForStagingTransfer(&buffer, ptr, false));
 }

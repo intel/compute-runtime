@@ -811,6 +811,7 @@ HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCor
 
     std::unique_ptr<Image> image(Image1dHelper<>::create(context));
     EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
+    pCmdQ->finish();
 
     image.reset(Image2dHelper<>::create(context));
     EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));

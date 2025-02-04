@@ -16,6 +16,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <set>
 
 namespace NEO {
 class SVMAllocsManager;
@@ -78,8 +79,8 @@ class StagingBufferManager {
     StagingBufferManager &operator=(StagingBufferManager &&other) noexcept = delete;
     StagingBufferManager &operator=(const StagingBufferManager &other) = delete;
 
-    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId) const;
-    bool isValidForStagingTransfer(const Device &device, const void *ptr, bool hasDependencies) const;
+    bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId);
+    bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
     StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
     StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
@@ -87,6 +88,9 @@ class StagingBufferManager {
 
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size);
     void trackChunk(const StagingBufferTracker &tracker);
+
+    bool registerHostPtr(const void *ptr);
+    void resetDetectedPtrs();
 
   private:
     std::pair<HeapAllocator *, uint64_t> getExistingBuffer(size_t &size);
@@ -99,6 +103,8 @@ class StagingBufferManager {
     WaitStatus fetchHead(StagingQueue &stagingQueue, StagingBufferTracker &tracker) const;
     WaitStatus drainAndReleaseStagingQueue(StagingQueue &stagingQueue) const;
 
+    bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
+
     size_t chunkSize = MemoryConstants::pageSize2M;
     std::mutex mtx;
     std::vector<StagingBuffer> stagingBuffers;
@@ -108,6 +114,8 @@ class StagingBufferManager {
     const RootDeviceIndicesContainer rootDeviceIndices;
     const std::map<uint32_t, DeviceBitfield> deviceBitfields;
     const bool requiresWritable = false;
+
+    std::set<const void *> detectedHostPtrs;
 };
 
 } // namespace NEO

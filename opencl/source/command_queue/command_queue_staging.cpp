@@ -173,7 +173,8 @@ bool CommandQueue::isValidForStagingTransfer(MemObj *memObj, const void *ptr, bo
     switch (memObj->peekClMemObjType()) {
     case CL_MEM_OBJECT_IMAGE1D:
     case CL_MEM_OBJECT_IMAGE2D:
-        return stagingBufferManager->isValidForStagingTransfer(this->getDevice(), ptr, hasDependencies);
+    case CL_MEM_OBJECT_BUFFER:
+        return stagingBufferManager->isValidForStagingTransfer(this->getDevice(), ptr, memObj->getSize(), hasDependencies);
     default:
         return false;
     }

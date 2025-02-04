@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/range.h"
+#include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -553,6 +554,9 @@ void Event::updateExecutionStatus() {
         auto *allocationStorage = cmdQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage();
         allocationStorage->cleanAllocationList(this->taskCount, TEMPORARY_ALLOCATION);
         allocationStorage->cleanAllocationList(this->taskCount, DEFERRED_DEALLOCATION);
+        if (cmdQueue->getContext().getStagingBufferManager()) {
+            cmdQueue->getContext().getStagingBufferManager()->resetDetectedPtrs();
+        }
         return;
     }
 

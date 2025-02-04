@@ -1176,7 +1176,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenUpdateTaskCountFromWaitSetWhe
     DebugManagerStateRestore restorer;
     debugManager.flags.UpdateTaskCountFromWait.set(3);
 
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    MockContext context(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&context, pClDevice, 0, false);
     commandQueue.taskCount = 10;
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
@@ -1220,7 +1221,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledDirectSubmissionUpdate
         }
     };
 
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    MockContext context(pClDevice);
+    CommandQueueHw<FamilyType> commandQueue(&context, pClDevice, 0, false);
     commandQueue.taskCount = 10;
 
     auto mockCsr = new MockCsrHwDirectSubmission(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/staging_buffer_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -20,6 +21,13 @@
 
 using namespace NEO;
 
+struct MockOSIface : OSInterface {
+    bool isSizeWithinThresholdForStaging(size_t size, bool isIGPU) const override {
+        return isSizeWithinThresholdValue;
+    }
+    bool isSizeWithinThresholdValue = true;
+};
+
 class StagingBufferManagerFixture : public DeviceFixture {
   public:
     void setUp() {
@@ -31,6 +39,8 @@ class StagingBufferManagerFixture : public DeviceFixture {
         std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
         this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager.get(), rootDeviceIndices, deviceBitfields, false);
         this->csr = pDevice->commandStreamReceivers[0].get();
+        this->osInterface = new MockOSIface{};
+        this->pDevice->getRootDeviceEnvironmentRef().osInterface.reset(this->osInterface);
     }
 
     void tearDown() {
@@ -165,6 +175,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
     std::unique_ptr<MockSVMAllocsManager> svmAllocsManager;
     std::unique_ptr<StagingBufferManager> stagingBufferManager;
     CommandStreamReceiver *csr;
+    MockOSIface *osInterface;
 };
 
 using StagingBufferManagerTest = Test<StagingBufferManagerFixture>;
@@ -199,18 +210,31 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForCopyThenRe
         }
         auto actualValid = stagingBufferManager->isValidForCopy(*pDevice, copyParamsStruct[i].dstPtr, copyParamsStruct[i].srcPtr, copyParamsStruct[i].size, copyParamsStruct[i].hasDependencies, 0u);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
+        stagingBufferManager->resetDetectedPtrs();
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
     EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    stagingBufferManager->resetDetectedPtrs();
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
-    auto isStaingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    auto isStagingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
+    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+
+    stagingBufferManager->registerHostPtr(nonUsmBuffer);
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    stagingBufferManager->resetDetectedPtrs();
+
+    this->osInterface->isSizeWithinThresholdValue = false;
+    EXPECT_FALSE(stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
+    stagingBufferManager->resetDetectedPtrs();
+
+    this->pDevice->getRootDeviceEnvironmentRef().osInterface.reset(nullptr);
+    EXPECT_EQ(isStagingBuffersEnabled, stagingBufferManager->isValidForCopy(*pDevice, usmBuffer, nonUsmBuffer, bufferSize, false, 0u));
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 
-TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForImageWriteThenReturnCorrectValue) {
+TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForStagingTransferThenReturnCorrectValue) {
     constexpr size_t bufferSize = 1024;
     auto usmBuffer = allocateDeviceBuffer(bufferSize);
     unsigned char nonUsmBuffer[bufferSize];
@@ -226,16 +250,23 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferEnabledWhenValidForImageWrite
         {nonUsmBuffer, true, false},
     };
     for (auto i = 0; i < 4; i++) {
-        auto actualValid = stagingBufferManager->isValidForStagingTransfer(*pDevice, copyParamsStruct[i].ptr, copyParamsStruct[i].hasDependencies);
+        auto actualValid = stagingBufferManager->isValidForStagingTransfer(*pDevice, copyParamsStruct[i].ptr, bufferSize, copyParamsStruct[i].hasDependencies);
         EXPECT_EQ(actualValid, copyParamsStruct[i].expectValid);
     }
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(0);
-    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, false));
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, bufferSize, false));
 
     debugManager.flags.EnableCopyWithStagingBuffers.set(-1);
     auto isStaingBuffersEnabled = pDevice->getProductHelper().isStagingBuffersEnabled();
-    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, false));
+    stagingBufferManager->resetDetectedPtrs();
+    EXPECT_EQ(isStaingBuffersEnabled, stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, bufferSize, false));
+
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, usmBuffer, bufferSize, false));
+
+    stagingBufferManager->registerHostPtr(nonUsmBuffer);
+    EXPECT_FALSE(stagingBufferManager->isValidForStagingTransfer(*pDevice, nonUsmBuffer, bufferSize, false));
+
     svmAllocsManager->freeSVMAlloc(usmBuffer);
 }
 
