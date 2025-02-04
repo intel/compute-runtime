@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 * [Obtaining counter memory and value](#Obtaining-counter-memory-and-value)
 * [IPC sharing](#IPC-sharing)
 * [Regular command list](#Regular-command-list)
+* [Multi directional dependencies on Regular command lists](#Multi-directional-dependencies-on-Regular-command-lists)
 
 # Overview
 
@@ -159,7 +160,10 @@ ze_result_t zexCounterBasedEventCloseIpcHandle(ze_event_handle_t hEvent);
 # Regular command list
 Regular command list is a special use case for CB Events. Its state is additionally updated on every `zeCommandQueueExecuteCommandLists` call.  
 Any API call that relies on explicit counter memory/value (eg. `zexEventGetDeviceAddress`) needs to be called again to obtain new data. This includes IPC.  
-Other API calls that don't specify counter explicitly, are managed by the Driver.
+Other API calls that don't specify counter explicitly, are managed by the Driver.  
+
+**Each regular command list execution updates state of the events that will be signaled in that command list to "not ready".**  
+**This rule applies to `zeCommandQueueExecuteCommandLists` and `zeCommandListImmediateAppendCommandListsExp` API calls.**
 
 ```cpp
 // in-order operations
@@ -182,3 +186,46 @@ zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList1, nullptr); // Co
 // execute regularCmdList2 2nd time
 zeCommandQueueExecuteCommandLists(cmdQueue, 1, &regularCmdList2, nullptr); // wait for counter=8
 ```
+
+# Multi directional dependencies on Regular command lists
+Regular command list with overlapping dependencies may be executed multiple times. For example, two command lists are executed in parallel with bi-directional dependencies.  
+Its important to understand counter (Event) state transition, to correctly reflect Users intention.  
+
+```
+regularCmdList1:       (A)      ------------->   (wait for B)   ----->   (C)
+                        |                            ^
+                        |                            |
+                        V                            |
+regularCmdList2:   (wait for A)  ------------->     (B)         ----->   (D)
+```
+
+In this example, all Events are synchronized to "ready" state after the first execution. 
+It means that second execution of `regularCmdList1` waits again for "ready" `{1->2->3}` state of `regularCmdList2` (first execution) instead of `{4->5->6}`.  
+This is because `regularCmdList2` was not yet executed for the second time. And their counters were not updated.
+
+**First execution:**
+```cpp
+// All Events are in "not ready" state
+zeCommandQueueExecuteCommandLists(cmdQueue1, 1, &regularCmdList1, nullptr); // Counter updated to {1->2->3}
+zeCommandQueueExecuteCommandLists(cmdQueue2, 1, &regularCmdList2, nullptr); // Counter updated to {1->2->3}
+
+// All Events are "ready" now
+zeCommandQueueSynchronize(cmdQueue1, timeout); // wait for counter=3
+zeCommandQueueSynchronize(cmdQueue2, timeout); // wait for counter=3
+```
+
+**Second execution:**
+```cpp
+// regularCmdList1 waits for "ready" {1->2->3} Events from first execution of regularCmdList2
+// regularCmdList1 changes Events state to "not ready"
+zeCommandQueueExecuteCommandLists(cmdQueue1, 1, &regularCmdList1, nullptr); // Counter updated to {4->5->6}
+
+// regularCmdList2 waits for "not ready" {4->5->6} Events from second execution of regularCmdList1
+zeCommandQueueExecuteCommandLists(cmdQueue2, 1, &regularCmdList2, nullptr); // Counter updated to {4->5->6}
+```
+
+**Different approach:**
+
+To avoid above situation, User must remove all bi-directional dependencies. By using single command list (if possible) or split the workload into different command lists with single-directional dependencies.  
+
+Using Counter Based Events for such scenarios is not always the most optimal usage mode. It may be better to use Regular Events with explicit Reset calls.
