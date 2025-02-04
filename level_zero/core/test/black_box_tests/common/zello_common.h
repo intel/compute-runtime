@@ -30,7 +30,8 @@ inline void validate(ResulT result, const char *message);
 
 namespace LevelZeroBlackBoxTests {
 
-using pfnZexCounterBasedEventCreate2 = decltype(&L0::zexCounterBasedEventCreate2);
+using pfnZexZexEventGetDeviceAddress = ze_result_t(ZE_APICALL *)(ze_event_handle_t event, uint64_t *completionValue, uint64_t *address);
+using pfnZexCounterBasedEventCreate2 = ze_result_t(ZE_APICALL *)(ze_context_handle_t hContext, ze_device_handle_t hDevice, const zex_counter_based_event_desc_t *desc, ze_event_handle_t *phEvent);
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
