@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-include(cmake/verify_l0_support.cmake)
-
 if(BUILD_WITH_L0)
   set(TARGET_NAME_L0 ze_intel_gpu)
 
