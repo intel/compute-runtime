@@ -816,7 +816,7 @@ void DebugSessionImp::generateEventsAndResumeStoppedThreads() {
 }
 
 bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0) {
-    const uint32_t cr0ExceptionBitmask = 0xFC010000;
+    const uint32_t cr0ExceptionBitmask = 0xFC810000;
     const uint32_t cr0ForcedExcpetionBitmask = 0x44000000;
 
     return (((cr0[1] & cr0ExceptionBitmask) & (~cr0ForcedExcpetionBitmask)) == 0);
