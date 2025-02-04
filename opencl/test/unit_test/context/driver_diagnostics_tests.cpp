@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,13 +129,6 @@ TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenC
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED], 0);
     EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED_WITH_DISABLED_PREEMPTION], 0);
-    if (context->getDevice(0)->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
-        EXPECT_TRUE(containsHint(expectedHint, userData));
-    } else {
-        EXPECT_FALSE(containsHint(expectedHint, userData));
-    }
 }
 
 TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPreemptionFlagWhenCommandQueueIsCreatingWithPropertiesThenContextProvidesProperHints) {
@@ -154,13 +147,6 @@ TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPre
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED], 0);
     EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
-
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED_WITH_DISABLED_PREEMPTION], 0);
-    if (context->getDevice(0)->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
-        EXPECT_TRUE(containsHint(expectedHint, userData));
-    } else {
-        EXPECT_FALSE(containsHint(expectedHint, userData));
-    }
 }
 
 TEST_F(PerformanceHintTest, GivenAlignedHostPtrWhenSubbufferIsCreatingThenContextProvidesHintAboutSharingMemoryWithParentBuffer) {

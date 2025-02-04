@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,6 @@ const char *const DriverDiagnostics::hintFormat[] = {
     "Performance hint: clCreateImage with pointer %p meets alignment restrictions and image will share the same physical memory with CPU.",                                                                                               // CL_IMAGE_MEETS_ALIGNMENT_RESTRICTIONS
     "Performance hint: Driver calls internal clFlush on the command queue each time 1 command is enqueued.",                                                                                                                              // DRIVER_CALLS_INTERNAL_CL_FLUSH
     "Performance hint: Profiling adds overhead on all enqueue commands with events.",                                                                                                                                                     // PROFILING_ENABLED
-    "Performance hint: Profiled kernels will be executed with disabled preemption.",                                                                                                                                                      // PROFILING_ENABLED_WITH_DISABLED_PREEMPTION
     "Performance hint: Subbuffer created from buffer %p shares the same memory with buffer.",                                                                                                                                             // SUBBUFFER_SHARES_MEMORY
     "Performance hint: clSVMAlloc with pointer %p and size %u meets alignment restrictions.",                                                                                                                                             // CL_SVM_ALLOC_MEETS_ALIGNMENT_RESTRICTIONS
     "Performance hint: clEnqueueReadBuffer call on a buffer %p with pointer %p will require driver to copy the data.Consider using clEnqueueMapBuffer with buffer that shares the same physical memory with CPU.",                        // CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA
