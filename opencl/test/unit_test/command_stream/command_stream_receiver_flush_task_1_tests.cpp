@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -393,11 +393,7 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandStreamReceiverFlushTaskTests, WhenForcePip
             switch (counterPC) {
             case 0: // First pipe control with CS Stall
                 EXPECT_EQ(bool(pipeControl->getCommandStreamerStallEnable()), true);
-                if (pDevice->getHardwareInfo().platform.eProductFamily == IGFX_BROADWELL) {
-                    EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), true);
-                } else {
-                    EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), false);
-                }
+                EXPECT_EQ(bool(pipeControl->getDcFlushEnable()), false);
                 EXPECT_EQ(bool(pipeControl->getRenderTargetCacheFlushEnable()), false);
                 EXPECT_EQ(bool(pipeControl->getInstructionCacheInvalidateEnable()), false);
                 EXPECT_EQ(bool(pipeControl->getTextureCacheInvalidationEnable()), false);

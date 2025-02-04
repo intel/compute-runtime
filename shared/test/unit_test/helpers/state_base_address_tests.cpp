@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,8 +22,6 @@ using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, IsBetweenSklAndTgllp) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
-
     STATE_BASE_ADDRESS stateBaseAddress;
     stateBaseAddress.setBindlessSurfaceStateSize(0);
     stateBaseAddress.setBindlessSurfaceStateBaseAddress(0);
@@ -40,8 +38,6 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
 
 HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBindingSurfaceStateProgrammed, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
     STATE_BASE_ADDRESS stateBaseAddress;
     stateBaseAddress.setBindlessSurfaceStateSize(0);
@@ -67,8 +63,6 @@ HWTEST2_F(SbaTest,
           givenProgramSurfaceStateBaseAddressUsingHeapBaseWhenOverrideSurfaceStateBaseAddressUsedThenSbaDispatchedWithOverrideValue, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
-
     constexpr uint64_t surfaceStateBaseAddress = 0xBADA550000;
 
     STATE_BASE_ADDRESS cmd;
@@ -87,8 +81,6 @@ using SbaForBindlessTests = SbaTest;
 
 HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 
@@ -124,8 +116,6 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
 HWTEST2_F(SbaForBindlessTests,
           givenGlobalBindlessBaseAddressOverridenSurfaceStateBaseAddressWhenProgramStateBaseAddressThenSbaProgrammedCorrectly, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
     constexpr uint64_t surfaceStateBaseAddress = 0xBADA550000;
@@ -164,8 +154,6 @@ using IohSupported = IsGen12LP;
 HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirectBaseAddressThenIndirectBaseAddressIsSet, IohSupported) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
-
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
     constexpr uint64_t indirectObjectBaseAddress = 0x12340000;
 
@@ -186,8 +174,6 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
 HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSurfaceBaseIsNotSet, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
-
     STATE_BASE_ADDRESS stateBaseAddress;
     stateBaseAddress.setBindlessSurfaceStateSize(0);
     stateBaseAddress.setBindlessSurfaceStateBaseAddress(0);
@@ -203,8 +189,6 @@ HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
 
 HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurfaceBaseIsGlobalHeapBase, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 
@@ -223,8 +207,6 @@ HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
 HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSurfaceBaseIsSshBase, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
-
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 
     StackVec<char, 4096> buffer(4096);
@@ -241,8 +223,6 @@ HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
 
 HWTEST2_F(SbaTest, givenNotUsedGlobalHeapBaseAndSshPassedWhenBindlessSurfStateBaseIsPassedThenBindlessSurfaceBaseIsSetToPassedValue, MatchAny) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    EXPECT_NE(IGFX_BROADWELL, ::productFamily);
 
     constexpr uint64_t globalBindlessHeapsBaseAddress = 0x12340000;
 

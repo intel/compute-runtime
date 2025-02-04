@@ -1326,8 +1326,6 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIsPlatformFlushTaskEnab
 struct CoherentWANotNeeded {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        if (productFamily == IGFX_BROADWELL)
-            return false;
         return !TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
     }
 };
@@ -1335,8 +1333,6 @@ struct CoherentWANotNeeded {
 struct ForceNonCoherentMode {
     template <PRODUCT_FAMILY productFamily>
     static constexpr bool isMatched() {
-        if (productFamily == IGFX_BROADWELL)
-            return false;
         return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::forceGpuNonCoherent;
     }
 };
