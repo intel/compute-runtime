@@ -116,3 +116,22 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenWaitForPagingFenceThen
 
     EXPECT_EQ(0u, drm.waitUserFenceParams.size());
 }
+
+TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenGetFenceAddressAndValToWaitThenReturnWithValidValues) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.requirePerContextVM = true;
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized(false);
+
+    osContext.pagingFence[0] = 2u;
+    osContext.fenceVal[0] = 3u;
+
+    auto fenceAddressAndValToWait = osContext.getFenceAddressAndValToWait(0, false);
+    const auto fenceAddressToWait = fenceAddressAndValToWait.first;
+    const auto fenceValToWait = fenceAddressAndValToWait.second;
+
+    EXPECT_GT(fenceAddressToWait, 0u);
+    EXPECT_GT(fenceValToWait, 0u);
+}

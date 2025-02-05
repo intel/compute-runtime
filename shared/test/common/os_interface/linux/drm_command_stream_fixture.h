@@ -157,7 +157,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
 
     template <typename GfxFamily>
     void makeResidentBufferObjects(OsContext *osContext, DrmAllocation *drmAllocation) {
-        drmAllocation->bindBOs(osContext, 0u, &static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency, false);
+        drmAllocation->bindBOs(osContext, 0u, &static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency, false, false);
     }
 
     template <typename GfxFamily>
@@ -237,7 +237,7 @@ class DrmCommandStreamEnhancedWithFailingExecTemplate : public ::testing::Test {
 
     template <typename GfxFamily>
     void makeResidentBufferObjects(OsContext *osContext, DrmAllocation *drmAllocation) {
-        drmAllocation->bindBOs(osContext, 0u, &static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency, false);
+        drmAllocation->bindBOs(osContext, 0u, &static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency, false, false);
     }
 
     template <typename GfxFamily>

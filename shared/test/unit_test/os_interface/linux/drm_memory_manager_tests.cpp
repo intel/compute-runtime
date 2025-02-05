@@ -5964,7 +5964,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBuffe
     allocation.bufferObjects[0] = &bo;
 
     std::vector<BufferObject *> bufferObjects;
-    allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
+    allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true, false);
 
     EXPECT_FALSE(allocation.shouldAllocationPageFault(&drm));
     EXPECT_FALSE(bo.isExplicitResidencyRequired());
@@ -5993,7 +5993,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedAndKmdMigrationEnabledForB
         debugManager.flags.UseKmdMigrationForBuffers.set(useKmdMigrationForBuffers);
 
         std::vector<BufferObject *> bufferObjects;
-        allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
+        allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true, false);
 
         if (useKmdMigrationForBuffers > 0) {
             EXPECT_TRUE(allocation.shouldAllocationPageFault(&drm));
@@ -6032,7 +6032,7 @@ TEST_F(DrmMemoryManagerTest, givenPageFaultIsSupportedWhenCallingBindBoOnAllocat
         allocation.shouldPageFault = shouldAllocationPageFault;
 
         std::vector<BufferObject *> bufferObjects;
-        allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true);
+        allocation.bindBO(&bo, &osContext, vmHandleId, &bufferObjects, true, false);
 
         EXPECT_EQ(shouldAllocationPageFault, allocation.shouldAllocationPageFault(&drm));
         EXPECT_EQ(!shouldAllocationPageFault, bo.isExplicitResidencyRequired());

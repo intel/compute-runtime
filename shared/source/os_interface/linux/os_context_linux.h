@@ -29,6 +29,7 @@ class OsContextLinux : public OsContext {
     const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
     bool isDirectSubmissionSupported() const override;
     Drm &getDrm() const;
+    virtual std::pair<uint64_t, uint64_t> getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked);
     virtual void waitForPagingFence();
     static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
     void reInitializeContext() override;

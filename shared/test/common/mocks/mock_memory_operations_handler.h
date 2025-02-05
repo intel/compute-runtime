@@ -20,22 +20,22 @@ class GraphicsAllocation;
 class MockMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandler() {}
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override { return MemoryOperationsStatus::unsupported; }
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override { return MemoryOperationsStatus::unsupported; }
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override { return MemoryOperationsStatus::unsupported; }
 };
 
 class MockMemoryOperationsHandlerTests : public MemoryOperationsHandler {
   public:
     MockMemoryOperationsHandlerTests() {}
-    ADDMETHOD_NOBASE(makeResident, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded));
+    ADDMETHOD_NOBASE(makeResident, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence));
     ADDMETHOD_NOBASE(lock, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, ArrayRef<GraphicsAllocation *> gfxAllocations));
     ADDMETHOD_NOBASE(evict, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, GraphicsAllocation &gfxAllocation));
     ADDMETHOD_NOBASE(isResident, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (Device * device, GraphicsAllocation &gfxAllocation));
-    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable));
+    ADDMETHOD_NOBASE(makeResidentWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence));
     ADDMETHOD_NOBASE(evictWithinOsContext, MemoryOperationsStatus, MemoryOperationsStatus::unsupported, (OsContext * osContext, GraphicsAllocation &gfxAllocation));
 };
 
@@ -43,7 +43,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
   public:
     MockMemoryOperations() {}
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {
         makeResidentCalledCount++;
         if (captureGfxAllocationsForMakeResident) {
             for (auto &gfxAllocation : gfxAllocations) {
@@ -85,7 +85,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         return MemoryOperationsStatus::success;
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
         makeResidentCalledCount++;
         if (osContext) {
             makeResidentContextId = osContext->getContextId();

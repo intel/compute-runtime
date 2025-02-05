@@ -20,7 +20,7 @@ WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm
 
 WddmMemoryOperationsHandler::~WddmMemoryOperationsHandler() = default;
 
-MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) {
     uint32_t totalHandlesCount = 0;
     constexpr uint32_t stackAllocations = 64;
     constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount * stackAllocations;
@@ -45,7 +45,7 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device,
             totalHandlesCount += wddmAllocation->getNumGmms();
         }
     }
-    return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize);
+    return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize, forcePagingFence);
 }
 
 MemoryOperationsStatus WddmMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
