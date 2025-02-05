@@ -333,11 +333,13 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(mockKernel.kernelArgInfos[0].allocIdMemoryManagerCounter, svmAllocsManager->allocationsCounter);
     EXPECT_EQ(mockKernel.kernelArgInfos[0].allocId, allocData->getAllocId());
 
+    const auto &argumentsResidencyContainer = mockKernel.getArgumentsResidencyContainer();
     // different value - called
     auto secondSvmAllocation = svmAllocsManager->createSVMAlloc(4096, allocationProperties, context->rootDeviceIndices, context->deviceBitfields);
     svmAllocsManager->getSVMAlloc(secondSvmAllocation)->setAllocId(3u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_NE(nullptr, argumentsResidencyContainer[0]);
 
     // nullptr - not called, argInfo is updated
     EXPECT_FALSE(mockKernel.kernelArgInfos[0].isSetToNullptr);
@@ -345,6 +347,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(nullptr), nullptr));
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_TRUE(mockKernel.kernelArgInfos[0].isSetToNullptr);
+    EXPECT_EQ(nullptr, argumentsResidencyContainer[0]);
 
     // nullptr again - not called
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(nullptr), nullptr));
@@ -355,6 +358,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     EXPECT_EQ(ZE_RESULT_SUCCESS, mockKernel.setArgBuffer(0, sizeof(secondSvmAllocation), &secondSvmAllocation));
     EXPECT_EQ(++callCounter, mockKernel.setArgBufferWithAllocCalled);
     EXPECT_FALSE(mockKernel.kernelArgInfos[0].isSetToNullptr);
+    EXPECT_NE(nullptr, argumentsResidencyContainer[0]);
 
     // allocations counter == 0 called
     svmAllocsManager->allocationsCounter = 0;
@@ -374,6 +378,7 @@ TEST_F(SetKernelArgCacheTest, givenValidBufferArgumentWhenSetMultipleTimesThenSe
     ASSERT_EQ(mockKernel.kernelArgInfos[0].value, secondSvmAllocation);
     ASSERT_EQ(mockKernel.kernelArgInfos[0].allocId, 0u);
     EXPECT_EQ(callCounter, mockKernel.setArgBufferWithAllocCalled);
+    EXPECT_EQ(nullptr, argumentsResidencyContainer[0]);
 
     svmAllocsManager->freeSVMAlloc(svmAllocation);
 }
