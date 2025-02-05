@@ -557,7 +557,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             false == svmData->isInternalAllocation &&
             this->usmDeviceAllocationsCacheEnabled) {
-            if (this->usmDeviceAllocationsCache.insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
+            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr, svmData)) {
                 return true;
             }
         }
