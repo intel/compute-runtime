@@ -36,13 +36,13 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
 
     ~DrmMemoryOperationsHandlerWithAubDump() override = default;
 
-    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded) override {
-        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, isDummyExecNeeded);
-        return BaseOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded);
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations, bool isDummyExecNeeded, const bool forcePagingFence) override {
+        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
+        return BaseOperationsHandler::makeResident(device, gfxAllocations, isDummyExecNeeded, forcePagingFence);
     }
 
     MemoryOperationsStatus lock(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
-        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, false);
+        aubMemoryOperationsHandler->makeResident(device, gfxAllocations, false, false);
         return BaseOperationsHandler::lock(device, gfxAllocations);
     }
 
@@ -61,9 +61,9 @@ class DrmMemoryOperationsHandlerWithAubDump : public BaseOperationsHandler {
         return BaseOperationsHandler::isResident(device, gfxAllocation);
     }
 
-    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override {
-        aubMemoryOperationsHandler->makeResidentWithinOsContext(osContext, gfxAllocations, evictable);
-        return BaseOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable);
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) override {
+        aubMemoryOperationsHandler->makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
+        return BaseOperationsHandler::makeResidentWithinOsContext(osContext, gfxAllocations, evictable, forcePagingFence);
     }
 
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override {

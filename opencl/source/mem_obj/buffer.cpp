@@ -575,7 +575,7 @@ Buffer *Buffer::create(Context *context,
             auto device = context->getDevice(deviceNum);
             auto graphicsAllocation = pBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
             auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
-            rootDeviceEnvironment->memoryOperationsInterface->makeResident(&device->getDevice(), ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false);
+            rootDeviceEnvironment->memoryOperationsInterface->makeResident(&device->getDevice(), ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1), false, false);
         }
     }
 

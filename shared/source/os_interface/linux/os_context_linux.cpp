@@ -108,19 +108,41 @@ void OsContextLinux::waitForPagingFence() {
 }
 
 void OsContextLinux::waitForBind(uint32_t drmIterator) {
-    if (drm.isPerContextVMRequired()) {
-        if (pagingFence[drmIterator] >= fenceVal[drmIterator]) {
-            return;
-        }
-        auto lock = drm.lockBindFenceMutex();
-        auto fenceAddress = castToUint64(&this->pagingFence[drmIterator]);
-        auto fenceValue = this->fenceVal[drmIterator];
-        lock.unlock();
 
-        drm.waitUserFence(0u, fenceAddress, fenceValue, Drm::ValueWidth::u64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
+    auto fenceAddressAndValToWait = getFenceAddressAndValToWait(drmIterator, false);
+
+    const auto fenceAddressToWait = fenceAddressAndValToWait.first;
+    const auto fenceValToWait = fenceAddressAndValToWait.second;
+
+    if (fenceAddressToWait != 0u) {
+        drm.waitUserFence(0u, fenceAddressToWait, fenceValToWait, Drm::ValueWidth::u64, -1, drm.getIoctlHelper()->getWaitUserFenceSoftFlag(), false, NEO::InterruptId::notUsed, nullptr);
+    }
+}
+
+[[nodiscard]] std::pair<uint64_t, uint64_t> OsContextLinux::getFenceAddressAndValToWait(uint32_t vmHandleId, bool isLocked) {
+    if (drm.isPerContextVMRequired()) {
+        std::pair<uint64_t, uint64_t> fenceAddressAndValToWait = std::make_pair(0, 0);
+        std::unique_lock<std::mutex> lock;
+
+        if (!isLocked) {
+            lock = drm.lockBindFenceMutex();
+        }
+
+        if (!(pagingFence[vmHandleId] >= fenceVal[vmHandleId])) {
+
+            auto fenceAddress = castToUint64(&this->pagingFence[vmHandleId]);
+            auto fenceValue = this->fenceVal[vmHandleId];
+            fenceAddressAndValToWait = std::make_pair(fenceAddress, fenceValue);
+        }
+
+        if (!isLocked) {
+            lock.unlock();
+        }
+
+        return fenceAddressAndValToWait;
 
     } else {
-        drm.waitForBind(drmIterator);
+        return drm.getFenceAddressAndValToWait(vmHandleId, isLocked);
     }
 }
 

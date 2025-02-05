@@ -88,9 +88,9 @@ class MockDrmAllocation : public DrmAllocation {
         DrmAllocation::markForCapture();
     }
 
-    int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) override {
+    int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence) override {
         bindBOsCalled = true;
-        DrmAllocation::bindBOs(osContext, vmHandleId, bufferObjects, bind);
+        DrmAllocation::bindBOs(osContext, vmHandleId, bufferObjects, bind, forcePagingFence);
         return bindBOsRetValue;
     }
 
@@ -101,7 +101,7 @@ class MockDrmAllocation : public DrmAllocation {
         return DrmAllocation::prefetchBO(bo, vmHandleId, subDeviceId);
     }
 
-    ADDMETHOD_NOBASE(makeBOsResident, int, 0, (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind));
+    ADDMETHOD_NOBASE(makeBOsResident, int, 0, (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence));
 
     bool registerBOBindExtHandleCalled = false;
     bool markedForCapture = false;

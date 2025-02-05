@@ -26,7 +26,7 @@ class WddmResidentAllocationsContainer {
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictResource(const D3DKMT_HANDLE &handle);
     MemoryOperationsStatus evictResources(const D3DKMT_HANDLE *handles, const uint32_t count);
     MOCKABLE_VIRTUAL MemoryOperationsStatus makeResidentResource(const D3DKMT_HANDLE &handle, size_t size);
-    MemoryOperationsStatus makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size);
+    MemoryOperationsStatus makeResidentResources(const D3DKMT_HANDLE *handles, const uint32_t count, size_t size, const bool forcePagingFence);
     MOCKABLE_VIRTUAL void removeResource(const D3DKMT_HANDLE &handle);
 
   protected:

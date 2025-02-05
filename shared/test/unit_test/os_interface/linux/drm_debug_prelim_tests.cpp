@@ -351,7 +351,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinDefaultE
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized(false);
-    bo.bind(&osContext, 0);
+    bo.bind(&osContext, 0, false);
 
     EXPECT_NE(0u, drm.context.receivedVmBind->extensions);
 
@@ -371,7 +371,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinInternal
 
     OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_RCS, EngineUsage::internal}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/});
     osContext.ensureContextInitialized(false);
-    bo.bind(&osContext, 0);
+    bo.bind(&osContext, 0, false);
 
     EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
 }
@@ -387,7 +387,7 @@ TEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenBindingWithinCopyEngi
 
     OsContextLinux osContext(drm, 0, 0u, {{aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular}, 1 /*deviceBitfield*/, PreemptionMode::Disabled, true /* isRootDevice*/});
     osContext.ensureContextInitialized(false);
-    bo.bind(&osContext, 0);
+    bo.bind(&osContext, 0, false);
 
     EXPECT_FALSE(drm.context.receivedVmBindUuidExt[0]);
 }
@@ -402,7 +402,7 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
 
     OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     osContext.ensureContextInitialized(false);
-    bo.bind(&osContext, 0);
+    bo.bind(&osContext, 0, false);
     EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
 
     bo.unbind(&osContext, 0);

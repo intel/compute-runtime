@@ -835,7 +835,7 @@ struct MockDrmAllocationBindBO : public DrmAllocation {
     }
 
     ADDMETHOD_NOBASE(bindBO, int, 0,
-                     (BufferObject * bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind));
+                     (BufferObject * bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence));
 };
 
 struct MockDrmAllocationBindBOs : public DrmAllocation {
@@ -844,7 +844,7 @@ struct MockDrmAllocationBindBOs : public DrmAllocation {
     }
 
     ADDMETHOD_NOBASE(bindBOs, int, 0,
-                     (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind));
+                     (OsContext * osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind, const bool forcePagingFence));
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOsFailsThenMakeBOsResidentReturnsError) {
@@ -855,7 +855,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOsFailsThenMakeBOsRes
     auto allocation = new MockDrmAllocationBindBOs(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOsResult = -1;
 
-    auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true);
+    auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true, false);
     EXPECT_NE(res, 0);
     EXPECT_EQ(allocation->fragmentsStorage.fragmentCount, 0u);
     EXPECT_GT(allocation->bindBOsCalled, 0u);
@@ -884,7 +884,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentStorageAndBindBOFa
     memcpy(&prevStorage, &allocation->fragmentsStorage, sizeof(OsHandleStorage));
     memcpy(&allocation->fragmentsStorage, &storage, sizeof(OsHandleStorage));
 
-    auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true);
+    auto res = allocation->makeBOsResident(&csr->getOsContext(), 0, nullptr, true, false);
     EXPECT_NE(res, 0);
     EXPECT_EQ(allocation->fragmentsStorage.fragmentCount, 1u);
     EXPECT_GT(allocation->bindBOCalled, 0u);
@@ -902,7 +902,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsThenBindBOsRetu
     auto allocation = new MockDrmAllocationBindBO(0, AllocationType::unknown, bos, nullptr, 0u, size, MemoryPool::localMemory);
     allocation->bindBOResult = -1;
 
-    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false);
+    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
     EXPECT_NE(res, 0);
     EXPECT_GT(allocation->bindBOCalled, 0u);
 
@@ -920,7 +920,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsWithMultipleMem
     allocation->storageInfo.memoryBanks = 0b11;
     EXPECT_EQ(allocation->storageInfo.getNumBanks(), 2u);
 
-    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false);
+    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
     EXPECT_NE(res, 0);
     EXPECT_GT(allocation->bindBOCalled, 0u);
 
@@ -939,7 +939,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenBindBOFailsWithMultipleMem
     allocation->storageInfo.memoryBanks = 0b11;
     EXPECT_EQ(allocation->storageInfo.getNumBanks(), 2u);
 
-    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false);
+    auto res = allocation->bindBOs(&csr->getOsContext(), 0u, &static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->residency, false, false);
     EXPECT_NE(res, 0);
     EXPECT_GT(allocation->bindBOCalled, 0u);
 
@@ -1417,7 +1417,7 @@ struct MockMergeResidencyContainerMemoryOperationsHandler : public DrmMemoryOper
                      (OsContext * osContext, ResidencyContainer &residencyContainer));
 
     ADDMETHOD_NOBASE(makeResidentWithinOsContext, NEO::MemoryOperationsStatus, NEO::MemoryOperationsStatus::success,
-                     (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable));
+                     (OsContext * osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence));
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContainerFailsThenFlushReturnsError) {
@@ -1534,7 +1534,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1), false);
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     LinearStream cs(commandBuffer);
@@ -1558,7 +1558,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInt
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1), false);
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(device.get(), ArrayRef<GraphicsAllocation *>(&allocation, 1), false, false);
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 

@@ -306,7 +306,7 @@ bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDevi
 
     for (auto subDeviceId : subDeviceIds) {
         auto vmHandleId = subDeviceId;
-        auto retVal = drmAllocation->bindBOs(osContextLinux, vmHandleId, nullptr, true);
+        auto retVal = drmAllocation->bindBOs(osContextLinux, vmHandleId, nullptr, true, false);
         if (retVal != 0) {
             DEBUG_BREAK_IF(true);
             return false;
@@ -736,7 +736,7 @@ bool DrmMemoryManager::mapPhysicalHostMemoryToVirtualMemory(RootDeviceIndicesCon
 
     bo->setMmapOffset(mmapOffset);
     bo->setAddress(gpuRange);
-    bo->bind(getDefaultOsContext(drmPhysicalAllocation->getRootDeviceIndex()), 0);
+    bo->bind(getDefaultOsContext(drmPhysicalAllocation->getRootDeviceIndex()), 0, false);
 
     auto drmAllocation = new DrmAllocation(drmPhysicalAllocation->getRootDeviceIndex(), 1u, AllocationType::bufferHostMemory, bo, addrToPtr(bo->peekAddress()), bo->peekSize(),
                                            static_cast<osHandle>(internalHandle), memoryPool, getGmmHelper(drmPhysicalAllocation->getRootDeviceIndex())->canonize(bo->peekAddress()));
@@ -1524,7 +1524,7 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
     if (ioctlHelper->makeResidentBeforeLockNeeded()) {
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
         auto graphicsAllocationPtr = &graphicsAllocation;
-        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false) == MemoryOperationsStatus::success;
+        [[maybe_unused]] auto ret = memoryOperationsInterface->makeResidentWithinOsContext(getDefaultOsContext(rootDeviceIndex), ArrayRef<NEO::GraphicsAllocation *>(&graphicsAllocationPtr, 1), false, false) == MemoryOperationsStatus::success;
         DEBUG_BREAK_IF(!ret);
     }
 
@@ -1678,7 +1678,7 @@ bool DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         auto rootDeviceIndex = allocation->getRootDeviceIndex();
         for (uint32_t i = 0; getDrm(rootDeviceIndex).getVirtualMemoryAddressSpace(i) > 0u; i++) {
-            if (drmAllocation->makeBOsResident(getDefaultOsContext(rootDeviceIndex), i, nullptr, true)) {
+            if (drmAllocation->makeBOsResident(getDefaultOsContext(rootDeviceIndex), i, nullptr, true, false)) {
                 return false;
             }
             getDrm(rootDeviceIndex).waitForBind(i);
