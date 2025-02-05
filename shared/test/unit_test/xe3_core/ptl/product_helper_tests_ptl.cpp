@@ -13,7 +13,6 @@
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "platforms.h"
-#include "wmtp_setup_ptl.inl"
 
 using namespace NEO;
 
@@ -38,7 +37,7 @@ PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
     hwInfo.featureTable.flags.ftrWalkerMTP = false;
     EXPECT_FALSE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     hwInfo.featureTable.flags.ftrWalkerMTP = true;
-    EXPECT_EQ(wmtpSupported, compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
+    EXPECT_TRUE(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
 }
 
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
