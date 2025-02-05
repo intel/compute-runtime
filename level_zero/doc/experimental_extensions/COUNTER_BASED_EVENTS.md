@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 * [Overview](#Overview)
 * [Creation](#Creation)
 * [External storage](#External-storage)
+* [Aggregated event](#Aggregated-event)
 * [Obtaining counter memory and value](#Obtaining-counter-memory-and-value)
 * [IPC sharing](#IPC-sharing)
 * [Regular command list](#Regular-command-list)
@@ -97,6 +98,19 @@ User may optionally specify externally managed counter allocation and value. Thi
 - Host allocation (`hostAddress`) must be accessible by CPU (eg. waiting for completion)
 - User is responsible for updating both memory locations to >= `completionValue` to signal Event completion
 - Signaling such event, replaces the state (as described previously)
+
+# Aggregated event
+Aggregated event is a special use case for CB Events. It can be signaled from multiple append calls, but waiting requires only one memory compare operation.  
+It can be created by passing `zex_counter_based_event_external_storage_properties_t` as extension of `zex_counter_based_event_desc_t`.
+
+**Requirements:**
+- This extension cannot be used with "external storage" extension
+- User must ensure device allocation (`deviceAddress`) residency. It must be accessible by GPU
+- Driver will use `deviceAddress` for host synchronization as USM allocation. It must be accessible by CPU
+- Signaling such event, will not replace its state (as described previously). It can be passed to multiple append calls and each append will increment the storage by `incrementValue` (atomically) on GPU
+- Using aggregated event as dependency, requires only one memory compare operation against final value: `completionValue` >=  `*deviceAddress`
+- Device storage is under Users control. It may be reset manually if needed
+- Profiling is not possible if producers originate on different GPUs (different timestamp domains)
 
 # Obtaining counter memory and value
 User may obtain counter memory location and value. For example, waiting for completion outside the L0 Driver.  

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -208,6 +208,17 @@ typedef struct _zex_counter_based_event_external_sync_alloc_properties_t {
     uint64_t *hostAddress;     ///< [in] host address for external synchronization allocation
     uint64_t completionValue;  ///< [in] completion value for external synchronization allocation
 } zex_counter_based_event_external_sync_alloc_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Initial Counter Based Event synchronization parameters. This structure may be
+///        passed as pNext member of ::zex_counter_based_event_desc_t.
+typedef struct _zex_counter_based_event_external_storage_properties_t {
+    ze_structure_type_t stype; ///< [in] type of this structure
+    const void *pNext;         ///< [in][optional] must be null or a pointer to an extension-specific
+    uint64_t *deviceAddress;   ///< [in] device address that would be updated with atomic_add upon signaling of this event, must be device USM memory
+    uint64_t incrementValue;   ///< [in] value which would by atomically added upon each completion
+    uint64_t completionValue;  ///< [in] final completion value, when value under deviceAddress is equal or greater then this value then event is considered as completed
+} zex_counter_based_event_external_storage_properties_t;
 
 #if defined(__cplusplus)
 } // extern "C"
