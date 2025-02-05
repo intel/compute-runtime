@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,12 +21,15 @@
 #include "third_party/opencl_headers/CL/cl.h"
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <list>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <set>
+#include <sstream>
 #include <stdio.h>
 #include <string>
 #include <vector>
