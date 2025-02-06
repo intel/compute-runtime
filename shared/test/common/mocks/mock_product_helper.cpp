@@ -31,6 +31,11 @@ uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxLocalRegionSize(const HardwareInfo
 }
 
 template <>
+uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const {
+    return 0;
+}
+
+template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getMaxThreadsForWorkgroupInDSSOrSS(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice, uint32_t maxNumEUsPerDualSubSlice) const {
     return 0;
 }

@@ -1122,3 +1122,8 @@ HWTEST_F(ProductHelperTest, whenAdjustScratchSizeThenSizeIsNotChanged) {
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIs2MBLocalMemAlignmentEnabledThenCorrectValueIsReturned) {
     EXPECT_FALSE(productHelper->is2MBLocalMemAlignmentEnabled());
 }
+
+HWTEST2_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnFalse, IsAtMostXe3Core) {
+    auto hwInfo = *defaultHwInfo;
+    EXPECT_EQ(0u, productHelper->getMaxLocalSubRegionSize(hwInfo));
+}

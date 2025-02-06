@@ -49,6 +49,7 @@ using IsXe2HpgCoreOrXe3Core = IsAnyGfxCores<IGFX_XE2_HPG_CORE, IGFX_XE3_CORE>;
 
 using IsXe3Core = IsGfxCore<IGFX_XE3_CORE>;
 using IsAtLeastXe3Core = IsAtLeastGfxCore<IGFX_XE3_CORE>;
+using IsAtMostXe3Core = IsAtMostGfxCore<IGFX_XE3_CORE>;
 
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsDG1 = IsProduct<IGFX_DG1>;

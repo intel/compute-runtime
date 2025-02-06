@@ -185,6 +185,7 @@ class ProductHelperHw : public ProductHelper {
     bool supportReadOnlyAllocations() const override;
     const std::vector<uint32_t> getSupportedLocalDispatchSizes(const HardwareInfo &hwInfo) const override;
     uint32_t getMaxLocalRegionSize(const HardwareInfo &hwInfo) const override;
+    uint32_t getMaxLocalSubRegionSize(const HardwareInfo &hwInfo) const override;
     bool localDispatchSizeQuerySupported() const override;
     bool isDeviceToHostCopySignalingFenceRequired() const override;
     size_t getMaxFillPaternSizeForCopyEngine() const override;
