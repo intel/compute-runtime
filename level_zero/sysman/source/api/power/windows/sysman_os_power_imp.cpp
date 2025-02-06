@@ -611,7 +611,7 @@ WddmPowerImp::WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t 
     isPowerHandleEnergyCounterOnly();
 }
 
-std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {
+std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     KmdSysManager *pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     KmdSysman::RequestProperty request;

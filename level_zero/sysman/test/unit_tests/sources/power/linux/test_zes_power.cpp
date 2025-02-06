@@ -42,23 +42,22 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenComponentCountZeroWhenEnumeratingPower
     }
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerPointerWhenGettingCardPowerDomainWhenhwmonInterfaceExistsAndThenCallSucceeds) {
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerPointerWhenGetCardPowerDomainIsCalledThenFailureIsReturned) {
     zes_pwr_handle_t phPower = {};
-    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenInvalidPowerPointerWhenGettingCardPowerDomainAndThenReturnsFailure) {
+TEST_F(SysmanDevicePowerFixtureI915, GivenInvalidPowerPointerWhenGetCardPowerDomainIsCalledThenFailureIsReturned) {
     EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), nullptr), ZE_RESULT_ERROR_INVALID_NULL_POINTER);
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenUninitializedPowerHandlesAndWhenGettingCardPowerDomainThenReturnsFailure) {
-    for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
-        delete handle;
-    }
-    pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
+TEST_F(SysmanDevicePowerFixtureI915, GivenPowerHandlesListContainsCardDomainHandleWhenGetCardPowerDomainIsCalledThenCallSucceeds) {
+    Power *pPower = new PowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD);
+
+    pSysmanDeviceImp->pPowerHandleContext->handleList.push_back(pPower);
 
     zes_pwr_handle_t phPower = {};
-    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesWhenhwmonInterfaceExistsThenCallSucceeds) {
@@ -118,7 +117,7 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerProper
         EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
         EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
         EXPECT_EQ(properties.minLimit, -1);
-        EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
+        EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
         EXPECT_TRUE(defaultLimit.limitValueLocked);
         EXPECT_TRUE(defaultLimit.enabledStateLocked);
         EXPECT_TRUE(defaultLimit.intervalValueLocked);
@@ -180,7 +179,7 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPowerSetLimitSuppor
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesAndSysfsReadFailsThenFailureIsReturned) {
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     EXPECT_TRUE(pLinuxPowerImp->isPowerModuleSupported());
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_properties_t properties{};

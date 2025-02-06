@@ -56,7 +56,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
     uint32_t powerLimitCount = 0;
-    zes_power_domain_t powerDomain = ZES_POWER_DOMAIN_CARD;
+    zes_power_domain_t powerDomain = ZES_POWER_DOMAIN_UNKNOWN;
 
     ze_result_t getErrorCode(ze_result_t result) {
         if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {

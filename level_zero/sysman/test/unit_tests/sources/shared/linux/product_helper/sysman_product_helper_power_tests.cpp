@@ -156,7 +156,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenSysfsReadFailsAndKeyOffsetMapNotAva
         return count;
     });
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
     zes_power_energy_counter_t energyCounter = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxPowerImp->getEnergyCounter(&energyCounter));
@@ -188,7 +188,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenSysfsReadFailsAndPmtReadValueFailsW
         return count;
     });
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
     zes_power_energy_counter_t energyCounter = {};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
@@ -200,7 +200,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenSysfsReadFailsWhenGettingPowerEnerg
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
 
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_CARD));
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
     zes_power_energy_counter_t energyCounter = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
@@ -240,7 +240,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenScanDirectoriesFailAndTelemetrySupp
     pSysmanDeviceImp->pPowerHandleContext->init(subDeviceCount);
     ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
     uint32_t subdeviceId = 0;
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_CARD));
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_PACKAGE));
     EXPECT_TRUE(pLinuxPowerImp->isPowerModuleSupported());
 }
 

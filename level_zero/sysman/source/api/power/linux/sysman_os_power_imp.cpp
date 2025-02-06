@@ -57,7 +57,7 @@ ze_result_t LinuxPowerImp::getDefaultLimit(int32_t &defaultLimit) {
 }
 
 ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
-    pExtPoperties->domain = isSubdevice ? ZES_POWER_DOMAIN_PACKAGE : powerDomain;
+    pExtPoperties->domain = powerDomain;
     if (pExtPoperties->defaultLimit) {
         if (!isSubdevice) {
             uint64_t val = 0;
@@ -184,6 +184,7 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
     }
     return result;
 }
+
 ze_result_t LinuxPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
     NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -340,8 +341,8 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
 }
 
-std::vector<zes_power_domain_t> OsPower::getNumberOfPowerDomainsSupported(OsSysman *pOsSysman) {
-    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_CARD};
+std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsSysman) {
+    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE};
     return powerDomains;
 }
 

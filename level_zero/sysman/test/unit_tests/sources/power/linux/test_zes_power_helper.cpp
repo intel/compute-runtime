@@ -32,7 +32,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidDeviceHandlesAndHwmo
     uint32_t subdeviceId = 0;
     do {
         ze_bool_t onSubdevice = (subDeviceCount == 0) ? false : true;
-        PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_CARD);
+        PublicLinuxPowerImp *pPowerImp = new PublicLinuxPowerImp(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_PACKAGE);
         EXPECT_TRUE(pPowerImp->isPowerModuleSupported());
         delete pPowerImp;
 
@@ -49,9 +49,9 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenInvalidComponentCountWhen
     EXPECT_EQ(count, powerHandleComponentCountMultiDevice);
 }
 
-TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGettingCardPowerDomainWhenhwmonInterfaceExistsAndThenCallSucceeds) {
+TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerPointerWhenGettingCardPowerDomainThenFailureIsReturned) {
     zes_pwr_handle_t phPower = {};
-    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
@@ -102,13 +102,12 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
         EXPECT_EQ(defaultLimit.level, ZES_POWER_LEVEL_UNKNOWN);
         EXPECT_EQ(defaultLimit.source, ZES_POWER_SOURCE_ANY);
         EXPECT_EQ(defaultLimit.limitUnit, ZES_LIMIT_UNIT_POWER);
+        EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
         if (properties.onSubdevice) {
             EXPECT_FALSE(properties.canControl);
-            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
             EXPECT_EQ(defaultLimit.limit, -1);
         } else {
             EXPECT_TRUE(properties.canControl);
-            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
             EXPECT_EQ(defaultLimit.limit, static_cast<int32_t>(mockDefaultPowerLimitVal / milliFactor));
             EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
             EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
@@ -133,15 +132,14 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPro
         properties.pNext = &extProperties;
         extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
         if (properties.onSubdevice) {
             EXPECT_FALSE(properties.canControl);
-            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_PACKAGE);
             EXPECT_EQ(properties.maxLimit, -1);
             EXPECT_EQ(properties.minLimit, -1);
             EXPECT_EQ(properties.defaultLimit, -1);
         } else {
             EXPECT_TRUE(properties.canControl);
-            EXPECT_EQ(extProperties.domain, ZES_POWER_DOMAIN_CARD);
             EXPECT_EQ(properties.defaultLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
             EXPECT_EQ(properties.maxLimit, (int32_t)(mockDefaultPowerLimitVal / milliFactor));
             EXPECT_EQ(properties.minLimit, -1);

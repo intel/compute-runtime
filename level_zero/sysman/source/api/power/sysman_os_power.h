@@ -29,7 +29,7 @@ class OsPower {
 
     virtual bool isPowerModuleSupported() = 0;
     static OsPower *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain);
-    static std::vector<zes_power_domain_t> getNumberOfPowerDomainsSupported(OsSysman *pOsSysman);
+    static std::vector<zes_power_domain_t> getSupportedPowerDomains(OsSysman *pOsSysman);
 
     virtual ~OsPower() = default;
 };
