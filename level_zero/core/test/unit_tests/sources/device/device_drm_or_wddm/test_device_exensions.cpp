@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,11 +132,11 @@ struct DeviceExtensionTest : public ::testing::Test {
     const uint32_t rootDeviceIndex = 0u;
 };
 
-TEST_F(DeviceExtensionTest, whenGetExternalMemoryPropertiesWithoutOsInterfaceIsCalledThenUnitializedIsReturnedAndNoPropertiesAreSet) {
+TEST_F(DeviceExtensionTest, whenGetExternalMemoryPropertiesWithoutOsInterfaceIsCalledThenSuccessIsReturnedAndNoPropertiesAreSet) {
     ze_device_external_memory_properties_t externalMemoryProperties{};
 
     ze_result_t result = device->getExternalMemoryProperties(&externalMemoryProperties);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(externalMemoryProperties.imageExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32);
     EXPECT_FALSE(externalMemoryProperties.imageExportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF);
     EXPECT_FALSE(externalMemoryProperties.imageImportTypes & ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32);

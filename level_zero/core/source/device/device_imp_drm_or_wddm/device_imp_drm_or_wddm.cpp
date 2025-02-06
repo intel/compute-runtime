@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,10 +63,8 @@ ze_result_t DeviceImp::getExternalMemoryProperties(ze_device_external_memory_pro
             pExternalMemoryProperties->memoryAllocationExportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
             pExternalMemoryProperties->memoryAllocationImportTypes = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
         }
-
-        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_ERROR_UNINITIALIZED;
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0
