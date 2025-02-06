@@ -35,6 +35,7 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 
+#include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"
 
 #include <algorithm>
@@ -405,6 +406,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto kernelExecutionType = args.isCooperative ? KernelExecutionType::concurrent : KernelExecutionType::defaultType;
 
     EncodeWalkerArgs walkerArgs{
+        .argsExtended = args.extendedArgs,
         .kernelExecutionType = kernelExecutionType,
         .requiredDispatchWalkOrder = args.requiredDispatchWalkOrder,
         .localRegionSize = args.localRegionSize,

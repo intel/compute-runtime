@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -204,6 +204,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         nullptr,                                                // cpuPayloadBuffer
         nullptr,                                                // outImplicitArgsPtr
         &additionalCommands,                                    // additionalCommands
+        nullptr,                                                // extendedArgs
         commandListPreemptionMode,                              // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim
         launchParams.requiredDispatchWalkOrder,                 // requiredDispatchWalkOrder

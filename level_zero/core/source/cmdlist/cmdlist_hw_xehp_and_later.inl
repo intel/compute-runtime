@@ -29,6 +29,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 
+#include "encode_dispatch_kernel_args_ext.h"
 #include "encode_surface_state_args.h"
 #include "igfxfmid.h"
 
@@ -332,6 +333,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
 
+    NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         eventAddress,                                           // eventAddress
         static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
@@ -347,6 +349,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.hostPayloadBuffer,                         // cpuPayloadBuffer
         nullptr,                                                // outImplicitArgsPtr
         &additionalCommands,                                    // additionalCommands
+        &dispatchKernelArgsExt,                                 // extendedArgs
         kernelPreemptionMode,                                   // preemptionMode
         launchParams.requiredPartitionDim,                      // requiredPartitionDim
         launchParams.requiredDispatchWalkOrder,                 // requiredDispatchWalkOrder
@@ -370,8 +373,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->heaplessStateInitEnabled,                         // isHeaplessStateInitEnabled
         interruptEvent,                                         // interruptEvent
         !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
-        launchParams.makeKernelCommandView,                     // makeCommandView
+        launchParams.makeKernelCommandView                      // makeCommandView
     };
+    setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
 
     NEO::EncodeDispatchKernel<GfxFamily>::encodeCommon(commandContainer, dispatchKernelArgs);
     launchParams.outWalker = dispatchKernelArgs.outWalkerPtr;

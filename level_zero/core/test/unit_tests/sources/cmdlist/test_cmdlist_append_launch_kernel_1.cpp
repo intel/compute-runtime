@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,6 +210,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
         nullptr,                                  // cpuPayloadBuffer
         nullptr,                                  // outImplicitArgsPtr
         nullptr,                                  // additionalCommands
+        nullptr,                                  // extendedArgs
         PreemptionMode::MidBatch,                 // preemptionMode
         NEO::RequiredPartitionDim::none,          // requiredPartitionDim
         NEO::RequiredDispatchWalkOrder::none,     // requiredDispatchWalkOrder

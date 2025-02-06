@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace L0 {
+struct CmdListKernelLaunchParamsExt;
 
 struct CommandToPatch {
     enum CommandType {
@@ -52,6 +53,7 @@ struct CmdListKernelLaunchParams {
     void *hostPayloadBuffer = nullptr;
     CommandToPatch *outSyncCommand = nullptr;
     CommandToPatchContainer *outListCommands = nullptr;
+    CmdListKernelLaunchParamsExt *launchParamsExt = nullptr;
     size_t syncBufferPatchIndex = std::numeric_limits<size_t>::max();
     size_t regionBarrierPatchIndex = std::numeric_limits<size_t>::max();
     uint32_t externalPerThreadScratchSize[2] = {0U, 0U};

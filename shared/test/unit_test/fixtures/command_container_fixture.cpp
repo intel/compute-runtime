@@ -53,6 +53,7 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
         nullptr,                                  // cpuPayloadBuffer
         nullptr,                                  // outImplicitArgsPtr
         nullptr,                                  // additionalCommands
+        nullptr,                                  // extendedArgs
         PreemptionMode::Disabled,                 // preemptionMode
         NEO::RequiredPartitionDim::none,          // requiredPartitionDim
         NEO::RequiredDispatchWalkOrder::none,     // requiredDispatchWalkOrder

@@ -44,6 +44,7 @@ struct RootDeviceEnvironment;
 struct StateBaseAddressProperties;
 struct StateComputeModeProperties;
 struct ImplicitArgs;
+struct EncodeKernelArgsExt;
 
 struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0;
@@ -60,6 +61,7 @@ struct EncodeDispatchKernelArgs {
     void *cpuPayloadBuffer = nullptr;
     void *outImplicitArgsPtr = nullptr;
     std::list<void *> *additionalCommands = nullptr;
+    EncodeKernelArgsExt *extendedArgs = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
     NEO::RequiredPartitionDim requiredPartitionDim = NEO::RequiredPartitionDim::none;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
@@ -104,6 +106,7 @@ enum class CompareOperation : uint32_t {
 };
 
 struct EncodeWalkerArgs {
+    EncodeKernelArgsExt *argsExtended = nullptr;
     KernelExecutionType kernelExecutionType = KernelExecutionType::defaultType;
     NEO::RequiredDispatchWalkOrder requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none;
     uint32_t localRegionSize = NEO::localRegionSizeParamNotSet;
