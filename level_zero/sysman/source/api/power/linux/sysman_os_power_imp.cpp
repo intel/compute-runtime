@@ -342,7 +342,9 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
 }
 
 std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsSysman) {
-    std::vector<zes_power_domain_t> powerDomains = {ZES_POWER_DOMAIN_PACKAGE};
+    auto pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    auto pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
+    std::vector<zes_power_domain_t> powerDomains = pSysmanKmdInterface->getPowerDomains();
     return powerDomains;
 }
 

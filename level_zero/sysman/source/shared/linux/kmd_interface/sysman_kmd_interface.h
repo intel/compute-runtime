@@ -151,6 +151,7 @@ class SysmanKmdInterface {
     virtual ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) = 0;
     virtual std::string getGpuBindEntry() const = 0;
     virtual std::string getGpuUnBindEntry() const = 0;
+    virtual std::vector<zes_power_domain_t> getPowerDomains() const = 0;
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
@@ -209,6 +210,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
+    std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -256,6 +258,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
+    std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -295,6 +298,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     bool isBoostFrequencyAvailable() const override { return false; }
     bool isTdpFrequencyAvailable() const override { return false; }
     bool isPhysicalMemorySizeSupported() const override { return true; }
+    std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
 
     // Wedged state is not supported in XE.
     void getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) override{};
