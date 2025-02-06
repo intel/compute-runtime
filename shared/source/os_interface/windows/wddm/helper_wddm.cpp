@@ -17,7 +17,10 @@ NTSTATUS Wddm::createNTHandle(const D3DKMT_HANDLE *resourceHandle, HANDLE *ntHan
     return getGdi()->shareObjects(1, resourceHandle, &objAttr, SHARED_ALLOCATION_WRITE, ntHandle);
 }
 
-bool Wddm::getReadOnlyFlagValue(const void *alignedCpuPtr) const {
-    return alignedCpuPtr != nullptr;
+bool Wddm::getReadOnlyFlagValue(const void *cpuPtr) const {
+    return !isAligned<MemoryConstants::pageSize>(cpuPtr);
+}
+bool Wddm::isReadOnlyFlagFallbackSupported() const {
+    return true;
 }
 } // namespace NEO

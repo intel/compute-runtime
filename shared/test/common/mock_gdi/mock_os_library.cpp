@@ -259,6 +259,9 @@ void *MockOsLibrary::getProcAddress(const std::string &procName) {
     if (procName == "getCapturedCreateAllocationFlags") {
         return reinterpret_cast<void *>(getCapturedCreateAllocationFlags);
     }
+    if (procName == "setSupportCreateAllocationWithReadWriteExisitingSysMemory") {
+        return reinterpret_cast<void *>(setSupportCreateAllocationWithReadWriteExisitingSysMemory);
+    }
     return nullptr;
 }
 

@@ -63,6 +63,7 @@ struct GdiDllFixture {
         setMockGetDeviceStateReturnValueFcn = reinterpret_cast<decltype(&setMockGetDeviceStateReturnValue)>(mockGdiDll->getProcAddress("setMockGetDeviceStateReturnValue"));
         getCapturedCreateAllocationFlagsFcn = reinterpret_cast<decltype(&getCapturedCreateAllocationFlags)>(mockGdiDll->getProcAddress("getCapturedCreateAllocationFlags"));
         setCapturingCreateAllocationFlagsFcn = reinterpret_cast<decltype(&setCapturingCreateAllocationFlags)>(mockGdiDll->getProcAddress("setCapturingCreateAllocationFlags"));
+        setSupportCreateAllocationWithReadWriteExisitingSysMemoryFcn = reinterpret_cast<decltype(&setSupportCreateAllocationWithReadWriteExisitingSysMemory)>(mockGdiDll->getProcAddress("setSupportCreateAllocationWithReadWriteExisitingSysMemory"));
         setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
         *getDestroySynchronizationObjectDataFcn() = {};
         *getCreateSynchronizationObject2FailCallFcn() = false;
@@ -113,4 +114,5 @@ struct GdiDllFixture {
     decltype(&setMockGetDeviceStateReturnValue) setMockGetDeviceStateReturnValueFcn = nullptr;
     decltype(&setCapturingCreateAllocationFlags) setCapturingCreateAllocationFlagsFcn = nullptr;
     decltype(&getCapturedCreateAllocationFlags) getCapturedCreateAllocationFlagsFcn = nullptr;
+    decltype(&setSupportCreateAllocationWithReadWriteExisitingSysMemory) setSupportCreateAllocationWithReadWriteExisitingSysMemoryFcn = nullptr;
 };

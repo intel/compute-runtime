@@ -406,9 +406,16 @@ TEST_F(WddmTestWithMockGdiDll, givenSetThreadPriorityStateEnabledWhenInitWddmThe
     EXPECT_EQ(SysCalls::ThreadPriority::AboveNormal, SysCalls::setThreadPriorityLastValue);
 }
 
-TEST_F(WddmTestWithMockGdiDll, whenGettingReadOnlyFlagThenReturnTrueOnlyForCpuPointer) {
-    void *ptr = reinterpret_cast<void *>(0x1000);
-    EXPECT_TRUE(wddm->getReadOnlyFlagValue(ptr));
+TEST_F(WddmTestWithMockGdiDll, whenGettingReadOnlyFlagThenReturnTrueOnlyForPageMisaligedCpuPointer) {
+    void *alignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+    EXPECT_FALSE(wddm->getReadOnlyFlagValue(alignedPtr));
+
+    void *misalignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize + MemoryConstants::cacheLineSize);
+    EXPECT_TRUE(wddm->getReadOnlyFlagValue(misalignedPtr));
 
     EXPECT_FALSE(wddm->getReadOnlyFlagValue(nullptr));
+}
+
+TEST_F(WddmTestWithMockGdiDll, whenGettingReadOnlyFlagFallbackSupportThenTrueIsReturned) {
+    EXPECT_TRUE(wddm->isReadOnlyFlagFallbackSupported());
 }

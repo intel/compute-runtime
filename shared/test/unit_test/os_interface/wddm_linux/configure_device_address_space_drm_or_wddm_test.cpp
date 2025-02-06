@@ -66,6 +66,7 @@ struct MockWddmLinux : NEO::Wddm {
     using Wddm::gfxPartition;
     using Wddm::gfxPlatform;
     using Wddm::gmmMemory;
+    using Wddm::isReadOnlyFlagFallbackSupported;
 };
 
 struct MockGmmMemoryWddmLinux : NEO::GmmMemory {
@@ -803,6 +804,9 @@ TEST_F(WddmLinuxTest, whenGettingReadOnlyFlagThenAlwaysReturnFalse) {
     EXPECT_FALSE(wddm->getReadOnlyFlagValue(nullptr));
 }
 
+TEST_F(WddmLinuxTest, whenGettingReadOnlyFlagFallbackSupportThenFalseIsReturned) {
+    EXPECT_FALSE(wddm->isReadOnlyFlagFallbackSupported());
+}
 class MockOsTimeLinux : public NEO::OSTimeLinux {
   public:
     MockOsTimeLinux(NEO::OSInterface &osInterface, std::unique_ptr<NEO::DeviceTime> deviceTime) : NEO::OSTimeLinux(osInterface, std::move(deviceTime)) {}

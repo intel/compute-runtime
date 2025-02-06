@@ -159,6 +159,7 @@ inline void *getStaticStorage(uint32_t slot) {
 static D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
 static bool captureCreateAllocationFlags = false;
 static uint32_t createAllocation2NumCalled = 0;
+static bool supportCreateAllocationWithReadWriteExisitingSysMemory = true;
 
 void setCapturingCreateAllocationFlags() {
     captureCreateAllocationFlags = true;
@@ -169,6 +170,11 @@ void getCapturedCreateAllocationFlags(D3DKMT_CREATEALLOCATIONFLAGS &capturedCrea
     capturedCreateAllocationFlags = createAllocationFlags;
     numCalled = createAllocation2NumCalled;
     captureCreateAllocationFlags = false;
+}
+
+void setSupportCreateAllocationWithReadWriteExisitingSysMemory(bool supportValue, bool &previousValue) {
+    previousValue = supportCreateAllocationWithReadWriteExisitingSysMemory;
+    supportCreateAllocationWithReadWriteExisitingSysMemory = supportValue;
 }
 
 NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
@@ -189,7 +195,6 @@ NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *a
     if (captureCreateAllocationFlags) {
         createAllocationFlags = pallocation.Flags;
         createAllocation2NumCalled++;
-        return STATUS_SUCCESS;
     }
 
     numOfAllocations = allocation->NumAllocations;
@@ -210,6 +215,9 @@ NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *a
                 static uint32_t handleIdForStaticStorage = 1u;
                 static uint32_t handleIdForUserPtr = ALLOCATION_HANDLE + 1u;
                 if (allocationInfo->pSystemMem) {
+                    if (!supportCreateAllocationWithReadWriteExisitingSysMemory && !createAllocationFlags.ReadOnly) {
+                        return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+                    }
                     userPtrMap.insert({handleIdForUserPtr, const_cast<void *>(allocationInfo->pSystemMem)});
                     allocationInfo->hAllocation = handleIdForUserPtr;
                     handleIdForUserPtr++;

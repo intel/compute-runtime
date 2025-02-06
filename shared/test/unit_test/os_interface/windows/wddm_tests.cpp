@@ -1001,33 +1001,89 @@ TEST_F(WddmTests, whenInitializeFailureThenInitOsInterfaceWddmFails) {
     EXPECT_FALSE(rootDeviceEnvironment->initOsInterface(std::move(hwDeviceId), 0u));
 }
 
-TEST_F(WddmTests, givenHostMemoryPassedToCreateAllocationThenAllocationCreatedWithReadOnlyFlagPassed) {
+TEST_F(WddmTests, givenPageMisalignedHostMemoryPassedToCreateAllocationThenAllocationCreatedWithReadOnlyFlagPassed) {
     wddm->init();
     setCapturingCreateAllocationFlagsFcn();
 
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    void *pageAlignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+    void *pageMisalignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize + MemoryConstants::cacheLineSize);
 
     D3DKMT_HANDLE handle, resHandle;
     GmmRequirements gmmRequirements{};
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), constMem, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), pageAlignedPtr, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
-    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(constMem, &gmm, handle, resHandle, nullptr));
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(pageMisalignedPtr, &gmm, handle, resHandle, nullptr));
     D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
     uint32_t createAllocation2NumCalled = 0;
     getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
-    EXPECT_EQ(createAllocationFlags.ReadOnly, wddm->getReadOnlyFlagValue(constMem));
+    EXPECT_EQ(createAllocationFlags.ReadOnly, wddm->getReadOnlyFlagValue(pageMisalignedPtr));
     EXPECT_EQ(1u, createAllocation2NumCalled);
+    EXPECT_TRUE(wddm->destroyAllocations(&handle, 1, resHandle));
 }
 
-TEST_F(WddmTests, givenHostMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocationCreatedWithReadOnlyFlagPassed) {
+TEST_F(WddmTests, givenPageAlignedReadWriteHostMemoryPassedToCreateAllocationThenAllocationCreatedWithoutReadOnlyFlagPassed) {
+    wddm->init();
+    setCapturingCreateAllocationFlagsFcn();
+
+    void *pageAlignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+
+    D3DKMT_HANDLE handle, resHandle;
+    GmmRequirements gmmRequirements{};
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), pageAlignedPtr, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocation(pageAlignedPtr, &gmm, handle, resHandle, nullptr));
+    D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+    uint32_t createAllocation2NumCalled = 0;
+    getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
+    EXPECT_FALSE(createAllocationFlags.ReadOnly);
+    EXPECT_EQ(1u, createAllocation2NumCalled);
+    EXPECT_TRUE(wddm->destroyAllocations(&handle, 1, resHandle));
+}
+
+TEST_F(WddmTests, givenPageAlignedReadOnlyHostMemoryPassedToCreateAllocationWhenReadOnlyFallbackIsSupportedThenAllocationCreatedWithReadOnlyFlagPassedOtherwiseAllocationFails) {
+    wddm->init();
+    setCapturingCreateAllocationFlagsFcn();
+
+    bool readOnlyFallbackSupported = wddm->isReadOnlyFlagFallbackSupported();
+    bool readWriteExistingSysMemSupported{};
+    setSupportCreateAllocationWithReadWriteExisitingSysMemory(false, readWriteExistingSysMemSupported);
+
+    void *pageAlignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+
+    D3DKMT_HANDLE handle, resHandle;
+    GmmRequirements gmmRequirements{};
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), pageAlignedPtr, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    auto allocationStatus = wddm->createAllocation(pageAlignedPtr, &gmm, handle, resHandle, nullptr);
+    D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+    uint32_t createAllocation2NumCalled = 0;
+    getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
+
+    if (readOnlyFallbackSupported) {
+        EXPECT_EQ(STATUS_SUCCESS, allocationStatus);
+        EXPECT_TRUE(createAllocationFlags.ReadOnly);
+        EXPECT_EQ(2u, createAllocation2NumCalled);
+        EXPECT_TRUE(wddm->destroyAllocations(&handle, 1, resHandle));
+    } else {
+        EXPECT_EQ(STATUS_GRAPHICS_NO_VIDEO_MEMORY, allocationStatus);
+        EXPECT_FALSE(createAllocationFlags.ReadOnly);
+        EXPECT_EQ(1u, createAllocation2NumCalled);
+    }
+    bool readWriteExistingSysMemSupportedForTest{};
+    setSupportCreateAllocationWithReadWriteExisitingSysMemory(readWriteExistingSysMemSupported, readWriteExistingSysMemSupportedForTest);
+    EXPECT_FALSE(readWriteExistingSysMemSupportedForTest);
+}
+
+TEST_F(WddmTests, givenPageMisalignedMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocationCreatedWithReadOnlyFlagPassed) {
     wddm->init();
     wddm->callBaseMapGpuVa = false;
     setCapturingCreateAllocationFlagsFcn();
 
-    static const int constMem[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    void *pageAlignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+    void *pageMisalignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize + MemoryConstants::cacheLineSize);
 
     GmmRequirements gmmRequirements{};
-    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), constMem, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), pageAlignedPtr, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
 
     OsHandleStorage handleStorage;
     OsHandleWin osHandle;
@@ -1035,7 +1091,7 @@ TEST_F(WddmTests, givenHostMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocat
     ResidencyData residency(maxOsContextCount);
 
     handleStorage.fragmentCount = 1;
-    handleStorage.fragmentStorageData[0].cpuPtr = constMem;
+    handleStorage.fragmentStorageData[0].cpuPtr = pageMisalignedPtr;
     handleStorage.fragmentStorageData[0].fragmentSize = 10;
     handleStorage.fragmentStorageData[0].freeTheFragment = false;
     handleStorage.fragmentStorageData[0].osHandleStorage = &osHandle;
@@ -1046,7 +1102,123 @@ TEST_F(WddmTests, givenHostMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocat
     D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
     uint32_t createAllocation2NumCalled = 0;
     getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
-    EXPECT_EQ(createAllocationFlags.ReadOnly, wddm->getReadOnlyFlagValue(constMem));
+    EXPECT_EQ(createAllocationFlags.ReadOnly, wddm->getReadOnlyFlagValue(pageMisalignedPtr));
     EXPECT_EQ(1u, createAllocation2NumCalled);
+    auto allocationHandle = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[0].osHandleStorage)->handle;
+    EXPECT_TRUE(wddm->destroyAllocations(&allocationHandle, 1, 0));
+}
+
+TEST_F(WddmTests, givenPageAlignedReadWriteMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocationCreatedWithoutReadOnlyFlagPassed) {
+    wddm->init();
+    wddm->callBaseMapGpuVa = false;
+    setCapturingCreateAllocationFlagsFcn();
+
+    void *pageAlignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+
+    GmmRequirements gmmRequirements{};
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), pageAlignedPtr, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    OsHandleStorage handleStorage;
+    OsHandleWin osHandle;
+    auto maxOsContextCount = 1u;
+    ResidencyData residency(maxOsContextCount);
+
+    handleStorage.fragmentCount = 1;
+    handleStorage.fragmentStorageData[0].cpuPtr = pageAlignedPtr;
+    handleStorage.fragmentStorageData[0].fragmentSize = 10;
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &osHandle;
+    handleStorage.fragmentStorageData[0].residency = &residency;
+    osHandle.gmm = &gmm;
+
+    EXPECT_EQ(STATUS_SUCCESS, wddm->createAllocationsAndMapGpuVa(handleStorage));
+    D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+    uint32_t createAllocation2NumCalled = 0;
+    getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
+    EXPECT_FALSE(createAllocationFlags.ReadOnly);
+    EXPECT_EQ(1u, createAllocation2NumCalled);
+    auto allocationHandle = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[0].osHandleStorage)->handle;
+    EXPECT_TRUE(wddm->destroyAllocations(&allocationHandle, 1, 0));
+}
+
+TEST_F(WddmTests, givenPageAlignedReadOnlyMemoryPassedToCreateAllocationsAndMapGpuVaThenAllocationCreatedWithReadOnlyFlagPassedOtherwiseAllocationFails) {
+    wddm->init();
+    wddm->callBaseMapGpuVa = false;
+    setCapturingCreateAllocationFlagsFcn();
+
+    bool readOnlyFallbackSupported = wddm->isReadOnlyFlagFallbackSupported();
+    bool readWriteExistingSysMemSupported{};
+    setSupportCreateAllocationWithReadWriteExisitingSysMemory(false, readWriteExistingSysMemSupported);
+
+    void *pageAlignedPtr = reinterpret_cast<void *>(MemoryConstants::pageSize);
+
+    GmmRequirements gmmRequirements{};
+    Gmm gmm(executionEnvironment->rootDeviceEnvironments[0]->getGmmHelper(), pageAlignedPtr, 10, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements);
+
+    OsHandleStorage handleStorage;
+    OsHandleWin osHandle;
+    auto maxOsContextCount = 1u;
+    ResidencyData residency(maxOsContextCount);
+
+    handleStorage.fragmentCount = 1;
+    handleStorage.fragmentStorageData[0].cpuPtr = pageAlignedPtr;
+    handleStorage.fragmentStorageData[0].fragmentSize = 10;
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &osHandle;
+    handleStorage.fragmentStorageData[0].residency = &residency;
+    osHandle.gmm = &gmm;
+
+    auto allocationStatus = wddm->createAllocationsAndMapGpuVa(handleStorage);
+    D3DKMT_CREATEALLOCATIONFLAGS createAllocationFlags{};
+    uint32_t createAllocation2NumCalled = 0;
+    getCapturedCreateAllocationFlagsFcn(createAllocationFlags, createAllocation2NumCalled);
+
+    if (readOnlyFallbackSupported) {
+        EXPECT_EQ(STATUS_SUCCESS, allocationStatus);
+        EXPECT_TRUE(createAllocationFlags.ReadOnly);
+        EXPECT_EQ(2u, createAllocation2NumCalled);
+        auto allocationHandle = static_cast<OsHandleWin *>(handleStorage.fragmentStorageData[0].osHandleStorage)->handle;
+        EXPECT_TRUE(wddm->destroyAllocations(&allocationHandle, 1, 0));
+    } else {
+        EXPECT_EQ(STATUS_GRAPHICS_NO_VIDEO_MEMORY, allocationStatus);
+        EXPECT_FALSE(createAllocationFlags.ReadOnly);
+        EXPECT_EQ(1u, createAllocation2NumCalled);
+    }
+
+    bool readWriteExistingSysMemSupportedForTest{};
+    setSupportCreateAllocationWithReadWriteExisitingSysMemory(readWriteExistingSysMemSupported, readWriteExistingSysMemSupportedForTest);
+    EXPECT_FALSE(readWriteExistingSysMemSupportedForTest);
+}
+
+TEST_F(WddmTests, whenThereIsNoExisitngSysMemoryThenReadOnlyFallbackIsNotAvailable) {
+    D3DKMT_CREATEALLOCATION createAllocation{};
+    D3DDDI_ALLOCATIONINFO2 allocationInfo2{};
+    createAllocation.pAllocationInfo2 = &allocationInfo2;
+    allocationInfo2.pSystemMem = nullptr;
+
+    EXPECT_FALSE(wddm->isReadOnlyFlagFallbackAvailable(createAllocation));
+}
+
+TEST_F(WddmTests, givenReadOnlyFlagAlreadySetInCreateAllocationFlagsThenReadOnlyFallbackIsNotAvailable) {
+    D3DKMT_CREATEALLOCATION createAllocation{};
+    D3DDDI_ALLOCATIONINFO2 allocationInfo2{};
+    createAllocation.pAllocationInfo2 = &allocationInfo2;
+
+    allocationInfo2.pSystemMem = reinterpret_cast<void *>(MemoryConstants::pageSize);
+    createAllocation.Flags.ReadOnly = true;
+
+    EXPECT_FALSE(wddm->isReadOnlyFlagFallbackAvailable(createAllocation));
+}
+
+TEST_F(WddmTests, givenSysMemoryPointerAndReadOnlyFlagNotSetInCreateAllocationFlagsThenReadOnlyFallbackIsAvailableBasedOnFallbackSupport) {
+    D3DKMT_CREATEALLOCATION createAllocation{};
+    D3DDDI_ALLOCATIONINFO2 allocationInfo2{};
+    createAllocation.pAllocationInfo2 = &allocationInfo2;
+
+    allocationInfo2.pSystemMem = reinterpret_cast<void *>(MemoryConstants::pageSize);
+    createAllocation.Flags.ReadOnly = false;
+
+    auto readOnlyFallbackSupported = wddm->isReadOnlyFlagFallbackSupported();
+    EXPECT_EQ(readOnlyFallbackSupported, wddm->isReadOnlyFlagFallbackAvailable(createAllocation));
 }
 } // namespace NEO

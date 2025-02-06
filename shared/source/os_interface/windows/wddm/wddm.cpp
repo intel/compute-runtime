@@ -650,7 +650,11 @@ bool Wddm::freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) 
     return status == STATUS_SUCCESS;
 }
 
-NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
+bool Wddm::isReadOnlyFlagFallbackAvailable(const D3DKMT_CREATEALLOCATION &createAllocation) const {
+    return isReadOnlyFlagFallbackSupported() && createAllocation.pAllocationInfo2->pSystemMem && !createAllocation.Flags.ReadOnly;
+}
+
+NTSTATUS Wddm::createAllocation(const void *cpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO2 allocationInfo = {};
     D3DKMT_CREATEALLOCATION createAllocation = {};
@@ -658,14 +662,14 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     if (gmm == nullptr)
         return false;
 
-    allocationInfo.pSystemMem = alignedCpuPtr;
+    allocationInfo.pSystemMem = gmm->gmmResourceInfo->getSystemMemPointer();
     allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
     allocationInfo.PrivateDriverDataSize = static_cast<uint32_t>(gmm->gmmResourceInfo->peekHandleSize());
     createAllocation.NumAllocations = 1;
     createAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
     createAllocation.Flags.NtSecuritySharing = outSharedHandle ? TRUE : FALSE;
     createAllocation.Flags.CreateResource = outSharedHandle ? TRUE : FALSE;
-    createAllocation.Flags.ReadOnly = getReadOnlyFlagValue(alignedCpuPtr);
+    createAllocation.Flags.ReadOnly = getReadOnlyFlagValue(cpuPtr);
     createAllocation.pAllocationInfo2 = &allocationInfo;
     createAllocation.hDevice = device;
 
@@ -678,6 +682,10 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     }
 
     status = getGdi()->createAllocation2(&createAllocation);
+    if (status != STATUS_SUCCESS && isReadOnlyFlagFallbackAvailable(createAllocation)) {
+        createAllocation.Flags.ReadOnly = TRUE;
+        status = getGdi()->createAllocation2(&createAllocation);
+    }
     if (status != STATUS_SUCCESS) {
         DEBUG_BREAK_IF(true);
         return status;
@@ -778,6 +786,10 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
 
     while (status == STATUS_UNSUCCESSFUL) {
         status = getGdi()->createAllocation2(&createAllocation);
+        if (status != STATUS_SUCCESS && isReadOnlyFlagFallbackAvailable(createAllocation)) {
+            createAllocation.Flags.ReadOnly = TRUE;
+            status = getGdi()->createAllocation2(&createAllocation);
+        }
 
         if (status != STATUS_SUCCESS) {
             PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr, "%s status: %d", __FUNCTION__, status);
