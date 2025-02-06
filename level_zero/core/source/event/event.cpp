@@ -708,6 +708,24 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(externalSyncAllocProperties->deviceAddress),
                                                                                       allocation, externalSyncAllocProperties->hostAddress, externalSyncAllocProperties->completionValue, 1, 1);
             updateInOrderExecState(inOrderExecInfo, externalSyncAllocProperties->completionValue, 0);
+        } else if (extendedDesc->stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES) {
+            auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
+
+            NEO::SvmAllocationData *externalDeviceAllocData = nullptr;
+            if (!externalStorageProperties->deviceAddress || !device->getDriverHandle()->findAllocationDataForRange(externalStorageProperties->deviceAddress, sizeof(uint64_t), externalDeviceAllocData)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
+
+            auto allocation = externalDeviceAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+            auto offset = ptrDiff(externalStorageProperties->deviceAddress, allocation->getGpuAddress());
+
+            auto hostAddress = ptrOffset(device->getNEODevice()->getMemoryManager()->lockResource(allocation), offset);
+
+            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), allocation, castToUint64(externalStorageProperties->deviceAddress),
+                                                                                      allocation, reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->completionValue, 1, 1);
+            inOrderExecInfo->setIncrementValue(externalStorageProperties->incrementValue);
+
+            updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
         }
 
         extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);
