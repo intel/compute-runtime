@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -831,6 +831,22 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
     auto createContextParams = this->getCreateContextDataFcn();
     auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
     EXPECT_TRUE(!!privateData->NoRingFlushes);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, whenCreateContextIsCalledThenDummyPageBackingEnabledFlagIsDisabled) {
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
+    EXPECT_FALSE(!!privateData->DummyPageBackingEnabled);
+}
+
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenDummyPageBackingEnabledFlagSetToTrueWhenCreateContextIsCalledThenFlagIsEnabled) {
+    DebugManagerStateRestore dbgRestore;
+    debugManager.flags.DummyPageBackingEnabled.set(true);
+    init();
+    auto createContextParams = this->getCreateContextDataFcn();
+    auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
+    EXPECT_TRUE(!!privateData->DummyPageBackingEnabled);
 }
 
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {

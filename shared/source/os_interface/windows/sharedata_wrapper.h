@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -158,13 +158,14 @@ struct CREATECONTEXT_PVTDATA { // NOLINT(readability-identifier-naming)
     unsigned long *pHwContextId;
     uint32_t NumberOfHwContextIds; // NOLINT(readability-identifier-naming)
 
-    uint32_t ProcessID;         // NOLINT(readability-identifier-naming)
-    uint8_t IsProtectedProcess; // NOLINT(readability-identifier-naming)
-    uint8_t IsDwm;              // NOLINT(readability-identifier-naming)
-    uint8_t IsMediaUsage;       // NOLINT(readability-identifier-naming)
-    uint8_t GpuVAContext;       // NOLINT(readability-identifier-naming)
-    BOOLEAN NoRingFlushes;      // NOLINT(readability-identifier-naming)
-    uint32_t UmdContextType;    // NOLINT(readability-identifier-naming)
+    uint32_t ProcessID;              // NOLINT(readability-identifier-naming)
+    uint8_t IsProtectedProcess;      // NOLINT(readability-identifier-naming)
+    uint8_t IsDwm;                   // NOLINT(readability-identifier-naming)
+    uint8_t IsMediaUsage;            // NOLINT(readability-identifier-naming)
+    uint8_t GpuVAContext;            // NOLINT(readability-identifier-naming)
+    BOOLEAN NoRingFlushes;           // NOLINT(readability-identifier-naming)
+    BOOLEAN DummyPageBackingEnabled; // NOLINT(readability-identifier-naming)
+    uint32_t UmdContextType;         // NOLINT(readability-identifier-naming)
 };
 
 struct PLATFORM_KMD : PLATFORM_GMM { // NOLINT(readability-identifier-naming)

@@ -1006,6 +1006,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     privateData.ProcessID = NEO::SysCalls::getProcessId();
     privateData.pHwContextId = &hwContextId;
     privateData.NoRingFlushes = debugManager.flags.UseNoRingFlushesKmdMode.get();
+    privateData.DummyPageBackingEnabled = debugManager.flags.DummyPageBackingEnabled.get();
 
     applyAdditionalContextFlags(privateData, osContext);
 
