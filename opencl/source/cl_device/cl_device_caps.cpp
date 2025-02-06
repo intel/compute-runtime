@@ -17,6 +17,7 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/utilities/buffer_pool_allocator.inl"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -480,7 +481,8 @@ void ClDevice::initializeMaxPoolCount() {
     auto &device = getDevice();
     const auto bitfield = device.getDeviceBitfield();
     const auto deviceMemory = device.getGlobalMemorySize(static_cast<uint32_t>(bitfield.to_ulong()));
-    const auto maxPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(deviceMemory, 2);
+    const auto preferredBufferPoolParams = SmallBuffersParams::getPreferredBufferPoolParams(device.getProductHelper());
+    const auto maxPoolCount = Context::BufferPoolAllocator::calculateMaxPoolCount(preferredBufferPoolParams, deviceMemory, 2);
     device.updateMaxPoolCount(maxPoolCount);
 }
 

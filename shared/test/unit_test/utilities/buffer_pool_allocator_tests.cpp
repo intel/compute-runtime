@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 
 #include "gtest/gtest.h"
 
@@ -24,20 +25,19 @@ struct DummyBuffer {
     int val;
 };
 
-template <>
-struct NEO::SmallBuffersParams<DummyBufferPool> {
-    static constexpr auto aggregatedSmallBuffersPoolSize = 32 * MemoryConstants::kiloByte;
-    static constexpr auto smallBufferThreshold = 2 * MemoryConstants::kiloByte;
-    static constexpr auto chunkAlignment = 1024u;
-    static constexpr auto startingOffset = chunkAlignment;
-};
-
 struct DummyBuffersPool : public NEO::AbstractBuffersPool<DummyBuffersPool, DummyBuffer> {
     using BaseType = NEO::AbstractBuffersPool<DummyBuffersPool, DummyBuffer>;
     static constexpr auto dummyPtr = 0xdeadbeef0000;
 
+    static constexpr NEO::SmallBuffersParams defaultParams{
+        32 * MemoryConstants::kiloByte, // aggregatedSmallBuffersPoolSize
+        2 * MemoryConstants::kiloByte,  // smallBufferThreshold
+        1024u,                          // chunkAlignment
+        1024u                           // startingOffset
+    };
+
     DummyBuffersPool(NEO::MemoryManager *memoryManager, uint32_t poolOffset, BaseType::OnChunkFreeCallback onChunkFreeCallback)
-        : BaseType{memoryManager, onChunkFreeCallback} {
+        : BaseType{memoryManager, onChunkFreeCallback, defaultParams} {
         dummyAllocations.resize(2);
         dummyAllocations[0] = reinterpret_cast<NEO::GraphicsAllocation *>(poolOffset + dummyPtr);
         dummyAllocations[1] = nullptr; // makes sure nullptrs don't cause SEGFAULTs
@@ -64,6 +64,9 @@ struct DummyBuffersAllocator : public NEO::AbstractBuffersAllocator<DummyBuffers
     using BaseType::bufferPools;
     using BaseType::isSizeWithinThreshold;
 
+    DummyBuffersAllocator() : BaseType() {}
+    DummyBuffersAllocator(const NEO::SmallBuffersParams &params) : BaseType(params) {}
+
     void drainUnderLock() {
         auto lock = std::unique_lock<std::mutex>(this->mutex);
         this->BaseType::drain();
@@ -86,10 +89,10 @@ struct AbstractSmallBuffersTest : public ::testing::Test {
 TEST_F(AbstractSmallBuffersTest, givenBuffersPoolWhenCreatedAndMovedThenCtorsWorkCorrectly) {
     auto pool1 = DummyBuffersPool{this->memoryManager.get()};
     pool1.mainStorage.reset(new DummyBuffer(testVal));
-    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::startingOffset,
-                                                      DummyBuffersPool::aggregatedSmallBuffersPoolSize,
-                                                      DummyBuffersPool::chunkAlignment,
-                                                      DummyBuffersPool::smallBufferThreshold});
+    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::defaultParams.startingOffset,
+                                                      DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize,
+                                                      DummyBuffersPool::defaultParams.chunkAlignment,
+                                                      DummyBuffersPool::defaultParams.smallBufferThreshold});
 
     EXPECT_EQ(pool1.memoryManager, this->memoryManager.get());
 
@@ -98,7 +101,7 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersPoolWhenCreatedAndMovedThenCtorsWor
     EXPECT_EQ(pool2.mainStorage->val, testVal);
     EXPECT_EQ(static_cast<DummyBuffersPool::BaseType &>(pool2).getAllocationsVector()[0], reinterpret_cast<NEO::GraphicsAllocation *>(DummyBuffersPool::dummyPtr));
     EXPECT_EQ(pool2.chunkAllocator->getUsedSize(), 0ul);
-    EXPECT_EQ(pool2.chunkAllocator->getLeftSize(), DummyBuffersPool::aggregatedSmallBuffersPoolSize);
+    EXPECT_EQ(pool2.chunkAllocator->getLeftSize(), DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize);
 }
 
 TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenPoolWithoutMainStorageAddedThenItIsIgnored) {
@@ -114,11 +117,11 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenPoolWithoutMainStorage
 TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenNullptrTriedToBeFreedThenItIsNotConsideredValidBuffer) {
     auto pool = DummyBuffersPool{this->memoryManager.get()};
     pool.mainStorage.reset(new DummyBuffer(testVal));
-    auto buffersAllocator = DummyBuffersAllocator{};
+    DummyBuffersAllocator buffersAllocator{pool.params};
     buffersAllocator.addNewBufferPool(std::move(pool));
 
-    EXPECT_TRUE(buffersAllocator.isSizeWithinThreshold(DummyBuffersPool::smallBufferThreshold));
-    EXPECT_FALSE(buffersAllocator.isSizeWithinThreshold(DummyBuffersPool::smallBufferThreshold + 1));
+    EXPECT_TRUE(buffersAllocator.isSizeWithinThreshold(pool.params.smallBufferThreshold));
+    EXPECT_FALSE(buffersAllocator.isSizeWithinThreshold(pool.params.smallBufferThreshold + 1));
 
     auto &chunksToFree = buffersAllocator.bufferPools[0].chunksToFree;
     EXPECT_EQ(chunksToFree.size(), 0u);
@@ -175,8 +178,8 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenChunkOfMainStorageTrie
     auto &chunksToFree2 = buffersAllocator.bufferPools[1].chunksToFree;
     EXPECT_EQ(chunksToFree1.size(), 0u);
     EXPECT_EQ(chunksToFree2.size(), 0u);
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
-    auto chunkOffset = DummyBuffersPool::chunkAlignment;
+    auto chunkSize = DummyBuffersPool::defaultParams.chunkAlignment * 4;
+    auto chunkOffset = DummyBuffersPool::defaultParams.chunkAlignment;
     buffersAllocator.tryFreeFromPoolBuffer(poolStorage2, chunkOffset, chunkSize);
     EXPECT_EQ(chunksToFree1.size(), 0u);
     EXPECT_EQ(chunksToFree2.size(), 1u);
@@ -197,21 +200,21 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolsThenOnlyA
     pool2.mainStorage.reset(new DummyBuffer(testVal + 2));
     auto buffer1 = pool1.mainStorage.get();
     auto buffer2 = pool2.mainStorage.get();
-    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::startingOffset,
-                                                      DummyBuffersPool::aggregatedSmallBuffersPoolSize,
-                                                      DummyBuffersPool::chunkAlignment,
-                                                      DummyBuffersPool::smallBufferThreshold});
-    pool2.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::startingOffset,
-                                                      DummyBuffersPool::aggregatedSmallBuffersPoolSize,
-                                                      DummyBuffersPool::chunkAlignment,
-                                                      DummyBuffersPool::smallBufferThreshold});
+    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::defaultParams.startingOffset,
+                                                      DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize,
+                                                      DummyBuffersPool::defaultParams.chunkAlignment,
+                                                      DummyBuffersPool::defaultParams.smallBufferThreshold});
+    pool2.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::defaultParams.startingOffset,
+                                                      DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize,
+                                                      DummyBuffersPool::defaultParams.chunkAlignment,
+                                                      DummyBuffersPool::defaultParams.smallBufferThreshold});
 
     auto buffersAllocator = DummyBuffersAllocator{};
     buffersAllocator.addNewBufferPool(std::move(pool1));
     buffersAllocator.addNewBufferPool(std::move(pool2));
 
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
-    auto chunkOffset = DummyBuffersPool::chunkAlignment;
+    auto chunkSize = DummyBuffersPool::defaultParams.chunkAlignment * 4;
+    auto chunkOffset = DummyBuffersPool::defaultParams.chunkAlignment;
     for (size_t i = 0; i < 3; i++) {
         auto exampleOffset = chunkOffset + i * chunkSize * 2;
         buffersAllocator.tryFreeFromPoolBuffer(buffer1, exampleOffset, chunkSize);
@@ -247,15 +250,15 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolsThenOnChu
     auto pool1 = DummyBuffersPool{this->memoryManager.get(), 0x0, nullptr};
     pool1.mainStorage.reset(new DummyBuffer(testVal));
     auto buffer1 = pool1.mainStorage.get();
-    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::startingOffset,
-                                                      DummyBuffersPool::aggregatedSmallBuffersPoolSize,
-                                                      DummyBuffersPool::chunkAlignment,
-                                                      DummyBuffersPool::smallBufferThreshold});
+    pool1.chunkAllocator.reset(new NEO::HeapAllocator{DummyBuffersPool::defaultParams.startingOffset,
+                                                      DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize,
+                                                      DummyBuffersPool::defaultParams.chunkAlignment,
+                                                      DummyBuffersPool::defaultParams.smallBufferThreshold});
     auto buffersAllocator = DummyBuffersAllocator{};
     buffersAllocator.addNewBufferPool(std::move(pool1));
 
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
-    auto chunkOffset = DummyBuffersPool::chunkAlignment;
+    auto chunkSize = DummyBuffersPool::defaultParams.chunkAlignment * 4;
+    auto chunkOffset = DummyBuffersPool::defaultParams.chunkAlignment;
     for (size_t i = 0; i < 3; i++) {
         auto exampleOffset = chunkOffset + i * chunkSize * 2;
         buffersAllocator.tryFreeFromPoolBuffer(buffer1, exampleOffset, chunkSize);
@@ -295,17 +298,17 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolThenOffset
     auto pool1 = DummyBuffersPool{this->memoryManager.get(), 0x0, nullptr};
     pool1.mainStorage.reset(new DummyBuffer(testVal));
     auto buffer1 = pool1.mainStorage.get();
-    pool1.chunkAllocator.reset(new ProxyHeapAllocator{DummyBuffersPool::startingOffset,
-                                                      DummyBuffersPool::aggregatedSmallBuffersPoolSize,
-                                                      DummyBuffersPool::chunkAlignment,
-                                                      DummyBuffersPool::smallBufferThreshold});
+    pool1.chunkAllocator.reset(new ProxyHeapAllocator{DummyBuffersPool::defaultParams.startingOffset,
+                                                      DummyBuffersPool::defaultParams.aggregatedSmallBuffersPoolSize,
+                                                      DummyBuffersPool::defaultParams.chunkAlignment,
+                                                      DummyBuffersPool::defaultParams.smallBufferThreshold});
     auto buffersAllocator = DummyBuffersAllocator{};
     buffersAllocator.addNewBufferPool(std::move(pool1));
 
-    auto chunkSize = DummyBuffersPool::chunkAlignment * 4;
+    auto chunkSize = DummyBuffersPool::defaultParams.chunkAlignment * 4;
     auto exampleOffsets = std::array<size_t, 3>{0u, 0u, 0u};
     for (size_t i = 0; i < 3; i++) {
-        exampleOffsets[i] = DummyBuffersPool::startingOffset + i * chunkSize * 2;
+        exampleOffsets[i] = DummyBuffersPool::defaultParams.startingOffset + i * chunkSize * 2;
         buffersAllocator.tryFreeFromPoolBuffer(buffer1, exampleOffsets[i], chunkSize);
     }
 
@@ -317,6 +320,74 @@ TEST_F(AbstractSmallBuffersTest, givenBuffersAllocatorWhenDrainingPoolThenOffset
     auto heapAllocator = static_cast<ProxyHeapAllocator *>(buffersAllocator.bufferPools[0].chunkAllocator.get());
     ASSERT_EQ(heapAllocator->registeredOffsets.size(), 3u);
     for (size_t i = 0; i < 3; i++) {
-        EXPECT_EQ(heapAllocator->registeredOffsets[i], exampleOffsets[i] + DummyBuffersPool::startingOffset);
+        EXPECT_EQ(heapAllocator->registeredOffsets[i], exampleOffsets[i] + DummyBuffersPool::defaultParams.startingOffset);
     }
+}
+
+struct SmallBuffersParamsTest : public ::testing::Test {
+    bool compareSmallBuffersParams(const NEO::SmallBuffersParams &first, const NEO::SmallBuffersParams &second) {
+        return first.aggregatedSmallBuffersPoolSize == second.aggregatedSmallBuffersPoolSize &&
+               first.smallBufferThreshold == second.smallBufferThreshold &&
+               first.chunkAlignment == second.chunkAlignment &&
+               first.startingOffset == second.startingOffset;
+    }
+};
+
+TEST_F(SmallBuffersParamsTest, WhenGettingDefaultParamsThenReturnCorrectValues) {
+    auto defaultParams = NEO::SmallBuffersParams::getDefaultParams();
+
+    EXPECT_EQ(2 * MemoryConstants::megaByte, defaultParams.aggregatedSmallBuffersPoolSize);
+    EXPECT_EQ(1 * MemoryConstants::megaByte, defaultParams.smallBufferThreshold);
+    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.chunkAlignment);
+    EXPECT_EQ(MemoryConstants::pageSize64k, defaultParams.startingOffset);
+}
+
+TEST_F(SmallBuffersParamsTest, WhenGettingLargePagesParamsThenReturnCorrectValues) {
+    auto largePagesParams = NEO::SmallBuffersParams::getLargePagesParams();
+
+    EXPECT_EQ(16 * MemoryConstants::megaByte, largePagesParams.aggregatedSmallBuffersPoolSize);
+    EXPECT_EQ(2 * MemoryConstants::megaByte, largePagesParams.smallBufferThreshold);
+    EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.chunkAlignment);
+    EXPECT_EQ(MemoryConstants::pageSize64k, largePagesParams.startingOffset);
+}
+
+TEST_F(SmallBuffersParamsTest, GivenProductHelperWhenGettingPreferredBufferPoolParamsThenReturnsCorrectValues) {
+    auto mockProductHelper = std::make_unique<NEO::MockProductHelper>();
+
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+        auto preferredParams = NEO::SmallBuffersParams::getPreferredBufferPoolParams(*mockProductHelper);
+        auto expectedParams = NEO::SmallBuffersParams::getDefaultParams();
+        EXPECT_TRUE(compareSmallBuffersParams(expectedParams, preferredParams));
+    }
+    {
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+        auto preferredParams = NEO::SmallBuffersParams::getPreferredBufferPoolParams(*mockProductHelper);
+        auto expectedParams = NEO::SmallBuffersParams::getLargePagesParams();
+        EXPECT_TRUE(compareSmallBuffersParams(expectedParams, preferredParams));
+    }
+}
+
+TEST_F(SmallBuffersParamsTest, GivenBuffersAllocatorWhenSettingDifferentParamsThenGetParamsReturnsExpectedValues) {
+    auto buffersAllocator = DummyBuffersAllocator{};
+
+    const NEO::SmallBuffersParams params1{
+        16 * MemoryConstants::kiloByte, // aggregatedSmallBuffersPoolSize
+        1 * MemoryConstants::kiloByte,  // smallBufferThreshold
+        1024u,                          // chunkAlignment
+        1024u                           // startingOffset
+    };
+
+    const NEO::SmallBuffersParams params2{
+        32 * MemoryConstants::megaByte, // aggregatedSmallBuffersPoolSize
+        2 * MemoryConstants::megaByte,  // smallBufferThreshold
+        MemoryConstants::pageSize64k,   // chunkAlignment
+        MemoryConstants::pageSize64k    // startingOffset
+    };
+
+    buffersAllocator.setParams(params1);
+    EXPECT_TRUE(compareSmallBuffersParams(params1, buffersAllocator.getParams()));
+
+    buffersAllocator.setParams(params2);
+    EXPECT_TRUE(compareSmallBuffersParams(params2, buffersAllocator.getParams()));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ class Kernel;
 class MemoryManager;
 class SharingFunctions;
 class SVMAllocsManager;
+class ProductHelper;
 class Program;
 class Platform;
 class TagAllocatorBase;
@@ -69,7 +70,11 @@ class Context : public BaseObject<_cl_context> {
     };
 
     class BufferPoolAllocator : public AbstractBuffersAllocator<BufferPool, Buffer, MemObj> {
+        using BaseType = AbstractBuffersAllocator<BufferPool, Buffer, MemObj>;
+
       public:
+        BufferPoolAllocator() = default;
+
         bool isAggregatedSmallBuffersEnabled(Context *context) const;
         void initAggregatedSmallBuffers(Context *context);
         Buffer *allocateBufferFromPool(const MemoryProperties &memoryProperties,
@@ -79,8 +84,8 @@ class Context : public BaseObject<_cl_context> {
                                        void *hostPtr,
                                        cl_int &errcodeRet);
         bool flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const;
-        static inline uint32_t calculateMaxPoolCount(uint64_t totalMemory, size_t percentOfMemory) {
-            const auto maxPoolCount = static_cast<uint32_t>(totalMemory * (percentOfMemory / 100.0) / BufferPoolAllocator::aggregatedSmallBuffersPoolSize);
+        static inline uint32_t calculateMaxPoolCount(SmallBuffersParams smallBuffersParams, uint64_t totalMemory, size_t percentOfMemory) {
+            const auto maxPoolCount = static_cast<uint32_t>(totalMemory * (percentOfMemory / 100.0) / (smallBuffersParams.aggregatedSmallBuffersPoolSize));
             return maxPoolCount ? maxPoolCount : 1u;
         }
 

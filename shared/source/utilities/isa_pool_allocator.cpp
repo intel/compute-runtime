@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace NEO {
 
 ISAPool::ISAPool(Device *device, bool isBuiltin, size_t storageSize)
     : BaseType(device->getMemoryManager(), nullptr), device(device), isBuiltin(isBuiltin) {
-    this->chunkAllocator.reset(new NEO::HeapAllocator(startingOffset, storageSize, MemoryConstants::pageSize, 0u));
+    this->chunkAllocator.reset(new NEO::HeapAllocator(params.startingOffset, storageSize, MemoryConstants::pageSize, 0u));
 
     auto allocationType = isBuiltin ? NEO::AllocationType::kernelIsaInternal : NEO::AllocationType::kernelIsa;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(),
@@ -47,7 +47,7 @@ SharedIsaAllocation *ISAPool::allocateISA(size_t requestedSize) const {
     if (offset == 0) {
         return nullptr;
     }
-    return new SharedIsaAllocation{this->mainStorage.get(), offset - startingOffset, requestedSize, mtx.get()};
+    return new SharedIsaAllocation{this->mainStorage.get(), offset - params.startingOffset, requestedSize, mtx.get()};
 }
 
 const StackVec<NEO::GraphicsAllocation *, 1> &ISAPool::getAllocationsVector() {

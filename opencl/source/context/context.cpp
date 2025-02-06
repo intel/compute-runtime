@@ -310,6 +310,8 @@ bool Context::createImpl(const cl_context_properties *properties,
             auto requiresWritableStaging = device->getDefaultEngine().commandStreamReceiver->getType() != CommandStreamReceiverType::hardware;
             this->stagingBufferManager = std::make_unique<StagingBufferManager>(svmAllocsManager, rootDeviceIndices, deviceBitfields, requiresWritableStaging);
         }
+
+        smallBufferPoolAllocator.setParams(SmallBuffersParams::getPreferredBufferPoolParams(device->getProductHelper()));
     }
 
     return true;
@@ -584,7 +586,9 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
            (isSupportedForSingleDeviceContexts && context->isSingleDeviceContext());
 }
 
-Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryManager, nullptr) {
+Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryManager,
+                                                             nullptr,
+                                                             SmallBuffersParams::getPreferredBufferPoolParams(context->getDevice(0)->getDevice().getProductHelper())) {
     static constexpr cl_mem_flags flags = CL_MEM_UNCOMPRESSED_HINT_INTEL;
     [[maybe_unused]] cl_int errcodeRet{};
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
@@ -592,14 +596,14 @@ Context::BufferPool::BufferPool(Context *context) : BaseType(context->memoryMana
     bufferCreateArgs.makeAllocationLockable = true;
     this->mainStorage.reset(Buffer::create(context,
                                            flags,
-                                           BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
+                                           context->getBufferPoolAllocator().getParams().aggregatedSmallBuffersPoolSize,
                                            nullptr,
                                            bufferCreateArgs,
                                            errcodeRet));
     if (this->mainStorage) {
-        this->chunkAllocator.reset(new HeapAllocator(BufferPool::startingOffset,
-                                                     BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
-                                                     BufferPoolAllocator::chunkAlignment));
+        this->chunkAllocator.reset(new HeapAllocator(params.startingOffset,
+                                                     context->getBufferPoolAllocator().getParams().aggregatedSmallBuffersPoolSize,
+                                                     context->getBufferPoolAllocator().getParams().chunkAlignment));
         context->decRefInternal();
     }
 }
@@ -620,7 +624,7 @@ Buffer *Context::BufferPool::allocate(const MemoryProperties &memoryProperties,
     if (bufferRegion.origin == 0) {
         return nullptr;
     }
-    bufferRegion.origin -= BufferPool::startingOffset;
+    bufferRegion.origin -= params.startingOffset;
     bufferRegion.size = requestedSize;
     auto bufferFromPool = this->mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
     bufferFromPool->createFunction = this->mainStorage->createFunction;

@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
 #include "shared/source/utilities/heap_allocator.h"
 
@@ -13,9 +14,17 @@
 
 namespace NEO {
 
+inline SmallBuffersParams SmallBuffersParams::getPreferredBufferPoolParams(const ProductHelper &productHelper) {
+    return productHelper.is2MBLocalMemAlignmentEnabled() ? SmallBuffersParams::getLargePagesParams() : SmallBuffersParams::getDefaultParams();
+}
+
 template <typename PoolT, typename BufferType, typename BufferParentType>
 AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb)
-    : memoryManager{memoryManager}, onChunkFreeCallback{onChunkFreeCb} {
+    : AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(memoryManager, onChunkFreeCb, SmallBuffersParams::getDefaultParams()) {}
+
+template <typename PoolT, typename BufferType, typename BufferParentType>
+AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCb, const SmallBuffersParams &params)
+    : memoryManager{memoryManager}, onChunkFreeCallback{onChunkFreeCb}, params{params} {
     static_assert(std::is_base_of_v<BufferParentType, BufferType>);
 }
 
@@ -24,7 +33,8 @@ AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(Ab
     : memoryManager{bufferPool.memoryManager},
       mainStorage{std::move(bufferPool.mainStorage)},
       chunkAllocator{std::move(bufferPool.chunkAllocator)},
-      onChunkFreeCallback{bufferPool.onChunkFreeCallback} {}
+      onChunkFreeCallback{bufferPool.onChunkFreeCallback},
+      params{bufferPool.params} {}
 
 template <typename PoolT, typename BufferType, typename BufferParentType>
 void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size) {
@@ -49,13 +59,23 @@ void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::drain() {
         }
     }
     for (auto &chunk : this->chunksToFree) {
-        this->chunkAllocator->free(chunk.first + startingOffset, chunk.second);
+        this->chunkAllocator->free(chunk.first + params.startingOffset, chunk.second);
         if (static_cast<PoolT *>(this)->onChunkFreeCallback) {
             (static_cast<PoolT *>(this)->*onChunkFreeCallback)(chunk.first, chunk.second);
         }
     }
     this->chunksToFree.clear();
 }
+
+template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
+AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::AbstractBuffersAllocator(const SmallBuffersParams &params)
+    : params{params} {
+    DEBUG_BREAK_IF(params.aggregatedSmallBuffersPoolSize < params.smallBufferThreshold);
+}
+
+template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
+AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::AbstractBuffersAllocator()
+    : AbstractBuffersAllocator(SmallBuffersParams::getDefaultParams()) {}
 
 template <typename BuffersPoolType, typename BufferType, typename BufferParentType>
 bool AbstractBuffersAllocator<BuffersPoolType, BufferType, BufferParentType>::isPoolBuffer(const BufferParentType *buffer) const {
