@@ -5767,7 +5767,7 @@ HWTEST2_F(InOrderCmdListTests, givenMitigateHostVisibleSignalWhenCallingSynchron
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->hostSynchronize(-1));
 
-    if (device->getProductHelper().isDcFlushAllowed()) {
+    if (device->getProductHelper().isDcFlushAllowed() && !ultCsr->heaplessModeEnabled) {
         EXPECT_TRUE(ultCsr->waitForTaskCountCalled);
         EXPECT_TRUE(ultCsr->flushTagUpdateCalled);
     } else {
