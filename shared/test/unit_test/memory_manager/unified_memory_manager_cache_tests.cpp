@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_ail_configuration.h"
+#include "shared/test/common/mocks/mock_deferred_deleter.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -827,7 +828,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationInUsageWhenAllocatingAfterFr
     svmManager->cleanupUSMAllocCaches();
 }
 
-TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCalledThenOldAllocationsAreRemoved) {
+TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCalledThenOldAllocationsAreRemovedIfDeferredDeleterHasNoWork) {
     std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
@@ -862,10 +863,19 @@ TEST_F(SvmDeviceAllocationCacheTest, givenUsmReuseCleanerWhenTrimOldInCachesCall
     svmManager->usmDeviceAllocationsCache.allocations[0].saveTime = oldTimePoint;
     svmManager->usmDeviceAllocationsCache.allocations[1].saveTime = notTrimmedTimePoint;
 
+    MockMemoryManager *memoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
+    memoryManager->setDeferredDeleter(new MockDeferredDeleter);
     mockUnifiedMemoryReuseCleaner->trimOldInCaches();
+    EXPECT_EQ(2u, svmManager->usmDeviceAllocationsCache.allocations.size());
 
+    mockUnifiedMemoryReuseCleaner->trimOldInCaches();
     EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
     EXPECT_EQ(notTrimmedTimePoint, svmManager->usmDeviceAllocationsCache.allocations[0].saveTime);
+
+    svmManager->usmDeviceAllocationsCache.allocations[0].saveTime = oldTimePoint;
+    memoryManager->setDeferredDeleter(nullptr);
+    mockUnifiedMemoryReuseCleaner->trimOldInCaches();
+    EXPECT_EQ(0u, svmManager->usmDeviceAllocationsCache.allocations.size());
 
     svmManager->cleanupUSMAllocCaches();
     EXPECT_EQ(0u, mockUnifiedMemoryReuseCleaner->svmAllocationCaches.size());
@@ -894,7 +904,7 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCal
     svmManager->freeSVMAlloc(allocation);
     svmManager->freeSVMAlloc(allocation2);
     svmManager->freeSVMAlloc(allocation3);
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 3u);
+    EXPECT_EQ(3u, svmManager->usmDeviceAllocationsCache.allocations.size());
 
     const auto baseTimePoint = std::chrono::high_resolution_clock::now();
     const auto timeDiff = std::chrono::microseconds(1);
@@ -904,7 +914,12 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCal
     svmManager->usmDeviceAllocationsCache.allocations[2].saveTime = baseTimePoint + timeDiff * 2;
 
     svmManager->usmDeviceAllocationsCache.trimOldAllocs(baseTimePoint + timeDiff);
+    EXPECT_EQ(2u, svmManager->usmDeviceAllocationsCache.allocations.size());
 
+    svmManager->usmDeviceAllocationsCache.trimOldAllocs(baseTimePoint + timeDiff);
+    EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
+
+    svmManager->usmDeviceAllocationsCache.trimOldAllocs(baseTimePoint + timeDiff);
     EXPECT_EQ(1u, svmManager->usmDeviceAllocationsCache.allocations.size());
     EXPECT_EQ(baseTimePoint + timeDiff * 2, svmManager->usmDeviceAllocationsCache.allocations[0].saveTime);
 
@@ -1526,7 +1541,7 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalle
     svmManager->freeSVMAlloc(allocation);
     svmManager->freeSVMAlloc(allocation2);
     svmManager->freeSVMAlloc(allocation3);
-    EXPECT_EQ(svmManager->usmHostAllocationsCache.allocations.size(), 3u);
+    EXPECT_EQ(3u, svmManager->usmHostAllocationsCache.allocations.size());
 
     auto baseTimePoint = std::chrono::high_resolution_clock::now();
     auto timeDiff = std::chrono::microseconds(1);
@@ -1536,8 +1551,13 @@ TEST_F(SvmHostAllocationCacheTest, givenAllocationsInReuseWhenTrimOldAllocsCalle
     svmManager->usmHostAllocationsCache.allocations[2].saveTime = baseTimePoint + timeDiff * 2;
 
     svmManager->usmHostAllocationsCache.trimOldAllocs(baseTimePoint + timeDiff);
+    EXPECT_EQ(2u, svmManager->usmHostAllocationsCache.allocations.size());
 
-    EXPECT_EQ(svmManager->usmHostAllocationsCache.allocations.size(), 1u);
+    svmManager->usmHostAllocationsCache.trimOldAllocs(baseTimePoint + timeDiff);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache.allocations.size());
+
+    svmManager->usmHostAllocationsCache.trimOldAllocs(baseTimePoint + timeDiff);
+    EXPECT_EQ(1u, svmManager->usmHostAllocationsCache.allocations.size());
     EXPECT_EQ(baseTimePoint + timeDiff * 2, svmManager->usmHostAllocationsCache.allocations[0].saveTime);
 
     svmManager->cleanupUSMAllocCaches();

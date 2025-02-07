@@ -178,6 +178,7 @@ void SVMAllocsManager::SvmAllocationCache::trimOldAllocs(std::chrono::high_resol
         }
         svmAllocsManager->freeSVMAllocImpl(allocationIter->allocation, FreePolicyType::defer, svmData);
         allocationIter = allocations.erase(allocationIter);
+        return;
     }
 }
 

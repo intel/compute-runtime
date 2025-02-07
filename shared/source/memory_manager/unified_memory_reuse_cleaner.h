@@ -19,8 +19,8 @@ class UnifiedMemoryReuseCleaner {
     using SvmAllocationCache = SVMAllocsManager::SvmAllocationCache;
 
   public:
-    static constexpr auto sleepTime = std::chrono::seconds(2u);
-    static constexpr auto maxHoldTime = sleepTime;
+    static constexpr auto sleepTime = std::chrono::milliseconds(15u);
+    static constexpr auto maxHoldTime = std::chrono::seconds(10u);
     UnifiedMemoryReuseCleaner();
     virtual ~UnifiedMemoryReuseCleaner();
 

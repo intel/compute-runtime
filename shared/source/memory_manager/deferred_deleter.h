@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,12 +31,13 @@ class DeferredDeleter {
 
     MOCKABLE_VIRTUAL void drain(bool blocking, bool hostptrsOnly);
 
+    MOCKABLE_VIRTUAL bool areElementsReleased(bool hostptrsOnly);
+
   protected:
     void stop();
     void safeStop();
     void ensureThread();
     MOCKABLE_VIRTUAL void clearQueue(bool hostptrsOnly);
-    MOCKABLE_VIRTUAL bool areElementsReleased(bool hostptrsOnly);
     MOCKABLE_VIRTUAL bool shouldStop();
 
     static void *run(void *);

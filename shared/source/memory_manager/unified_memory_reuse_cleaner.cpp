@@ -8,6 +8,8 @@
 #include "shared/source/memory_manager/unified_memory_reuse_cleaner.h"
 
 #include "shared/source/helpers/sleep.h"
+#include "shared/source/memory_manager/deferred_deleter.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include <thread>
@@ -62,6 +64,11 @@ void UnifiedMemoryReuseCleaner::trimOldInCaches() {
     const std::chrono::high_resolution_clock::time_point trimTimePoint = std::chrono::high_resolution_clock::now() - maxHoldTime;
     std::lock_guard<std::mutex> lockSvmAllocationCaches(this->svmAllocationCachesMutex);
     for (auto svmAllocCache : this->svmAllocationCaches) {
+        if (auto deferredDeleter = svmAllocCache->memoryManager->getDeferredDeleter()) {
+            if (false == deferredDeleter->areElementsReleased(false)) {
+                continue;
+            }
+        }
         svmAllocCache->trimOldAllocs(trimTimePoint);
     }
 }
