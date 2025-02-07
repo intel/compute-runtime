@@ -712,7 +712,8 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
 
             NEO::SvmAllocationData *externalDeviceAllocData = nullptr;
-            if (!externalStorageProperties->deviceAddress || !device->getDriverHandle()->findAllocationDataForRange(externalStorageProperties->deviceAddress, sizeof(uint64_t), externalDeviceAllocData)) {
+            if (!externalStorageProperties->deviceAddress || !device->getDriverHandle()->findAllocationDataForRange(externalStorageProperties->deviceAddress, sizeof(uint64_t), externalDeviceAllocData) ||
+                externalStorageProperties->incrementValue == 0) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
@@ -723,9 +724,10 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
 
             auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), allocation, castToUint64(externalStorageProperties->deviceAddress),
                                                                                       allocation, reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->completionValue, 1, 1);
-            inOrderExecInfo->setIncrementValue(externalStorageProperties->incrementValue);
 
             updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
+
+            this->inOrderIncrementValue = externalStorageProperties->incrementValue;
         }
 
         extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);

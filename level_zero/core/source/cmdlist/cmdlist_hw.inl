@@ -179,7 +179,7 @@ void CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(Event 
     this->commandContainer.addToResidencyContainer(inOrderExecInfo->getDeviceCounterAllocation());
     this->commandContainer.addToResidencyContainer(inOrderExecInfo->getHostCounterAllocation());
 
-    if (signalEvent) {
+    if (signalEvent && signalEvent->getInOrderIncrementValue() == 0) {
         if (signalEvent->isCounterBased() || nonWalkerInOrderCmdsChaining || (isImmediateType() && this->duplicatedInOrderCounterStorageEnabled)) {
             signalEvent->updateInOrderExecState(inOrderExecInfo, inOrderExecInfo->getCounterValue(), inOrderExecInfo->getAllocationOffset());
         } else {

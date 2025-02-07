@@ -97,9 +97,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
     void pushTempTimestampNode(TagNodeBase *node, uint64_t value);
     void releaseNotUsedTempTimestampNodes(bool forceReturn);
 
-    void setIncrementValue(uint64_t value) { incrementValue = value; }
-    uint64_t getIncrementValue() const { return incrementValue; }
-
   protected:
     void uploadToTbx(TagNodeBase &node, size_t size);
 
@@ -114,7 +111,6 @@ class InOrderExecInfo : public NEO::NonCopyableClass {
 
     uint64_t counterValue = 0;
     uint64_t lastWaitedCounterValue = 0;
-    uint64_t incrementValue = 0;
     uint64_t regularCmdListSubmissionCounter = 0;
     uint64_t deviceAddress = 0;
     uint64_t *hostAddress = nullptr;

@@ -303,6 +303,7 @@ struct Event : _ze_event_handle_t {
     uint64_t getInOrderExecSignalValueWithSubmissionCounter() const;
     uint64_t getInOrderExecBaseSignalValue() const { return inOrderExecSignalValue; }
     uint32_t getInOrderAllocationOffset() const { return inOrderAllocationOffset; }
+    uint64_t getInOrderIncrementValue() const { return inOrderIncrementValue; }
     void setLatestUsedCmdQueue(CommandQueue *newCmdQ);
     NEO::TimeStampData *peekReferenceTs() {
         return static_cast<NEO::TimeStampData *>(ptrOffset(getHostAddress(), getMaxPacketsCount() * getSinglePacketSize()));
@@ -352,6 +353,7 @@ struct Event : _ze_event_handle_t {
     uint64_t contextEndTS = 1;
 
     uint64_t inOrderExecSignalValue = 0;
+    uint64_t inOrderIncrementValue = 0;
     uint32_t inOrderAllocationOffset = 0;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
