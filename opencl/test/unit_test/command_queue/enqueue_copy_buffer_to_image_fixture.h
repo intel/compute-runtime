@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,19 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
         delete BufferDefaults::context;
         delete context;
         CommandEnqueueFixture::tearDown();
+    }
+
+    int32_t adjustBuiltInType(bool isHeaplessEnabled, int32_t builtInType) {
+
+        if (isHeaplessEnabled) {
+            switch (builtInType) {
+            case EBuiltInOps::copyBufferToImage3d:
+            case EBuiltInOps::copyBufferToImage3dStateless:
+                return EBuiltInOps::copyBufferToImage3dHeapless;
+            }
+        }
+
+        return builtInType;
     }
 
     MockContext *context = nullptr;
