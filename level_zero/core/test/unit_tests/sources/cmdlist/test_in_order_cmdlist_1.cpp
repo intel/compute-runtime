@@ -5237,17 +5237,49 @@ HWTEST2_F(InOrderCmdListTests, givenCorrectInputParamsWhenCreatingCbEvent2ThenRe
     EXPECT_EQ(counterValue, eventObj->getInOrderExecInfo()->getCounterValue());
     EXPECT_EQ(hostAddress, eventObj->getInOrderExecInfo()->getBaseHostAddress());
     EXPECT_EQ(castToUint64(gpuAddress), eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+    EXPECT_EQ(nullptr, eventObj->getInOrderExecInfo()->getDeviceCounterAllocation());
 
-    uint64_t addresss = 0;
+    uint64_t address = 0;
     uint64_t value = 0;
-    zexEventGetDeviceAddress(handle, &value, &addresss);
+    zexEventGetDeviceAddress(handle, &value, &address);
 
-    EXPECT_EQ(addresss, eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+    EXPECT_EQ(address, eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
     EXPECT_EQ(value, counterValue);
 
     zeEventDestroy(handle);
 
     context->freeMem(hostAddress);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenUsmDeviceAllocationWhenCreatingCbEventFromExternalMemoryThenAssignGraphicsAllocation, MatchAny) {
+    auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));
+    auto deviceAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+
+    zex_counter_based_event_external_sync_alloc_properties_t externalSyncAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_SYNC_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    externalSyncAllocProperties.completionValue = 2;
+    externalSyncAllocProperties.deviceAddress = deviceAddress;
+    externalSyncAllocProperties.hostAddress = hostAddress;
+
+    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+    counterBasedDesc.pNext = &externalSyncAllocProperties;
+
+    ze_event_handle_t handle = nullptr;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+
+    auto eventObj = Event::fromHandle(handle);
+
+    ASSERT_NE(nullptr, eventObj);
+    ASSERT_NE(nullptr, eventObj->getInOrderExecInfo().get());
+
+    EXPECT_EQ(castToUint64(deviceAddress), eventObj->getInOrderExecInfo()->getBaseDeviceAddress());
+    EXPECT_NE(nullptr, eventObj->getInOrderExecInfo()->getDeviceCounterAllocation());
+
+    zeEventDestroy(handle);
+
+    context->freeMem(hostAddress);
+    context->freeMem(deviceAddress);
 }
 
 HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCreatingCounterBasedEventThenSetAllParams, MatchAny) {

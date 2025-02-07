@@ -673,6 +673,15 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
     inOrderTimestampNode = newNode;
 }
 
+NEO::GraphicsAllocation *Event::getExternalCounterAllocationFromAddress(uint64_t *address) const {
+    NEO::SvmAllocationData *allocData = nullptr;
+    if (!address || !device->getDriverHandle()->findAllocationDataForRange(address, sizeof(uint64_t), allocData)) {
+        return nullptr;
+    }
+
+    return allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+}
+
 ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
     bool interruptMode = false;
     bool kmdWaitMode = false;
@@ -699,31 +708,31 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            NEO::SvmAllocationData *externalHostAllocData = nullptr;
-            if (!device->getDriverHandle()->findAllocationDataForRange(externalSyncAllocProperties->hostAddress, sizeof(uint64_t), externalHostAllocData)) {
+            auto deviceAlloc = getExternalCounterAllocationFromAddress(externalSyncAllocProperties->deviceAddress);
+            auto hostAlloc = getExternalCounterAllocationFromAddress(externalSyncAllocProperties->hostAddress);
+
+            if (!hostAlloc) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            auto allocation = externalHostAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, castToUint64(externalSyncAllocProperties->deviceAddress),
-                                                                                      allocation, externalSyncAllocProperties->hostAddress, externalSyncAllocProperties->completionValue, 1, 1);
+            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), deviceAlloc, castToUint64(externalSyncAllocProperties->deviceAddress),
+                                                                                      hostAlloc, externalSyncAllocProperties->hostAddress, externalSyncAllocProperties->completionValue, 1, 1);
             updateInOrderExecState(inOrderExecInfo, externalSyncAllocProperties->completionValue, 0);
         } else if (extendedDesc->stype == ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES) {
             auto externalStorageProperties = reinterpret_cast<const zex_counter_based_event_external_storage_properties_t *>(extendedDesc);
 
-            NEO::SvmAllocationData *externalDeviceAllocData = nullptr;
-            if (!externalStorageProperties->deviceAddress || !device->getDriverHandle()->findAllocationDataForRange(externalStorageProperties->deviceAddress, sizeof(uint64_t), externalDeviceAllocData) ||
-                externalStorageProperties->incrementValue == 0) {
+            auto deviceAlloc = getExternalCounterAllocationFromAddress(externalStorageProperties->deviceAddress);
+
+            if (!deviceAlloc || externalStorageProperties->incrementValue == 0) {
                 return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
 
-            auto allocation = externalDeviceAllocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-            auto offset = ptrDiff(externalStorageProperties->deviceAddress, allocation->getGpuAddress());
+            auto offset = ptrDiff(externalStorageProperties->deviceAddress, deviceAlloc->getGpuAddress());
 
-            auto hostAddress = ptrOffset(device->getNEODevice()->getMemoryManager()->lockResource(allocation), offset);
+            auto hostAddress = ptrOffset(device->getNEODevice()->getMemoryManager()->lockResource(deviceAlloc), offset);
 
-            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), allocation, castToUint64(externalStorageProperties->deviceAddress),
-                                                                                      allocation, reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->completionValue, 1, 1);
+            auto inOrderExecInfo = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), deviceAlloc, castToUint64(externalStorageProperties->deviceAddress),
+                                                                                      deviceAlloc, reinterpret_cast<uint64_t *>(hostAddress), externalStorageProperties->completionValue, 1, 1);
 
             updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
 

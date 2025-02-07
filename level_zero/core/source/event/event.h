@@ -341,6 +341,7 @@ struct Event : _ze_event_handle_t {
     Event(int index, Device *device) : device(device), index(index) {}
 
     ze_result_t enableExtensions(const EventDescriptor &eventDescriptor);
+    NEO::GraphicsAllocation *getExternalCounterAllocationFromAddress(uint64_t *address) const;
 
     void unsetCmdQueue();
     void releaseTempInOrderTimestampNodes();
