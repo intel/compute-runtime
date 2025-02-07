@@ -490,11 +490,11 @@ TEST_F(SvmDeviceAllocationCacheTest, givenAllocationWithDifferentSizeWhenAllocat
     EXPECT_EQ(svmData->size, firstAllocationSize);
 
     auto secondAllocation = svmManager->createUnifiedMemoryAllocation(secondAllocationSize, unifiedMemoryProperties);
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
-    EXPECT_NE(secondAllocation, allocation);
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 0u);
+    EXPECT_EQ(secondAllocation, allocation);
 
     svmManager->freeSVMAlloc(secondAllocation);
-    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 2u);
+    EXPECT_EQ(svmManager->usmDeviceAllocationsCache.allocations.size(), 1u);
 
     svmData = svmManager->getSVMAlloc(secondAllocation);
     EXPECT_EQ(svmData->size, secondAllocationSize);

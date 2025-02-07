@@ -126,6 +126,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
                 memoryManager->recordHostAllocationGetFromReuse(allocationIter->allocationSize);
             }
             allocations.erase(allocationIter);
+            svmData->size = size;
             return allocationPtr;
         }
     }
@@ -558,7 +559,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
         if (InternalMemoryType::deviceUnifiedMemory == svmData->memoryType &&
             false == svmData->isInternalAllocation &&
             this->usmDeviceAllocationsCacheEnabled) {
-            if (this->usmDeviceAllocationsCache.insert(svmData->size, ptr, svmData)) {
+            if (this->usmDeviceAllocationsCache.insert(svmData->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize(), ptr, svmData)) {
                 return true;
             }
         }
