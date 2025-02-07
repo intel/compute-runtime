@@ -1688,7 +1688,10 @@ HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIs
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
 
-    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.DualSubSliceCount) * minSimd;
+    uint32_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.DualSubSliceCount) * minSimd;
+
+    expectedWGSize = gfxCoreHelper.overrideMaxWorkGroupSize(expectedWGSize);
+
     EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
 }
 
