@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -487,4 +487,35 @@ TEST_F(DebugEnvReaderTests, givenEnvironmentVariableReaderWhenCreateOsReaderWith
     std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, ""));
     EXPECT_NE(nullptr, settingsReader);
 }
+
+TEST_F(DebugEnvReaderTests, givenTooLongEnvValueWhenGetEnvironmentVariableIsCalledThenNullptrIsReturned) {
+    {
+        auto maxAllowedEnvVariableSize = CommonConstants::maxAllowedEnvVariableSize;
+        const char *testingVariableName = "test";
+        VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+        {
+
+            std::string veryLongPath(maxAllowedEnvVariableSize + 1u, 'a');
+            veryLongPath.back() = '\0';
+            std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, veryLongPath.c_str()}};
+            VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+            auto envValue = IoFunctions::getEnvironmentVariable(testingVariableName);
+
+            ASSERT_NE(nullptr, veryLongPath.c_str());
+            EXPECT_EQ(nullptr, envValue);
+        }
+
+        {
+            std::string goodPath(maxAllowedEnvVariableSize, 'a');
+            goodPath.back() = '\0';
+            std::unordered_map<std::string, std::string> mockableEnvs = {{testingVariableName, goodPath.c_str()}};
+            VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+            auto envValue = IoFunctions::getEnvironmentVariable(testingVariableName);
+
+            ASSERT_NE(nullptr, goodPath.c_str());
+            EXPECT_EQ(mockableEnvs.at(testingVariableName).c_str(), envValue);
+        }
+    }
+}
+
 } // namespace NEO

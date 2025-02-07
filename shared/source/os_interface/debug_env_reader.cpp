@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,9 +69,7 @@ int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t d
 }
 
 std::string EnvironmentVariableReader::getSetting(const char *settingName, const std::string &value, DebugVarPrefix &type) {
-    char *envValue;
-    std::string keyValue;
-    keyValue.assign(value);
+    std::string keyValue = value;
 
     auto prefixString = ApiSpecificConfig::getPrefixStrings();
     auto prefixType = ApiSpecificConfig::getPrefixTypes();
@@ -80,7 +78,8 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
     for (const auto &prefix : prefixString) {
         std::string neoKey = prefix;
         neoKey += settingName;
-        envValue = IoFunctions::getenvPtr(neoKey.c_str());
+        auto envValue = IoFunctions::getEnvironmentVariable(neoKey.c_str());
+
         if (envValue) {
             keyValue.assign(envValue);
             type = prefixType[i];
@@ -93,14 +92,14 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
 }
 
 std::string EnvironmentVariableReader::getSetting(const char *settingName, const std::string &value) {
-    char *envValue;
-    std::string keyValue;
-    keyValue.assign(value);
+    std::string keyValue = value;
+    char *envValue = IoFunctions::getEnvironmentVariable(settingName);
 
-    envValue = IoFunctions::getenvPtr(settingName);
     if (envValue) {
         keyValue.assign(envValue);
     }
+
     return keyValue;
 }
+
 } // namespace NEO

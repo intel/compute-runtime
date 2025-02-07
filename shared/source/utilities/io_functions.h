@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string.h"
+
 #include <cstdarg>
 #include <cstdio>
 #include <stdlib.h>
@@ -49,6 +52,17 @@ inline bool getEnvToBool(const char *name) {
         return false;
     return (0 == strcmp("1", env));
 }
-} // namespace IoFunctions
 
+inline char *getEnvironmentVariable(const char *name) {
+
+    char *environmentVariable = getenvPtr(name);
+
+    if (strnlen_s(environmentVariable, CommonConstants::maxAllowedEnvVariableSize) < CommonConstants::maxAllowedEnvVariableSize) {
+        return environmentVariable;
+    }
+
+    return nullptr;
+}
+
+} // namespace IoFunctions
 } // namespace NEO

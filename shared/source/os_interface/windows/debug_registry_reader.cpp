@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,7 +188,6 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
 
     if (!(getSettingStringCommon(settingName, keyValue))) {
-        char *envValue;
 
         auto prefixString = ApiSpecificConfig::getPrefixStrings();
         auto prefixType = ApiSpecificConfig::getPrefixTypes();
@@ -197,7 +196,8 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
         for (const auto &prefix : prefixString) {
             std::string neoKey = prefix;
             neoKey += settingName;
-            envValue = IoFunctions::getenvPtr(neoKey.c_str());
+            auto envValue = IoFunctions::getEnvironmentVariable(neoKey.c_str());
+
             if (envValue) {
                 keyValue.assign(envValue);
                 type = prefixType[i];
@@ -214,7 +214,8 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     std::string keyValue = value;
 
     if (!(getSettingStringCommon(settingName, keyValue))) {
-        const char *envValue = IoFunctions::getenvPtr(settingName);
+        const char *envValue = IoFunctions::getEnvironmentVariable(settingName);
+
         if (envValue) {
             keyValue.assign(envValue);
         }

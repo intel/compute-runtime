@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,14 +32,12 @@ int64_t getSetting(const char *settingName, int64_t defaultValue) {
 }
 
 std::string getSetting(const char *settingName, const std::string &value) {
-    char *envValue;
-    std::string keyValue;
-    keyValue.assign(value);
-
-    envValue = IoFunctions::getenvPtr(settingName);
+    std::string keyValue = value;
+    char *envValue = IoFunctions::getEnvironmentVariable(settingName);
     if (envValue) {
         keyValue.assign(envValue);
     }
+
     return keyValue;
 }
 
