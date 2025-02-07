@@ -23,8 +23,7 @@ struct ClCreateKernelsInProgramTests : public ApiTests {
         ApiTests::SetUp();
 
         constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
-        auto simd = std::max(16u, pDevice->getGfxCoreHelper().getMinimalSIMDSize());
-        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), static_cast<uint8_t>(simd));
+        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
         const auto &src = zebinData->storage;
         const auto &binarySize = src.size();
 
