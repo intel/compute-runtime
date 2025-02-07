@@ -113,7 +113,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
     if (getMcsAllocation()) {
         auto mcsGmm = getMcsAllocation()->getDefaultGmm();
 
-        if (mcsGmm->unifiedAuxTranslationCapable() && mcsGmm->hasMultisampleControlSurface()) {
+        if (EncodeSurfaceState<GfxFamily>::shouldProgramAuxForMcs(mcsGmm->unifiedAuxTranslationCapable(), mcsGmm->hasMultisampleControlSurface())) {
             auto *releaseHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getReleaseHelper();
             DEBUG_BREAK_IF(releaseHelper == nullptr);
             EncodeSurfaceState<GfxFamily>::setAuxParamsForMCSCCS(surfaceState, releaseHelper);

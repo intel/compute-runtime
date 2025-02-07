@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -461,4 +461,34 @@ HWTEST2_F(XeHPAndLaterImageHelperTests, givenAuxModeMcsLceWhenAppendingSurfaceSt
     EXPECT_EQ(mockCompressionFormat, rss.getCompressionFormat());
     EXPECT_EQ(expectedGetSurfaceStateCompressionFormatCalled, gmmClientContext->getSurfaceStateCompressionFormatCalled);
     EXPECT_EQ(expectedGetMediaSurfaceStateCompressionFormatCalled, gmmClientContext->getMediaSurfaceStateCompressionFormatCalled);
+}
+
+HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenAuxCapableIsNotSetThenProgramAuxBaseAddressAnyway, IsAtLeastBmg) {
+    MockContext context;
+    McsSurfaceInfo msi = {10, 20, 3};
+    auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
+    imageHw->setMcsSurfaceInfo(msi);
+    imageHw->setMcsAllocation(mcsAlloc);
+    auto mockResource = static_cast<MockGmmResourceInfo *>(mcsAlloc->getDefaultGmm()->gmmResourceInfo.get());
+    mockResource->setMultisampleControlSurface();
+
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 }

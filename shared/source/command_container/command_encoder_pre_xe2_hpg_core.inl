@@ -92,4 +92,9 @@ bool EncodeSurfaceState<Family>::isAuxModeEnabled(R_SURFACE_STATE *surfaceState,
 template <typename Family>
 void EncodeEnableRayTracing<Family>::append3dStateBtd(void *ptr3dStateBtd) {}
 
+template <typename Family>
+bool EncodeSurfaceState<Family>::shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface) {
+    return isAuxCapable && hasMcsSurface;
+}
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,6 +71,7 @@ struct EncodeSurfaceState {
     static void appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState);
     static void setPitchForScratch(R_SURFACE_STATE *surfaceState, uint32_t pitch, const ProductHelper &productHelper);
     static uint32_t getPitchForScratchInBytes(R_SURFACE_STATE *surfaceState, const ProductHelper &productHelper);
+    static bool shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface);
 };
 
 } // namespace NEO

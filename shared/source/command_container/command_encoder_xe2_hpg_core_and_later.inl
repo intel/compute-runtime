@@ -128,4 +128,9 @@ inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const Pro
     }
 }
 
+template <typename Family>
+bool EncodeSurfaceState<Family>::shouldProgramAuxForMcs(bool isAuxCapable, bool hasMcsSurface) {
+    return hasMcsSurface;
+}
+
 } // namespace NEO
