@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -189,6 +189,9 @@ off_t lseek(int fd, off_t offset, int whence) noexcept {
 }
 long sysconf(int name) {
     return ::sysconf(name);
+}
+int mkfifo(const char *pathname, mode_t mode) {
+    return ::mkfifo(pathname, mode);
 }
 } // namespace SysCalls
 } // namespace NEO

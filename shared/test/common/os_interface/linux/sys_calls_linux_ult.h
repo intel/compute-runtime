@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,6 +54,8 @@ extern bool allowFakeDevicePath;
 extern int flockRetVal;
 extern int openFuncRetVal;
 extern uint32_t openFuncCalled;
+extern uint32_t accessFuncCalled;
+extern uint32_t pollFuncCalled;
 extern int closeFuncRetVal;
 extern int closeFuncArgPassed;
 extern const char *drmVersion;
@@ -73,7 +75,10 @@ extern int flockCalled;
 extern int fsyncCalled;
 extern int fsyncArgPassed;
 extern int fsyncRetVal;
+extern uint32_t readFuncCalled;
 extern uint32_t writeFuncCalled;
+extern uint32_t mkfifoFuncCalled;
+extern bool failMkfifo;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;
@@ -86,6 +91,7 @@ extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
 extern bool captureDlOpenFilePath;
 extern std::string dlOpenFilePathPassed;
+extern std::string mkfifoPathNamePassed;
 
 extern long sysconfReturn;
 } // namespace SysCalls
