@@ -702,38 +702,6 @@ TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourc
     pProgram->release();
 }
 
-TEST_F(MinimumProgramFixture, givenAILReturningTrueForFallbackRequirementWhenBuildingProgramThenMarkContextAsNonZebin) {
-    class MockAIL : public MockAILConfiguration {
-      public:
-        bool isFallbackToPatchtokensRequired() override {
-            return true;
-        }
-    };
-    auto pDevice = pContext->getDevice(0);
-    auto rootDeviceEnvironment = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
-    rootDeviceEnvironment->ailConfiguration.reset(new MockAIL());
-
-    ASSERT_FALSE(pContext->checkIfContextIsNonZebin());
-
-    const char *kernelSources[] = {"some source code"};
-    size_t knownSourceSize = strlen(kernelSources[0]);
-    MockProgram *pProgram = nullptr;
-    pProgram = Program::create<SucceedingGenBinaryProgram>(
-        pContext,
-        1,
-        kernelSources,
-        &knownSourceSize,
-        retVal);
-
-    ASSERT_NE(nullptr, pProgram);
-    ASSERT_EQ(CL_SUCCESS, retVal);
-
-    retVal = pProgram->build(pProgram->getDevices(), "");
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(pContext->checkIfContextIsNonZebin());
-    pProgram->release();
-}
-
 TEST_F(MinimumProgramFixture, givenApplicationContextMarkedAsNonZebinWhenBuildingProgramThenInternalOptionsShouldContainDisableZebinOption) {
     const char *kernelSources[] = {"some source code"};
     size_t knownSourceSize = strlen(kernelSources[0]);

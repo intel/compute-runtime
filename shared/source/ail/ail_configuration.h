@@ -89,8 +89,6 @@ class AILConfiguration {
 
     virtual bool isRunAloneContextRequired() = 0;
 
-    virtual bool isFallbackToPatchtokensRequired() = 0;
-
     virtual bool isAdjustMicrosecondResolutionRequired() = 0;
 
     virtual uint32_t getMicrosecondResolution() = 0;
@@ -112,7 +110,6 @@ extern const std::set<std::string_view> applicationsBufferPoolDisabledXe;
 extern const std::set<std::string_view> applicationsOverfetchDisabled;
 extern const std::set<std::string_view> applicationsDrainHostptrsDisabled;
 extern const std::set<std::string_view> applicationsDeviceUSMRecyclingLimited;
-extern const std::set<std::string_view> applicationsFallbackToPatchtokensRequiredDg2;
 extern const std::set<std::string_view> applicationsMicrosecontResolutionAdjustment;
 
 extern const uint32_t microsecondAdjustment;
@@ -138,7 +135,6 @@ class AILConfigurationHw : public AILConfiguration {
     bool disableBindlessAddressing() override;
     bool limitAmountOfDeviceMemoryForRecycling() override;
     bool isRunAloneContextRequired() override;
-    bool isFallbackToPatchtokensRequired() override;
     bool isAdjustMicrosecondResolutionRequired() override;
     uint32_t getMicrosecondResolution() override;
 

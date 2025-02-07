@@ -132,12 +132,6 @@ HWTEST2_F(AILTests, givenAilWhenCheckingDrainHostptrsRequiredThenExpectTrue, Mat
     EXPECT_TRUE(ail.drainHostptrs());
 }
 
-HWTEST2_F(AILTests, givenAilWhenCheckingIfPatchtokenFallbackIsRequiredThenExpectFalse, MatchAny) {
-    AILWhitebox<productFamily> ail;
-    ail.processName = "other";
-    EXPECT_FALSE(ail.isFallbackToPatchtokensRequired());
-}
-
 HWTEST2_F(AILTests, givenAilWhenGetMicrosecondResolutionCalledThenCorrectValueReturned, MatchAny) {
     AILWhitebox<productFamily> ail;
     EXPECT_EQ(ail.getMicrosecondResolution(), microsecondAdjustment);

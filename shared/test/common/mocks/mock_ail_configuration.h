@@ -72,10 +72,6 @@ class MockAILConfiguration : public AILConfiguration {
         return true;
     }
 
-    bool isFallbackToPatchtokensRequired() override {
-        return false;
-    }
-
     bool isAdjustMicrosecondResolutionRequired() override {
         return adjustMicrosecondResolution;
     }

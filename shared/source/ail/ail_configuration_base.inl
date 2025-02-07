@@ -77,11 +77,6 @@ inline bool AILConfigurationHw<product>::limitAmountOfDeviceMemoryForRecycling()
 }
 
 template <PRODUCT_FAMILY product>
-inline bool AILConfigurationHw<product>::isFallbackToPatchtokensRequired() {
-    return false;
-}
-
-template <PRODUCT_FAMILY product>
 inline bool AILConfigurationHw<product>::isAdjustMicrosecondResolutionRequired() {
     return shouldAdjustMicrosecondResolution;
 }

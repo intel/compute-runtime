@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,9 +78,6 @@ T *Program::create(
         }
 
         program = new T(pContext, false, pContext->getDevices());
-        if (ail && ail->isFallbackToPatchtokensRequired()) {
-            pContext->setContextAsNonZebin();
-        }
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::source;
     }
