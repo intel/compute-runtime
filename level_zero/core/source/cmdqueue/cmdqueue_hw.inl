@@ -113,11 +113,23 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     this->startingCmdBuffer = &this->commandStream;
 
+    NEO::LinearStream *parentStream = nullptr;
     if (this->isCopyOnlyCommandQueue) {
-        ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
+        if (NEO::debugManager.flags.ForceParentCommandStreamUsageForImmediateAppendForCopyEngine.get() == 1) {
+            parentStream = parentImmediateCommandlistLinearStream;
+        }
+        ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentStream);
     } else if (this->heaplessStateInitEnabled) {
+        parentStream = parentImmediateCommandlistLinearStream;
+        if (NEO::debugManager.flags.ForceParentCommandStreamUsageForImmediateAppendForComputeEngine.get() == 0) {
+            parentStream = nullptr;
+        }
         ret = this->executeCommandListsRegularHeapless(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     } else {
+        parentStream = parentImmediateCommandlistLinearStream;
+        if (NEO::debugManager.flags.ForceParentCommandStreamUsageForImmediateAppendForComputeEngine.get() == 0) {
+            parentStream = nullptr;
+        }
         ret = this->executeCommandListsRegular(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
     }
 
@@ -1286,10 +1298,6 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStartSecondaryBa
                 }
             }
         }
-    }
-
-    if (ctx.containsParentImmediateStream) {
-        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(commandContainer);
     }
 }
 

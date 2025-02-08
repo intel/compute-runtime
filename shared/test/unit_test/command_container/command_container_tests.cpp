@@ -98,6 +98,25 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleH
     }
 }
 
+using CommandContainerSwapStreamTest = Test<CommandContainerFixture>;
+TEST_F(CommandContainerSwapStreamTest, givenCommandContainerInitializedWithSecondaryCmdBufferAndForceSwapStreamsReturnsFalseThenCallIsUnsuccessful) {
+    class MyMockCommandContainer : public CommandContainer {
+      public:
+        bool swapStreams() override {
+            swapStreamsCalled++;
+            return forceSwapAction;
+        }
+
+        uint32_t swapStreamsCalled = 0u;
+        bool forceSwapAction = false;
+    };
+
+    MyMockCommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, true);
+
+    EXPECT_FALSE(cmdContainer.swapStreams());
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorrectAllocationTypeIsSet) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
@@ -121,6 +140,22 @@ TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenInitializ
     auto cmdStream = cmdContainer.getCommandStream();
 
     EXPECT_TRUE(cmdContainer.swapStreams());
+
+    EXPECT_EQ(cmdContainer.getCommandStream(), secondaryCmdStream);
+    EXPECT_EQ(cmdContainer.secondaryCommandStreamForImmediateCmdList.get(), cmdStream);
+}
+
+TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenInitializeThenCreateAdditionalLinearStreamAndReturnAccordingly) {
+    MyMockCommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, true);
+
+    EXPECT_NE(cmdContainer.secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+
+    auto secondaryCmdStream = cmdContainer.secondaryCommandStreamForImmediateCmdList.get();
+    auto cmdStream = cmdContainer.getCommandStream();
+
+    EXPECT_TRUE(cmdContainer.swapStreams());
+    EXPECT_TRUE(cmdContainer.usingSecondaryCmdbufInHostMem());
 
     EXPECT_EQ(cmdContainer.getCommandStream(), secondaryCmdStream);
     EXPECT_EQ(cmdContainer.secondaryCommandStreamForImmediateCmdList.get(), cmdStream);
