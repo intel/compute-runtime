@@ -34,7 +34,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.pushUnique(rootDeviceIndex);
         std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
-        subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+        subDeviceBitfields.emplace(rootDeviceIndex, deviceBitfield);
         NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::deviceUnifiedMemory, 1, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
         unifiedMemoryProperties.requestedAllocationType = allocationType;

@@ -53,7 +53,7 @@ bool FlatBatchBufferHelper::registerCommandChunk(CommandChunk &commandChunk) {
 }
 
 bool FlatBatchBufferHelper::registerBatchBufferStartAddress(uint64_t commandAddress, uint64_t startAddress) {
-    batchBufferStartAddressSequence.insert(std::pair<uint64_t, uint64_t>(commandAddress, startAddress));
+    batchBufferStartAddressSequence.emplace(commandAddress, startAddress);
     return true;
 }
 

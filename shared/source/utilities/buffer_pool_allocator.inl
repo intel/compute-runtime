@@ -39,7 +39,7 @@ AbstractBuffersPool<PoolT, BufferType, BufferParentType>::AbstractBuffersPool(Ab
 template <typename PoolT, typename BufferType, typename BufferParentType>
 void AbstractBuffersPool<PoolT, BufferType, BufferParentType>::tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size) {
     if (this->isPoolBuffer(possiblePoolBuffer)) {
-        this->chunksToFree.push_back({offset, size});
+        this->chunksToFree.emplace_back(offset, size);
     }
 }
 

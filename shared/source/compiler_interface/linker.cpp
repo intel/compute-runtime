@@ -263,7 +263,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
 
             traits.exportsFunctions = true;
             exportedFunctionsSegmentId = static_cast<int32_t>(symbolInfo.instructionSegmentId);
-            extFuncSymbols.push_back({symbolName, symbolInfo});
+            extFuncSymbols.emplace_back(symbolName, symbolInfo);
         }
     } else {
         return false;

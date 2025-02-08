@@ -35,7 +35,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
         }
 
         for (const auto &acronym : device.deviceAcronyms) {
-            data.acronyms.push_back({acronym.data(), device.aotConfig.value});
+            data.acronyms.emplace_back(acronym.data(), device.aotConfig.value);
         }
     }
 
@@ -45,7 +45,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
         groupedDevices[device.family].push_back(device.aotConfig.value);
     }
     for (const auto &entry : groupedDevices) {
-        data.familyGroups.push_back({productConfigHelper->getAcronymFromAFamily(entry.first).data(), entry.second});
+        data.familyGroups.emplace_back(productConfigHelper->getAcronymFromAFamily(entry.first).data(), entry.second);
     }
 
     // Populate Release groups
@@ -56,7 +56,7 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::collectSupp
     for (const auto &entry : groupedReleases) {
         auto name = productConfigHelper->getAcronymFromARelease(entry.first);
         if (!name.empty()) {
-            data.releaseGroups.push_back({name.data(), entry.second});
+            data.releaseGroups.emplace_back(name.data(), entry.second);
         }
     }
 
@@ -161,7 +161,7 @@ std::map<std::string, SupportedDevicesHelper::SupportedDevicesData> SupportedDev
                 std::string acronym = parser.readKey(acrNode).str();
                 uint32_t ipVersion;
                 if (parser.readValueChecked(acrNode, ipVersion)) {
-                    data.acronyms.push_back({acronym, ipVersion});
+                    data.acronyms.emplace_back(acronym, ipVersion);
                 }
             }
         }
@@ -178,7 +178,7 @@ std::map<std::string, SupportedDevicesHelper::SupportedDevicesData> SupportedDev
                     }
                 }
                 if (!ipVersions.empty()) {
-                    data.familyGroups.push_back({family, ipVersions});
+                    data.familyGroups.emplace_back(family, ipVersions);
                 }
             }
         }
@@ -195,7 +195,7 @@ std::map<std::string, SupportedDevicesHelper::SupportedDevicesData> SupportedDev
                     }
                 }
                 if (!ipVersions.empty()) {
-                    data.releaseGroups.push_back({release, ipVersions});
+                    data.releaseGroups.emplace_back(release, ipVersions);
                 }
             }
         }
@@ -272,14 +272,14 @@ SupportedDevicesHelper::SupportedDevicesData SupportedDevicesHelper::mergeOclocD
 
     // Sort FamilyGroups (alphabetically by group name)
     for (const auto &[family, ipVersions] : uniqueFamilyGroups) {
-        mergedData.familyGroups.push_back({family, std::vector<uint32_t>(ipVersions.begin(), ipVersions.end())});
+        mergedData.familyGroups.emplace_back(family, std::vector<uint32_t>(ipVersions.begin(), ipVersions.end()));
     }
     std::sort(mergedData.familyGroups.begin(), mergedData.familyGroups.end(),
               [](const auto &a, const auto &b) { return a.first < b.first; });
 
     // Sort ReleaseGroups (alphabetically by group name)
     for (const auto &[release, ipVersions] : uniqueReleaseGroups) {
-        mergedData.releaseGroups.push_back({release, std::vector<uint32_t>(ipVersions.begin(), ipVersions.end())});
+        mergedData.releaseGroups.emplace_back(release, std::vector<uint32_t>(ipVersions.begin(), ipVersions.end()));
     }
     std::sort(mergedData.releaseGroups.begin(), mergedData.releaseGroups.end(),
               [](const auto &a, const auto &b) { return a.first < b.first; });

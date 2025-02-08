@@ -148,7 +148,7 @@ void SettingsFileReader::parseStream(std::istream &inputStream) {
             }
         }
 
-        settingStringMap.insert(std::pair<std::string, std::string>(key, value));
+        settingStringMap.emplace(key, value);
     }
 }
 }; // namespace NEO

@@ -16,7 +16,7 @@ class DestructorCallbacks {
 
   public:
     inline void add(CallbackType *callback, void *userData) {
-        callbacks.push_back({callback, userData});
+        callbacks.emplace_back(callback, userData);
     }
     inline bool empty() {
         return callbacks.empty();
