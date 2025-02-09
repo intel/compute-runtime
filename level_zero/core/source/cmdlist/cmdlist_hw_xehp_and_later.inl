@@ -48,11 +48,15 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::isInOrderNonWalkerSignalingRequired(const Event *event) const {
-    if (event && compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
-        return true;
+    if (!event) {
+        return false;
     }
 
-    return (!this->duplicatedInOrderCounterStorageEnabled && event && (event->isUsingContextEndOffset() || !event->isCounterBased()));
+    const bool flushRequired = compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()));
+    const bool inOrderRequired = !this->duplicatedInOrderCounterStorageEnabled &&
+                                 (event->isUsingContextEndOffset() || !event->isCounterBased());
+
+    return flushRequired || inOrderRequired;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
