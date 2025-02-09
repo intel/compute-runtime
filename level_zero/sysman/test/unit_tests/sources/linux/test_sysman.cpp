@@ -249,6 +249,14 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErr
     EXPECT_FALSE(fsAccess->fileExists(path));
 }
 
+TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingSysFsAccessScanDirEntriesThenErrorIsReturned) {
+    auto pSysFsAccess = &pLinuxSysmanImp->getSysfsAccess();
+
+    std::string path = "noSuchDirectory";
+    std::vector<std::string> listFiles;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysFsAccess->scanDirEntries(path, listFiles));
+}
+
 TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMultipleFilesThenSuccessIsReturned) {
 
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
