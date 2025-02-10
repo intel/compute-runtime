@@ -272,6 +272,15 @@ class Context : public BaseObject<_cl_context> {
         }
     };
 
+    struct UsmPoolParams {
+        size_t poolSize{0};
+        size_t minServicedSize{0};
+        size_t maxServicedSize{0};
+    };
+
+    UsmPoolParams getUsmHostPoolParams() const;
+    UsmPoolParams getUsmDevicePoolParams() const;
+
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);
 

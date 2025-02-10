@@ -26,6 +26,8 @@ class MockContext : public Context {
     using Context::deviceBitfields;
     using Context::devices;
     using Context::driverDiagnostics;
+    using Context::getUsmDevicePoolParams;
+    using Context::getUsmHostPoolParams;
     using Context::maxRootDeviceIndex;
     using Context::memoryManager;
     using Context::preferD3dSharedResources;
@@ -37,6 +39,7 @@ class MockContext : public Context {
     using Context::specialQueues;
     using Context::svmAllocsManager;
     using Context::usmPoolInitialized;
+    using Context::UsmPoolParams;
 
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
     MockContext(const ClDeviceVector &clDeviceVector, bool noSpecialQueue = true);
