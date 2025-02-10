@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,10 +33,53 @@ class CommandEncodeStatesFixture : public DeviceFixture {
     void setUp();
     void tearDown();
 
-    EncodeDispatchKernelArgs createDefaultDispatchKernelArgs(Device *device,
-                                                             DispatchKernelEncoderI *dispatchInterface,
-                                                             const void *threadGroupDimensions,
-                                                             bool requiresUncachedMocs);
+    static EncodeDispatchKernelArgs createDefaultDispatchKernelArgs(Device *device, DispatchKernelEncoderI *dispatchInterface, const void *threadGroupDimensions, bool requiresUncachedMocs) {
+        EncodeDispatchKernelArgs args{
+            .eventAddress = 0,
+            .postSyncImmValue = 0,
+            .inOrderCounterValue = 0,
+            .inOrderIncrementGpuAddress = 0,
+            .inOrderIncrementValue = 0,
+            .device = device,
+            .inOrderExecInfo = nullptr,
+            .dispatchInterface = dispatchInterface,
+            .surfaceStateHeap = nullptr,
+            .dynamicStateHeap = nullptr,
+            .threadGroupDimensions = threadGroupDimensions,
+            .outWalkerPtr = nullptr,
+            .cpuWalkerBuffer = nullptr,
+            .cpuPayloadBuffer = nullptr,
+            .outImplicitArgsPtr = nullptr,
+            .additionalCommands = nullptr,
+            .extendedArgs = nullptr,
+            .preemptionMode = PreemptionMode::Disabled,
+            .requiredPartitionDim = NEO::RequiredPartitionDim::none,
+            .requiredDispatchWalkOrder = NEO::RequiredDispatchWalkOrder::none,
+            .localRegionSize = NEO::localRegionSizeParamNotSet,
+            .partitionCount = 1,
+            .reserveExtraPayloadSpace = 0,
+            .maxWgCountPerTile = 1,
+            .defaultPipelinedThreadArbitrationPolicy = NEO::ThreadArbitrationPolicy::NotPresent,
+            .isIndirect = false,
+            .isPredicate = false,
+            .isTimestampEvent = false,
+            .requiresUncachedMocs = requiresUncachedMocs,
+            .isInternal = false,
+            .isCooperative = false,
+            .isHostScopeSignalEvent = false,
+            .isKernelUsingSystemAllocation = false,
+            .isKernelDispatchedFromImmediateCmdList = false,
+            .isRcs = false,
+            .dcFlushEnable = false,
+            .isHeaplessModeEnabled = false,
+            .isHeaplessStateInitEnabled = false,
+            .interruptEvent = false,
+            .immediateScratchAddressPatching = false,
+            .makeCommandView = false,
+        };
+
+        return args;
+    }
 
     static EncodeWalkerArgs createDefaultEncodeWalkerArgs(const KernelDescriptor &kernelDescriptor);
 

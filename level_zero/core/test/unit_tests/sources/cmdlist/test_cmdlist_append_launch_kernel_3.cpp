@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_sync_buffer_handler.h"
 #include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -912,47 +913,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
 
     const uint32_t threadGroupDimensions[3] = {1, 1, 1};
 
-    NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,                                        // eventAddress
-        0,                                        // postSyncImmValue
-        0,                                        // inOrderCounterValue
-        device->getNEODevice(),                   // device
-        nullptr,                                  // inOrderExecInfo
-        kernel.get(),                             // dispatchInterface
-        nullptr,                                  // surfaceStateHeap
-        nullptr,                                  // dynamicStateHeap
-        threadGroupDimensions,                    // threadGroupDimensions
-        nullptr,                                  // outWalkerPtr
-        nullptr,                                  // cpuWalkerBuffer
-        nullptr,                                  // cpuPayloadBuffer
-        nullptr,                                  // outImplicitArgsPtr
-        nullptr,                                  // additionalCommands
-        nullptr,                                  // extendedArgs
-        PreemptionMode::MidBatch,                 // preemptionMode
-        NEO::RequiredPartitionDim::none,          // requiredPartitionDim
-        NEO::RequiredDispatchWalkOrder::none,     // requiredDispatchWalkOrder
-        NEO::localRegionSizeParamNotSet,          // localRegionSize
-        0,                                        // partitionCount
-        0,                                        // reserveExtraPayloadSpace
-        1,                                        // maxWgCountPerTile
-        NEO::ThreadArbitrationPolicy::NotPresent, // defaultPipelinedThreadArbitrationPolicy
-        false,                                    // isIndirect
-        false,                                    // isPredicate
-        false,                                    // isTimestampEvent
-        false,                                    // requiresUncachedMocs
-        false,                                    // isInternal
-        false,                                    // isCooperative
-        false,                                    // isHostScopeSignalEvent
-        false,                                    // isKernelUsingSystemAllocation
-        false,                                    // isKernelDispatchedFromImmediateCmdList
-        false,                                    // isRcs
-        commandList->getDcFlushRequired(true),    // dcFlushEnable
-        false,                                    // isHeaplessModeEnabled
-        false,                                    // isHeaplessStateInitEnabled
-        false,                                    // interruptEvent
-        false,                                    // immediateScratchAddressPatching
-        false,                                    // makeCommandView
-    };
+    auto dispatchKernelArgs = CommandEncodeStatesFixture::createDefaultDispatchKernelArgs(device->getNEODevice(), kernel.get(), threadGroupDimensions, false);
+    dispatchKernelArgs.dcFlushEnable = commandList->getDcFlushRequired(true);
+
     EXPECT_THROW(NEO::EncodeDispatchKernel<FamilyType>::template encode<DefaultWalkerType>(commandContainer, dispatchKernelArgs), std::exception);
 }
 

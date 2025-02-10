@@ -17,6 +17,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/sources/helper/ze_object_utils.h"
+#include "level_zero/driver_experimental/zex_api.h"
 
 namespace L0 {
 namespace ult {
@@ -82,6 +83,19 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         events.clear();
 
         ::Test<ModuleFixture>::TearDown();
+    }
+
+    void createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress, ze_event_handle_t &outEvent) {
+        zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        externalStorageAllocProperties.completionValue = counterValue;
+        externalStorageAllocProperties.deviceAddress = deviceAddress;
+        externalStorageAllocProperties.incrementValue = incrementValue;
+
+        zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+        counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
+        counterBasedDesc.pNext = &externalStorageAllocProperties;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
     }
 
     DestroyableZeUniquePtr<FixtureMockEvent> createStandaloneCbEvent(const ze_base_desc_t *pNext) {

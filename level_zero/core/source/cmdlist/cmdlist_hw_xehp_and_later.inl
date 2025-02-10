@@ -303,6 +303,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool inOrderNonWalkerSignalling = false;
 
     uint64_t inOrderCounterValue = 0;
+    uint64_t inOrderIncrementValue = 0;
+    uint64_t inOrderIncrementGpuAddress = 0;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
 
     if (!launchParams.makeKernelCommandView) {
@@ -327,8 +329,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                 } else {
                     inOrderCounterValue = this->inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
                     inOrderExecInfo = this->inOrderExecInfo.get();
-                    if (eventForInOrderExec && eventForInOrderExec->isCounterBased() && !isTimestampEvent) {
-                        eventAddress = 0;
+                    if (eventForInOrderExec && eventForInOrderExec->isCounterBased()) {
+                        if (eventForInOrderExec->getInOrderIncrementValue() > 0) {
+                            inOrderIncrementGpuAddress = eventForInOrderExec->getInOrderExecInfo()->getBaseDeviceAddress();
+                            inOrderIncrementValue = eventForInOrderExec->getInOrderIncrementValue();
+                        }
+                        if (!isTimestampEvent) {
+                            eventAddress = 0;
+                        }
                     }
                 }
             }
@@ -338,46 +346,49 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto maxWgCountPerTile = kernel->getMaxWgCountPerTile(this->engineGroupType);
 
     NEO::EncodeKernelArgsExt dispatchKernelArgsExt = {};
+
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        eventAddress,                                           // eventAddress
-        static_cast<uint64_t>(Event::STATE_SIGNALED),           // postSyncImmValue
-        inOrderCounterValue,                                    // inOrderCounterValue
-        neoDevice,                                              // device
-        inOrderExecInfo,                                        // inOrderExecInfo
-        kernel,                                                 // dispatchInterface
-        ssh,                                                    // surfaceStateHeap
-        dsh,                                                    // dynamicStateHeap
-        reinterpret_cast<const void *>(&threadGroupDimensions), // threadGroupDimensions
-        nullptr,                                                // outWalkerPtr
-        launchParams.cmdWalkerBuffer,                           // cpuWalkerBuffer
-        launchParams.hostPayloadBuffer,                         // cpuPayloadBuffer
-        nullptr,                                                // outImplicitArgsPtr
-        &additionalCommands,                                    // additionalCommands
-        &dispatchKernelArgsExt,                                 // extendedArgs
-        kernelPreemptionMode,                                   // preemptionMode
-        launchParams.requiredPartitionDim,                      // requiredPartitionDim
-        launchParams.requiredDispatchWalkOrder,                 // requiredDispatchWalkOrder
-        launchParams.localRegionSize,                           // localRegionSize
-        this->partitionCount,                                   // partitionCount
-        launchParams.reserveExtraPayloadSpace,                  // reserveExtraPayloadSpace
-        maxWgCountPerTile,                                      // maxWgCountPerTile
-        this->defaultPipelinedThreadArbitrationPolicy,          // defaultPipelinedThreadArbitrationPolicy
-        launchParams.isIndirect,                                // isIndirect
-        launchParams.isPredicate,                               // isPredicate
-        isTimestampEvent,                                       // isTimestampEvent
-        uncachedMocsKernel,                                     // requiresUncachedMocs
-        internalUsage,                                          // isInternal
-        launchParams.isCooperative,                             // isCooperative
-        isHostSignalScopeEvent,                                 // isHostScopeSignalEvent
-        isKernelUsingSystemAllocation,                          // isKernelUsingSystemAllocation
-        isImmediateType(),                                      // isKernelDispatchedFromImmediateCmdList
-        engineGroupType == NEO::EngineGroupType::renderCompute, // isRcs
-        this->dcFlushSupport,                                   // dcFlushEnable
-        this->heaplessModeEnabled,                              // isHeaplessModeEnabled
-        this->heaplessStateInitEnabled,                         // isHeaplessStateInitEnabled
-        interruptEvent,                                         // interruptEvent
-        !this->scratchAddressPatchingEnabled,                   // immediateScratchAddressPatching
-        launchParams.makeKernelCommandView                      // makeCommandView
+        .eventAddress = eventAddress,
+        .postSyncImmValue = static_cast<uint64_t>(Event::STATE_SIGNALED),
+        .inOrderCounterValue = inOrderCounterValue,
+        .inOrderIncrementGpuAddress = inOrderIncrementGpuAddress,
+        .inOrderIncrementValue = inOrderIncrementValue,
+        .device = neoDevice,
+        .inOrderExecInfo = inOrderExecInfo,
+        .dispatchInterface = kernel,
+        .surfaceStateHeap = ssh,
+        .dynamicStateHeap = dsh,
+        .threadGroupDimensions = reinterpret_cast<const void *>(&threadGroupDimensions),
+        .outWalkerPtr = nullptr,
+        .cpuWalkerBuffer = launchParams.cmdWalkerBuffer,
+        .cpuPayloadBuffer = launchParams.hostPayloadBuffer,
+        .outImplicitArgsPtr = nullptr,
+        .additionalCommands = &additionalCommands,
+        .extendedArgs = &dispatchKernelArgsExt,
+        .preemptionMode = kernelPreemptionMode,
+        .requiredPartitionDim = launchParams.requiredPartitionDim,
+        .requiredDispatchWalkOrder = launchParams.requiredDispatchWalkOrder,
+        .localRegionSize = launchParams.localRegionSize,
+        .partitionCount = this->partitionCount,
+        .reserveExtraPayloadSpace = launchParams.reserveExtraPayloadSpace,
+        .maxWgCountPerTile = maxWgCountPerTile,
+        .defaultPipelinedThreadArbitrationPolicy = this->defaultPipelinedThreadArbitrationPolicy,
+        .isIndirect = launchParams.isIndirect,
+        .isPredicate = launchParams.isPredicate,
+        .isTimestampEvent = isTimestampEvent,
+        .requiresUncachedMocs = uncachedMocsKernel,
+        .isInternal = internalUsage,
+        .isCooperative = launchParams.isCooperative,
+        .isHostScopeSignalEvent = isHostSignalScopeEvent,
+        .isKernelUsingSystemAllocation = isKernelUsingSystemAllocation,
+        .isKernelDispatchedFromImmediateCmdList = isImmediateType(),
+        .isRcs = engineGroupType == NEO::EngineGroupType::renderCompute,
+        .dcFlushEnable = this->dcFlushSupport,
+        .isHeaplessModeEnabled = this->heaplessModeEnabled,
+        .isHeaplessStateInitEnabled = this->heaplessStateInitEnabled,
+        .interruptEvent = interruptEvent,
+        .immediateScratchAddressPatching = !this->scratchAddressPatchingEnabled,
+        .makeCommandView = launchParams.makeKernelCommandView,
     };
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
 

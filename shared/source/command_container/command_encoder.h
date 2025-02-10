@@ -50,6 +50,8 @@ struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0;
     uint64_t postSyncImmValue = 0;
     uint64_t inOrderCounterValue = 0;
+    uint64_t inOrderIncrementGpuAddress = 0;
+    uint64_t inOrderIncrementValue = 0;
     Device *device = nullptr;
     NEO::InOrderExecInfo *inOrderExecInfo = nullptr;
     DispatchKernelEncoderI *dispatchInterface = nullptr;

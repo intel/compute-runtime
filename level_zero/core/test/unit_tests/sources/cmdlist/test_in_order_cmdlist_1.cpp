@@ -5332,17 +5332,8 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-    externalStorageAllocProperties.completionValue = counterValue;
-    externalStorageAllocProperties.deviceAddress = devAddress;
-    externalStorageAllocProperties.incrementValue = incValue;
-
-    zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-    counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE | ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE;
-    counterBasedDesc.pNext = &externalStorageAllocProperties;
     ze_event_handle_t handle = nullptr;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &handle));
+    createExternalSyncStorageEvent(counterValue, incValue, devAddress, handle);
     auto eventObj = Event::fromHandle(handle);
     ASSERT_NE(nullptr, eventObj->getInOrderExecInfo());
 
