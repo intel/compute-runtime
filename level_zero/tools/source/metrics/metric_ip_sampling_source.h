@@ -129,7 +129,7 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
   private:
     std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
     zet_metric_group_properties_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, nullptr};
-    ze_result_t getCalculatedMetricCount(const size_t rawDataSize, uint32_t &metricValueCount);
+    ze_result_t getCalculatedMetricCount(const uint8_t *pRawData, const size_t rawDataSize, uint32_t &metricValueCount);
     ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                           uint32_t &metricValueCount,
                                           zet_typed_value_t *pCalculatedData);

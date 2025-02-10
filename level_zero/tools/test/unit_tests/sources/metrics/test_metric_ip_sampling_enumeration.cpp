@@ -539,7 +539,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
         EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 40u);
+        EXPECT_EQ(totalMetricValueCount, 20u);
         EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                      ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
@@ -626,7 +626,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
                                                                          &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                       ZE_RESULT_SUCCESS);
             EXPECT_EQ(setCount, expectedSetCount);
-            EXPECT_EQ(totalMetricValueCount, 40u);
+            EXPECT_EQ(totalMetricValueCount, 20u);
             EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                          ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()),
                                                                          &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
@@ -714,7 +714,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
         EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 80u);
+        EXPECT_EQ(totalMetricValueCount, 40u);
         totalMetricValueCount = 10;
         EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                      ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(),
@@ -893,7 +893,8 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
         EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 40u);
+        EXPECT_EQ(totalMetricValueCount, 20u);
+        totalMetricValueCount += 1;
         EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                      ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size() + 1, reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
@@ -923,7 +924,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
                   ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 40);
+        EXPECT_TRUE(metricValueCount == 20);
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
                   ZE_RESULT_SUCCESS);
@@ -985,7 +986,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
                   ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 40);
+        EXPECT_TRUE(metricValueCount == 20);
         metricValueCount = 15;
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
@@ -1043,7 +1044,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhen
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
                   ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 40);
+        EXPECT_TRUE(metricValueCount == 20);
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize - 1, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
                   ZE_RESULT_ERROR_INVALID_SIZE);
@@ -1085,7 +1086,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenDataOverflowOccurredWhenStr
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), nullptr),
                   ZE_RESULT_SUCCESS);
         EXPECT_EQ(setCount, expectedSetCount);
-        EXPECT_EQ(totalMetricValueCount, 40u);
+        EXPECT_EQ(totalMetricValueCount, 20u);
         EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroups[0],
                                                                      ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataWithHeader.size(), reinterpret_cast<uint8_t *>(rawDataWithHeader.data()),
                                                                      &setCount, &totalMetricValueCount, metricCounts.data(), metricValues.data()),
@@ -1122,7 +1123,7 @@ HWTEST2_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWith
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, nullptr),
                   ZE_RESULT_SUCCESS);
-        EXPECT_TRUE(metricValueCount == 40);
+        EXPECT_TRUE(metricValueCount == 20);
         EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroups[0], ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES,
                                                       rawDataVectorSize, reinterpret_cast<uint8_t *>(rawDataVector.data()), &metricValueCount, metricValues.data()),
                   ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);

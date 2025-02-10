@@ -23,6 +23,7 @@
 #include <level_zero/zet_api.h>
 
 #include <cstring>
+#include <unordered_set>
 
 namespace L0 {
 constexpr uint32_t ipSamplinDomainId = 100u;
@@ -301,7 +302,7 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValues(const zet_metric_gro
     }
 
     if (calculateCountOnly) {
-        return getCalculatedMetricCount(rawDataSize, *pMetricValueCount);
+        return getCalculatedMetricCount(pRawData, rawDataSize, *pMetricValueCount);
     } else {
         return getCalculatedMetricValues(type, rawDataSize, pRawData, *pMetricValueCount, pMetricValues);
     }
@@ -373,15 +374,26 @@ ze_result_t IpSamplingMetricGroupImp::getMetricTimestampsExp(const ze_bool_t syn
     return getDeviceTimestamps(deviceImp, synchronizedWithHost, globalTimestamp, metricTimestamp);
 }
 
-ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
+ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const uint8_t *pRawData, const size_t rawDataSize,
                                                                uint32_t &metricValueCount) {
 
-    if ((rawDataSize % IpSamplingMetricGroupBase::rawReportSize) != 0) {
+    std::unordered_set<uint64_t> stallReportIpCount{};
+    constexpr uint32_t rawReportSize = IpSamplingMetricGroupBase::rawReportSize;
+
+    if ((rawDataSize % rawReportSize) != 0) {
         return ZE_RESULT_ERROR_INVALID_SIZE;
     }
 
-    const uint32_t rawReportCount = static_cast<uint32_t>(rawDataSize) / IpSamplingMetricGroupBase::rawReportSize;
-    metricValueCount = rawReportCount * properties.metricCount;
+    const uint32_t rawReportCount = static_cast<uint32_t>(rawDataSize) / rawReportSize;
+
+    for (const uint8_t *pRawIpData = pRawData; pRawIpData < pRawData + (rawReportCount * rawReportSize); pRawIpData += rawReportSize) {
+        uint64_t ip = 0ULL;
+        memcpy_s(reinterpret_cast<uint8_t *>(&ip), sizeof(ip), pRawIpData, sizeof(ip));
+        ip &= 0x1fffffff;
+        stallReportIpCount.insert(ip);
+    }
+
+    metricValueCount = static_cast<uint32_t>(stallReportIpCount.size()) * properties.metricCount;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -402,7 +414,7 @@ ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const uint8_t *pM
         }
 
         auto currTotalMetricValueCount = 0u;
-        auto result = this->getCalculatedMetricCount(header->rawDataSize, currTotalMetricValueCount);
+        auto result = this->getCalculatedMetricCount((processMetricData + sizeof(IpSamplingMetricDataHeader)), header->rawDataSize, currTotalMetricValueCount);
         if (result != ZE_RESULT_SUCCESS) {
             metricValueCount = 0;
             return result;
