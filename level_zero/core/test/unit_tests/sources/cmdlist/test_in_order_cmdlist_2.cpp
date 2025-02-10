@@ -3266,6 +3266,7 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto &bcsSplit = static_cast<DeviceImp *>(device)->bcsSplit;
 
@@ -3352,6 +3353,11 @@ void BcsSplitInOrderCmdListTests::verifySplitCmds(LinearStream &cmdStream, size_
     }
 
     ASSERT_NE(nullptr, genCmdCast<MI_FLUSH_DW *>(*itor)); // marker event
+
+    if (immCmdList.isHeaplessModeEnabled()) {
+        auto inOrderAtomicSignalling = genCmdCast<MI_ATOMIC *>(*(++itor));
+        ASSERT_NE(nullptr, inOrderAtomicSignalling);
+    }
 
     auto implicitCounterSdi = genCmdCast<MI_STORE_DATA_IMM *>(*(++itor));
     ASSERT_NE(nullptr, implicitCounterSdi);
