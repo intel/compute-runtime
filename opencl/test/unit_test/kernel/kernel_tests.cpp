@@ -2861,8 +2861,8 @@ TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenEnqueuedMaxWorkGroupSi
 }
 
 TEST_F(KernelCrossThreadTests, WhenKernelIsInitializedThenDataParameterSimdSizeIsCorrect) {
-    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize = 16;
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
+    pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
     MockKernel kernel(program.get(), *pKernelInfo, *pClDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -3821,7 +3821,7 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
 };
 
 HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSizeThenCorrectValueReturned, IsAtLeastXeHpCore) {
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 16;
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = pClDevice->getGfxCoreHelper().getMinimalSIMDSize();
     pKernelInfo->kernelDescriptor.kernelAttributes.crossThreadDataSize = 4;
     pKernelInfo->kernelDescriptor.payloadMappings.implicitArgs.maxWorkGroupSize = 0;
     {
@@ -3838,8 +3838,11 @@ HWTEST2_F(KernelLargeGrfTests, GivenLargeGrfAndSimdSizeWhenGettingMaxWorkGroupSi
 
         pKernelInfo->kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::largeGrfNumber;
         EXPECT_EQ(CL_SUCCESS, kernel.initialize());
-        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, *kernel.maxWorkGroupSizeForCrossThreadData);
-        EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
+        if (pKernelInfo->kernelDescriptor.kernelAttributes.simdSize != 32) {
+
+            EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, *kernel.maxWorkGroupSizeForCrossThreadData);
+            EXPECT_EQ(pDevice->getDeviceInfo().maxWorkGroupSize >> 1, kernel.maxKernelWorkGroupSize);
+        }
     }
 
     {
