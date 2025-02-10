@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,6 +11,7 @@ set_target_properties(prepare_test_kernels_for_l0 PROPERTIES FOLDER ${TARGET_NAM
 
 set(TEST_MODULES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_kernel.cl
+    ${CMAKE_CURRENT_SOURCE_DIR}/simple_spill_fill_kernel.cl
 )
 
 set(TEST_KERNEL_BINDLESS_internal_options
