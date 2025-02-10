@@ -209,7 +209,7 @@ struct CommandList : _ze_command_list_handle_t {
     }
 
     void forceDcFlushForDcFlushMitigation();
-    void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
+    void setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const;
 
     void setOrdinal(uint32_t ord) { ordinal = ord; }
     void setCommandListPerThreadScratchSize(uint32_t slotId, uint32_t size) {

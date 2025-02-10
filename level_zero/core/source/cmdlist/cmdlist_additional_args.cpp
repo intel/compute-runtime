@@ -12,7 +12,7 @@
 namespace L0 {
 struct CmdListKernelLaunchParams;
 
-void CommandList::setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const {
+void CommandList::setAdditionalDispatchKernelArgsFromLaunchParams(NEO::EncodeDispatchKernelArgs &dispatchKernelArgs, const CmdListKernelLaunchParams &launchParams) const {
 }
 
 } // namespace L0
