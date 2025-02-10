@@ -285,6 +285,7 @@ int main(int argc, char **argv) {
             generateRandomInput = true;
         } else if (!strcmp("--read-config", argv[i]) && isAubTestMode(testMode)) {
             if (debugManager.registryReadAvailable()) {
+                ApiSpecificConfig::initPrefixes();
                 debugManager.setReaderImpl(SettingsReader::create(ApiSpecificConfig::getRegistryPath()));
                 debugManager.injectSettingsFromReader();
             }
