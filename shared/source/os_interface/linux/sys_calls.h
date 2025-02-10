@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include <dirent.h>
+#include <fcntl.h>
 #include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
