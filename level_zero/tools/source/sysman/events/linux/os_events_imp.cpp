@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
+#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
 #include <sys/stat.h>
 
