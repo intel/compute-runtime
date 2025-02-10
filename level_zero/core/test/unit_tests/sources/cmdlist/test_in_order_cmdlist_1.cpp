@@ -1904,11 +1904,11 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyWhenDispatchingKer
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, eventHandle, 0, nullptr, copyParams);
-    findSemaphores(heaplessEnabled ? 1 : 2); // implicit dependency + chaining
+    findSemaphores((heaplessEnabled && !immCmdList->dcFlushSupport) ? 1 : 2); // implicit dependency + chaining
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(alloc, &region, 1, 1, alloc, &region, 1, 1, nullptr, 0, nullptr, copyParams);
-    findSemaphores(heaplessEnabled ? 1 : 0); // no implicit dependency
+    findSemaphores((heaplessEnabled && !immCmdList->dcFlushSupport) ? 1 : 0); // no implicit dependency
 
     context->freeMem(alloc);
 }
