@@ -54,8 +54,8 @@ class SysmanProductHelperHw : public SysmanProductHelper {
     uint64_t setPowerLimitValue(int32_t value) override;
     zes_limit_unit_t getPowerLimitUnit() override;
     bool isPowerSetLimitSupported() override;
-    std::string getCardCriticalPowerLimitFile() override;
-    SysfsValueUnit getCardCriticalPowerLimitNativeUnit() override;
+    std::string getPackageCriticalPowerLimitFile() override;
+    SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() override;
 
     // standby
     bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) override;

@@ -454,12 +454,12 @@ zes_limit_unit_t SysmanProductHelperHw<gfxProduct>::getPowerLimitUnit() {
 }
 
 template <>
-std::string SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitFile() {
+std::string SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitFile() {
     return "curr1_crit";
 }
 
 template <>
-SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getCardCriticalPowerLimitNativeUnit() {
+SysfsValueUnit SysmanProductHelperHw<gfxProduct>::getPackageCriticalPowerLimitNativeUnit() {
     return SysfsValueUnit::milli;
 }
 
