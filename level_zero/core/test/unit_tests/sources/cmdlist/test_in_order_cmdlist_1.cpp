@@ -3954,9 +3954,10 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingComputeCopyThenDon
     context->freeMem(alloc);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyThenSingalFromSdi, IsAtLeastXeHpCore) {
+HWTEST2_F(InOrderCmdListTests, givenAllocFlushRequiredWhenProgrammingComputeCopyThenSignalFromSdi, IsAtLeastXeHpCore) {
     using WalkerVariant = typename FamilyType::WalkerVariant;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
@@ -3985,13 +3986,28 @@ HWTEST2_F(InOrderCmdListTests, givenAlocFlushRequiredhenProgrammingComputeCopyTh
     },
                walkerVariant);
 
-    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
+    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+    auto gpuAddress = inOrderExecInfo->getBaseDeviceAddress();
 
+    auto miAtomicItor = find<MI_ATOMIC *>(walkerItor, cmdList.end());
+    if (device->getProductHelper().isDcFlushAllowed() && inOrderExecInfo->isHostStorageDuplicated()) {
+        EXPECT_NE(cmdList.end(), miAtomicItor);
+        auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomicItor);
+        EXPECT_EQ(gpuAddress, miAtomicCmd->getMemoryAddress());
+    } else {
+        EXPECT_EQ(cmdList.end(), miAtomicItor);
+    }
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(walkerItor, cmdList.end());
     if (dcFlushRequired) {
         EXPECT_NE(cmdList.end(), sdiItor);
-        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+        auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+        if (inOrderExecInfo->isHostStorageDuplicated()) {
+            gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
+        }
 
-        EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
+        auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+        EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
     } else {
         EXPECT_EQ(cmdList.end(), sdiItor);
     }
