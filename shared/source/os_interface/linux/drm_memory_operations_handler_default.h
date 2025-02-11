@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 
-#include <unordered_set>
+#include <vector>
 
 namespace NEO {
 class OsContextLinux;
@@ -32,7 +32,10 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
     MOCKABLE_VIRTUAL MemoryOperationsStatus flushDummyExec(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations);
 
+    bool obtainAndResetNewResourcesSinceLastRingSubmit() override;
+
   protected:
-    std::unordered_set<GraphicsAllocation *> residency;
+    std::vector<GraphicsAllocation *> residency{};
+    bool newResourcesSinceLastRingSubmit = false;
 };
 } // namespace NEO

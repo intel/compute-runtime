@@ -98,6 +98,9 @@ bool OsContextLinux::isDirectSubmissionSupported() const {
 Drm &OsContextLinux::getDrm() const {
     return this->drm;
 }
+bool OsContextLinux::isDirectSubmissionLightActive() const {
+    return this->isDirectSubmissionActive() && !this->getDrm().isVmBindAvailable();
+}
 
 void OsContextLinux::waitForPagingFence() {
     for (auto drmIterator = 0u; drmIterator < this->deviceBitfield.size(); drmIterator++) {

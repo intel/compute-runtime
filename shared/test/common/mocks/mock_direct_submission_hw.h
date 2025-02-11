@@ -141,7 +141,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         return true;
     }
 
-    bool submit(uint64_t gpuAddress, size_t size) override {
+    bool submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationsForResidency) override {
         submitGpuAddress = gpuAddress;
         submitSize = size;
         submitCount++;

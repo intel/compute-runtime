@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_neo.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -860,6 +861,16 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
     GemWait wait{};
     wait.boHandle = waitHandle;
     wait.timeoutNs = timeout;
+
+    if (this->rootDeviceEnvironment.executionEnvironment.memoryManager) {
+        const auto &mulitEngines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
+        for (const auto &engines : mulitEngines) {
+            for (const auto &engine : engines) {
+                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                engine.commandStreamReceiver->stopDirectSubmission(false);
+            }
+        }
+    }
 
     int ret = ioctlHelper->ioctl(DrmIoctl::gemWait, &wait);
     if (ret != 0) {

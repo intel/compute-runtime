@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include <algorithm>
 
@@ -25,7 +26,8 @@ DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = defaul
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable, const bool forcePagingFence) {
     std::lock_guard<std::mutex> lock(mutex);
-    this->residency.insert(gfxAllocations.begin(), gfxAllocations.end());
+    this->residency.insert(this->residency.end(), gfxAllocations.begin(), gfxAllocations.end());
+    this->newResourcesSinceLastRingSubmit = true;
     return MemoryOperationsStatus::success;
 }
 
@@ -58,7 +60,11 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::lock(Device *device, A
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
-    this->residency.erase(&gfxAllocation);
+    auto ret = std::find(this->residency.begin(), this->residency.end(), &gfxAllocation);
+    if (ret != this->residency.end()) {
+        this->residency.erase(ret);
+        this->newResourcesSinceLastRingSubmit = true;
+    }
     return MemoryOperationsStatus::success;
 }
 
@@ -79,7 +85,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evict(Device *device, 
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
-    auto ret = this->residency.find(&gfxAllocation);
+    auto ret = std::find(this->residency.begin(), this->residency.end(), &gfxAllocation);
     if (ret == this->residency.end()) {
         return MemoryOperationsStatus::memoryNotFound;
     }
@@ -87,10 +93,16 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::isResident(Device *dev
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
-    for (auto gfxAllocation = this->residency.begin(); gfxAllocation != this->residency.end(); gfxAllocation++) {
-        auto ret = std::find(residencyContainer.begin(), residencyContainer.end(), *gfxAllocation);
-        if (ret == residencyContainer.end()) {
-            residencyContainer.push_back(*gfxAllocation);
+    if (osContext->isDirectSubmissionLightActive()) {
+        if (this->newResourcesSinceLastRingSubmit) {
+            residencyContainer.insert(residencyContainer.end(), this->residency.begin(), this->residency.end());
+        }
+    } else {
+        for (auto gfxAllocation = this->residency.begin(); gfxAllocation != this->residency.end(); gfxAllocation++) {
+            auto ret = std::find(residencyContainer.begin(), residencyContainer.end(), *gfxAllocation);
+            if (ret == residencyContainer.end()) {
+                residencyContainer.push_back(*gfxAllocation);
+            }
         }
     }
     return MemoryOperationsStatus::success;
@@ -106,6 +118,12 @@ std::unique_lock<std::mutex> DrmMemoryOperationsHandlerDefault::lockHandlerIfUse
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
     return MemoryOperationsStatus::success;
+}
+
+bool DrmMemoryOperationsHandlerDefault::obtainAndResetNewResourcesSinceLastRingSubmit() {
+    auto ret = this->newResourcesSinceLastRingSubmit;
+    this->newResourcesSinceLastRingSubmit = false;
+    return ret;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::flushDummyExec(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {

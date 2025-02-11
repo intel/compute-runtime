@@ -187,7 +187,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSubmitingCmdBufferThenExpectPass
 
     uint64_t gpuAddress = 0xFF00FF000;
     size_t size = 0xF0;
-    ret = wddmDirectSubmission.submit(gpuAddress, size);
+    ret = wddmDirectSubmission.submit(gpuAddress, size, nullptr);
     EXPECT_TRUE(ret);
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_EQ(gpuAddress, wddm->submitResult.commandBufferSubmitted);
@@ -718,7 +718,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuThenS
     uint64_t gpuAddress = 0xF000;
     size_t size = 0xFF000;
 
-    bool ret = wddmDirectSubmission.submit(gpuAddress, size);
+    bool ret = wddmDirectSubmission.submit(gpuAddress, size, nullptr);
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);

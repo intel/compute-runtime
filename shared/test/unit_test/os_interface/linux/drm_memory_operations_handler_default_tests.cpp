@@ -75,7 +75,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenMakingAllocationResidentThenAlloc
 
     EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
-    EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::success);
 }
 
@@ -87,7 +87,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingResidentAllocationThenAll
     EXPECT_EQ(drmMemoryOperationsHandler->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1), false, false), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
-    EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(allocationPtr) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->evict(nullptr, *allocationPtr), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *allocationPtr), MemoryOperationsStatus::memoryNotFound);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 0u);
@@ -99,7 +99,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenLockingAllocationThenAllocationIs
 
     EXPECT_EQ(drmMemoryOperationsHandler->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
-    EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(drmAllocation) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::success);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
     EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
@@ -114,7 +114,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationThenAlloc
 
     EXPECT_EQ(drmMemoryOperationsHandler->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::success);
-    EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(drmAllocation) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
     EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
@@ -134,7 +134,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithMulti
 
     EXPECT_EQ(drmMemoryOperationsHandler->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::success);
-    EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(drmAllocation) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
     EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());
@@ -157,7 +157,7 @@ TEST_F(DrmMemoryOperationsHandlerBaseTest, whenEvictingLockedAllocationWithChunk
 
     EXPECT_EQ(drmMemoryOperationsHandler->lock(nullptr, ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::success);
     EXPECT_EQ(drmMemoryOperationsHandler->isResident(nullptr, *drmAllocation), MemoryOperationsStatus::success);
-    EXPECT_TRUE(drmMemoryOperationsHandler->residency.find(drmAllocation) != drmMemoryOperationsHandler->residency.end());
+    EXPECT_TRUE(std::find(drmMemoryOperationsHandler->residency.begin(), drmMemoryOperationsHandler->residency.end(), drmAllocation) != drmMemoryOperationsHandler->residency.end());
     EXPECT_EQ(drmMemoryOperationsHandler->residency.size(), 1u);
     EXPECT_TRUE(drmAllocation->isLockedMemory());
     EXPECT_TRUE(mockBos[0]->isExplicitLockedMemoryRequired());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     virtual bool isDirectSubmissionSupported() const { return false; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
-    bool isDirectSubmissionActive() { return directSubmissionActive; }
+    bool isDirectSubmissionActive() const { return directSubmissionActive; }
     bool isDebuggableContext() { return debuggableContext; }
     void setDirectSubmissionActive() { directSubmissionActive = true; }
 
@@ -98,6 +98,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isPartOfContextGroup() const {
         return isContextGroup;
     }
+    virtual bool isDirectSubmissionLightActive() const { return false; }
 
   protected:
     virtual bool initializeContext(bool allocateInterrupt) { return true; }

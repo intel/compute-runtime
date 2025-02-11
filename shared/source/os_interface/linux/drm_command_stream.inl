@@ -118,7 +118,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
 
     std::unique_lock<std::mutex> lock;
-    if (!this->directSubmission.get() && !this->blitterDirectSubmission.get()) {
+    if (!this->drm->isVmBindAvailable()) {
         lock = memoryOperationsInterface->lockHandlerIfUsed();
     }
 
@@ -140,6 +140,9 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
     }
 
     if (this->directSubmission.get()) {
+        if (!this->drm->isVmBindAvailable()) {
+            batchBuffer.allocationsForResidency = &allocationsForResidency;
+        }
         bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
         if (ret == false) {
             return Drm::getSubmissionStatusFromReturnCode(this->directSubmission->getDispatchErrorCode());
@@ -387,6 +390,6 @@ inline bool DrmCommandStreamReceiver<GfxFamily>::isUserFenceWaitActive() {
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::isKmdWaitOnTaskCountAllowed() const {
-    return this->isDirectSubmissionEnabled();
+    return this->isDirectSubmissionEnabled() && this->drm->isVmBindAvailable();
 }
 } // namespace NEO

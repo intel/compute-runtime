@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,8 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     void setRootDeviceIndex(uint32_t index) {
         this->rootDeviceIndex = index;
     }
+
+    virtual bool obtainAndResetNewResourcesSinceLastRingSubmit() { return false; }
 
   protected:
     std::mutex mutex;

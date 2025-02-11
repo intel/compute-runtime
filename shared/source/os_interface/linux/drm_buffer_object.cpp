@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -345,6 +346,13 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
             }
         }
     } else {
+        if (this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager) {
+            const auto &engines = this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager->getRegisteredEngines(osContext->getRootDeviceIndex());
+            for (const auto engine : engines) {
+                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                engine.commandStreamReceiver->stopDirectSubmission(false);
+            }
+        }
         StackVec<ExecObject, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0], 0, 0);
     }

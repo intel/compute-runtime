@@ -13,6 +13,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/wait_util.h"
@@ -117,7 +118,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
 
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;
-    EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size));
+    EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
 
     EXPECT_TRUE(drmDirectSubmission.handleResidency());
 
@@ -463,7 +464,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportWhenSubmittingThe
 
     for (auto i = 0; i < 2; i++) {
         mockBO.passedExecParams.clear();
-        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size));
+        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
 
         ASSERT_EQ(1u, mockBO.passedExecParams.size());
         EXPECT_EQ(0u, mockBO.passedExecParams[0].completionGpuAddress);
@@ -489,7 +490,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportAndExecFailureWhe
     ringBuffer->getBufferObjectToModify(0) = &mockBO;
 
     mockBO.execReturnValue = ENXIO;
-    EXPECT_FALSE(drmDirectSubmission.submit(gpuAddress, size));
+    EXPECT_FALSE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
     EXPECT_EQ((uint32_t)ENXIO, drmDirectSubmission.getDispatchErrorCode());
 
     ringBuffer->getBufferObjectToModify(0) = initialBO;
@@ -515,7 +516,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndExecFailureWhenS
 
     mockBO.execReturnValue = 1;
     drmDirectSubmission.completionFenceValue = 1u;
-    EXPECT_FALSE(drmDirectSubmission.submit(gpuAddress, size));
+    EXPECT_FALSE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
     EXPECT_EQ(1u, drmDirectSubmission.completionFenceValue);
 
     ringBuffer->getBufferObjectToModify(0) = initialBO;
@@ -551,7 +552,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmitt
 
     for (auto i = 0u; i < 2; i++) {
         mockBO.passedExecParams.clear();
-        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size));
+        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
 
         ASSERT_EQ(1u, mockBO.passedExecParams.size());
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
@@ -595,7 +596,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTile1AndCompletionFenceSupportWhenSubmitt
 
     for (auto i = 0u; i < 2; i++) {
         mockBO.passedExecParams.clear();
-        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size));
+        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
 
         ASSERT_EQ(1u, mockBO.passedExecParams.size());
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
@@ -644,7 +645,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenTwoTilesAndCompletionFenceSupportWhenSubm
 
     for (auto i = 0u; i < 2; i++) {
         mockBO.passedExecParams.clear();
-        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size));
+        EXPECT_TRUE(drmDirectSubmission.submit(gpuAddress, size, nullptr));
 
         ASSERT_EQ(2u, mockBO.passedExecParams.size());
         EXPECT_EQ(completionFenceBaseGpuAddress, mockBO.passedExecParams[0].completionGpuAddress);
@@ -738,6 +739,101 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenDi
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
 
     EXPECT_EQ(directSubmission.getSizeNewResourceHandler(), sizeof(PIPE_CONTROL));
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenRegisterResourcesThenRestart) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(drmDirectSubmission.initialize(false));
+
+    FlushStampTracker flushStamp(true);
+    BatchBuffer batchBuffer = {};
+    GraphicsAllocation *commandBuffer = nullptr;
+    LinearStream stream;
+
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
+    commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+
+    stream.replaceGraphicsAllocation(commandBuffer);
+    stream.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
+    stream.getSpace(0x20);
+
+    memset(stream.getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(stream.getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = commandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = 0x881112340000;
+    batchBuffer.stream = &stream;
+    batchBuffer.hasStallingCmds = true;
+
+    ResidencyContainer residencyContainer{};
+    batchBuffer.allocationsForResidency = &residencyContainer;
+    drmDirectSubmission.ringStart = true;
+
+    EXPECT_TRUE(drmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(drmDirectSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_NE(pipeControl, nullptr);
+    auto *bbe = hwParse.getCommand<BATCH_BUFFER_END>();
+    EXPECT_NE(bbe, nullptr);
+
+    drmDirectSubmission.ringStart = false;
+    executionEnvironment.memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenNoRegisteredResourcesThenNoRestart) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(drmDirectSubmission.initialize(false));
+
+    FlushStampTracker flushStamp(true);
+    BatchBuffer batchBuffer = {};
+    GraphicsAllocation *commandBuffer = nullptr;
+    LinearStream stream;
+
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
+    commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+
+    stream.replaceGraphicsAllocation(commandBuffer);
+    stream.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
+    stream.getSpace(0x20);
+
+    memset(stream.getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(stream.getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = commandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = 0x881112340000;
+    batchBuffer.stream = &stream;
+    batchBuffer.hasStallingCmds = true;
+
+    ResidencyContainer residencyContainer{};
+    batchBuffer.allocationsForResidency = &residencyContainer;
+    drmDirectSubmission.ringStart = true;
+    static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get())->obtainAndResetNewResourcesSinceLastRingSubmit();
+
+    EXPECT_TRUE(drmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(drmDirectSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_EQ(pipeControl, nullptr);
+    auto *bbe = hwParse.getCommand<BATCH_BUFFER_END>();
+    EXPECT_EQ(bbe, nullptr);
+
+    drmDirectSubmission.ringStart = false;
+    executionEnvironment.memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(DrmDirectSubmissionTest, givenNewResourceBoundWhenDispatchCommandBufferThenTlbIsFlushed) {

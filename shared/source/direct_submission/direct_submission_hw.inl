@@ -502,7 +502,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
         }
         dispatchSemaphoreSection(currentQueueWorkCount);
 
-        ringStart = submit(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), startBufferSize);
+        ringStart = submit(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), startBufferSize, nullptr);
         performDiagnosticMode();
         return ringStart;
     }
@@ -964,6 +964,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchUllsState() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
+    this->handleRingRestartForUllsLightResidency(batchBuffer.allocationsForResidency);
+
     lastSubmittedThrottle = batchBuffer.throttle;
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
     bool inputRequiredMonitorFence = false;
@@ -1017,7 +1019,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     cpuCachelineFlush(currentPosition, dispatchSize);
 
     auto requiresBlockingResidencyHandling = batchBuffer.pagingFenceSemInfo.requiresBlockingResidencyHandling;
-    if (!this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, requiresBlockingResidencyHandling)) {
+    if (!this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, requiresBlockingResidencyHandling, batchBuffer.allocationsForResidency)) {
         return false;
     }
 
@@ -1035,9 +1037,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait) {
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::submitCommandBufferToGpu(bool needStart, uint64_t gpuAddress, size_t size, bool needWait, ResidencyContainer *allocationsForResidency) {
     if (needStart) {
-        this->ringStart = this->submit(gpuAddress, size);
+        this->ringStart = this->submit(gpuAddress, size, allocationsForResidency);
         return this->ringStart;
     } else {
         if (needWait) {

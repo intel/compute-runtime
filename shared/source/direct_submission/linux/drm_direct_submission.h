@@ -7,6 +7,8 @@
 
 #pragma once
 #include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 
 namespace NEO {
 
@@ -24,9 +26,10 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
   protected:
     bool allocateOsResources() override;
-    bool submit(uint64_t gpuAddress, size_t size) override;
+    bool submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationsForResidency) override;
 
     bool handleResidency() override;
+    void handleRingRestartForUllsLightResidency(ResidencyContainer *allocationsForResidency) override;
     void handleStopRingBuffer() override;
 
     void ensureRingCompletion() override;
@@ -43,5 +46,8 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     volatile TagAddressType *tagAddress;
     TaskCountType completionFenceValue{};
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
+
+    std::vector<BufferObject *> residency{};
+    std::vector<ExecObject> execObjectsStorage{};
 };
 } // namespace NEO

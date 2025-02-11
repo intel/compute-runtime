@@ -1674,6 +1674,15 @@ std::vector<GraphicsAllocation *> &DrmMemoryManager::getLocalMemAllocs(uint32_t 
 }
 
 bool DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
+    auto rootDeviceIndex = allocation->getRootDeviceIndex();
+    auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
+    const auto &engines = this->getRegisteredEngines(rootDeviceIndex);
+    for (const auto engine : engines) {
+        if (engine.osContext->isDirectSubmissionLightActive()) {
+            memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false);
+        }
+    }
+
     if (debugManager.flags.MakeEachAllocationResident.get() == 1) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         auto rootDeviceIndex = allocation->getRootDeviceIndex();

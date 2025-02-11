@@ -73,7 +73,7 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::flushMonitorFence() {
     Dispatcher::dispatchMonitorFence(this->ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired);
 
     this->dispatchSemaphoreSection(this->currentQueueWorkCount + 1);
-    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, true);
+    this->submitCommandBufferToGpu(needStart, startVA, requiredMinimalSize, true, nullptr);
     this->currentQueueWorkCount++;
 
     this->updateTagValueImpl(this->currentRingBuffer);
@@ -92,7 +92,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size) {
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationForResidency) {
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS Submit to GPU\n");
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader.get());
     pHeader->RequiresCoherency = false;
