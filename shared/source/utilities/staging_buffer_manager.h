@@ -58,9 +58,16 @@ struct StagingBufferTracker {
     void freeChunk() const;
 };
 
-struct UserDstData {
-    void *ptr;
-    size_t size;
+struct RowPitchData {
+    size_t rowSize = 0;
+    size_t rowPitch = 0;
+    size_t rowsInChunk = 0;
+};
+
+struct UserData {
+    const void *ptr = nullptr;
+    size_t size = 0;
+    RowPitchData rowPitchData{};
 };
 
 struct StagingTransferStatus {
@@ -68,7 +75,8 @@ struct StagingTransferStatus {
     WaitStatus waitStatus = WaitStatus::ready;
 };
 
-using StagingQueue = std::queue<std::pair<UserDstData, StagingBufferTracker>>;
+constexpr size_t maxInFlightReads = 2u;
+using StagingQueue = StackVec<std::pair<UserData, StagingBufferTracker>, maxInFlightReads>;
 
 class StagingBufferManager {
   public:
@@ -83,7 +91,7 @@ class StagingBufferManager {
     bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
     StagingTransferStatus performCopy(void *dstPtr, const void *srcPtr, size_t size, ChunkCopyFunction &chunkCopyFunc, CommandStreamReceiver *csr);
-    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
+    StagingTransferStatus performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t bytesPerPixel, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead);
     StagingTransferStatus performBufferTransfer(const void *ptr, size_t globalOffset, size_t globalSize, ChunkTransferBufferFunc &chunkTransferBufferFunc, CommandStreamReceiver *csr, bool isRead);
 
     std::pair<HeapAllocator *, uint64_t> requestStagingBuffer(size_t &size);
@@ -98,10 +106,10 @@ class StagingBufferManager {
     void clearTrackedChunks();
 
     template <class Func, class... Args>
-    StagingTransferStatus performChunkTransfer(bool isRead, void *userPtr, size_t size, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args);
+    StagingTransferStatus performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args);
 
-    WaitStatus fetchHead(StagingQueue &stagingQueue, StagingBufferTracker &tracker) const;
-    WaitStatus drainAndReleaseStagingQueue(StagingQueue &stagingQueue) const;
+    WaitStatus copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const;
+    WaitStatus drainAndReleaseStagingQueue(const StagingQueue &stagingQueue, size_t numOfTransfers) const;
 
     bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 

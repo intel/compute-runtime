@@ -85,20 +85,26 @@ class StagingBufferManagerFixture : public DeviceFixture {
     }
 
     void imageTransferThroughStagingBuffers(bool isRead, size_t rowPitch, const size_t *globalOrigin, const size_t *globalRegion, size_t expectedChunks) {
-        auto hostPtr = new unsigned char[stagingBufferSize * expectedChunks];
-        auto imageData = new unsigned char[stagingBufferSize * expectedChunks];
+        auto hostPtr = new unsigned char[stagingBufferSize * (expectedChunks + globalOrigin[1])];
+        auto imageData = new unsigned char[stagingBufferSize * (expectedChunks + globalOrigin[1])];
         if (isRead) {
-            memset(hostPtr, 0, stagingBufferSize * expectedChunks);
-            memset(imageData, 0xFF, stagingBufferSize * expectedChunks);
+            memset(hostPtr, 0, stagingBufferSize * (expectedChunks + globalOrigin[1]));
+            memset(imageData, 0xFF, stagingBufferSize * (expectedChunks + globalOrigin[1]));
         } else {
-            memset(hostPtr, 0xFF, stagingBufferSize * expectedChunks);
-            memset(imageData, 0, stagingBufferSize * expectedChunks);
+            memset(hostPtr, 0xFF, stagingBufferSize * (expectedChunks + globalOrigin[1]));
+            memset(imageData, 0, stagingBufferSize * (expectedChunks + globalOrigin[1]));
         }
         size_t chunkCounter = 0;
         size_t expectedOrigin = globalOrigin[1];
+        auto rowSize = globalRegion[0] * pixelElemSize;
         auto expectedRowsPerChunk = std::min<size_t>(std::max<size_t>(1ul, stagingBufferSize / rowPitch), globalRegion[1]);
         auto numOfChunks = globalRegion[1] / expectedRowsPerChunk;
         auto remainder = globalRegion[1] % (expectedRowsPerChunk * numOfChunks);
+
+        // This lambda function simulates chunk read/write on image.
+        // Iterates over rows in given image chunk, copies each row with offset origin[0]
+        // For writes, data is transferred in staging buffer -> image direction.
+        // For reads, it's image -> staging buffer.
         ChunkTransferImageFunc chunkTransfer = [&](void *stagingBuffer, const size_t *origin, const size_t *region) -> int32_t {
             EXPECT_NE(nullptr, stagingBuffer);
             EXPECT_NE(nullptr, origin);
@@ -113,11 +119,14 @@ class StagingBufferManagerFixture : public DeviceFixture {
             } else {
                 EXPECT_EQ(expectedRowsPerChunk, region[1]);
             }
-            auto offset = origin[1] - globalOrigin[1];
-            if (isRead) {
-                memcpy(stagingBuffer, imageData + rowPitch * offset, rowPitch * region[1]);
-            } else {
-                memcpy(imageData + rowPitch * offset, stagingBuffer, rowPitch * region[1]);
+
+            for (auto rowId = 0u; rowId < region[1]; rowId++) {
+                void *dst = ptrOffset(imageData, (origin[1] + rowId) * rowPitch + origin[0] * pixelElemSize);
+                void *src = ptrOffset(stagingBuffer, rowId * rowPitch);
+                if (isRead) {
+                    std::swap(dst, src);
+                }
+                memcpy(dst, src, rowSize);
             }
             expectedOrigin += region[1];
             chunkCounter++;
@@ -125,10 +134,14 @@ class StagingBufferManagerFixture : public DeviceFixture {
             return 0;
         };
         auto initialNumOfUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs();
-        auto ret = stagingBufferManager->performImageTransfer(hostPtr, globalOrigin, globalRegion, rowPitch, chunkTransfer, csr, isRead);
+        auto ret = stagingBufferManager->performImageTransfer(hostPtr, globalOrigin, globalRegion, rowPitch, pixelElemSize, chunkTransfer, csr, isRead);
         auto newUsmAllocations = svmAllocsManager->svmAllocs.getNumAllocs() - initialNumOfUsmAllocations;
 
-        EXPECT_EQ(0, memcmp(hostPtr, imageData, rowPitch * (numOfChunks * expectedRowsPerChunk + remainder)));
+        for (auto rowId = 0u; rowId < globalRegion[1]; rowId++) {
+            auto offset = (globalOrigin[1] + rowId) * rowPitch;
+            EXPECT_EQ(0, memcmp(ptrOffset(hostPtr, rowId * rowPitch), ptrOffset(imageData, offset + globalOrigin[0] * pixelElemSize), rowSize));
+        }
+
         EXPECT_EQ(0, ret.chunkCopyStatus);
         EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
         EXPECT_EQ(expectedChunks, chunkCounter);
@@ -171,6 +184,7 @@ class StagingBufferManagerFixture : public DeviceFixture {
     }
 
     constexpr static size_t stagingBufferSize = MemoryConstants::megaByte * 2;
+    constexpr static size_t pixelElemSize = 1u;
     DebugManagerStateRestore restorer;
     std::unique_ptr<MockSVMAllocsManager> svmAllocsManager;
     std::unique_ptr<StagingBufferManager> stagingBufferManager;
@@ -500,10 +514,17 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageWriteWithRema
     imageTransferThroughStagingBuffers(false, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
 }
 
-TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenWholeRegionCovered) {
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenRegionCovered) {
     size_t expectedChunks = 8;
     const size_t globalOrigin[3] = {0, 0, 0};
     const size_t globalRegion[3] = {4, expectedChunks, 1};
+    imageTransferThroughStagingBuffers(true, stagingBufferSize, globalOrigin, globalRegion, expectedChunks);
+}
+
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenWholeRegionCovered) {
+    size_t expectedChunks = 8;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {stagingBufferSize, expectedChunks, 1};
     imageTransferThroughStagingBuffers(true, stagingBufferSize, globalOrigin, globalRegion, expectedChunks);
 }
 
@@ -528,6 +549,13 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadWithRemai
     imageTransferThroughStagingBuffers(true, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
 }
 
+TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadWithRemainderAndTransfersWithinLimitThenWholeRegionCovered) {
+    size_t expectedChunks = 2;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {4, 3, 1};
+    imageTransferThroughStagingBuffers(true, MemoryConstants::megaByte, globalOrigin, globalRegion, expectedChunks);
+}
+
 HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringChunkReadFromImageThenReturnImmediatelyWithFailure) {
     size_t expectedChunks = 4;
     const size_t globalOrigin[3] = {0, 0, 0};
@@ -541,7 +569,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringChunkReadF
     };
     auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
     ultCsr->waitForTaskCountReturnValue = WaitStatus::gpuHang;
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, true);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(2u, chunkCounter);
@@ -563,7 +591,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangAfterChunkReadFr
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, true);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(4u, chunkCounter);
@@ -586,7 +614,7 @@ HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenGpuHangDuringRemainderC
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, chunkWrite, csr, true);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, true);
     EXPECT_EQ(0, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::gpuHang, ret.waitStatus);
     EXPECT_EQ(remainderCounter - 1, chunkCounter);
@@ -605,7 +633,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteThen
         ++chunkCounter;
         return expectedErrorCode;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, false);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(1u, chunkCounter);
@@ -628,7 +656,7 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenFailedChunkImageWriteWith
         }
         return 0;
     };
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, chunkWrite, csr, false);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, MemoryConstants::megaByte, pixelElemSize, chunkWrite, csr, false);
     EXPECT_EQ(expectedErrorCode, ret.chunkCopyStatus);
     EXPECT_EQ(WaitStatus::ready, ret.waitStatus);
     EXPECT_EQ(remainderCounter, chunkCounter);

@@ -70,7 +70,7 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
     auto dstRowPitch = inputRowPitch ? inputRowPitch : globalRegion[0] * bytesPerPixel;
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, chunkWrite, &csr, isRead);
+    auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, bytesPerPixel, chunkWrite, &csr, isRead);
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, commandType);
 }
 

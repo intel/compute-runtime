@@ -55,31 +55,31 @@ StagingBufferManager::~StagingBufferManager() {
  * or tracking container for further reusage.
  */
 template <class Func, class... Args>
-StagingTransferStatus StagingBufferManager::performChunkTransfer(bool isRead, void *userPtr, size_t size, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args) {
+StagingTransferStatus StagingBufferManager::performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args) {
     StagingTransferStatus result{};
     StagingBufferTracker tracker{};
-    if (currentStagingBuffers.size() > 1) {
-        if (fetchHead(currentStagingBuffers, tracker) == WaitStatus::gpuHang) {
+    auto stagingBufferIndex = chunkTransferId % maxInFlightReads;
+    if (isRead && chunkTransferId >= maxInFlightReads) {
+        if (copyStagingToHost(currentStagingBuffers[stagingBufferIndex], tracker) == WaitStatus::gpuHang) {
             result.waitStatus = WaitStatus::gpuHang;
             return result;
         }
     } else {
-        auto allocatedSize = size;
+        auto allocatedSize = userData.size;
         auto [allocator, stagingBuffer] = requestStagingBuffer(allocatedSize);
         tracker = StagingBufferTracker{allocator, stagingBuffer, allocatedSize, csr};
     }
 
     auto stagingBuffer = addrToPtr(tracker.chunkAddress);
     if (!isRead) {
-        memcpy(stagingBuffer, userPtr, size);
+        memcpy(stagingBuffer, userData.ptr, userData.size);
     }
 
     result.chunkCopyStatus = func(stagingBuffer, args...);
 
     tracker.taskCountToWait = csr->peekTaskCount();
     if (isRead) {
-        UserDstData dstData{userPtr, size};
-        currentStagingBuffers.push({dstData, tracker});
+        currentStagingBuffers[stagingBufferIndex] = {userData, tracker};
     } else {
         trackChunk(tracker);
     }
@@ -103,7 +103,8 @@ StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void
     for (auto i = 0u; i < copiesNum; i++) {
         auto chunkDst = ptrOffset(dstPtr, i * chunkSize);
         auto chunkSrc = ptrOffset(srcPtr, i * chunkSize);
-        result = performChunkTransfer(false, const_cast<void *>(chunkSrc), chunkSize, stagingQueue, csr, chunkCopyFunc, chunkDst, chunkSize);
+        UserData userData{chunkSrc, chunkSize};
+        result = performChunkTransfer(i, false, userData, stagingQueue, csr, chunkCopyFunc, chunkDst, chunkSize);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
@@ -112,7 +113,8 @@ StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void
     if (remainder != 0) {
         auto chunkDst = ptrOffset(dstPtr, copiesNum * chunkSize);
         auto chunkSrc = ptrOffset(srcPtr, copiesNum * chunkSize);
-        auto result = performChunkTransfer(false, const_cast<void *>(chunkSrc), remainder, stagingQueue, csr, chunkCopyFunc, chunkDst, remainder);
+        UserData userData{chunkSrc, remainder};
+        auto result = performChunkTransfer(copiesNum, false, userData, stagingQueue, csr, chunkCopyFunc, chunkDst, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
@@ -127,7 +129,7 @@ StagingTransferStatus StagingBufferManager::performCopy(void *dstPtr, const void
  * Several rows are packed into single chunk unless size of single row exceeds maximum chunk size (2MB).
  * Caller provides actual function to enqueue read/write operation for single chunk.
  */
-StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
+StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr, const size_t *globalOrigin, const size_t *globalRegion, size_t rowPitch, size_t bytesPerPixel, ChunkTransferImageFunc &chunkTransferImageFunc, CommandStreamReceiver *csr, bool isRead) {
     StagingQueue stagingQueue;
     size_t origin[3] = {};
     size_t region[3] = {};
@@ -140,13 +142,16 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
     auto numOfChunks = globalRegion[1] / rowsPerChunk;
     auto remainder = globalRegion[1] % (rowsPerChunk * numOfChunks);
     StagingTransferStatus result{};
+    RowPitchData rowPitchData{region[0] * bytesPerPixel, rowPitch, rowsPerChunk};
 
     for (auto i = 0u; i < numOfChunks; i++) {
         origin[1] = globalOrigin[1] + i * rowsPerChunk;
         region[1] = rowsPerChunk;
         auto size = region[1] * rowPitch;
         auto chunkPtr = ptrOffset(ptr, i * rowsPerChunk * rowPitch);
-        result = performChunkTransfer(isRead, const_cast<void *>(chunkPtr), size, stagingQueue, csr, chunkTransferImageFunc, origin, region);
+        UserData userData{chunkPtr, size, rowPitchData};
+
+        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, chunkTransferImageFunc, origin, region);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
             return result;
         }
@@ -157,13 +162,19 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
         region[1] = remainder;
         auto size = region[1] * rowPitch;
         auto chunkPtr = ptrOffset(ptr, numOfChunks * rowsPerChunk * rowPitch);
-        result = performChunkTransfer(isRead, const_cast<void *>(chunkPtr), size, stagingQueue, csr, chunkTransferImageFunc, origin, region);
+        rowPitchData.rowsInChunk = remainder;
+        UserData userData{chunkPtr, size, rowPitchData};
+
+        result = performChunkTransfer(numOfChunks, isRead, userData, stagingQueue, csr, chunkTransferImageFunc, origin, region);
         if (result.chunkCopyStatus != 0 || result.waitStatus == WaitStatus::gpuHang) {
             return result;
         }
     }
 
-    result.waitStatus = drainAndReleaseStagingQueue(stagingQueue);
+    if (isRead) {
+        auto numOfSubmittedTransfers = numOfChunks + (remainder != 0 ? 1 : 0);
+        result.waitStatus = drainAndReleaseStagingQueue(stagingQueue, std::min(numOfSubmittedTransfers, maxInFlightReads));
+    }
     return result;
 }
 
@@ -175,7 +186,8 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
     StagingTransferStatus result{};
     for (auto i = 0u; i < copiesNum; i++) {
         auto chunkPtr = ptrOffset(ptr, i * chunkSize);
-        result = performChunkTransfer(isRead, const_cast<void *>(chunkPtr), chunkSize, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, chunkSize);
+        UserData userData{chunkPtr, chunkSize};
+        result = performChunkTransfer(i, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, chunkSize);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
@@ -184,33 +196,39 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
 
     if (remainder != 0) {
         auto chunkPtr = ptrOffset(ptr, copiesNum * chunkSize);
-        result = performChunkTransfer(isRead, const_cast<void *>(chunkPtr), remainder, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, remainder);
+        UserData userData{chunkPtr, remainder};
+        result = performChunkTransfer(copiesNum, isRead, userData, stagingQueue, csr, chunkTransferBufferFunc, chunkOffset, remainder);
         if (result.chunkCopyStatus != 0) {
             return result;
         }
     }
 
-    result.waitStatus = drainAndReleaseStagingQueue(stagingQueue);
     return result;
 }
 
 /*
- * This method is used for read transfers. It waits for oldest transfer to finish
+ * This method is used for read transfers. It waits for transfer to finish
  * and copies data associated with that transfer to host allocation.
  * Returned tracker contains staging buffer ready for reuse.
  */
-WaitStatus StagingBufferManager::fetchHead(StagingQueue &stagingQueue, StagingBufferTracker &tracker) const {
-    auto &head = stagingQueue.front();
-    auto status = head.second.csr->waitForTaskCount(head.second.taskCountToWait);
+WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const {
+    auto status = transfer.second.csr->waitForTaskCount(transfer.second.taskCountToWait);
     if (status == WaitStatus::gpuHang) {
         return status;
     }
 
-    auto &userData = head.first;
-    tracker = head.second;
+    auto &userData = transfer.first;
+    tracker = transfer.second;
     auto stagingBuffer = addrToPtr(tracker.chunkAddress);
-    memcpy(userData.ptr, stagingBuffer, userData.size);
-    stagingQueue.pop();
+    auto userDst = const_cast<void *>(userData.ptr);
+    if (userData.rowPitchData.rowSize < userData.rowPitchData.rowPitch) {
+        for (auto rowId = 0u; rowId < userData.rowPitchData.rowsInChunk; rowId++) {
+            auto offset = rowId * userData.rowPitchData.rowPitch;
+            memcpy(ptrOffset(userDst, offset), ptrOffset(stagingBuffer, offset), userData.rowPitchData.rowSize);
+        }
+    } else {
+        memcpy(userDst, stagingBuffer, userData.size);
+    }
     return WaitStatus::ready;
 }
 
@@ -218,10 +236,10 @@ WaitStatus StagingBufferManager::fetchHead(StagingQueue &stagingQueue, StagingBu
  * Waits for all pending transfers to finish.
  * Releases staging buffers back to pool for reuse.
  */
-WaitStatus StagingBufferManager::drainAndReleaseStagingQueue(StagingQueue &stagingQueue) const {
+WaitStatus StagingBufferManager::drainAndReleaseStagingQueue(const StagingQueue &stagingQueue, size_t numOfTransfers) const {
     StagingBufferTracker tracker{};
-    while (!stagingQueue.empty()) {
-        auto status = fetchHead(stagingQueue, tracker);
+    for (auto i = 0u; i < numOfTransfers; i++) {
+        auto status = copyStagingToHost(stagingQueue[i], tracker);
         if (status == WaitStatus::gpuHang) {
             return status;
         }
