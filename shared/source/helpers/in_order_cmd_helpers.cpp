@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -133,6 +133,9 @@ NEO::GraphicsAllocation *InOrderExecInfo::getDeviceCounterAllocation() const {
 }
 
 NEO::GraphicsAllocation *InOrderExecInfo::getHostCounterAllocation() const {
+    if (externalHostAllocation) {
+        return externalHostAllocation;
+    }
     return hostCounterNode ? hostCounterNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex) : nullptr;
 }
 

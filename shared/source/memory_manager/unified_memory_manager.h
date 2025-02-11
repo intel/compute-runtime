@@ -18,6 +18,7 @@
 #include "memory_properties_flags.h"
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <memory>
