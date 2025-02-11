@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -247,7 +247,7 @@ TEST_F(D3D9Tests, WhenCreatingSurfaceIntelThenImagePropertiesAreSetCorrectly) {
 }
 
 TEST_F(D3D9Tests, givenD3DHandleWhenCreatingSharedSurfaceThenAllocationTypeImageIsSet) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = reinterpret_cast<HANDLE>(1);
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -263,7 +263,7 @@ TEST_F(D3D9Tests, givenD3DHandleWhenCreatingSharedSurfaceThenAllocationTypeImage
 }
 
 TEST_F(D3D9Tests, givenUPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)1;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -280,7 +280,7 @@ TEST_F(D3D9Tests, givenUPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
 }
 
 TEST_F(D3D9Tests, givenVPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)1;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -297,7 +297,7 @@ TEST_F(D3D9Tests, givenVPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
 }
 
 TEST_F(D3D9Tests, givenUVPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)1;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -314,7 +314,7 @@ TEST_F(D3D9Tests, givenUVPlaneWhenCreateSurfaceThenChangeWidthHeightAndPitch) {
 }
 
 TEST_F(D3D9Tests, givenYPlaneWhenCreateSurfaceThenDontChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)1;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -331,7 +331,7 @@ TEST_F(D3D9Tests, givenYPlaneWhenCreateSurfaceThenDontChangeWidthHeightAndPitch)
 }
 
 TEST_F(D3D9Tests, givenUPlaneWhenCreateNonSharedSurfaceThenChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -348,7 +348,7 @@ TEST_F(D3D9Tests, givenUPlaneWhenCreateNonSharedSurfaceThenChangeWidthHeightAndP
 }
 
 TEST_F(D3D9Tests, givenVPlaneWhenCreateNonSharedSurfaceThenChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -365,7 +365,7 @@ TEST_F(D3D9Tests, givenVPlaneWhenCreateNonSharedSurfaceThenChangeWidthHeightAndP
 }
 
 TEST_F(D3D9Tests, givenUVPlaneWhenCreateNonSharedSurfaceThenChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -382,7 +382,7 @@ TEST_F(D3D9Tests, givenUVPlaneWhenCreateNonSharedSurfaceThenChangeWidthHeightAnd
 }
 
 TEST_F(D3D9Tests, givenYPlaneWhenCreateNonSharedSurfaceThenDontChangeWidthHeightAndPitch) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -400,7 +400,7 @@ TEST_F(D3D9Tests, givenYPlaneWhenCreateNonSharedSurfaceThenDontChangeWidthHeight
 
 TEST_F(D3D9Tests, givenNV12FormatAndInvalidPlaneWhenSurfaceIsCreatedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -413,7 +413,7 @@ TEST_F(D3D9Tests, givenNV12FormatAndInvalidPlaneWhenSurfaceIsCreatedThenReturnEr
 
 TEST_F(D3D9Tests, givenYV12FormatAndInvalidPlaneWhenSurfaceIsCreatedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -473,7 +473,7 @@ TEST_F(D3D9Tests, givenAlreadyUsedSurfaceWhenSurfaceIsCreatedThenReturnError) {
 
 TEST_F(D3D9Tests, givenNotSupportedFormatWhenSurfaceIsCreatedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('I', '4', '2', '0');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('I', '4', '2', '0'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)0;
 
     mockSharingFcns->getTexture2dDescSetParams = true;
@@ -485,7 +485,7 @@ TEST_F(D3D9Tests, givenNotSupportedFormatWhenSurfaceIsCreatedThenReturnError) {
 }
 
 TEST_F(D3D9Tests, GivenMediaSurfaceInfoKhrWhenGetMemObjInfoThenCorrectInfoIsReturned) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     cl_dx9_media_adapter_type_khr expectedAdapterType = 5;
     cl_uint expectedPlane = 2;
     cl_dx9_surface_info_khr getSurfaceInfo = {};
@@ -508,7 +508,7 @@ TEST_F(D3D9Tests, GivenMediaSurfaceInfoKhrWhenGetMemObjInfoThenCorrectInfoIsRetu
 }
 
 TEST_F(D3D9Tests, GivenResourceIntelWhenGetMemObjInfoThenCorrectInfoIsReturned) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     cl_dx9_media_adapter_type_khr expectedAdapterType = 5;
     cl_uint expectedPlane = 2;
     cl_dx9_surface_info_khr getSurfaceInfo = {};
@@ -531,7 +531,7 @@ TEST_F(D3D9Tests, GivenResourceIntelWhenGetMemObjInfoThenCorrectInfoIsReturned) 
 }
 
 TEST_F(D3D9Tests, GivenSharedHandleIntelWhenGetMemObjInfoThenCorrectInfoIsReturned) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     cl_dx9_media_adapter_type_khr expectedAdapterType = 5;
     cl_uint expectedPlane = 2;
     cl_dx9_surface_info_khr getSurfaceInfo = {};
@@ -553,7 +553,7 @@ TEST_F(D3D9Tests, GivenSharedHandleIntelWhenGetMemObjInfoThenCorrectInfoIsReturn
 }
 
 TEST_F(D3D9Tests, GivenMediaAdapterTypeKhrWhenGetMemObjInfoThenCorrectInfoIsReturned) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     cl_dx9_media_adapter_type_khr adapterType = 0;
     cl_dx9_media_adapter_type_khr expectedAdapterType = 5;
     cl_uint expectedPlane = 2;
@@ -575,7 +575,7 @@ TEST_F(D3D9Tests, GivenMediaAdapterTypeKhrWhenGetMemObjInfoThenCorrectInfoIsRetu
 }
 
 TEST_F(D3D9Tests, GivenMediaPlaneKhrWhenGetMemObjInfoThenCorrectInfoIsReturned) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     cl_dx9_media_adapter_type_khr expectedAdapterType = 5;
     cl_uint plane = 0;
     cl_uint expectedPlane = 2;
@@ -597,7 +597,7 @@ TEST_F(D3D9Tests, GivenMediaPlaneKhrWhenGetMemObjInfoThenCorrectInfoIsReturned) 
 }
 
 TEST_F(D3D9Tests, GivenPlaneIntelWhenGetMemObjInfoThenCorrectInfoIsReturned) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     cl_dx9_media_adapter_type_khr expectedAdapterType = 5;
     cl_uint plane = 0;
     cl_uint expectedPlane = 2;
@@ -1089,7 +1089,7 @@ TEST_F(D3D9Tests, givenInvalidContextWhenImageIsCreatedThenErrorIsReturned) {
 }
 
 TEST_F(D3D9Tests, givenTheSameResourceAndPlaneWhenSurfaceIsCreatedThenReturnError) {
-    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
+    mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), code supplied by vendor
     surfaceInfo.shared_handle = (HANDLE)1;
     cl_int retVal = CL_SUCCESS;
     cl_uint plane = 0;

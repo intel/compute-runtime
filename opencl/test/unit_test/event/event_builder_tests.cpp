@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -154,7 +154,7 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
     virtualEvent.eventWithoutCommand = false;
     virtualEvent.submittedCmd.exchange(command.release());
 
-    EventBuilder eventBuilder;
+    EventBuilder eventBuilder; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
     EXPECT_EQ(nullptr, eventBuilder.getEvent());
 
     constexpr int constrParam1 = 7;

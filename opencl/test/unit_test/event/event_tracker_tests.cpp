@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -668,8 +668,8 @@ TEST(EventsTracker, givenEventsFromDifferentThreadsThenDumpingProperly) {
     UserEvent uEvent2;
 
     evTrackerMockMT->getList()->pushFrontOne(*new TrackedEvent{&uEvent1, 2});
-    evTrackerMockMT->getList()->pushFrontOne(*new TrackedEvent{&uEvent2, 3});
-    evTrackerMockMT->dump();
+    evTrackerMockMT->getList()->pushFrontOne(*new TrackedEvent{&uEvent2, 3}); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
+    evTrackerMockMT->dump();                                                  // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
 
     std::stringstream expected;
     expected << "digraph events_registry_" << evTrackerMockMT

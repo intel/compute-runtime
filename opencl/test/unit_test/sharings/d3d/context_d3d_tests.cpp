@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,9 @@ struct ClIntelSharingFormatQueryDX9 : public ApiTests {
                                      D3DFMT_A8L8, D3DFMT_A32B32G32R32F, D3DFMT_A16B16G16R16F, D3DFMT_A16B16G16R16,
                                      D3DFMT_A8B8G8R8, D3DFMT_X8B8G8R8, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8};
 
+        // Silence all checks for FOURCC codes out of range of D3DFORMAT
+        // format are supplied by vendor and many codes are not listed in enum
+        // NOLINTBEGIN(clang-analyzer-optin.core.EnumCastOutOfRange)
         supportedPlanarFormats = {D3DFMT_YUY2, D3DFMT_UYVY,
                                   static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')),
                                   static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')),
@@ -61,6 +64,7 @@ struct ClIntelSharingFormatQueryDX9 : public ApiTests {
                                   static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2'))};
 
         supportedPlane2Formats = {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2'))};
+        // NOLINTEND(clang-analyzer-optin.core.EnumCastOutOfRange)
         retrievedFormats.assign(supportedNonPlanarFormats.size() + supportedPlanarFormats.size(), D3DFMT_UNKNOWN);
     }
 

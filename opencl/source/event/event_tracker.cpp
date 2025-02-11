@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,12 +234,12 @@ void EventsTracker::notifyCreation(Event *eventToTrack) {
     dump();
     auto trackedE = new TrackedEvent{eventToTrack, eventId++};
     trackedEvents.pushFrontOne(*trackedE);
-}
+} // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
 
 void EventsTracker::notifyDestruction(Event *eventToDestroy) {
     auto trackedE = new TrackedEvent{eventToDestroy, -(eventId++)};
     trackedEvents.pushFrontOne(*trackedE);
-    dump();
+    dump(); // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks), NEO-14033
 }
 
 void EventsTracker::notifyTransitionedExecutionStatus() {
