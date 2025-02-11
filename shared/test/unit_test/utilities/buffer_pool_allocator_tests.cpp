@@ -30,11 +30,10 @@ struct DummyBuffersPool : public NEO::AbstractBuffersPool<DummyBuffersPool, Dumm
     static constexpr auto dummyPtr = 0xdeadbeef0000;
 
     static constexpr NEO::SmallBuffersParams defaultParams{
-        32 * MemoryConstants::kiloByte, // aggregatedSmallBuffersPoolSize
-        2 * MemoryConstants::kiloByte,  // smallBufferThreshold
-        1024u,                          // chunkAlignment
-        1024u                           // startingOffset
-    };
+        .aggregatedSmallBuffersPoolSize = 32 * MemoryConstants::kiloByte,
+        .smallBufferThreshold = 2 * MemoryConstants::kiloByte,
+        .chunkAlignment = 1024u,
+        .startingOffset = 1024u};
 
     DummyBuffersPool(NEO::MemoryManager *memoryManager, uint32_t poolOffset, BaseType::OnChunkFreeCallback onChunkFreeCallback)
         : BaseType{memoryManager, onChunkFreeCallback, defaultParams} {
@@ -372,18 +371,16 @@ TEST_F(SmallBuffersParamsTest, GivenBuffersAllocatorWhenSettingDifferentParamsTh
     auto buffersAllocator = DummyBuffersAllocator{};
 
     const NEO::SmallBuffersParams params1{
-        16 * MemoryConstants::kiloByte, // aggregatedSmallBuffersPoolSize
-        1 * MemoryConstants::kiloByte,  // smallBufferThreshold
-        1024u,                          // chunkAlignment
-        1024u                           // startingOffset
-    };
+        .aggregatedSmallBuffersPoolSize = 16 * MemoryConstants::kiloByte,
+        .smallBufferThreshold = 1 * MemoryConstants::kiloByte,
+        .chunkAlignment = 1024u,
+        .startingOffset = 1024u};
 
     const NEO::SmallBuffersParams params2{
-        32 * MemoryConstants::megaByte, // aggregatedSmallBuffersPoolSize
-        2 * MemoryConstants::megaByte,  // smallBufferThreshold
-        MemoryConstants::pageSize64k,   // chunkAlignment
-        MemoryConstants::pageSize64k    // startingOffset
-    };
+        .aggregatedSmallBuffersPoolSize = 32 * MemoryConstants::megaByte,
+        .smallBufferThreshold = 2 * MemoryConstants::megaByte,
+        .chunkAlignment = MemoryConstants::pageSize64k,
+        .startingOffset = MemoryConstants::pageSize64k};
 
     buffersAllocator.setParams(params1);
     EXPECT_TRUE(compareSmallBuffersParams(params1, buffersAllocator.getParams()));

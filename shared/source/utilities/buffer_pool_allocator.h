@@ -31,20 +31,18 @@ struct SmallBuffersParams {
 
     static SmallBuffersParams getDefaultParams() {
         return {
-            2 * MemoryConstants::megaByte, // aggregatedSmallBuffersPoolSize
-            1 * MemoryConstants::megaByte, // smallBufferThreshold
-            MemoryConstants::pageSize64k,  // chunkAlignment
-            MemoryConstants::pageSize64k   // startingOffset
-        };
+            .aggregatedSmallBuffersPoolSize = 2 * MemoryConstants::megaByte,
+            .smallBufferThreshold = 1 * MemoryConstants::megaByte,
+            .chunkAlignment = MemoryConstants::pageSize64k,
+            .startingOffset = MemoryConstants::pageSize64k};
     }
 
     static SmallBuffersParams getLargePagesParams() {
         return {
-            16 * MemoryConstants::megaByte, // aggregatedSmallBuffersPoolSize
-            2 * MemoryConstants::megaByte,  // smallBufferThreshold
-            MemoryConstants::pageSize64k,   // chunkAlignment
-            MemoryConstants::pageSize64k    // startingOffset
-        };
+            .aggregatedSmallBuffersPoolSize = 16 * MemoryConstants::megaByte,
+            .smallBufferThreshold = 2 * MemoryConstants::megaByte,
+            .chunkAlignment = MemoryConstants::pageSize64k,
+            .startingOffset = MemoryConstants::pageSize64k};
     }
 
     static inline SmallBuffersParams getPreferredBufferPoolParams(const ProductHelper &productHelper);
