@@ -5352,6 +5352,28 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
     context->freeMem(devAddress);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDontPachDependencies, MatchAny) {
+    uint64_t counterValue = 4;
+    uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+
+    ze_event_handle_t handle = nullptr;
+    createExternalSyncStorageEvent(counterValue, incValue, devAddress, handle);
+
+    auto immCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &handle, launchParams, false);
+
+    for (auto &cmd : immCmdList->inOrderPatchCmds) {
+        EXPECT_NE(NEO::InOrderPatchCommandHelpers::PatchCmdType::lri64b, cmd.patchCmdType);
+        EXPECT_NE(NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore, cmd.patchCmdType);
+    }
+
+    zeEventDestroy(handle);
+
+    context->freeMem(devAddress);
+}
+
 HWTEST_F(InOrderCmdListTests, givenTimestmapEnabledWhenCreatingStandaloneCbEventThenSetCorrectPacketSize) {
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;

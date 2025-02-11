@@ -2656,6 +2656,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                 bool indirectMode = false;
 
                 size_t inOrderPatchListIndex = std::numeric_limits<size_t>::max();
+
+                bool patchingRequired = inOrderExecInfo->isRegularCmdList() && !inOrderExecInfo->isExternalMemoryExecInfo();
+
                 if (isQwordInOrderCounter()) {
                     indirectMode = true;
 
@@ -2673,7 +2676,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                         memset(lri2, 0, sizeof(MI_LOAD_REGISTER_IMM));
                     }
 
-                    if (inOrderExecInfo->isRegularCmdList()) {
+                    if (patchingRequired) {
                         inOrderPatchListIndex = addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), lri1, lri2, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::lri64b);
                         if (noopDispatch) {
                             disablePatching(inOrderPatchListIndex);
@@ -2703,7 +2706,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendWaitOnInOrderDependency(std::sh
                     memset(semaphoreCommand, 0, sizeof(MI_SEMAPHORE_WAIT));
                 }
 
-                if (inOrderExecInfo->isRegularCmdList() && !isQwordInOrderCounter()) {
+                if (patchingRequired && !isQwordInOrderCounter()) {
                     inOrderPatchListIndex = addCmdForPatching((implicitDependency ? nullptr : &inOrderExecInfo), semaphoreCommand, nullptr, waitValue, NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore);
                     if (noopDispatch) {
                         disablePatching(inOrderPatchListIndex);
