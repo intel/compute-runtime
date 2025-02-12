@@ -38,7 +38,7 @@ class TbxPageFaultManager : public virtual CpuPageFaultManager {
     void handlePageFault(void *ptr, PageFaultDataTbx &faultData);
 
     std::unordered_map<void *, PageFaultDataTbx> memoryDataTbx;
-    RecursiveSpinLock mtxTbx;
+    SpinLock mtxTbx;
 };
 
 } // namespace NEO

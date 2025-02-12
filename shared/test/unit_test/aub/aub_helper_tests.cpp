@@ -129,18 +129,12 @@ TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectR
     }
 }
 
-TEST(AubHelper, givenSetBufferHostMemoryAlwaysAubWritableAndDisabledTbxFaultMngrWhenAskingIfBufferHostMemoryAllocationIsOneTimeAubWritableThenReturnCorrectResult) {
+TEST(AubHelper, givenSetBufferHostMemoryAlwaysAubWritableWhenAskingIfBufferHostMemoryAllocationIsOneTimeAubWritableThenReturnCorrectResult) {
     DebugManagerStateRestore stateRestore;
-    NEO::debugManager.flags.EnableTbxPageFaultManager.set(0);
 
     for (auto isAlwaysAubWritable : {false, true}) {
-        for (auto isTbxFaultManagerEnabled : {false, true}) {
-            NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.set(isAlwaysAubWritable);
-            NEO::debugManager.flags.EnableTbxPageFaultManager.set(isTbxFaultManagerEnabled);
-
-            bool isOneTimeAubWritable = AubHelper::isOneTimeAubWritableAllocationType(AllocationType::bufferHostMemory);
-            EXPECT_EQ(!isAlwaysAubWritable || isTbxFaultManagerEnabled, isOneTimeAubWritable);
-        }
+        NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.set(isAlwaysAubWritable);
+        EXPECT_NE(AubHelper::isOneTimeAubWritableAllocationType(AllocationType::bufferHostMemory), isAlwaysAubWritable);
     }
 }
 

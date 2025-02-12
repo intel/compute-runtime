@@ -14,7 +14,7 @@
 namespace NEO {
 
 bool TbxPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) {
-    std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
+    std::unique_lock<SpinLock> lock{mtxTbx};
     auto allocPtr = getFaultData(memoryDataTbx, ptr, handleFault);
     if (allocPtr == nullptr) {
         return CpuPageFaultManager::verifyAndHandlePageFault(ptr, handleFault);
@@ -43,7 +43,7 @@ void TbxPageFaultManager::handlePageFault(void *ptr, PageFaultDataTbx &faultData
 }
 
 void TbxPageFaultManager::removeAllocation(GraphicsAllocation *alloc) {
-    std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
+    std::unique_lock<SpinLock> lock{mtxTbx};
     for (auto &data : memoryDataTbx) {
         auto allocPtr = data.first;
         auto faultData = data.second;
@@ -56,7 +56,7 @@ void TbxPageFaultManager::removeAllocation(GraphicsAllocation *alloc) {
 }
 
 void TbxPageFaultManager::insertAllocation(CommandStreamReceiver *csr, GraphicsAllocation *alloc, uint32_t bank, void *ptr, size_t size) {
-    std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
+    std::unique_lock<SpinLock> lock{mtxTbx};
 
     if (this->memoryDataTbx.find(ptr) == this->memoryDataTbx.end()) {
         PageFaultDataTbx pageFaultData{};

@@ -12,6 +12,9 @@
 
 namespace NEO {
 
-class TbxPageFaultManagerLinux final : public PageFaultManagerLinux, public TbxPageFaultManager {};
+class TbxPageFaultManagerLinux final : public PageFaultManagerLinux, public TbxPageFaultManager {
+  public:
+    TbxPageFaultManagerLinux() : PageFaultManagerLinux(), TbxPageFaultManager() {}
+};
 
 } // namespace NEO

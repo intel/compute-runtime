@@ -15,6 +15,9 @@
 
 namespace NEO {
 
-class TbxPageFaultManagerWindows final : public PageFaultManagerWindows, public TbxPageFaultManager {};
+class TbxPageFaultManagerWindows final : public PageFaultManagerWindows, public TbxPageFaultManager {
+  public:
+    TbxPageFaultManagerWindows() : PageFaultManagerWindows(), TbxPageFaultManager() {}
+};
 
 } // namespace NEO
