@@ -478,11 +478,6 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
         return false;
     }
 
-    bool internalUsage = (engineUsage == EngineUsage::internal);
-    if (internalUsage) {
-        commandStreamReceiver->initializeDefaultsForInternalEngine();
-    }
-
     if (commandStreamReceiver->needsPageTableManager()) {
         commandStreamReceiver->createPageTableManager();
     }
@@ -562,15 +557,9 @@ bool Device::initializeEngines() {
 }
 
 bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineTypeUsage engineTypeUsage) {
-    auto engineUsage = engineTypeUsage.second;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver = createCommandStreamReceiver();
     if (!commandStreamReceiver) {
         return false;
-    }
-
-    bool internalUsage = (engineUsage == EngineUsage::internal);
-    if (internalUsage) {
-        commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
 
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);

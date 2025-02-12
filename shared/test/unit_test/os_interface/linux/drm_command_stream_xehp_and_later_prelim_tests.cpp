@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -360,8 +360,8 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         }
         MockDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex,
                                      DeviceBitfield deviceBitfield,
-                                     GemCloseWorkerMode mode, uint32_t inputHandleId)
-            : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, mode), expectedHandleId(inputHandleId) {
+                                     uint32_t inputHandleId)
+            : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield), expectedHandleId(inputHandleId) {
         }
 
         SubmissionStatus processResidency(ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
@@ -393,7 +393,6 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         csr = new MockDrmCommandStreamReceiver<GfxFamily>(executionEnvironment,
                                                           rootDeviceIndex,
                                                           3,
-                                                          GemCloseWorkerMode::gemCloseWorkerActive,
                                                           expectedHandleId);
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
@@ -514,7 +513,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
 
     template <typename FamilyType>
     std::unique_ptr<DrmCommandStreamReceiver<FamilyType>> createCsr() {
-        auto csr = std::make_unique<DrmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 0b11, GemCloseWorkerMode::gemCloseWorkerActive);
+        auto csr = std::make_unique<DrmCommandStreamReceiver<FamilyType>>(*executionEnvironment, 0, 0b11);
         csr->setupContext(*osContext);
         return csr;
     }
@@ -598,8 +597,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
                                                       EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0])[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized(false);
-    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         GemCloseWorkerMode::gemCloseWorkerActive);
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
     csr->setupContext(*osContext);
 
     auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
@@ -641,8 +639,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
 
         uint32_t execCalled = 0;
     };
-    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         GemCloseWorkerMode::gemCloseWorkerActive);
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
     csr->setupContext(*osContext);
 
     auto tileInstancedBo0 = new BufferObject(0u, drm, 3, 40, 0, 1);
@@ -689,8 +686,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
         uint32_t execCalled = 0;
         uint32_t processResidencyCalled = 0;
     };
-    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         GemCloseWorkerMode::gemCloseWorkerActive);
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
     csr->setupContext(*osContext);
 
     const auto size = 1024u;
@@ -723,8 +719,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
 
         uint32_t execCalled = 0;
     };
-    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         GemCloseWorkerMode::gemCloseWorkerActive);
+    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield());
     csr->setupContext(*osContext);
 
     const auto size = 1024u;

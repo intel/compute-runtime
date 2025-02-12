@@ -46,15 +46,14 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
 
-    TestedDrmCommandStreamReceiver(GemCloseWorkerMode mode,
-                                   ExecutionEnvironment &executionEnvironment,
+    TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                    const DeviceBitfield deviceBitfield)
-        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, deviceBitfield, mode) {
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, 0, deviceBitfield) {
     }
     TestedDrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                    uint32_t rootDeviceIndex,
                                    const DeviceBitfield deviceBitfield)
-        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, GemCloseWorkerMode::gemCloseWorkerInactive) {
+        : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {
     }
 
     void overrideDispatchPolicy(DispatchMode overrideValue) {
@@ -141,12 +140,11 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiverWithFailingExec : public TestedDrmCommandStreamReceiver<GfxFamily> {
   public:
-    TestedDrmCommandStreamReceiverWithFailingExec(GemCloseWorkerMode mode,
-                                                  ExecutionEnvironment &executionEnvironment,
+    TestedDrmCommandStreamReceiverWithFailingExec(ExecutionEnvironment &executionEnvironment,
                                                   const DeviceBitfield deviceBitfield)
-        : TestedDrmCommandStreamReceiver<GfxFamily>(mode,
-                                                    executionEnvironment,
-                                                    deviceBitfield) {
+        : TestedDrmCommandStreamReceiver<GfxFamily>(
+              executionEnvironment,
+              deviceBitfield) {
     }
     TestedDrmCommandStreamReceiverWithFailingExec(ExecutionEnvironment &executionEnvironment,
                                                   uint32_t rootDeviceIndex,

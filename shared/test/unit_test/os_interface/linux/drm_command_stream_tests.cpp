@@ -26,7 +26,7 @@ using namespace NEO;
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenL0ApiConfigWhenCreatingDrmCsrThenEnableImmediateDispatch) {
     VariableBackup<ApiSpecificConfig::ApiType> backup(&apiTypeForUlts, ApiSpecificConfig::L0);
-    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1);
     EXPECT_EQ(DispatchMode::immediateDispatch, csr.dispatchMode);
 }
 
@@ -42,7 +42,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenEnabledDirectSubmissionWhenGetting
     debugManager.flags.EnableDrmCompletionFence.set(1);
     debugManager.flags.EnableDirectSubmission.set(1);
     debugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
-    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr<FamilyType> csr(executionEnvironment, 0, 1);
     csr.setupContext(*osContext);
     EXPECT_EQ(nullptr, csr.completionFenceValuePointer);
 
@@ -99,10 +99,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, GivenExecBufferErrorWhenFlushInternalTh
 
     auto ret = static_cast<MockDrmCsr<FamilyType> *>(csr)->flushInternal(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(SubmissionStatus::outOfHostMemory, ret);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDefaultDrmCSRWhenItIsCreatedThenGemCloseWorkerModeIsInactive) {
-    EXPECT_EQ(GemCloseWorkerMode::gemCloseWorkerInactive, static_cast<const DrmCommandStreamReceiver<FamilyType> *>(csr)->peekGemCloseWorkerOperationMode());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenCommandStreamWhenItIsFlushedWithGemCloseWorkerInDefaultModeThenWorkerDecreasesTheRefCount) {
@@ -261,13 +257,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDebugFlagSetWhenFlushingTh
     }
 
     mm->freeGraphicsMemory(commandBuffer);
-}
-
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCsrCreatedWithInactiveGemCloseWorkerPolicyThenThreadIsNotCreated) {
-    TestedDrmCommandStreamReceiver<FamilyType> testedCsr(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                         *this->executionEnvironment,
-                                                         1);
-    EXPECT_EQ(GemCloseWorkerMode::gemCloseWorkerInactive, testedCsr.peekGemCloseWorkerOperationMode());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmAllocationWhenGetBufferObjectToModifyIsCalledForAGivenHandleIdThenTheCorrespondingBufferObjectGetsModified) {
@@ -968,9 +957,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
 
@@ -999,9 +988,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
 
@@ -1033,9 +1022,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = false;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     device->resetCommandStreamReceiver(testedCsr);
 
@@ -1063,9 +1052,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
     debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
     device->resetCommandStreamReceiver(testedCsr);
@@ -1104,9 +1093,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutU
     debugManager.flags.EnableUserFenceForCompletionWait.set(0);
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
     device->resetCommandStreamReceiver(testedCsr);
@@ -1129,9 +1118,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
     device->resetCommandStreamReceiver(testedCsr);
@@ -1178,9 +1167,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
                 mock->configureGpuFaultCheckThreshold();
 
                 TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-                    new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                   *this->executionEnvironment,
-                                                                   1);
+                    new TestedDrmCommandStreamReceiver<FamilyType>(
+                        *this->executionEnvironment,
+                        1);
                 EXPECT_TRUE(testedCsr->useUserFenceWait);
                 EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
 
@@ -1229,9 +1218,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = false;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
     device->resetCommandStreamReceiver(testedCsr);
@@ -1257,9 +1246,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
     device->resetCommandStreamReceiver(testedCsr);
@@ -1286,9 +1275,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     TestedDrmCommandStreamReceiver<FamilyType> *testedCsr =
-        new TestedDrmCommandStreamReceiver<FamilyType>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                       *this->executionEnvironment,
-                                                       1);
+        new TestedDrmCommandStreamReceiver<FamilyType>(
+            *this->executionEnvironment,
+            1);
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
     device->resetCommandStreamReceiver(testedCsr);
@@ -1317,9 +1306,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
-        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                     *this->executionEnvironment,
-                                                                     1);
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(
+            *this->executionEnvironment,
+            1);
 
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
@@ -1334,9 +1323,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
-        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                     *this->executionEnvironment,
-                                                                     1);
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(
+            *this->executionEnvironment,
+            1);
 
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
@@ -1351,9 +1340,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
-        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                     *this->executionEnvironment,
-                                                                     1);
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(
+            *this->executionEnvironment,
+            1);
 
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
@@ -1369,9 +1358,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
-        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                     *this->executionEnvironment,
-                                                                     1);
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(
+            *this->executionEnvironment,
+            1);
 
     EXPECT_FALSE(testedCsr->useUserFenceWait);
     EXPECT_TRUE(testedCsr->isUsedNotifyEnableForPostSync());
@@ -1387,9 +1376,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->isVmBindAvailableCall.returnValue = true;
 
     std::unique_ptr<TestedDrmCommandStreamReceiver<FamilyType>> testedCsr =
-        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(GemCloseWorkerMode::gemCloseWorkerInactive,
-                                                                     *this->executionEnvironment,
-                                                                     1);
+        std::make_unique<TestedDrmCommandStreamReceiver<FamilyType>>(
+            *this->executionEnvironment,
+            1);
 
     EXPECT_TRUE(testedCsr->useUserFenceWait);
     EXPECT_FALSE(testedCsr->isUsedNotifyEnableForPostSync());
@@ -1462,7 +1451,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1);
     mockCsr.setupContext(*osContext.get());
     auto res = mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
     EXPECT_GT(operationHandler->mergeWithResidencyContainerCalled, 0u);
@@ -1493,7 +1482,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenMergeWithResidencyContaine
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1);
     mockCsr.setupContext(*osContext.get());
     auto res = mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
     EXPECT_GT(operationHandler->mergeWithResidencyContainerCalled, 0u);
@@ -1527,7 +1516,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenNoAllocsInMemoryOperationH
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1);
     mockCsr.setupContext(*osContext.get());
     mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
 
@@ -1561,7 +1550,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocsInMemoryOperationHan
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
     BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
-    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    MockDrmCsr mockCsr(*executionEnvironment, rootDeviceIndex, 1);
     mockCsr.setupContext(*osContext.get());
     mockCsr.flush(batchBuffer, mockCsr.getResidencyAllocations());
 

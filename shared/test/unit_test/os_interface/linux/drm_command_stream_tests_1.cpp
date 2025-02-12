@@ -1039,7 +1039,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     executionEnvironment.rootDeviceEnvironments[1]->initGmm();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[1]->osInterface->setDriverModel(DrmMockCustom::create(*executionEnvironment.rootDeviceEnvironments[0]));
-    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1, GemCloseWorkerMode::gemCloseWorkerActive);
+    auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, 1);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(csr->pageTableManager.get(), pageTableManager);
 }
@@ -1049,11 +1049,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
         DebugManagerStateRestore restore;
         debugManager.flags.EnableLocalMemory.set(1);
 
-        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1);
         EXPECT_EQ(DispatchMode::batchedDispatch, csr1.dispatchMode);
 
         debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::immediateDispatch));
-        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1);
         EXPECT_EQ(DispatchMode::immediateDispatch, csr2.dispatchMode);
     }
 
@@ -1061,11 +1061,11 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmC
         DebugManagerStateRestore restore;
         debugManager.flags.EnableLocalMemory.set(0);
 
-        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, 1);
         EXPECT_EQ(DispatchMode::immediateDispatch, csr1.dispatchMode);
 
         debugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::batchedDispatch));
-        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, 1);
         EXPECT_EQ(DispatchMode::batchedDispatch, csr2.dispatchMode);
     }
 }

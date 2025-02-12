@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     // When drm is passed, DCSR will not free it at destruction
     DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                              uint32_t rootDeviceIndex,
-                             const DeviceBitfield deviceBitfield,
-                             GemCloseWorkerMode mode = GemCloseWorkerMode::gemCloseWorkerActive);
+                             const DeviceBitfield deviceBitfield);
     ~DrmCommandStreamReceiver() override;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
@@ -54,18 +53,12 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     DrmMemoryManager *getMemoryManager() const;
     GmmPageTableMngr *createPageTableManager() override;
 
-    GemCloseWorkerMode peekGemCloseWorkerOperationMode() const {
-        return this->gemCloseWorkerOperationMode;
-    }
-
-    void initializeDefaultsForInternalEngine() override {
-        gemCloseWorkerOperationMode = GemCloseWorkerMode::gemCloseWorkerInactive;
-    }
-
     SubmissionStatus printBOsForSubmit(ResidencyContainer &allocationsForResidency, GraphicsAllocation &cmdBufferAllocation);
 
     bool waitUserFenceSupported() override { return isUserFenceWaitActive(); }
     bool waitUserFence(TaskCountType waitValue, uint64_t hostAddress, int64_t timeout, bool userInterrupt, uint32_t externalInterruptId, GraphicsAllocation *allocForInterruptWait) override;
+
+    bool isGemCloseWorkerActive() const;
 
     using CommandStreamReceiver::pageTableManager;
 
@@ -78,7 +71,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     std::vector<BufferObject *> residency;
     std::vector<ExecObject> execObjectsStorage;
     Drm *drm;
-    GemCloseWorkerMode gemCloseWorkerOperationMode;
 
     volatile uint32_t reserved = 0;
     int32_t kmdWaitTimeout = -1;

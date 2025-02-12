@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ HWTEST_F(DrmCommandStreamMMTest, GivenForcePinThenMemoryManagerCreatesPinBb) {
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u, false);
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
-    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
 
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
     executionEnvironment.memoryManager.reset(memoryManager);
@@ -69,7 +69,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
-    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerInactive);
+    DrmCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     auto memoryManager = new TestedDrmMemoryManager(false, true, false, executionEnvironment);
 
     executionEnvironment.memoryManager.reset(memoryManager);

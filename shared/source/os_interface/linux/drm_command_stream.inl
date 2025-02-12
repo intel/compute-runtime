@@ -32,23 +32,14 @@ namespace NEO {
 template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                                                               uint32_t rootDeviceIndex,
-                                                              const DeviceBitfield deviceBitfield,
-                                                              GemCloseWorkerMode mode)
-    : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), gemCloseWorkerOperationMode(mode) {
+                                                              const DeviceBitfield deviceBitfield)
+    : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield) {
 
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
 
     this->drm = rootDeviceEnvironment->osInterface->getDriverModel()->as<Drm>();
     residency.reserve(512);
     execObjectsStorage.reserve(512);
-
-    if (this->drm->isVmBindAvailable()) {
-        gemCloseWorkerOperationMode = GemCloseWorkerMode::gemCloseWorkerInactive;
-    }
-
-    if (debugManager.flags.EnableGemCloseWorker.get() != -1) {
-        gemCloseWorkerOperationMode = debugManager.flags.EnableGemCloseWorker.get() ? GemCloseWorkerMode::gemCloseWorkerActive : GemCloseWorkerMode::gemCloseWorkerInactive;
-    }
 
     auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
     auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
@@ -174,7 +165,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
 
     auto ret = this->flushInternal(batchBuffer, allocationsForResidency);
 
-    if (this->gemCloseWorkerOperationMode == GemCloseWorkerMode::gemCloseWorkerActive) {
+    if (this->isGemCloseWorkerActive()) {
         bb->reference();
         this->getMemoryManager()->peekGemCloseWorker()->push(bb);
     }
@@ -375,6 +366,11 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue,
     int ret = drm->waitOnUserFences(static_cast<OsContextLinux &>(*this->osContext), hostAddress, waitValue, this->activePartitions, timeout, this->immWritePostSyncWriteOffset, userInterrupt, externalInterruptId, allocForInterruptWait);
 
     return (ret == 0);
+}
+
+template <typename GfxFamily>
+bool DrmCommandStreamReceiver<GfxFamily>::isGemCloseWorkerActive() const {
+    return this->getMemoryManager()->peekGemCloseWorker() && !this->osContext->isInternalEngine() && this->getType() == CommandStreamReceiverType::hardware;
 }
 
 template <typename GfxFamily>

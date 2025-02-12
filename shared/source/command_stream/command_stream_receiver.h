@@ -395,8 +395,6 @@ class CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL bool isRcs() const;
 
-    virtual void initializeDefaultsForInternalEngine(){};
-
     virtual GraphicsAllocation *getClearColorAllocation() = 0;
 
     virtual void postInitFlagsSetup() = 0;

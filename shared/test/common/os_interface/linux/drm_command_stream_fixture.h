@@ -59,7 +59,7 @@ class DrmCommandStreamTest : public ::testing::Test {
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo)));
         osContext->ensureContextInitialized(false);
 
-        csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1, GemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new MockDrmCsr<GfxFamily>(executionEnvironment, 0, 1);
         ASSERT_NE(nullptr, csr);
         csr->setupContext(*osContext);
 
