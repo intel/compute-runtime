@@ -272,4 +272,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool globalBindlessHeapsEnabled = false;
 };
 
+static_assert(NEO::NonCopyableOrMovable<CommandContainer>);
+
 } // namespace NEO

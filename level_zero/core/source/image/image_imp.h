@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,4 +73,7 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     bool sampledImage = false;
     bool mimickedImagefor3Ch = false;
 };
+
+static_assert(NEO::NonCopyableOrMovable<ImageImp>);
+
 } // namespace L0

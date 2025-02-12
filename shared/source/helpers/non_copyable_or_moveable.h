@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include <type_traits>
+
 namespace NEO {
 class NonCopyableOrMovableClass {
   public:
@@ -26,4 +29,17 @@ class NonCopyableClass {
     NonCopyableClass(NonCopyableClass &&) = default;
     NonCopyableClass &operator=(NonCopyableClass &&) = default;
 };
+
+template <typename T>
+concept NonCopyableOrMovable = !
+std::is_copy_constructible_v<T> &&
+    !std::is_copy_assignable_v<T> &&
+    !std::is_move_constructible_v<T> &&
+    !std::is_move_assignable_v<T>;
+
+template <typename T>
+concept NonCopyable = !
+std::is_copy_constructible_v<T> &&
+    !std::is_copy_assignable_v<T>;
+
 } // namespace NEO

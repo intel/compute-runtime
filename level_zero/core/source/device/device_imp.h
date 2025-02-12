@@ -196,6 +196,8 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     std::unique_ptr<DebugSession> debugSession;
 };
 
+static_assert(NEO::NonCopyableOrMovable<DeviceImp>);
+
 void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHandler, void *allocPtr, NEO::CpuPageFaultManager::PageFaultData &pageFaultData);
 
 } // namespace L0

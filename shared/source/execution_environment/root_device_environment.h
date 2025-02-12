@@ -46,6 +46,7 @@ struct AllocationProperties;
 struct HardwareInfo;
 
 struct RootDeviceEnvironment : NonCopyableClass {
+
   protected:
     std::unique_ptr<HardwareInfo> hwInfo;
 
@@ -134,5 +135,7 @@ struct RootDeviceEnvironment : NonCopyableClass {
   private:
     std::mutex mtx;
 };
+
+static_assert(NEO::NonCopyable<RootDeviceEnvironment>);
 
 } // namespace NEO
