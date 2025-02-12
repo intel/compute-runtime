@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,6 +125,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     if (texInfo.glInternalFormat != GL_RGB10) {
         surfaceFormatInfo.surfaceFormat.genxSurfaceFormat = (SurfaceFormat)texInfo.glHWFormat;
     }
+    bool hasUnifiedMcsSurface = texInfo.numberOfSamples > 1 && texInfo.globalShareHandleMCS == NULL && gmm->hasMultisampleControlSurface();
 
     GraphicsAllocation *mcsAlloc = nullptr;
     if (texInfo.globalShareHandleMCS) {
@@ -137,6 +138,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         }
         mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(mcsAlloc->getDefaultGmm()->gmmResourceInfo->getRenderPitch() / 128));
         mcsSurfaceInfo.qPitch = mcsAlloc->getDefaultGmm()->gmmResourceInfo->getQPitch();
+    } else if (hasUnifiedMcsSurface) {
+        mcsSurfaceInfo.pitch = getValidParam(static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch() / 128));
+        mcsSurfaceInfo.qPitch = gmm->gmmResourceInfo->getQPitch();
     }
     mcsSurfaceInfo.multisampleCount = GmmTypesConverter::getRenderMultisamplesCount(static_cast<uint32_t>(imgDesc.num_samples));
 
@@ -162,7 +166,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     multiGraphicsAllocation.addAllocation(alloc);
 
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, std::move(multiGraphicsAllocation), mcsAlloc, flags, 0, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
-                                    std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels);
+                                    std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels, hasUnifiedMcsSurface);
 } // namespace NEO
 
 void GlTexture::synchronizeObject(UpdateData &updateData) {

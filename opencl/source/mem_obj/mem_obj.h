@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,6 +167,12 @@ class MemObj : public BaseObject<_cl_mem> {
     void setSizeInPoolAllocator(size_t size) {
         this->sizeInPoolAllocator = size;
     }
+    bool getIsUnifiedMcsSurface() {
+        return isMcsSurfaceUnified;
+    }
+    void setIsUnifiedMcsSurface(bool isMcsSurfaceUnified) {
+        this->isMcsSurfaceUnified = isMcsSurfaceUnified;
+    }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -192,6 +198,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isHostPtrSVM;
     bool isObjectRedescribed;
     bool isDisplayable{false};
+    bool isMcsSurfaceUnified = false;
     MemoryManager *memoryManager = nullptr;
     MultiGraphicsAllocation multiGraphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;

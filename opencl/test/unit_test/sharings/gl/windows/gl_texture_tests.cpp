@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,6 +78,11 @@ class GlSharingTextureTests : public ::testing::Test {
         tempMM->useForcedGmm = true;
         auto mockGmmResInfo = static_cast<MockGmmResourceInfo *>(tempMM->forceGmm->gmmResourceInfo.get());
         mockGmmResInfo->setUnifiedAuxTranslationCapable();
+    }
+    void setMcsSurf() {
+        tempMM->useForcedGmm = true;
+        auto mockGmmResInfo = static_cast<MockGmmResourceInfo *>(tempMM->forceGmm->gmmResourceInfo.get());
+        mockGmmResInfo->setMultisampleControlSurface();
     }
 
     ExecutionEnvironment *executionEnvironment;
@@ -208,6 +213,24 @@ TEST_F(GlSharingTextureTests, givenGmmResourceAsInputWhenTextureIsCreatedThenItH
     ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
     ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
 
+    delete glTexture;
+}
+
+TEST_F(GlSharingTextureTests, givenGmmResourceInfoWithMcsWhenMcsHandleIsNullAndMultisampleCountIsGreaterThanOneThenImageHasUnifiedMcs) {
+    cl_int retVal = CL_INVALID_VALUE;
+
+    setMcsSurf();
+    glSharing->textureInfoOutput.globalShareHandleMCS = NULL;
+    glSharing->textureInfoOutput.numberOfSamples = 16;
+    glSharing->textureInfoOutput.globalShareHandle = textureId;
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+    this->tempMM->useForcedGmm = false;
+    glSharing->textureInfoOutput.pGmmResInfo = this->tempMM->forceGmm->gmmResourceInfo->peekGmmResourceInfo();
+
+    glSharing->uploadDataToTextureInfo();
+
+    auto glTexture = GlTexture::createSharedGlTexture(clContext.get(), (cl_mem_flags)0, GL_TEXTURE_1D, 0, textureId, &retVal);
+    EXPECT_TRUE(glTexture->getIsUnifiedMcsSurface());
     delete glTexture;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -232,7 +232,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(alloc);
 
-    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, flagsIntel, imgSurfaceFormat, sharedSurfaceInfo.imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, flagsIntel, imgSurfaceFormat, sharedSurfaceInfo.imgInfo, __GMM_NO_CUBE_MAP, 0, 0, false);
     image->setMediaPlaneType(plane);
     return image;
 }

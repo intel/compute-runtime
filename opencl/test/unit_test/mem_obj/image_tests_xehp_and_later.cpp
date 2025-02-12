@@ -205,6 +205,145 @@ HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetArgIsCalledWithUnifie
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedMode);
 }
 
+HWTEST2_F(XeHPAndLaterImageTests, givenMcsAllocationWhenSetAuxParamsForMultisampleCalledThenAuxModeIsExpected, IsAtLeastBmg) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockContext context;
+    McsSurfaceInfo msi = {10, 20, 3};
+    auto mcsAlloc = context.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
+
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    GmmRequirements gmmRequirements{};
+    gmmRequirements.allowLargePages = true;
+    gmmRequirements.preferCompressed = false;
+    mcsAlloc->setDefaultGmm(new Gmm(pClDevice->getRootDeviceEnvironment().getGmmHelper(), nullptr, 1, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, {}, gmmRequirements));
+    surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
+    imageHw->setMcsSurfaceInfo(msi);
+    imageHw->setMcsAllocation(mcsAlloc);
+
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    RENDER_SURFACE_STATE expectedSS = {};
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&expectedSS, releaseHelper);
+
+    EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedSS.getAuxiliarySurfaceMode());
+}
+
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithUnifiedMcsWhenSetAuxParamsForMultisampleThenAuxModeIsExpected, IsAtLeastBmg) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockContext context;
+    McsSurfaceInfo msi = {10, 20, 3};
+
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    surfaceState.setSurfaceBaseAddress(0xABCDEF1000);
+    imageHw->setMcsSurfaceInfo(msi);
+    imageHw->setIsUnifiedMcsSurface(true);
+
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    auto releaseHelper = pClDevice->getDevice().getReleaseHelper();
+    RENDER_SURFACE_STATE expectedSS = {};
+    EncodeSurfaceState<FamilyType>::setAuxParamsForMCSCCS(&expectedSS, releaseHelper);
+    EXPECT_NE(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), expectedSS.getAuxiliarySurfaceMode());
+}
+
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWhenSetAuxParamsForMultisampleThenAuxSurfBaseAddredssIsZero, IsAtLeastBmg) {
+    MockContext context;
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+}
+
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithDepthFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToDepthStencil, IsAtLeastBmg) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockContext context;
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc, &imgFormat));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    surfaceState.setSurfaceFormat(RENDER_SURFACE_STATE::SURFACE_FORMAT::SURFACE_FORMAT_R8G8B8A8_UINT);
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    EXPECT_EQ(surfaceState.getMultisampledSurfaceStorageFormat(),
+              RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
+}
+
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithNotDepthFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToMSS, IsAtLeastBmg) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockContext context;
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    cl_image_format imgFormat = {CL_RGBA, CL_FLOAT};
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc, &imgFormat));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    surfaceState.setSurfaceFormat(RENDER_SURFACE_STATE::SURFACE_FORMAT::SURFACE_FORMAT_R8G8B8A8_UINT);
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    EXPECT_EQ(surfaceState.getMultisampledSurfaceStorageFormat(),
+              RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+}
+
+HWTEST2_F(XeHPAndLaterImageTests, givenImageWithoutMcsWithTypelessSurfaceStateFormatWhenSetAuxParamsForMultisampleThenStorageFormatIsSetToMSS, IsAtLeastBmg) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    MockContext context;
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
+    imgDesc.num_samples = 8;
+    std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc, &imgFormat));
+
+    auto pClDevice = context.getDevice(0);
+
+    auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+    surfaceState.setSurfaceFormat(RENDER_SURFACE_STATE::SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS);
+    imageHw->setAuxParamsForMultisamples(&surfaceState, pClDevice->getRootDeviceIndex());
+
+    EXPECT_EQ(surfaceState.getMultisampledSurfaceStorageFormat(),
+              RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+}
+
 HWTEST2_F(ImageClearColorFixture, givenImageForXeHPAndLaterWhenClearColorParametersAreSetThenClearColorSurfaceInSurfaceStateIsSet, CompressionParamsSupportedMatcher) {
     this->setUpImpl<FamilyType>();
     auto surfaceState = this->getSurfaceState<FamilyType>();

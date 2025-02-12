@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,7 +245,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
     multiGraphicsAllocation.addAllocation(alloc);
 
     return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, std::move(multiGraphicsAllocation), mcsAlloc, flags, 0, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
-                                    std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels);
+                                    std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels, false);
 }
 
 void GlTexture::synchronizeObject(UpdateData &updateData) {

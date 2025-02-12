@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -114,7 +114,7 @@ TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueRet
         0,
         &surfaceFormat,
         info,
-        0, 0, 0);
+        0, 0, 0, false);
 
     ASSERT_NE(nullptr, image);
 
@@ -155,7 +155,7 @@ TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenF
         0,
         &surfaceFormat,
         info,
-        0, 0, 0);
+        0, 0, 0, false);
 
     ASSERT_NE(nullptr, image);
 
