@@ -90,8 +90,6 @@ void printResult(bool aubMode, bool outputValidationSuccessful, const std::strin
 
 void printResult(bool aubMode, bool outputValidationSuccessful, const std::string &blackBoxName);
 
-std::vector<ze_command_queue_group_properties_t> &getDeviceQueueProperties(ze_device_handle_t device);
-
 uint32_t getCommandQueueOrdinal(ze_device_handle_t &device, bool useCooperativeFlag);
 
 std::vector<uint32_t> getComputeQueueOrdinals(ze_device_handle_t &device);

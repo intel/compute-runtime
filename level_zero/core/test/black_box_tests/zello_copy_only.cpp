@@ -238,7 +238,7 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
         }
     }
 
-    uint8_t value = 0;
+    int value = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, dstBuffer, reinterpret_cast<void *>(&value),
                                                        sizeof(value), dstSize, nullptr, 0, nullptr));
 
@@ -304,12 +304,6 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     uint32_t copyQueueGroup = LevelZeroBlackBoxTests::getCopyOnlyCommandQueueOrdinal(device);
     if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
-        validRet = true;
-        return;
-    }
-
-    if (LevelZeroBlackBoxTests::getDeviceQueueProperties(device).at(copyQueueGroup).maxMemoryFillPatternSize < pattern1Size) {
-        std::cout << "testSharedMemDataAccessWithoutCopy case not supported. Skipping test run\n";
         validRet = true;
         return;
     }
@@ -493,7 +487,7 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
         }
     }
 
-    uint8_t value = 0;
+    int value = 0;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, dstBuffer, reinterpret_cast<void *>(&value),
                                                        sizeof(value), dstSize, nullptr, 0, nullptr));
 
