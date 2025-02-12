@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -142,15 +142,21 @@ class CCustomEventListener : public ::testing::TestEventListener {
             stdout,
             "Tests run:      %d\n"
             "Tests passed:   %d\n"
-            "Tests skipped:  %d\n"
-            "Tests failed:   %d\n"
+            "Tests skipped:  %d\n",
+            testsRun,
+            testsPassed,
+            testsSkipped);
+        if (testsFailed > 0)
+            fprintf(
+                stdout,
+                "Tests failed:   %d\n",
+                testsFailed);
+
+        fprintf(
+            stdout,
             "Tests disabled: %d\n"
             " Time elapsed:  %d ms\n"
             "%s==================\n",
-            testsRun,
-            testsPassed,
-            testsSkipped,
-            testsFailed,
             testsDisabled,
             timeElapsed,
             paddingE.c_str());
