@@ -105,7 +105,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
-            auto groupedDevices = Platform::groupDevices(std::move(allDevices));
+            auto groupedDevices = Device::groupDevices(std::move(allDevices));
             for (auto &deviceVector : groupedDevices) {
 
                 auto pPlatform = Platform::createFunc(*executionEnvironment);

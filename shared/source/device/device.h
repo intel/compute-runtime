@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -144,6 +145,7 @@ class Device : public ReferenceTrackedObject<Device> {
     bool isFullRangeSvm() const;
     static bool isBlitSplitEnabled();
     static bool isInitDeviceWithFirstSubmissionEnabled(CommandStreamReceiverType csrType);
+    static std::vector<DeviceVector> groupDevices(DeviceVector devices);
     bool isBcsSplitSupported();
     bool isInitDeviceWithFirstSubmissionSupported(CommandStreamReceiverType csrType);
     bool areSharedSystemAllocationsAllowed() const;

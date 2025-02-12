@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -437,43 +437,4 @@ TEST(PlatformInitTest, GivenPreferredPlatformNameWhenPlatformIsInitializedThenOv
     auto status = platform()->initialize(std::move(devices));
     EXPECT_TRUE(status);
     EXPECT_STREQ("Overridden Platform Name", platform()->getPlatformInfo().name.c_str());
-}
-
-TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {
-    DebugManagerStateRestore restorer;
-    const size_t numRootDevices = 5u;
-
-    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-    auto executionEnvironment = new ExecutionEnvironment();
-
-    for (auto i = 0u; i < numRootDevices; i++) {
-        executionEnvironment->rootDeviceEnvironments.push_back(std::make_unique<MockRootDeviceEnvironment>(*executionEnvironment));
-    }
-    auto inputDevices = DeviceFactory::createDevices(*executionEnvironment);
-    EXPECT_EQ(numRootDevices, inputDevices.size());
-
-    auto skl0Device = inputDevices[0].get();
-    auto kbl0Device = inputDevices[1].get();
-    auto skl1Device = inputDevices[2].get();
-    auto skl2Device = inputDevices[3].get();
-    auto cfl0Device = inputDevices[4].get();
-
-    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_SKYLAKE;
-    executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_KABYLAKE;
-    executionEnvironment->rootDeviceEnvironments[2]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_SKYLAKE;
-    executionEnvironment->rootDeviceEnvironments[3]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_SKYLAKE;
-    executionEnvironment->rootDeviceEnvironments[4]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_COFFEELAKE;
-
-    auto groupedDevices = Platform::groupDevices(std::move(inputDevices));
-
-    EXPECT_EQ(3u, groupedDevices.size());
-    EXPECT_EQ(1u, groupedDevices[0].size());
-    EXPECT_EQ(1u, groupedDevices[1].size());
-    EXPECT_EQ(3u, groupedDevices[2].size());
-
-    EXPECT_EQ(skl0Device, groupedDevices[2][0].get());
-    EXPECT_EQ(skl1Device, groupedDevices[2][1].get());
-    EXPECT_EQ(skl2Device, groupedDevices[2][2].get());
-    EXPECT_EQ(kbl0Device, groupedDevices[1][0].get());
-    EXPECT_EQ(cfl0Device, groupedDevices[0][0].get());
 }

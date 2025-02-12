@@ -1259,4 +1259,23 @@ void Device::stopDirectSubmissionForCopyEngine() {
     }
 }
 
+std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
+    std::map<PRODUCT_FAMILY, size_t> productsMap;
+    std::vector<DeviceVector> outDevices;
+    for (auto &device : devices) {
+        auto productFamily = device->getHardwareInfo().platform.eProductFamily;
+        auto result = productsMap.find(productFamily);
+        if (result == productsMap.end()) {
+            productsMap.insert({productFamily, productsMap.size()});
+            outDevices.push_back(DeviceVector{});
+        }
+        auto productId = productsMap[productFamily];
+        outDevices[productId].push_back(std::move(device));
+    }
+    std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
+        return lhs[0]->getHardwareInfo().platform.eProductFamily > rhs[0]->getHardwareInfo().platform.eProductFamily; // NOLINT(clang-analyzer-cplusplus.Move)
+    });
+    return outDevices;
+}
+
 } // namespace NEO

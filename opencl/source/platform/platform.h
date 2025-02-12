@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     ExecutionEnvironment *peekExecutionEnvironment() const { return &executionEnvironment; }
 
     static std::unique_ptr<Platform> (*createFunc)(ExecutionEnvironment &executionEnvironment);
-    static std::vector<DeviceVector> groupDevices(DeviceVector devices);
 
   protected:
     enum {

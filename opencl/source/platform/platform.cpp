@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -242,24 +242,5 @@ const PlatformInfo &Platform::getPlatformInfo() const {
 std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
     return std::make_unique<Platform>(executionEnvironment);
 };
-
-std::vector<DeviceVector> Platform::groupDevices(DeviceVector devices) {
-    std::map<PRODUCT_FAMILY, size_t> platformsMap;
-    std::vector<DeviceVector> outDevices;
-    for (auto &device : devices) {
-        auto productFamily = device->getHardwareInfo().platform.eProductFamily;
-        auto result = platformsMap.find(productFamily);
-        if (result == platformsMap.end()) {
-            platformsMap.insert({productFamily, platformsMap.size()});
-            outDevices.push_back(DeviceVector{});
-        }
-        auto platformId = platformsMap[productFamily];
-        outDevices[platformId].push_back(std::move(device));
-    }
-    std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
-        return lhs[0]->getHardwareInfo().platform.eProductFamily > rhs[0]->getHardwareInfo().platform.eProductFamily; // NOLINT(clang-analyzer-cplusplus.Move)
-    });
-    return outDevices;
-}
 
 } // namespace NEO

@@ -2129,3 +2129,42 @@ TEST(Device, givenDeviceWhenGettingMicrosecondResolutionThenCorrectValueReturned
     device->microsecondResolution = expectedMicrosecondResolution;
     EXPECT_EQ(device->getMicrosecondResolution(), expectedMicrosecondResolution);
 }
+
+TEST(GroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {
+    DebugManagerStateRestore restorer;
+    const size_t numRootDevices = 5u;
+
+    debugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+    auto executionEnvironment = new ExecutionEnvironment();
+
+    for (auto i = 0u; i < numRootDevices; i++) {
+        executionEnvironment->rootDeviceEnvironments.push_back(std::make_unique<MockRootDeviceEnvironment>(*executionEnvironment));
+    }
+    auto inputDevices = DeviceFactory::createDevices(*executionEnvironment);
+    EXPECT_EQ(numRootDevices, inputDevices.size());
+
+    auto lnl0Device = inputDevices[0].get();
+    auto bmg0Device = inputDevices[1].get();
+    auto lnl1Device = inputDevices[2].get();
+    auto lnl2Device = inputDevices[3].get();
+    auto ptl0Device = inputDevices[4].get();
+
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_BMG;
+    executionEnvironment->rootDeviceEnvironments[2]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment->rootDeviceEnvironments[3]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment->rootDeviceEnvironments[4]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_PTL;
+
+    auto groupedDevices = Device::groupDevices(std::move(inputDevices));
+
+    EXPECT_EQ(3u, groupedDevices.size());
+    EXPECT_EQ(1u, groupedDevices[0].size());
+    EXPECT_EQ(3u, groupedDevices[1].size());
+    EXPECT_EQ(1u, groupedDevices[2].size());
+
+    EXPECT_EQ(bmg0Device, groupedDevices[2][0].get());
+    EXPECT_EQ(lnl0Device, groupedDevices[1][0].get());
+    EXPECT_EQ(lnl1Device, groupedDevices[1][1].get());
+    EXPECT_EQ(lnl2Device, groupedDevices[1][2].get());
+    EXPECT_EQ(ptl0Device, groupedDevices[0][0].get());
+}
