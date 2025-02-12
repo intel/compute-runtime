@@ -5374,6 +5374,44 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
     context->freeMem(devAddress);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation, MatchAny) {
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+    using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename FamilyType::MI_ATOMIC::DATA_SIZE;
+
+    constexpr uint64_t incValue = static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()) + 1234;
+    constexpr uint64_t counterValue = incValue * 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+
+    ze_event_handle_t handle = nullptr;
+    createExternalSyncStorageEvent(counterValue, incValue, devAddress, handle);
+
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+    immCmdList->inOrderAtomicSignalingEnabled = false;
+    immCmdList->appendSignalInOrderDependencyCounter(Event::fromHandle(handle), false, false);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
+
+    auto it = find<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), it);
+
+    auto miAtomic = genCmdCast<MI_ATOMIC *>(*it);
+    EXPECT_EQ(ATOMIC_OPCODES::ATOMIC_8B_ADD, miAtomic->getAtomicOpcode());
+    EXPECT_EQ(DATA_SIZE::DATA_SIZE_QWORD, miAtomic->getDataSize());
+    EXPECT_EQ(getLowPart(incValue), miAtomic->getOperand1DataDword0());
+    EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
+
+    EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
+
+    zeEventDestroy(handle);
+
+    context->freeMem(devAddress);
+}
+
 HWTEST_F(InOrderCmdListTests, givenTimestmapEnabledWhenCreatingStandaloneCbEventThenSetCorrectPacketSize) {
     zex_counter_based_event_desc_t counterBasedDesc = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_DESC}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
     counterBasedDesc.flags = ZEX_COUNTER_BASED_EVENT_FLAG_KERNEL_TIMESTAMP;

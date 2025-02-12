@@ -2866,6 +2866,9 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSdiInOrderCounterSignalling(uin
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(Event *signalEvent, bool copyOffloadOperation, bool stall) {
+    using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
+    using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
+
     uint64_t deviceAllocGpuVa = inOrderExecInfo->getBaseDeviceAddress();
     uint64_t signalValue = inOrderExecInfo->getCounterValue() + getInOrderIncrementValue();
 
@@ -2885,9 +2888,6 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
             args);
 
     } else if (this->inOrderAtomicSignalingEnabled) {
-        using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
-        using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
-
         ATOMIC_OPCODES opcode = ATOMIC_OPCODES::ATOMIC_8B_INCREMENT;
         uint64_t operand1Data = 0;
 
@@ -2905,6 +2905,11 @@ void CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(
 
     if (inOrderExecInfo->isHostStorageDuplicated()) {
         appendSdiInOrderCounterSignalling(inOrderExecInfo->getBaseHostGpuAddress(), signalValue, copyOffloadOperation);
+    }
+
+    if (signalEvent && signalEvent->getInOrderIncrementValue() > 0) {
+        NEO::EncodeAtomic<GfxFamily>::programMiAtomic(*cmdStream, signalEvent->getInOrderExecInfo()->getBaseDeviceAddress(), ATOMIC_OPCODES::ATOMIC_8B_ADD,
+                                                      DATA_SIZE::DATA_SIZE_QWORD, 0, 0, signalEvent->getInOrderIncrementValue(), 0);
     }
 
     if ((NEO::debugManager.flags.ProgramUserInterruptOnResolvedDependency.get() == 1 || copyOffloadOperation) && signalEvent && signalEvent->isInterruptModeEnabled()) {
