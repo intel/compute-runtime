@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -2442,7 +2442,6 @@ inline void marshall(TOKSTR_GMM_RESOURCE_FLAG_REC &dst, const GMM_RESOURCE_FLAG_
     dst.Info.KernelModeMapped.setValue(src.Info.KernelModeMapped);
     dst.Info.LayoutBelow.setValue(src.Info.LayoutBelow);
     dst.Info.LayoutMono.setValue(src.Info.LayoutMono);
-    dst.Info.LayoutRight.setValue(src.Info.LayoutRight);
     dst.Info.LocalOnly.setValue(src.Info.LocalOnly);
     dst.Info.Linear.setValue(src.Info.Linear);
     dst.Info.MediaCompressed.setValue(src.Info.MediaCompressed);
@@ -2716,7 +2715,6 @@ inline void marshall(TOKSTR_GMM_TEXTURE_INFO_REC &dst, const GMM_TEXTURE_INFO_RE
     dst.Flags.Info.KernelModeMapped.setValue(src.Flags.Info.KernelModeMapped);
     dst.Flags.Info.LayoutBelow.setValue(src.Flags.Info.LayoutBelow);
     dst.Flags.Info.LayoutMono.setValue(src.Flags.Info.LayoutMono);
-    dst.Flags.Info.LayoutRight.setValue(src.Flags.Info.LayoutRight);
     dst.Flags.Info.LocalOnly.setValue(src.Flags.Info.LocalOnly);
     dst.Flags.Info.Linear.setValue(src.Flags.Info.Linear);
     dst.Flags.Info.MediaCompressed.setValue(src.Flags.Info.MediaCompressed);
@@ -2929,7 +2927,6 @@ inline void marshall(TOKSTR_GmmResourceInfoCommonStruct &dst, const GmmResourceI
     dst.Surf.Flags.Info.KernelModeMapped.setValue(src.Surf.Flags.Info.KernelModeMapped);
     dst.Surf.Flags.Info.LayoutBelow.setValue(src.Surf.Flags.Info.LayoutBelow);
     dst.Surf.Flags.Info.LayoutMono.setValue(src.Surf.Flags.Info.LayoutMono);
-    dst.Surf.Flags.Info.LayoutRight.setValue(src.Surf.Flags.Info.LayoutRight);
     dst.Surf.Flags.Info.LocalOnly.setValue(src.Surf.Flags.Info.LocalOnly);
     dst.Surf.Flags.Info.Linear.setValue(src.Surf.Flags.Info.Linear);
     dst.Surf.Flags.Info.MediaCompressed.setValue(src.Surf.Flags.Info.MediaCompressed);
@@ -3108,7 +3105,6 @@ inline void marshall(TOKSTR_GmmResourceInfoCommonStruct &dst, const GmmResourceI
     dst.AuxSurf.Flags.Info.KernelModeMapped.setValue(src.AuxSurf.Flags.Info.KernelModeMapped);
     dst.AuxSurf.Flags.Info.LayoutBelow.setValue(src.AuxSurf.Flags.Info.LayoutBelow);
     dst.AuxSurf.Flags.Info.LayoutMono.setValue(src.AuxSurf.Flags.Info.LayoutMono);
-    dst.AuxSurf.Flags.Info.LayoutRight.setValue(src.AuxSurf.Flags.Info.LayoutRight);
     dst.AuxSurf.Flags.Info.LocalOnly.setValue(src.AuxSurf.Flags.Info.LocalOnly);
     dst.AuxSurf.Flags.Info.Linear.setValue(src.AuxSurf.Flags.Info.Linear);
     dst.AuxSurf.Flags.Info.MediaCompressed.setValue(src.AuxSurf.Flags.Info.MediaCompressed);
@@ -3287,7 +3283,6 @@ inline void marshall(TOKSTR_GmmResourceInfoCommonStruct &dst, const GmmResourceI
     dst.AuxSecSurf.Flags.Info.KernelModeMapped.setValue(src.AuxSecSurf.Flags.Info.KernelModeMapped);
     dst.AuxSecSurf.Flags.Info.LayoutBelow.setValue(src.AuxSecSurf.Flags.Info.LayoutBelow);
     dst.AuxSecSurf.Flags.Info.LayoutMono.setValue(src.AuxSecSurf.Flags.Info.LayoutMono);
-    dst.AuxSecSurf.Flags.Info.LayoutRight.setValue(src.AuxSecSurf.Flags.Info.LayoutRight);
     dst.AuxSecSurf.Flags.Info.LocalOnly.setValue(src.AuxSecSurf.Flags.Info.LocalOnly);
     dst.AuxSecSurf.Flags.Info.Linear.setValue(src.AuxSecSurf.Flags.Info.Linear);
     dst.AuxSecSurf.Flags.Info.MediaCompressed.setValue(src.AuxSecSurf.Flags.Info.MediaCompressed);
@@ -3494,7 +3489,6 @@ inline void marshall(TOKSTR_GmmResourceInfoWinStruct &dst, const GmmResourceInfo
     dst.GmmResourceInfoCommon.Surf.Flags.Info.KernelModeMapped.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.KernelModeMapped);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutBelow.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.LayoutBelow);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutMono.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.LayoutMono);
-    dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutRight.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.LayoutRight);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.LocalOnly.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.LocalOnly);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.Linear.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.Linear);
     dst.GmmResourceInfoCommon.Surf.Flags.Info.MediaCompressed.setValue(src.GmmResourceInfoCommon.Surf.Flags.Info.MediaCompressed);
@@ -3673,7 +3667,6 @@ inline void marshall(TOKSTR_GmmResourceInfoWinStruct &dst, const GmmResourceInfo
     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.KernelModeMapped.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.KernelModeMapped);
     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutBelow.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutBelow);
     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutMono.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutMono);
-    dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutRight.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutRight);
     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LocalOnly.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.LocalOnly);
     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.Linear.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.Linear);
     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.MediaCompressed.setValue(src.GmmResourceInfoCommon.AuxSurf.Flags.Info.MediaCompressed);
@@ -3852,7 +3845,6 @@ inline void marshall(TOKSTR_GmmResourceInfoWinStruct &dst, const GmmResourceInfo
     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.KernelModeMapped.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.KernelModeMapped);
     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutBelow.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutBelow);
     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutMono.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutMono);
-    dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutRight.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutRight);
     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LocalOnly.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LocalOnly);
     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.Linear.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.Linear);
     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.MediaCompressed.setValue(src.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.MediaCompressed);

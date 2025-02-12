@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4911,9 +4911,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_FLAG_REC> {
                             case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                 dst.Info.LayoutMono = readTokValue<decltype(dst.Info.LayoutMono)>(*tokInfo);
                             } break;
-                            case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                dst.Info.LayoutRight = readTokValue<decltype(dst.Info.LayoutRight)>(*tokInfo);
-                            } break;
                             case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                 dst.Info.LocalOnly = readTokValue<decltype(dst.Info.LocalOnly)>(*tokInfo);
                             } break;
@@ -6003,9 +6000,6 @@ struct Demarshaller<TOK_S_GMM_TEXTURE_INFO_REC> {
                                         case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                             dst.Flags.Info.LayoutMono = readTokValue<decltype(dst.Flags.Info.LayoutMono)>(*tokInfo);
                                         } break;
-                                        case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                            dst.Flags.Info.LayoutRight = readTokValue<decltype(dst.Flags.Info.LayoutRight)>(*tokInfo);
-                                        } break;
                                         case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                             dst.Flags.Info.LocalOnly = readTokValue<decltype(dst.Flags.Info.LocalOnly)>(*tokInfo);
                                         } break;
@@ -7084,9 +7078,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                                                     case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                                         dst.Surf.Flags.Info.LayoutMono = readTokValue<decltype(dst.Surf.Flags.Info.LayoutMono)>(*tokInfo);
                                                     } break;
-                                                    case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                                        dst.Surf.Flags.Info.LayoutRight = readTokValue<decltype(dst.Surf.Flags.Info.LayoutRight)>(*tokInfo);
-                                                    } break;
                                                     case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                                         dst.Surf.Flags.Info.LocalOnly = readTokValue<decltype(dst.Surf.Flags.Info.LocalOnly)>(*tokInfo);
                                                     } break;
@@ -8070,9 +8061,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                                                     case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                                         dst.AuxSurf.Flags.Info.LayoutMono = readTokValue<decltype(dst.AuxSurf.Flags.Info.LayoutMono)>(*tokInfo);
                                                     } break;
-                                                    case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                                        dst.AuxSurf.Flags.Info.LayoutRight = readTokValue<decltype(dst.AuxSurf.Flags.Info.LayoutRight)>(*tokInfo);
-                                                    } break;
                                                     case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                                         dst.AuxSurf.Flags.Info.LocalOnly = readTokValue<decltype(dst.AuxSurf.Flags.Info.LocalOnly)>(*tokInfo);
                                                     } break;
@@ -9055,9 +9043,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_COMMON_STRUCT> {
                                                     } break;
                                                     case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                                         dst.AuxSecSurf.Flags.Info.LayoutMono = readTokValue<decltype(dst.AuxSecSurf.Flags.Info.LayoutMono)>(*tokInfo);
-                                                    } break;
-                                                    case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                                        dst.AuxSecSurf.Flags.Info.LayoutRight = readTokValue<decltype(dst.AuxSecSurf.Flags.Info.LayoutRight)>(*tokInfo);
                                                     } break;
                                                     case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                                         dst.AuxSecSurf.Flags.Info.LocalOnly = readTokValue<decltype(dst.AuxSecSurf.Flags.Info.LocalOnly)>(*tokInfo);
@@ -10184,9 +10169,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                                                 case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                                                     dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutMono = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutMono)>(*tokInfo);
                                                                 } break;
-                                                                case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                                                    dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutRight = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.Flags.Info.LayoutRight)>(*tokInfo);
-                                                                } break;
                                                                 case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                                                     dst.GmmResourceInfoCommon.Surf.Flags.Info.LocalOnly = readTokValue<decltype(dst.GmmResourceInfoCommon.Surf.Flags.Info.LocalOnly)>(*tokInfo);
                                                                 } break;
@@ -11170,9 +11152,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                                                 case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                                                     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutMono = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutMono)>(*tokInfo);
                                                                 } break;
-                                                                case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                                                    dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutRight = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LayoutRight)>(*tokInfo);
-                                                                } break;
                                                                 case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                                                     dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LocalOnly = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSurf.Flags.Info.LocalOnly)>(*tokInfo);
                                                                 } break;
@@ -12155,9 +12134,6 @@ struct Demarshaller<TOK_S_GMM_RESOURCE_INFO_WIN_STRUCT> {
                                                                 } break;
                                                                 case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO: {
                                                                     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutMono = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutMono)>(*tokInfo);
-                                                                } break;
-                                                                case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT: {
-                                                                    dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutRight = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LayoutRight)>(*tokInfo);
                                                                 } break;
                                                                 case TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY: {
                                                                     dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LocalOnly = readTokValue<decltype(dst.GmmResourceInfoCommon.AuxSecSurf.Flags.Info.LocalOnly)>(*tokInfo);

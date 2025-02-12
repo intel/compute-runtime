@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1231,7 +1231,6 @@ struct TOKSTR_GMM_RESOURCE_FLAG_REC {
         TokenDword KernelModeMapped = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__KERNEL_MODE_MAPPED};
         TokenDword LayoutBelow = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_BELOW};
         TokenDword LayoutMono = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_MONO};
-        TokenDword LayoutRight = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LAYOUT_RIGHT};
         TokenDword LocalOnly = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LOCAL_ONLY};
         TokenDword Linear = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__LINEAR};
         TokenDword MediaCompressed = {TOK_FBD_GMM_RESOURCE_FLAG_REC__ANONYMOUS6797__MEDIA_COMPRESSED};
