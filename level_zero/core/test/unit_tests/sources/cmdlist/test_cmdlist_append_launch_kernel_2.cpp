@@ -26,6 +26,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+#include "test_traits_common.h"
+
 namespace L0 {
 namespace ult {
 struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
@@ -1076,7 +1078,14 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWithScratchAndPrivateWhenAp
     EXPECT_EQ(commandList->getCommandListPerThreadScratchSize(0u), static_cast<uint32_t>(0x200));
 }
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithPrivateScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, IsAtLeastXeHpCore) {
+struct CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastXeHpCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
+    }
+};
+
+HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithPrivateScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     UnitTestSetter::disableHeapless(restorer);
@@ -1118,7 +1127,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelW
     EXPECT_NE(nullptr, commandList->getCmdContainer().getIndirectHeap(HeapType::surfaceState));
 }
 
-HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, IsAtLeastXeHpCore) {
+HWTEST2_F(CmdlistAppendLaunchKernelTests, givenGlobalBindlessAllocatorAndKernelWithScratchWhenAppendLaunchKernelThenCmdContainerHasBindfulSSHAllocated, CmdlistAppendLaunchKernelTestsWithoutHeaplessMatcher) {
     DebugManagerStateRestore restorer;
     debugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
     UnitTestSetter::disableHeapless(restorer);

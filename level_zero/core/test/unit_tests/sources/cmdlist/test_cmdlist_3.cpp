@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
+
+#include "test_traits_common.h"
 
 namespace L0 {
 namespace ult {
@@ -1579,10 +1581,18 @@ HWTEST2_F(CommandListCreateTests, givenGetAlignedAllocationWhenExternalMemWithin
     commandList->hostPtrMap.clear();
 }
 
+struct FrontEndStateTestingAllowed {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastXeHpCore::isMatched<productFamily>() && !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
+    }
+};
+
 using FrontEndPrimaryBatchBufferCommandListTest = Test<FrontEndCommandListFixture<1>>;
+
 HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
           givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndAddedToPatchlist,
-          IsAtLeastXeHpCore) {
+          FrontEndStateTestingAllowed) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
@@ -1707,7 +1717,7 @@ HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
 
 HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
           givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndAddedToPatchlist,
-          IsAtLeastXeHpCore) {
+          FrontEndStateTestingAllowed) {
     using CFE_STATE = typename FamilyType::CFE_STATE;
 
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};

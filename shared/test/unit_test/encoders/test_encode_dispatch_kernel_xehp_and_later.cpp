@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -193,7 +193,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenOverrideSlmTotalSizeD
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndImageWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
+struct CommandEncodeStatesTestBindingTableStateMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::bindingTableStateSupported;
+        }
+        return false;
+    }
+};
+
+HWTEST2_F(CommandEncodeStatesTest, givenStatelessBufferAndImageWhenDispatchingKernelThenBindingTableOffsetIsCorrect, CommandEncodeStatesTestBindingTableStateMatcher) {
+
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     uint32_t numBindingTable = 1;
@@ -231,7 +242,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenStatelessBufferAndIma
     EXPECT_EQ(idd.getBindingTablePointer(), expectedOffset);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhenDispatchingKernelThenBTOffsetIsCorrect) {
+HWTEST2_F(CommandEncodeStatesTest, givennumBindingTableOneWhenDispatchingKernelThenBTOffsetIsCorrect, CommandEncodeStatesTestBindingTableStateMatcher) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     uint32_t numBindingTable = 1;
@@ -267,7 +278,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhe
     EXPECT_EQ(idd.getBindingTablePointer(), expectedOffset);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBTOffsetIsZero) {
+HWTEST2_F(CommandEncodeStatesTest, giveNumBindingTableZeroWhenDispatchingKernelThenBTOffsetIsZero, CommandEncodeStatesTestBindingTableStateMatcher) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     uint32_t numBindingTable = 0;
@@ -435,7 +446,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
     ASSERT_EQ(itorPC, commands.end());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenCorrectValuesAreSetUp) {
+HWTEST2_F(CommandEncodeStatesTest, givenForceBtpPrefetchModeDebugFlagWhenDispatchingKernelThenCorrectValuesAreSetUp, CommandEncodeStatesTestBindingTableStateMatcher) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

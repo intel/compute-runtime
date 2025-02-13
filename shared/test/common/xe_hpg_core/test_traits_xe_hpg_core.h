@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,8 @@ struct TestTraits<IGFX_XE_HPG_CORE> {
     static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = false;
     static constexpr bool largeGrfModeInStateComputeModeSupported = true;
     static constexpr bool heaplessAllowed = false;
+    static constexpr bool heaplessRequired = false;
+    static constexpr bool bindingTableStateSupported = true;
 };
 #ifdef TESTS_MTL
 #include "shared/test/common/xe_hpg_core/mtl/test_traits_mtl.h"

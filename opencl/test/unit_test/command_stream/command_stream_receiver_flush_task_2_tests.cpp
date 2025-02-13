@@ -33,6 +33,8 @@
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
+#include "test_traits_common.h"
+
 using namespace NEO;
 
 using CommandStreamReceiverFlushTaskTests = UltCommandStreamReceiverTest;
@@ -498,7 +500,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenCreatingCommandStreamReceiverH
     debugManager.flags.SetCommandStreamReceiver.set(0);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, WhenFlushingThenScratchAllocationIsReused) {
+struct FlushTaskNonHeaplessMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return !(TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::heaplessRequired);
+    }
+};
+
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, WhenFlushingThenScratchAllocationIsReused, FlushTaskNonHeaplessMatcher) {
     DebugManagerStateRestore restorer{};
     UnitTestSetter::disableHeapless(restorer);
 
@@ -633,7 +642,7 @@ struct MockScratchController : public ScratchSpaceController {
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override{};
 };
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenScratchIsRequiredForFirstFlushAndPrivateScratchForSecondFlushThenHandleResidencyProperly) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, whenScratchIsRequiredForFirstFlushAndPrivateScratchForSecondFlushThenHandleResidencyProperly, FlushTaskNonHeaplessMatcher) {
 
     DebugManagerStateRestore restorer{};
     UnitTestSetter::disableHeapless(restorer);
@@ -672,7 +681,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenScratchIsRequiredForFirstFlush
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratch1Allocation));
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, whenPrivateScratchIsRequiredForFirstFlushAndCommonScratchForSecondFlushThenHandleResidencyProperly) {
+HWTEST2_F(CommandStreamReceiverFlushTaskTests, whenPrivateScratchIsRequiredForFirstFlushAndCommonScratchForSecondFlushThenHandleResidencyProperly, FlushTaskNonHeaplessMatcher) {
 
     DebugManagerStateRestore restorer{};
     UnitTestSetter::disableHeapless(restorer);

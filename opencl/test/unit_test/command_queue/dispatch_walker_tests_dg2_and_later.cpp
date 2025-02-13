@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,14 @@ using WalkerDispatchTestDg2AndLater = ::testing::Test;
 using Dg2AndLaterDispatchWalkerBasicTest = Test<Dg2AndLaterDispatchWalkerBasicFixture>;
 using matcherDG2AndLater = IsAtLeastXeHpgCore;
 
-HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramComputeWalkerThenApplyL3PrefetchAppropriately, matcherDG2AndLater) {
+struct L3PrefetchMatch {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastXeHpCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
+    }
+};
+
+HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramComputeWalkerThenApplyL3PrefetchAppropriately, L3PrefetchMatch) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManagerStateRestore restore;
     auto walkerCmd = FamilyType::template getInitGpuWalker<COMPUTE_WALKER>();

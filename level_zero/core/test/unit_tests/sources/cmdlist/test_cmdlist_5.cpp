@@ -28,6 +28,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
+#include "test_traits_common.h"
+
 namespace L0 {
 namespace ult {
 
@@ -1093,7 +1095,7 @@ using CommandListStateBaseAddressPrivateHeapTest = Test<CommandListPrivateHeapsF
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelAndExecuteThenBaseAddressStateIsStoredInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     checkAndPrepareBindlessKernel();
@@ -1274,7 +1276,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     checkAndPrepareBindlessKernel();
@@ -1512,7 +1514,7 @@ using CommandListBindlessSshPrivateHeapTest = Test<CommandListPrivateHeapsBindle
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenStateBaseAddressTrackingAndGlobalBindlessEnabledWhenRegularCmdListAppendKernelChangesHeapsAndExecuteThenBindlessSurfaceStateBaseIsProgrammedToGlobalBase,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1636,7 +1638,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenStateBaseAddressTrackingAndGlobalBindlessSshAndDshEnabledWhenRegularCmdListExecutedThenBindlessSurfaceStateAndDynamicStateBaseIsProgrammedToGlobalBase,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1690,7 +1692,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenBindlessKernelStateBaseAddressTrackingAndGlobalBindlessEnabledWhenRegularCmdListAppendsKernelThenReservedSshSizeIsZeroAndSbaIsNotAdded,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1761,7 +1763,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
           givenBindlessKernelStateBaseAddressTrackingAndGlobalBindlessEnabledWhenOneArgUsesKernelsSshThenReservedSshSizeIsNonZero,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(device->getNEODevice(),
@@ -1845,7 +1847,7 @@ HWTEST2_F(CommandListBindlessSshPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelChangesHeapsAndNextKernelIsAppendedThenFinalBaseAddressStateIsDispatchedInCommandListOnce,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     checkAndPrepareBindlessKernel();
@@ -1988,7 +1990,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2156,7 +2158,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelAndExecuteAndImmediateCmdListAppendKernelSharingCsrThenBaseAddressStateIsUpdatedInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2387,7 +2389,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelAndRegularCmdListAppendKernelAndExecuteSharingCsrThenBaseAddressStateIsUpdatedInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2615,7 +2617,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendUncachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKernelThenMocsStateIsUpdatedInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
 
     checkAndPrepareBindlessKernel();
 
@@ -2707,7 +2709,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendCachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
@@ -2781,7 +2783,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendUncachedKerneAndRegularCmdListAppendCachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
@@ -2855,7 +2857,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendCachedKerneAndRegularCmdListAppendUncachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     EXPECT_TRUE(commandList->stateBaseAddressTracking);
@@ -2927,8 +2929,15 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ((uncachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
+struct HeapfulSupportedAndAtLeastXeHpCoreMatch {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastXeHpCore::isMatched<productFamily>() && HeapfulSupportedMatch::isMatched<productFamily>();
+    }
+};
+
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
-          givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsAtLeastXeHpCore) {
+          givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, HeapfulSupportedAndAtLeastXeHpCoreMatch) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     constexpr uint64_t bindingTablePoolBaseAddress = 0x32000;
@@ -2980,7 +2989,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetThenBaseAddressPropertiesAreResetToo,
-          MatchAny) {
+          HeapfulSupportedMatch) {
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -3015,7 +3024,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetThenStateHeapsRetainPosition,
-          MatchAny) {
+          HeapfulSupportedMatch) {
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -3043,7 +3052,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetAndHeapsExhaustedBeforeFirstKernelThenStateIsReloadedInCmdQueuePreamble,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -3113,7 +3122,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListAppendsKernelWhenCommandListIsResetAndHeapsExhaustedBeforeSecondKernelThenStateIsReloadedInCmdList,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -3199,7 +3208,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDispatchesStateCacheFlush,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
@@ -3225,7 +3234,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenOsContextNotInitializedAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
-          MatchAny) {
+          HeapfulSupportedMatch) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     EngineControl &engine = neoDevice->getDefaultEngine();
     static_cast<NEO::MockOsContext *>(engine.osContext)->contextInitialized = false;
@@ -3279,7 +3288,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
 
 HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenCommandListUsingPrivateSurfaceHeapWhenMakeCommandViewIsTrueThenDoNotReserveHeapSpaceAndDoNotConsumeCommandBuffer,
-          IsAtLeastXeHpgCore) {
+          HeapfulSupportedAndAtLeastXeHpCoreMatch) {
     checkAndPrepareBindlessKernel();
 
     auto &container = commandList->getCmdContainer();
