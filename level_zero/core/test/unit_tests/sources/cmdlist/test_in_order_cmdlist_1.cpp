@@ -816,6 +816,10 @@ HWTEST2_F(InOrderCmdListTests, givenRegularEventWithTemporaryInOrderDataAssignme
 
     auto hostAddress = static_cast<uint64_t *>(cmdList->inOrderExecInfo->getDeviceCounterAllocation()->getUnderlyingBuffer());
 
+    if (cmdList->isHeaplessModeEnabled() && cmdList->inOrderExecInfo->isHostStorageDuplicated()) {
+        hostAddress = static_cast<uint64_t *>(cmdList->inOrderExecInfo->getBaseHostAddress());
+    }
+
     auto eventPool = createEvents<FamilyType>(1, true);
     events[0]->makeCounterBasedImplicitlyDisabled(eventPool->getAllocation());
 
