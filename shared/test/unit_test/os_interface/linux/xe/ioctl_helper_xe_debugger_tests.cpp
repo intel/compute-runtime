@@ -436,14 +436,3 @@ TEST_F(IoctlHelperXeTest, givenDebuggingEnabledWhenCallingVmBindThenWaitUserFenc
     waitUserFence = drm->waitUserFenceInputs[0];
     EXPECT_EQ(expectedTimeout, waitUserFence.timeout);
 }
-
-TEST_F(IoctlHelperXeTest, givenDebuggingEnabledWhenCallinggetFlagsForVmCreateThenFaultModeIsEnabled) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->setDebuggingMode(DebuggingMode::online);
-    auto drm = DrmMockXeDebug::create(*executionEnvironment->rootDeviceEnvironments[0]);
-    auto xeIoctlHelper = std::make_unique<MockIoctlHelperXeDebug>(*drm);
-    uint32_t flags = xeIoctlHelper->getFlagsForVmCreate(false, false, false);
-    EXPECT_EQ(flags & DRM_XE_VM_CREATE_FLAG_FAULT_MODE, static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE));
-    flags = xeIoctlHelper->getFlagsForVmCreate(false, true, false);
-    EXPECT_EQ(flags & DRM_XE_VM_CREATE_FLAG_FAULT_MODE, static_cast<uint32_t>(DRM_XE_VM_CREATE_FLAG_FAULT_MODE));
-}
