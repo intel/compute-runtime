@@ -308,8 +308,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, DebugUmdMaxReadWriteRetry, -1, "-1: default , > 
 DECLARE_DEBUG_VARIABLE(int32_t, ForceIndirectDetectionForCMKernels, -1, "-1: default , 0 : disable indirect detection for CM kernels, 1 : enable indirect detection for CM kernels")
 DECLARE_DEBUG_VARIABLE(int32_t, PipelinedEuThreadArbitration, -1, "-1: default. 1: Use Walker field, 0: Use StateComputeMode command to program pipelinedEuThreadArbitration")
 DECLARE_DEBUG_VARIABLE(bool, ForceUseOnlyGlobalTimestamps, 0, "0- default disabled, 1: enable use only global timestamp")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceParentCommandStreamUsageForImmediateAppendForCopyEngine, -1, "-1 - default (disabled), 0: disable, 1: enable")
-DECLARE_DEBUG_VARIABLE(int32_t, ForceParentCommandStreamUsageForImmediateAppendForComputeEngine, -1, "-1 - default (enabled), 0: disable, 1: enable")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

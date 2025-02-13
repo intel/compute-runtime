@@ -89,8 +89,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     LinearStream *getCommandStream() { return commandStream.get(); }
 
-    bool usingSecondaryCmdbufInHostMem() { return useSecondaryCommandStream; }
-
     IndirectHeap *getIndirectHeap(HeapType heapType);
 
     HeapHelper *getHeapHelper() { return heapHelper.get(); }
@@ -121,7 +119,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     GraphicsAllocation *obtainNextCommandBufferAllocation();
     GraphicsAllocation *obtainNextCommandBufferAllocation(bool forceHostMemory);
 
-    MOCKABLE_VIRTUAL bool swapStreams();
+    bool swapStreams();
 
     void reset();
 

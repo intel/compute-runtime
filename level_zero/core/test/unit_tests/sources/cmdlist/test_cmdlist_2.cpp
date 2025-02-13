@@ -1733,10 +1733,10 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenForcedPrimaryBatchBufferWhenRegular
     EXPECT_TRUE(commandList->dispatchCmdListBatchBufferAsPrimary);
     EXPECT_TRUE(commandQueue->dispatchCmdListBatchBufferAsPrimary);
 
-    EXPECT_TRUE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_FALSE(commandListImmediate->dispatchCmdListBatchBufferAsPrimary);
     ASSERT_NE(nullptr, commandListImmediate->cmdQImmediate);
     auto immediateCmdQueue = static_cast<L0::ult::CommandQueue *>(commandListImmediate->cmdQImmediate);
-    EXPECT_TRUE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
+    EXPECT_FALSE(immediateCmdQueue->dispatchCmdListBatchBufferAsPrimary);
 }
 
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenAppendingKernelAndClosingCommandListThenExpectAlignedSpaceForBatchBufferStart) {
@@ -1883,62 +1883,6 @@ HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAn
         EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies);
         EXPECT_FALSE(ultCsr->recordedDispatchFlags.hasStallingCmds);
     }
-}
-
-HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRegularCmdListAndSubmittedToImmediateWhenFlushingOnCcsWithoutParentStreamThenExecutePasses, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceParentCommandStreamUsageForImmediateAppendForComputeEngine.set(0);
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    auto immCommandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::compute, returnValue));
-    ASSERT_NE(nullptr, immCommandList);
-
-    ze_group_count_t groupCount{1, 1, 1};
-    CmdListKernelLaunchParams launchParams = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 0, nullptr, launchParams, false));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->close());
-
-    auto cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCommandList->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr));
-}
-
-HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRegularCmdListAndSubmittedToImmediateWhenFlushingOnBcsWithoutParentStreamThenExecutePasses, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceParentCommandStreamUsageForImmediateAppendForCopyEngine.set(0);
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    auto immCommandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
-    ASSERT_NE(nullptr, immCommandList);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, false));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->close());
-
-    auto cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCommandList->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr));
-}
-
-HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRegularCmdListAndSubmittedToImmediateWhenFlushingOnBcsWithParentStreamThenExecutePasses, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
-    debugManager.flags.ForceParentCommandStreamUsageForImmediateAppendForCopyEngine.set(1);
-
-    ze_command_queue_desc_t desc = {};
-    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    ze_result_t returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
-    auto immCommandList = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
-    ASSERT_NE(nullptr, immCommandList);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->appendBarrier(nullptr, 0, nullptr, false));
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList->close());
-
-    auto cmdListHandle = commandList->toHandle();
-    EXPECT_EQ(ZE_RESULT_SUCCESS, immCommandList->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr));
 }
 
 HWTEST_F(PrimaryBatchBufferCmdListTest, givenCmdListWhenCallingSynchronizeThenUnregisterCsrClient) {

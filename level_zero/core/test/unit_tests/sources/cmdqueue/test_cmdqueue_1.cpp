@@ -540,6 +540,48 @@ HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndRegularCmdListWhenDi
     commandQueue->destroy();
 }
 
+HWTEST_F(CommandQueueCreate, givenUpdateTaskCountFromWaitAndImmediateCmdListWhenDispatchTaskCountWriteThenNoPipeControlFlushed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    DebugManagerStateRestore restorer;
+    debugManager.flags.UpdateTaskCountFromWait.set(3);
+
+    const ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          true,
+                                                          returnValue));
+
+    auto commandList = CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), commandQueue->commandStream.getUsed()));
+
+    auto pipeControls = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    bool pipeControlsPostSync = false;
+    for (size_t i = 0; i < pipeControls.size(); i++) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*pipeControls[i]);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            pipeControlsPostSync = true;
+        }
+    }
+    EXPECT_FALSE(pipeControlsPostSync);
+
+    commandList->destroy();
+    commandQueue->destroy();
+}
+
 HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainerIsEmptyThenMakeResidentWasNotCalled) {
     auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
     csr->setupContext(*neoDevice->getDefaultEngine().osContext);
