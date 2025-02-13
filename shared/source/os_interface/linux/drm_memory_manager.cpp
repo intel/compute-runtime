@@ -1769,6 +1769,12 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     return ioctlHelper->getLocalMemoryRegionsSize(memoryInfo, subDevicesCount, deviceBitfield);
 }
 
+void DrmMemoryManager::drainGemCloseWorker() const {
+    if (this->peekGemCloseWorker()) {
+        this->peekGemCloseWorker()->close(true);
+    }
+}
+
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
     if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
         return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);

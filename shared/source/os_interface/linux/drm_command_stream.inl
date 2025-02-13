@@ -80,6 +80,8 @@ inline DrmCommandStreamReceiver<GfxFamily>::~DrmCommandStreamReceiver() {
     if (this->isUpdateTagFromWaitEnabled()) {
         this->waitForCompletionWithTimeout(WaitParams{false, false, false, 0}, this->peekTaskCount());
     }
+
+    this->getMemoryManager()->drainGemCloseWorker();
 }
 
 template <typename GfxFamily>

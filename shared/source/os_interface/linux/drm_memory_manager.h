@@ -129,6 +129,8 @@ class DrmMemoryManager : public MemoryManager {
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex);
     size_t getUserptrAlignment();
 
+    void drainGemCloseWorker() const override;
+
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;
 
