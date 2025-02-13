@@ -614,7 +614,6 @@ void CommandQueueThreadArbitrationPolicyFixture::setUp() {
 void CommandQueueThreadArbitrationPolicyFixture::tearDown() {
     commandList->destroy();
     commandQueue->destroy();
-    L0::globalDriver = nullptr;
 }
 
 void CommandListScratchPatchFixtureInit::setUpParams(int32_t globalStatelessMode, int32_t heaplessStateInitEnabled, bool scratchAddressPatchingEnabled) {

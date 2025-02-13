@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,6 @@
 
 namespace L0 {
 
-extern _ze_driver_handle_t *globalDriverHandle;
 namespace ult {
 
 class MockOsLibrary : public NEO::OsLibrary {
@@ -48,9 +47,10 @@ using MetricInitializationTest = Test<MetricContextFixture>;
 
 TEST_F(MetricInitializationTest, GivenOaDependenciesAreAvailableThenMetricInitializationIsSuccess) {
 
-    globalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
+    globalDriverHandles->push_back(driverHandle.get());
     VariableBackup<decltype(NEO::OsLibrary::loadFunc)> funcBackup{&NEO::OsLibrary::loadFunc, MockOsLibrary::load};
     EXPECT_EQ(device->getMetricDeviceContext().enableMetricApi(), ZE_RESULT_SUCCESS);
+    globalDriverHandles->clear();
 }
 
 } // namespace ult

@@ -47,8 +47,6 @@
 
 namespace L0 {
 
-struct DriverHandleImp *globalDriver;
-
 DriverHandleImp::DriverHandleImp() = default;
 
 ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
@@ -303,8 +301,6 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
         *returnValue = res;
         return nullptr;
     }
-
-    globalDriver = driverHandle;
 
     driverHandle->getMemoryManager()->setForceNonSvmForExternalHostPtr(true);
 

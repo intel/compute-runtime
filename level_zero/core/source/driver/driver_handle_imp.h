@@ -185,6 +185,4 @@ struct DriverHandleImp : public DriverHandle {
                                                NEO::SvmAllocationData **peerAllocData);
 };
 
-extern struct DriverHandleImp *globalDriver;
-
 } // namespace L0

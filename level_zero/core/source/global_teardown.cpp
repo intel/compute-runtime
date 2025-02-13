@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,9 @@ decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc = nullptr;
 decltype(&zelSetDriverTeardown) setDriverTeardownFunc = nullptr;
 
 void globalDriverSetup() {
+    if (!globalDriverHandles) {
+        globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
+    }
     NEO::OsLibraryCreateProperties loaderLibraryProperties("ze_loader.dll");
     loaderLibraryProperties.performSelfLoad = true;
     std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::loadFunc(loaderLibraryProperties)};
@@ -43,12 +46,19 @@ void globalDriverTeardown() {
         }
     }
 
-    if (globalDriver != nullptr) {
+    if (globalDriverHandles) {
+        for (auto &globalDriverHandle : *globalDriverHandles) {
+            auto globalDriver = static_cast<L0::DriverHandleImp *>(DriverHandle::fromHandle(globalDriverHandle));
+            if (globalDriver != nullptr) {
 
-        if (globalDriver->pid == NEO::SysCalls::getCurrentProcessId()) {
-            delete globalDriver;
+                if (globalDriver->pid == NEO::SysCalls::getCurrentProcessId()) {
+                    delete globalDriver;
+                }
+                globalDriver = nullptr;
+            }
         }
-        globalDriver = nullptr;
+        delete globalDriverHandles;
+        globalDriverHandles = nullptr;
     }
     if (Sysman::globalSysmanDriver != nullptr) {
         delete Sysman::globalSysmanDriver;

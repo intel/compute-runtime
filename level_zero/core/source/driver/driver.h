@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 
 #include <level_zero/ze_api.h>
+
+#include <vector>
 
 namespace L0 {
 struct Driver {
@@ -28,6 +30,6 @@ ze_result_t initDrivers(uint32_t *pCount, ze_driver_handle_t *phDrivers, ze_init
 
 extern bool sysmanInitFromCore;
 extern uint32_t driverCount;
-extern _ze_driver_handle_t *globalDriverHandle;
+extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 extern bool levelZeroDriverInitialized;
 } // namespace L0

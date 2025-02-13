@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,16 +14,12 @@
 void L0::UltConfigListenerL0::OnTestStart(const ::testing::TestInfo &testInfo) {
     BaseUltConfigListener::OnTestStart(testInfo);
 
-    globalDriverHandle = nullptr;
-    L0::globalDriver = nullptr;
-    driverCount = 0;
+    globalDriverHandles->clear();
 }
 
 void L0::UltConfigListenerL0::OnTestEnd(const ::testing::TestInfo &testInfo) {
 
-    EXPECT_EQ(nullptr, globalDriverHandle);
-    EXPECT_EQ(0u, driverCount);
-    EXPECT_EQ(nullptr, L0::globalDriver);
+    EXPECT_TRUE(globalDriverHandles->empty());
     EXPECT_EQ(nullptr, L0::Sysman::globalSysmanDriver);
 
     BaseUltConfigListener::OnTestEnd(testInfo);

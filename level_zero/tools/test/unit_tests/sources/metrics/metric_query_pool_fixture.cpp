@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@ void MetricQueryPoolTest::SetUp() {
 void MetricQueryPoolTest::TearDown() {
     MetricContextFixture::tearDown();
     driverHandle.reset();
-    globalDriver = nullptr;
 }
 
 void MultiDeviceMetricQueryPoolTest::SetUp() {
@@ -36,7 +35,6 @@ void MultiDeviceMetricQueryPoolTest::SetUp() {
 void MultiDeviceMetricQueryPoolTest::TearDown() {
     MetricMultiDeviceFixture::tearDown();
     driverHandle.reset();
-    globalDriver = nullptr;
 }
 
 } // namespace ult

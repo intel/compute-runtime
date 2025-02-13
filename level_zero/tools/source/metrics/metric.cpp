@@ -182,28 +182,29 @@ ze_result_t MetricDeviceContext::enableMetricApi() {
 
     bool failed = false;
 
-    auto driverHandle = L0::DriverHandle::fromHandle(globalDriverHandle);
-    auto rootDevices = std::vector<ze_device_handle_t>();
-    auto subDevices = std::vector<ze_device_handle_t>();
+    for (auto &globalDriverHandle : *globalDriverHandles) {
+        auto driverHandle = L0::DriverHandle::fromHandle(globalDriverHandle);
+        auto rootDevices = std::vector<ze_device_handle_t>();
+        auto subDevices = std::vector<ze_device_handle_t>();
 
-    // Obtain root devices.
-    uint32_t rootDeviceCount = 0;
-    driverHandle->getDevice(&rootDeviceCount, nullptr);
-    rootDevices.resize(rootDeviceCount);
-    driverHandle->getDevice(&rootDeviceCount, rootDevices.data());
+        // Obtain root devices.
+        uint32_t rootDeviceCount = 0;
+        driverHandle->getDevice(&rootDeviceCount, nullptr);
+        rootDevices.resize(rootDeviceCount);
+        driverHandle->getDevice(&rootDeviceCount, rootDevices.data());
 
-    for (auto rootDeviceHandle : rootDevices) {
-        auto rootDevice = static_cast<DeviceImp *>(L0::Device::fromHandle(rootDeviceHandle));
-        // Initialize root device.
-        failed |= !rootDevice->metricContext->enable();
+        for (auto rootDeviceHandle : rootDevices) {
+            auto rootDevice = static_cast<DeviceImp *>(L0::Device::fromHandle(rootDeviceHandle));
+            // Initialize root device.
+            failed |= !rootDevice->metricContext->enable();
 
+            // Initialize sub devices.
+            for (uint32_t i = 0; i < rootDevice->numSubDevices; ++i) {
+                failed |= !rootDevice->subDevices[i]->getMetricDeviceContext().enable();
+            }
+        }
         if (failed) {
             break;
-        }
-
-        // Initialize sub devices.
-        for (uint32_t i = 0; i < rootDevice->numSubDevices; ++i) {
-            failed |= !rootDevice->subDevices[i]->getMetricDeviceContext().enable();
         }
     }
 

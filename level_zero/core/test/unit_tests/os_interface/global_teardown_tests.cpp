@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,10 @@
 namespace L0 {
 namespace ult {
 
-TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTranslateHandleIsLoadedIfAvailable) {
-
+struct GlobalTearDownTests : public ::testing::Test {
+    VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
+};
+TEST_F(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTranslateHandleIsLoadedIfAvailable) {
     void *mockSetDriverTeardownPtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x1234ABC8));
     void *mockLoaderTranslateHandlePtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x5678EF08));
 
@@ -67,6 +69,7 @@ TEST(GlobalTearDownTests, whenCallingGlobalDriverSetupThenLoaderFunctionForTrans
 
     EXPECT_EQ(nullptr, setDriverTeardownFunc);
     EXPECT_EQ(mockLoaderTranslateHandlePtr, reinterpret_cast<void *>(loaderTranslateHandleFunc));
+    globalDriverTeardown();
 }
 
 uint32_t loaderTearDownCalled = 0;
@@ -76,7 +79,7 @@ ze_result_t loaderTearDown() {
     return ZE_RESULT_ERROR_UNKNOWN;
 };
 
-TEST(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardownThenLoaderFunctionForTeardownIsLoadedAndCalledIfAvailable) {
+TEST_F(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardownThenLoaderFunctionForTeardownIsLoadedAndCalledIfAvailable) {
 
     void *mockLoaderTranslateHandlePtr = reinterpret_cast<void *>(static_cast<uintptr_t>(0x5678EF08));
 
@@ -130,7 +133,7 @@ TEST(GlobalTearDownTests, givenInitializedDriverWhenCallingGlobalDriverTeardownT
     EXPECT_EQ(nullptr, loaderTranslateHandleFunc);
 }
 
-TEST(GlobalTearDownTests, givenInitializedDriverAndNoTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCrash) {
+TEST_F(GlobalTearDownTests, givenInitializedDriverAndNoTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCrash) {
     VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized};
     VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc};
 
@@ -139,7 +142,7 @@ TEST(GlobalTearDownTests, givenInitializedDriverAndNoTeardownFunctionIsAvailable
     EXPECT_NO_THROW(globalDriverTeardown());
 }
 
-TEST(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCallTeardownFunc) {
+TEST_F(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailableWhenCallGlobalTeardownThenDontCallTeardownFunc) {
     VariableBackup<bool> initializedBackup{&levelZeroDriverInitialized};
     VariableBackup<decltype(setDriverTeardownFunc)> teardownFuncBackup{&setDriverTeardownFunc};
 
@@ -151,36 +154,38 @@ TEST(GlobalTearDownTests, givenNotInitializedDriverAndTeardownFunctionIsAvailabl
     EXPECT_NO_THROW(globalDriverTeardown());
 }
 
-TEST(GlobalTearDownTests, givenCallToGlobalTearDownFunctionThenGlobalDriversAreNull) {
+TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionThenGlobalDriversAreNull) {
     globalDriverTeardown();
-    EXPECT_EQ(globalDriver, nullptr);
+    EXPECT_EQ(globalDriverHandles, nullptr);
     EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 }
-TEST(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWithNullSysManDriverThenGlobalDriverIsNull) {
+TEST_F(GlobalTearDownTests, givenCallToGlobalTearDownFunctionWithNullSysManDriverThenGlobalDriverIsNull) {
     delete Sysman::globalSysmanDriver;
     Sysman::globalSysmanDriver = nullptr;
     globalDriverTeardown();
-    EXPECT_EQ(globalDriver, nullptr);
+    EXPECT_EQ(globalDriverHandles, nullptr);
     EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 }
 
-TEST(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledThenGlobalDriverIsNotDeleted) {
-    VariableBackup<uint32_t> driverCountBackup{&L0::driverCount};
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&L0::globalDriverHandle};
+TEST_F(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledThenGlobalDriverIsNotDeleted) {
+    VariableBackup<decltype(globalDriverHandles)> globalDriverHandlesBackup{&globalDriverHandles, nullptr};
+
+    globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
 
     ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     driverImp.initialize(&result);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(L0::globalDriver, nullptr);
+    EXPECT_EQ(1u, globalDriverHandles->size());
+
+    auto tempDriver = static_cast<L0::DriverHandleImp *>(DriverHandle::fromHandle((*globalDriverHandles)[0]));
+    EXPECT_NE(tempDriver, nullptr);
 
     // change pid in driver
-    L0::globalDriver->pid = L0::globalDriver->pid + 5;
-
-    auto tempDriver = L0::globalDriver;
+    tempDriver->pid = tempDriver->pid + 5;
 
     globalDriverTeardown();
-    EXPECT_EQ(L0::globalDriver, nullptr);
+    EXPECT_EQ(globalDriverHandles, nullptr);
     EXPECT_EQ(Sysman::globalSysmanDriver, nullptr);
 
     delete tempDriver;

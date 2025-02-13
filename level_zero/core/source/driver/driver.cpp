@@ -29,9 +29,8 @@
 
 namespace L0 {
 
-_ze_driver_handle_t *globalDriverHandle;
+std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 bool levelZeroDriverInitialized = false;
-uint32_t driverCount = 0;
 
 void DriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
@@ -75,19 +74,22 @@ void DriverImp::initialize(ze_result_t *result) {
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
     if (!neoDevices.empty()) {
-        globalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables, result);
-        if (globalDriverHandle != nullptr) {
-            driverCount = 1;
+        auto driverHandle = DriverHandle::create(std::move(neoDevices), envVariables, result);
+        if (driverHandle) {
+            globalDriverHandles->push_back(driverHandle);
+        }
+
+        if (globalDriverHandles->size() > 0) {
             *result = ZE_RESULT_SUCCESS;
 
             if (envVariables.metrics) {
                 *result = MetricDeviceContext::enableMetricApi();
             }
             if (*result != ZE_RESULT_SUCCESS) {
-                delete globalDriver;
-                globalDriverHandle = nullptr;
-                globalDriver = nullptr;
-                driverCount = 0;
+                for (auto &driverHandle : *globalDriverHandles) {
+                    delete driverHandle;
+                }
+                globalDriverHandles->clear();
             } else if (envVariables.pin) {
                 std::unique_lock<std::mutex> mtx{this->gtpinInitMtx};
                 this->gtPinInitializationNeeded = true;
@@ -112,6 +114,7 @@ ze_result_t DriverImp::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phD
     if (phDriverHandles != nullptr && *pCount > 0) {
         Driver::get()->tryInitGtpin();
     }
+    auto driverCount = static_cast<uint32_t>(globalDriverHandles->size());
     if (*pCount == 0) {
         *pCount = driverCount;
         return ZE_RESULT_SUCCESS;
@@ -126,7 +129,7 @@ ze_result_t DriverImp::driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phD
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        phDriverHandles[i] = globalDriverHandle;
+        phDriverHandles[i] = (*globalDriverHandles)[i];
     }
 
     return ZE_RESULT_SUCCESS;

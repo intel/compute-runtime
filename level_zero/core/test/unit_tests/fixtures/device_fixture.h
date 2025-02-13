@@ -31,8 +31,6 @@ struct Context;
 struct Device;
 struct ContextImp;
 
-extern uint32_t driverCount;
-extern _ze_driver_handle_t *globalDriverHandle;
 namespace ult {
 class MockBuiltins;
 
@@ -54,8 +52,6 @@ struct DeviceFixture {
     const uint32_t rootDeviceIndex = 0u;
     template <typename HelperType>
     HelperType &getHelper() const;
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
 
 template <typename T>
@@ -131,9 +127,6 @@ struct MultiDeviceFixture {
     uint32_t numSubDevices = 2u;
     L0::ContextImp *context = nullptr;
     NEO::DeviceHierarchyMode deviceHierarchyMode = NEO::DeviceHierarchyMode::composite;
-
-    VariableBackup<_ze_driver_handle_t *> globalDriverHandleBackup{&globalDriverHandle};
-    VariableBackup<uint32_t> driverCountBackup{&driverCount};
 };
 
 struct MultiDeviceFixtureHierarchy : public MultiDeviceFixture {
