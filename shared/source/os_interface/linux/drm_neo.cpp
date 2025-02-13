@@ -866,8 +866,10 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
         const auto &mulitEngines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
         for (const auto &engines : mulitEngines) {
             for (const auto &engine : engines) {
-                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                engine.commandStreamReceiver->stopDirectSubmission(false);
+                if (engine.osContext->isDirectSubmissionLightActive()) {
+                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                    engine.commandStreamReceiver->stopDirectSubmission(false);
+                }
             }
         }
     }

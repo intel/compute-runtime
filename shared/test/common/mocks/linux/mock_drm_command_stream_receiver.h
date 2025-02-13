@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,8 +129,13 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         this->drm = proxyDrm;
     }
 
+    void stopDirectSubmission(bool blocking) override {
+        stopDirectSubmissionCalled = true;
+    }
+
     void *latestReadBackAddress = nullptr;
     uint32_t fillReusableAllocationsListCalled = 0;
+    bool stopDirectSubmissionCalled = false;
 };
 
 template <typename GfxFamily>

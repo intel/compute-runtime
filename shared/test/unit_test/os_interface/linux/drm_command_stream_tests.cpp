@@ -1079,6 +1079,25 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenWaitUserFenceFlagNotSetWhe
     EXPECT_EQ(0u, testedCsr->waitUserFenceResult.called);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDirectSubmissionLightWhenWaitForFlushStampThenStopDirectSubmission) {
+    EXPECT_FALSE(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->stopDirectSubmissionCalled);
+
+    csr->getOsContext().setDirectSubmissionActive();
+    FlushStamp handleToWait = 123;
+    csr->waitForFlushStamp(handleToWait);
+
+    EXPECT_TRUE(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->stopDirectSubmissionCalled);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, whenWaitForFlushStampThenDoNotStopDirectSubmission) {
+    EXPECT_FALSE(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->stopDirectSubmissionCalled);
+
+    FlushStamp handleToWait = 123;
+    csr->waitForFlushStamp(handleToWait);
+
+    EXPECT_FALSE(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->stopDirectSubmissionCalled);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemWaitUsedWhenKmdTimeoutUsedWhenDrmCsrWaitsForFlushStampThenExpectUseDrmGemWaitCallAndOverrideTimeout) {
     DebugManagerStateRestore restorer;
     debugManager.flags.SetKmdWaitTimeout.set(1000);
