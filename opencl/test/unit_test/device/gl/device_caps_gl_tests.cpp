@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,8 +28,31 @@ TEST(Device_GetCaps, givenForceClGlSharingWhenCapsAreCreatedThenDeviceReportsClG
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
 
-        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_sharing ")));
+        auto &productHelper = device->getProductHelper();
+
+        if (productHelper.isSharingWith3dOrMediaAllowed()) {
+            EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_sharing ")));
+        }
 
         debugManager.flags.AddClGlSharing.set(false);
+    }
+}
+
+TEST(GetDeviceInfo, givenImageSupportedWhenCapsAreCreatedThenDeviceReportsClGlSharingExtensions) {
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    const auto &caps = device->getDeviceInfo();
+
+    if (defaultHwInfo->capabilityTable.supportsImages) {
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_sharing ")));
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_depth_images ")));
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_event ")));
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_msaa_sharing ")));
+
+    } else {
+        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_sharing ")));
+        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_depth_images ")));
+        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_event ")));
+        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_gl_msaa_sharing ")));
     }
 }

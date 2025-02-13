@@ -1048,6 +1048,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSuppo
     EXPECT_FALSE(productHelper->supportReadOnlyAllocations());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaSupportThenTrueReturned) {
+    EXPECT_TRUE(productHelper->isSharingWith3dOrMediaAllowed());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned) {
     EXPECT_FALSE(productHelper->isDeviceToHostCopySignalingFenceRequired());
 }

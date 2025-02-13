@@ -500,7 +500,14 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipl
     debugManager.flags.CreateMultipleSubDevices.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-    EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+
+    auto &productHelper = device->getProductHelper();
+
+    if (productHelper.isSharingWith3dOrMediaAllowed()) {
+        EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+    } else {
+        EXPECT_FALSE(hasSubstr(caps.deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+    }
 }
 
 TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultipleSubDevicesWhenDeviceCapsAreCreatedForRootDeviceThenSharingFormatQueryIsNotReported) {
@@ -519,13 +526,20 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     debugManager.flags.CreateMultipleSubDevices.set(2);
 
     auto rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto &productHelper = rootDevice->getProductHelper();
+
     EXPECT_FALSE(hasSubstr(rootDevice->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
 
     auto subDevice0 = rootDevice->getSubDevice(0);
-    EXPECT_TRUE(hasSubstr(subDevice0->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
-
     auto subDevice1 = rootDevice->getSubDevice(1);
-    EXPECT_TRUE(hasSubstr(subDevice1->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+
+    if (productHelper.isSharingWith3dOrMediaAllowed()) {
+        EXPECT_TRUE(hasSubstr(subDevice0->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+        EXPECT_TRUE(hasSubstr(subDevice1->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+    } else {
+        EXPECT_FALSE(hasSubstr(subDevice0->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+        EXPECT_FALSE(hasSubstr(subDevice1->getDeviceInfo().deviceExtensions, std::string("cl_intel_sharing_format_query ")));
+    }
 }
 
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensions) {

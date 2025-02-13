@@ -197,6 +197,7 @@ class ProductHelperHw : public ProductHelper {
     bool supports2DBlockLoad() const override;
     uint32_t getNumCacheRegions() const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
+    bool isSharingWith3dOrMediaAllowed() const override;
 
     ~ProductHelperHw() override = default;
 

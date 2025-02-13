@@ -975,6 +975,11 @@ uint32_t ProductHelperHw<gfxProduct>::getCacheLineSize() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::supports2DBlockLoad() const {
     return false;
 }

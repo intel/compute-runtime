@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -237,6 +237,11 @@ bool ProductHelperHw<gfxProduct>::supportReadOnlyAllocations() const {
 template <>
 std::optional<bool> ProductHelperHw<gfxProduct>::isCoherentAllocation(uint64_t patIndex) const {
     return std::nullopt;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isSharingWith3dOrMediaAllowed() const {
+    return false;
 }
 
 } // namespace NEO

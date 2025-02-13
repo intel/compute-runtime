@@ -256,6 +256,7 @@ class ProductHelper {
     virtual bool supports2DBlockLoad() const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
+    virtual bool isSharingWith3dOrMediaAllowed() const = 0;
 
     virtual ~ProductHelper() = default;
 

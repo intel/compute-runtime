@@ -298,3 +298,7 @@ PVCTEST_F(PvcProductHelper, givenProductHelperWhenGetRequiredDetectIndirectVersi
     EXPECT_EQ(3u, productHelper->getRequiredDetectIndirectVersion());
     EXPECT_EQ(9u, productHelper->getRequiredDetectIndirectVersionVC());
 }
+
+PVCTEST_F(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaSupportThenFalseReturned) {
+    EXPECT_FALSE(productHelper->isSharingWith3dOrMediaAllowed());
+}

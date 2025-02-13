@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,3 +40,4 @@ HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPatIndexP
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingForReadOnlyResourceSupportThenFalseReturned, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingForDeviceToHostCopySignalingFenceFalseReturned, IGFX_XE_HPC_CORE);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskingForSharingWith3dOrMediaSupportThenTrueReturned, IGFX_XE_HPC_CORE);

@@ -201,7 +201,7 @@ void ClDevice::initializeCaps() {
         deviceInfo.vmeExtension = true;
     }
 
-    auto sharingAllowed = (getNumGenericSubDevices() <= 1u);
+    auto sharingAllowed = (getNumGenericSubDevices() <= 1u) && productHelper.isSharingWith3dOrMediaAllowed();
     if (sharingAllowed) {
         deviceExtensions += sharingFactory.getExtensions(driverInfo.get());
     }
