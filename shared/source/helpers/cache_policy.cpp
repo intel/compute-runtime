@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-bool isL3Capable(void *ptr, size_t size) {
+bool isL3Capable(const void *ptr, size_t size) {
     return isAligned<MemoryConstants::cacheLineSize>(ptr) &&
            isAligned<MemoryConstants::cacheLineSize>(size);
 }

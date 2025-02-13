@@ -455,6 +455,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_int postStagingTransferSync(const StagingTransferStatus &status, cl_event *event, const cl_event profilingEvent, bool isSingleTransfer, bool isBlocking, cl_command_type commandType);
     cl_event *assignEventForStaging(cl_event *userEvent, cl_event *profilingEvent, bool isFirstTransfer, bool isLastTransfer) const;
 
+    size_t calculateHostPtrSizeForImage(const size_t *region, size_t rowPitch, size_t slicePitch, Image *image);
+
     Context *context = nullptr;
     ClDevice *device = nullptr;
     mutable EngineControl *gpgpuEngine = nullptr;

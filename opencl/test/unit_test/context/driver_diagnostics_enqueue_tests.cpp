@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -375,6 +375,41 @@ TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnq
                             nullptr,
                             nullptr);
     size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
+    EXPECT_EQ(hintWithMisalignment, containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueStagingReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+    REQUIRE_SVM_OR_SKIP(pPlatform->getClDevice(0));
+
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t sizeForReadImageInPixels = MemoryConstants::cacheLineSize;
+    size_t sizeForReadImage = sizeForReadImageInPixels * image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    void *ptr = alignedMalloc(sizeForReadImage + MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    uintptr_t addressForReadImage = (uintptr_t)ptr;
+
+    bool hintWithMisalignment = !(alignedAddress && alignedSize);
+    if (!alignedAddress) {
+        addressForReadImage++;
+    }
+    if (!alignedSize) {
+        sizeForReadImageInPixels--;
+        sizeForReadImage -= image->getSurfaceFormatInfo().surfaceFormat.imageElementSizeInBytes;
+    }
+    size_t region[] = {sizeForReadImageInPixels, 1, 1};
+    pCmdQ->enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE,
+                                       image,
+                                       CL_FALSE,
+                                       hostOrigin,
+                                       region,
+                                       0,
+                                       0,
+                                       (void *)addressForReadImage,
+                                       nullptr);
     ASSERT_EQ(alignedSize, isAligned<MemoryConstants::cacheLineSize>(sizeForReadImage));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);

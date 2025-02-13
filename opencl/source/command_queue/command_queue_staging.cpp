@@ -71,6 +71,14 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
 
     auto stagingBufferManager = this->context->getStagingBufferManager();
     auto ret = stagingBufferManager->performImageTransfer(ptr, globalOrigin, globalRegion, dstRowPitch, bytesPerPixel, chunkWrite, &csr, isRead);
+
+    if (isRead && context->isProvidingPerformanceHints()) {
+        auto hostPtrSize = calculateHostPtrSizeForImage(globalRegion, inputRowPitch, inputSlicePitch, image);
+        if (!isL3Capable(ptr, hostPtrSize)) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, hostPtrSize, MemoryConstants::pageSize, MemoryConstants::pageSize);
+        }
+    }
+
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, commandType);
 }
 
