@@ -495,6 +495,11 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         cmdQImp->makeResidentForResidencyContainer(this->commandContainer.getResidencyContainer());
     }
 
+    for (auto &operation : this->memAdviseOperations) {
+        this->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
+    }
+    this->memAdviseOperations.clear();
+
     NEO::CompletionStamp completionStamp;
     if (cmdQ->peekIsCopyOnlyCommandQueue()) {
         completionStamp = flushBcsTask(*commandStream, commandStreamStart, hasStallingCmds, hasRelaxedOrderingDependencies, requireTaskCountUpdate, appendOperation, csr);

@@ -216,6 +216,31 @@ HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlus
     EXPECT_EQ(ZE_RESULT_SUCCESS, commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr, nullptr));
 }
 
+HWTEST2_F(CommandListExecuteImmediate, whenExecutingCommandListImmediateWithFlushTaskWithMemAdvicesThenMemAdvicesAreDispatchedAndSuccessIsReturned, MatchAny) {
+
+    MockCommandListForExecuteMemAdvise<FamilyType::gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::compute, 0u);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
+    auto oldCommandQueue = commandList.cmdQImmediate;
+    commandList.cmdQImmediate = &mockCommandQueue;
+    commandList.indirectAllocationsAllowed = false;
+
+    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, 0, 16, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    EXPECT_EQ(1u, commandList.getMemAdviseOperations().size());
+    commandList.getMemAdviseOperations().push_back(MemAdviseOperation(0, 0, 8, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION));
+    EXPECT_EQ(2u, commandList.getMemAdviseOperations().size());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, commandList.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::none, false, false, nullptr, nullptr));
+    EXPECT_EQ(0u, commandList.getMemAdviseOperations().size());
+    EXPECT_EQ(2u, commandList.executeMemAdviseCallCount);
+
+    commandList.cmdQImmediate = oldCommandQueue;
+}
+
 HWTEST2_F(CommandListExecuteImmediate, givenOutOfHostMemoryErrorOnFlushWhenExecutingCommandListImmediateWithFlushTaskThenProperErrorIsReturned, MatchAny) {
     std::unique_ptr<L0::CommandList> commandList;
     const ze_command_queue_desc_t desc = {};

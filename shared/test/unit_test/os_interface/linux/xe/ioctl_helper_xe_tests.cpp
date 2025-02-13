@@ -392,7 +392,11 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(PreferredLocation::none, 0));
 
+    EXPECT_EQ(0u, xeIoctlHelper->getPreferredLocationAdvise());
+
     EXPECT_TRUE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
+
+    EXPECT_TRUE(xeIoctlHelper->setVmSharedSystemMemAdvise(0, 0, 0, 0, 0));
 
     EXPECT_TRUE(xeIoctlHelper->setVmBoAdviseForChunking(0, 0, 0, 0, nullptr));
 
@@ -447,6 +451,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
 
     EXPECT_EQ(0, xeIoctlHelper->setContextDebugFlag(0));
 
+    verifyDrmGetParamValue(-1, DrmParam::atomicClassUndefined);
+    verifyDrmGetParamValue(-1, DrmParam::atomicClassDevice);
+    verifyDrmGetParamValue(-1, DrmParam::atomicClassGlobal);
+    verifyDrmGetParamValue(-1, DrmParam::atomicClassSystem);
     verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_VRAM, DrmParam::memoryClassDevice);
     verifyDrmGetParamValue(DRM_XE_MEM_REGION_CLASS_SYSMEM, DrmParam::memoryClassSystem);
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_RENDER, DrmParam::engineClassRender);
@@ -460,6 +468,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyDrmGetParamValue(DRM_XE_ENGINE_CLASS_COMPUTE, DrmParam::execDefault);
 
     // Expect stringify
+    verifyDrmParamString("AtomicClassUndefined", DrmParam::atomicClassUndefined);
+    verifyDrmParamString("AtomicClassDevice", DrmParam::atomicClassDevice);
+    verifyDrmParamString("AtomicClassGlobal", DrmParam::atomicClassGlobal);
+    verifyDrmParamString("AtomicClassSystem", DrmParam::atomicClassSystem);
     verifyDrmParamString("ContextCreateExtSetparam", DrmParam::contextCreateExtSetparam);
     verifyDrmParamString("ContextCreateExtSetparam", DrmParam::contextCreateExtSetparam);
     verifyDrmParamString("ContextCreateFlagsUseExtensions", DrmParam::contextCreateFlagsUseExtensions);
@@ -502,7 +514,6 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyDrmParamString("TilingY", DrmParam::tilingY);
 
     verifyIoctlString(DrmIoctl::gemClose, "DRM_IOCTL_GEM_CLOSE");
-    verifyIoctlString(DrmIoctl::gemCreate, "DRM_IOCTL_XE_GEM_CREATE");
     verifyIoctlString(DrmIoctl::gemVmCreate, "DRM_IOCTL_XE_VM_CREATE");
     verifyIoctlString(DrmIoctl::gemVmDestroy, "DRM_IOCTL_XE_VM_DESTROY");
     verifyIoctlString(DrmIoctl::gemMmapOffset, "DRM_IOCTL_XE_GEM_MMAP_OFFSET");
@@ -515,6 +526,7 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIs
     verifyIoctlString(DrmIoctl::gemWaitUserFence, "DRM_IOCTL_XE_WAIT_USER_FENCE");
     verifyIoctlString(DrmIoctl::primeFdToHandle, "DRM_IOCTL_PRIME_FD_TO_HANDLE");
     verifyIoctlString(DrmIoctl::primeHandleToFd, "DRM_IOCTL_PRIME_HANDLE_TO_FD");
+    verifyIoctlString(DrmIoctl::getResetStats, "DRM_IOCTL_XE_EXEC_QUEUE_GET_PROPERTY");
 
     EXPECT_TRUE(xeIoctlHelper->completionFenceExtensionSupported(true));
 
@@ -592,6 +604,10 @@ TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
         EXPECT_STREQ(name, mockXeIoctlHelper->xeGetBindOperationName(bind));
     };
 
+    auto verifyXeOperationAdviseName = [&mockXeIoctlHelper](const char *name, auto advise) {
+        EXPECT_STREQ(name, mockXeIoctlHelper->xeGetAdviseOperationName(advise));
+    };
+
     auto verifyXeFlagsBindName = [&mockXeIoctlHelper](const char *name, auto flags) {
         EXPECT_STREQ(name, mockXeIoctlHelper->xeGetBindFlagNames(flags).c_str());
     };
@@ -612,6 +628,8 @@ TEST_F(IoctlHelperXeTest, verifyPublicFunctions) {
     verifyXeOperationBindName("UNMAP ALL", DRM_XE_VM_BIND_OP_UNMAP_ALL);
     verifyXeOperationBindName("PREFETCH", DRM_XE_VM_BIND_OP_PREFETCH);
     verifyXeOperationBindName("Unknown operation", -1);
+
+    verifyXeOperationAdviseName("Unknown operation", -1);
 
     verifyXeFlagsBindName("", 0);
     verifyXeFlagsBindName("NULL", DRM_XE_VM_BIND_FLAG_NULL);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,4 +32,24 @@ struct MemAdviseFlags {
     }
 };
 static_assert(sizeof(MemAdviseFlags) == sizeof(uint8_t), "");
+
+enum class MemAdvise : uint8_t {
+    setReadMostly = 0,                  /* hint that memory will be read from frequently and written to rarely */
+    clearReadMostly,                    /* removes the effect of SetReadMostly */
+    setPreferredLocation,               /* hint that the preferred memory location is the specified device */
+    clearPreferredLocation,             /* removes the effect of SetPreferredLocation */
+    setNonAtomicMostly,                 /* hints that memory will mostly be accessed non-atomically */
+    clearNonAtomicMostly,               /* removes the effect of SetNonAtomicMostly */
+    biasCached,                         /* hints that memory should be cached */
+    biasUncached,                       /* hints that memory should not be cached */
+    setSystemMemoryPreferredLocation,   /* hint that the preferred memory location is host memory */
+    clearSystemMemoryPreferredLocation, /* removes the effect of SetSystemMemoryPreferredLocation */
+    setAtomicDevice,                    /* hint that memory will be accessed atomically by the specified device */
+    clearAtomicDevice,                  /* removes the effect of SetAtomicDevice */
+    setAtomicGlobal,                    /* hint that memory will be accessed atomically by device on system memory */
+    clearAtomicGlobal,                  /* removes the effect of SetAtomicGlobal */
+    setAtomicCpu,                       /* hint that memory will be accessed atomically by CPU */
+    clearAtomicCpu,                     /* removes the effect of SetAtomicCpu */
+    invalidAdvise                       /* invalid advise */
+};
 } // namespace NEO

@@ -48,7 +48,6 @@
 #include <cstring>
 #include <memory>
 #include <sys/ioctl.h>
-
 namespace NEO {
 
 using AllocationStatus = MemoryManager::AllocationStatus;
@@ -292,6 +291,70 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
 
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
+}
+
+bool DrmMemoryManager::setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, uint32_t rootDeviceIndex) {
+
+    auto &drm = this->getDrm(rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
+
+    uint32_t attribute = 0;
+    uint64_t param = 0;
+
+    switch (memAdviseOp) {
+    case MemAdvise::setPreferredLocation:
+        attribute = ioctlHelper->getPreferredLocationAdvise();
+        param = (static_cast<uint64_t>(-1) << 32) //-1 as currently not supported and ignored. This will be useful in multi device settings.
+                | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
+        break;
+    case MemAdvise::clearPreferredLocation:
+        // Assumes that the default location is VRAM, i.e. 1 == DrmParam::memoryClassDevice
+        attribute = ioctlHelper->getPreferredLocationAdvise();
+        param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
+        break;
+    case MemAdvise::setSystemMemoryPreferredLocation:
+        attribute = ioctlHelper->getPreferredLocationAdvise();
+        param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem));
+        break;
+    case MemAdvise::clearSystemMemoryPreferredLocation:
+        attribute = ioctlHelper->getPreferredLocationAdvise();
+        param = (static_cast<uint64_t>(-1) << 32) | static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
+        break;
+    case MemAdvise::setAtomicDevice:
+        attribute = ioctlHelper->getAtomicAdvise(false);
+        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassDevice)) << 32);
+        break;
+    case MemAdvise::clearAtomicDevice:
+        attribute = ioctlHelper->getAtomicAdvise(false);
+        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
+        break;
+    case MemAdvise::setAtomicGlobal:
+        attribute = ioctlHelper->getAtomicAdvise(false);
+        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassGlobal)) << 32);
+        break;
+    case MemAdvise::clearAtomicGlobal:
+        attribute = ioctlHelper->getAtomicAdvise(false);
+        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
+        break;
+    case MemAdvise::setAtomicCpu:
+        attribute = ioctlHelper->getAtomicAdvise(false);
+        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassSystem)) << 32);
+        break;
+    case MemAdvise::clearAtomicCpu:
+        attribute = ioctlHelper->getAtomicAdvise(false);
+        param = (static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::atomicClassUndefined)) << 32);
+        break;
+    default:
+        return false;
+    }
+
+    // Single vm_id for shared system allocation
+    uint32_t vmHandleId = 0;
+    auto vmId = drm.getVirtualMemoryAddressSpace(vmHandleId);
+
+    auto result = ioctlHelper->setVmSharedSystemMemAdvise(reinterpret_cast<uint64_t>(ptr), size, attribute, param, vmId);
+
+    return result;
 }
 
 bool DrmMemoryManager::setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t size, AtomicAccessMode mode, uint32_t rootDeviceIndex) {

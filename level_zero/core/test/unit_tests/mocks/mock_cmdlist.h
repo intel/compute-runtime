@@ -446,6 +446,12 @@ struct MockCommandList : public CommandList {
                       size_t size,
                       ze_memory_advice_t advice));
 
+    ADDMETHOD_NOBASE(executeMemAdvise, ze_result_t, ZE_RESULT_SUCCESS,
+                     (ze_device_handle_t hDevice,
+                      const void *ptr,
+                      size_t size,
+                      ze_memory_advice_t advice));
+
     ADDMETHOD_NOBASE(appendMemoryCopy, ze_result_t, ZE_RESULT_SUCCESS,
                      (void *dstptr,
                       const void *srcptr,
@@ -623,6 +629,13 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     using BaseClass::ownedPrivateAllocations;
     using BaseClass::taskCountUpdateFenceRequired;
 
+    ze_result_t executeMemAdvise(ze_device_handle_t hDevice,
+                                 const void *ptr, size_t size,
+                                 ze_memory_advice_t advice) override {
+        executeMemAdviseCallCount++;
+        return ZE_RESULT_SUCCESS;
+    }
+
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
               (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
                uint64_t dstOffset, void *srcPtr,
@@ -699,6 +712,7 @@ class MockCommandListCoreFamily : public CommandListCoreFamily<gfxCoreFamily> {
     uintptr_t dstAlignedPtr;
     size_t srcBlitCopyRegionOffset = 0;
     size_t dstBlitCopyRegionOffset = 0;
+    uint32_t executeMemAdviseCallCount = 0;
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -828,6 +842,26 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
 
         return ZE_RESULT_SUCCESS;
     }
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForExecuteMemAdvise : public WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> {
+  public:
+    using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
+
+    using BaseClass::cmdQImmediate;
+    using BaseClass::indirectAllocationsAllowed;
+
+    using BaseClass::executeCommandListImmediateWithFlushTaskImpl;
+
+    ze_result_t executeMemAdvise(ze_device_handle_t hDevice,
+                                 const void *ptr, size_t size,
+                                 ze_memory_advice_t advice) override {
+        executeMemAdviseCallCount++;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    uint32_t executeMemAdviseCallCount = 0;
 };
 
 } // namespace ult

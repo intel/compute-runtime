@@ -135,6 +135,9 @@ struct CommandListCoreFamily : public CommandListImp {
     ze_result_t appendMemAdvise(ze_device_handle_t hDevice,
                                 const void *ptr, size_t size,
                                 ze_memory_advice_t advice) override;
+    ze_result_t executeMemAdvise(ze_device_handle_t hDevice,
+                                 const void *ptr, size_t size,
+                                 ze_memory_advice_t advice) override;
     ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
                                  ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                  ze_event_handle_t *phWaitEvents, CmdListMemoryCopyParams &memoryCopyParams) override;

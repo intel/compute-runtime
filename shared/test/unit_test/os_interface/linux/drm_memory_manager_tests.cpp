@@ -5808,6 +5808,70 @@ HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemAdviseIs
     }
 }
 
+HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetSharedSystemMemAdviseIsCalledThenAdviceSentToIoctlHelper) {
+    TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+
+    class MyMockIoctlHelper : public MockIoctlHelper {
+        using MockIoctlHelper::MockIoctlHelper;
+
+      public:
+        bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const uint32_t vmId) override {
+            setVmSharedSystemMemAdviseCalled++;
+            return true;
+        }
+        u_int32_t setVmSharedSystemMemAdviseCalled = 0;
+    };
+
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager.getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    MemAdvise memAdviseOp = MemAdvise::setPreferredLocation;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(1u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::clearPreferredLocation;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(2u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::setSystemMemoryPreferredLocation;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(3u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::clearSystemMemoryPreferredLocation;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(4u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::setAtomicDevice;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(5u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::clearAtomicDevice;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(6u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::setAtomicGlobal;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(7u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::clearAtomicGlobal;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(8u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::setAtomicCpu;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(9u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::clearAtomicCpu;
+    EXPECT_TRUE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(10u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+
+    memAdviseOp = MemAdvise::invalidAdvise;
+    EXPECT_FALSE(memoryManager.setSharedSystemMemAdvise(nullptr, 0u, memAdviseOp, 0u));
+    EXPECT_EQ(10u, mockIoctlHelper->setVmSharedSystemMemAdviseCalled);
+}
+
 HWTEST_TEMPLATED_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetAtomicAccessIsCalledThenTrueReturned) {
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     BufferObject bo(rootDeviceIndex, mock, 3, 1, 1024, 0);

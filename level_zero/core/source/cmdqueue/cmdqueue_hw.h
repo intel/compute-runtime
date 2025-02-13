@@ -114,6 +114,8 @@ struct CommandQueueHw : public CommandQueueImp {
         bool containsParentImmediateStream = false;
     };
 
+    inline void processMemAdviseOperations(CommandList *commandList);
+
     ze_result_t executeCommandListsRegularHeapless(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *commandListHandles,

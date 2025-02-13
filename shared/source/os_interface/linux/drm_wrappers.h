@@ -299,6 +299,10 @@ enum class DrmIoctl {
 };
 
 enum class DrmParam {
+    atomicClassUndefined,
+    atomicClassDevice,
+    atomicClassGlobal,
+    atomicClassSystem,
     contextCreateExtSetparam,
     contextCreateFlagsUseExtensions,
     contextEnginesExtLoadBalance,

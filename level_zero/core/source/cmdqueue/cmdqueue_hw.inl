@@ -134,6 +134,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::processMemAdviseOperations(CommandList *commandList) {
+    auto &memAdviseOperations = commandList->getMemAdviseOperations();
+    for (auto &operation : memAdviseOperations) {
+        commandList->executeMemAdvise(operation.hDevice, operation.ptr, operation.size, operation.advice);
+    }
+    memAdviseOperations.clear();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
     CommandListExecutionContext &ctx,
     uint32_t numCommandLists,
@@ -208,6 +217,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegularHeapless(
             cmdListWithAssertExecuted.exchange(true);
         }
 
+        this->processMemAdviseOperations(commandList);
         this->collectPrintfContentsFromCommandsList(commandList);
     }
 
@@ -433,6 +443,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             cmdListWithAssertExecuted.exchange(true);
         }
 
+        this->processMemAdviseOperations(commandList);
         this->collectPrintfContentsFromCommandsList(commandList);
     }
 
@@ -525,6 +536,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
         this->programOneCmdListBatchBufferStart(commandList, *streamForDispatch, ctx);
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
     }
+
     this->migrateSharedAllocationsIfRequested(ctx.isMigrationRequested, ctx.firstCommandList);
 
     this->assignCsrTaskCountToFenceIfAvailable(hFence);

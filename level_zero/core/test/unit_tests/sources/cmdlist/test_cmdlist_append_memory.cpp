@@ -1169,6 +1169,47 @@ HWTEST2_F(AppendMemoryCopyFenceTest, givenDeviceToHostCopyWhenProgrammingThenAdd
     context->freeMem(deviceBuffer);
 }
 
+HWTEST2_F(AppendMemoryCopyFenceTest, givenAppendMemAdviseWithRegularAndHeapLessCmdListThenMemAdvicesAreDispatched, IsAtLeastXeHpcCore) {
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    ze_command_queue_desc_t desc = {};
+    auto mockCmdQHw = makeZeUniquePtr<MockCommandQueueHw<FamilyType::gfxCoreFamily>>(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
+    mockCmdQHw->initialize(false, false, false);
+
+    MockCommandListCoreFamily<FamilyType::gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::compute, 0u);
+    cmdList.isFlushTaskSubmissionEnabled = true;
+
+    constexpr size_t allocSize = 1;
+    void *deviceBuffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, allocSize, &deviceBuffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto cmdListHandle = cmdList.toHandle();
+
+    {
+        cmdList.appendMemAdvise(device->toHandle(), deviceBuffer, allocSize, ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION);
+        cmdList.close();
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        EXPECT_EQ(1u, cmdList.executeMemAdviseCallCount);
+        EXPECT_EQ(0u, cmdList.getMemAdviseOperations().size());
+    }
+
+    {
+        mockCmdQHw->heaplessStateInitEnabled = true;
+        cmdList.reset();
+        cmdList.appendMemAdvise(device->toHandle(), deviceBuffer, allocSize, ZE_MEMORY_ADVICE_CLEAR_SYSTEM_MEMORY_PREFERRED_LOCATION);
+        cmdList.close();
+        mockCmdQHw->executeCommandLists(1, &cmdListHandle, nullptr, false, nullptr, nullptr);
+        EXPECT_EQ(2u, cmdList.executeMemAdviseCallCount);
+        EXPECT_EQ(0u, cmdList.getMemAdviseOperations().size());
+    }
+
+    context->freeMem(deviceBuffer);
+}
+
 HWTEST2_F(AppendMemoryCopyFenceTest, givenRegularCmdListWhenDeviceToHostCopyProgrammedWithoutEventThenAddFenceDuringTagUpdate, IsAtLeastXeHpcCore) {
 
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;

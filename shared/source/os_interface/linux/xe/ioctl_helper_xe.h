@@ -60,6 +60,7 @@ class IoctlHelperXe : public IoctlHelper {
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const uint32_t vmId) override;
     bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     bool setGemTiling(void *setTiling) override;
@@ -144,6 +145,7 @@ class IoctlHelperXe : public IoctlHelper {
 
     virtual const char *xeGetClassName(int className) const;
     const char *xeGetBindOperationName(int bindOperation);
+    const char *xeGetAdviseOperationName(int adviseOperation);
 
     const char *xeGetengineClassName(uint32_t engineClass);
     template <typename DataType>

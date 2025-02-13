@@ -212,6 +212,14 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemAdvise(gfxAllocation, flags, rootDeviceIndex);
     }
 
+    bool setSharedSystemMemAdvise(const void *ptr, const size_t size, MemAdvise memAdviseOp, uint32_t rootDeviceIndex) override {
+        setSharedSystemMemAdviseCalledCount++;
+        if (failSetSharedSystemMemAdvise) {
+            return false;
+        }
+        return MemoryManager::setSharedSystemMemAdvise(ptr, size, memAdviseOp, rootDeviceIndex);
+    }
+
     bool setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
         memPrefetchSubDeviceIds = subDeviceIds;
         setMemPrefetchCalled = true;
@@ -320,6 +328,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     uint32_t waitForEnginesCompletionCalled = 0u;
     uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
     uint32_t setMemPrefetchCalledCount = 0;
+    uint32_t setSharedSystemMemAdviseCalledCount = 0;
     osHandle capturedSharedHandle = 0u;
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
@@ -337,6 +346,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failAllocate32Bit = false;
     bool failLockResource = false;
     bool failSetMemAdvise = false;
+    bool failSetSharedSystemMemAdvise = false;
     bool setMemPrefetchCalled = false;
     bool prefetchSharedSystemAllocCalled = false;
     bool cpuCopyRequired = false;

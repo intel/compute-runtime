@@ -46,7 +46,6 @@
 #ifndef DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR
 #define DRM_XE_VM_BIND_FLAG_CPU_ADDR_MIRROR (1 << 2)
 #endif
-
 namespace NEO {
 
 const char *IoctlHelperXe::xeGetClassName(int className) const {
@@ -78,6 +77,10 @@ const char *IoctlHelperXe::xeGetBindOperationName(int bindOperation) {
     case DRM_XE_VM_BIND_OP_PREFETCH:
         return "PREFETCH";
     }
+    return "Unknown operation";
+}
+
+const char *IoctlHelperXe::xeGetAdviseOperationName(int adviseOperation) {
     return "Unknown operation";
 }
 
@@ -819,7 +822,7 @@ int IoctlHelperXe::waitUserFence(uint32_t ctxId, uint64_t address,
     return 0;
 }
 
-uint32_t IoctlHelperXe::getAtomicAdvise(bool isNonAtomic) {
+uint32_t IoctlHelperXe::getAtomicAdvise(bool /* isNonAtomic */) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return 0;
 }
@@ -840,6 +843,12 @@ std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(Pre
 
 bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    // There is no vmAdvise attribute in Xe, so return success
+    return true;
+}
+
+bool IoctlHelperXe::setVmSharedSystemMemAdvise(uint64_t handle, const size_t size, const uint32_t attribute, const uint64_t param, const uint32_t vmId) {
+    xeLog(" -> IoctlHelperXe::%s h=0x%llx s=0x%llx vmid=0x%x\n", __FUNCTION__, handle, size, vmId);
     // There is no vmAdvise attribute in Xe, so return success
     return true;
 }
@@ -1100,8 +1109,15 @@ bool IoctlHelperXe::isDebugAttachAvailable() {
 
 int IoctlHelperXe::getDrmParamValue(DrmParam drmParam) const {
     xeLog(" -> IoctlHelperXe::%s 0x%x %s\n", __FUNCTION__, drmParam, getDrmParamString(drmParam).c_str());
-
     switch (drmParam) {
+    case DrmParam::atomicClassUndefined:
+        return -1;
+    case DrmParam::atomicClassDevice:
+        return -1;
+    case DrmParam::atomicClassGlobal:
+        return -1;
+    case DrmParam::atomicClassSystem:
+        return -1;
     case DrmParam::memoryClassDevice:
         return DRM_XE_MEM_REGION_CLASS_VRAM;
     case DrmParam::memoryClassSystem:
@@ -1486,6 +1502,14 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
 
 std::string IoctlHelperXe::getDrmParamString(DrmParam drmParam) const {
     switch (drmParam) {
+    case DrmParam::atomicClassUndefined:
+        return "AtomicClassUndefined";
+    case DrmParam::atomicClassDevice:
+        return "AtomicClassDevice";
+    case DrmParam::atomicClassGlobal:
+        return "AtomicClassGlobal";
+    case DrmParam::atomicClassSystem:
+        return "AtomicClassSystem";
     case DrmParam::contextCreateExtSetparam:
         return "ContextCreateExtSetparam";
     case DrmParam::contextCreateFlagsUseExtensions:
