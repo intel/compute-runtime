@@ -1017,24 +1017,25 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (debugManager.flags.ClosEnabled.get() == 0 || productHelper.getNumCacheRegions() == 0) {
-        this->l3CacheInfo.reset(new CacheInfo{*ioctlHelper, 0, 0, 0});
-        return;
-    }
+    auto getL3CacheReservationLimits{[&hwInfo, &productHelper]() {
+        CacheReservationParameters out{};
+        if (debugManager.flags.ClosEnabled.get() == 0 || productHelper.getNumCacheRegions() == 0) {
+            return out;
+        }
 
-    auto allocateL3CacheInfo{[&productHelper, &hwInfo, &ioctlHelper = *(this->ioctlHelper)]() {
-        constexpr uint16_t maxNumWays = 32;
+        constexpr uint16_t totalMaxNumWays = 32;
         constexpr uint16_t globalReservationLimit = 16;
         constexpr uint16_t clientReservationLimit = 8;
-        constexpr uint16_t maxReservationNumWays = std::min(globalReservationLimit, clientReservationLimit);
         const size_t totalCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte;
-        const size_t maxReservationCacheSize = (totalCacheSize * maxReservationNumWays) / maxNumWays;
-        const uint32_t maxReservationNumCacheRegions = productHelper.getNumCacheRegions() - 1;
 
-        return new CacheInfo(ioctlHelper, maxReservationCacheSize, maxReservationNumCacheRegions, maxReservationNumWays);
+        out.maxNumWays = std::min(globalReservationLimit, clientReservationLimit);
+        out.maxSize = (totalCacheSize * out.maxNumWays) / totalMaxNumWays;
+        out.maxNumRegions = productHelper.getNumCacheRegions() - 1;
+
+        return out;
     }};
 
-    this->l3CacheInfo.reset(allocateL3CacheInfo());
+    this->cacheInfo.reset(new CacheInfo(*ioctlHelper, getL3CacheReservationLimits()));
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {

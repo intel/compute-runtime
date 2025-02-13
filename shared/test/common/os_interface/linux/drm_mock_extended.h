@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,9 +25,9 @@ using namespace NEO;
 
 class DrmMockExtended : public DrmMock {
   public:
+    using Drm::cacheInfo;
     using Drm::engineInfo;
     using Drm::ioctlHelper;
-    using Drm::l3CacheInfo;
     using Drm::memoryInfo;
     using Drm::pageFaultSupported;
     using Drm::rootDeviceEnvironment;

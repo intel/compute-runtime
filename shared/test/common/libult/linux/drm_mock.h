@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <cstdio>
 #include <fstream>
@@ -24,8 +25,10 @@ using namespace NEO;
 
 class DrmMock : public Drm {
   public:
+    using BaseClass = Drm;
     using Drm::adapterBDF;
     using Drm::bindAvailable;
+    using Drm::cacheInfo;
     using Drm::checkQueueSliceSupport;
     using Drm::chunkingAvailable;
     using Drm::chunkingMode;
@@ -40,7 +43,6 @@ class DrmMock : public Drm {
     using Drm::getQueueSliceCount;
     using Drm::ioctlHelper;
     using Drm::isSharedSystemAllocEnabled;
-    using Drm::l3CacheInfo;
     using Drm::memoryInfo;
     using Drm::memoryInfoQueried;
     using Drm::minimalChunkingSize;
@@ -189,6 +191,8 @@ class DrmMock : public Drm {
     uint32_t getAggregatedProcessCount() const override {
         return mockProcessCount;
     }
+
+    ADDMETHOD_CONST(getDriverModelType, DriverModelType, true, DriverModelType::drm, (), ());
 
     static const int mockFd = 33;
 

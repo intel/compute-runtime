@@ -161,7 +161,7 @@ bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
         return true;
     }
 
-    auto cacheInfo = drm->getL3CacheInfo();
+    auto cacheInfo = drm->getCacheInfo();
     if (cacheInfo == nullptr) {
         return false;
     }
@@ -175,7 +175,7 @@ bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
 }
 
 bool DrmAllocation::setCacheAdvice(Drm *drm, size_t regionSize, CacheRegion regionIndex, bool isSystemMemoryPool) {
-    if (!drm->getL3CacheInfo()->getCacheRegion(regionSize, regionIndex)) {
+    if (!drm->getCacheInfo()->getCacheRegion(regionSize, regionIndex)) {
         return false;
     }
 

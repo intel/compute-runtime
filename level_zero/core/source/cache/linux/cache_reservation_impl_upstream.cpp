@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, size_t regionSize, ze_cache
     return false;
 }
 
-size_t CacheReservationImpl::getMaxCacheReservationSize() {
+size_t CacheReservationImpl::getMaxCacheReservationSize(size_t cacheLevel) {
     return 0;
 }
 

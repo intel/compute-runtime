@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class CacheReservation {
 
     virtual bool reserveCache(size_t cacheLevel, size_t cacheReservationSize) = 0;
     virtual bool setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext_region_t cacheRegion) = 0;
-    virtual size_t getMaxCacheReservationSize() = 0;
+    virtual size_t getMaxCacheReservationSize(size_t cacheLevel) = 0;
 };
 
 } // namespace L0

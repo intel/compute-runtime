@@ -1239,8 +1239,9 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
     if (pCacheProperties->pNext) {
         auto extendedProperties = reinterpret_cast<ze_device_cache_properties_t *>(pCacheProperties->pNext);
         if (extendedProperties->stype == ZE_STRUCTURE_TYPE_CACHE_RESERVATION_EXT_DESC) {
+            constexpr size_t cacheLevel{3U};
             auto cacheReservationProperties = reinterpret_cast<ze_cache_reservation_ext_desc_t *>(extendedProperties);
-            cacheReservationProperties->maxCacheReservationSize = cacheReservation->getMaxCacheReservationSize();
+            cacheReservationProperties->maxCacheReservationSize = cacheReservation->getMaxCacheReservationSize(cacheLevel);
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }
@@ -1255,12 +1256,16 @@ ze_result_t DeviceImp::reserveCache(size_t cacheLevel, size_t cacheReservationSi
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (cacheReservation->getMaxCacheReservationSize() == 0) {
+    if (cacheLevel == 0U) {
+        cacheLevel = 3U;
+    }
+
+    if (cacheLevel != 3U) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (cacheLevel == 0) {
-        cacheLevel = 3;
+    if (cacheReservation->getMaxCacheReservationSize(cacheLevel) == 0U) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     auto result = cacheReservation->reserveCache(cacheLevel, cacheReservationSize);
@@ -1277,12 +1282,22 @@ ze_result_t DeviceImp::setCacheAdvice(void *ptr, size_t regionSize, ze_cache_ext
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    if (cacheReservation->getMaxCacheReservationSize() == 0) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (cacheRegion == ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_DEFAULT) {
+        cacheRegion = ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_NON_RESERVED;
     }
 
-    if (cacheRegion == ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_REGION_DEFAULT) {
-        cacheRegion = ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_NON_RESERVED_REGION;
+    const auto cacheLevel{[cacheRegion]() {
+        switch (cacheRegion) {
+        case ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_RESERVED:
+        case ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_NON_RESERVED:
+            return 3U;
+        default:
+            UNRECOVERABLE_IF(true);
+        }
+    }()};
+
+    if (cacheReservation->getMaxCacheReservationSize(cacheLevel) == 0) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     auto result = cacheReservation->setCacheAdvice(ptr, regionSize, cacheRegion);

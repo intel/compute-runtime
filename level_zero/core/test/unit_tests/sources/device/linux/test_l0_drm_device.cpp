@@ -48,5 +48,30 @@ TEST_F(DrmDeviceTests, whenMemoryAccessPropertiesQueriedThenConcurrentDeviceShar
     delete proxyMemoryManager;
 }
 
+TEST_F(DrmDeviceTests, givenDriverModelIsNotDrmWhenUsingTheApiThenUnsupportedFeatureErrorIsReturned) {
+    constexpr auto rootDeviceIndex{0U};
+
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(new NEO::OSInterface);
+    auto drm{new DrmMock{*execEnv->rootDeviceEnvironments[rootDeviceIndex]}};
+    drm->getDriverModelTypeCallBase = false;
+    drm->getDriverModelTypeResult = DriverModelType::unknown;
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>{drm});
+
+    EXPECT_NE(nullptr, neoDevice->getRootDeviceEnvironment().osInterface.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->reserveCache(3, 0));
+}
+
+TEST_F(DrmDeviceTests, givenCacheLevelUnsupportedViaCacheReservationApiWhenUsingTheApiThenUnsupportedFeatureErrorIsReturned) {
+    constexpr auto rootDeviceIndex{0U};
+
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(new NEO::OSInterface);
+    auto drm{new DrmMock{*execEnv->rootDeviceEnvironments[rootDeviceIndex]}};
+    execEnv->rootDeviceEnvironments[rootDeviceIndex]->osInterface->setDriverModel(std::unique_ptr<DriverModel>{drm});
+
+    EXPECT_NE(nullptr, neoDevice->getRootDeviceEnvironment().osInterface.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->reserveCache(1, 0));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, device->reserveCache(2, 0));
+}
+
 } // namespace ult
 } // namespace L0

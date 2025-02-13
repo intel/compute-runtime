@@ -22,14 +22,24 @@ std::unique_ptr<CacheReservation> CacheReservation::create(Device &device) {
 }
 
 bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
-    auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    switch (cacheLevel) {
+    case 3U:
+        return reserveCacheForLevel(3U, cacheReservationSize, reservedL3CacheRegion, reservedL3CacheSize);
+    default:
+        return false;
+    }
 
-    auto cacheInfo = drm->getL3CacheInfo();
+    return true;
+}
+
+bool CacheReservationImpl::reserveCacheForLevel(size_t cacheLevel, size_t cacheReservationSize, NEO::CacheRegion &reservedCacheRegion, size_t &reservedCacheSize) {
+    auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    auto cacheInfo = drm->getCacheInfo();
 
     if (cacheReservationSize == 0) {
-        cacheInfo->freeCacheRegion(this->reservedL3CacheRegion);
-        this->reservedL3CacheRegion = NEO::CacheRegion::none;
-        this->reservedL3CacheSize = 0;
+        cacheInfo->freeCacheRegion(reservedCacheRegion);
+        reservedCacheRegion = NEO::CacheRegion::none;
+        reservedCacheSize = 0;
         return true;
     }
 
@@ -38,8 +48,8 @@ bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservati
         return false;
     }
 
-    this->reservedL3CacheRegion = cacheRegion;
-    this->reservedL3CacheSize = cacheReservationSize;
+    reservedCacheRegion = cacheRegion;
+    reservedCacheSize = cacheReservationSize;
 
     return true;
 }
@@ -66,10 +76,15 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t reg
     return drmAllocation->setCacheAdvice(drm, cacheRegionSize, cacheRegionIdx, !drmAllocation->isAllocatedInLocalMemoryPool());
 }
 
-size_t CacheReservationImpl::getMaxCacheReservationSize() {
+size_t CacheReservationImpl::getMaxCacheReservationSize(size_t cacheLevel) {
+    if (cacheLevel != 3U) {
+        return 0U;
+    }
+
     auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
 
-    auto cacheInfo = drm->getL3CacheInfo();
+    auto cacheInfo = drm->getCacheInfo();
+    DEBUG_BREAK_IF(cacheInfo == nullptr);
     return cacheInfo->getMaxReservationCacheSize();
 }
 

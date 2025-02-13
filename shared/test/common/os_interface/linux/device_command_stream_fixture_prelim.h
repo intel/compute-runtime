@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_context.h"
 
 struct DrmMockCustomPrelim : public DrmMockCustom {
+    using Drm::cacheInfo;
     using Drm::ioctlHelper;
-    using Drm::l3CacheInfo;
     using Drm::memoryInfo;
 
     static auto create(RootDeviceEnvironment &rootDeviceEnvironment) {

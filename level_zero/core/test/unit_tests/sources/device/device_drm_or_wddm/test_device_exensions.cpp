@@ -160,7 +160,7 @@ class MockCacheReservation : public CacheReservation {
         receivedCacheRegion = cacheRegion;
         return isInitialized;
     }
-    size_t getMaxCacheReservationSize() override {
+    size_t getMaxCacheReservationSize(size_t cacheLevel) override {
         return maxCacheReservationSize;
     }
 

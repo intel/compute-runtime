@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,7 +32,12 @@ struct BuffersWithClMemCacheClosTests : public DrmMemoryManagerLocalMemoryPrelim
         auto memoryInfo = new MockExtendedMemoryInfo(*mock);
 
         mock->memoryInfo.reset(memoryInfo);
-        mock->l3CacheInfo.reset(new MockCacheInfo(*mock->getIoctlHelper(), 1024, 2, 32));
+
+        CacheReservationParameters l3CacheParameters{};
+        l3CacheParameters.maxSize = 1024;
+        l3CacheParameters.maxNumRegions = 2;
+        l3CacheParameters.maxNumWays = 32;
+        mock->cacheInfo.reset(new MockCacheInfo(*mock->getIoctlHelper(), l3CacheParameters));
 
         auto &multiTileArchInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
         multiTileArchInfo.TileCount = (memoryInfo->getDrmRegionInfos().size() - 1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,11 +110,11 @@ struct DrmMockCustom : public Drm {
     static std::unique_ptr<DrmMockCustom> create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
 
     using Drm::bindAvailable;
+    using Drm::cacheInfo;
     using Drm::checkToDisableScratchPage;
     using Drm::completionFenceSupported;
     using Drm::disableScratch;
     using Drm::ioctlHelper;
-    using Drm::l3CacheInfo;
     using Drm::memoryInfo;
     using Drm::pageFaultSupported;
     using Drm::queryTopology;

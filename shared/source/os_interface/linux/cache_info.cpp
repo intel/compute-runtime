@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,10 +27,12 @@ CacheInfo::~CacheInfo() {
 }
 
 CacheRegion CacheInfo::reserveRegion(size_t cacheReservationSize) {
-    uint16_t numWays = (maxReservationNumWays * cacheReservationSize) / maxReservationCacheSize;
+    auto &limits{l3ReservationLimits};
+
+    uint16_t numWays = (limits.maxNumWays * cacheReservationSize) / limits.maxSize;
     if (debugManager.flags.ClosNumCacheWays.get() != -1) {
         numWays = debugManager.flags.ClosNumCacheWays.get();
-        cacheReservationSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
+        cacheReservationSize = (numWays * limits.maxSize) / limits.maxNumWays;
     }
     auto regionIndex = cacheReserve.reserveCache(CacheLevel::level3, numWays);
     if (regionIndex == CacheRegion::none) {
@@ -52,10 +54,12 @@ CacheRegion CacheInfo::freeRegion(CacheRegion regionIndex) {
 }
 
 bool CacheInfo::isRegionReserved(CacheRegion regionIndex, [[maybe_unused]] size_t expectedRegionSize) const {
+    auto &limits{l3ReservationLimits};
+
     if (regionIndex < CacheRegion::count && reservedCacheRegionsSize[toUnderlying(regionIndex)]) {
         if (debugManager.flags.ClosNumCacheWays.get() != -1) {
             auto numWays = debugManager.flags.ClosNumCacheWays.get();
-            expectedRegionSize = (numWays * maxReservationCacheSize) / maxReservationNumWays;
+            expectedRegionSize = (numWays * limits.maxSize) / limits.maxNumWays;
         }
         DEBUG_BREAK_IF(expectedRegionSize != reservedCacheRegionsSize[toUnderlying(regionIndex)]);
         return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,11 @@ class CacheReservationFixture : public DeviceFixture {
         mockDrm->ioctlHelper = IoctlHelper::getI915Helper(productFamily, "2.0", *mockDrm);
         mockDrm->ioctlHelper->initialize();
 
-        mockDrm->l3CacheInfo.reset(new MockCacheInfo(*mockDrm->ioctlHelper, 1024, 1, 32));
+        CacheReservationParameters l3CacheParameters{};
+        l3CacheParameters.maxSize = 1024;
+        l3CacheParameters.maxNumRegions = 1;
+        l3CacheParameters.maxNumWays = 32;
+        mockDrm->cacheInfo.reset(new MockCacheInfo(*mockDrm->ioctlHelper, l3CacheParameters));
         rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
         rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
         rootDeviceEnvironment.initGmm();
@@ -67,14 +71,19 @@ class CacheReservationFixture : public DeviceFixture {
 
 using CacheReservationTest = Test<CacheReservationFixture>;
 
-HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserveCacheWithZeroSizeThenRemovePriorReservation, IsCacheReservationSupported) {
-    size_t cacheLevel = 3;
-    size_t cacheReservationSize = 0;
+HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserveCacheThenReservationIsAcquiredAndReleasedAppropriately, IsCacheReservationSupported) {
+    constexpr size_t cacheLevel{3U};
+    constexpr size_t cacheReservationSize{128U};
 
-    auto result = cache->reserveCache(cacheLevel, cacheReservationSize);
-    EXPECT_TRUE(result);
+    auto result1 = cache->reserveCache(cacheLevel, cacheReservationSize);
+    EXPECT_TRUE(result1);
 
     auto cacheImpl = static_cast<MockCacheReservationImpl *>(cache);
+    EXPECT_EQ(CacheRegion::region1, cacheImpl->reservedL3CacheRegion);
+    EXPECT_EQ(cacheReservationSize, cacheImpl->reservedL3CacheSize);
+
+    auto result2 = cache->reserveCache(cacheLevel, 0U);
+    EXPECT_TRUE(result2);
     EXPECT_EQ(CacheRegion::none, cacheImpl->reservedL3CacheRegion);
     EXPECT_EQ(0u, cacheImpl->reservedL3CacheSize);
 }
@@ -82,7 +91,7 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserve
 HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserveCacheWithInvalidSizeThenDontReserveCacheRegion, IsCacheReservationSupported) {
     size_t cacheLevel = 3;
     size_t cacheReservationSize = 2048;
-    ASSERT_GT(cacheReservationSize, mockDrm->getL3CacheInfo()->getMaxReservationCacheSize());
+    ASSERT_GT(cacheReservationSize, mockDrm->getCacheInfo()->getMaxReservationCacheSize());
 
     auto result = cache->reserveCache(cacheLevel, cacheReservationSize);
     EXPECT_FALSE(result);
@@ -92,17 +101,16 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserve
     EXPECT_EQ(0u, cacheImpl->reservedL3CacheSize);
 }
 
-HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserveCacheWithValidSizeThenReserveCacheRegionWithGivenSize, IsCacheReservationSupported) {
-    size_t cacheLevel = 3;
-    size_t cacheReservationSize = 1024;
-    ASSERT_LE(cacheReservationSize, mockDrm->getL3CacheInfo()->getMaxReservationCacheSize());
+HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingReserveCacheWithInvalidCacheLevelThenDontReserveCacheRegion, IsCacheReservationSupported) {
+    constexpr size_t cacheLevel{1U};
+    constexpr size_t cacheReservationSize{128U};
 
     auto result = cache->reserveCache(cacheLevel, cacheReservationSize);
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 
     auto cacheImpl = static_cast<MockCacheReservationImpl *>(cache);
-    EXPECT_NE(CacheRegion::none, cacheImpl->reservedL3CacheRegion);
-    EXPECT_EQ(1024u, cacheImpl->reservedL3CacheSize);
+    EXPECT_EQ(CacheRegion::none, cacheImpl->reservedL3CacheRegion);
+    EXPECT_EQ(0U, cacheImpl->reservedL3CacheSize);
 }
 
 HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCacheAdviceWithInvalidPointerThenReturnFalse, IsCacheReservationSupported) {
@@ -225,8 +233,13 @@ HWTEST2_F(CacheReservationTest, GivenCacheReservationSupportedWhenCallingSetCach
     }
 }
 
-HWTEST2_F(CacheReservationTest, GivenCacheReservationCreatedWhenCallingGetMaxCacheReservationSizeThenReturnZero, IsCacheReservationSupported) {
-    EXPECT_EQ(mockDrm->getL3CacheInfo()->getMaxReservationCacheSize(), cache->getMaxCacheReservationSize());
+HWTEST2_F(CacheReservationTest, GivenCacheReservationWhenCallingGetMaxCacheReservationSizeThenAppropriateValueReturned, IsCacheReservationSupported) {
+    auto cacheLevel{3U};
+    EXPECT_EQ(mockDrm->getCacheInfo()->getMaxReservationCacheSize(), cache->getMaxCacheReservationSize(cacheLevel));
+    cacheLevel = 2U;
+    EXPECT_EQ(0U, cache->getMaxCacheReservationSize(cacheLevel));
+    cacheLevel = 1U;
+    EXPECT_EQ(0U, cache->getMaxCacheReservationSize(cacheLevel));
 }
 
 } // namespace ult

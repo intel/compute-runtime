@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ class DrmQueryMock : public DrmMock {
     DrmMockPrelimContext context{
         nullptr,
         rootDeviceEnvironment,
-        getL3CacheInfo(),
+        getCacheInfo(),
         failRetTopology,
         supportedCopyEnginesMask,
         contextDebugSupported,
