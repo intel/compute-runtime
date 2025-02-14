@@ -845,7 +845,9 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->usmDeviceAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
     }
     if (this->usmDeviceAllocationsCacheEnabled) {
-        device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner();
+        if (!device.isAnyDirectSubmissionEnabled(true)) {
+            device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner();
+        }
         this->initUsmDeviceAllocationsCache(device);
     }
 
@@ -854,7 +856,9 @@ void SVMAllocsManager::initUsmAllocationsCaches(Device &device) {
         this->usmHostAllocationsCacheEnabled = !!debugManager.flags.ExperimentalEnableHostAllocationCache.get();
     }
     if (this->usmHostAllocationsCacheEnabled) {
-        device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner();
+        if (!device.isAnyDirectSubmissionEnabled(true)) {
+            device.getExecutionEnvironment()->initializeUnifiedMemoryReuseCleaner();
+        }
         this->initUsmHostAllocationsCache();
     }
 }

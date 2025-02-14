@@ -1064,13 +1064,14 @@ void Device::stopDirectSubmissionAndWaitForCompletion() {
     }
 }
 
-bool Device::isAnyDirectSubmissionEnabled() {
-    bool enabled = false;
-    for (auto &engine : allEngines) {
-        auto csr = engine.commandStreamReceiver;
-        enabled |= csr->isAnyDirectSubmissionEnabled();
+bool Device::isAnyDirectSubmissionEnabled(bool light) const {
+    for (const auto &engine : allEngines) {
+        auto enabled = light ? engine.osContext->isDirectSubmissionLightActive() : engine.commandStreamReceiver->isAnyDirectSubmissionEnabled();
+        if (enabled) {
+            return true;
+        }
     }
-    return enabled;
+    return false;
 }
 
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {

@@ -202,6 +202,23 @@ HWTEST_F(SvmDeviceAllocationCacheTest, givenOclApiSpecificConfigWhenCheckingIfEn
     }
 }
 
+TEST_F(SvmDeviceAllocationCacheTest, givenAllocationCacheEnabledWhenDirectSubmissionLightActiveThenCleanerDisabled) {
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 1));
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
+    DebugManagerStateRestore restore;
+    debugManager.flags.ExperimentalEnableDeviceAllocationCache.set(1);
+    debugManager.flags.ExperimentalEnableHostAllocationCache.set(1);
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+    device->anyDirectSubmissionEnabledReturnValue = true;
+
+    svmManager->initUsmAllocationsCaches(*device);
+
+    ASSERT_TRUE(svmManager->usmDeviceAllocationsCacheEnabled);
+    EXPECT_FALSE(device->getExecutionEnvironment()->unifiedMemoryReuseCleaner.get());
+}
+
 struct SvmDeviceAllocationCacheSimpleTestDataType {
     size_t allocationSize;
     void *allocation;

@@ -202,7 +202,7 @@ class Device : public ReferenceTrackedObject<Device> {
         return deviceUsmMemAllocPoolsManager.get();
     }
     MOCKABLE_VIRTUAL void stopDirectSubmissionAndWaitForCompletion();
-    bool isAnyDirectSubmissionEnabled();
+    MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabled(bool light) const;
     bool isStateSipRequired() const {
         return (getPreemptionMode() == PreemptionMode::MidThread || getDebugger() != nullptr) && getCompilerInterface();
     }

@@ -626,7 +626,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
-            EXPECT_EQ(device->getNEODevice()->isAnyDirectSubmissionEnabled(), cmd->getConstantCacheInvalidationEnable());
+            EXPECT_EQ(device->getNEODevice()->isAnyDirectSubmissionEnabled(false), cmd->getConstantCacheInvalidationEnable());
             EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncFound++;
             gpuAddress += event->getSinglePacketSize();

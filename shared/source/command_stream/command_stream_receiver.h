@@ -357,7 +357,7 @@ class CommandStreamReceiver {
 
     MOCKABLE_VIRTUAL void startControllingDirectSubmissions();
 
-    bool isAnyDirectSubmissionEnabled() {
+    bool isAnyDirectSubmissionEnabled() const {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
     }
 

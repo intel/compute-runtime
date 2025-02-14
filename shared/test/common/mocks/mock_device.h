@@ -170,6 +170,10 @@ class MockDevice : public RootDevice {
         rtDispatchGlobalsForceAllocation = true;
     }
 
+    bool isAnyDirectSubmissionEnabled(bool light) const override {
+        return anyDirectSubmissionEnabledReturnValue;
+    }
+
     void stopDirectSubmissionAndWaitForCompletion() override {
         stopDirectSubmissionCalled = true;
         Device::stopDirectSubmissionAndWaitForCompletion();
@@ -187,6 +191,7 @@ class MockDevice : public RootDevice {
     static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
+    bool anyDirectSubmissionEnabledReturnValue = false;
     bool callBaseGetMaxParameterSizeFromIGC = false;
     bool callBaseVerifyAdapterLuid = true;
     bool verifyAdapterLuidReturnValue = true;
