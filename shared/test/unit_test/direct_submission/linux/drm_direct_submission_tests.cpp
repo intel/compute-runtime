@@ -108,6 +108,26 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
 
 using namespace NEO;
 
+struct MockDrmMemoryManagerForcePin : public DrmMemoryManager {
+    using DrmMemoryManager::forcePinEnabled;
+};
+
+HWTEST_F(DrmDirectSubmissionTest, whenCreateDrmDirectSubmissionLightThenDisableForcePin) {
+    EXPECT_TRUE(static_cast<MockDrmMemoryManagerForcePin *>(executionEnvironment.memoryManager.get())->forcePinEnabled);
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    drm->bindAvailable = false;
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(static_cast<MockDrmMemoryManagerForcePin *>(executionEnvironment.memoryManager.get())->forcePinEnabled);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, whenCreateDrmDirectSubmissionThenEnableForcePin) {
+    EXPECT_TRUE(static_cast<MockDrmMemoryManagerForcePin *>(executionEnvironment.memoryManager.get())->forcePinEnabled);
+    auto drm = static_cast<DrmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>());
+    drm->bindAvailable = true;
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(static_cast<MockDrmMemoryManagerForcePin *>(executionEnvironment.memoryManager.get())->forcePinEnabled);
+}
+
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplementationThenExpectInitialImplementationValues) {
     MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 

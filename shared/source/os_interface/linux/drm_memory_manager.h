@@ -130,6 +130,7 @@ class DrmMemoryManager : public MemoryManager {
     size_t getUserptrAlignment();
 
     void drainGemCloseWorker() const override;
+    void disableForcePin();
 
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;

@@ -12,6 +12,7 @@
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
@@ -47,6 +48,10 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
 
     auto &drm = osContextLinux->getDrm();
     drm.setDirectSubmissionActive(true);
+
+    if (!drm.isVmBindAvailable()) {
+        static_cast<DrmMemoryManager *>(this->memoryManager)->disableForcePin();
+    }
 
     auto usePciBarrier = !this->hwInfo->capabilityTable.isIntegratedDevice;
     if (debugManager.flags.DirectSubmissionPCIBarrier.get() != -1) {
