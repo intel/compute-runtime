@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -291,7 +291,6 @@ class MetricExportDataOaTest : public Test<MetricMultiDeviceFixture> {
         case MetricsDiscovery::EQUATION_ELEM_GLOBAL_SYMBOL:
         case MetricsDiscovery::EQUATION_ELEM_LOCAL_COUNTER_SYMBOL:
         case MetricsDiscovery::EQUATION_ELEM_OTHER_SET_COUNTER_SYMBOL:
-            mdElement.Operation = MetricsDiscovery::EQUATION_OPER_LSHIFT;
             break;
 
         case MetricsDiscovery::EQUATION_ELEM_LOCAL_METRIC_SYMBOL:
@@ -342,7 +341,6 @@ class MetricExportDataOaTest : public Test<MetricMultiDeviceFixture> {
         case ZET_INTEL_METRIC_DF_EQUATION_ELEM_GLOBAL_SYMBOL:
         case ZET_INTEL_METRIC_DF_EQUATION_ELEM_LOCAL_COUNTER_SYMBOL:
         case ZET_INTEL_METRIC_DF_EQUATION_ELEM_OTHER_SET_COUNTER_SYMBOL:
-            EXPECT_EQ(readUnaligned(&element.operation), ZET_INTEL_METRIC_DF_EQUATION_OPER_LSHIFT);
             break;
 
         case ZET_INTEL_METRIC_DF_EQUATION_ELEM_LOCAL_METRIC_SYMBOL:

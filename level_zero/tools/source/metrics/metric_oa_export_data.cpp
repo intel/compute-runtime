@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -287,15 +287,12 @@ ze_result_t MetricOaExporter01::assignEquation(zet_intel_metric_df_gpu_equation_
 
         case MetricsDiscovery::EQUATION_ELEM_GLOBAL_SYMBOL:
             type = ZET_INTEL_METRIC_DF_EQUATION_ELEM_GLOBAL_SYMBOL;
-            status = getEquationOperation(currElement.operation, mdElement->Operation);
             break;
         case MetricsDiscovery::EQUATION_ELEM_LOCAL_COUNTER_SYMBOL:
             type = ZET_INTEL_METRIC_DF_EQUATION_ELEM_LOCAL_COUNTER_SYMBOL;
-            status = getEquationOperation(currElement.operation, mdElement->Operation);
             break;
         case MetricsDiscovery::EQUATION_ELEM_OTHER_SET_COUNTER_SYMBOL:
             type = ZET_INTEL_METRIC_DF_EQUATION_ELEM_OTHER_SET_COUNTER_SYMBOL;
-            status = getEquationOperation(currElement.operation, mdElement->Operation);
             break;
 
         case MetricsDiscovery::EQUATION_ELEM_LOCAL_METRIC_SYMBOL:
