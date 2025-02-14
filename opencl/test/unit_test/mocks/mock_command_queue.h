@@ -22,6 +22,7 @@
 namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
+    using CommandQueue::bcsAllowed;
     using CommandQueue::bcsEngineCount;
     using CommandQueue::bcsEngines;
     using CommandQueue::bcsInitialized;

@@ -290,6 +290,14 @@ TEST(CommandQueue, givenDeviceWhenCreatingCommandQueueThenPickCsrFromDefaultEngi
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
 }
 
+TEST(CommandQueue, givenDirectSubmissionLightWhenCreateCmdQThenDisallowBlitter) {
+    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    mockDevice->device.anyDirectSubmissionEnabledReturnValue = true;
+    MockCommandQueue cmdQ(nullptr, mockDevice.get(), 0, false);
+
+    EXPECT_FALSE(cmdQ.bcsAllowed);
+}
+
 TEST(CommandQueue, givenDeviceNotSupportingBlitOperationsWhenQueueIsCreatedThenDontRegisterAnyBcsCsrs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = false;
