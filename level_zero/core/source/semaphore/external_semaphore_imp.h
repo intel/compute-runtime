@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/external_semaphore.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -34,7 +35,7 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
     const ze_intel_external_semaphore_exp_desc_t *desc;
 };
 
-class ExternalSemaphoreController {
+class ExternalSemaphoreController : NEO::NonCopyableOrMovableClass {
   public:
     enum SemaphoreOperation {
         Wait,
@@ -97,5 +98,7 @@ class ExternalSemaphoreController {
 
     std::thread extSemThread;
 };
+
+static_assert(NEO::NonCopyableOrMovable<ExternalSemaphoreController>);
 
 } // namespace L0
