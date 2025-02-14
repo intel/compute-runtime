@@ -1264,17 +1264,24 @@ std::vector<DeviceVector> Device::groupDevices(DeviceVector devices) {
     std::map<PRODUCT_FAMILY, size_t> productsMap;
     std::vector<DeviceVector> outDevices;
     for (auto &device : devices) {
-        auto productFamily = device->getHardwareInfo().platform.eProductFamily;
-        auto result = productsMap.find(productFamily);
-        if (result == productsMap.end()) {
-            productsMap.insert({productFamily, productsMap.size()});
-            outDevices.push_back(DeviceVector{});
+        if (device) {
+            auto productFamily = device->getHardwareInfo().platform.eProductFamily;
+            auto result = productsMap.find(productFamily);
+            if (result == productsMap.end()) {
+                productsMap.insert({productFamily, productsMap.size()});
+                outDevices.push_back(DeviceVector{});
+            }
+            auto productId = productsMap[productFamily];
+            outDevices[productId].push_back(std::move(device));
         }
-        auto productId = productsMap[productFamily];
-        outDevices[productId].push_back(std::move(device));
     }
     std::sort(outDevices.begin(), outDevices.end(), [](DeviceVector &lhs, DeviceVector &rhs) -> bool {
-        return lhs[0]->getHardwareInfo().platform.eProductFamily > rhs[0]->getHardwareInfo().platform.eProductFamily; // NOLINT(clang-analyzer-cplusplus.Move)
+        auto &leftHwInfo = lhs[0]->getHardwareInfo();  // NOLINT(clang-analyzer-cplusplus.Move) - MSVC assumes usage of moved vector
+        auto &rightHwInfo = rhs[0]->getHardwareInfo(); // NOLINT(clang-analyzer-cplusplus.Move)
+        if (leftHwInfo.capabilityTable.isIntegratedDevice != rightHwInfo.capabilityTable.isIntegratedDevice) {
+            return rightHwInfo.capabilityTable.isIntegratedDevice;
+        }
+        return leftHwInfo.platform.eProductFamily > rightHwInfo.platform.eProductFamily;
     });
     return outDevices;
 }

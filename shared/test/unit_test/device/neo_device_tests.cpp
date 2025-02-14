@@ -2130,7 +2130,7 @@ TEST(Device, givenDeviceWhenGettingMicrosecondResolutionThenCorrectValueReturned
     EXPECT_EQ(device->getMicrosecondResolution(), expectedMicrosecondResolution);
 }
 
-TEST(GroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {
+TEST(GroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamilySortedOverGpuTypeAndProductFamily) {
     DebugManagerStateRestore restorer;
     const size_t numRootDevices = 5u;
 
@@ -2150,21 +2150,42 @@ TEST(GroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVecto
     auto ptl0Device = inputDevices[4].get();
 
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_BMG;
+    executionEnvironment->rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
     executionEnvironment->rootDeviceEnvironments[2]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment->rootDeviceEnvironments[2]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[3]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment->rootDeviceEnvironments[3]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     executionEnvironment->rootDeviceEnvironments[4]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_PTL;
+    executionEnvironment->rootDeviceEnvironments[4]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
 
     auto groupedDevices = Device::groupDevices(std::move(inputDevices));
 
     EXPECT_EQ(3u, groupedDevices.size());
     EXPECT_EQ(1u, groupedDevices[0].size());
-    EXPECT_EQ(3u, groupedDevices[1].size());
-    EXPECT_EQ(1u, groupedDevices[2].size());
+    EXPECT_EQ(1u, groupedDevices[1].size());
+    EXPECT_EQ(3u, groupedDevices[2].size());
 
-    EXPECT_EQ(bmg0Device, groupedDevices[2][0].get());
-    EXPECT_EQ(lnl0Device, groupedDevices[1][0].get());
-    EXPECT_EQ(lnl1Device, groupedDevices[1][1].get());
-    EXPECT_EQ(lnl2Device, groupedDevices[1][2].get());
-    EXPECT_EQ(ptl0Device, groupedDevices[0][0].get());
+    EXPECT_EQ(lnl0Device, groupedDevices[2][0].get());
+    EXPECT_EQ(lnl1Device, groupedDevices[2][1].get());
+    EXPECT_EQ(lnl2Device, groupedDevices[2][2].get());
+    EXPECT_EQ(ptl0Device, groupedDevices[1][0].get());
+    EXPECT_EQ(bmg0Device, groupedDevices[0][0].get());
+}
+
+TEST(GroupDevicesTest, givenEmptyDeviceVectorWhenGroupDevicesThenEmptyVectorIsReturned) {
+    DeviceVector inputDevices{};
+    auto groupedDevices = Device::groupDevices(std::move(inputDevices));
+
+    EXPECT_TRUE(groupedDevices.empty());
+}
+
+TEST(GroupDevicesTest, givenNullInputInDeviceVectorWhenGroupDevicesThenEmptyVectorIsReturned) {
+    DeviceVector inputDevices{};
+    inputDevices.push_back(nullptr);
+    inputDevices.push_back(nullptr);
+    auto groupedDevices = Device::groupDevices(std::move(inputDevices));
+
+    EXPECT_TRUE(groupedDevices.empty());
 }
