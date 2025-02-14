@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,9 +24,7 @@ struct ConvertibleProcAddr {
 };
 
 struct OsLibraryCreateProperties {
-    OsLibraryCreateProperties(std::string name) {
-        libraryName = name;
-    }
+    OsLibraryCreateProperties(const std::string &name) : libraryName(name) {}
     std::string libraryName;
     std::string *errorValue = nullptr;
     bool performSelfLoad = false;
