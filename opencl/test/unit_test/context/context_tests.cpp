@@ -904,7 +904,8 @@ TEST_F(ContextUsmPoolParamsTest, GivenEnabled2MBLocalMemAlignmentWhenGettingUsmP
 }
 
 TEST_F(ContextUsmPoolParamsTest, GivenUsmPoolAllocatorSupportedWhenInitializingUsmPoolsThenPoolsAreInitializedWithCorrectParams) {
-    mockProductHelper->isUsmPoolAllocatorSupportedResult = true;
+    mockProductHelper->isHostUsmPoolAllocatorSupportedResult = true;
+    mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
 
     cl_device_id devices[] = {device};
     context.reset(Context::create<MockContext>(nullptr, ClDeviceVector(devices, 1), nullptr, nullptr, retVal));

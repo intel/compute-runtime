@@ -180,7 +180,8 @@ class ProductHelper {
     virtual bool isNonBlockingGpuSubmissionSupported() const = 0;
     virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const = 0;
     virtual bool isBufferPoolAllocatorSupported() const = 0;
-    virtual bool isUsmPoolAllocatorSupported() const = 0;
+    virtual bool isHostUsmPoolAllocatorSupported() const = 0;
+    virtual bool isDeviceUsmPoolAllocatorSupported() const = 0;
     virtual bool isDeviceUsmAllocationReuseSupported() const = 0;
     virtual bool isHostUsmAllocationReuseSupported() const = 0;
     virtual bool useLocalPreferredForCacheableBuffers() const = 0;

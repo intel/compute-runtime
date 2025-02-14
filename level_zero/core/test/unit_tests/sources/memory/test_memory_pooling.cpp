@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct AllocUsmPoolMemoryTest : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
             if (1 == deviceUsmPoolFlag) {
-                mockProductHelpers[i]->isUsmPoolAllocatorSupportedResult = true;
+                mockProductHelpers[i]->isDeviceUsmPoolAllocatorSupportedResult = true;
             }
         }
 

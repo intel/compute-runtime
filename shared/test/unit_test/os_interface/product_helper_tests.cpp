@@ -810,16 +810,28 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocator
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsBeforeXeHpgCore) {
-    EXPECT_FALSE(productHelper->isUsmPoolAllocatorSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsBeforeXeHpgCore) {
+    EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
-    EXPECT_FALSE(productHelper->isUsmPoolAllocatorSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsBeforeXeHpgCore) {
+    EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
 }
 
-HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
-    EXPECT_TRUE(productHelper->isUsmPoolAllocatorSupported());
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
+    EXPECT_FALSE(productHelper->isHostUsmPoolAllocatorSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpcCore) {
+    EXPECT_FALSE(productHelper->isDeviceUsmPoolAllocatorSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsHostUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
+    EXPECT_TRUE(productHelper->isHostUsmPoolAllocatorSupported());
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmPoolAllocatorSupportedThenCorrectValueIsReturned, IsXeHpgCore) {
+    EXPECT_TRUE(productHelper->isDeviceUsmPoolAllocatorSupported());
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenCheckingIsDeviceUsmAllocationReuseSupportedThenCorrectValueIsReturned, IsAtMostDg2) {

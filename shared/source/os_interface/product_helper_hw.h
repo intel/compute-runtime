@@ -122,7 +122,8 @@ class ProductHelperHw : public ProductHelper {
     bool isNonBlockingGpuSubmissionSupported() const override;
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const override;
     bool isBufferPoolAllocatorSupported() const override;
-    bool isUsmPoolAllocatorSupported() const override;
+    bool isHostUsmPoolAllocatorSupported() const override;
+    bool isDeviceUsmPoolAllocatorSupported() const override;
     bool isDeviceUsmAllocationReuseSupported() const override;
     bool isHostUsmAllocationReuseSupported() const override;
     bool useLocalPreferredForCacheableBuffers() const override;

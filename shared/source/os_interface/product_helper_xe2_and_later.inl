@@ -132,7 +132,12 @@ bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isUsmPoolAllocatorSupported() const {
+bool ProductHelperHw<gfxProduct>::isHostUsmPoolAllocatorSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
     return true;
 }
 

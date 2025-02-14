@@ -200,7 +200,7 @@ void Device::initializeCommonResources() {
     }
 
     if (ApiSpecificConfig::isDeviceUsmPoolingEnabled() &&
-        getProductHelper().isUsmPoolAllocatorSupported() &&
+        getProductHelper().isDeviceUsmPoolAllocatorSupported() &&
         NEO::debugManager.flags.ExperimentalUSMAllocationReuseVersion.get() == 2) {
 
         RootDeviceIndicesContainer rootDeviceIndices;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,8 +110,8 @@ TEST_F(ContextUsmPoolEnabledFlagsTestDefault, givenDefaultDebugSettingsThenPoolI
     clMemFreeINTEL(mockContext.get(), pooledHostAlloc);
 
     auto &productHelper = mockContext->getDevice(0u)->getProductHelper();
-    bool enabledDevice = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
-    bool enabledHost = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
+    bool enabledDevice = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isDeviceUsmPoolAllocatorSupported();
+    bool enabledHost = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isHostUsmPoolAllocatorSupported();
 
     EXPECT_EQ(enabledDevice, mockDeviceUsmMemAllocPool->isInitialized());
     EXPECT_EQ(enabledHost, mockHostUsmMemAllocPool->isInitialized());

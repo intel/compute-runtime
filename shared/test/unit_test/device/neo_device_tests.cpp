@@ -2039,7 +2039,7 @@ TEST_F(DeviceTests, givenNewUsmPoolingEnabledWhenDeviceInitializedThenUsmMemAllo
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         auto mockProductHelper = new MockProductHelper;
         executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isUsmPoolAllocatorSupportedResult = true;
+        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
         UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
         auto device = deviceFactory.rootDevices[0];
         auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
@@ -2052,7 +2052,7 @@ TEST_F(DeviceTests, givenNewUsmPoolingEnabledWhenDeviceInitializedThenUsmMemAllo
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         auto mockProductHelper = new MockProductHelper;
         executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isUsmPoolAllocatorSupportedResult = true;
+        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
         UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
         auto device = deviceFactory.rootDevices[0];
         auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
@@ -2064,7 +2064,7 @@ TEST_F(DeviceTests, givenNewUsmPoolingEnabledWhenDeviceInitializedThenUsmMemAllo
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         auto mockProductHelper = new MockProductHelper;
         executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isUsmPoolAllocatorSupportedResult = false;
+        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = false;
         UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
         auto device = deviceFactory.rootDevices[0];
         auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();
@@ -2077,7 +2077,7 @@ TEST_F(DeviceTests, givenNewUsmPoolingEnabledWhenDeviceInitializedThenUsmMemAllo
         auto executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
         auto mockProductHelper = new MockProductHelper;
         executionEnvironment->rootDeviceEnvironments[0]->productHelper.reset(mockProductHelper);
-        mockProductHelper->isUsmPoolAllocatorSupportedResult = true;
+        mockProductHelper->isDeviceUsmPoolAllocatorSupportedResult = true;
         UltDeviceFactory deviceFactory{1, 1, *executionEnvironment};
         auto device = deviceFactory.rootDevices[0];
         auto usmMemAllocPoolsManager = device->getUsmMemAllocPoolsManager();

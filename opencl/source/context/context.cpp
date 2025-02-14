@@ -553,7 +553,7 @@ void Context::initializeUsmAllocationPools() {
     }
 
     auto &productHelper = getDevices()[0]->getProductHelper();
-    bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
+    bool enabled = ApiSpecificConfig::isDeviceUsmPoolingEnabled() && productHelper.isDeviceUsmPoolAllocatorSupported();
 
     auto usmDevicePoolParams = getUsmDevicePoolParams();
     if (debugManager.flags.EnableDeviceUsmAllocationPool.get() != -1) {
@@ -570,7 +570,7 @@ void Context::initializeUsmAllocationPools() {
         usmDeviceMemAllocPool.initialize(svmMemoryManager, memoryProperties, usmDevicePoolParams.poolSize, usmDevicePoolParams.minServicedSize, usmDevicePoolParams.maxServicedSize);
     }
 
-    enabled = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isUsmPoolAllocatorSupported();
+    enabled = ApiSpecificConfig::isHostUsmPoolingEnabled() && productHelper.isHostUsmPoolAllocatorSupported();
     auto usmHostPoolParams = getUsmHostPoolParams();
     if (debugManager.flags.EnableHostUsmAllocationPool.get() != -1) {
         enabled = debugManager.flags.EnableHostUsmAllocationPool.get() > 0;
