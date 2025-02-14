@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,6 +282,67 @@ TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWi
     auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, 0, size, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
     EXPECT_EQ(nullptr, buffer);
+}
+
+TEST_F(ClCreateBufferTests, GivenValidHostPointerAndSizeOverSVMAllocSizeWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        size_t size = 10;
+
+        const cl_mem_flags flags[] = {CL_MEM_USE_HOST_PTR, CL_MEM_COPY_HOST_PTR};
+        cl_char *data = static_cast<cl_char *>(clSVMAlloc(pContext, CL_MEM_READ_WRITE, size, 0));
+
+        for (const auto &flag : flags) {
+            cl_mem buffer = clCreateBuffer(pContext, flag, 2 * size, data, &retVal);
+
+            EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+            EXPECT_EQ(nullptr, buffer);
+        }
+
+        clSVMFree(pContext, data);
+    }
+}
+
+TEST_F(ClCreateBufferTests, GivenValidHostPointerAndSizeWithinSVMAllocSizeWhenCreatingBufferThenSuccessIsReturned) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        size_t size = 10;
+
+        const cl_mem_flags flags[] = {CL_MEM_USE_HOST_PTR, CL_MEM_COPY_HOST_PTR};
+        cl_char *data = static_cast<cl_char *>(clSVMAlloc(pContext, CL_MEM_READ_WRITE, size, 0));
+
+        for (const auto &flag : flags) {
+            cl_mem buffer = clCreateBuffer(pContext, flag, size, data, &retVal);
+
+            EXPECT_EQ(CL_SUCCESS, retVal);
+            EXPECT_NE(nullptr, buffer);
+
+            retVal = clReleaseMemObject(buffer);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+        }
+
+        clSVMFree(pContext, data);
+    }
+}
+
+TEST_F(ClCreateBufferTests, GivenValidHostPointerAndSVMAllocWhenOffsetAndSizeReachOutOfBoundWhenCreatingBufferThenInvalidBufferSizeIsReturned) {
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities != 0) {
+        size_t size = 1024;
+        size_t offset = 1020;
+
+        const cl_mem_flags flags[] = {CL_MEM_USE_HOST_PTR, CL_MEM_COPY_HOST_PTR};
+        cl_char *data = static_cast<cl_char *>(clSVMAlloc(pContext, CL_MEM_READ_WRITE, size, 0));
+
+        for (const auto &flag : flags) {
+            cl_mem buffer = clCreateBuffer(pContext, flag, size, (cl_char *)(data + offset), &retVal);
+
+            EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
+            EXPECT_EQ(nullptr, buffer);
+        }
+
+        clSVMFree(pContext, data);
+    }
 }
 
 TEST_F(ClCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnrestirctedSizeFlagWhenCreatingBufferThenClSuccessIsReturned) {

@@ -144,6 +144,21 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
         return nullptr;
     }
 
+    if (expectHostPtr) {
+        auto svmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(hostPtr);
+
+        if (svmAlloc) {
+            auto rootDeviceIndex = pDevice->getRootDeviceIndex();
+            auto allocationEndAddress = svmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmAlloc->size;
+            auto bufferEndAddress = castToUint64(hostPtr) + size;
+
+            if ((size > svmAlloc->size) || (bufferEndAddress > allocationEndAddress)) {
+                retVal = CL_INVALID_BUFFER_SIZE;
+                return nullptr;
+            }
+        }
+    }
+
     // create the buffer
 
     Buffer *pBuffer = nullptr;
