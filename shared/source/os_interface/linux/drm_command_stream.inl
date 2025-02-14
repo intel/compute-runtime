@@ -370,7 +370,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue,
 
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::isGemCloseWorkerActive() const {
-    return this->getMemoryManager()->peekGemCloseWorker() && !this->osContext->isInternalEngine() && this->getType() == CommandStreamReceiverType::hardware;
+    return this->getMemoryManager()->peekGemCloseWorker() && !this->osContext->isInternalEngine() && !this->osContext->isDirectSubmissionLightActive() && this->getType() == CommandStreamReceiverType::hardware;
 }
 
 template <typename GfxFamily>

@@ -114,6 +114,19 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultGemCloseWorkerWhenCsrIsCreate
     delete osContext;
 }
 
+HWTEST_F(DeviceCommandStreamLeaksTest, givenDirectSubmissionLightWhenCsrIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
+    executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
+    auto osContext = OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(), 0, 0,
+                                       EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::regular}, PreemptionMode::ThreadGroup, 0b1));
+    ptr->setupContext(*osContext);
+    osContext->setDirectSubmissionActive();
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+
+    EXPECT_FALSE(drmCsr->isGemCloseWorkerActive());
+    delete osContext;
+}
+
 HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultGemCloseWorkerWhenInternalCsrIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
     executionEnvironment->memoryManager = DrmMemoryManager::create(*executionEnvironment);
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0, 1));
