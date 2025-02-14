@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,10 +19,13 @@ using ClEnqueueWriteBufferTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClEnqueueWriteBufferTests, GivenCorrectArgumentsWhenWritingBufferThenSuccessIsReturned) {
-    MockBuffer buffer{};
+    MockContext context{};
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer{&context, allocation};
+    MockCommandQueue commandQueue{context};
     auto data = 1;
     auto retVal = clEnqueueWriteBuffer(
-        pCommandQueue,
+        &commandQueue,
         &buffer,
         false,
         0,

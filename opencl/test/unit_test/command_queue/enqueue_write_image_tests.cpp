@@ -810,14 +810,14 @@ HWTEST_F(EnqueueWriteImageTest, whenisValidForStagingTransferCalledThenReturnCor
     unsigned char ptr[16];
 
     std::unique_ptr<Image> image(Image1dHelper<>::create(context));
-    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
     pCmdQ->finish();
 
     image.reset(Image2dHelper<>::create(context));
-    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
+    EXPECT_EQ(isStagingBuffersEnabled, pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
 
     image.reset(Image3dHelper<>::create(context));
-    EXPECT_FALSE(pCmdQ->isValidForStagingTransfer(image.get(), ptr, false));
+    EXPECT_FALSE(pCmdQ->isValidForStagingTransfer(image.get(), ptr, image->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
 }
 
 struct WriteImageStagingBufferTest : public EnqueueWriteImageTest {
@@ -949,6 +949,6 @@ HWTEST_F(WriteImageStagingBufferTest, givenIsValidForStagingTransferWhenUserPtrI
     cl_int retVal = CL_SUCCESS;
     auto mappedPtr = mockCommandQueueHw.enqueueMapBuffer(buffer, CL_TRUE, CL_MAP_READ, 0, buffer->getSize(), 0, nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(buffer, mappedPtr, false));
+    EXPECT_FALSE(mockCommandQueueHw.isValidForStagingTransfer(buffer, mappedPtr, buffer->getSize(), CL_COMMAND_WRITE_IMAGE, false, false));
     delete buffer;
 }

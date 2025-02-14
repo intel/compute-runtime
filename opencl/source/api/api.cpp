@@ -2542,7 +2542,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (pCommandQueue->isValidForStagingTransfer(pBuffer, ptr, numEventsInWaitList > 0)) {
+        if (pCommandQueue->isValidForStagingTransfer(pBuffer, ptr, cb, CL_COMMAND_WRITE_BUFFER, blockingWrite, numEventsInWaitList > 0)) {
             retVal = pCommandQueue->enqueueStagingWriteBuffer(
                 pBuffer,
                 blockingWrite,
@@ -2899,7 +2899,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             return retVal;
         }
 
-        if (pCommandQueue->isValidForStagingTransfer(pImage, ptr, numEventsInWaitList > 0)) {
+        if (pCommandQueue->isValidForStagingTransfer(pImage, ptr, pImage->getSize(), CL_COMMAND_READ_IMAGE, blockingRead, numEventsInWaitList > 0)) {
             retVal = pCommandQueue->enqueueStagingImageTransfer(CL_COMMAND_READ_IMAGE, pImage, blockingRead, origin, region, rowPitch, slicePitch, ptr, event);
         } else {
             retVal = pCommandQueue->enqueueReadImage(
@@ -2975,7 +2975,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             TRACING_EXIT(ClEnqueueWriteImage, &retVal);
             return retVal;
         }
-        if (pCommandQueue->isValidForStagingTransfer(pImage, ptr, numEventsInWaitList > 0)) {
+        if (pCommandQueue->isValidForStagingTransfer(pImage, ptr, pImage->getSize(), CL_COMMAND_WRITE_IMAGE, blockingWrite, numEventsInWaitList > 0)) {
             retVal = pCommandQueue->enqueueStagingImageTransfer(CL_COMMAND_WRITE_IMAGE, pImage, blockingWrite, origin, region, inputRowPitch, inputSlicePitch, ptr, event);
         } else {
             retVal = pCommandQueue->enqueueWriteImage(
