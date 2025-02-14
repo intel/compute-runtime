@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,6 +32,11 @@ class NEOProgramFixture {
 
 class ProgramFixture {
   public:
+    void createProgramFromBinary(Context *pContext,
+                                 const ClDeviceVector &deviceVector,
+                                 const unsigned char **binary,
+                                 const size_t *binarySize);
+
     void createProgramFromBinary(Context *pContext,
                                  const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,

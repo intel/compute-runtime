@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -91,6 +91,25 @@ void ProgramFixture::createProgramFromBinary(Context *pContext,
         binaryFileName,
         retVal,
         options);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+void ProgramFixture::createProgramFromBinary(Context *pContext,
+                                             const ClDeviceVector &deviceVector,
+                                             const unsigned char **binary,
+                                             const size_t *binarySize) {
+    cleanup();
+    cl_int retVal = CL_SUCCESS;
+
+    pProgram = Program::create<MockProgram>(
+        pContext,
+        deviceVector,
+        binarySize,
+        binary,
+        nullptr,
+        retVal);
 
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
