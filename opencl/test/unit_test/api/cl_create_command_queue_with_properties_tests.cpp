@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -452,6 +452,18 @@ TEST_F(ClCreateCommandQueueWithPropertiesApi, givenInvalidQueueIndexSelectedWhen
     auto queue = clCreateCommandQueueWithProperties(pContext, testedClDevice, queueProperties, &retVal);
     EXPECT_EQ(nullptr, queue);
     EXPECT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
+}
+
+TEST_F(ClCreateCommandQueueWithPropertiesApi, givenDeprecatedClSetCommandQueuePropertiesCalledThenCorrectErrorIsReturned) {
+    cl_queue_properties properties = 0, oldProperties = 0, newProperties = CL_QUEUE_PROFILING_ENABLE;
+
+    cl_int retVal = CL_SUCCESS;
+    auto commandQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, &properties, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, commandQueue);
+
+    EXPECT_EQ(CL_INVALID_OPERATION, clSetCommandQueueProperty(commandQueue, newProperties, CL_TRUE, &oldProperties));
+    clReleaseCommandQueue(commandQueue);
 }
 
 using LowPriorityCommandQueueTest = ::testing::Test;

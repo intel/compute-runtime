@@ -693,7 +693,7 @@ cl_int CL_API_CALL clSetCommandQueueProperty(cl_command_queue commandQueue,
                                              cl_bool enable,
                                              cl_command_queue_properties *oldProperties) {
     TRACING_ENTER(ClSetCommandQueueProperty, &commandQueue, &properties, &enable, &oldProperties);
-    cl_int retVal = CL_INVALID_VALUE;
+    cl_int retVal = CL_INVALID_OPERATION;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "properties", properties,
