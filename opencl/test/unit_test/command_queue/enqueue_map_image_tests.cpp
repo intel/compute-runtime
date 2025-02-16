@@ -330,18 +330,21 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     struct E2Clb {
         static void CL_CALLBACK signalEv2(cl_event e, cl_int status, void *data) {
             uint32_t *pTagMem = static_cast<uint32_t *>(data);
-            *pTagMem = 4;
+            *pTagMem = 5;
         }
     };
 
+    size_t expectedTaskCount = pCmdQ->getHeaplessStateInitEnabled() ? 2u : 1u;
+
     TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
-    EXPECT_EQ(1u, taskCount);
+    EXPECT_EQ(expectedTaskCount, taskCount);
 
     // enqueue something that can be finished...
     retVal = clEnqueueNDRangeKernel(pCmdQ, kernel.mockMultiDeviceKernel, 1, 0, &gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    *pTagMemory = tagHW += 3;
+    expectedTaskCount += 2;
+    *pTagMemory = tagHW += static_cast<uint32_t>(expectedTaskCount);
     auto ptr = pCmdQ->enqueueMapImage(
         image,
         false,
@@ -361,16 +364,17 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     EXPECT_TRUE(CL_COMMAND_MAP_IMAGE == mapEvent->getCommandType());
 
     taskCount = commandStreamReceiver.peekTaskCount();
-    EXPECT_EQ(3u, taskCount);
+    EXPECT_EQ(expectedTaskCount, taskCount);
 
     clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)pTagMemory);
 
     retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(4u, *pTagMemory);
+    EXPECT_EQ(5u, *pTagMemory);
     taskCount = commandStreamReceiver.peekTaskCount();
-    EXPECT_EQ(3u, taskCount);
+    EXPECT_EQ(expectedTaskCount, taskCount);
 
+    expectedTaskCount++;
     auto newTag = *pTagMemory + 1;
     (*pTagMemory) = newTag;
     retVal = clEnqueueUnmapMemObject(
@@ -387,7 +391,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
     retVal = clWaitForEvents(1, &unmapEventReturned);
 
     taskCount = commandStreamReceiver.peekTaskCount();
-    EXPECT_EQ(4u, taskCount);
+    EXPECT_EQ(expectedTaskCount, taskCount);
 
     clReleaseEvent(mapEventReturned);
     clReleaseEvent(unmapEventReturned);
