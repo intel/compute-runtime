@@ -3335,13 +3335,15 @@ HWTEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterAndBcsEnqueueNotP
         {true, true, ccsCsr}    // OOQ & CCS idle -> CCS
     };
 
+    const auto initialTagAddress = queue->heaplessStateInitEnabled ? 1 : 0;
+
     for (auto &state : queueState) {
         auto queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
         if (state.isOOQ) {
             queue->setOoqEnabled();
         }
 
-        *ccsCsr->tagAddress = 0u;
+        *ccsCsr->tagAddress = initialTagAddress;
         ccsCsr->taskCount = 1u;
         if (state.isIdle) {
             ccsCsr->taskCount = 0u;
