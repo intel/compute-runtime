@@ -346,11 +346,13 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
             }
         }
     } else {
-        if (this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager) {
+        if (this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager.get()) {
             const auto &engines = this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager->getRegisteredEngines(osContext->getRootDeviceIndex());
-            for (const auto engine : engines) {
-                auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                engine.commandStreamReceiver->stopDirectSubmission(false);
+            for (const auto &engine : engines) {
+                if (engine.osContext->isDirectSubmissionLightActive()) {
+                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
+                    engine.commandStreamReceiver->stopDirectSubmission(false);
+                }
             }
         }
         StackVec<ExecObject, maxFragmentsCount + 1> execObject(numberOfBos + 1);

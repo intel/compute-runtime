@@ -1677,7 +1677,7 @@ bool DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
     auto rootDeviceIndex = allocation->getRootDeviceIndex();
     auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get());
     const auto &engines = this->getRegisteredEngines(rootDeviceIndex);
-    for (const auto engine : engines) {
+    for (const auto &engine : engines) {
         if (engine.osContext->isDirectSubmissionLightActive()) {
             memoryOperationsInterface->makeResidentWithinOsContext(engine.osContext, ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1), false, false);
         }

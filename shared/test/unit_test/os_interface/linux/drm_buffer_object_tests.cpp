@@ -13,6 +13,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 #include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
+#include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
@@ -122,6 +123,31 @@ TEST_F(DrmBufferObjectTest, whenExecFailsThenPinFails) {
     BufferObject *boArray[1] = {boToPin.get()};
     auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
     EXPECT_EQ(EINVAL, ret);
+}
+
+TEST_F(DrmBufferObjectTest, givenDirectSubmissionLightWhenValidateHostptrThenStopDirectSubmission) {
+    mock->ioctlExpected.total = -1;
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0, 0b1);
+    OsContextLinux osContextLinux(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    executionEnvironment.memoryManager->createAndRegisterOsContext(&csr, EngineDescriptorHelper::getDefaultDescriptor());
+    auto &engine = executionEnvironment.memoryManager->getRegisteredEngines(0)[0];
+    auto backupContext = engine.osContext;
+    auto &mutableEngine = const_cast<EngineControl &>(engine);
+    mutableEngine.osContext = &osContextLinux;
+    executionEnvironment.memoryManager->getRegisteredEngines(0)[0].osContext->setDirectSubmissionActive();
+    std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
+
+    std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(rootDeviceIndex, this->mock.get()));
+    ASSERT_NE(nullptr, boToPin.get());
+    bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
+    BufferObject *boArray[1] = {boToPin.get()};
+    EXPECT_EQ(csr.stopDirectSubmissionCalledTimes, 0u);
+
+    bo->validateHostPtr(boArray, 1, osContext.get(), 0, 1);
+
+    EXPECT_EQ(csr.stopDirectSubmissionCalledTimes, 1u);
+    mutableEngine.osContext = backupContext;
 }
 
 TEST_F(DrmBufferObjectTest, whenExecFailsThenValidateHostPtrFails) {
