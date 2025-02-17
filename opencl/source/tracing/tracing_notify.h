@@ -110,7 +110,7 @@ class AtomicBackoff {
     uint32_t count = 1;
 };
 
-class ClBuildProgramTracer {
+class ClBuildProgramTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClBuildProgramTracer() {}
 
@@ -181,7 +181,7 @@ class ClBuildProgramTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCloneKernelTracer {
+class ClCloneKernelTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCloneKernelTracer() {}
 
@@ -244,7 +244,7 @@ class ClCloneKernelTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCompileProgramTracer {
+class ClCompileProgramTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCompileProgramTracer() {}
 
@@ -321,7 +321,7 @@ class ClCompileProgramTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateBufferTracer {
+class ClCreateBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateBufferTracer() {}
 
@@ -390,7 +390,7 @@ class ClCreateBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateCommandQueueTracer {
+class ClCreateCommandQueueTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateCommandQueueTracer() {}
 
@@ -457,7 +457,7 @@ class ClCreateCommandQueueTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateCommandQueueWithPropertiesTracer {
+class ClCreateCommandQueueWithPropertiesTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateCommandQueueWithPropertiesTracer() {}
 
@@ -524,7 +524,7 @@ class ClCreateCommandQueueWithPropertiesTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateContextTracer {
+class ClCreateContextTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateContextTracer() {}
 
@@ -595,7 +595,7 @@ class ClCreateContextTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateContextFromTypeTracer {
+class ClCreateContextFromTypeTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateContextFromTypeTracer() {}
 
@@ -664,7 +664,7 @@ class ClCreateContextFromTypeTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClMemFreeINTELTracer {
+class ClMemFreeINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClMemFreeINTELTracer() {}
 
@@ -727,7 +727,7 @@ class ClMemFreeINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClIcdGetPlatformIDsKHRTracer {
+class ClIcdGetPlatformIDsKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClIcdGetPlatformIDsKHRTracer() {}
 
@@ -792,7 +792,7 @@ class ClIcdGetPlatformIDsKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateBufferWithPropertiesINTELTracer {
+class ClCreateBufferWithPropertiesINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateBufferWithPropertiesINTELTracer() {}
 
@@ -863,7 +863,7 @@ class ClCreateBufferWithPropertiesINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateBufferWithPropertiesTracer {
+class ClCreateBufferWithPropertiesTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateBufferWithPropertiesTracer() {}
 
@@ -934,7 +934,7 @@ class ClCreateBufferWithPropertiesTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateImageWithPropertiesTracer {
+class ClCreateImageWithPropertiesTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateImageWithPropertiesTracer() {}
 
@@ -1007,7 +1007,7 @@ class ClCreateImageWithPropertiesTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateImageWithPropertiesINTELTracer {
+class ClCreateImageWithPropertiesINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateImageWithPropertiesINTELTracer() {}
 
@@ -1080,7 +1080,7 @@ class ClCreateImageWithPropertiesINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetImageParamsINTELTracer {
+class ClGetImageParamsINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetImageParamsINTELTracer() {}
 
@@ -1149,7 +1149,7 @@ class ClGetImageParamsINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreatePerfCountersCommandQueueINTELTracer {
+class ClCreatePerfCountersCommandQueueINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreatePerfCountersCommandQueueINTELTracer() {}
 
@@ -1218,7 +1218,7 @@ class ClCreatePerfCountersCommandQueueINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClHostMemAllocINTELTracer {
+class ClHostMemAllocINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClHostMemAllocINTELTracer() {}
 
@@ -1287,7 +1287,7 @@ class ClHostMemAllocINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClDeviceMemAllocINTELTracer {
+class ClDeviceMemAllocINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClDeviceMemAllocINTELTracer() {}
 
@@ -1358,7 +1358,7 @@ class ClDeviceMemAllocINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSharedMemAllocINTELTracer {
+class ClSharedMemAllocINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSharedMemAllocINTELTracer() {}
 
@@ -1429,7 +1429,7 @@ class ClSharedMemAllocINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClMemBlockingFreeINTELTracer {
+class ClMemBlockingFreeINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClMemBlockingFreeINTELTracer() {}
 
@@ -1492,7 +1492,7 @@ class ClMemBlockingFreeINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetMemAllocInfoINTELTracer {
+class ClGetMemAllocInfoINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetMemAllocInfoINTELTracer() {}
 
@@ -1563,7 +1563,7 @@ class ClGetMemAllocInfoINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetKernelArgMemPointerINTELTracer {
+class ClSetKernelArgMemPointerINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetKernelArgMemPointerINTELTracer() {}
 
@@ -1628,7 +1628,7 @@ class ClSetKernelArgMemPointerINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMemsetINTELTracer {
+class ClEnqueueMemsetINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMemsetINTELTracer() {}
 
@@ -1701,7 +1701,7 @@ class ClEnqueueMemsetINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMemFillINTELTracer {
+class ClEnqueueMemFillINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMemFillINTELTracer() {}
 
@@ -1776,7 +1776,7 @@ class ClEnqueueMemFillINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMemcpyINTELTracer {
+class ClEnqueueMemcpyINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMemcpyINTELTracer() {}
 
@@ -1851,7 +1851,7 @@ class ClEnqueueMemcpyINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMigrateMemINTELTracer {
+class ClEnqueueMigrateMemINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMigrateMemINTELTracer() {}
 
@@ -1924,7 +1924,7 @@ class ClEnqueueMigrateMemINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMemAdviseINTELTracer {
+class ClEnqueueMemAdviseINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMemAdviseINTELTracer() {}
 
@@ -1997,7 +1997,7 @@ class ClEnqueueMemAdviseINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateCommandQueueWithPropertiesKHRTracer {
+class ClCreateCommandQueueWithPropertiesKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateCommandQueueWithPropertiesKHRTracer() {}
 
@@ -2064,7 +2064,7 @@ class ClCreateCommandQueueWithPropertiesKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateAcceleratorINTELTracer {
+class ClCreateAcceleratorINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateAcceleratorINTELTracer() {}
 
@@ -2133,7 +2133,7 @@ class ClCreateAcceleratorINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainAcceleratorINTELTracer {
+class ClRetainAcceleratorINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainAcceleratorINTELTracer() {}
 
@@ -2194,7 +2194,7 @@ class ClRetainAcceleratorINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetAcceleratorInfoINTELTracer {
+class ClGetAcceleratorInfoINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetAcceleratorInfoINTELTracer() {}
 
@@ -2263,7 +2263,7 @@ class ClGetAcceleratorInfoINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseAcceleratorINTELTracer {
+class ClReleaseAcceleratorINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseAcceleratorINTELTracer() {}
 
@@ -2324,7 +2324,7 @@ class ClReleaseAcceleratorINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateProgramWithILKHRTracer {
+class ClCreateProgramWithILKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateProgramWithILKHRTracer() {}
 
@@ -2391,7 +2391,7 @@ class ClCreateProgramWithILKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelSuggestedLocalWorkSizeKHRTracer {
+class ClGetKernelSuggestedLocalWorkSizeKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelSuggestedLocalWorkSizeKHRTracer() {}
 
@@ -2462,7 +2462,7 @@ class ClGetKernelSuggestedLocalWorkSizeKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelSubGroupInfoKHRTracer {
+class ClGetKernelSubGroupInfoKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelSubGroupInfoKHRTracer() {}
 
@@ -2537,7 +2537,7 @@ class ClGetKernelSubGroupInfoKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueVerifyMemoryINTELTracer {
+class ClEnqueueVerifyMemoryINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueVerifyMemoryINTELTracer() {}
 
@@ -2606,7 +2606,7 @@ class ClEnqueueVerifyMemoryINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClAddCommentINTELTracer {
+class ClAddCommentINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClAddCommentINTELTracer() {}
 
@@ -2669,7 +2669,7 @@ class ClAddCommentINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetDeviceGlobalVariablePointerINTELTracer {
+class ClGetDeviceGlobalVariablePointerINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetDeviceGlobalVariablePointerINTELTracer() {}
 
@@ -2738,7 +2738,7 @@ class ClGetDeviceGlobalVariablePointerINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetDeviceFunctionPointerINTELTracer {
+class ClGetDeviceFunctionPointerINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetDeviceFunctionPointerINTELTracer() {}
 
@@ -2805,7 +2805,7 @@ class ClGetDeviceFunctionPointerINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetProgramReleaseCallbackTracer {
+class ClSetProgramReleaseCallbackTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetProgramReleaseCallbackTracer() {}
 
@@ -2870,7 +2870,7 @@ class ClSetProgramReleaseCallbackTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetProgramSpecializationConstantTracer {
+class ClSetProgramSpecializationConstantTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetProgramSpecializationConstantTracer() {}
 
@@ -2937,7 +2937,7 @@ class ClSetProgramSpecializationConstantTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelSuggestedLocalWorkSizeINTELTracer {
+class ClGetKernelSuggestedLocalWorkSizeINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelSuggestedLocalWorkSizeINTELTracer() {}
 
@@ -3008,7 +3008,7 @@ class ClGetKernelSuggestedLocalWorkSizeINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelMaxConcurrentWorkGroupCountINTELTracer {
+class ClGetKernelMaxConcurrentWorkGroupCountINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelMaxConcurrentWorkGroupCountINTELTracer() {}
 
@@ -3079,7 +3079,7 @@ class ClGetKernelMaxConcurrentWorkGroupCountINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueNDCountKernelINTELTracer {
+class ClEnqueueNDCountKernelINTELTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueNDCountKernelINTELTracer() {}
 
@@ -3156,7 +3156,7 @@ class ClEnqueueNDCountKernelINTELTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetContextDestructorCallbackTracer {
+class ClSetContextDestructorCallbackTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetContextDestructorCallbackTracer() {}
 
@@ -3221,7 +3221,7 @@ class ClSetContextDestructorCallbackTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueExternalMemObjectsKHRTracer {
+class ClEnqueueExternalMemObjectsKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueExternalMemObjectsKHRTracer() {}
 
@@ -3292,7 +3292,7 @@ class ClEnqueueExternalMemObjectsKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueAcquireExternalMemObjectsKHRTracer {
+class ClEnqueueAcquireExternalMemObjectsKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueAcquireExternalMemObjectsKHRTracer() {}
 
@@ -3363,7 +3363,7 @@ class ClEnqueueAcquireExternalMemObjectsKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueReleaseExternalMemObjectsKHRTracer {
+class ClEnqueueReleaseExternalMemObjectsKHRTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueReleaseExternalMemObjectsKHRTracer() {}
 
@@ -3434,7 +3434,7 @@ class ClEnqueueReleaseExternalMemObjectsKHRTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateImageTracer {
+class ClCreateImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateImageTracer() {}
 
@@ -3505,7 +3505,7 @@ class ClCreateImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateImage2DTracer {
+class ClCreateImage2DTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateImage2DTracer() {}
 
@@ -3580,7 +3580,7 @@ class ClCreateImage2DTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateImage3DTracer {
+class ClCreateImage3DTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateImage3DTracer() {}
 
@@ -3659,7 +3659,7 @@ class ClCreateImage3DTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateKernelTracer {
+class ClCreateKernelTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateKernelTracer() {}
 
@@ -3724,7 +3724,7 @@ class ClCreateKernelTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateKernelsInProgramTracer {
+class ClCreateKernelsInProgramTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateKernelsInProgramTracer() {}
 
@@ -3791,7 +3791,7 @@ class ClCreateKernelsInProgramTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateSubDevicesTracer {
+class ClCreateSubDevicesTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateSubDevicesTracer() {}
 
@@ -3860,7 +3860,7 @@ class ClCreateSubDevicesTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreatePipeTracer {
+class ClCreatePipeTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreatePipeTracer() {}
 
@@ -3931,7 +3931,7 @@ class ClCreatePipeTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateProgramWithBinaryTracer {
+class ClCreateProgramWithBinaryTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateProgramWithBinaryTracer() {}
 
@@ -4004,7 +4004,7 @@ class ClCreateProgramWithBinaryTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateProgramWithBuiltInKernelsTracer {
+class ClCreateProgramWithBuiltInKernelsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateProgramWithBuiltInKernelsTracer() {}
 
@@ -4073,7 +4073,7 @@ class ClCreateProgramWithBuiltInKernelsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateProgramWithIlTracer {
+class ClCreateProgramWithIlTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateProgramWithIlTracer() {}
 
@@ -4140,7 +4140,7 @@ class ClCreateProgramWithIlTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateProgramWithSourceTracer {
+class ClCreateProgramWithSourceTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateProgramWithSourceTracer() {}
 
@@ -4209,7 +4209,7 @@ class ClCreateProgramWithSourceTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateSamplerTracer {
+class ClCreateSamplerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateSamplerTracer() {}
 
@@ -4278,7 +4278,7 @@ class ClCreateSamplerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateSamplerWithPropertiesTracer {
+class ClCreateSamplerWithPropertiesTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateSamplerWithPropertiesTracer() {}
 
@@ -4343,7 +4343,7 @@ class ClCreateSamplerWithPropertiesTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateSubBufferTracer {
+class ClCreateSubBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateSubBufferTracer() {}
 
@@ -4412,7 +4412,7 @@ class ClCreateSubBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateUserEventTracer {
+class ClCreateUserEventTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateUserEventTracer() {}
 
@@ -4475,7 +4475,7 @@ class ClCreateUserEventTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueBarrierTracer {
+class ClEnqueueBarrierTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueBarrierTracer() {}
 
@@ -4536,7 +4536,7 @@ class ClEnqueueBarrierTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueBarrierWithWaitListTracer {
+class ClEnqueueBarrierWithWaitListTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueBarrierWithWaitListTracer() {}
 
@@ -4603,7 +4603,7 @@ class ClEnqueueBarrierWithWaitListTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueCopyBufferTracer {
+class ClEnqueueCopyBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueCopyBufferTracer() {}
 
@@ -4680,7 +4680,7 @@ class ClEnqueueCopyBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueCopyBufferRectTracer {
+class ClEnqueueCopyBufferRectTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueCopyBufferRectTracer() {}
 
@@ -4765,7 +4765,7 @@ class ClEnqueueCopyBufferRectTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueCopyBufferToImageTracer {
+class ClEnqueueCopyBufferToImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueCopyBufferToImageTracer() {}
 
@@ -4842,7 +4842,7 @@ class ClEnqueueCopyBufferToImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueCopyImageTracer {
+class ClEnqueueCopyImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueCopyImageTracer() {}
 
@@ -4919,7 +4919,7 @@ class ClEnqueueCopyImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueCopyImageToBufferTracer {
+class ClEnqueueCopyImageToBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueCopyImageToBufferTracer() {}
 
@@ -4996,7 +4996,7 @@ class ClEnqueueCopyImageToBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueFillBufferTracer {
+class ClEnqueueFillBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueFillBufferTracer() {}
 
@@ -5073,7 +5073,7 @@ class ClEnqueueFillBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueFillImageTracer {
+class ClEnqueueFillImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueFillImageTracer() {}
 
@@ -5148,7 +5148,7 @@ class ClEnqueueFillImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMapBufferTracer {
+class ClEnqueueMapBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMapBufferTracer() {}
 
@@ -5227,7 +5227,7 @@ class ClEnqueueMapBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMapImageTracer {
+class ClEnqueueMapImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMapImageTracer() {}
 
@@ -5310,7 +5310,7 @@ class ClEnqueueMapImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMarkerTracer {
+class ClEnqueueMarkerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMarkerTracer() {}
 
@@ -5373,7 +5373,7 @@ class ClEnqueueMarkerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMarkerWithWaitListTracer {
+class ClEnqueueMarkerWithWaitListTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMarkerWithWaitListTracer() {}
 
@@ -5440,7 +5440,7 @@ class ClEnqueueMarkerWithWaitListTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueMigrateMemObjectsTracer {
+class ClEnqueueMigrateMemObjectsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueMigrateMemObjectsTracer() {}
 
@@ -5513,7 +5513,7 @@ class ClEnqueueMigrateMemObjectsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueNdRangeKernelTracer {
+class ClEnqueueNdRangeKernelTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueNdRangeKernelTracer() {}
 
@@ -5590,7 +5590,7 @@ class ClEnqueueNdRangeKernelTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueNativeKernelTracer {
+class ClEnqueueNativeKernelTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueNativeKernelTracer() {}
 
@@ -5669,7 +5669,7 @@ class ClEnqueueNativeKernelTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueReadBufferTracer {
+class ClEnqueueReadBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueReadBufferTracer() {}
 
@@ -5746,7 +5746,7 @@ class ClEnqueueReadBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueReadBufferRectTracer {
+class ClEnqueueReadBufferRectTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueReadBufferRectTracer() {}
 
@@ -5833,7 +5833,7 @@ class ClEnqueueReadBufferRectTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueReadImageTracer {
+class ClEnqueueReadImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueReadImageTracer() {}
 
@@ -5914,7 +5914,7 @@ class ClEnqueueReadImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueSvmFreeTracer {
+class ClEnqueueSvmFreeTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueSvmFreeTracer() {}
 
@@ -5989,7 +5989,7 @@ class ClEnqueueSvmFreeTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueSvmMapTracer {
+class ClEnqueueSvmMapTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueSvmMapTracer() {}
 
@@ -6064,7 +6064,7 @@ class ClEnqueueSvmMapTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueSvmMemFillTracer {
+class ClEnqueueSvmMemFillTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueSvmMemFillTracer() {}
 
@@ -6139,7 +6139,7 @@ class ClEnqueueSvmMemFillTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueSvmMemcpyTracer {
+class ClEnqueueSvmMemcpyTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueSvmMemcpyTracer() {}
 
@@ -6214,7 +6214,7 @@ class ClEnqueueSvmMemcpyTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueSvmMigrateMemTracer {
+class ClEnqueueSvmMigrateMemTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueSvmMigrateMemTracer() {}
 
@@ -6289,7 +6289,7 @@ class ClEnqueueSvmMigrateMemTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueSvmUnmapTracer {
+class ClEnqueueSvmUnmapTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueSvmUnmapTracer() {}
 
@@ -6358,7 +6358,7 @@ class ClEnqueueSvmUnmapTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueTaskTracer {
+class ClEnqueueTaskTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueTaskTracer() {}
 
@@ -6427,7 +6427,7 @@ class ClEnqueueTaskTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueUnmapMemObjectTracer {
+class ClEnqueueUnmapMemObjectTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueUnmapMemObjectTracer() {}
 
@@ -6498,7 +6498,7 @@ class ClEnqueueUnmapMemObjectTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueWaitForEventsTracer {
+class ClEnqueueWaitForEventsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueWaitForEventsTracer() {}
 
@@ -6563,7 +6563,7 @@ class ClEnqueueWaitForEventsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueWriteBufferTracer {
+class ClEnqueueWriteBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueWriteBufferTracer() {}
 
@@ -6640,7 +6640,7 @@ class ClEnqueueWriteBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueWriteBufferRectTracer {
+class ClEnqueueWriteBufferRectTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueWriteBufferRectTracer() {}
 
@@ -6727,7 +6727,7 @@ class ClEnqueueWriteBufferRectTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueWriteImageTracer {
+class ClEnqueueWriteImageTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueWriteImageTracer() {}
 
@@ -6808,7 +6808,7 @@ class ClEnqueueWriteImageTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClFinishTracer {
+class ClFinishTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClFinishTracer() {}
 
@@ -6869,7 +6869,7 @@ class ClFinishTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClFlushTracer {
+class ClFlushTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClFlushTracer() {}
 
@@ -6930,7 +6930,7 @@ class ClFlushTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetCommandQueueInfoTracer {
+class ClGetCommandQueueInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetCommandQueueInfoTracer() {}
 
@@ -6999,7 +6999,7 @@ class ClGetCommandQueueInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetContextInfoTracer {
+class ClGetContextInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetContextInfoTracer() {}
 
@@ -7068,7 +7068,7 @@ class ClGetContextInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetDeviceAndHostTimerTracer {
+class ClGetDeviceAndHostTimerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetDeviceAndHostTimerTracer() {}
 
@@ -7133,7 +7133,7 @@ class ClGetDeviceAndHostTimerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetDeviceIDsTracer {
+class ClGetDeviceIDsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetDeviceIDsTracer() {}
 
@@ -7202,7 +7202,7 @@ class ClGetDeviceIDsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetDeviceInfoTracer {
+class ClGetDeviceInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetDeviceInfoTracer() {}
 
@@ -7271,7 +7271,7 @@ class ClGetDeviceInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetEventInfoTracer {
+class ClGetEventInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetEventInfoTracer() {}
 
@@ -7340,7 +7340,7 @@ class ClGetEventInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetEventProfilingInfoTracer {
+class ClGetEventProfilingInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetEventProfilingInfoTracer() {}
 
@@ -7409,7 +7409,7 @@ class ClGetEventProfilingInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetExtensionFunctionAddressTracer {
+class ClGetExtensionFunctionAddressTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetExtensionFunctionAddressTracer() {}
 
@@ -7470,7 +7470,7 @@ class ClGetExtensionFunctionAddressTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetExtensionFunctionAddressForPlatformTracer {
+class ClGetExtensionFunctionAddressForPlatformTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetExtensionFunctionAddressForPlatformTracer() {}
 
@@ -7533,7 +7533,7 @@ class ClGetExtensionFunctionAddressForPlatformTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetHostTimerTracer {
+class ClGetHostTimerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetHostTimerTracer() {}
 
@@ -7596,7 +7596,7 @@ class ClGetHostTimerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetImageInfoTracer {
+class ClGetImageInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetImageInfoTracer() {}
 
@@ -7665,7 +7665,7 @@ class ClGetImageInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelArgInfoTracer {
+class ClGetKernelArgInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelArgInfoTracer() {}
 
@@ -7736,7 +7736,7 @@ class ClGetKernelArgInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelInfoTracer {
+class ClGetKernelInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelInfoTracer() {}
 
@@ -7805,7 +7805,7 @@ class ClGetKernelInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelSubGroupInfoTracer {
+class ClGetKernelSubGroupInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelSubGroupInfoTracer() {}
 
@@ -7880,7 +7880,7 @@ class ClGetKernelSubGroupInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetKernelWorkGroupInfoTracer {
+class ClGetKernelWorkGroupInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetKernelWorkGroupInfoTracer() {}
 
@@ -7951,7 +7951,7 @@ class ClGetKernelWorkGroupInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetMemObjectInfoTracer {
+class ClGetMemObjectInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetMemObjectInfoTracer() {}
 
@@ -8020,7 +8020,7 @@ class ClGetMemObjectInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetPipeInfoTracer {
+class ClGetPipeInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetPipeInfoTracer() {}
 
@@ -8089,7 +8089,7 @@ class ClGetPipeInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetPlatformIDsTracer {
+class ClGetPlatformIDsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetPlatformIDsTracer() {}
 
@@ -8154,7 +8154,7 @@ class ClGetPlatformIDsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetPlatformInfoTracer {
+class ClGetPlatformInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetPlatformInfoTracer() {}
 
@@ -8223,7 +8223,7 @@ class ClGetPlatformInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetProgramBuildInfoTracer {
+class ClGetProgramBuildInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetProgramBuildInfoTracer() {}
 
@@ -8294,7 +8294,7 @@ class ClGetProgramBuildInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetProgramInfoTracer {
+class ClGetProgramInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetProgramInfoTracer() {}
 
@@ -8363,7 +8363,7 @@ class ClGetProgramInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetSamplerInfoTracer {
+class ClGetSamplerInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetSamplerInfoTracer() {}
 
@@ -8432,7 +8432,7 @@ class ClGetSamplerInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetSupportedImageFormatsTracer {
+class ClGetSupportedImageFormatsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetSupportedImageFormatsTracer() {}
 
@@ -8503,7 +8503,7 @@ class ClGetSupportedImageFormatsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClLinkProgramTracer {
+class ClLinkProgramTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClLinkProgramTracer() {}
 
@@ -8580,7 +8580,7 @@ class ClLinkProgramTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseCommandQueueTracer {
+class ClReleaseCommandQueueTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseCommandQueueTracer() {}
 
@@ -8641,7 +8641,7 @@ class ClReleaseCommandQueueTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseContextTracer {
+class ClReleaseContextTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseContextTracer() {}
 
@@ -8702,7 +8702,7 @@ class ClReleaseContextTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseDeviceTracer {
+class ClReleaseDeviceTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseDeviceTracer() {}
 
@@ -8763,7 +8763,7 @@ class ClReleaseDeviceTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseEventTracer {
+class ClReleaseEventTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseEventTracer() {}
 
@@ -8824,7 +8824,7 @@ class ClReleaseEventTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseKernelTracer {
+class ClReleaseKernelTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseKernelTracer() {}
 
@@ -8885,7 +8885,7 @@ class ClReleaseKernelTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseMemObjectTracer {
+class ClReleaseMemObjectTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseMemObjectTracer() {}
 
@@ -8946,7 +8946,7 @@ class ClReleaseMemObjectTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseProgramTracer {
+class ClReleaseProgramTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseProgramTracer() {}
 
@@ -9007,7 +9007,7 @@ class ClReleaseProgramTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClReleaseSamplerTracer {
+class ClReleaseSamplerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClReleaseSamplerTracer() {}
 
@@ -9068,7 +9068,7 @@ class ClReleaseSamplerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainCommandQueueTracer {
+class ClRetainCommandQueueTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainCommandQueueTracer() {}
 
@@ -9129,7 +9129,7 @@ class ClRetainCommandQueueTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainContextTracer {
+class ClRetainContextTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainContextTracer() {}
 
@@ -9190,7 +9190,7 @@ class ClRetainContextTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainDeviceTracer {
+class ClRetainDeviceTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainDeviceTracer() {}
 
@@ -9251,7 +9251,7 @@ class ClRetainDeviceTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainEventTracer {
+class ClRetainEventTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainEventTracer() {}
 
@@ -9312,7 +9312,7 @@ class ClRetainEventTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainKernelTracer {
+class ClRetainKernelTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainKernelTracer() {}
 
@@ -9373,7 +9373,7 @@ class ClRetainKernelTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainMemObjectTracer {
+class ClRetainMemObjectTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainMemObjectTracer() {}
 
@@ -9434,7 +9434,7 @@ class ClRetainMemObjectTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainProgramTracer {
+class ClRetainProgramTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainProgramTracer() {}
 
@@ -9495,7 +9495,7 @@ class ClRetainProgramTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClRetainSamplerTracer {
+class ClRetainSamplerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClRetainSamplerTracer() {}
 
@@ -9556,7 +9556,7 @@ class ClRetainSamplerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSvmAllocTracer {
+class ClSvmAllocTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSvmAllocTracer() {}
 
@@ -9623,7 +9623,7 @@ class ClSvmAllocTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSvmFreeTracer {
+class ClSvmFreeTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSvmFreeTracer() {}
 
@@ -9686,7 +9686,7 @@ class ClSvmFreeTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetCommandQueuePropertyTracer {
+class ClSetCommandQueuePropertyTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetCommandQueuePropertyTracer() {}
 
@@ -9753,7 +9753,7 @@ class ClSetCommandQueuePropertyTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetDefaultDeviceCommandQueueTracer {
+class ClSetDefaultDeviceCommandQueueTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetDefaultDeviceCommandQueueTracer() {}
 
@@ -9818,7 +9818,7 @@ class ClSetDefaultDeviceCommandQueueTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetEventCallbackTracer {
+class ClSetEventCallbackTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetEventCallbackTracer() {}
 
@@ -9885,7 +9885,7 @@ class ClSetEventCallbackTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetKernelArgTracer {
+class ClSetKernelArgTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetKernelArgTracer() {}
 
@@ -9952,7 +9952,7 @@ class ClSetKernelArgTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetKernelArgSvmPointerTracer {
+class ClSetKernelArgSvmPointerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetKernelArgSvmPointerTracer() {}
 
@@ -10017,7 +10017,7 @@ class ClSetKernelArgSvmPointerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetKernelExecInfoTracer {
+class ClSetKernelExecInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetKernelExecInfoTracer() {}
 
@@ -10084,7 +10084,7 @@ class ClSetKernelExecInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetMemObjectDestructorCallbackTracer {
+class ClSetMemObjectDestructorCallbackTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetMemObjectDestructorCallbackTracer() {}
 
@@ -10149,7 +10149,7 @@ class ClSetMemObjectDestructorCallbackTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClSetUserEventStatusTracer {
+class ClSetUserEventStatusTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClSetUserEventStatusTracer() {}
 
@@ -10212,7 +10212,7 @@ class ClSetUserEventStatusTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClUnloadCompilerTracer {
+class ClUnloadCompilerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClUnloadCompilerTracer() {}
 
@@ -10270,7 +10270,7 @@ class ClUnloadCompilerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClUnloadPlatformCompilerTracer {
+class ClUnloadPlatformCompilerTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClUnloadPlatformCompilerTracer() {}
 
@@ -10331,7 +10331,7 @@ class ClUnloadPlatformCompilerTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClWaitForEventsTracer {
+class ClWaitForEventsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClWaitForEventsTracer() {}
 
@@ -10394,7 +10394,7 @@ class ClWaitForEventsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateFromGlBufferTracer {
+class ClCreateFromGlBufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateFromGlBufferTracer() {}
 
@@ -10461,7 +10461,7 @@ class ClCreateFromGlBufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateFromGlRenderbufferTracer {
+class ClCreateFromGlRenderbufferTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateFromGlRenderbufferTracer() {}
 
@@ -10528,7 +10528,7 @@ class ClCreateFromGlRenderbufferTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateFromGlTextureTracer {
+class ClCreateFromGlTextureTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateFromGlTextureTracer() {}
 
@@ -10599,7 +10599,7 @@ class ClCreateFromGlTextureTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateFromGlTexture2DTracer {
+class ClCreateFromGlTexture2DTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateFromGlTexture2DTracer() {}
 
@@ -10670,7 +10670,7 @@ class ClCreateFromGlTexture2DTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClCreateFromGlTexture3DTracer {
+class ClCreateFromGlTexture3DTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClCreateFromGlTexture3DTracer() {}
 
@@ -10741,7 +10741,7 @@ class ClCreateFromGlTexture3DTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueAcquireGlObjectsTracer {
+class ClEnqueueAcquireGlObjectsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueAcquireGlObjectsTracer() {}
 
@@ -10812,7 +10812,7 @@ class ClEnqueueAcquireGlObjectsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClEnqueueReleaseGlObjectsTracer {
+class ClEnqueueReleaseGlObjectsTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClEnqueueReleaseGlObjectsTracer() {}
 
@@ -10883,7 +10883,7 @@ class ClEnqueueReleaseGlObjectsTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetGlObjectInfoTracer {
+class ClGetGlObjectInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetGlObjectInfoTracer() {}
 
@@ -10948,7 +10948,7 @@ class ClGetGlObjectInfoTracer {
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-class ClGetGlTextureInfoTracer {
+class ClGetGlTextureInfoTracer : NEO::NonCopyableAndNonMovableClass {
   public:
     ClGetGlTextureInfoTracer() {}
 
@@ -11016,5 +11016,164 @@ class ClGetGlTextureInfoTracer {
     uint64_t correlationData[tracingMaxHandleCount];
     TracingNotifyState state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<ClBuildProgramTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCloneKernelTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCompileProgramTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateCommandQueueTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateCommandQueueWithPropertiesTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateContextTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateContextFromTypeTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClMemFreeINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClIcdGetPlatformIDsKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateBufferWithPropertiesINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateBufferWithPropertiesTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateImageWithPropertiesTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateImageWithPropertiesINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetImageParamsINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreatePerfCountersCommandQueueINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClHostMemAllocINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClDeviceMemAllocINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSharedMemAllocINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClMemBlockingFreeINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetMemAllocInfoINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetKernelArgMemPointerINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMemsetINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMemFillINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMemcpyINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMigrateMemINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMemAdviseINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateCommandQueueWithPropertiesKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateAcceleratorINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainAcceleratorINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetAcceleratorInfoINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseAcceleratorINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateProgramWithILKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSuggestedLocalWorkSizeKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSubGroupInfoKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueVerifyMemoryINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClAddCommentINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetDeviceGlobalVariablePointerINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetDeviceFunctionPointerINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetProgramReleaseCallbackTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetProgramSpecializationConstantTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSuggestedLocalWorkSizeINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelMaxConcurrentWorkGroupCountINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueNDCountKernelINTELTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetContextDestructorCallbackTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueExternalMemObjectsKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueAcquireExternalMemObjectsKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReleaseExternalMemObjectsKHRTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateImage2DTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateImage3DTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateKernelTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateKernelsInProgramTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateSubDevicesTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreatePipeTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateProgramWithBinaryTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateProgramWithBuiltInKernelsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateProgramWithIlTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateProgramWithSourceTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateSamplerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateSamplerWithPropertiesTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateSubBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateUserEventTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueBarrierTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueBarrierWithWaitListTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueCopyBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueCopyBufferRectTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueCopyBufferToImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueCopyImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueCopyImageToBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueFillBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueFillImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMapBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMapImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMarkerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMarkerWithWaitListTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueMigrateMemObjectsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueNdRangeKernelTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueNativeKernelTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReadBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReadBufferRectTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReadImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueSvmFreeTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueSvmMapTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueSvmMemFillTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueSvmMemcpyTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueSvmMigrateMemTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueSvmUnmapTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueTaskTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueUnmapMemObjectTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueWaitForEventsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueWriteBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueWriteBufferRectTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueWriteImageTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClFinishTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClFlushTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetCommandQueueInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetContextInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetDeviceAndHostTimerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetDeviceIDsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetDeviceInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetEventInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetEventProfilingInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetExtensionFunctionAddressTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetExtensionFunctionAddressForPlatformTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetHostTimerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetImageInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelArgInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelSubGroupInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetKernelWorkGroupInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetMemObjectInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetPipeInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetPlatformIDsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetPlatformInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetProgramBuildInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetProgramInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetSamplerInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetSupportedImageFormatsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClLinkProgramTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseCommandQueueTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseContextTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseDeviceTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseEventTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseKernelTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseMemObjectTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseProgramTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClReleaseSamplerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainCommandQueueTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainContextTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainDeviceTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainEventTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainKernelTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainMemObjectTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainProgramTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClRetainSamplerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSvmAllocTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSvmFreeTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetCommandQueuePropertyTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetDefaultDeviceCommandQueueTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetEventCallbackTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetKernelArgTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetKernelArgSvmPointerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetKernelExecInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetMemObjectDestructorCallbackTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClSetUserEventStatusTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClUnloadCompilerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClUnloadPlatformCompilerTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClWaitForEventsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateFromGlBufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateFromGlRenderbufferTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateFromGlTextureTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateFromGlTexture2DTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClCreateFromGlTexture3DTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueAcquireGlObjectsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClEnqueueReleaseGlObjectsTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetGlObjectInfoTracer>);
+static_assert(NEO::NonCopyableAndNonMovable<ClGetGlTextureInfoTracer>);
 
 } // namespace HostSideTracing

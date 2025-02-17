@@ -441,6 +441,8 @@ struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     PartitionDimT partitionDim = Defaults::partitionDim;
 };
 
+static_assert(NEO::NonCopyableAndNonMovable<ExecutionEnvBaseT>);
+
 struct ExperimentalPropertiesBaseT {
     HasNonKernelArgLoadT hasNonKernelArgLoad = Defaults::hasNonKernelArgLoad;
     HasNonKernelArgStoreT hasNonKernelArgStore = Defaults::hasNonKernelArgStore;

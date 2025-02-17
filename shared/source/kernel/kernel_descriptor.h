@@ -281,4 +281,6 @@ struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     std::once_flag initBindlessArgsMapOnce;
 };
 
+static_assert(NEO::NonCopyableAndNonMovable<KernelDescriptor>);
+
 } // namespace NEO
