@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -623,6 +623,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverFlushTaskXeHPAndLaterTests, gi
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
+    csrSurfaceCount += pDevice->getRTMemoryBackedBuffer() ? 1 : 0;
 
     EXPECT_EQ(4u + csrSurfaceCount, cmdBuffer->surfaces.size());
 

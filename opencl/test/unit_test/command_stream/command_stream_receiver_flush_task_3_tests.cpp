@@ -78,6 +78,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += mockCsr->clearColorAllocation ? 1 : 0;
     csrSurfaceCount += pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;
+    csrSurfaceCount += pDevice->getRTMemoryBackedBuffer() ? 1 : 0;
 
     // we should have 3 heaps, tag allocation and csr command stream + cq
     EXPECT_EQ(4u + csrSurfaceCount, cmdBuffer->surfaces.size());

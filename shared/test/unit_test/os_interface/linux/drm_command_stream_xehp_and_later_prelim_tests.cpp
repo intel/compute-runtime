@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
@@ -141,8 +142,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->activePartitions = static_cast<uint32_t>(drmCtxSize);
 
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
     auto tagPtr = const_cast<TagAddressType *>(testDrmCsr->getTagAddress());
-    *tagPtr = 0;
+    *tagPtr = hasFirstSubmission;
     uint64_t tagAddress = castToUint64(tagPtr);
     FlushStamp handleToWait = 123;
     testDrmCsr->waitForFlushStamp(handleToWait);

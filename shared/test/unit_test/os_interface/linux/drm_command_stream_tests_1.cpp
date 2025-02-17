@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -567,6 +568,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount += testedCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += testedCsr->clearColorAllocation ? 1 : 0;
+    csrSurfaceCount += device->getRTMemoryBackedBuffer() ? 1u : 0u;
 
     auto recordedCmdBuffer = cmdBuffers.peekHead();
     EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
@@ -641,6 +643,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount += testedCsr->globalFenceAllocation ? 1 : 0;
     csrSurfaceCount += testedCsr->clearColorAllocation ? 1 : 0;
+    csrSurfaceCount += device->getRTMemoryBackedBuffer() ? 1u : 0u;
 
     // validate that submited command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.getBufferCount());

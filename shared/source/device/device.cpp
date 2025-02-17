@@ -50,8 +50,6 @@ Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDe
 }
 
 Device::~Device() {
-    finalizeRayTracing();
-
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
 
     if (performanceCounters) {
@@ -62,6 +60,7 @@ Device::~Device() {
         engine.commandStreamReceiver->flushBatchedSubmissions();
     }
     allEngines.clear();
+    finalizeRayTracing();
 
     for (auto subdevice : subdevices) {
         if (subdevice) {
@@ -889,6 +888,14 @@ RTDispatchGlobalsInfo *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
 }
 
 void Device::initializeRayTracing(uint32_t maxBvhLevels) {
+    initializeRTMemoryBackedBuffer();
+
+    while (rtDispatchGlobalsInfos.size() <= maxBvhLevels) {
+        rtDispatchGlobalsInfos.push_back(nullptr);
+    }
+}
+
+void Device::initializeRTMemoryBackedBuffer() {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
 
@@ -898,10 +905,6 @@ void Device::initializeRayTracing(uint32_t maxBvhLevels) {
         allocProps.flags.isUSMDeviceAllocation = true;
 
         rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
-    }
-
-    while (rtDispatchGlobalsInfos.size() <= maxBvhLevels) {
-        rtDispatchGlobalsInfos.push_back(nullptr);
     }
 }
 

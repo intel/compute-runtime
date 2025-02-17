@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
@@ -185,6 +186,10 @@ TEST(Device, WhenCreatingDeviceThenCapsInitilizedBeforeEnginesAreCreated) {
 using DeviceTest = Test<DeviceFixture>;
 
 TEST_F(DeviceTest, whenInitializeRayTracingIsCalledAndRtBackedBufferIsNullptrThenMemoryBackedBufferIsCreated) {
+    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     EXPECT_EQ(nullptr, pDevice->getRTMemoryBackedBuffer());
     EXPECT_EQ(false, pDevice->rayTracingIsInitialized());
     pDevice->initializeRayTracing(0);

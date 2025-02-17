@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
@@ -1134,8 +1135,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
         drmCtxIds[i] = 5u + i;
     }
 
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
     FlushStamp handleToWait = 123;
-    *testedCsr->getTagAddress() = 0;
+    *testedCsr->getTagAddress() = hasFirstSubmission;
     testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctlCnt.gemWait);
@@ -1284,8 +1286,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest,
     mock->ioctlCnt.gemWait = 0;
     mock->isVmBindAvailableCall.called = 0u;
 
+    const auto hasFirstSubmission = device->getCompilerProductHelper().isHeaplessModeEnabled() ? 1 : 0;
     FlushStamp handleToWait = 123;
-    *testedCsr->getTagAddress() = 0;
+    *testedCsr->getTagAddress() = hasFirstSubmission;
     testedCsr->waitForFlushStamp(handleToWait);
 
     EXPECT_EQ(0, mock->ioctlCnt.gemWait);

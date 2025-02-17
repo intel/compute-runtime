@@ -1169,7 +1169,7 @@ void CommandStreamReceiver::createGlobalStatelessHeap() {
 }
 
 bool CommandStreamReceiver::isRayTracingStateProgramingNeeded(Device &device) const {
-    return device.getRTMemoryBackedBuffer() && getBtdCommandDirty();
+    return device.rayTracingIsInitialized() && getBtdCommandDirty();
 }
 
 void CommandStreamReceiver::registerClient(void *client) {

@@ -829,9 +829,10 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
     size_t commandBufferCount = pDevice->getProductHelper().getCommandBuffersPreallocatedPerCommandQueue() > 0 ? 0 : 1;
+    size_t rtSurface = pDevice->getRTMemoryBackedBuffer() ? 1u : 0u;
 
     EXPECT_EQ(mockCsr->heaplessStateInitialized ? 1u : 0u, mockCsr->flushCalledCount);
-    EXPECT_EQ(4u + csrSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize + commandBufferCount, cmdBuffer->surfaces.size());
+    EXPECT_EQ(4u + csrSurfaceCount + timestampPacketSurfacesCount + fenceSurfaceCount + clearColorSize + commandBufferCount + rtSurface, cmdBuffer->surfaces.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenReducedAddressSpaceGraphicsAllocationForHostPtrWithL3FlushRequiredWhenEnqueueKernelIsCalledThenFlushIsCalledForReducedAddressSpacePlatforms) {

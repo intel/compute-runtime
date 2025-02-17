@@ -3568,6 +3568,9 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
 
     EXPECT_FALSE(commandStreamReceiver.isRayTracingStateProgramingNeeded(*pDevice));
 
@@ -4500,6 +4503,9 @@ HWTEST2_F(CommandStreamReceiverHwTest,
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
+    if (commandStreamReceiver.heaplessModeEnabled) {
+        GTEST_SKIP();
+    }
 
     commandStreamReceiver.flushImmediateTask(commandStream, commandStream.getUsed(), immediateFlushTaskFlags, *pDevice);
 

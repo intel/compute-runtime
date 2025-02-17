@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -619,7 +620,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ContextCreateTests, givenGpuHangOnFlushBcsTaskAndLo
     executionEnv->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
 
     const auto rootDevice = testedDevice->getDevice().getRootDevice();
-    const auto blitDevice = rootDevice->getNearestGenericSubDevice(0);
+    const auto leastOccupiedBankDevice = rootDevice->getRTMemoryBackedBuffer() ? 1u : 0u;
+    const auto blitDevice = rootDevice->getNearestGenericSubDevice(leastOccupiedBankDevice);
     auto &selectorCopyEngine = blitDevice->getSelectorCopyEngine();
     auto deviceBitfield = blitDevice->getDeviceBitfield();
 

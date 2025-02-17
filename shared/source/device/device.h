@@ -178,7 +178,8 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     GraphicsAllocation *getRTMemoryBackedBuffer() { return rtMemoryBackedBuffer; }
     RTDispatchGlobalsInfo *getRTDispatchGlobals(uint32_t maxBvhLevels);
-    bool rayTracingIsInitialized() const { return rtMemoryBackedBuffer != nullptr; }
+    bool rayTracingIsInitialized() const { return rtMemoryBackedBuffer != nullptr && rtDispatchGlobalsInfos.size() != 0; }
+    void initializeRTMemoryBackedBuffer();
     void initializeRayTracing(uint32_t maxBvhLevels);
     void allocateRTDispatchGlobals(uint32_t maxBvhLevels);
 

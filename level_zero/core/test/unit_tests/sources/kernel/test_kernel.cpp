@@ -1444,7 +1444,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitial
     immDataVector->push_back(std::move(mockKernelImmutableData));
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, kernel->initialize(&kernelDesc));
-    EXPECT_EQ(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
+    EXPECT_FALSE(module->getDevice()->getNEODevice()->rayTracingIsInitialized());
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatched) {
