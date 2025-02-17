@@ -49,6 +49,20 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
 
 bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     auto retVal = true;
+    if (ultHwConfig.sourceExecutionEnvironment && ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
+        if (executionEnvironment.rootDeviceEnvironments.size() < ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments.size()) {
+            executionEnvironment.rootDeviceEnvironments.resize(ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments.size());
+        }
+        for (uint32_t i = 0; i < ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment.rootDeviceEnvironments[i] = std::make_unique<RootDeviceEnvironment>(executionEnvironment);
+            executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+            executionEnvironment.rootDeviceEnvironments[i]->initGmm();
+
+            executionEnvironment.rootDeviceEnvironments[i]->getMutableHardwareInfo()->platform = ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments[i]->getHardwareInfo()->platform;
+            executionEnvironment.rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable = ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments[i]->getHardwareInfo()->capabilityTable;
+        }
+        return ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult;
+    }
     if (executionEnvironment.rootDeviceEnvironments.size() == 0) {
         executionEnvironment.prepareRootDeviceEnvironments(1u);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
 #include "opencl/source/context/context.h"
@@ -297,5 +298,49 @@ TEST(clGetPlatformIDsTest, givenDefaultFP64EmulationStateWhenGettingPlatformIdsT
     EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
 
     platformsImpl->clear();
+}
+
+TEST(clGetPlatformIDsTest, givenMultipleDifferentDevicesWhenGetPlatformIdsThenSeparatePlatformIsReturnedPerEachProductFamily) {
+    platformsImpl->clear();
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    const size_t numRootDevices = 5u;
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, numRootDevices);
+
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment.rootDeviceEnvironments[1]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_BMG;
+    executionEnvironment.rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment.rootDeviceEnvironments[2]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment.rootDeviceEnvironments[2]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment.rootDeviceEnvironments[3]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment.rootDeviceEnvironments[3]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment.rootDeviceEnvironments[4]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_PTL;
+    executionEnvironment.rootDeviceEnvironments[4]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    ultHwConfig.sourceExecutionEnvironment = &executionEnvironment;
+
+    uint32_t numPlatforms = 0;
+    clGetPlatformIDs(0, nullptr, &numPlatforms);
+
+    ASSERT_EQ(3u, numPlatforms);
+
+    cl_platform_id platforms[3];
+    clGetPlatformIDs(3, platforms, &numPlatforms);
+
+    auto platform0 = static_cast<Platform *>(platforms[0]);
+    auto platform1 = static_cast<Platform *>(platforms[1]);
+    auto platform2 = static_cast<Platform *>(platforms[2]);
+
+    EXPECT_EQ(1u, platform0->getNumDevices());
+
+    EXPECT_EQ(IGFX_BMG, platform0->getClDevices()[0]->getHardwareInfo().platform.eProductFamily);
+
+    EXPECT_EQ(1u, platform1->getNumDevices());
+    EXPECT_EQ(IGFX_PTL, platform1->getClDevices()[0]->getHardwareInfo().platform.eProductFamily);
+
+    EXPECT_EQ(3u, platform2->getNumDevices());
+    EXPECT_EQ(IGFX_LUNARLAKE, platform2->getClDevices()[0]->getHardwareInfo().platform.eProductFamily);
+    EXPECT_EQ(IGFX_LUNARLAKE, platform2->getClDevices()[1]->getHardwareInfo().platform.eProductFamily);
+    EXPECT_EQ(IGFX_LUNARLAKE, platform2->getClDevices()[2]->getHardwareInfo().platform.eProductFamily);
 }
 } // namespace ULT

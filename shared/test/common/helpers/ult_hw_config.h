@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,11 @@
 
 #pragma once
 namespace NEO {
+
+class ExecutionEnvironment;
 struct UltHwConfig {
     const char *aubTestName = nullptr;
+    ExecutionEnvironment *sourceExecutionEnvironment = nullptr;
 
     bool mockedPrepareDeviceEnvironmentsFuncResult = true;
     bool useHwCsr = false;
