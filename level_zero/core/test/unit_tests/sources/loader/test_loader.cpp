@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,8 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/ddi/ze_ddi_tables.h"
 #include <level_zero/ze_api.h>
-
-#include "ze_ddi_tables.h"
 
 namespace L0 {
 namespace ult {

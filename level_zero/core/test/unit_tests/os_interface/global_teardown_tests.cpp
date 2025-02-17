@@ -16,6 +16,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/global_teardown.h"
+#include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
 namespace L0 {
@@ -191,5 +192,24 @@ TEST_F(GlobalTearDownTests, givenForkedProcessWhenGlobalTearDownFunctionCalledTh
     delete tempDriver;
 }
 
+TEST_F(GlobalTearDownTests, givenGlobalDriverDispatchWhenGlobalSetupAndTeardownAreCalledThenPerApiValidFlagsAreChanged) {
+    VariableBackup<DriverDispatch> globalDispatchBackup{&globalDriverDispatch};
+
+    globalDriverDispatch.core.isValidFlag = false;
+    globalDriverDispatch.tools.isValidFlag = false;
+    globalDriverDispatch.sysman.isValidFlag = false;
+
+    globalDriverSetup();
+
+    EXPECT_TRUE(globalDriverDispatch.core.isValidFlag);
+    EXPECT_TRUE(globalDriverDispatch.tools.isValidFlag);
+    EXPECT_TRUE(globalDriverDispatch.sysman.isValidFlag);
+
+    globalDriverTeardown();
+
+    EXPECT_FALSE(globalDriverDispatch.core.isValidFlag);
+    EXPECT_FALSE(globalDriverDispatch.tools.isValidFlag);
+    EXPECT_FALSE(globalDriverDispatch.sysman.isValidFlag);
+}
 } // namespace ult
 } // namespace L0
