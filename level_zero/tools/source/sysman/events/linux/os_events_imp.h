@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace L0 {
 
-class LinuxEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
+class LinuxEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
   public:
     bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;

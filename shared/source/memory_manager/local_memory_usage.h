@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include <memory>
 
 namespace NEO {
-class LocalMemoryUsageBankSelector : public NonCopyableOrMovableClass {
+class LocalMemoryUsageBankSelector : public NonCopyableAndNonMovableClass {
   public:
     LocalMemoryUsageBankSelector() = delete;
     LocalMemoryUsageBankSelector(uint32_t banksCount);

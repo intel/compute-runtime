@@ -21,7 +21,7 @@ class SysFsAccessInterface;
 class SysmanKmdInterface;
 class SysmanProductHelper;
 class LinuxSysmanImp;
-class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
+class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;
     ze_result_t getEnergyCounter(zes_power_energy_counter_t *pEnergy) override;

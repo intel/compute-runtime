@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ static_assert(sizeof(DebugAreaHeader) == 32u * sizeof(uint8_t));
 
 #pragma pack()
 
-class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
+class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableAndNonMovableClass {
   public:
     static std::unique_ptr<Debugger> create(NEO::Device *device);
 

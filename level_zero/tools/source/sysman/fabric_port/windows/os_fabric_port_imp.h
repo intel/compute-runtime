@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 namespace L0 {
 
-class WddmFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableClass {
+class WddmFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableAndNonMovableClass {
   public:
     uint32_t getNumPorts() override;
     ze_result_t getMultiPortThroughput(std::vector<zes_fabric_port_id_t> &portIdList, zes_fabric_port_throughput_t **pThroughput) override;
@@ -26,7 +26,7 @@ class WddmFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableClas
     uint32_t numPorts = 0;
 };
 
-class WddmFabricPortImp : public OsFabricPort, NEO::NonCopyableOrMovableClass {
+class WddmFabricPortImp : public OsFabricPort, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_fabric_port_properties_t *pProperties) override;
     ze_result_t getLinkType(zes_fabric_link_type_t *pLinkType) override;

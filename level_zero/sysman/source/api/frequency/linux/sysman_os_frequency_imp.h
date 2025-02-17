@@ -20,7 +20,7 @@ class SysmanKmdInterface;
 class SysmanProductHelper;
 class SysFsAccessInterface;
 
-class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
+class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) override;
     double osFrequencyGetStepSize() override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class FsAccessInterface;
 class SysFsAccessInterface;
 class ProcFsAccessInterface;
 
-class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
+class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
   public:
     LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~LinuxSysmanImp() override;

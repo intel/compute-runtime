@@ -42,7 +42,7 @@ class UsmMemAllocPoolsManager;
 enum class EngineGroupType : uint32_t;
 struct PhysicalDevicePciBusInfo;
 
-struct SelectorCopyEngine : NonCopyableOrMovableClass {
+struct SelectorCopyEngine : NonCopyableAndNonMovableClass {
     std::atomic<bool> isMainUsed = false;
     std::atomic<uint32_t> selector = 0;
 };

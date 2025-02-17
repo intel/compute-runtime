@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include <level_zero/zes_api.h>
 namespace L0 {
 
-class EngineImp : public Engine, NEO::NonCopyableOrMovableClass {
+class EngineImp : public Engine, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t engineGetProperties(zes_engine_properties_t *pProperties) override;
     ze_result_t engineGetActivity(zes_engine_stats_t *pStats) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace L0 {
 namespace Sysman {
 
-class PerformanceImp : public Performance, NEO::NonCopyableOrMovableClass {
+class PerformanceImp : public Performance, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t performanceGetProperties(zes_perf_properties_t *pProperties) override;
     ze_result_t performanceGetConfig(double *pFactor) override;

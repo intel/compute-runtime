@@ -46,7 +46,7 @@ struct WriteMemoryParams {
 };
 
 template <typename GfxFamily>
-class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, public NonCopyableOrMovableClass {
+class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, public NonCopyableAndNonMovableClass {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
 
   public:

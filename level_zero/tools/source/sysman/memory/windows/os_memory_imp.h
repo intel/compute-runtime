@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ typedef PDH_STATUS(__stdcall *fn_PdhCloseQuery)(PDH_HQUERY hQuery);
 namespace L0 {
 class KmdSysManager;
 
-class WddmMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
+class WddmMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace L0 {
 
 struct OsSysman;
 
-class FabricDeviceAccess : NEO::NonCopyableOrMovableClass {
+class FabricDeviceAccess : NEO::NonCopyableAndNonMovableClass {
   public:
     virtual ze_result_t getState(const zes_fabric_port_id_t portId, zes_fabric_port_state_t &state) = 0;
     virtual ze_result_t getThroughput(const zes_fabric_port_id_t portId, zes_fabric_port_throughput_t &througput) = 0;

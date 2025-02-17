@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ typedef struct nlmsghdr *(*pNlmsgHdr)(struct nl_msg *);
 typedef struct nlattr *(*pNlaNestStart)(struct nl_msg *, int);
 typedef int (*pNlaNestEnd)(struct nl_msg *, struct nlattr *);
 
-class NlApi : public NEO::NonCopyableOrMovableClass {
+class NlApi : public NEO::NonCopyableAndNonMovableClass {
   public:
     MOCKABLE_VIRTUAL int genlConnect(struct nl_sock *sock);
     MOCKABLE_VIRTUAL int genlCtrlResolve(struct nl_sock *sock, const char *name);

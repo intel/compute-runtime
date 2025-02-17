@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace L0 {
 class FirmwareUtil;
 
-class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass {
+class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableAndNonMovableClass {
   public:
     void osGetDiagProperties(zes_diag_properties_t *pProperties) override;
     ze_result_t osGetDiagTests(uint32_t *pCount, zes_diag_test_t *pTests) override;

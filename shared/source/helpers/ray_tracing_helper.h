@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 #include <cstdint>
 
 namespace NEO {
-class RayTracingHelper : public NonCopyableOrMovableClass {
+class RayTracingHelper : public NonCopyableAndNonMovableClass {
   public:
     static constexpr uint32_t hitInfoSize = 64;
     static constexpr uint32_t bvhStackSize = 96;

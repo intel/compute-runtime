@@ -17,7 +17,7 @@
 
 namespace L0 {
 
-struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
+struct ImageImp : public Image, NEO::NonCopyableAndNonMovableClass {
     ze_result_t destroy() override;
     ze_result_t destroyPeerImages(const void *ptr, Device *device) override;
 
@@ -74,6 +74,6 @@ struct ImageImp : public Image, NEO::NonCopyableOrMovableClass {
     bool mimickedImagefor3Ch = false;
 };
 
-static_assert(NEO::NonCopyableOrMovable<ImageImp>);
+static_assert(NEO::NonCopyableAndNonMovable<ImageImp>);
 
 } // namespace L0

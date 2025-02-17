@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ enum class RasInterfaceType {
     none,
 };
 
-class RasUtil : public NEO::NonCopyableOrMovableClass {
+class RasUtil : public NEO::NonCopyableAndNonMovableClass {
   public:
     RasUtil() = default;
     static std::unique_ptr<RasUtil> create(RasInterfaceType rasInterface, LinuxSysmanImp *pLinuxSysmanImp, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);

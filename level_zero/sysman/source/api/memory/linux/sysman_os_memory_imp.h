@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class LinuxSysmanImp;
 class SysmanKmdInterface;
 struct SysmanDeviceImp;
 
-class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
+class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;

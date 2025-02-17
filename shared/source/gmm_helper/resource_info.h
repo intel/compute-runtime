@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace NEO {
 class GmmClientContext;
-class GmmResourceInfo : NonCopyableOrMovableClass {
+class GmmResourceInfo : NonCopyableAndNonMovableClass {
   public:
     static GmmResourceInfo *create(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *resourceCreateParams);
 

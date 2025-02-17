@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace NEO {
 namespace Windows {
 
-class OsLibrary : public NEO::OsLibrary, NEO::NonCopyableOrMovableClass {
+class OsLibrary : public NEO::OsLibrary, NEO::NonCopyableAndNonMovableClass {
   private:
     HMODULE handle;
 

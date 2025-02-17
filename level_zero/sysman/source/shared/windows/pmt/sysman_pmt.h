@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ namespace L0 {
 namespace Sysman {
 
 class SysmanProductHelper;
-class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
+class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
   public:
     PlatformMonitoringTech() = delete;
     PlatformMonitoringTech(std::vector<wchar_t> deviceInterface, SysmanProductHelper *pSysmanProductHelper) : deviceInterface(std::move(deviceInterface)), pSysmanProductHelper(pSysmanProductHelper) {}

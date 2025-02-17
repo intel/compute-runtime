@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@
 
 namespace L0 {
 
-class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
+class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
   public:
     PlatformMonitoringTech() = delete;
     PlatformMonitoringTech(FsAccess *pFsAccess, ze_bool_t onSubdevice, uint32_t subdeviceId);

@@ -399,7 +399,7 @@ struct ExecutionEnvExt;
 ExecutionEnvExt *allocateExecEnvExt();
 void freeExecEnvExt(ExecutionEnvExt *);
 
-struct ExecutionEnvBaseT final : NEO::NonCopyableOrMovableClass {
+struct ExecutionEnvBaseT final : NEO::NonCopyableAndNonMovableClass {
     ExecutionEnvBaseT() {
         execEnvExt = allocateExecEnvExt();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace L0 {
 namespace Sysman {
 class OsPower;
-class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
+class PowerImp : public Power, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t powerGetProperties(zes_power_properties_t *pProperties) override;
     ze_result_t powerGetEnergyCounter(zes_power_energy_counter_t *pEnergy) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct PrefetchContext {
     SpinLock lock;
 };
 
-class PrefetchManager : public NonCopyableOrMovableClass {
+class PrefetchManager : public NonCopyableAndNonMovableClass {
   public:
     static std::unique_ptr<PrefetchManager> create();
 

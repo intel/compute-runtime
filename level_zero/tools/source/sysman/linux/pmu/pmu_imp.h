@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
+class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass {
   public:
     PmuInterfaceImp() = delete;
     PmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 namespace L0 {
 namespace Sysman {
 
-class FabricDeviceImp : public FabricDevice, NEO::NonCopyableOrMovableClass {
+class FabricDeviceImp : public FabricDevice, NEO::NonCopyableAndNonMovableClass {
   public:
     FabricDeviceImp() = delete;
     FabricDeviceImp(OsSysman *pOsSysman);
@@ -28,7 +28,7 @@ class FabricDeviceImp : public FabricDevice, NEO::NonCopyableOrMovableClass {
     OsFabricDevice *pOsFabricDevice = nullptr;
 };
 
-class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
+class FabricPortImp : public FabricPort, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t fabricPortGetProperties(zes_fabric_port_properties_t *pProperties) override;
     ze_result_t fabricPortGetLinkType(zes_fabric_link_type_t *pLinkType) override;

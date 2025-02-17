@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 namespace L0 {
 class FirmwareUtil;
 struct OsSysman;
-class EccImp : public Ecc, NEO::NonCopyableOrMovableClass {
+class EccImp : public Ecc, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override {}
     ze_result_t deviceEccAvailable(ze_bool_t *pAvailable) override;

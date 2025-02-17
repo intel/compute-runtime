@@ -10,14 +10,14 @@
 #include <type_traits>
 
 namespace NEO {
-class NonCopyableOrMovableClass {
+class NonCopyableAndNonMovableClass {
   public:
-    NonCopyableOrMovableClass() = default;
-    NonCopyableOrMovableClass(const NonCopyableOrMovableClass &) = delete;
-    NonCopyableOrMovableClass &operator=(const NonCopyableOrMovableClass &) = delete;
+    NonCopyableAndNonMovableClass() = default;
+    NonCopyableAndNonMovableClass(const NonCopyableAndNonMovableClass &) = delete;
+    NonCopyableAndNonMovableClass &operator=(const NonCopyableAndNonMovableClass &) = delete;
 
-    NonCopyableOrMovableClass(NonCopyableOrMovableClass &&) = delete;
-    NonCopyableOrMovableClass &operator=(NonCopyableOrMovableClass &&) = delete;
+    NonCopyableAndNonMovableClass(NonCopyableAndNonMovableClass &&) = delete;
+    NonCopyableAndNonMovableClass &operator=(NonCopyableAndNonMovableClass &&) = delete;
 };
 
 class NonCopyableClass {
@@ -31,7 +31,7 @@ class NonCopyableClass {
 };
 
 template <typename T>
-concept NonCopyableOrMovable = !
+concept NonCopyableAndNonMovable = !
 std::is_copy_constructible_v<T> &&
     !std::is_copy_assignable_v<T> &&
     !std::is_move_constructible_v<T> &&

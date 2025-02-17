@@ -35,7 +35,7 @@ class ExternalSemaphoreImp : public ExternalSemaphore {
     const ze_intel_external_semaphore_exp_desc_t *desc;
 };
 
-class ExternalSemaphoreController : NEO::NonCopyableOrMovableClass {
+class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
   public:
     enum SemaphoreOperation {
         Wait,
@@ -99,6 +99,6 @@ class ExternalSemaphoreController : NEO::NonCopyableOrMovableClass {
     std::thread extSemThread;
 };
 
-static_assert(NEO::NonCopyableOrMovable<ExternalSemaphoreController>);
+static_assert(NEO::NonCopyableAndNonMovable<ExternalSemaphoreController>);
 
 } // namespace L0

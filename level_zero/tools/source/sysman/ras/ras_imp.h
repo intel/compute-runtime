@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace L0 {
 
-class RasImp : public Ras, NEO::NonCopyableOrMovableClass {
+class RasImp : public Ras, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t rasGetProperties(zes_ras_properties_t *pProperties) override;
     ze_result_t rasGetConfig(zes_ras_config_t *pConfig) override;

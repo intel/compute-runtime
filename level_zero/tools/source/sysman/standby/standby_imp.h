@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
+class StandbyImp : public Standby, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t standbyGetProperties(zes_standby_properties_t *pProperties) override;
     ze_result_t standbyGetMode(zes_standby_promo_mode_t *pMode) override;

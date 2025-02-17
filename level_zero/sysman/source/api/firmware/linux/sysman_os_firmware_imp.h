@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ namespace Sysman {
 class FirmwareUtil;
 class SysFsAccessInterface;
 
-class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
+class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;

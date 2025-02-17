@@ -17,7 +17,7 @@
 namespace L0 {
 namespace Sysman {
 
-class VfImp : public VfManagement, NEO::NonCopyableOrMovableClass {
+class VfImp : public VfManagement, NEO::NonCopyableAndNonMovableClass {
   public:
     void init();
     ze_result_t vfGetCapabilities(zes_vf_exp2_capabilities_t *pCapability) override;

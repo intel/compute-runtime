@@ -114,7 +114,7 @@ class BuiltInDispatchBuilderOp {
     static BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, ClDevice &device);
 };
 
-class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
+class BuiltInOwnershipWrapper : public NonCopyableAndNonMovableClass {
   public:
     BuiltInOwnershipWrapper() = default;
     BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
@@ -126,6 +126,6 @@ class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
     BuiltinDispatchInfoBuilder *builder = nullptr;
 };
 
-static_assert(NEO::NonCopyableOrMovable<BuiltInOwnershipWrapper>);
+static_assert(NEO::NonCopyableAndNonMovable<BuiltInOwnershipWrapper>);
 
 } // namespace NEO

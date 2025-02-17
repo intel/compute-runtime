@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ namespace Sysman {
 class OsPci;
 struct OsSysman;
 
-class PciImp : public L0::Sysman::Pci, NEO::NonCopyableOrMovableClass {
+class PciImp : public L0::Sysman::Pci, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override;
     ze_result_t pciStaticProperties(zes_pci_properties_t *pProperties) override;

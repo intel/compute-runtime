@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ struct KmdThrottleReasons {
 };
 
 class KmdSysManager;
-class WddmFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
+class WddmFrequencyImp : public OsFrequency, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) override;
     double osFrequencyGetStepSize() override;

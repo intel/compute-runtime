@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace L0 {
 namespace Sysman {
-class TemperatureImp : public Temperature, NEO::NonCopyableOrMovableClass {
+class TemperatureImp : public Temperature, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t temperatureGetProperties(zes_temp_properties_t *pProperties) override;
     ze_result_t temperatureGetConfig(zes_temp_config_t *pConfig) override;

@@ -19,7 +19,7 @@
 namespace L0 {
 class SysfsAccess;
 
-class LinuxVfImp : public OsVf, NEO::NonCopyableOrMovableClass {
+class LinuxVfImp : public OsVf, NEO::NonCopyableAndNonMovableClass {
   public:
     struct EngineUtilsData {
         zes_engine_group_t engineType;

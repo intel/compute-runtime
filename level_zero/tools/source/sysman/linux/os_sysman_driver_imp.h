@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ namespace L0 {
 class LinuxEventsUtil;
 struct SysmanDeviceImp;
 
-class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableOrMovableClass {
+class LinuxSysmanDriverImp : public OsSysmanDriver, NEO::NonCopyableAndNonMovableClass {
   public:
     LinuxSysmanDriverImp();
     ~LinuxSysmanDriverImp() override;

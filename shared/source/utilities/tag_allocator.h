@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,7 +31,7 @@ class TagNode;
 
 class TagAllocatorBase;
 
-class TagNodeBase : public NonCopyableOrMovableClass {
+class TagNodeBase : public NonCopyableAndNonMovableClass {
   public:
     virtual ~TagNodeBase() = default;
 

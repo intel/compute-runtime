@@ -30,7 +30,7 @@ struct SysmanDevice;
 struct FabricVertex;
 class CacheReservation;
 
-struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
+struct DeviceImp : public Device, NEO::NonCopyableAndNonMovableClass {
     DeviceImp();
     ze_result_t getStatus() override;
     ze_result_t submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value);
@@ -196,7 +196,7 @@ struct DeviceImp : public Device, NEO::NonCopyableOrMovableClass {
     std::unique_ptr<DebugSession> debugSession;
 };
 
-static_assert(NEO::NonCopyableOrMovable<DeviceImp>);
+static_assert(NEO::NonCopyableAndNonMovable<DeviceImp>);
 
 void transferAndUnprotectMemoryWithHints(NEO::CpuPageFaultManager *pageFaultHandler, void *allocPtr, NEO::CpuPageFaultManager::PageFaultData &pageFaultData);
 

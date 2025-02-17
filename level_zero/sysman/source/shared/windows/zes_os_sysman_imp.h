@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ namespace Sysman {
 class SysmanProductHelper;
 class PlatformMonitoringTech;
 
-class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
+class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
   public:
     WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~WddmSysmanImp() override;

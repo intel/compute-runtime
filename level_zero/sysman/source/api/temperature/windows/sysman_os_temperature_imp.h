@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace L0 {
 namespace Sysman {
 class KmdSysManager;
-class WddmTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass {
+class WddmTemperatureImp : public OsTemperature, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_temp_properties_t *pProperties) override;
     ze_result_t getSensorTemperature(double *pTemperature) override;

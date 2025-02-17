@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ class Scheduler : _zes_sched_handle_t {
     bool initSuccess = false;
 };
 
-struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
+struct SchedulerHandleContext : NEO::NonCopyableAndNonMovableClass {
     SchedulerHandleContext(OsSysman *pOsSysman);
     ~SchedulerHandleContext();
     void init(uint32_t subDeviceCount);

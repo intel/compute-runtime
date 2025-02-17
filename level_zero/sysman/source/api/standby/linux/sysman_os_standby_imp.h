@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ namespace Sysman {
 class SysmanKmdInterface;
 class SysFsAccessInterface;
 class SysmanProductHelper;
-class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
+class LinuxStandbyImp : public OsStandby, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getMode(zes_standby_promo_mode_t &mode) override;
     ze_result_t setMode(zes_standby_promo_mode_t mode) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-class FileDescriptor : NonCopyableOrMovableClass {
+class FileDescriptor : NonCopyableAndNonMovableClass {
   public:
     FileDescriptor(const char *file, int flags) : handle(SysCalls::open(file, flags)) {}
 

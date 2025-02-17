@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ class SysFsAccessInterface;
 class LinuxSysmanImp;
 struct OsSysman;
 
-class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
+class LinuxPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
     void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace L0 {
 namespace Sysman {
 struct OsSysman;
 
-struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
+struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
 
     SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex);
     ~SysmanDeviceImp() override;

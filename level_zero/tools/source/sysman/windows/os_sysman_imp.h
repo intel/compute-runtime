@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class KmdSysManager;
 
 struct Device;
 
-class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
+class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
   public:
     WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~WddmSysmanImp() override;

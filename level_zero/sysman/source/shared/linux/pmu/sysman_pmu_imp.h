@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ namespace Sysman {
 
 class SysmanKmdInterface;
 
-class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
+class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass {
   public:
     PmuInterfaceImp() = delete;
     PmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp);

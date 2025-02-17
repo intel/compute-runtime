@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class LinuxRasSources;
 class FirmwareUtil;
 struct Device;
 
-class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
+class LinuxRasImp : public OsRas, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t osRasGetProperties(zes_ras_properties_t &properties) override;
     ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
@@ -51,7 +51,7 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
     uint64_t categoryThreshold[maxRasErrorCategoryCount] = {0};
 };
 
-class LinuxRasSources : NEO::NonCopyableOrMovableClass {
+class LinuxRasSources : NEO::NonCopyableAndNonMovableClass {
   public:
     virtual ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) = 0;
     virtual ze_result_t osRasGetStateExp(uint32_t numCategoriesRequested, zes_ras_state_exp_t *pState) = 0;

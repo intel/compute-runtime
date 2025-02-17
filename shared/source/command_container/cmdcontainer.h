@@ -58,7 +58,7 @@ struct HeapReserveArguments {
     size_t alignment = 0;
 };
 
-class CommandContainer : public NonCopyableOrMovableClass {
+class CommandContainer : public NonCopyableAndNonMovableClass {
   public:
     enum class ErrorCode {
         success = 0,
@@ -272,6 +272,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool globalBindlessHeapsEnabled = false;
 };
 
-static_assert(NEO::NonCopyableOrMovable<CommandContainer>);
+static_assert(NEO::NonCopyableAndNonMovable<CommandContainer>);
 
 } // namespace NEO

@@ -29,7 +29,7 @@ inline constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 
-class ScratchSpaceController : NonCopyableOrMovableClass {
+class ScratchSpaceController : NonCopyableAndNonMovableClass {
   public:
     ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);
     virtual ~ScratchSpaceController();

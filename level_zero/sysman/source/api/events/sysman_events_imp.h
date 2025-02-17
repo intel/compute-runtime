@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 namespace L0 {
 namespace Sysman {
 
-class EventsImp : public Events, NEO::NonCopyableOrMovableClass {
+class EventsImp : public Events, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;

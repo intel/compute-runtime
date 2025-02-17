@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace NEO {
 struct MultiDispatchInfo;
 
 template <DebugFunctionalityLevel debugLevel>
-class ClFileLogger : public NonCopyableOrMovableClass {
+class ClFileLogger : public NonCopyableAndNonMovableClass {
   public:
     ClFileLogger(FileLogger<debugLevel> &baseLoggerInm, const DebugVariables &flags);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ size_t findPos(const std::vector<std::string> &lines, const std::string &whatToF
 
 PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName);
 
-class MessagePrinter : NEO::NonCopyableOrMovableClass {
+class MessagePrinter : NEO::NonCopyableAndNonMovableClass {
   public:
     explicit MessagePrinter() = default;
     explicit MessagePrinter(bool suppressMessages) : suppressMessages(suppressMessages) {}

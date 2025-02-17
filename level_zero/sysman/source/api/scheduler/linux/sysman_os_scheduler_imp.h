@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ class SysFsAccessInterface;
 // zes_sched_timeslice_properties_t.interval = timeslice_duration_ms
 // zes_sched_timeslice_properties_t.yieldTimeout = preempt_timeout_ms
 // zes_sched_timeout_properties_t. watchdogTimeout =  heartbeat_interval_ms
-class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
+class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t setExclusiveMode(ze_bool_t *pNeedReload) override;
     ze_result_t getCurrentMode(zes_sched_mode_t *pMode) override;

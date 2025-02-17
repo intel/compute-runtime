@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace L0 {
 namespace Sysman {
 
-class SchedulerImp : public Scheduler, NEO::NonCopyableOrMovableClass {
+class SchedulerImp : public Scheduler, NEO::NonCopyableAndNonMovableClass {
   public:
     void init();
     ze_result_t schedulerGetProperties(zes_sched_properties_t *pProperties) override;

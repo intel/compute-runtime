@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 namespace L0 {
 class PmuInterface;
 struct Device;
-class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
+class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
     ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;
@@ -50,7 +50,7 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     ze_result_t initStatus = ZE_RESULT_SUCCESS;
 };
 
-class LinuxEngineImpPrelim : public OsEngine, NEO::NonCopyableOrMovableClass {
+class LinuxEngineImpPrelim : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
     ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;

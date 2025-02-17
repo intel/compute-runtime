@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 
 namespace L0 {
 
-struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
+struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
 
     SysmanDeviceImp(ze_device_handle_t hDevice);
     ~SysmanDeviceImp() override;

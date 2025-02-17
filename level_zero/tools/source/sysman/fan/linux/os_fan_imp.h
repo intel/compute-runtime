@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ namespace L0 {
 
 class SysfsAccess;
 
-class LinuxFanImp : public OsFan, NEO::NonCopyableOrMovableClass {
+class LinuxFanImp : public OsFan, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_fan_properties_t *pProperties) override;
     ze_result_t getConfig(zes_fan_config_t *pConfig) override;

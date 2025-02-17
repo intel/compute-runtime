@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ struct EventHandler {
     uint32_t requestId;
 };
 
-class WddmEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
+class WddmEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
   public:
     bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t eventRegister(zes_event_type_flags_t events) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace Sysman {
 
 class SysmanKmdInterface;
 class SysFsAccessInterface;
-class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableOrMovableClass {
+class LinuxPerformanceImp : public OsPerformance, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t osPerformanceGetProperties(zes_perf_properties_t &pProperties) override;
     ze_result_t osPerformanceGetConfig(double *pFactor) override;

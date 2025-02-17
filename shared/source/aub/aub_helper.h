@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace NEO {
 class ReleaseHelper;
 struct HardwareInfo;
 
-class AubHelper : public NonCopyableOrMovableClass {
+class AubHelper : public NonCopyableAndNonMovableClass {
   public:
     static bool isOneTimeAubWritableAllocationType(const AllocationType &type);
     static uint64_t getTotalMemBankSize(const ReleaseHelper *releaseHelper);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,7 +40,7 @@ class ExecutionEnvironmentRefCountRestore {
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
-class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
+class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
   public:
     LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~LinuxSysmanImp() override;

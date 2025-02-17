@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ constexpr bool wddmResidencyLoggingAvailable = true;
 constexpr bool wddmResidencyLoggingAvailable = false;
 #endif
 
-class WddmResidencyLogger : NonCopyableOrMovableClass {
+class WddmResidencyLogger : NonCopyableAndNonMovableClass {
   public:
     WddmResidencyLogger(unsigned int device, volatile void *fenceValueCpuVirtualAddress, std::string outDirectory) {
         const char *wddmResidencyLoggerDefaultDirectory = "unk";

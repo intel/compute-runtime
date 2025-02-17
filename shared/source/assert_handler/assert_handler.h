@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,7 @@ static_assert(sizeof(AssertBufferHeader) == 3u * sizeof(uint32_t));
 
 #pragma pack()
 
-class AssertHandler : NonCopyableOrMovableClass {
+class AssertHandler : NonCopyableAndNonMovableClass {
   public:
     AssertHandler(Device *device);
     MOCKABLE_VIRTUAL ~AssertHandler();

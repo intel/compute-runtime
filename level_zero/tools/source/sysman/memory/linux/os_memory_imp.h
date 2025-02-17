@@ -19,7 +19,7 @@ class SysfsAccess;
 struct Device;
 class PlatformMonitoringTech;
 class LinuxSysmanImp;
-class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
+class LinuxMemoryImp : public OsMemory, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;

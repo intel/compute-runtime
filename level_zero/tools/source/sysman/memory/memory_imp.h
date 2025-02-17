@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace L0 {
 
-class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
+class MemoryImp : public Memory, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t memoryGetProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) override;

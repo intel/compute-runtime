@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class FabricPort : _zes_fabric_port_handle_t {
     }
 };
 
-struct FabricPortHandleContext : NEO::NonCopyableOrMovableClass {
+struct FabricPortHandleContext : NEO::NonCopyableAndNonMovableClass {
     FabricPortHandleContext(OsSysman *pOsSysman);
     ~FabricPortHandleContext();
 

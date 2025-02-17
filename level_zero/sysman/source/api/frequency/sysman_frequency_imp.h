@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 namespace L0 {
 namespace Sysman {
 
-class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
+class FrequencyImp : public Frequency, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t frequencyGetProperties(zes_freq_properties_t *pProperties) override;
     ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) override;

@@ -20,7 +20,7 @@ namespace L0 {
 namespace Sysman {
 class SysFsAccessInterface;
 
-class LinuxVfImp : public OsVf, NEO::NonCopyableOrMovableClass {
+class LinuxVfImp : public OsVf, NEO::NonCopyableAndNonMovableClass {
   public:
     struct EngineUtilsData {
         zes_engine_group_t engineType{};

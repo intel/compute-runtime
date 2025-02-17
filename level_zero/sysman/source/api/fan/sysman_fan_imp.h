@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace L0 {
 namespace Sysman {
-class FanImp : public Fan, NEO::NonCopyableOrMovableClass {
+class FanImp : public Fan, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t fanGetProperties(zes_fan_properties_t *pProperties) override;
     ze_result_t fanGetConfig(zes_fan_config_t *pConfig) override;

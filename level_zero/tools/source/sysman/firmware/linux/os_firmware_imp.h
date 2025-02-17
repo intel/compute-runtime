@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 namespace L0 {
 class FirmwareUtil;
 
-class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
+class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableAndNonMovableClass {
   public:
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class Device;
 class GraphicsAllocation;
 class MemoryManager;
 
-class SyncBufferHandler : NonCopyableOrMovableClass {
+class SyncBufferHandler : NonCopyableAndNonMovableClass {
   public:
     ~SyncBufferHandler();
 

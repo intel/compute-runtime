@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ namespace L0 {
 namespace Sysman {
 struct OsSysman;
 class KmdSysManager;
-class WddmPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
+class WddmPciImp : public OsPci, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getPciBdf(zes_pci_properties_t &pciProperties) override;
     void getMaxLinkCaps(double &maxLinkSpeed, int32_t &maxLinkWidth) override;

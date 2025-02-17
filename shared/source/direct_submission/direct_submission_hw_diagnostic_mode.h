@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ struct DirectSubmissionSingleDelta {
 
 using DirectSubmissionExecution = std::vector<DirectSubmissionSingleDelta>;
 
-class DirectSubmissionDiagnosticsCollector : NonCopyableOrMovableClass {
+class DirectSubmissionDiagnosticsCollector : NonCopyableAndNonMovableClass {
   public:
     DirectSubmissionDiagnosticsCollector(uint32_t executions,
                                          bool storeExecutions,

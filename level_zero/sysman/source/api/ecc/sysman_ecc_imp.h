@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct OsSysman;
 static constexpr uint8_t eccStateDisable = 0;
 static constexpr uint8_t eccStateEnable = 1;
 static constexpr uint8_t eccStateNone = 0xFF;
-class EccImp : public Ecc, NEO::NonCopyableOrMovableClass {
+class EccImp : public Ecc, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override {}
     ze_result_t deviceEccAvailable(ze_bool_t *pAvailable) override;

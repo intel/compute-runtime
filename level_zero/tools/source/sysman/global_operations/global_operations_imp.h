@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableClass {
+class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableAndNonMovableClass {
   public:
     void init() override;
     ze_result_t reset(ze_bool_t force) override;

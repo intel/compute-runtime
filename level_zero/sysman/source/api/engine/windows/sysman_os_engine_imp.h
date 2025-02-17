@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace L0 {
 namespace Sysman {
 class KmdSysManager;
-class WddmEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
+class WddmEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
     ze_result_t getActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) override;

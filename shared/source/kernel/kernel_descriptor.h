@@ -33,7 +33,7 @@ struct KernelDescriptorExt;
 KernelDescriptorExt *allocateKernelDescriptorExt();
 void freeKernelDescriptorExt(KernelDescriptorExt *);
 
-struct KernelDescriptor : NEO::NonCopyableOrMovableClass {
+struct KernelDescriptor : NEO::NonCopyableAndNonMovableClass {
     static bool isBindlessAddressingKernel(const KernelDescriptor &desc);
 
     enum AddressingMode : uint8_t {

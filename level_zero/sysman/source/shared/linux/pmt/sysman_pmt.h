@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class LinuxSysmanImp;
 class FsAccessInterface;
 class SysmanProductHelper;
 
-class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
+class PlatformMonitoringTech : NEO::NonCopyableAndNonMovableClass {
   public:
     struct TelemData {
         std::string telemDir;

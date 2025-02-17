@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 namespace L0 {
 namespace Sysman {
 
-class DiagnosticsImp : public Diagnostics, NEO::NonCopyableOrMovableClass {
+class DiagnosticsImp : public Diagnostics, NEO::NonCopyableAndNonMovableClass {
   public:
     ze_result_t diagnosticsGetProperties(zes_diag_properties_t *pProperties) override;
     ze_result_t diagnosticsGetTests(uint32_t *pCount, zes_diag_test_t *pTests) override;

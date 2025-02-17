@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ extern pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 extern pIgscGetEccConfig getEccConfig;
 extern pIgscSetEccConfig setEccConfig;
 
-class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableOrMovableClass {
+class FirmwareUtilImp : public FirmwareUtil, NEO::NonCopyableAndNonMovableClass {
   public:
     FirmwareUtilImp(uint16_t domain, uint8_t bus, uint8_t device, uint8_t function);
     ~FirmwareUtilImp() override;
