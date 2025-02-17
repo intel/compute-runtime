@@ -2788,7 +2788,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             continue;
         }
 
-        if (event->isCounterBased() && (!event->hasInOrderTimestampNode() || this->asMutable())) {
+        if (event->isCounterBased() && (this->heaplessModeEnabled || !event->hasInOrderTimestampNode() || this->asMutable())) {
             // 1. Regular CmdList adds submission counter to base value on each Execute
             // 2. Immediate CmdList takes current value (with submission counter)
             auto waitValue = !isImmediateType() ? event->getInOrderExecBaseSignalValue() : event->getInOrderExecSignalValueWithSubmissionCounter();
