@@ -332,7 +332,6 @@ TEST(clGetPlatformIDsTest, givenMultipleDifferentDevicesWhenGetPlatformIdsThenSe
     auto platform2 = static_cast<Platform *>(platforms[2]);
 
     EXPECT_EQ(1u, platform0->getNumDevices());
-
     EXPECT_EQ(IGFX_BMG, platform0->getClDevices()[0]->getHardwareInfo().platform.eProductFamily);
 
     EXPECT_EQ(1u, platform1->getNumDevices());
