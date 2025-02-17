@@ -5546,29 +5546,29 @@ typedef struct tagCOMPUTE_WALKER {
             uint32_t IndirectParameterEnable : BITFIELD_RANGE(10, 10);
             uint32_t Reserved_11 : BITFIELD_RANGE(11, 12);
             uint32_t DispatchComplete : BITFIELD_RANGE(13, 13);
-            uint32_t Reserved_14 : BITFIELD_RANGE(14, 14); // patched
+            uint32_t Reserved_14 : BITFIELD_RANGE(14, 14);
             uint32_t CfeSubopcodeVariant : BITFIELD_RANGE(15, 17);
             uint32_t CfeSubopcode : BITFIELD_RANGE(18, 23);
             uint32_t ComputeCommandOpcode : BITFIELD_RANGE(24, 26);
             uint32_t Pipeline : BITFIELD_RANGE(27, 28);
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
-            // DWORD 1 of COMPUTE WALKER = DWORD 0 of COMPUTE_WALKER_BODY
-            uint32_t Reserved_0 : BITFIELD_RANGE(0, 7);
-            uint32_t DebugObjectId : BITFIELD_RANGE(8, 31);
             // DWORD 1
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 7);
+            uint32_t DebugObjectId : BITFIELD_RANGE(8, 31);
+            // DWORD 2
             uint32_t IndirectDataLength : BITFIELD_RANGE(0, 16);
             uint32_t L3PrefetchDisable : BITFIELD_RANGE(17, 17);
             uint32_t PartitionDispatchParameter : BITFIELD_RANGE(18, 29);
             uint32_t PartitionType : BITFIELD_RANGE(30, 31);
-            // DWORD 2
-            uint32_t Reserved_64 : BITFIELD_RANGE(0, 5);
-            uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
             // DWORD 3
+            uint32_t Reserved_96 : BITFIELD_RANGE(0, 5);
+            uint32_t IndirectDataStartAddress : BITFIELD_RANGE(6, 31);
+            // DWORD 4
             uint32_t ComputeDispatchAllWalkerEnable : BITFIELD_RANGE(0, 0);
-            uint32_t Reserved_97 : BITFIELD_RANGE(1, 2);
+            uint32_t Reserved_129 : BITFIELD_RANGE(1, 2);
             uint32_t ThreadGroupBatchSize : BITFIELD_RANGE(3, 4);
             uint32_t DispatchWalkOrder : BITFIELD_RANGE(5, 6);
-            uint32_t Reserved_98 : BITFIELD_RANGE(7, 16);
+            uint32_t Reserved_135 : BITFIELD_RANGE(7, 16);
             uint32_t MessageSimd : BITFIELD_RANGE(17, 18);
             uint32_t TileLayout : BITFIELD_RANGE(19, 21);
             uint32_t WalkOrder : BITFIELD_RANGE(22, 24);
@@ -5576,47 +5576,45 @@ typedef struct tagCOMPUTE_WALKER {
             uint32_t EmitLocal : BITFIELD_RANGE(26, 28);
             uint32_t GenerateLocalId : BITFIELD_RANGE(29, 29);
             uint32_t SimdSize : BITFIELD_RANGE(30, 31);
-            // DWORD 4
-            uint32_t ExecutionMask;
             // DWORD 5
+            uint32_t ExecutionMask;
+            // DWORD 6
             uint32_t LocalXMaximum : BITFIELD_RANGE(0, 9);
             uint32_t LocalYMaximum : BITFIELD_RANGE(10, 19);
             uint32_t LocalZMaximum : BITFIELD_RANGE(20, 29);
-            uint32_t Reserved_190 : BITFIELD_RANGE(30, 31);
-            // DWORD 6
-            uint32_t ThreadGroupIdXDimension;
+            uint32_t Reserved_222 : BITFIELD_RANGE(30, 31);
             // DWORD 7
-            uint32_t ThreadGroupIdYDimension;
+            uint32_t ThreadGroupIdXDimension;
             // DWORD 8
-            uint32_t ThreadGroupIdZDimension;
+            uint32_t ThreadGroupIdYDimension;
             // DWORD 9
-            uint32_t ThreadGroupIdStartingX;
+            uint32_t ThreadGroupIdZDimension;
             // DWORD 10
-            uint32_t ThreadGroupIdStartingY;
+            uint32_t ThreadGroupIdStartingX;
             // DWORD 11
-            uint32_t ThreadGroupIdStartingZ;
+            uint32_t ThreadGroupIdStartingY;
             // DWORD 12
-            uint64_t PartitionId : BITFIELD_RANGE(0, 31);
+            uint32_t ThreadGroupIdStartingZ;
             // DWORD 13
-            uint64_t PartitionSize : BITFIELD_RANGE(32, 63);
+            uint64_t PartitionId : BITFIELD_RANGE(0, 31);
             // DWORD 14
-            uint32_t PreemptX;
+            uint64_t PartitionSize : BITFIELD_RANGE(32, 63);
             // DWORD 15
-            uint32_t PreemptY;
+            uint32_t PreemptX;
             // DWORD 16
-            uint32_t PreemptZ;
+            uint32_t PreemptY;
             // DWORD 17
-            uint32_t WalkerId : BITFIELD_RANGE(0, 3);
-            uint32_t Reserved_548 : BITFIELD_RANGE(4, 7);
-            uint32_t OverDispatchTgCount : BITFIELD_RANGE(8, 23);
-            uint32_t Reserved_568 : BITFIELD_RANGE(24, 29);
-            uint32_t PreemptLastRow : BITFIELD_RANGE(30, 30);
-            uint32_t PreemptLastCol : BITFIELD_RANGE(31, 31);
+            uint32_t PreemptZ;
             // DWORD 18
+            uint32_t WalkerId : BITFIELD_RANGE(0, 3);
+            uint32_t Reserved_580 : BITFIELD_RANGE(4, 7);
+            uint32_t OverDispatchTgCount : BITFIELD_RANGE(8, 23);
+            uint32_t Reserved_600 : BITFIELD_RANGE(24, 31);
+            // DWORD 19
             INTERFACE_DESCRIPTOR_DATA InterfaceDescriptor;
-            // DWORD 26
+            // DWORD 27
             POSTSYNC_DATA PostSync;
-            // DWORD 31
+            // DWORD 32
             uint32_t InlineData[8];
         } Common;
         uint32_t RawData[40];
@@ -5645,6 +5643,55 @@ typedef struct tagCOMPUTE_WALKER {
     typedef enum tagCOMMAND_TYPE {
         COMMAND_TYPE_GFXPIPE = 0x3,
     } COMMAND_TYPE;
+    typedef enum tagPARTITION_TYPE {
+        PARTITION_TYPE_DISABLED = 0x0,
+        PARTITION_TYPE_X = 0x1,
+        PARTITION_TYPE_Y = 0x2,
+        PARTITION_TYPE_Z = 0x3,
+    } PARTITION_TYPE;
+    typedef enum tagTHREAD_GROUP_BATCH_SIZE {
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_1 = 0x0,
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_2 = 0x1,
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_4 = 0x2,
+        THREAD_GROUP_BATCH_SIZE_TG_BATCH_8 = 0x3,
+    } THREAD_GROUP_BATCH_SIZE;
+    typedef enum tagDISPATCH_WALK_ORDER {
+        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
+        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
+        DISPATCH_WALK_ORDER_MORTON_WALK = 0x2,
+    } DISPATCH_WALK_ORDER;
+    typedef enum tagMESSAGE_SIMD {
+        MESSAGE_SIMD_SIMT16 = 0x1,
+        MESSAGE_SIMD_SIMT32 = 0x2,
+    } MESSAGE_SIMD;
+    typedef enum tagTILE_LAYOUT {
+        TILE_LAYOUT_LINEAR = 0x0,
+        TILE_LAYOUT_TILEY_32BPE = 0x1,
+        TILE_LAYOUT_TILEY_64BPE = 0x2,
+        TILE_LAYOUT_TILEY_128BPE = 0x3,
+    } TILE_LAYOUT;
+    typedef enum tagWALK_ORDER {
+        WALK_ORDER_WALK_012 = 0x0,
+        WALK_ORDER_WALK_021 = 0x1,
+        WALK_ORDER_WALK_102 = 0x2,
+        WALK_ORDER_WALK_120 = 0x3,
+        WALK_ORDER_WALK_201 = 0x4,
+        WALK_ORDER_WALK_210 = 0x5,
+    } WALK_ORDER;
+    typedef enum tagEMIT_LOCAL {
+        EMIT_LOCAL_EMIT_NONE = 0x0,
+        EMIT_LOCAL_EMIT_X = 0x1,
+        EMIT_LOCAL_EMIT_XY = 0x3,
+        EMIT_LOCAL_EMIT_XYZ = 0x7,
+    } EMIT_LOCAL;
+    typedef enum tagSIMD_SIZE {
+        SIMD_SIZE_SIMT16 = 0x1,
+        SIMD_SIZE_SIMT32 = 0x2,
+    } SIMD_SIZE;
+    typedef enum tagPARTITION_ID {
+        PARTITION_ID_SUPPORTED_MIN = 0x0,
+        PARTITION_ID_SUPPORTED_MAX = 0xf,
+    } PARTITION_ID;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
         TheStructure.Common.DwordLength = DWORD_LENGTH_FIXED_SIZE;
@@ -5653,14 +5700,17 @@ typedef struct tagCOMPUTE_WALKER {
         TheStructure.Common.ComputeCommandOpcode = COMPUTE_COMMAND_OPCODE_NEW_CFE_COMMAND;
         TheStructure.Common.Pipeline = PIPELINE_COMPUTE;
         TheStructure.Common.CommandType = COMMAND_TYPE_GFXPIPE;
-        TheStructure.Common.ThreadGroupBatchSize = THREAD_GROUP_BATCH_SIZE_TG_BATCH_1;
-        // patched - copy from compute body walker
         TheStructure.Common.PartitionType = PARTITION_TYPE_DISABLED;
+        TheStructure.Common.ThreadGroupBatchSize = THREAD_GROUP_BATCH_SIZE_TG_BATCH_1;
+        TheStructure.Common.DispatchWalkOrder = DISPATCH_WALK_ORDER_LINEAR_WALK;
         TheStructure.Common.TileLayout = TILE_LAYOUT_LINEAR;
         TheStructure.Common.WalkOrder = WALK_ORDER_WALK_012;
         TheStructure.Common.EmitLocal = EMIT_LOCAL_EMIT_NONE;
         TheStructure.Common.InterfaceDescriptor.init();
         TheStructure.Common.PostSync.init();
+        for (uint32_t i = 0; i < 8; i++) {
+            TheStructure.Common.InlineData[i] = 0;
+        }
     }
     static tagCOMPUTE_WALKER sInit() {
         COMPUTE_WALKER state;
@@ -5719,56 +5769,6 @@ typedef struct tagCOMPUTE_WALKER {
     inline COMPUTE_COMMAND_OPCODE getComputeCommandOpcode() const {
         return static_cast<COMPUTE_COMMAND_OPCODE>(TheStructure.Common.ComputeCommandOpcode);
     }
-    // patched - copy from compute walker body
-    typedef enum tagPARTITION_TYPE {
-        PARTITION_TYPE_DISABLED = 0x0,
-        PARTITION_TYPE_X = 0x1,
-        PARTITION_TYPE_Y = 0x2,
-        PARTITION_TYPE_Z = 0x3,
-    } PARTITION_TYPE;
-    typedef enum tagMESSAGE_SIMD {
-        MESSAGE_SIMD_SIMT16 = 0x1,
-        MESSAGE_SIMD_SIMT32 = 0x2,
-    } MESSAGE_SIMD;
-    typedef enum tagTILE_LAYOUT {
-        TILE_LAYOUT_LINEAR = 0x0,
-        TILE_LAYOUT_TILEY_32BPE = 0x1,
-        TILE_LAYOUT_TILEY_64BPE = 0x2,
-        TILE_LAYOUT_TILEY_128BPE = 0x3,
-    } TILE_LAYOUT;
-    typedef enum tagWALK_ORDER {
-        WALK_ORDER_WALK_012 = 0x0,
-        WALK_ORDER_WALK_021 = 0x1,
-        WALK_ORDER_WALK_102 = 0x2,
-        WALK_ORDER_WALK_120 = 0x3,
-        WALK_ORDER_WALK_201 = 0x4,
-        WALK_ORDER_WALK_210 = 0x5,
-    } WALK_ORDER;
-    typedef enum tagEMIT_LOCAL {
-        EMIT_LOCAL_EMIT_NONE = 0x0,
-        EMIT_LOCAL_EMIT_X = 0x1,
-        EMIT_LOCAL_EMIT_XY = 0x3,
-        EMIT_LOCAL_EMIT_XYZ = 0x7,
-    } EMIT_LOCAL;
-    typedef enum tagSIMD_SIZE {
-        SIMD_SIZE_SIMT16 = 0x1,
-        SIMD_SIZE_SIMT32 = 0x2,
-    } SIMD_SIZE;
-    typedef enum tagPARTITION_ID {
-        PARTITION_ID_SUPPORTED_MIN = 0x0,
-        PARTITION_ID_SUPPORTED_MAX = 0xf,
-    } PARTITION_ID;
-    typedef enum tagDISPATCH_WALK_ORDER {
-        DISPATCH_WALK_ORDER_LINEAR_WALK = 0x0,
-        DISPATCH_WALK_ORDER_Y_ORDER_WALK = 0x1,
-        DISPATCH_WALK_ORDER_MORTON_WALK = 0x2,
-    } DISPATCH_WALK_ORDER;
-    typedef enum tagTHREAD_GROUP_BATCH_SIZE {
-        THREAD_GROUP_BATCH_SIZE_TG_BATCH_1 = 0x0,
-        THREAD_GROUP_BATCH_SIZE_TG_BATCH_2 = 0x1,
-        THREAD_GROUP_BATCH_SIZE_TG_BATCH_4 = 0x2,
-        THREAD_GROUP_BATCH_SIZE_TG_BATCH_8 = 0x3,
-    } THREAD_GROUP_BATCH_SIZE;
     inline void setDebugObjectId(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xffffff);
         TheStructure.Common.DebugObjectId = value;
@@ -5824,10 +5824,10 @@ typedef struct tagCOMPUTE_WALKER {
     inline THREAD_GROUP_BATCH_SIZE getThreadGroupBatchSize() const {
         return static_cast<THREAD_GROUP_BATCH_SIZE>(TheStructure.Common.ThreadGroupBatchSize);
     }
-    inline void setDispatchWalkOrder(const DISPATCH_WALK_ORDER value) { // patched
+    inline void setDispatchWalkOrder(const DISPATCH_WALK_ORDER value) {
         TheStructure.Common.DispatchWalkOrder = value;
     }
-    inline DISPATCH_WALK_ORDER getDispatchWalkOrder() const { // patched
+    inline DISPATCH_WALK_ORDER getDispatchWalkOrder() const {
         return static_cast<DISPATCH_WALK_ORDER>(TheStructure.Common.DispatchWalkOrder);
     }
     inline void setMessageSimd(const uint32_t value) { // patched
@@ -5842,10 +5842,10 @@ typedef struct tagCOMPUTE_WALKER {
     inline TILE_LAYOUT getTileLayout() const {
         return static_cast<TILE_LAYOUT>(TheStructure.Common.TileLayout);
     }
-    inline void setWalkOrder(const uint32_t value) {
+    inline void setWalkOrder(const uint32_t value) { // patched
         TheStructure.Common.WalkOrder = value;
     }
-    inline uint32_t getWalkOrder() const {
+    inline uint32_t getWalkOrder() const { // patched
         return TheStructure.Common.WalkOrder;
     }
     inline void setEmitInlineParameter(const bool value) {
@@ -5854,10 +5854,10 @@ typedef struct tagCOMPUTE_WALKER {
     inline bool getEmitInlineParameter() const {
         return TheStructure.Common.EmitInlineParameter;
     }
-    inline void setEmitLocalId(const uint32_t value) {
+    inline void setEmitLocalId(const uint32_t value) { // patched
         TheStructure.Common.EmitLocal = value;
     }
-    inline uint32_t getEmitLocalId() const {
+    inline uint32_t getEmitLocalId() const { // patched
         return TheStructure.Common.EmitLocal;
     }
     inline void setGenerateLocalId(const bool value) {
@@ -5991,23 +5991,10 @@ typedef struct tagCOMPUTE_WALKER {
     inline POSTSYNC_DATA &getPostSync() {
         return TheStructure.Common.PostSync;
     }
-    inline uint32_t *getInlineDataPointer() { // patched
+    inline uint32_t *getInlineDataPointer() {
         return reinterpret_cast<uint32_t *>(&TheStructure.Common.InlineData);
     }
-    inline uint32_t getPreemptLastRow() const { // patched
-        return TheStructure.Common.PreemptLastRow;
-    }
-    inline void setPreemptLastRow(const uint32_t value) { // patched
-        TheStructure.Common.PreemptLastRow = value;
-    }
-    inline uint32_t getPreemptLastCol() const { // patched
-        return TheStructure.Common.PreemptLastCol;
-    }
-    inline void setPreemptLastCol(const uint32_t value) { // patched
-        TheStructure.Common.PreemptLastCol = value;
-    }
-
-    static constexpr uint32_t getInlineDataSize() { // patched
+    static constexpr uint32_t getInlineDataSize() {
         return sizeof(TheStructure.Common.InlineData);
     }
     using InterfaceDescriptorType = std::decay_t<decltype(TheStructure.Common.InterfaceDescriptor)>; // patched
