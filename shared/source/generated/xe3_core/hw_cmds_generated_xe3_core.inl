@@ -5237,11 +5237,10 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
             // DWORD 1
             uint64_t Reserved_32 : BITFIELD_RANGE(32, 63);
             // DWORD 2
-            uint32_t Reserved_64 : BITFIELD_RANGE(0, 6);
+            uint32_t EuThreadSchedulingModeOverride : BITFIELD_RANGE(0, 1);
+            uint32_t Reserved_66 : BITFIELD_RANGE(2, 6);
             uint32_t SoftwareExceptionEnable : BITFIELD_RANGE(7, 7);
-            uint32_t Reserved_72 : BITFIELD_RANGE(8, 10);
-            uint32_t MaskStackExceptionEnable : BITFIELD_RANGE(11, 11);
-            uint32_t Reserved_76 : BITFIELD_RANGE(12, 12);
+            uint32_t Reserved_72 : BITFIELD_RANGE(8, 12);
             uint32_t IllegalOpcodeExceptionEnable : BITFIELD_RANGE(13, 13);
             uint32_t Reserved_78 : BITFIELD_RANGE(14, 15);
             uint32_t FloatingPointMode : BITFIELD_RANGE(16, 16);
@@ -5273,13 +5272,25 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
             uint32_t NumberOfBarriers : BITFIELD_RANGE(28, 30);
             uint32_t BtdMode : BITFIELD_RANGE(31, 31);
             // DWORD 6
-            uint32_t Reserved_192;
+            uint32_t Reserved_192 : BITFIELD_RANGE(0, 7);
+            uint32_t ZPassAsyncComputeThreadLimit : BITFIELD_RANGE(8, 10);
+            uint32_t Reserved_203 : BITFIELD_RANGE(11, 11);
+            uint32_t NpZAsyncThrottleSettings : BITFIELD_RANGE(12, 13);
+            uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
+            uint32_t PsAsyncThreadLimit : BITFIELD_RANGE(16, 18);
+            uint32_t Reserved_211 : BITFIELD_RANGE(19, 31);
             // DWORD 7
             uint32_t PreferredSlmAllocationSize : BITFIELD_RANGE(0, 3);
             uint32_t Reserved_228 : BITFIELD_RANGE(4, 31);
         } Common;
         uint32_t RawData[8];
     } TheStructure;
+    typedef enum tagEU_THREAD_SCHEDULING_MODE_OVERRIDE {
+        EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT = 0x0,
+        EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST = 0x1,
+        EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN = 0x2,
+        EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN = 0x3,
+    } EU_THREAD_SCHEDULING_MODE_OVERRIDE;
     typedef enum tagFLOATING_POINT_MODE {
         FLOATING_POINT_MODE_IEEE_754 = 0x0,
         FLOATING_POINT_MODE_ALTERNATE = 0x1,
@@ -5292,6 +5303,16 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         DENORM_MODE_FTZ = 0x0,
         DENORM_MODE_SETBYKERNEL = 0x1,
     } DENORM_MODE;
+    typedef enum tagREGISTERS_PER_THREAD {
+        REGISTERS_PER_THREAD_REGISTERS_32 = 0x0,
+        REGISTERS_PER_THREAD_REGISTERS_64 = 0x1,
+        REGISTERS_PER_THREAD_REGISTERS_96 = 0x2,
+        REGISTERS_PER_THREAD_REGISTERS_128 = 0x3,
+        REGISTERS_PER_THREAD_REGISTERS_160 = 0x4,
+        REGISTERS_PER_THREAD_REGISTERS_192 = 0x5,
+        REGISTERS_PER_THREAD_REGISTERS_256 = 0x7,
+        REGISTERS_PER_THREAD_REGISTERS_512 = 0xf, // patched
+    } REGISTERS_PER_THREAD;
     typedef enum tagSAMPLER_COUNT {
         SAMPLER_COUNT_NO_SAMPLERS_USED = 0x0,
         SAMPLER_COUNT_BETWEEN_1_AND_4_SAMPLERS_USED = 0x1,
@@ -5327,16 +5348,6 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         ROUNDING_MODE_RD = 0x2,
         ROUNDING_MODE_RTZ = 0x3,
     } ROUNDING_MODE;
-    typedef enum tagREGISTERS_PER_THREAD {
-        REGISTERS_PER_THREAD_REGISTERS_32 = 0x0,
-        REGISTERS_PER_THREAD_REGISTERS_64 = 0x1,
-        REGISTERS_PER_THREAD_REGISTERS_96 = 0x2,
-        REGISTERS_PER_THREAD_REGISTERS_128 = 0x3,
-        REGISTERS_PER_THREAD_REGISTERS_160 = 0x4,
-        REGISTERS_PER_THREAD_REGISTERS_192 = 0x5,
-        REGISTERS_PER_THREAD_REGISTERS_256 = 0x7,
-        REGISTERS_PER_THREAD_REGISTERS_512 = 0xf, // patched
-    } REGISTERS_PER_THREAD;
     typedef enum tagTHREAD_GROUP_DISPATCH_SIZE {
         THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8 = 0x0,
         THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_4 = 0x1,
@@ -5357,6 +5368,31 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         BTD_MODE_DISABLE = 0x0,
         BTD_MODE_ENABLE = 0x1,
     } BTD_MODE;
+    typedef enum tagZ_PASS_ASYNC_COMPUTE_THREAD_LIMIT {
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60 = 0x0,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_64 = 0x1,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_56 = 0x2,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_48 = 0x3,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_40 = 0x4,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_32 = 0x5,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_24 = 0x6,
+        Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_16 = 0x7,
+    } Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT;
+    typedef enum tagNP_Z_ASYNC_THROTTLE_SETTINGS {
+        NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_32 = 0x1,
+        NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_40 = 0x2,
+        NP_Z_ASYNC_THROTTLE_SETTINGS_MAX_48 = 0x3,
+    } NP_Z_ASYNC_THROTTLE_SETTINGS;
+    typedef enum tagPS_ASYNC_THREAD_LIMIT {
+        PS_ASYNC_THREAD_LIMIT_DISABLED = 0x0,
+        PS_ASYNC_THREAD_LIMIT_MAX_2 = 0x1,
+        PS_ASYNC_THREAD_LIMIT_MAX_8 = 0x2,
+        PS_ASYNC_THREAD_LIMIT_MAX_16 = 0x3,
+        PS_ASYNC_THREAD_LIMIT_MAX_24 = 0x4,
+        PS_ASYNC_THREAD_LIMIT_MAX_32 = 0x5,
+        PS_ASYNC_THREAD_LIMIT_MAX_40 = 0x6,
+        PS_ASYNC_THREAD_LIMIT_MAX_48 = 0x7,
+    } PS_ASYNC_THREAD_LIMIT;
     typedef enum tagPREFERRED_SLM_ALLOCATION_SIZE {
         PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K = 0x0,
         PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_16K = 0x1,
@@ -5372,17 +5408,20 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     } PREFERRED_SLM_ALLOCATION_SIZE;
     inline void init() {
         memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.EuThreadSchedulingModeOverride = EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT;
         TheStructure.Common.FloatingPointMode = FLOATING_POINT_MODE_IEEE_754;
         TheStructure.Common.SingleProgramFlow = SINGLE_PROGRAM_FLOW_MULTIPLE;
         TheStructure.Common.DenormMode = DENORM_MODE_FTZ;
+        TheStructure.Common.RegistersPerThread = REGISTERS_PER_THREAD_REGISTERS_128;
         TheStructure.Common.SamplerCount = SAMPLER_COUNT_NO_SAMPLERS_USED;
         TheStructure.Common.BindingTableEntryCount = BINDING_TABLE_ENTRY_COUNT_PREFETCH_DISABLED;
         TheStructure.Common.SharedLocalMemorySize = SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K;
         TheStructure.Common.RoundingMode = ROUNDING_MODE_RTNE;
-        TheStructure.Common.RegistersPerThread = REGISTERS_PER_THREAD_REGISTERS_128;
         TheStructure.Common.ThreadGroupDispatchSize = THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_8;
         TheStructure.Common.NumberOfBarriers = NUMBER_OF_BARRIERS_NONE;
         TheStructure.Common.BtdMode = BTD_MODE_DISABLE;
+        TheStructure.Common.ZPassAsyncComputeThreadLimit = Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT_MAX_60;
+        TheStructure.Common.PsAsyncThreadLimit = PS_ASYNC_THREAD_LIMIT_DISABLED;
         TheStructure.Common.PreferredSlmAllocationSize = PREFERRED_SLM_ALLOCATION_SIZE_SLM_ENCODES_0K;
     }
     static tagINTERFACE_DESCRIPTOR_DATA sInit() {
@@ -5399,28 +5438,23 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         KERNELSTARTPOINTER_ALIGN_SIZE = 0x40,
     } KERNELSTARTPOINTER;
     inline void setKernelStartPointer(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0xffffffff);
         TheStructure.Common.KernelStartPointer = static_cast<uint32_t>(value) >> KERNELSTARTPOINTER_BIT_SHIFT;
     }
     inline uint64_t getKernelStartPointer() const {
         return static_cast<uint64_t>(TheStructure.Common.KernelStartPointer) << KERNELSTARTPOINTER_BIT_SHIFT; // patched
+    }
+    inline void setEuThreadSchedulingModeOverride(const EU_THREAD_SCHEDULING_MODE_OVERRIDE value) {
+        TheStructure.Common.EuThreadSchedulingModeOverride = value;
+    }
+    inline EU_THREAD_SCHEDULING_MODE_OVERRIDE getEuThreadSchedulingModeOverride() const {
+        return static_cast<EU_THREAD_SCHEDULING_MODE_OVERRIDE>(TheStructure.Common.EuThreadSchedulingModeOverride);
     }
     inline void setSoftwareExceptionEnable(const bool value) {
         TheStructure.Common.SoftwareExceptionEnable = value;
     }
     inline bool getSoftwareExceptionEnable() const {
         return TheStructure.Common.SoftwareExceptionEnable;
-    }
-    inline void setRegistersPerThread(const REGISTERS_PER_THREAD value) { // patched
-        TheStructure.Common.RegistersPerThread = value;
-    }
-    inline REGISTERS_PER_THREAD getRegistersPerThread() const { // patched
-        return static_cast<REGISTERS_PER_THREAD>(TheStructure.Common.RegistersPerThread);
-    }
-    inline void setMaskStackExceptionEnable(const bool value) {
-        TheStructure.Common.MaskStackExceptionEnable = value;
-    }
-    inline bool getMaskStackExceptionEnable() const {
-        return TheStructure.Common.MaskStackExceptionEnable;
     }
     inline void setIllegalOpcodeExceptionEnable(const bool value) {
         TheStructure.Common.IllegalOpcodeExceptionEnable = value;
@@ -5452,6 +5486,12 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline bool getThreadPreemption() const {
         return TheStructure.Common.ThreadPreemption;
     }
+    inline void setRegistersPerThread(const REGISTERS_PER_THREAD value) {
+        TheStructure.Common.RegistersPerThread = value;
+    }
+    inline REGISTERS_PER_THREAD getRegistersPerThread() const {
+        return static_cast<REGISTERS_PER_THREAD>(TheStructure.Common.RegistersPerThread);
+    }
     inline void setSamplerCount(const SAMPLER_COUNT value) {
         TheStructure.Common.SamplerCount = value;
     }
@@ -5468,10 +5508,10 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     inline uint32_t getSamplerStatePointer() const {
         return TheStructure.Common.SamplerStatePointer << SAMPLERSTATEPOINTER_BIT_SHIFT;
     }
-    inline void setBindingTableEntryCount(const uint32_t value) {
+    inline void setBindingTableEntryCount(const uint32_t value) { // patched
         TheStructure.Common.BindingTableEntryCount = value;
     }
-    inline uint32_t getBindingTableEntryCount() const {
+    inline uint32_t getBindingTableEntryCount() const { // patched
         return TheStructure.Common.BindingTableEntryCount;
     }
     typedef enum tagBINDINGTABLEPOINTER {
@@ -5479,6 +5519,7 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         BINDINGTABLEPOINTER_ALIGN_SIZE = 0x20,
     } BINDINGTABLEPOINTER;
     inline void setBindingTablePointer(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fffff);
         TheStructure.Common.BindingTablePointer = static_cast<uint32_t>(value) >> BINDINGTABLEPOINTER_BIT_SHIFT;
     }
     inline uint32_t getBindingTablePointer() const {
@@ -5526,6 +5567,24 @@ typedef struct tagINTERFACE_DESCRIPTOR_DATA {
     }
     inline BTD_MODE getBtdMode() const {
         return static_cast<BTD_MODE>(TheStructure.Common.BtdMode);
+    }
+    inline void setZPassAsyncComputeThreadLimit(const Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT value) {
+        TheStructure.Common.ZPassAsyncComputeThreadLimit = value;
+    }
+    inline Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT getZPassAsyncComputeThreadLimit() const {
+        return static_cast<Z_PASS_ASYNC_COMPUTE_THREAD_LIMIT>(TheStructure.Common.ZPassAsyncComputeThreadLimit);
+    }
+    inline void setNpZAsyncThrottleSettings(const NP_Z_ASYNC_THROTTLE_SETTINGS value) {
+        TheStructure.Common.NpZAsyncThrottleSettings = value;
+    }
+    inline NP_Z_ASYNC_THROTTLE_SETTINGS getNpZAsyncThrottleSettings() const {
+        return static_cast<NP_Z_ASYNC_THROTTLE_SETTINGS>(TheStructure.Common.NpZAsyncThrottleSettings);
+    }
+    inline void setPsAsyncThreadLimit(const PS_ASYNC_THREAD_LIMIT value) {
+        TheStructure.Common.PsAsyncThreadLimit = value;
+    }
+    inline PS_ASYNC_THREAD_LIMIT getPsAsyncThreadLimit() const {
+        return static_cast<PS_ASYNC_THREAD_LIMIT>(TheStructure.Common.PsAsyncThreadLimit);
     }
     inline void setPreferredSlmAllocationSize(const PREFERRED_SLM_ALLOCATION_SIZE value) {
         TheStructure.Common.PreferredSlmAllocationSize = value;
