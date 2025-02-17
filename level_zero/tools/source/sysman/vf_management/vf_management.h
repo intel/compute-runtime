@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
@@ -30,13 +32,9 @@ class VfManagement : _zes_vf_handle_t {
     }
 };
 
-struct VfManagementHandleContext {
+struct VfManagementHandleContext : NEO::NonCopyableAndNonMovableClass {
     VfManagementHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~VfManagementHandleContext();
-    VfManagementHandleContext(VfManagementHandleContext &&other) noexcept = delete;
-    VfManagementHandleContext(const VfManagementHandleContext &other) = delete;
-    VfManagementHandleContext &operator=(VfManagementHandleContext &&other) noexcept = delete;
-    VfManagementHandleContext &operator=(const VfManagementHandleContext &other) = delete;
 
     ze_result_t init();
 
@@ -49,5 +47,7 @@ struct VfManagementHandleContext {
     void createHandle(uint32_t vfId);
     std::once_flag initVfManagementOnce;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<VfManagementHandleContext>);
 
 } // namespace L0

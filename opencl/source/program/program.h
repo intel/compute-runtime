@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -125,9 +125,6 @@ class Program : public BaseObject<_cl_program> {
 
     Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevicesIn);
     ~Program() override;
-
-    Program(const Program &) = delete;
-    Program &operator=(const Program &) = delete;
 
     cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions);
 
@@ -396,5 +393,7 @@ class Program : public BaseObject<_cl_program> {
         std::string decodeWarnings;
     } decodedSingleDeviceBinary;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Program>);
 
 } // namespace NEO

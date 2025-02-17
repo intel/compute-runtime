@@ -31,9 +31,7 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNo
     ze_result_t resetExt(zes_reset_properties_t *pProperties) override;
 
     WddmGlobalOperationsImp(OsSysman *pOsSysman);
-    WddmGlobalOperationsImp(const WddmGlobalOperationsImp &obj) = delete;
     WddmGlobalOperationsImp() = default;
-    WddmGlobalOperationsImp &operator=(const WddmGlobalOperationsImp &obj) = delete;
     ~WddmGlobalOperationsImp() override = default;
 
   private:
@@ -42,5 +40,7 @@ class WddmGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableAndNo
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<WddmGlobalOperationsImp>);
 
 } // namespace L0

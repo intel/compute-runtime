@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/abort.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/dispatch.h"
@@ -132,7 +133,7 @@ class TakeOwnershipWrapper {
 // This class should act as a base class for all CL objects. It will handle the
 // MT safe and reference things for every CL object.
 template <typename B>
-class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
+class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>>, NEO::NonCopyableAndNonMovableClass {
   public:
     typedef BaseObject<B> ThisType;
     typedef B BaseType;
@@ -140,9 +141,6 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
 
     const static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     const static cl_ulong deadMagic = 0xFFFFFFFFFFFFFFFFLL;
-
-    BaseObject(const BaseObject &) = delete;
-    BaseObject &operator=(const BaseObject &) = delete;
 
   protected:
     cl_long magic;

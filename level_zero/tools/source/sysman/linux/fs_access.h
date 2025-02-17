@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/ze_api.h"
@@ -49,8 +50,10 @@ class FsAccess {
   public:
     static FsAccess *create();
     FsAccess(const FsAccess &fsAccess);
-    FsAccess &operator=(const FsAccess &) = delete;
     virtual ~FsAccess() = default;
+    FsAccess(FsAccess &&other) noexcept = delete;
+    FsAccess &operator=(FsAccess &&other) noexcept = delete;
+    FsAccess &operator=(const FsAccess &other) = delete;
 
     virtual ze_result_t canRead(const std::string file);
     virtual ze_result_t canWrite(const std::string file);
@@ -158,5 +161,7 @@ class SysfsAccess : protected FsAccess {
     static const std::string intelGpuBindEntry;
     static const std::string intelGpuUnbindEntry;
 };
+
+static_assert(NEO::NonMovable<FsAccess>);
 
 } // namespace L0

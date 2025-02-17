@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -17,7 +18,7 @@ namespace NEO {
 
 class Event;
 
-class EventBuilder {
+class EventBuilder : NEO::NonCopyableAndNonMovableClass {
   public:
     template <typename EventType, typename... ArgsT>
     void create(ArgsT &&...args) {
@@ -25,10 +26,6 @@ class EventBuilder {
     }
 
     EventBuilder() = default;
-    EventBuilder(const EventBuilder &) = delete;
-    EventBuilder &operator=(const EventBuilder &) = delete;
-    EventBuilder(EventBuilder &&) = delete;
-    EventBuilder &operator=(EventBuilder &&) = delete;
 
     ~EventBuilder();
 
@@ -63,4 +60,7 @@ class EventBuilder {
     StackVec<Event *, 16> parentEvents;
     bool doNotRegister = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<EventBuilder>);
+
 } // namespace NEO

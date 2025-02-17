@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -90,9 +90,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     Event(CommandQueue *cmdQueue, cl_command_type cmdType,
           TaskCountType taskLevel, TaskCountType taskCount);
-
-    Event(const Event &) = delete;
-    Event &operator=(const Event &) = delete;
 
     ~Event() override;
 
@@ -409,4 +406,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // can be accessed only with updateTaskCount
     std::atomic<TaskCountType> taskCount{0};
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Event>);
 } // namespace NEO

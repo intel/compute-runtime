@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"
@@ -51,9 +52,6 @@ struct OpenCLObjectMapper<_cl_device_id> {
 class ClDevice : public BaseObject<_cl_device_id> {
   public:
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
-
-    ClDevice &operator=(const ClDevice &) = delete;
-    ClDevice(const ClDevice &) = delete;
 
     explicit ClDevice(Device &device, Platform *platformId);
     explicit ClDevice(Device &device, ClDevice &rootClDevice, Platform *platformId);
@@ -171,5 +169,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::string compilerExtensions;
     std::string compilerExtensionsWithFeatures;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<ClDevice>);
 
 } // namespace NEO

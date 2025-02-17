@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/registered_method_dispatcher.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/utilities/stackvec.h"
@@ -82,15 +83,12 @@ class DispatchInfo {
     Vec3<size_t> swgs{0, 0, 0};   // start of work groups
 };
 
-struct MultiDispatchInfo {
+struct MultiDispatchInfo : NEO::NonCopyableAndNonMovableClass {
     ~MultiDispatchInfo();
 
     explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
     explicit MultiDispatchInfo(const BuiltinOpParams &operationParams) : builtinOpParams(operationParams) {}
     MultiDispatchInfo() = default;
-
-    MultiDispatchInfo &operator=(const MultiDispatchInfo &) = delete;
-    MultiDispatchInfo(const MultiDispatchInfo &) = delete;
 
     bool empty() const {
         return dispatchInfos.size() == 0;
@@ -195,4 +193,7 @@ struct MultiDispatchInfo {
     std::unique_ptr<const KernelObjsForAuxTranslation> kernelObjsForAuxTranslation;
     Kernel *mainKernel = nullptr;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<MultiDispatchInfo>);
+
 } // namespace NEO

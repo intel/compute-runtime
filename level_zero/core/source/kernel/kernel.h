@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -110,7 +110,7 @@ struct KernelImmutableData {
     bool isaCopiedToAllocation = false;
 };
 
-struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
+struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI, NEO::NonCopyableAndNonMovableClass {
     template <typename Type>
     struct Allocator {
         static Kernel *allocate(Module *module) { return new Type(module); }
@@ -174,12 +174,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
 
     virtual ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) = 0;
 
-    Kernel() = default;
-    Kernel(const Kernel &) = delete;
-    Kernel(Kernel &&) = delete;
-    Kernel &operator=(const Kernel &) = delete;
-    Kernel &operator=(Kernel &&) = delete;
-
     static Kernel *fromHandle(ze_kernel_handle_t handle) { return static_cast<Kernel *>(handle); }
 
     inline ze_kernel_handle_t toHandle() { return this; }
@@ -214,5 +208,7 @@ struct KernelPopulateFactory {
         kernelFactory[productFamily] = KernelType::template Allocator<KernelType>::allocate;
     }
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Kernel>);
 
 } // namespace L0

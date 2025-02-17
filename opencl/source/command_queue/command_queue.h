@@ -74,9 +74,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     CommandQueue(Context *context, ClDevice *device, const cl_queue_properties *properties, bool internalUsage);
 
-    CommandQueue &operator=(const CommandQueue &) = delete;
-    CommandQueue(const CommandQueue &) = delete;
-
     ~CommandQueue() override;
 
     // API entry points
@@ -512,6 +509,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool heaplessStateInitEnabled = false;
     bool isForceStateless = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CommandQueue>);
 
 template <typename PtrType>
 PtrType CommandQueue::convertAddressWithOffsetToGpuVa(PtrType ptr, InternalMemoryType memoryType, GraphicsAllocation &allocation) {

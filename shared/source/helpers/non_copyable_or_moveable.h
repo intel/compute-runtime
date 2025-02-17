@@ -31,15 +31,16 @@ class NonCopyableClass {
 };
 
 template <typename T>
-concept NonCopyableAndNonMovable = !
-std::is_copy_constructible_v<T> &&
-    !std::is_copy_assignable_v<T> &&
-    !std::is_move_constructible_v<T> &&
-    !std::is_move_assignable_v<T>;
-
-template <typename T>
 concept NonCopyable = !
 std::is_copy_constructible_v<T> &&
     !std::is_copy_assignable_v<T>;
+
+template <typename T>
+concept NonMovable = !
+std::is_move_constructible_v<T> &&
+    !std::is_move_assignable_v<T>;
+
+template <typename T>
+concept NonCopyableAndNonMovable = NonCopyable<T> && NonMovable<T>;
 
 } // namespace NEO

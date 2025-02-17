@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <level_zero/ze_api.h>
 
@@ -15,7 +17,7 @@ namespace L0 {
 
 struct Module;
 
-struct ModuleBuildLog : _ze_module_build_log_handle_t {
+struct ModuleBuildLog : _ze_module_build_log_handle_t, NEO::NonCopyableAndNonMovableClass {
     static ModuleBuildLog *create();
     virtual ~ModuleBuildLog() = default;
 
@@ -35,5 +37,7 @@ struct ModuleBuildLog : _ze_module_build_log_handle_t {
 
     inline ze_module_build_log_handle_t toHandle() { return this; }
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<ModuleBuildLog>);
 
 } // namespace L0

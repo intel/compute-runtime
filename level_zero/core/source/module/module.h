@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <level_zero/ze_api.h>
 
@@ -28,7 +30,7 @@ enum class ModuleType {
     user
 };
 
-struct Module : _ze_module_handle_t {
+struct Module : _ze_module_handle_t, NEO::NonCopyableAndNonMovableClass {
 
     static Module *create(Device *device, const ze_module_desc_t *desc, ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
 
@@ -60,15 +62,11 @@ struct Module : _ze_module_handle_t {
     virtual uint32_t getProfileFlags() const = 0;
     virtual void checkIfPrivateMemoryPerDispatchIsNeeded() = 0;
 
-    Module() = default;
-    Module(const Module &) = delete;
-    Module(Module &&) = delete;
-    Module &operator=(const Module &) = delete;
-    Module &operator=(Module &&) = delete;
-
     static Module *fromHandle(ze_module_handle_t handle) { return static_cast<Module *>(handle); }
 
     inline ze_module_handle_t toHandle() { return this; }
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Module>);
 
 } // namespace L0

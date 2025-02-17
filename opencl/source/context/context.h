@@ -127,9 +127,6 @@ class Context : public BaseObject<_cl_context> {
         return pContext;
     }
 
-    Context &operator=(const Context &) = delete;
-    Context(const Context &) = delete;
-
     ~Context() override;
 
     cl_int setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, void *),
@@ -321,4 +318,7 @@ class Context : public BaseObject<_cl_context> {
     bool nonZebinContext = false;
     bool usmPoolInitialized = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Context>);
+
 } // namespace NEO

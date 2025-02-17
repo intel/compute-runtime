@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
 #include "opencl/source/tracing/tracing_handle.h"
@@ -29,16 +30,12 @@ namespace HostSideTracing {
 
 inline thread_local bool tracingInProgress = false;
 
-class CheckIfExitCalled {
+class CheckIfExitCalled : NEO::NonCopyableAndNonMovableClass {
   public:
     CheckIfExitCalled() = default;
     ~CheckIfExitCalled() {
         UNRECOVERABLE_IF(!tracingExited);
     }
-    CheckIfExitCalled(CheckIfExitCalled &&other) noexcept = delete;
-    CheckIfExitCalled(const CheckIfExitCalled &other) = delete;
-    CheckIfExitCalled &operator=(CheckIfExitCalled &&other) noexcept = delete;
-    CheckIfExitCalled &operator=(const CheckIfExitCalled &other) = delete;
 
     void exit() {
         tracingExited = true;
@@ -47,6 +44,8 @@ class CheckIfExitCalled {
   private:
     bool tracingExited = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CheckIfExitCalled>);
 
 #define TRACING_ENTER(name, ...)                                                                                                                   \
     bool isHostSideTracingEnabled_##name = false;                                                                                                  \

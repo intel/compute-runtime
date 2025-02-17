@@ -30,10 +30,6 @@ class WddmEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
         CloseHandle(exitHandle);
     }
 
-    // Don't allow copies of the WddmEventsImp object
-    WddmEventsImp(const WddmEventsImp &obj) = delete;
-    WddmEventsImp &operator=(const WddmEventsImp &obj) = delete;
-
   private:
     void registerEvents(zes_event_type_flags_t eventId, uint32_t requestId);
     void unregisterEvents();
@@ -43,5 +39,8 @@ class WddmEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
     KmdSysManager *pKmdSysManager = nullptr;
     std::vector<EventHandler> eventList;
 };
+
+// Don't allow copies of the WddmEventsImp object
+static_assert(NEO::NonCopyableAndNonMovable<WddmEventsImp>);
 
 } // namespace L0

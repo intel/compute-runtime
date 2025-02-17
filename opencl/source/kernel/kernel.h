@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/kernel/implicit_args_helper.h"
 #include "shared/source/kernel/kernel_execution_type.h"
@@ -42,7 +43,7 @@ class PrintfHandler;
 class MultiDeviceKernel;
 class LocalIdsCache;
 
-class Kernel : public ReferenceTrackedObject<Kernel> {
+class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMovableClass {
   public:
     static const uint32_t kernelBinaryAlignment = 64;
 
@@ -111,9 +112,6 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
         return pKernel;
     }
-
-    Kernel &operator=(const Kernel &) = delete;
-    Kernel(const Kernel &) = delete;
 
     ~Kernel() override;
 
@@ -528,5 +526,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
     bool anyKernelArgumentUsingSystemMemory = false;
     bool isDestinationAllocationInSystemMemory = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Kernel>);
 
 } // namespace NEO
