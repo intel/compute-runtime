@@ -16,6 +16,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/tests_configuration.h"
 
@@ -57,6 +58,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
             executionEnvironment.rootDeviceEnvironments[i] = std::make_unique<RootDeviceEnvironment>(executionEnvironment);
             executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment.rootDeviceEnvironments[i]->initGmm();
+            executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<MockMemoryOperations>();
 
             executionEnvironment.rootDeviceEnvironments[i]->getMutableHardwareInfo()->platform = ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments[i]->getHardwareInfo()->platform;
             executionEnvironment.rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable = ultHwConfig.sourceExecutionEnvironment->rootDeviceEnvironments[i]->getHardwareInfo()->capabilityTable;

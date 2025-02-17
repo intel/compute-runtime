@@ -74,9 +74,12 @@ void DriverImp::initialize(ze_result_t *result) {
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
     if (!neoDevices.empty()) {
-        auto driverHandle = DriverHandle::create(std::move(neoDevices), envVariables, result);
-        if (driverHandle) {
-            globalDriverHandles->push_back(driverHandle);
+        auto deviceGroups = NEO::Device::groupDevices(std::move(neoDevices));
+        for (auto &devices : deviceGroups) {
+            auto driverHandle = DriverHandle::create(std::move(devices), envVariables, result);
+            if (driverHandle) {
+                globalDriverHandles->push_back(driverHandle);
+            }
         }
 
         if (globalDriverHandles->size() > 0) {

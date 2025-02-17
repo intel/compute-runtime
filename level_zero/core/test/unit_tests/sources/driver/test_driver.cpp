@@ -1449,5 +1449,60 @@ TEST(InitDriversTest, givenAllPossibleFlagCombinationsWhenInitDriversIsCalledThe
     }
 }
 
+TEST(MultiDriverHandleTest, givenMultiplesDifferentDevicesWhenGetDriverHandleThenSeparateDriverHandleIsReturnedPerEachProductFamily) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    const size_t numRootDevices = 5u;
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, numRootDevices);
+
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment.rootDeviceEnvironments[1]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_BMG;
+    executionEnvironment.rootDeviceEnvironments[1]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    executionEnvironment.rootDeviceEnvironments[2]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment.rootDeviceEnvironments[2]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment.rootDeviceEnvironments[3]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_LUNARLAKE;
+    executionEnvironment.rootDeviceEnvironments[3]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+    executionEnvironment.rootDeviceEnvironments[4]->getMutableHardwareInfo()->platform.eProductFamily = IGFX_PTL;
+    executionEnvironment.rootDeviceEnvironments[4]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+
+    ultHwConfig.sourceExecutionEnvironment = &executionEnvironment;
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_FALSE(globalDriverHandles->empty());
+    uint32_t numDrivers = 0;
+    zeDriverGet(&numDrivers, nullptr);
+
+    ASSERT_EQ(3u, numDrivers);
+
+    ze_driver_handle_t drivers[3];
+    zeDriverGet(&numDrivers, drivers);
+
+    auto driver0 = static_cast<L0::DriverHandleImp *>(drivers[0]);
+    auto driver1 = static_cast<L0::DriverHandleImp *>(drivers[1]);
+    auto driver2 = static_cast<L0::DriverHandleImp *>(drivers[2]);
+
+    EXPECT_EQ(1u, driver0->devices.size());
+    EXPECT_EQ(IGFX_BMG, driver0->devices[0]->getHwInfo().platform.eProductFamily);
+
+    EXPECT_EQ(1u, driver1->devices.size());
+    EXPECT_EQ(IGFX_PTL, driver1->devices[0]->getHwInfo().platform.eProductFamily);
+
+    EXPECT_EQ(3u, driver2->devices.size());
+    EXPECT_EQ(IGFX_LUNARLAKE, driver2->devices[0]->getHwInfo().platform.eProductFamily);
+    EXPECT_EQ(IGFX_LUNARLAKE, driver2->devices[1]->getHwInfo().platform.eProductFamily);
+    EXPECT_EQ(IGFX_LUNARLAKE, driver2->devices[2]->getHwInfo().platform.eProductFamily);
+
+    delete driver0;
+    delete driver1;
+    delete driver2;
+
+    globalDriverHandles->clear();
+}
+
 } // namespace ult
 } // namespace L0
