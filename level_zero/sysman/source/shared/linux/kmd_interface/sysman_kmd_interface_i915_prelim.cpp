@@ -96,6 +96,14 @@ std::string SysmanKmdInterfaceI915Prelim::getSysfsFilePathForPhysicalMemorySize(
     return filePathPhysicalMemorySize;
 }
 
+std::string SysmanKmdInterfaceI915Prelim::getEnergyCounterNodeFile(zes_power_domain_t powerDomain) {
+    std::string filePath = {};
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        filePath = sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode].second;
+    }
+    return filePath;
+}
+
 int64_t SysmanKmdInterfaceI915Prelim::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {

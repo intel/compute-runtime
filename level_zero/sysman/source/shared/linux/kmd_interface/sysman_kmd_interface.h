@@ -111,6 +111,7 @@ class SysmanKmdInterface {
     virtual std::string getBasePath(uint32_t subDeviceId) const = 0;
     virtual std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) = 0;
     virtual std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) = 0;
+    virtual std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) = 0;
     virtual int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) = 0;
     virtual std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const = 0;
     virtual bool isStandbyModeControlAvailable() const = 0;
@@ -182,6 +183,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     std::string getBasePath(uint32_t subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
+    std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
@@ -230,6 +232,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     std::string getBasePath(uint32_t subDeviceId) const override;
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
+    std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return true; }
@@ -279,6 +282,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getSysfsFilePath(SysfsName sysfsName, uint32_t subDeviceId, bool baseDirectoryExists) override;
     std::string getSysfsFilePathForPhysicalMemorySize(uint32_t subDeviceId) override;
     std::string getEngineBasePath(uint32_t subDeviceId) const override;
+    std::string getEnergyCounterNodeFile(zes_power_domain_t powerDomain) override;
     int64_t getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pmuInterface) override;
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }

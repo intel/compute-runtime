@@ -52,6 +52,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     std::string criticalPowerLimit = {};
     std::string sustainedPowerLimit = {};
     std::string sustainedPowerLimitInterval = {};
+    std::string energyCounterNodeFile = {};
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
@@ -66,6 +67,7 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
     }
 
     ze_result_t getDefaultLimit(int32_t &defaultLimit);
+    void init();
 };
 } // namespace Sysman
 } // namespace L0

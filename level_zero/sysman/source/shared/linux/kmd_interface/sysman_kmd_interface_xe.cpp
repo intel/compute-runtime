@@ -93,6 +93,14 @@ std::string SysmanKmdInterfaceXe::getSysfsFilePathForPhysicalMemorySize(uint32_t
     return filePathPhysicalMemorySize;
 }
 
+std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t powerDomain) {
+    std::string filePath = {};
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
+        filePath = sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode].second;
+    }
+    return filePath;
+}
+
 int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
     return -1;
 }

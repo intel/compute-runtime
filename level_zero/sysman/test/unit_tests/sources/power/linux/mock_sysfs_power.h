@@ -43,11 +43,21 @@ constexpr uint32_t mockDefaultPowerLimitVal = 600000000;
 constexpr uint64_t mockMinPowerLimitVal = 300000000;
 constexpr uint64_t mockMaxPowerLimitVal = 600000000;
 
-const std::string realPathTelem = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
-const std::string sysfsPathTelem = "/sys/class/intel_pmt/telem1";
-const std::string telemOffsetFileName("/sys/class/intel_pmt/telem1/offset");
-const std::string telemGuidFileName("/sys/class/intel_pmt/telem1/guid");
-const std::string telemFileName("/sys/class/intel_pmt/telem1/telem");
+const std::string realPathTelem1 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem1";
+const std::string realPathTelem2 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem2";
+const std::string realPathTelem3 = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:02.0/0000:8e:00.1/pmt_telemetry.1.auto/intel_pmt/telem3";
+const std::string sysfsPathTelem1 = "/sys/class/intel_pmt/telem1";
+const std::string sysfsPathTelem2 = "/sys/class/intel_pmt/telem2";
+const std::string sysfsPathTelem3 = "/sys/class/intel_pmt/telem3";
+const std::string telem1OffsetFileName("/sys/class/intel_pmt/telem1/offset");
+const std::string telem1GuidFileName("/sys/class/intel_pmt/telem1/guid");
+const std::string telem1TelemFileName("/sys/class/intel_pmt/telem1/telem");
+const std::string telem2OffsetFileName("/sys/class/intel_pmt/telem2/offset");
+const std::string telem2GuidFileName("/sys/class/intel_pmt/telem2/guid");
+const std::string telem2TelemFileName("/sys/class/intel_pmt/telem2/telem");
+const std::string telem3OffsetFileName("/sys/class/intel_pmt/telem3/offset");
+const std::string telem3GuidFileName("/sys/class/intel_pmt/telem3/guid");
+const std::string telem3TelemFileName("/sys/class/intel_pmt/telem3/telem");
 
 struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
 
@@ -56,9 +66,16 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     ze_result_t mockWriteResult = ZE_RESULT_SUCCESS;
     ze_result_t mockReadIntResult = ZE_RESULT_SUCCESS;
     ze_result_t mockWritePeakLimitResult = ZE_RESULT_SUCCESS;
-    ze_result_t mockscanDirEntriesResult = ZE_RESULT_SUCCESS;
+    std::vector<ze_result_t> mockscanDirEntriesResult{};
     std::vector<ze_result_t> mockReadValUnsignedLongResult{};
     std::vector<ze_result_t> mockWriteUnsignedResult{};
+
+    uint64_t sustainedPowerLimitVal = 0;
+    uint64_t criticalPowerLimitVal = 0;
+    int32_t sustainedPowerLimitIntervalVal = 0;
+    bool isEnergyCounterFilePresent = true;
+    bool isSustainedPowerLimitFilePresent = true;
+    bool isCriticalPowerLimitFilePresent = true;
 
     ze_result_t getValString(const std::string file, std::string &val) {
         ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
@@ -79,10 +96,6 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
         }
         return result;
     }
-
-    uint64_t sustainedPowerLimitVal = 0;
-    uint64_t criticalPowerLimitVal = 0;
-    int32_t sustainedPowerLimitIntervalVal = 0;
 
     ze_result_t getValUnsignedLongHelper(const std::string file, uint64_t &val);
     ze_result_t getValUnsignedLong(const std::string file, uint64_t &val) {
@@ -225,11 +238,27 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     }
 
     ze_result_t scanDirEntries(const std::string file, std::vector<std::string> &listOfEntries) override {
-        if (mockscanDirEntriesResult != ZE_RESULT_SUCCESS) {
-            return mockscanDirEntriesResult;
+        if (!mockscanDirEntriesResult.empty()) {
+            ze_result_t result = mockscanDirEntriesResult.front();
+            mockscanDirEntriesResult.erase(mockscanDirEntriesResult.begin());
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
         }
-
         return getscanDirEntries(file, listOfEntries);
+    }
+
+    bool fileExists(const std::string file) override {
+        if (file.find(energyCounterNode) != std::string::npos) {
+            return isEnergyCounterFilePresent;
+        } else if (file.find(sustainedPowerLimit) != std::string::npos) {
+            return isSustainedPowerLimitFilePresent;
+        } else if (file.find(criticalPowerLimit1) != std::string::npos) {
+            return isCriticalPowerLimitFilePresent;
+        } else if (file.find(criticalPowerLimit2) != std::string::npos) {
+            return isCriticalPowerLimitFilePresent;
+        }
+        return false;
     }
 
     MockPowerSysfsAccessInterface() = default;
@@ -262,8 +291,8 @@ class SysmanDevicePowerFixtureI915 : public SysmanDeviceFixture {
         pSysmanKmdInterface->pFsAccess.reset(pFsAccess);
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+        pSysfsAccess->mockscanDirEntriesResult.push_back(ZE_RESULT_SUCCESS);
         pLinuxSysmanImp->pFsAccess = pFsAccess;
-        getPowerHandles(0);
     }
     void TearDown() override {
         SysmanDeviceFixture::TearDown();
@@ -303,6 +332,7 @@ class SysmanDevicePowerMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pSysfsAccess = new MockPowerSysfsAccessInterface();
         pSysmanKmdInterface->pSysfsAccess.reset(pSysfsAccess);
         pLinuxSysmanImp->pSysmanKmdInterface.reset(pSysmanKmdInterface);
+        pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
     }
     void TearDown() override {
         SysmanMultiDeviceFixture::TearDown();

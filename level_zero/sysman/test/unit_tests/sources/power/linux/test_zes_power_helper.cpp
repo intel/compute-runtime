@@ -150,7 +150,7 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleAndExtPro
 
 TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenScanDirectoriesFailAndTelemetrySupportNotAvailableWhenGettingCardPowerThenFailureIsReturned) {
 
-    pSysfsAccess->mockscanDirEntriesResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    pSysfsAccess->mockscanDirEntriesResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
@@ -180,8 +180,8 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenReadingToSysNodesFailsWhe
         delete handle;
     }
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCriticalPowerLimitFilePresent = false;
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
 
     auto handles = getPowerHandles(powerHandleComponentCountMultiDevice);
@@ -202,7 +202,9 @@ TEST_F(SysmanDevicePowerMultiDeviceFixtureHelper, GivenValidPowerHandleWhenGetti
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
         zes_power_energy_counter_t energyCounter = {};
         ASSERT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        if (properties.subdeviceId == 0) {
+        if (!properties.onSubdevice) {
+            EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+        } else if (properties.subdeviceId == 0) {
             EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile0);
         } else if (properties.subdeviceId == 1) {
             EXPECT_EQ(energyCounter.energy, expectedEnergyCounterTile1);

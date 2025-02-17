@@ -111,14 +111,21 @@ ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEner
 }
 
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-    pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
-    std::string energyCounterNode = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageEnergyCounterNode, subdeviceId, false);
-    ze_result_t result = pSysfsAccess->read(energyCounterNode, pEnergy->energy);
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    if (isTelemetrySupportAvailable) {
+        result = getPmtEnergyCounter(pEnergy);
+    }
+
     if (result != ZE_RESULT_SUCCESS) {
-        if (isTelemetrySupportAvailable) {
-            return getPmtEnergyCounter(pEnergy);
+        if ((result = pSysfsAccess->read(energyCounterNodeFile, pEnergy->energy)) != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), energyCounterNodeFile.c_str(), getErrorCode(result));
+            return result;
         }
     }
+
+    pEnergy->timestamp = SysmanDevice::getSysmanTimestamp();
+
     return result;
 }
 
@@ -293,13 +300,13 @@ bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {
     return false;
 }
 
-bool LinuxPowerImp::isPowerModuleSupported() {
+void LinuxPowerImp::init() {
     std::vector<std::string> listOfAllHwmonDirs = {};
-    bool hwmonDirExists = false;
     const std::string hwmonDir("device/hwmon");
     if (ZE_RESULT_SUCCESS != pSysfsAccess->scanDirEntries(hwmonDir, listOfAllHwmonDirs)) {
-        hwmonDirExists = false;
+        return;
     }
+
     for (const auto &tempHwmonDirEntry : listOfAllHwmonDirs) {
         const std::string hwmonNameFile = hwmonDir + "/" + tempHwmonDirEntry + "/" + "name";
         std::string name;
@@ -308,30 +315,49 @@ bool LinuxPowerImp::isPowerModuleSupported() {
         }
         if (isIntelGraphicsHwmonDir(name)) {
             intelGraphicsHwmonDir = hwmonDir + "/" + tempHwmonDirEntry;
-            hwmonDirExists = true;
             canControl = (!isSubdevice) && (pSysmanProductHelper->isPowerSetLimitSupported());
+            break;
         }
     }
 
-    if (!isSubdevice) {
-        uint64_t val = 0;
-        sustainedPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, subdeviceId, false);
+    if (intelGraphicsHwmonDir.empty()) {
+        return;
+    }
+
+    std::string fileName = pSysmanKmdInterface->getEnergyCounterNodeFile(powerDomain);
+    if (!fileName.empty()) {
+        energyCounterNodeFile = intelGraphicsHwmonDir + "/" + fileName;
+    }
+
+    if (isSubdevice) {
+        return;
+    }
+
+    if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
         criticalPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageCriticalPowerLimit, subdeviceId, false);
+        sustainedPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, subdeviceId, false);
         sustainedPowerLimitInterval = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, subdeviceId, false);
-        if (ZE_RESULT_SUCCESS == pSysfsAccess->read(sustainedPowerLimit, val)) {
-            powerLimitCount++;
-        }
-
-        if (ZE_RESULT_SUCCESS == pSysfsAccess->read(criticalPowerLimit, val)) {
-            powerLimitCount++;
-        }
+    } else {
+        return;
     }
 
-    if (hwmonDirExists == false) {
-        isTelemetrySupportAvailable = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
-        return isTelemetrySupportAvailable;
+    if (pSysfsAccess->fileExists(sustainedPowerLimit)) {
+        powerLimitCount++;
     }
-    return true;
+
+    if (pSysfsAccess->fileExists(criticalPowerLimit)) {
+        powerLimitCount++;
+    }
+}
+
+bool LinuxPowerImp::isPowerModuleSupported() {
+    bool isEnergyCounterAvailable = (pSysfsAccess->fileExists(energyCounterNodeFile) || isTelemetrySupportAvailable);
+
+    if (isSubdevice) {
+        return isEnergyCounterAvailable;
+    }
+
+    return isEnergyCounterAvailable || pSysfsAccess->fileExists(sustainedPowerLimit) || pSysfsAccess->fileExists(criticalPowerLimit);
 }
 
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), powerDomain(powerDomain) {
@@ -339,6 +365,8 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();
     pSysmanProductHelper = pLinuxSysmanImp->getSysmanProductHelper();
+    isTelemetrySupportAvailable = PlatformMonitoringTech::isTelemetrySupportAvailable(pLinuxSysmanImp, subdeviceId);
+    init();
 }
 
 std::vector<zes_power_domain_t> OsPower::getSupportedPowerDomains(OsSysman *pOsSysman) {

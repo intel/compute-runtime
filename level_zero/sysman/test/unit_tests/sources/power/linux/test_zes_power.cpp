@@ -60,6 +60,76 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenPowerHandlesListContainsCardDomainHand
     EXPECT_EQ(zesDeviceGetCardPowerDomain(device->toHandle(), &phPower), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(SysmanDevicePowerFixtureI915, GivenHwmonDirectoriesDoesNotExistWhenGettingPowerHandlesThenNoHandlesAreReturned) {
+    pSysfsAccess->mockscanDirEntriesResult.clear();
+    pSysfsAccess->mockscanDirEntriesResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->mockscanDirEntriesResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0u);
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenHwmonDirectoriesDoesNotContainNameFileWhenGettingPowerHandlesThenNoHandlesAreReturned) {
+    pSysfsAccess->mockReadResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0u);
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenPowerHandleWithUnknownPowerDomainWhenIsPowerModuleSupportedIsCalledThenFalseValueIsReturned) {
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, onSubdevice, subdeviceId, ZES_POWER_DOMAIN_UNKNOWN);
+    pPowerImp->pSysfsAccess = pSysfsAccess;
+    EXPECT_FALSE(pPowerImp->isPowerModuleSupported());
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenTelemetrySupportAndEnergyCounterNodeExistanceStatesWhenIsPowerModuleSupportedIsCalledForSubdeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
+    auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE);
+
+    // Loop through all combinations of the three boolean flags (false/true) for the file existence
+    for (bool isPackageEnergyCounterFilePresent : {false, true}) {
+        for (bool isTelemetrySupportAvailable : {false, true}) {
+            // Set the file existence flags based on the current combination
+            pSysfsAccess->isEnergyCounterFilePresent = isPackageEnergyCounterFilePresent;
+            pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+            // The expected result is true if at least one of the path is present
+            bool expected = (isTelemetrySupportAvailable || isPackageEnergyCounterFilePresent);
+
+            // Verify if the power module is supported as expected
+            EXPECT_EQ(pPowerImp->isPowerModuleSupported(), expected);
+        }
+    }
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
+    auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
+
+    // Loop through all combinations of the three boolean flags (false/true) for the file existence
+    for (bool isPackageEnergyCounterFilePresent : {false, true}) {
+        for (bool isTelemetrySupportAvailable : {false, true}) {
+            for (bool isPackagedSustainedPowerLimitFilePresent : {false, true}) {
+                for (bool isPackageCriticalPowerLimit2Present : {false, true}) {
+                    // Set the file existence flags based on the current combination
+                    pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
+                    pSysfsAccess->isEnergyCounterFilePresent = isPackageEnergyCounterFilePresent;
+                    pSysfsAccess->isSustainedPowerLimitFilePresent = isPackagedSustainedPowerLimitFilePresent;
+                    pSysfsAccess->isCriticalPowerLimitFilePresent = isPackageCriticalPowerLimit2Present;
+
+                    // The expected result is true if at least one of the files is present
+                    bool expected = (isTelemetrySupportAvailable || isPackageEnergyCounterFilePresent ||
+                                     isPackagedSustainedPowerLimitFilePresent || isPackageCriticalPowerLimit2Present);
+
+                    // Verify if the power module is supported as expected
+                    EXPECT_EQ(pPowerImp->isPowerModuleSupported(), expected);
+                }
+            }
+        }
+    }
+}
+
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerPropertiesWhenhwmonInterfaceExistsThenCallSucceeds) {
     MockSysmanProductHelper *pMockSysmanProductHelper = new MockSysmanProductHelper();
     pMockSysmanProductHelper->isPowerSetLimitSupportedResult = true;
@@ -297,8 +367,8 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenReadingToSysNodesFailsWhenCallingGetPo
     for (const auto &handle : pSysmanDeviceImp->pPowerHandleContext->handleList) {
         delete handle;
     }
-    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+    pSysfsAccess->isSustainedPowerLimitFilePresent = false;
+    pSysfsAccess->isCriticalPowerLimitFilePresent = false;
     pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
     pSysmanDeviceImp->pPowerHandleContext->init(pLinuxSysmanImp->getSubDeviceCount());
 
