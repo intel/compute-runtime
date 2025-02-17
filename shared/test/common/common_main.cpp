@@ -80,6 +80,8 @@ extern GFXCORE_FAMILY renderCoreFamily;
 void applyWorkarounds();
 void setupTestFiles(std::string testBinaryFiles, int32_t revId);
 std::string getBaseExecutionDir();
+bool isChangeDirectoryRequired();
+
 void addUltListener(::testing::TestEventListeners &listener);
 void cleanTestHelpers();
 
@@ -351,23 +353,25 @@ int main(int argc, char **argv) {
 
         setupTestFiles(getRunPath(argv[0]), testRevId);
 
-        auto executionDirectory = getBaseExecutionDir();
-        executionDirectory += hardwarePrefix[productFamily];
-        executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
-        executionDirectory += "/";
-        executionDirectory += std::to_string(testRevId);
+        if (isChangeDirectoryRequired()) {
+            auto executionDirectory = getBaseExecutionDir();
+            executionDirectory += hardwarePrefix[productFamily];
+            executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
+            executionDirectory += "/";
+            executionDirectory += std::to_string(testRevId);
 
 #ifdef WIN32
 #include <direct.h>
-        if (_chdir(executionDirectory.c_str())) {
-            std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
-        }
+            if (_chdir(executionDirectory.c_str())) {
+                std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
+            }
 #elif defined(__linux__)
 #include <unistd.h>
-        if (chdir(executionDirectory.c_str()) != 0) {
-            std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
-        }
+            if (chdir(executionDirectory.c_str()) != 0) {
+                std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
+            }
 #endif
+        }
 
         if (!checkAubTestsExecutionPathValidity()) {
             return -1;

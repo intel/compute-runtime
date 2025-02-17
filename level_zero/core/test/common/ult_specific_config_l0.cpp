@@ -49,10 +49,14 @@ void setupTestFiles(std::string testBinaryFiles, int32_t revId) {
 }
 
 std::string getBaseExecutionDir() {
-    if (testMode != TestMode::aubTests) {
+    if (!isAubTestMode(testMode)) {
         return "level_zero/";
     }
     return "";
+}
+
+bool isChangeDirectoryRequired() {
+    return true;
 }
 
 void addUltListener(::testing::TestEventListeners &listeners) {
