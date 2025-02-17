@@ -280,7 +280,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(16384u, sharedCaps.image2DMaxHeight);
     EXPECT_EQ(2048u, sharedCaps.imageMaxArraySize);
     if (device->getHardwareInfo().capabilityTable.supportsOcl21Features == false && is64bit) {
-        EXPECT_TRUE(sharedCaps.force32BitAddressess);
+        EXPECT_TRUE(sharedCaps.force32BitAddresses);
     }
 }
 
@@ -398,9 +398,9 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
         const auto &sharedCaps = device->getSharedDeviceInfo();
         const auto memSizePercent = device->getMemoryManager()->getPercentOfGlobalMemoryAvailable(device->getRootDeviceIndex());
         if constexpr (is64bit) {
-            EXPECT_TRUE(sharedCaps.force32BitAddressess);
+            EXPECT_TRUE(sharedCaps.force32BitAddresses);
         } else {
-            EXPECT_FALSE(sharedCaps.force32BitAddressess);
+            EXPECT_FALSE(sharedCaps.force32BitAddresses);
         }
         auto expectedSize = (cl_ulong)(4 * memSizePercent * MemoryConstants::gigaByte);
         EXPECT_LE(sharedCaps.globalMemSize, expectedSize);

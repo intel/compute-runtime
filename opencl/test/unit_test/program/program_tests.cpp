@@ -1727,12 +1727,12 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
     }
 }
 
-TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
+TEST_F(ProgramTests, GivenForce32BitAddressesWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
     cl_int retVal = CL_DEVICE_NOT_FOUND;
     debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
-        const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
+        const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
         MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
         auto internalOptions = program.getInternalOptions();
         const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
@@ -1774,10 +1774,10 @@ TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3Typ
     EXPECT_TRUE(CompilerOptions::contains(internalOptions, CompilerOptions::preserveVec3Type)) << internalOptions;
 }
 
-TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
+TEST_F(ProgramTests, Force32BitAddressesWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     DebugManagerStateRestore dbgRestorer;
     debugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
+    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
     std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
     auto internalOptions = program->getInternalOptions();
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();

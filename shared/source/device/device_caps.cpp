@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,7 +75,7 @@ void Device::initializeCaps() {
         double percentOfGlobalMemoryAvailable = getPercentOfGlobalMemoryAvailable();
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * MemoryConstants::gigaByte * percentOfGlobalMemoryAvailable));
         deviceInfo.addressBits = 32;
-        deviceInfo.force32BitAddressess = is64bit;
+        deviceInfo.force32BitAddresses = is64bit;
     }
 
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);

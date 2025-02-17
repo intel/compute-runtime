@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,16 +28,16 @@ const bool enableBacktrace = true;
 constexpr u_int32_t backtraceBufferSize = 256;
 
 void collectBacktrace() {
-    void *addressess[backtraceBufferSize];
+    void *addresses[backtraceBufferSize];
     char **functions;
-    auto pointersCount = backtrace(addressess, backtraceBufferSize);
-    functions = backtrace_symbols(addressess, pointersCount);
+    auto pointersCount = backtrace(addresses, backtraceBufferSize);
+    functions = backtrace_symbols(addresses, pointersCount);
 
     printf("\n backtrace collected -- START --\n");
 
     for (int symbolId = 0; symbolId < pointersCount; symbolId++) {
         Dl_info info;
-        dladdr(addressess[symbolId], &info);
+        dladdr(addresses[symbolId], &info);
         char *realname;
         int status;
         realname = abi::__cxa_demangle(info.dli_sname, 0, 0, &status);

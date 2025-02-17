@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1833,8 +1833,8 @@ TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPoint
 }
 
 TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreated) {
-    bool force32BitAddressess = pDevice->getDeviceInfo().force32BitAddressess;
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
+    bool force32BitAddresses = pDevice->getDeviceInfo().force32BitAddresses;
+    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = true;
 
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::copyBufferToBuffer, BuiltinCode::ECodeType::source, *pDevice);
@@ -1854,7 +1854,7 @@ TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreate
         EXPECT_EQ(std::string::npos, it);
     }
 
-    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = force32BitAddressess;
+    const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddresses = force32BitAddresses;
 }
 
 TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {

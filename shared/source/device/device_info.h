@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ struct DeviceInfo {
     StackVec<uint32_t, 6> threadsPerEUConfigs;
     uint32_t vendorId;
     uint32_t vmeAvcSupportsPreemption;
-    bool force32BitAddressess;
+    bool force32BitAddresses;
     std::string name;
 };
 
