@@ -68,6 +68,7 @@ class Context : public BaseObject<_cl_context> {
 
         const StackVec<NEO::GraphicsAllocation *, 1> &getAllocationsVector();
     };
+    static_assert(NEO::NonCopyable<AbstractBuffersPool<BufferPool, Buffer, MemObj>>);
 
     class BufferPoolAllocator : public AbstractBuffersAllocator<BufferPool, Buffer, MemObj> {
         using BaseType = AbstractBuffersAllocator<BufferPool, Buffer, MemObj>;

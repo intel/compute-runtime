@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <atomic>
 #include <memory>
@@ -169,7 +170,7 @@ inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
 }
 
 template <typename RefTrackedObj>
-class DecRefInternalAtScopeEnd final {
+class DecRefInternalAtScopeEnd final : NEO::NonCopyableAndNonMovableClass {
   public:
     DecRefInternalAtScopeEnd(RefTrackedObj &obj) : object{obj} {
     }
@@ -177,11 +178,6 @@ class DecRefInternalAtScopeEnd final {
     ~DecRefInternalAtScopeEnd() {
         object.decRefInternal();
     }
-
-    DecRefInternalAtScopeEnd(const DecRefInternalAtScopeEnd &) = delete;
-    DecRefInternalAtScopeEnd(DecRefInternalAtScopeEnd &&) = delete;
-    DecRefInternalAtScopeEnd &operator=(const DecRefInternalAtScopeEnd &) = delete;
-    DecRefInternalAtScopeEnd &operator=(DecRefInternalAtScopeEnd &&) = delete;
 
   private:
     RefTrackedObj &object;

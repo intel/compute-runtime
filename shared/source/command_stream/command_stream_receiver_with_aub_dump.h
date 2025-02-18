@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,6 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
                                      ExecutionEnvironment &executionEnvironment,
                                      uint32_t rootDeviceIndex,
                                      const DeviceBitfield deviceBitfield);
-
-    CommandStreamReceiverWithAUBDump(const CommandStreamReceiverWithAUBDump &) = delete;
-    CommandStreamReceiverWithAUBDump &operator=(const CommandStreamReceiverWithAUBDump &) = delete;
 
     SubmissionStatus flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;

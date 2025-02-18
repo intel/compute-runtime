@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <atomic>
 #include <thread>
@@ -168,7 +169,7 @@ struct IDNode {
 };
 
 template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = false, bool supportRecursiveLock = true>
-class IDList {
+class IDList : NEO::NonCopyableAndNonMovableClass {
   public:
     using ThisType = IDList<NodeObjectType, threadSafe, ownsNodes, supportRecursiveLock>;
 
@@ -191,9 +192,6 @@ class IDList {
     ~IDList() {
         this->cleanup();
     }
-
-    IDList(const IDList &) = delete;
-    IDList &operator=(const IDList &) = delete;
 
     void pushFrontOne(NodeObjectType &node) {
         processLocked<ThisType, &ThisType::pushFrontOneImpl>(&node);

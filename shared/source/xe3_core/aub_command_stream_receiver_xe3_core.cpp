@@ -23,4 +23,5 @@ void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
 }
 
 template class AUBCommandStreamReceiverHw<Family>;
+static_assert(NEO::NonCopyableAndNonMovable<AUBCommandStreamReceiverHw<Family>>);
 } // namespace NEO

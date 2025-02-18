@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/mt_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <atomic>
 #include <memory>
@@ -89,7 +90,7 @@ struct IFNode {
 };
 
 template <typename NodeObjectType, bool threadSafe = true, bool ownsNodes = false>
-class IFList {
+class IFList : NEO::NonCopyableAndNonMovableClass {
   public:
     IFList()
         : head(nullptr) {
@@ -102,9 +103,6 @@ class IFList {
     ~IFList() {
         this->cleanup();
     }
-
-    IFList(const IFList &) = delete;
-    IFList &operator=(const IFList &) = delete;
 
     template <bool c = threadSafe>
     typename std::enable_if<c, void>::type pushFrontOne(NodeObjectType &node) {

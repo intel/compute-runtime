@@ -27,4 +27,5 @@ void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
 
 template class TbxCommandStreamReceiverHw<Family>;
 template class CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>;
+static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>>);
 } // namespace NEO

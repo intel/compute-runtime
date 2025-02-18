@@ -15,4 +15,5 @@ namespace NEO {
 template class DeviceCommandStreamReceiver<Xe3CoreFamily>;
 template class WddmCommandStreamReceiver<Xe3CoreFamily>;
 template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<Xe3CoreFamily>>;
+static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<Xe3CoreFamily>>>);
 } // namespace NEO

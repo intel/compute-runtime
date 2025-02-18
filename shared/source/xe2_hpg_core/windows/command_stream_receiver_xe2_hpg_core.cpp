@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,4 +15,5 @@ namespace NEO {
 template class DeviceCommandStreamReceiver<Xe2HpgCoreFamily>;
 template class WddmCommandStreamReceiver<Xe2HpgCoreFamily>;
 template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<Xe2HpgCoreFamily>>;
+static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<Xe2HpgCoreFamily>>>);
 } // namespace NEO

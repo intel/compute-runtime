@@ -31,6 +31,8 @@ namespace NEO {
 template void KernelOperation::ResourceCleaner::operator()<LinearStream>(LinearStream *);
 template void KernelOperation::ResourceCleaner::operator()<IndirectHeap>(IndirectHeap *);
 
+static_assert(NEO::NonCopyableAndNonMovable<DecRefInternalAtScopeEnd<MemObj>>);
+
 CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
                                  CommandQueue &commandQueue)
     : Command(commandQueue), memObj(memObj), copySize(copySize), copyOffset(copyOffset), readOnly(readOnly), operationType(operationType) {

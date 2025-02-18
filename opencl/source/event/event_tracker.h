@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct TrackedEvent : IFNode<TrackedEvent> {
     Event *ev = nullptr;
     int64_t eventId = 1;
 };
+static_assert(NEO::NonCopyableAndNonMovable<IFList<TrackedEvent, true, true>>);
 
 class EventsTracker {
 

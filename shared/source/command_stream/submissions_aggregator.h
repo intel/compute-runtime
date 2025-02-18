@@ -9,6 +9,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/utilities/idlist.h"
 
@@ -72,10 +73,8 @@ struct BatchBuffer {
     bool taskCountUpdateOnly = false;
 };
 
-struct CommandBuffer : public IDNode<CommandBuffer> {
+struct CommandBuffer : public IDNode<CommandBuffer>, NEO::NonCopyableAndNonMovableClass {
     CommandBuffer(Device &device);
-    CommandBuffer &operator=(const CommandBuffer &) = delete;
-    CommandBuffer &operator=(CommandBuffer &&) = delete;
     ~CommandBuffer() override;
     ResidencyContainer surfaces;
     BatchBuffer batchBuffer;
@@ -88,6 +87,8 @@ struct CommandBuffer : public IDNode<CommandBuffer> {
     std::unique_ptr<FlushStampTracker> flushStamp;
     Device &device;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CommandBuffer>);
 
 struct CommandBufferList : public IDList<CommandBuffer, false, true, false> {};
 

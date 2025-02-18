@@ -15,6 +15,7 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/spinlock.h"
@@ -78,7 +79,7 @@ enum class DispatchMode {
     batchedDispatch             // dispatching is batched, explicit clFlush is required
 };
 
-class CommandStreamReceiver {
+class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
   public:
     static constexpr size_t startingResidencyContainerSize = 128;
 
@@ -93,8 +94,6 @@ class CommandStreamReceiver {
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment,
                           uint32_t rootDeviceIndex,
                           const DeviceBitfield deviceBitfield);
-    CommandStreamReceiver(const CommandStreamReceiver &) = delete;
-    CommandStreamReceiver &operator=(const CommandStreamReceiver &) = delete;
 
     virtual ~CommandStreamReceiver();
 
@@ -708,6 +707,8 @@ class CommandStreamReceiver {
     bool csrSurfaceProgrammingDone = false;
     bool latestFlushIsTaskCountUpdateOnly = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiver>);
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,
                                                                   ExecutionEnvironment &executionEnvironment,

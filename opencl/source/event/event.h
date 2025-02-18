@@ -78,6 +78,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         int32_t callbackExecutionStatusTarget; // minimum event execution status that will triger this callback
         void *userData;
     };
+    static_assert(NEO::NonCopyableAndNonMovable<IFList<Callback, true, true>>);
 
     struct ProfilingInfo {
         uint64_t cpuTimeInNs;

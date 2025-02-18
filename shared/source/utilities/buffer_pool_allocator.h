@@ -61,7 +61,7 @@ struct AbstractBuffersPool : public NonCopyableClass {
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback);
     AbstractBuffersPool(MemoryManager *memoryManager, OnChunkFreeCallback onChunkFreeCallback, const SmallBuffersParams &params);
     AbstractBuffersPool(AbstractBuffersPool<PoolT, BufferType, BufferParentType> &&bufferPool);
-    AbstractBuffersPool &operator=(AbstractBuffersPool &&) = delete;
+    AbstractBuffersPool &operator=(AbstractBuffersPool &&other) noexcept = delete;
     virtual ~AbstractBuffersPool() = default;
 
     void tryFreeFromPoolBuffer(BufferParentType *possiblePoolBuffer, size_t offset, size_t size);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,4 +43,5 @@ uint32_t AUBCommandStreamReceiverHw<Family>::getGUCWorkQueueItemHeader() {
 }
 
 template class AUBCommandStreamReceiverHw<Family>;
+static_assert(NEO::NonCopyableAndNonMovable<NEO::AUBCommandStreamReceiverHw<Family>>);
 } // namespace NEO

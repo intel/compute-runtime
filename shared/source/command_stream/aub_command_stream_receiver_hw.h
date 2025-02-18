@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,9 +78,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
                                uint32_t rootDeviceIndex,
                                const DeviceBitfield deviceBitfield);
     ~AUBCommandStreamReceiverHw() override;
-
-    AUBCommandStreamReceiverHw(const AUBCommandStreamReceiverHw &) = delete;
-    AUBCommandStreamReceiverHw &operator=(const AUBCommandStreamReceiverHw &) = delete;
 
     MOCKABLE_VIRTUAL void openFile(const std::string &fileName);
     MOCKABLE_VIRTUAL bool reopenFile(const std::string &fileName);

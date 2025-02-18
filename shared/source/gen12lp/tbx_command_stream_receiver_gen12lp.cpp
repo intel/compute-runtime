@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,4 +37,5 @@ void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
 
 template class TbxCommandStreamReceiverHw<Family>;
 template class CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>;
+static_assert(NEO::NonCopyableAndNonMovable<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>>);
 } // namespace NEO
