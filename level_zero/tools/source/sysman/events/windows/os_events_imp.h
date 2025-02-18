@@ -40,7 +40,6 @@ class WddmEventsImp : public OsEvents, NEO::NonCopyableAndNonMovableClass {
     std::vector<EventHandler> eventList;
 };
 
-// Don't allow copies of the WddmEventsImp object
 static_assert(NEO::NonCopyableAndNonMovable<WddmEventsImp>);
 
 } // namespace L0
