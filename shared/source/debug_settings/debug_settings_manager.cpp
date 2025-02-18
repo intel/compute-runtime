@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,8 @@ void DebugSettingsManager<debugLevel>::getStringWithFlags(std::string &allFlags,
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                 \
     {                                                                                                             \
         std::string neoKey = convPrefixToString(flags.variableName.getPrefixType());                              \
-        neoKey += getNonReleaseKeyName(#variableName);                                                            \
+        constexpr auto keyName = getNonReleaseKeyName(#variableName);                                             \
+        neoKey += keyName;                                                                                        \
         allFlagsStream << neoKey.c_str() << " = " << flags.variableName.get() << '\n';                            \
         dumpNonDefaultFlag<dataType>(neoKey.c_str(), flags.variableName.get(), defaultValue, changedFlagsStream); \
     }
@@ -139,12 +140,13 @@ void DebugSettingsManager<debugLevel>::dumpFlags() const {
 template <DebugFunctionalityLevel debugLevel>
 void DebugSettingsManager<debugLevel>::injectSettingsFromReader() {
 #undef DECLARE_DEBUG_VARIABLE
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                        \
-    {                                                                                                                    \
-        DebugVarPrefix type;                                                                                             \
-        dataType tempData = readerImpl->getSetting(getNonReleaseKeyName(#variableName), flags.variableName.get(), type); \
-        flags.variableName.setPrefixType(type);                                                                          \
-        flags.variableName.set(tempData);                                                                                \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)            \
+    {                                                                                        \
+        DebugVarPrefix type;                                                                 \
+        constexpr auto keyName = getNonReleaseKeyName(#variableName);                        \
+        dataType tempData = readerImpl->getSetting(keyName, flags.variableName.get(), type); \
+        flags.variableName.setPrefixType(type);                                              \
+        flags.variableName.set(tempData);                                                    \
     }
 
     if (registryReadAvailable() || isDebugKeysReadEnabled()) {
