@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,11 +72,12 @@ TEST(CcsModeTest, GivenValidCcsModeWhenConfigureCcsModeIsCalledThenVerifyCcsMode
 
     directoryFilesMap["/sys/class/drm"] = {};
     directoryFilesMap["/sys/class/drm"].push_back("/sys/class/drm/card0");
+    directoryFilesMap["/sys/class/drm"].push_back("/sys/class/drm/card1");
     directoryFilesMap["/sys/class/drm"].push_back("version");
 
-    directoryFilesMap["/sys/class/drm/card0/gt"] = {};
-    directoryFilesMap["/sys/class/drm/card0/gt"].push_back("/sys/class/drm/card0/gt/gt0");
-    directoryFilesMap["/sys/class/drm/card0/gt"].push_back("unknown");
+    directoryFilesMap["/sys/class/drm/card1/gt"] = {};
+    directoryFilesMap["/sys/class/drm/card1/gt"].push_back("/sys/class/drm/card1/gt/gt0");
+    directoryFilesMap["/sys/class/drm/card1/gt"].push_back("unknown");
 
     VariableBackup<decltype(SysCalls::sysCallsOpen)> openBackup(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
         return 1;

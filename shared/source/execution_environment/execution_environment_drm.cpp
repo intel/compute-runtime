@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ void ExecutionEnvironment::configureCcsMode() {
     }
 
     const std::string drmPath = "/sys/class/drm";
-    std::string expectedFilePrefix = drmPath + "/card";
+    const std::string expectedFilePrefix = drmPath + "/card";
     auto files = Directory::getFiles(drmPath.c_str());
     for (const auto &file : files) {
         if (file.find(expectedFilePrefix.c_str()) == std::string::npos) {
@@ -47,9 +47,9 @@ void ExecutionEnvironment::configureCcsMode() {
 
         std::string gtPath = file + "/gt";
         auto gtFiles = Directory::getFiles(gtPath.c_str());
-        expectedFilePrefix = gtPath + "/gt";
+        auto expectedGtFilePrefix = gtPath + "/gt";
         for (const auto &gtFile : gtFiles) {
-            if (gtFile.find(expectedFilePrefix.c_str()) == std::string::npos) {
+            if (gtFile.find(expectedGtFilePrefix.c_str()) == std::string::npos) {
                 continue;
             }
             std::string ccsFile = gtFile + "/ccs_mode";
