@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#pragma once
 #include "shared/test/common/test_configuration/aub_tests/aub_tests_configuration.h"
 
 template <typename GfxFamily>

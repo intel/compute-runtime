@@ -5,7 +5,6 @@
  *
  */
 
-#pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"

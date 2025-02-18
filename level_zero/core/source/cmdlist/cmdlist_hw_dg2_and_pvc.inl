@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#pragma once
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 namespace L0 {

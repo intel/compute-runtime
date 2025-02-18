@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#pragma once
 
 inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;

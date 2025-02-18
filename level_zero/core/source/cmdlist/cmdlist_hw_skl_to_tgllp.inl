@@ -5,8 +5,6 @@
  *
  */
 
-#pragma once
-
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"

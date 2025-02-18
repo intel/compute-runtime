@@ -1,11 +1,9 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
-
-#pragma once
 
 #include "shared/source/command_stream/linear_stream.h"
 

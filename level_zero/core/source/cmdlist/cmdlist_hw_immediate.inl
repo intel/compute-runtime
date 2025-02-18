@@ -5,8 +5,6 @@
  *
  */
 
-#pragma once
-
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"

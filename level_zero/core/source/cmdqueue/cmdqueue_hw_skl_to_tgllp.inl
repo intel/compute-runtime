@@ -5,8 +5,6 @@
  *
  */
 
-#pragma once
-
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/linear_stream.h"

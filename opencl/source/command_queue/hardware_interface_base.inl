@@ -5,7 +5,6 @@
  *
  */
 
-#pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"

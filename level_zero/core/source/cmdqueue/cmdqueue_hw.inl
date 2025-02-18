@@ -5,8 +5,6 @@
  *
  */
 
-#pragma once
-
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/command_encoder.h"

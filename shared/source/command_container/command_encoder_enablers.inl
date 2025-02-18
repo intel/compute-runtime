@@ -5,8 +5,6 @@
  *
  */
 
-#pragma once
-
 #include "shared/source/command_container/command_encoder.h"
 
 template struct NEO::EncodeDispatchKernel<Family>;
