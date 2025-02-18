@@ -25,20 +25,9 @@ inline static int openMockDiag(const char *pathname, int flags) {
     }
     return -1;
 }
-void mockSleepFunctionSecs(int64_t secs) {
-    return;
-}
 
 inline static int openMockDiagFail(const char *pathname, int flags) {
     return -1;
-}
-
-inline static int gtPciConfigOpenFail(const char *pathname, int flags) {
-    if (strcmp(pathname, mockRealPathConfig.c_str()) == 0) {
-        return mockFileDescriptor;
-    } else {
-        return -1;
-    }
 }
 
 ssize_t preadMockDiag(int fd, void *buf, size_t count, off_t offset) {
@@ -74,24 +63,6 @@ ssize_t preadMockDiag(int fd, void *buf, size_t count, off_t offset) {
         mockBuf[0x323] = 0x40;
         mockBuf[0x400] = 0x18;
         mockBuf[0x402] = 0x01;
-    }
-    return count;
-}
-
-ssize_t mockGtConfigPreadInvalid(int fd, void *buf, size_t count, off_t offset) {
-    return count;
-}
-
-ssize_t mockGtConfigPreadFail(int fd, void *buf, size_t count, off_t offset) {
-    if (fd == mockGtPciConfigFd) {
-        return -1;
-    }
-    return count;
-}
-
-ssize_t mockGtConfigPwriteFail(int fd, const void *buf, size_t count, off_t offset) {
-    if (fd == mockGtPciConfigFd) {
-        return -1;
     }
     return count;
 }
@@ -527,66 +498,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetThen
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
-}
-
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtPciConfigOpenFailsThenCallReturnsFailure) {
-    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, gtPciConfigOpenFail);
-    pLinuxSysmanImp->preadFunction = preadMockDiag;
-    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
-}
-
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndConfigHeaderIsInvalidThenCallReturnsFailure) {
-    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
-    pLinuxSysmanImp->preadFunction = mockGtConfigPreadInvalid;
-    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
-}
-
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtConfigPreadFailsThenCallReturnsFailure) {
-    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
-    pLinuxSysmanImp->preadFunction = mockGtConfigPreadFail;
-    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
-}
-
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndGtConfigPwriteFailsThenCallReturnsFailure) {
-    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
-    pLinuxSysmanImp->preadFunction = preadMockDiag;
-    pLinuxSysmanImp->pwriteFunction = mockGtConfigPwriteFail;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxSysmanImp->osWarmReset());
-}
-
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndCardBusRemoveFailsThenCallReturnsFailure) {
-    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
-    pLinuxSysmanImp->preadFunction = preadMockDiag;
-    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-
-    pMockFsAccess->checkErrorAfterCount = 2;
-    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
-}
-
-TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetAndRootPortRescanFailsThenCallReturnsFailure) {
-    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> openBackup(&NEO::SysCalls::sysCallsOpen, openMockDiag);
-    pLinuxSysmanImp->preadFunction = preadMockDiag;
-    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
-
-    pMockFsAccess->checkErrorAfterCount = 3;
-    pMockFsAccess->mockWriteError = ZE_RESULT_ERROR_NOT_AVAILABLE;
-
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxSysmanImp->osWarmReset());
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndVfBarIsResizedWhenCallingWarmResetThenCallSucceeds) {

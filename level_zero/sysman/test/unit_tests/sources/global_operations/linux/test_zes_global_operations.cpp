@@ -845,8 +845,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingzesDeviceResetE
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper = std::make_unique<MockSysmanProductHelper>();
     std::swap(pLinuxSysmanImp->pSysmanProductHelper, pSysmanProductHelper);
 
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.VfBarResourceAllocationWa.set(false);
     zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_WARM};
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -894,8 +892,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingZesDeviceResetE
 
 TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetExtWithInvalidTypeThenFailureIsReturned) {
     init(true);
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.VfBarResourceAllocationWa.set(false);
     zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_FORCE_UINT32};
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
@@ -903,8 +899,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenDeviceInUseWhenCallingResetExtWithInv
 
 TEST_F(SysmanGlobalOperationsFixture, GivenGettingSysfsPathFailsWhenCallingResetExtThenFailureIsReturned) {
     init(true);
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.VfBarResourceAllocationWa.set(false);
     pSysfsAccess->mockDeviceUnbound = true;
     zes_reset_properties_t pProperties = {.stype = ZES_STRUCTURE_TYPE_RESET_PROPERTIES, .pNext = nullptr, .force = true, .resetType = ZES_RESET_TYPE_FORCE_UINT32};
     ze_result_t result = zesDeviceResetExt(pSysmanDevice->toHandle(), &pProperties);
@@ -912,8 +906,6 @@ TEST_F(SysmanGlobalOperationsFixture, GivenGettingSysfsPathFailsWhenCallingReset
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenForceTrueWhenCallingResetThenSuccessIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    debugManager.flags.VfBarResourceAllocationWa.set(false);
     ze_result_t result = zesDeviceReset(device, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }

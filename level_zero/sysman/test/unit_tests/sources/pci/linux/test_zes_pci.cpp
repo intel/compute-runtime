@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -666,6 +666,43 @@ TEST_F(ZesPciFixture, WhenConvertingLinkSpeedFromGigaTransfersPerSecondToBytesPe
     int64_t speedPci25 = L0::Sysman::convertPcieSpeedFromGTsToBs(PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond);
     EXPECT_EQ(speedPci25, static_cast<int64_t>(PciLinkSpeeds::pci2Dot5GigaTransfersPerSecond * convertMegabitsPerSecondToBytesPerSecond * convertGigabitToMegabit * encodingGen1Gen2));
     EXPECT_EQ(0, L0::Sysman::convertPcieSpeedFromGTsToBs(0.0));
+}
+
+TEST_F(ZesPciFixture, GivenValidConfigMemoryDataWhenCallingGetRebarCapabilityPosThenTrueValueIsReturned) {
+    std::unique_ptr<PublicLinuxPciImp> pLinuxPciImp = std::make_unique<PublicLinuxPciImp>(pOsSysman);
+    std::vector<uint8_t> configMemory(PCI_CFG_SPACE_EXP_SIZE);
+    uint8_t *mockBuf = configMemory.data();
+    mockBuf[0x006] = 0x10;
+    mockBuf[0x034] = 0x40;
+    mockBuf[0x040] = 0x0d;
+    mockBuf[0x041] = 0x50;
+    mockBuf[0x050] = 0x10;
+    mockBuf[0x051] = 0x70;
+    mockBuf[0x052] = 0x90;
+    mockBuf[0x070] = 0x10;
+    mockBuf[0x071] = 0xac;
+    mockBuf[0x072] = 0xa0;
+    mockBuf[0x0ac] = 0x10;
+    mockBuf[0x0b8] = 0x11;
+    mockBuf[0x100] = 0x0e;
+    mockBuf[0x102] = 0x01;
+    mockBuf[0x103] = 0x42;
+    mockBuf[0x420] = 0x15;
+    mockBuf[0x422] = 0x01;
+    mockBuf[0x423] = 0x22;
+    mockBuf[0x425] = 0xf0;
+    mockBuf[0x426] = 0x3f;
+    mockBuf[0x428] = 0x22;
+    mockBuf[0x429] = 0x11;
+    mockBuf[0x220] = 0x24;
+    mockBuf[0x222] = 0x01;
+    mockBuf[0x223] = 0x32;
+    mockBuf[0x320] = 0x10;
+    mockBuf[0x322] = 0x01;
+    mockBuf[0x323] = 0x40;
+    mockBuf[0x400] = 0x18;
+    mockBuf[0x402] = 0x01;
+    EXPECT_TRUE(pLinuxPciImp->getRebarCapabilityPos(mockBuf, true));
 }
 
 } // namespace ult
