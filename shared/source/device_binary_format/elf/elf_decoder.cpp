@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -160,7 +160,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
             int symbolSectionIndex = symbolTable[symbolIndex].shndx;
             std::string name = std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + symbolTable[symbolIndex].name);
 
-            RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, rela->addend, rela->offset, relocType, name};
+            RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, rela->addend, rela->offset, relocType, std::move(name)};
 
             relocs.push_back(relocInfo);
             rela++;
@@ -194,7 +194,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
             int symbolSectionIndex = symbolTable[symbolIndex].shndx;
             std::string name = std::string(reinterpret_cast<const char *>(sectionHeaderNamesData.begin()) + symbolTable[symbolIndex].name);
 
-            RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, 0, reloc->offset, relocType, name};
+            RelocationInfo relocInfo = {symbolSectionIndex, symbolIndex, targetSectionIndex, 0, reloc->offset, relocType, std::move(name)};
 
             relocs.push_back(relocInfo);
             reloc++;
