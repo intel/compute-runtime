@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,22 +8,20 @@
 #pragma once
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 namespace NEO {
 class CommandStreamReceiver;
 class TbxSockets;
 class ExecutionEnvironment;
 
-class TbxStream : public AubMemDump::AubStream {
+class TbxStream : public AubMemDump::AubStream, NEO::NonCopyableAndNonMovableClass {
   protected:
     TbxSockets *socket = nullptr;
 
   public:
     TbxStream();
     ~TbxStream() override;
-
-    TbxStream(const TbxStream &) = delete;
-    TbxStream &operator=(const TbxStream &) = delete;
 
     void open(const char *options) override;
     void close() override;
@@ -36,6 +34,8 @@ class TbxStream : public AubMemDump::AubStream {
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override;
     void readMemory(uint64_t physAddress, void *memory, size_t size);
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<TbxStream>);
 
 struct TbxCommandStreamReceiver {
     static CommandStreamReceiver *create(const std::string &baseName,

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/utilities/stackvec.h"
 
@@ -13,7 +14,7 @@
 
 namespace NEO {
 struct RootDeviceEnvironment;
-class LocalIdsCache {
+class LocalIdsCache : NEO::NonCopyableAndNonMovableClass {
   public:
     struct LocalIdsCacheEntry {
         Vec3<uint16_t> groupSize = {0, 0, 0};
@@ -24,8 +25,6 @@ class LocalIdsCache {
     };
 
     LocalIdsCache() = delete;
-    LocalIdsCache(LocalIdsCache &) = delete;
-    LocalIdsCache &operator=(const LocalIdsCache &other) = delete;
 
     LocalIdsCache(size_t cacheSize, std::array<uint8_t, 3> wgDimOrder, uint32_t grfCount, uint8_t simdSize, uint8_t grfSize, bool usesOnlyImages = false);
     ~LocalIdsCache();
@@ -48,4 +47,7 @@ class LocalIdsCache {
     const uint8_t simdSize;
     const bool usesOnlyImages;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<LocalIdsCache>);
+
 } // namespace NEO

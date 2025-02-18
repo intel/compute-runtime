@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/io_functions.h"
@@ -119,13 +120,10 @@ struct DebugVariables {                                 // NOLINT(clang-analyzer
 };
 
 template <DebugFunctionalityLevel debugLevel>
-class DebugSettingsManager {
+class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
   public:
     DebugSettingsManager(const char *registryPath);
     ~DebugSettingsManager();
-
-    DebugSettingsManager(const DebugSettingsManager &) = delete;
-    DebugSettingsManager &operator=(const DebugSettingsManager &) = delete;
 
     static constexpr bool registryReadAvailable() {
         return (debugLevel == DebugFunctionalityLevel::full) || (debugLevel == DebugFunctionalityLevel::regKeys);
@@ -181,6 +179,10 @@ class DebugSettingsManager {
     void dumpFlags() const;
     static const char *settingsDumpFileName;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<DebugSettingsManager<DebugFunctionalityLevel::none>>);
+static_assert(NEO::NonCopyableAndNonMovable<DebugSettingsManager<DebugFunctionalityLevel::full>>);
+static_assert(NEO::NonCopyableAndNonMovable<DebugSettingsManager<DebugFunctionalityLevel::regKeys>>);
 
 extern DebugSettingsManager<globalDebugFunctionalityLevel> debugManager;
 

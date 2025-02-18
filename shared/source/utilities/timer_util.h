@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,14 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 namespace NEO {
 
-class Timer {
+class Timer : NEO::NonCopyableAndNonMovableClass {
   public:
     Timer();
-    Timer(const Timer &) = delete;
+    Timer &operator=(Timer &&) noexcept = delete;
 
     ~Timer();
 
@@ -33,4 +35,7 @@ class Timer {
     class TimerImpl;
     TimerImpl *timerImpl;
 };
+
+static_assert(NEO::NonMovable<Timer>);
+
 }; // namespace NEO

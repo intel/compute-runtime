@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -31,7 +32,7 @@ class DrmMemoryManager;
 class Drm;
 class OsContext;
 
-class BufferObjectHandleWrapper {
+class BufferObjectHandleWrapper : NEO::NonCopyableClass {
   private:
     struct ControlBlock {
         int refCount{0};
@@ -53,8 +54,6 @@ class BufferObjectHandleWrapper {
 
     ~BufferObjectHandleWrapper();
 
-    BufferObjectHandleWrapper(const BufferObjectHandleWrapper &) = delete;
-    BufferObjectHandleWrapper &operator=(const BufferObjectHandleWrapper &) = delete;
     BufferObjectHandleWrapper &operator=(BufferObjectHandleWrapper &&) = delete;
 
     BufferObjectHandleWrapper acquireSharedOwnership();
@@ -85,6 +84,8 @@ class BufferObjectHandleWrapper {
     Ownership ownership{Ownership::strong};
     ControlBlock *controlBlock{nullptr};
 };
+
+static_assert(NEO::NonCopyable<BufferObjectHandleWrapper>);
 
 class BufferObject {
   public:

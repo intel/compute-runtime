@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"
@@ -25,15 +27,10 @@ class OsLibrary;
 
 struct HardwareInfo;
 
-class OclocFclFacade {
+class OclocFclFacade : NEO::NonCopyableAndNonMovableClass {
   public:
     OclocFclFacade(OclocArgHelper *argHelper);
     MOCKABLE_VIRTUAL ~OclocFclFacade();
-
-    OclocFclFacade(OclocFclFacade &) = delete;
-    OclocFclFacade(const OclocFclFacade &&) = delete;
-    OclocFclFacade &operator=(const OclocFclFacade &) = delete;
-    OclocFclFacade &operator=(OclocFclFacade &&) = delete;
 
     int initialize(const HardwareInfo &hwInfo);
     bool isInitialized() const;
@@ -58,5 +55,7 @@ class OclocFclFacade {
     CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx;
     bool initialized{false};
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<OclocFclFacade>);
 
 } // namespace NEO

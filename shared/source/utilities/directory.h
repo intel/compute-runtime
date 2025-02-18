@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include <cinttypes>
 #include <optional>
 #include <string.h>
@@ -14,7 +16,7 @@
 
 namespace NEO {
 
-class Directory {
+class Directory : NEO::NonCopyableAndNonMovableClass {
   public:
     static inline constexpr char returnDirs{1 << 0};
     static inline constexpr char createDirs{1 << 1};
@@ -24,10 +26,6 @@ class Directory {
 
     Directory() = default;
     Directory(const std::string &path) : path(path) {}
-    Directory(Directory &&other) noexcept = delete;
-    Directory(const Directory &other) = delete;
-    Directory &operator=(Directory &&other) noexcept = delete;
-    Directory &operator=(const Directory &other) = delete;
 
     inline std::optional<std::vector<std::string>> parseDirectories(char flags) {
         std::optional<std::vector<std::string>> directories;
@@ -61,6 +59,8 @@ class Directory {
 
     std::string path;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Directory>);
 
 inline int parseBdfString(const std::string &pciBDF, uint16_t &domain, uint8_t &bus, uint8_t &device, uint8_t &function) {
     if (strlen(pciBDF.c_str()) == 12) {

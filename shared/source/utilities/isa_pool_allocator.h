@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/buffer_pool_allocator.h"
 
 #include <mutex>
@@ -83,5 +84,7 @@ class ISAPoolAllocator : public AbstractBuffersAllocator<ISAPool, GraphicsAlloca
     size_t buitinAllocationSize = MemoryConstants::pageSize64k;
     std::mutex allocatorMtx;
 };
+
+static_assert(NEO::NonCopyable<ISAPool>);
 
 } // namespace NEO

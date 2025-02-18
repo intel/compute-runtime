@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -24,13 +26,10 @@ enum class GemCloseWorkerMode {
     gemCloseWorkerActive
 };
 
-class DrmGemCloseWorker {
+class DrmGemCloseWorker : NEO::NonCopyableAndNonMovableClass {
   public:
     DrmGemCloseWorker(DrmMemoryManager &memoryManager);
     MOCKABLE_VIRTUAL ~DrmGemCloseWorker();
-
-    DrmGemCloseWorker(const DrmGemCloseWorker &) = delete;
-    DrmGemCloseWorker &operator=(const DrmGemCloseWorker &) = delete;
 
     void push(BufferObject *allocation);
     MOCKABLE_VIRTUAL void close(bool blocking);
@@ -55,4 +54,7 @@ class DrmGemCloseWorker {
     std::condition_variable condition;
     std::atomic<bool> workerDone{false};
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<DrmGemCloseWorker>);
+
 } // namespace NEO

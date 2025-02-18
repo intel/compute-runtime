@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/os_handle.h"
 #include "shared/source/utilities/arrayref.h"
 
@@ -26,15 +27,11 @@ struct CompilerCacheConfig {
     size_t cacheSize = 0;
 };
 
-class CompilerCache {
+class CompilerCache : NEO::NonCopyableAndNonMovableClass {
   public:
     CompilerCache(const CompilerCacheConfig &config);
     virtual ~CompilerCache() = default;
 
-    CompilerCache(const CompilerCache &) = delete;
-    CompilerCache(CompilerCache &&) = delete;
-    CompilerCache &operator=(const CompilerCache &) = delete;
-    CompilerCache &operator=(CompilerCache &&) = delete;
     const CompilerCacheConfig &getConfig() {
         return config;
     }
@@ -56,4 +53,7 @@ class CompilerCache {
     static std::mutex cacheAccessMtx;
     CompilerCacheConfig config;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CompilerCache>);
+
 } // namespace NEO

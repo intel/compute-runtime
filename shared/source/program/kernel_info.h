@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/heap_info.h"
 #include "shared/source/utilities/arrayref.h"
@@ -39,11 +40,9 @@ struct DeviceInfoKernelPayloadConstants {
     uint32_t maxWorkGroupSize = 0U;
 };
 
-struct KernelInfo {
+struct KernelInfo : NEO::NonCopyableAndNonMovableClass {
   public:
     KernelInfo() = default;
-    KernelInfo(const KernelInfo &) = delete;
-    KernelInfo &operator=(const KernelInfo &) = delete;
     ~KernelInfo();
 
     GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
@@ -103,6 +102,8 @@ struct KernelInfo {
     uint64_t shaderHashCode;
     KernelDescriptor kernelDescriptor;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<KernelInfo>);
 
 std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos);
 

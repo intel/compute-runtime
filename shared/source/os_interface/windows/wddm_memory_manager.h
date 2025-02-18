@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_memory.h"
@@ -22,15 +23,12 @@ class Wddm;
 
 extern const GfxMemoryAllocationMethod preferredAllocationMethod;
 
-class WddmMemoryManager : public MemoryManager {
+class WddmMemoryManager : public MemoryManager, NEO::NonCopyableAndNonMovableClass {
   public:
     using MemoryManager::allocateGraphicsMemoryWithProperties;
 
     ~WddmMemoryManager() override;
     WddmMemoryManager(ExecutionEnvironment &executionEnvironment);
-
-    WddmMemoryManager(const WddmMemoryManager &) = delete;
-    WddmMemoryManager &operator=(const WddmMemoryManager &) = delete;
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) override;
@@ -125,4 +123,7 @@ class WddmMemoryManager : public MemoryManager {
 
     Wddm &getWddm(uint32_t rootDeviceIndex) const;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<WddmMemoryManager>);
+
 } // namespace NEO

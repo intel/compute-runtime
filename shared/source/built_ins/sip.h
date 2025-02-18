@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/sip_kernel_type.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <string>
 #include <vector>
@@ -22,14 +23,10 @@ class OsContext;
 
 struct RootDeviceEnvironment;
 
-class SipKernel {
+class SipKernel : NEO::NonCopyableAndNonMovableClass {
   public:
     SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah, std::vector<char> binary);
     SipKernel(SipKernelType type, GraphicsAllocation *sipAlloc, std::vector<char> ssah);
-    SipKernel(const SipKernel &) = delete;
-    SipKernel &operator=(const SipKernel &) = delete;
-    SipKernel(SipKernel &&) = delete;
-    SipKernel &operator=(SipKernel &&) = delete;
     virtual ~SipKernel();
 
     SipKernelType getType() const {
@@ -86,5 +83,7 @@ class SipKernel {
     GraphicsAllocation *sipAllocation = nullptr;
     SipKernelType type = SipKernelType::count;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<SipKernel>);
 
 } // namespace NEO

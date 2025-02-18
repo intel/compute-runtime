@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/clos_cache.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -25,7 +26,7 @@ struct CacheReservationParameters {
     uint16_t maxNumWays{0U};
 };
 
-struct CacheInfo {
+struct CacheInfo : NEO::NonCopyableAndNonMovableClass {
     CacheInfo(IoctlHelper &ioctlHelper, const CacheReservationParameters l3Limits)
         : l3ReservationLimits{l3Limits},
           cacheReserve{ioctlHelper} {
@@ -34,9 +35,6 @@ struct CacheInfo {
     }
 
     MOCKABLE_VIRTUAL ~CacheInfo();
-
-    CacheInfo(const CacheInfo &) = delete;
-    CacheInfo &operator=(const CacheInfo &) = delete;
 
     size_t getMaxReservationCacheSize() const {
         const auto &limits{l3ReservationLimits};
@@ -80,5 +78,7 @@ struct CacheInfo {
     std::array<size_t, toUnderlying(CacheRegion::count)> reservedCacheRegionsSize;
     SpinLock mtx;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CacheInfo>);
 
 } // namespace NEO

@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/device_bitfield.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -32,7 +33,7 @@ class MemoryManager;
 class Device;
 struct VirtualMemoryReservation;
 
-struct SvmAllocationData {
+struct SvmAllocationData : NEO::NonCopyableAndNonMovableClass {
     SvmAllocationData(uint32_t maxRootDeviceIndex) : gpuAllocations(maxRootDeviceIndex), maxRootDeviceIndex(maxRootDeviceIndex){};
     SvmAllocationData(const SvmAllocationData &svmAllocData) : SvmAllocationData(svmAllocData.maxRootDeviceIndex) {
         this->allocationFlagsProperty = svmAllocData.allocationFlagsProperty;
@@ -52,7 +53,7 @@ struct SvmAllocationData {
         this->mappedAllocData = svmAllocData.mappedAllocData;
         this->virtualReservationData = svmAllocData.virtualReservationData;
     }
-    SvmAllocationData &operator=(const SvmAllocationData &) = delete;
+    SvmAllocationData(SvmAllocationData &&other) noexcept = delete;
     GraphicsAllocation *cpuAllocation = nullptr;
     MultiGraphicsAllocation gpuAllocations;
     VirtualMemoryReservation *virtualReservationData = nullptr;
@@ -78,6 +79,8 @@ struct SvmAllocationData {
     const uint32_t maxRootDeviceIndex;
     uint32_t allocId = uninitializedAllocId;
 };
+
+static_assert(NEO::NonMovable<SvmAllocationData>);
 
 struct SvmMapOperation {
     void *regionSvmPtr = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 
 #include <cstdint>
@@ -15,7 +16,7 @@
 namespace NEO {
 class GraphicsAllocation;
 
-class LinearStream {
+class LinearStream : NEO::NonCopyableAndNonMovableClass {
   public:
     virtual ~LinearStream() = default;
     LinearStream() = default;
@@ -23,9 +24,6 @@ class LinearStream {
     LinearStream(GraphicsAllocation *gfxAllocation);
     LinearStream(GraphicsAllocation *gfxAllocation, void *buffer, size_t bufferSize);
     LinearStream(void *buffer, size_t bufferSize, CommandContainer *cmdContainer, size_t batchBufferEndSize);
-
-    LinearStream(const LinearStream &) = delete;
-    LinearStream &operator=(const LinearStream &) = delete;
 
     void *getCpuBase() const;
     void *getSpace(size_t size);
@@ -118,5 +116,7 @@ inline void LinearStream::replaceGraphicsAllocation(GraphicsAllocation *gfxAlloc
 inline uint64_t LinearStream::getCurrentGpuAddressPosition() const {
     return (getGpuBase() + getUsed());
 }
+
+static_assert(NEO::NonCopyableAndNonMovable<LinearStream>);
 
 } // namespace NEO

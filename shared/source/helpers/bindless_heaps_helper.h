@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/heap_helper.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include <array>
@@ -31,7 +32,7 @@ constexpr uint32_t redescribedImage = 3;
 constexpr uint32_t max = 4;
 }; // namespace BindlessImageSlot
 
-class BindlessHeapsHelper {
+class BindlessHeapsHelper : NEO::NonCopyableAndNonMovableClass {
   public:
     enum BindlesHeapType {
         specialSsh = 0,
@@ -42,9 +43,6 @@ class BindlessHeapsHelper {
 
     BindlessHeapsHelper(Device *rootDevice, bool isMultiOsContextCapable);
     MOCKABLE_VIRTUAL ~BindlessHeapsHelper();
-
-    BindlessHeapsHelper(const BindlessHeapsHelper &) = delete;
-    BindlessHeapsHelper &operator=(const BindlessHeapsHelper &) = delete;
 
     GraphicsAllocation *getHeapAllocation(size_t heapSize, size_t alignment, bool allocInFrontWindow);
 
@@ -108,4 +106,7 @@ class BindlessHeapsHelper {
 
     std::vector<AddressRange> reservedRanges;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<BindlessHeapsHelper>);
+
 } // namespace NEO

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/idlist.h"
 
 #include <atomic>
@@ -15,13 +16,10 @@
 namespace NEO {
 class DeferrableDeletion;
 class Thread;
-class DeferredDeleter {
+class DeferredDeleter : NEO::NonCopyableAndNonMovableClass {
   public:
     DeferredDeleter();
     virtual ~DeferredDeleter();
-
-    DeferredDeleter(const DeferredDeleter &) = delete;
-    DeferredDeleter &operator=(const DeferredDeleter &) = delete;
 
     MOCKABLE_VIRTUAL void deferDeletion(DeferrableDeletion *deletion);
 
@@ -52,4 +50,7 @@ class DeferredDeleter {
     std::mutex threadMutex;
     std::condition_variable condition;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<DeferredDeleter>);
+
 } // namespace NEO

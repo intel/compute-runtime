@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <functional>
@@ -27,13 +28,11 @@ class HeapAllocator;
 using ChunkCopyFunction = std::function<int32_t(void *, void *, size_t)>;
 using ChunkTransferImageFunc = std::function<int32_t(void *, const size_t *, const size_t *)>;
 using ChunkTransferBufferFunc = std::function<int32_t(void *, size_t, size_t)>;
-class StagingBuffer {
+class StagingBuffer : NEO::NonCopyableClass {
   public:
     StagingBuffer(void *baseAddress, size_t size);
     StagingBuffer(StagingBuffer &&other);
-    StagingBuffer(const StagingBuffer &other) = delete;
     StagingBuffer &operator=(StagingBuffer &&other) noexcept = delete;
-    StagingBuffer &operator=(const StagingBuffer &other) = delete;
 
     void *getBaseAddress() const {
         return baseAddress;
@@ -46,6 +45,8 @@ class StagingBuffer {
     void *baseAddress;
     std::unique_ptr<HeapAllocator> allocator;
 };
+
+static_assert(NEO::NonCopyable<StagingBuffer>);
 
 struct StagingBufferTracker {
     HeapAllocator *allocator = nullptr;
@@ -78,14 +79,10 @@ struct StagingTransferStatus {
 constexpr size_t maxInFlightReads = 2u;
 using StagingQueue = StackVec<std::pair<UserData, StagingBufferTracker>, maxInFlightReads>;
 
-class StagingBufferManager {
+class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
   public:
     StagingBufferManager(SVMAllocsManager *svmAllocsManager, const RootDeviceIndicesContainer &rootDeviceIndices, const std::map<uint32_t, DeviceBitfield> &deviceBitfields, bool requiresWritable);
     ~StagingBufferManager();
-    StagingBufferManager(StagingBufferManager &&other) noexcept = delete;
-    StagingBufferManager(const StagingBufferManager &other) = delete;
-    StagingBufferManager &operator=(StagingBufferManager &&other) noexcept = delete;
-    StagingBufferManager &operator=(const StagingBufferManager &other) = delete;
 
     bool isValidForCopy(const Device &device, void *dstPtr, const void *srcPtr, size_t size, bool hasDependencies, uint32_t osContextId);
     bool isValidForStagingTransfer(const Device &device, const void *ptr, size_t size, bool hasDependencies);
@@ -125,5 +122,7 @@ class StagingBufferManager {
 
     std::set<const void *> detectedHostPtrs;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<StagingBufferManager>);
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
@@ -25,10 +26,6 @@ class IndirectHeap : public LinearStream {
     IndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)
         : BaseClass(graphicsAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {}
 
-    // Disallow copy'ing
-    IndirectHeap(const IndirectHeap &) = delete;
-    IndirectHeap &operator=(const IndirectHeap &) = delete;
-
     void align(size_t alignment);
     uint64_t getHeapGpuStartOffset() const;
     uint64_t getHeapGpuBase() const;
@@ -37,6 +34,8 @@ class IndirectHeap : public LinearStream {
   protected:
     bool canBeUtilizedAs4GbHeap = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<IndirectHeap>);
 
 inline void IndirectHeap::align(size_t alignment) {
     auto address = alignUp(ptrOffset(buffer, sizeUsed), alignment);
@@ -74,10 +73,6 @@ class ReservedIndirectHeap : public IndirectHeap {
     ReservedIndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)
         : IndirectHeap(graphicsAllocation, canBeUtilizedAs4GbHeap) {}
 
-    // Disallow copy'ing
-    ReservedIndirectHeap(const ReservedIndirectHeap &) = delete;
-    ReservedIndirectHeap &operator=(const ReservedIndirectHeap &) = delete;
-
     uint32_t getHeapSizeInPages() const override {
         return parentHeapSizeInPages;
     }
@@ -88,5 +83,7 @@ class ReservedIndirectHeap : public IndirectHeap {
   protected:
     uint32_t parentHeapSizeInPages = 0;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<ReservedIndirectHeap>);
 
 } // namespace NEO

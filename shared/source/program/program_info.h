@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include <cstddef>
@@ -20,12 +21,10 @@ struct ExternalFunctionInfo;
 struct LinkerInput;
 struct KernelInfo;
 
-struct ProgramInfo {
+struct ProgramInfo : NEO::NonCopyableClass {
     ProgramInfo() = default;
     ProgramInfo(ProgramInfo &&) = default;
     ProgramInfo &operator=(ProgramInfo &&) = default;
-    ProgramInfo(const ProgramInfo &) = delete;
-    ProgramInfo &operator=(const ProgramInfo &) = delete;
     ~ProgramInfo();
 
     struct GlobalSurfaceInfo {
@@ -49,6 +48,8 @@ struct ProgramInfo {
     uint32_t indirectDetectionVersion = 0U;
     size_t kernelMiscInfoPos = std::string::npos;
 };
+
+static_assert(NEO::NonCopyable<ProgramInfo>);
 
 size_t getMaxInlineSlmNeeded(const ProgramInfo &programInfo);
 bool requiresLocalMemoryWindowVA(const ProgramInfo &programInfo);

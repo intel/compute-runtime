@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <mutex>
 #include <sstream>
@@ -27,13 +28,10 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
 const char *getMemoryPoolString(GraphicsAllocation const *graphicsAllocation);
 
 template <DebugFunctionalityLevel debugLevel>
-class FileLogger {
+class FileLogger : NEO::NonCopyableAndNonMovableClass {
   public:
     FileLogger(std::string filename, const DebugVariables &flags);
     MOCKABLE_VIRTUAL ~FileLogger();
-
-    FileLogger(const FileLogger &) = delete;
-    FileLogger &operator=(const FileLogger &) = delete;
 
     static constexpr bool enabled() {
         return debugLevel != DebugFunctionalityLevel::none;
@@ -188,6 +186,10 @@ class FileLogger {
         }
     }
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<FileLogger<DebugFunctionalityLevel::none>>);
+static_assert(NEO::NonCopyableAndNonMovable<FileLogger<DebugFunctionalityLevel::full>>);
+static_assert(NEO::NonCopyableAndNonMovable<FileLogger<DebugFunctionalityLevel::regKeys>>);
 
 extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 

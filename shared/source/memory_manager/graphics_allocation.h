@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
@@ -56,7 +57,7 @@ struct SurfaceStateInHeapInfo {
     size_t ssSize;
 };
 
-class GraphicsAllocation : public IDNode<GraphicsAllocation> {
+class GraphicsAllocation : public IDNode<GraphicsAllocation>, NEO::NonCopyableAndNonMovableClass {
   public:
     enum UsmInitialPlacement {
         DEFAULT,
@@ -65,8 +66,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     };
 
     ~GraphicsAllocation() override;
-    GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
-    GraphicsAllocation(const GraphicsAllocation &) = delete;
 
     GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
                        uint64_t canonizedGpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool pool, size_t maxOsContextCount);
@@ -413,4 +412,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool cantBeReadOnly = false;
     bool explicitlyMadeResident = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<GraphicsAllocation>);
+
 } // namespace NEO

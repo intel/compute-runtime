@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <sstream>
 #include <string>
@@ -15,10 +17,8 @@ class OclocArgHelper;
 
 namespace NEO {
 
-class MultiCommand {
+class MultiCommand : NEO::NonCopyableAndNonMovableClass {
   public:
-    MultiCommand &operator=(const MultiCommand &) = delete;
-    MultiCommand(const MultiCommand &) = delete;
     MOCKABLE_VIRTUAL ~MultiCommand() = default;
 
     static MultiCommand *create(const std::vector<std::string> &args, int &retVal, OclocArgHelper *helper);
@@ -45,4 +45,7 @@ class MultiCommand {
     std::stringstream outputFile;
     bool quiet = false;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<MultiCommand>);
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <cstdint>
 #include <limits>
@@ -63,7 +64,7 @@ struct SymbolInfo {
     bool global = false;                                                  // Binding
 };
 
-struct LinkerInput {
+struct LinkerInput : NEO::NonCopyableAndNonMovableClass {
     union Traits {
         enum PointerSize : uint8_t {
             Ptr32bit = 0,
@@ -111,10 +112,6 @@ struct LinkerInput {
 
     LinkerInput();
     virtual ~LinkerInput();
-    LinkerInput(LinkerInput &&other) noexcept = delete;
-    LinkerInput(const LinkerInput &other) = delete;
-    LinkerInput &operator=(LinkerInput &&other) noexcept = delete;
-    LinkerInput &operator=(const LinkerInput &other) = delete;
 
     static SegmentType getSegmentForSection(ConstStringRef name);
 
@@ -272,6 +269,8 @@ struct Linker {
 
     std::unordered_map<uint32_t /*ISA segment id*/, StackVec<uint32_t *, 2> /*implicit args relocation address to patch*/> pImplicitArgsRelocationAddresses;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<LinkerInput>);
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);

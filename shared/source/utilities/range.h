@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include <iterator>
 
 namespace NEO {
 
 template <typename DataType>
-struct Range {
+struct Range : NEO::NonCopyableAndNonMovableClass {
     using iterator = DataType *;
     using const_iterator = const DataType *;
     using reverse_iterator = std::reverse_iterator<iterator>;
@@ -34,7 +36,6 @@ struct Range {
     Range(T (&base)[size])
         : Range(&base[0], size) {
     }
-    Range &operator=(const Range &) = delete;
 
     iterator begin() {
         return begIt;
@@ -79,6 +80,8 @@ struct Range {
     iterator begIt;
     iterator endIt;
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<Range<int>>);
 
 template <typename T>
 inline Range<T> createRange(T *base, size_t count) {

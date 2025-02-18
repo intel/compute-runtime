@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
 #include "shared/source/utilities/stackvec.h"
@@ -110,13 +111,9 @@ enum class CachingMode {
     preProcess
 };
 
-class CompilerInterface {
+class CompilerInterface : NEO::NonCopyableAndNonMovableClass {
   public:
     CompilerInterface();
-    CompilerInterface(const CompilerInterface &) = delete;
-    CompilerInterface &operator=(const CompilerInterface &) = delete;
-    CompilerInterface(CompilerInterface &&) = delete;
-    CompilerInterface &operator=(CompilerInterface &&) = delete;
     virtual ~CompilerInterface();
 
     template <typename CompilerInterfaceT = CompilerInterface>
@@ -247,6 +244,8 @@ class CompilerInterface {
         return (isFclAvailable() || (false == requiresFcl)) && (isIgcAvailable(device) || (false == requiresIgc)) && ((false == requiresFinalizer) || isFinalizerAvailable(device));
     }
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<CompilerInterface>);
 
 class CompilerCacheHelper {
   public:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -23,14 +24,11 @@ namespace Ar {
 struct Ar;
 }
 
-class OclocConcat {
+class OclocConcat : NEO::NonCopyableAndNonMovableClass {
   public:
     using ErrorCode = uint32_t;
 
     OclocConcat() = delete;
-    OclocConcat(const OclocConcat &) = delete;
-    OclocConcat &operator=(const OclocConcat &) = delete;
-
     OclocConcat(OclocArgHelper *argHelper) : argHelper(argHelper){};
     ErrorCode initialize(const std::vector<std::string> &args);
     ErrorCode concatenate();
@@ -53,4 +51,7 @@ Usage: ocloc concat <fat binary> <fat binary> ... [-out <concatenated fat binary
     std::vector<std::string> fileNamesToConcat;
     std::string fatBinaryName = "concat.ar";
 };
+
+static_assert(NEO::NonCopyableAndNonMovable<OclocConcat>);
+
 } // namespace NEO
