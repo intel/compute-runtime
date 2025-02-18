@@ -552,15 +552,15 @@ void Event::disableImplicitCounterBasedMode() {
 }
 
 uint64_t Event::getGpuAddress(Device *device) const {
-    if (inOrderTimestampNode) {
-        return inOrderTimestampNode->getGpuAddress();
+    if (!inOrderTimestampNode.empty()) {
+        return inOrderTimestampNode[0]->getGpuAddress();
     }
     return getAllocation(device)->getGpuAddress() + this->eventPoolOffset;
 }
 
 void *Event::getHostAddress() const {
-    if (inOrderTimestampNode) {
-        return inOrderTimestampNode->getCpuBase();
+    if (!inOrderTimestampNode.empty()) {
+        return inOrderTimestampNode[0]->getCpuBase();
     }
 
     return this->hostAddressFromPool;
@@ -569,8 +569,8 @@ void *Event::getHostAddress() const {
 NEO::GraphicsAllocation *Event::getAllocation(Device *device) const {
     auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
 
-    if (inOrderTimestampNode) {
-        return inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
+    if (!inOrderTimestampNode.empty()) {
+        return inOrderTimestampNode[0]->getBaseGraphicsAllocation()->getGraphicsAllocation(rootDeviceIndex);
     } else if (eventPoolAllocation) {
         return eventPoolAllocation->getGraphicsAllocation(rootDeviceIndex);
     }
@@ -667,10 +667,21 @@ void Event::unsetInOrderExecInfo() {
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
-    if (inOrderTimestampNode) {
-        inOrderExecInfo->pushTempTimestampNode(inOrderTimestampNode, inOrderExecSignalValue);
+    if (inOrderIncrementValue == 0 || !newNode) {
+        for (auto &node : inOrderTimestampNode) {
+            inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
+        }
+
+        inOrderTimestampNode.clear();
     }
-    inOrderTimestampNode = newNode;
+
+    if (newNode) {
+        inOrderTimestampNode.push_back(newNode);
+
+        if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
+            clearLatestInOrderTimestampData();
+        }
+    }
 }
 
 NEO::GraphicsAllocation *Event::getExternalCounterAllocationFromAddress(uint64_t *address) const {
@@ -737,6 +748,7 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
 
             this->inOrderIncrementValue = externalStorageProperties->incrementValue;
+            this->inOrderIncrementOperationsCount = static_cast<uint32_t>(externalStorageProperties->completionValue / externalStorageProperties->incrementValue);
         }
 
         extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);

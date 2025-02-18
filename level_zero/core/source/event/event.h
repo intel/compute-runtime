@@ -327,7 +327,7 @@ struct Event : _ze_event_handle_t {
 
     void resetInOrderTimestampNode(NEO::TagNodeBase *newNode);
 
-    bool hasInOrderTimestampNode() const { return inOrderTimestampNode != nullptr; }
+    bool hasInOrderTimestampNode() const { return !inOrderTimestampNode.empty(); }
 
     bool isIpcImported() const { return isFromIpcPool; }
 
@@ -345,6 +345,7 @@ struct Event : _ze_event_handle_t {
 
     void unsetCmdQueue();
     void releaseTempInOrderTimestampNodes();
+    virtual void clearLatestInOrderTimestampData() = 0;
 
     EventPool *eventPool = nullptr;
 
@@ -355,6 +356,7 @@ struct Event : _ze_event_handle_t {
 
     uint64_t inOrderExecSignalValue = 0;
     uint64_t inOrderIncrementValue = 0;
+    uint32_t inOrderIncrementOperationsCount = 0;
     uint32_t inOrderAllocationOffset = 0;
 
     std::chrono::microseconds gpuHangCheckPeriod{CommonConstants::gpuHangCheckTimeInUS};
@@ -382,7 +384,7 @@ struct Event : _ze_event_handle_t {
     std::mutex *kernelWithPrintfDeviceMutex = nullptr;
     std::shared_ptr<NEO::InOrderExecInfo> inOrderExecInfo;
     CommandQueue *latestUsedCmdQueue = nullptr;
-    NEO::TagNodeBase *inOrderTimestampNode = nullptr;
+    std::vector<NEO::TagNodeBase *> inOrderTimestampNode;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

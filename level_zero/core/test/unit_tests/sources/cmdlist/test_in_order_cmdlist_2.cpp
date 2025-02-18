@@ -1736,7 +1736,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenDebugFlagSetWhenCreati
     auto eventPool = createEvents<FamilyType>(1, true);
     auto cmdList = createImmCmdList<gfxCoreFamily>();
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, events[0]->toHandle(), 0, nullptr, launchParams, false);
-    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
     EXPECT_NE(nullptr, events[0]->eventPoolAllocation);
 }
 
@@ -1798,16 +1798,16 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenAski
     EXPECT_TRUE(events[0]->hasInOrderTimestampNode());
     EXPECT_TRUE(events[1]->hasInOrderTimestampNode());
 
-    EXPECT_NE(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation(), events[0]->eventPoolAllocation);
-    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode->getBaseGraphicsAllocation());
+    EXPECT_NE(events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation(), events[0]->eventPoolAllocation);
+    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation());
     EXPECT_EQ(nullptr, events[0]->eventPoolAllocation);
 
-    EXPECT_EQ(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0), events[0]->getAllocation(device));
-    EXPECT_EQ(events[0]->inOrderTimestampNode->getBaseGraphicsAllocation()->getGraphicsAllocation(0)->getGpuAddress(), events[0]->getGpuAddress(device));
+    EXPECT_EQ(events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation()->getGraphicsAllocation(0), events[0]->getAllocation(device));
+    EXPECT_EQ(events[0]->inOrderTimestampNode[0]->getBaseGraphicsAllocation()->getGraphicsAllocation(0)->getGpuAddress(), events[0]->getGpuAddress(device));
     EXPECT_EQ(events[0]->getGpuAddress(device) + events[0]->getCompletionFieldOffset(), events[0]->getCompletionFieldGpuAddress(device));
 
-    EXPECT_EQ(events[0]->getGpuAddress(device), events[0]->inOrderTimestampNode->getGpuAddress());
-    EXPECT_EQ(events[1]->getGpuAddress(device), events[1]->inOrderTimestampNode->getGpuAddress());
+    EXPECT_EQ(events[0]->getGpuAddress(device), events[0]->inOrderTimestampNode[0]->getGpuAddress());
+    EXPECT_EQ(events[1]->getGpuAddress(device), events[1]->inOrderTimestampNode[0]->getGpuAddress());
     EXPECT_NE(events[0]->getGpuAddress(device), events[1]->getGpuAddress(device));
 }
 
@@ -1843,7 +1843,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenNonWalkerCounterSignal
 
     auto cmdList = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
 
@@ -1894,30 +1894,30 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDisp
 
     auto cmdList = createImmCmdList<gfxCoreFamily>();
 
-    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
 
-    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_FALSE(events[0]->inOrderTimestampNode.empty());
 
     // keep node0 ownership for testing
-    auto node0 = events[0]->inOrderTimestampNode;
-    events[0]->inOrderTimestampNode = nullptr;
+    auto node0 = events[0]->inOrderTimestampNode[0];
+    events[0]->inOrderTimestampNode.clear();
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
-    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode);
-    EXPECT_NE(node0, events[0]->inOrderTimestampNode);
+    EXPECT_FALSE(events[0]->inOrderTimestampNode.empty());
+    EXPECT_NE(node0, events[0]->inOrderTimestampNode[0]);
 
-    auto node1 = events[0]->inOrderTimestampNode;
+    auto node1 = events[0]->inOrderTimestampNode[0];
 
     // node1 moved to reusable list
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
-    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode);
-    EXPECT_NE(node1->getGpuAddress(), events[0]->inOrderTimestampNode->getGpuAddress());
+    EXPECT_NE(nullptr, events[0]->inOrderTimestampNode[0]);
+    EXPECT_NE(node1->getGpuAddress(), events[0]->inOrderTimestampNode[0]->getGpuAddress());
 
-    auto node2 = events[0]->inOrderTimestampNode;
+    auto node2 = events[0]->inOrderTimestampNode[0];
 
-    *static_cast<Event::State *>(ptrOffset(events[0]->inOrderTimestampNode->getCpuBase(), events[0]->getContextEndOffset())) = Event::State::STATE_SIGNALED;
+    *static_cast<Event::State *>(ptrOffset(events[0]->inOrderTimestampNode[0]->getCpuBase(), events[0]->getContextEndOffset())) = Event::State::STATE_SIGNALED;
     auto hostAddress = cmdList->inOrderExecInfo->getBaseHostAddress();
     *hostAddress = 3;
 
@@ -1926,7 +1926,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDisp
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
     // node1 reused
-    EXPECT_EQ(node1->getGpuAddress(), events[0]->inOrderTimestampNode->getGpuAddress());
+    EXPECT_EQ(node1->getGpuAddress(), events[0]->inOrderTimestampNode[0]->getGpuAddress());
 
     // reuse node2 - counter already waited
     *hostAddress = 2;
@@ -1934,10 +1934,10 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDisp
     cmdList->inOrderExecInfo->releaseNotUsedTempTimestampNodes(false);
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
 
-    EXPECT_EQ(node2->getGpuAddress(), events[0]->inOrderTimestampNode->getGpuAddress());
+    EXPECT_EQ(node2->getGpuAddress(), events[0]->inOrderTimestampNode[0]->getGpuAddress());
 
     events[0]->unsetInOrderExecInfo();
-    EXPECT_EQ(nullptr, events[0]->inOrderTimestampNode);
+    EXPECT_TRUE(events[0]->inOrderTimestampNode.empty());
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
 

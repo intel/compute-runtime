@@ -1670,10 +1670,10 @@ HWTEST2_F(InOrderCmdListTests, givenImmediateCmdListWhenDispatchingWithRegularEv
     } else {
         EXPECT_EQ(Event::CounterBasedMode::implicitlyEnabled, events[0]->counterBasedMode);
     }
-    if (events[0]->inOrderTimestampNode) {
-        copyOnlyCmdList->inOrderExecInfo->pushTempTimestampNode(events[0]->inOrderTimestampNode, events[0]->inOrderExecSignalValue);
+    if (!events[0]->inOrderTimestampNode.empty()) {
+        copyOnlyCmdList->inOrderExecInfo->pushTempTimestampNode(events[0]->inOrderTimestampNode[0], events[0]->inOrderExecSignalValue);
     }
-    events[0]->inOrderTimestampNode = nullptr;
+    events[0]->inOrderTimestampNode.clear();
     events[0]->makeCounterBasedInitiallyDisabled(eventPool->getAllocation());
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, copyParams);
     if (dcFlushRequired) {
@@ -5332,9 +5332,9 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t) * 2));
 
-    ze_event_handle_t handle = nullptr;
-    createExternalSyncStorageEvent(counterValue, incValue, devAddress, handle);
-    auto eventObj = Event::fromHandle(handle);
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto handle = eventObj->toHandle();
+
     ASSERT_NE(nullptr, eventObj->getInOrderExecInfo());
 
     auto inOrderExecInfo = eventObj->getInOrderExecInfo();
@@ -5347,8 +5347,6 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
     EXPECT_EQ(counterValue, eventObj->getInOrderExecSignalValueWithSubmissionCounter());
     EXPECT_EQ(incValue, eventObj->getInOrderIncrementValue());
 
-    zeEventDestroy(handle);
-
     context->freeMem(devAddress);
 }
 
@@ -5358,8 +5356,8 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
 
     auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
 
-    ze_event_handle_t handle = nullptr;
-    createExternalSyncStorageEvent(counterValue, incValue, devAddress, handle);
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    auto handle = eventObj->toHandle();
 
     auto immCmdList = createRegularCmdList<gfxCoreFamily>(false);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, nullptr, 1, &handle, launchParams, false);
@@ -5369,7 +5367,65 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenDont
         EXPECT_NE(NEO::InOrderPatchCommandHelpers::PatchCmdType::semaphore, cmd.patchCmdType);
     }
 
-    zeEventDestroy(handle);
+    context->freeMem(devAddress);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenAggregateTimestampNodes, MatchAny) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    uint64_t counterValue = 4;
+    uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+    eventObj->setPacketsInUse(2);
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createRegularCmdList<gfxCoreFamily>(false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
+    eventObj->setPacketsInUse(2);
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+    eventObj->setPacketsInUse(2);
+
+    ASSERT_EQ(2u, eventObj->inOrderTimestampNode.size());
+
+    auto node0 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderTimestampNode[0]->getCpuBase());
+    auto node1 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderTimestampNode[1]->getCpuBase());
+
+    TagSizeT packet00[4] = {1, 2, 3, 4};
+    TagSizeT packet01[4] = {13, 14, 15, 16};
+
+    TagSizeT packet10[4] = {5, 6, 7, 8};
+    TagSizeT packet11[4] = {17, 18, 19, 20};
+
+    node0->assignDataToAllTimestamps(0, packet00);
+    node0->assignDataToAllTimestamps(1, packet01);
+    node1->assignDataToAllTimestamps(0, packet10);
+    node1->assignDataToAllTimestamps(1, packet11);
+
+    ze_kernel_timestamp_result_t result = {};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, eventObj->queryKernelTimestamp(&result));
+
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+
+    if (gfxCoreHelper.useOnlyGlobalTimestamps()) {
+        EXPECT_EQ(2u, result.context.kernelStart);
+    } else {
+        EXPECT_EQ(1u, result.context.kernelStart);
+    }
+    EXPECT_EQ(2u, result.global.kernelStart);
+
+    if (gfxCoreHelper.useOnlyGlobalTimestamps()) {
+        EXPECT_EQ(20u, result.context.kernelEnd);
+    } else {
+        EXPECT_EQ(19u, result.context.kernelEnd);
+    }
+    EXPECT_EQ(20u, result.global.kernelEnd);
 
     context->freeMem(devAddress);
 }
@@ -5386,12 +5442,11 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalIn
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
 
-    ze_event_handle_t handle = nullptr;
-    createExternalSyncStorageEvent(counterValue, incValue, devAddress, handle);
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
 
     auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
     immCmdList->inOrderAtomicSignalingEnabled = false;
-    immCmdList->appendSignalInOrderDependencyCounter(Event::fromHandle(handle), false, false);
+    immCmdList->appendSignalInOrderDependencyCounter(eventObj.get(), false, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, cmdStream->getCpuBase(), cmdStream->getUsed()));
@@ -5406,8 +5461,6 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalIn
     EXPECT_EQ(getHighPart(incValue), miAtomic->getOperand1DataDword1());
 
     EXPECT_EQ(castToUint64(devAddress), NEO::UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic));
-
-    zeEventDestroy(handle);
 
     context->freeMem(devAddress);
 }

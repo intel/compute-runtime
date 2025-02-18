@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,6 +72,7 @@ struct EventImp : public Event {
     ze_result_t queryCounterBasedEventStatus();
     void handleSuccessfulHostSynchronization();
     MOCKABLE_VIRTUAL ze_result_t hostEventSetValueTimestamps(State eventState);
+    void clearLatestInOrderTimestampData() override;
     MOCKABLE_VIRTUAL void assignKernelEventCompletionData(void *address);
     void setRemainingPackets(TagSizeT eventVal, uint64_t nextPacketGpuVa, void *nextPacketAddress, uint32_t packetsAlreadySet);
     void getSynchronizedKernelTimestamps(ze_synchronized_timestamp_result_ext_t *pSynchronizedTimestampsBuffer,

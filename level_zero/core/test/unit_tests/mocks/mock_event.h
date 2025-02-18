@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -178,6 +178,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
     }
+    void clearLatestInOrderTimestampData() override {}
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}

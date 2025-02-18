@@ -35,6 +35,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::Event::isFromIpcPool;
         using EventImp<uint32_t>::Event::counterBasedFlags;
         using EventImp<uint32_t>::Event::isSharableCounterBased;
+        using EventImp<uint32_t>::Event::isTimestampEvent;
         using EventImp<uint32_t>::eventPoolAllocation;
         using EventImp<uint32_t>::maxPacketCount;
         using EventImp<uint32_t>::inOrderExecInfo;
@@ -85,7 +86,8 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         ::Test<ModuleFixture>::TearDown();
     }
 
-    void createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress, ze_event_handle_t &outEvent) {
+    DestroyableZeUniquePtr<FixtureMockEvent> createExternalSyncStorageEvent(uint64_t counterValue, uint64_t incrementValue, uint64_t *deviceAddress) {
+        ze_event_handle_t outEvent = nullptr;
         zex_counter_based_event_external_storage_properties_t externalStorageAllocProperties = {ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
         externalStorageAllocProperties.completionValue = counterValue;
         externalStorageAllocProperties.deviceAddress = deviceAddress;
@@ -96,6 +98,10 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         counterBasedDesc.pNext = &externalStorageAllocProperties;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zexCounterBasedEventCreate2(context, device, &counterBasedDesc, &outEvent));
+
+        auto eventObj = static_cast<FixtureMockEvent *>(Event::fromHandle(outEvent));
+
+        return DestroyableZeUniquePtr<FixtureMockEvent>(eventObj);
     }
 
     DestroyableZeUniquePtr<FixtureMockEvent> createStandaloneCbEvent(const ze_base_desc_t *pNext) {
