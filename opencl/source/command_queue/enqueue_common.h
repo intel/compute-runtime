@@ -238,7 +238,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     auto &commandStream = *obtainCommandStream<commandType>(csrDeps, false, blockQueue, multiDispatchInfo, eventsRequest,
-                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies, isFlushWithPostSyncWrite);
+                                                            blockedCommandsData, surfacesForResidency, numSurfaceForResidency, isFlushWithPostSyncWrite, canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies);
     auto commandStreamStart = commandStream.getUsed();
 
     if (canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {

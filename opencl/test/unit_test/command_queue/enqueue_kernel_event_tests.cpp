@@ -1,13 +1,17 @@
 /*
- * Copyright (C) 2018-2023 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/cmd_parse/hw_parse.h"
+
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/event.h"
+#include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
 #include "gtest/gtest.h"
 
@@ -229,4 +233,29 @@ TEST_F(EventTests, WhenEnqueuingMarkerThenPassedEventHasTheSameLevelAsPreviousCo
 
     clReleaseEvent(event);
     clReleaseEvent(event2);
+}
+
+HWTEST_F(EventTests, givenEnqueueKernelBlockedOnserEventWhenEnqueueHasOutEventWithProfilingThenPCisProgrammed) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    MockKernel *kernel = mockKernelWithInternals.mockKernel;
+    UserEvent userEvent;
+    cl_event userEventWaitlist[] = {&userEvent};
+    cl_event outEvent;
+    auto ccsStart = pCmdQ->getGpgpuCommandStreamReceiver().getCS().getUsed();
+    auto mockCmdQueue = static_cast<MockCommandQueueHw<FamilyType> *>(pCmdQ);
+    mockCmdQueue->commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->enqueueKernel(kernel, 1, nullptr, nullptr, nullptr, 1, userEventWaitlist, &outEvent));
+
+    userEvent.setStatus(CL_COMPLETE);
+    {
+        HardwareParse ccsHwParser;
+        ccsHwParser.parseCommands<FamilyType>(pCmdQ->getGpgpuCommandStreamReceiver().getCS(0), ccsStart);
+        const auto pipeControlItor = find<PIPE_CONTROL *>(ccsHwParser.cmdList.begin(), ccsHwParser.cmdList.end());
+        EXPECT_NE(pipeControlItor, ccsHwParser.cmdList.end());
+    }
+
+    EXPECT_EQ(CL_SUCCESS, pCmdQ->finish());
+    clReleaseEvent(outEvent);
 }
