@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -127,18 +127,6 @@ class WslComputeHelperUmKmDataTranslator : public UmKmDataTranslator {
             auto prod = static_cast<uint32_t>(dst.GfxPlatform.eProductFamily);
             switch (prod) {
             default:
-                break;
-            case 28:
-                prod = IGFX_ICELAKE;
-                break;
-            case 29:
-                prod = IGFX_ICELAKE_LP;
-                break;
-            case 30:
-                prod = IGFX_LAKEFIELD;
-                break;
-            case 31:
-                prod = IGFX_JASPERLAKE;
                 break;
             case 33:
                 prod = IGFX_TIGERLAKE_LP;

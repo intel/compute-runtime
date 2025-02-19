@@ -1556,21 +1556,20 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
         ze_image_format_type_t formatType;
         SURFACE_FORMAT ssFormat;
         bool requireEven;
-        GFXCORE_FAMILY minGen;
     };
     struct FormatInfo testFormats[] = {
         {sizeof(uint8_t) * 8, ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
-         RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UINT, false, IGFX_GEN9_CORE},
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R8_UINT, false},
         {sizeof(uint32_t) * 4 * 8, ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_UINT,
-         RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_UINT, false, IGFX_GEN9_CORE},
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_UINT, false},
         {sizeof(uint8_t) * 4 * 8, ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8, ZE_IMAGE_FORMAT_TYPE_UNORM,
-         RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UNORM, false, IGFX_GEN9_CORE},
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R8G8B8A8_UNORM, false},
         {sizeof(int16_t) * 8, ZE_IMAGE_FORMAT_LAYOUT_16, ZE_IMAGE_FORMAT_TYPE_SNORM,
-         RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_SNORM, false, IGFX_GEN9_CORE},
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R16_SNORM, false},
         {sizeof(float) * 4 * 8, ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
-         RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_FLOAT, false, IGFX_GEN9_CORE},
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R32G32B32A32_FLOAT, false},
         {sizeof(uint32_t) * 8, ZE_IMAGE_FORMAT_LAYOUT_10_10_10_2, ZE_IMAGE_FORMAT_TYPE_UINT,
-         RENDER_SURFACE_STATE::SURFACE_FORMAT_R10G10B10A2_UINT, false, IGFX_GEN10_CORE}};
+         RENDER_SURFACE_STATE::SURFACE_FORMAT_R10G10B10A2_UINT, false}};
     size_t numFormats = sizeof(testFormats) / sizeof(struct FormatInfo);
 
     for (size_t i = 0; i < numFormats; i++) {
@@ -1578,10 +1577,6 @@ HWTEST2_F(ImageCreate, WhenImageIsCreatedThenDescMatchesSurfaceFormats, IsAtMost
             bool odd = (j == 0);
 
             if (odd && testFormats[i].requireEven) {
-                continue;
-            }
-
-            if (gfxCoreFamily < testFormats[i].minGen) {
                 continue;
             }
 
