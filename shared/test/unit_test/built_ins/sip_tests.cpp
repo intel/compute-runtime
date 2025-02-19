@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,6 +119,8 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelThenSipIsLoadedFromF
 
     auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_NE(0u, header.size());
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenFileHeaderMissingWhenInitSipKernelThenSipIsLoadedFromFileWithoutHeader) {
@@ -146,6 +148,8 @@ TEST_F(RawBinarySipTest, givenFileHeaderMissingWhenInitSipKernelThenSipIsLoadedF
 
     auto header = SipKernel::getSipKernel(*pDevice, nullptr).getStateSaveAreaHeader();
     EXPECT_EQ(0u, header.size());
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenDebuggerAndRawBinaryFileWhenInitSipKernelThenDbgSipIsLoadedFromFile) {
@@ -171,6 +175,8 @@ TEST_F(RawBinarySipTest, givenDebuggerAndRawBinaryFileWhenInitSipKernelThenDbgSi
     auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, storedAllocation);
     EXPECT_EQ(storedAllocation, sipAllocation);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenOpenFileFailsThenSipIsNotLoadedFromFile) {
@@ -189,6 +195,8 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenOpenFileFailsThenSipIsNotLoadedFr
     uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
     auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
     EXPECT_EQ(nullptr, sipKernel);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenTellSizeDiffrentThanBytesReadThenSipIsNotCreated) {
@@ -207,6 +215,8 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenTellSizeDiffrentThanBytesReadThen
     uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
     auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
     EXPECT_EQ(nullptr, sipKernel);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenBytesReadIsZeroThenSipIsNotCreated) {
@@ -226,6 +236,8 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenBytesReadIsZeroThenSipIsNotCreate
     uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
     auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
     EXPECT_EQ(nullptr, sipKernel);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenAllocationCreationFailsThenSipIsNotCreated) {
@@ -244,6 +256,8 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenAllocationCreationFailsThenSipIsN
     uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::csr);
     auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
     EXPECT_EQ(nullptr, sipKernel);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoadedFromFileAndCreatedOnce) {
@@ -287,6 +301,8 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenInitSipKernelTwiceThenSipIsLoaded
     EXPECT_NE(nullptr, secondStoredAllocation);
     EXPECT_EQ(sipKernel, secondSipKernel);
     EXPECT_EQ(storedAllocation, secondStoredAllocation);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingHeaplessDebugSipThenSipIsLoadedFromFile) {
@@ -862,6 +878,8 @@ TEST_F(DebugBuiltinSipTest, givenDebuggerWhenInitSipKernelThenDbgSipIsLoadedFrom
     auto sipAllocation = SipKernel::getSipKernel(*pDevice, nullptr).getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
     EXPECT_EQ(SipKernelMock::classType, SipClassType::builtins);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenProperSipClassIsSet) {
@@ -876,6 +894,8 @@ TEST_F(DebugBuiltinSipTest, givenDebugFlagForForceSipClassWhenInitSipKernelThenP
     debugManager.flags.ForceSipClass.set(static_cast<int32_t>(SipClassType::hexadecimalHeaderFile));
     EXPECT_TRUE(SipKernel::initSipKernel(SipKernelType::csr, *pDevice));
     EXPECT_EQ(SipKernelMock::classType, SipClassType::hexadecimalHeaderFile);
+
+    SipKernel::freeSipKernels(&pDevice->getRootDeviceEnvironmentRef(), pDevice->getMemoryManager());
 }
 
 TEST_F(DebugBuiltinSipTest, givenDumpSipHeaderFileWhenGettingSipKernelThenSipHeaderFileIsCreated) {

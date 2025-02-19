@@ -217,6 +217,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
         }
     }
     EXPECT_TRUE(found);
+
+    mockCsr.makeSurfacePackNonResident(cmdBuffer->surfaces, true);
+    SipKernel::freeSipKernels(&mockDevice->getRootDeviceEnvironmentRef(), mockDevice->getMemoryManager());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
@@ -252,6 +255,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
         }
     }
     EXPECT_TRUE(found);
+
+    SipKernel::freeSipKernels(&mockDevice->getRootDeviceEnvironmentRef(), mockDevice->getMemoryManager());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenFlushThenCommandBufferAlreadyHasProperTaskCountsAndIsNotIncludedInResidencyVector) {

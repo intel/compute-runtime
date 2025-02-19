@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/wait_status.h"
@@ -1870,6 +1871,10 @@ struct CsrSelectionCommandQueueTests : ::testing::Test {
         queue = std::make_unique<MockCommandQueue>(context.get(), clDevice.get(), queueProperties, false);
     }
 
+    void TearDown() override {
+        NEO::SipKernel::freeSipKernels(&device->getRootDeviceEnvironmentRef(), device->getMemoryManager());
+    }
+
     MockDevice *device;
     std::unique_ptr<MockClDevice> clDevice;
     std::unique_ptr<MockContext> context;
@@ -3079,7 +3084,7 @@ TEST_F(MultiTileFixture, givenTile1WhenQueueIsCreatedThenItContainsTile1Device) 
 
 struct CopyOnlyQueueTests : ::testing::Test {
     void SetUp() override {
-        auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
+        device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
         typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, device->getRootDeviceEnvironment());
 
         auto copyEngineGroup = std::find_if(device->regularEngineGroups.begin(), device->regularEngineGroups.end(), [](const auto &engineGroup) {
@@ -3102,6 +3107,10 @@ struct CopyOnlyQueueTests : ::testing::Test {
         properties[1] = device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::copy);
     }
 
+    void TearDown() override {
+        NEO::SipKernel::freeSipKernels(&device->getRootDeviceEnvironmentRef(), device->getMemoryManager());
+    }
+
     EngineTypeUsage typeUsageBcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_BCS, EngineUsage::regular};
     EngineTypeUsage typeUsageRcs = EngineTypeUsage{aub_stream::EngineType::ENGINE_RCS, EngineUsage::regular};
 
@@ -3109,6 +3118,7 @@ struct CopyOnlyQueueTests : ::testing::Test {
     std::unique_ptr<MockContext> context{};
     std::unique_ptr<MockCommandQueue> queue{};
     const EngineControl *bcsEngine = nullptr;
+    MockDevice *device = nullptr;
 
     cl_queue_properties properties[5] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
 };

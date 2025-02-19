@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -80,6 +80,8 @@ TEST(Debugger, givenL0DebuggerOFFWhenGettingStateSaveAreaHeaderThenValidSipTypeI
         auto &expectedStateSaveAreaHeader = neoDevice->getBuiltIns()->getSipKernel(sipType, *neoDevice).getStateSaveAreaHeader();
         EXPECT_EQ(expectedStateSaveAreaHeader, stateSaveAreaHeader);
     }
+
+    SipKernel::freeSipKernels(&neoDevice->getRootDeviceEnvironmentRef(), neoDevice->getMemoryManager());
 }
 
 TEST(Debugger, givenDebuggingEnabledInExecEnvWhenAllocatingIsaThenSingleBankIsUsed) {

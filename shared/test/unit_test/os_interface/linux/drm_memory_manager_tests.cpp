@@ -5233,6 +5233,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAllocateGraphicsMemory
 
     EXPECT_TRUE(memoryZeroed(mem, size));
 
+    SipKernel::freeSipKernels(&device->getRootDeviceEnvironmentRef(), device->getMemoryManager());
     memoryManager->freeGraphicsMemory(debugSurface);
 }
 
@@ -5271,6 +5272,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenAffinityMaskDeviceWith
 
     EXPECT_TRUE(memoryZeroed(mem, size));
 
+    SipKernel::freeSipKernels(&device->getRootDeviceEnvironmentRef(), device->getMemoryManager());
     memoryManager->freeGraphicsMemory(debugSurface);
 }
 
