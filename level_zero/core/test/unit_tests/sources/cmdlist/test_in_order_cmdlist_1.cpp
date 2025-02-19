@@ -5430,6 +5430,71 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenAggr
     context->freeMem(devAddress);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenHandleResidency, MatchAny) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr->storeMakeResidentAllocations = true;
+
+    constexpr uint64_t counterValue = 4;
+    constexpr uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+
+    auto node0 = eventObj->inOrderTimestampNode[0];
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node0->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()]);
+
+    while (device->getInOrderTimestampAllocator()->getGfxAllocations().size() == 1) {
+        device->getInOrderTimestampAllocator()->getTag();
+    }
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+
+    ASSERT_EQ(2u, eventObj->inOrderTimestampNode.size());
+
+    auto node1 = eventObj->inOrderTimestampNode[1];
+
+    EXPECT_NE(node0->getBaseGraphicsAllocation(), node1->getBaseGraphicsAllocation());
+
+    EXPECT_EQ(1u, ultCsr->makeResidentAllocations[node1->getBaseGraphicsAllocation()->getDefaultGraphicsAllocation()]);
+
+    context->freeMem(devAddress);
+}
+
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThanCounterValueThenResetNodes, MatchAny) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    constexpr uint64_t counterValue = 4;
+    constexpr uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+
+    ASSERT_EQ(2u, eventObj->inOrderTimestampNode.size());
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
+
+    context->freeMem(devAddress);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation, MatchAny) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;

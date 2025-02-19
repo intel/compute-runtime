@@ -667,7 +667,15 @@ void Event::unsetInOrderExecInfo() {
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
-    if (inOrderIncrementValue == 0 || !newNode) {
+    bool removeExistingNodes = inOrderIncrementValue == 0 || !newNode;
+
+    if (inOrderIncrementValue > 0 && inOrderTimestampNode.size() == inOrderIncrementOperationsCount) {
+        // Increment event reused. Collect new TS nodes.
+        removeExistingNodes = true;
+        inOrderExecInfo->releaseNotUsedTempTimestampNodes(true);
+    }
+
+    if (removeExistingNodes) {
         for (auto &node : inOrderTimestampNode) {
             inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
         }

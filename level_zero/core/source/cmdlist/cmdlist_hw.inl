@@ -4185,7 +4185,10 @@ bool CommandListCoreFamily<gfxCoreFamily>::handleCounterBasedEventOperations(Eve
         }
 
         if (signalEvent->isUsingContextEndOffset() && Event::standaloneInOrderTimestampAllocationEnabled()) {
-            signalEvent->resetInOrderTimestampNode(device->getInOrderTimestampAllocator()->getTag());
+            auto tag = device->getInOrderTimestampAllocator()->getTag();
+
+            this->commandContainer.addToResidencyContainer(tag->getBaseGraphicsAllocation()->getGraphicsAllocation(device->getRootDeviceIndex()));
+            signalEvent->resetInOrderTimestampNode(tag);
         }
     }
 
