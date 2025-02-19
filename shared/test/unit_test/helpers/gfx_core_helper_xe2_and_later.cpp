@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -105,4 +105,22 @@ HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenAtLeastXe2HpgWhenEncodeAdditionalT
     storeRegMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*(++storeRegMemIt));
     EXPECT_EQ(storeRegMem->getRegisterAddress(), RegisterOffsets::globalTimestampUn);
     EXPECT_EQ(storeRegMem->getMemoryAddress(), sndAddress + sizeof(uint32_t));
+}
+
+HWTEST2_F(GfxCoreHelperXe2AndLaterTests, givenOverrideDirectSubmissionTimeoutsCalledThenTimeoutsAreOverridden, IsAtLeastXe2HpgCore) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto timeout = std::chrono::microseconds{5'000};
+    auto maxTimeout = timeout;
+    gfxCoreHelper.overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(timeout.count(), 1'000);
+    EXPECT_EQ(maxTimeout.count(), 1'000);
+
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.DirectSubmissionControllerTimeout.set(2'000);
+    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(3'000);
+
+    gfxCoreHelper.overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(timeout.count(), 2'000);
+    EXPECT_EQ(maxTimeout.count(), 3'000);
 }
