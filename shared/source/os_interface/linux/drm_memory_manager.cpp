@@ -1880,11 +1880,10 @@ void fillGmmsInAllocation(GmmHelper *gmmHelper, DrmAllocation *allocation) {
     }
 }
 
-inline uint64_t getCanonizedHeapAllocationAddress(HeapIndex heap, GmmHelper *gmmHelper, GfxPartition *gfxPartition, size_t &sizeAllocated, bool packed) {
-    size_t alignment = 0;
-
-    if (debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get() != -1) {
-        alignment = static_cast<size_t>(debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+inline uint64_t getCanonizedHeapAllocationAddress(HeapIndex heap, GmmHelper *gmmHelper, GfxPartition *gfxPartition, size_t &sizeAllocated, size_t alignment, bool packed) {
+    if (const size_t customAlignment = static_cast<size_t>(debugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+        customAlignment > 0) {
+        alignment = customAlignment;
     }
     auto address = gfxPartition->heapAllocateWithCustomAlignment(heap, sizeAllocated, alignment);
     return gmmHelper->canonize(address);
@@ -1904,10 +1903,15 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
     case AllocationType::kernelIsa:
     case AllocationType::kernelIsaInternal:
     case AllocationType::internalHeap:
-    case AllocationType::debugModuleArea:
+    case AllocationType::debugModuleArea: {
+        size_t alignment = 0;
+        if (gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>().is2MBLocalMemAlignmentEnabled()) {
+            alignment = MemoryConstants::pageSize2M;
+        }
         gpuAddress = getCanonizedHeapAllocationAddress(heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, allocationData.flags.use32BitFrontWindow),
-                                                       gmmHelper, gfxPartition, sizeAllocated, false);
+                                                       gmmHelper, gfxPartition, sizeAllocated, alignment, false);
         break;
+    }
     case AllocationType::writeCombined:
         sizeAllocated = 0;
         break;

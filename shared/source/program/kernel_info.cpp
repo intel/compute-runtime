@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,8 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
 
     AllocationProperties properties = {device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()};
 
-    if (debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
+    if (device.getProductHelper().is2MBLocalMemAlignmentEnabled() ||
+        debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
         properties.alignment = MemoryConstants::pageSize2M;
     }
 

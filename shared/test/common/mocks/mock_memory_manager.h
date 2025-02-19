@@ -346,6 +346,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failMapPhysicalToVirtualMemory = false;
     bool returnMockGAFromDevicePool = false;
     bool returnMockGAFromHostPool = false;
+    bool shouldStoreLastAllocationProperties = false;
     std::unique_ptr<MockExecutionEnvironment> mockExecutionEnvironment;
     DeviceBitfield recentlyPassedDeviceBitfield{};
     std::unique_ptr<MultiGraphicsAllocation> waitAllocations = nullptr;
@@ -354,6 +355,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     MemoryManager::AllocationStatus populateOsHandlesResult = MemoryManager::AllocationStatus::Success;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtrResult = nullptr;
     std::unique_ptr<AllocationProperties> lastAllocationProperties = nullptr;
+    std::unique_ptr<AllocationProperties> lastAllocationPropertiesWithPtr = nullptr;
     std::function<void(const AllocationProperties &)> validateAllocateProperties = [](const AllocationProperties &) -> void {};
     AddressRange reserveGpuAddressOnHeapResult = AddressRange{0u, 0u};
 };

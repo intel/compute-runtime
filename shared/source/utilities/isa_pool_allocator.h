@@ -73,15 +73,17 @@ class ISAPoolAllocator : public AbstractBuffersAllocator<ISAPool, GraphicsAlloca
     void freeSharedIsaAllocation(SharedIsaAllocation *sharedIsaAllocation);
 
   private:
+    void initAllocParams();
     SharedIsaAllocation *tryAllocateISA(bool isBuiltin, size_t size);
-
     size_t getAllocationSize(bool isBuiltin) const {
         return isBuiltin ? buitinAllocationSize : userAllocationSize;
     }
+    size_t alignToPoolSize(size_t size) const;
 
     Device *device;
     size_t userAllocationSize = MemoryConstants::pageSize2M * 2;
     size_t buitinAllocationSize = MemoryConstants::pageSize64k;
+    size_t poolAlignment = 1u;
     std::mutex allocatorMtx;
 };
 

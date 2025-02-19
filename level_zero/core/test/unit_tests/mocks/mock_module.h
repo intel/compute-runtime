@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,6 +58,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::copyPatchedSegments;
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
+    using BaseClass::getIsaAllocationPageSize;
     using BaseClass::importedSymbolAllocations;
     using BaseClass::isaSegmentsForPatching;
     using BaseClass::isFullyLinked;
@@ -111,6 +112,7 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::allocateKernelsIsaMemory;
     using ModuleImp::computeKernelIsaAllocationAlignedSizeWithPadding;
     using ModuleImp::debugModuleHandle;
+    using ModuleImp::getIsaAllocationPageSize;
     using ModuleImp::getModuleAllocations;
     using ModuleImp::initializeKernelImmutableDatas;
     using ModuleImp::isaAllocationPageSize;

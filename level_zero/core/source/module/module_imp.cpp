@@ -503,10 +503,9 @@ void ModuleTranslationUnit::processDebugData() {
 ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog), type(type) {
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto &hwInfo = device->getHwInfo();
-    this->isaAllocationPageSize = gfxCoreHelper.useSystemMemoryPlacementForISA(hwInfo) ? MemoryConstants::pageSize : MemoryConstants::pageSize64k;
     this->productFamily = hwInfo.platform.eProductFamily;
+    this->isaAllocationPageSize = getIsaAllocationPageSize();
 }
 
 ModuleImp::~ModuleImp() {
@@ -1712,6 +1711,21 @@ NEO::GraphicsAllocation *ModuleImp::getKernelsIsaParentAllocation() const {
         return nullptr;
     }
     return sharedIsaAllocation->getGraphicsAllocation();
+}
+
+size_t ModuleImp::getIsaAllocationPageSize() const {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto &hwInfo = device->getHwInfo();
+
+    if (gfxCoreHelper.useSystemMemoryPlacementForISA(hwInfo)) {
+        return MemoryConstants::pageSize;
+    }
+
+    if (device->getProductHelper().is2MBLocalMemAlignmentEnabled()) {
+        return MemoryConstants::pageSize2M;
+    } else {
+        return MemoryConstants::pageSize64k;
+    }
 }
 
 } // namespace L0

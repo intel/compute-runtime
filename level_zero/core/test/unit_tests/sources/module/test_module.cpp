@@ -34,6 +34,7 @@
 #include "shared/test/common/mocks/mock_l0_debugger.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -174,7 +175,6 @@ HWTEST_F(ModuleTest, givenUserModuleWhenCreatedThenCorrectAllocationTypeIsUsedFo
 
 template <bool localMemEnabled>
 struct ModuleKernelIsaAllocationsFixture : public ModuleFixture {
-    static constexpr size_t isaAllocationPageSize = (localMemEnabled ? MemoryConstants::pageSize64k : MemoryConstants::pageSize);
     using Module = WhiteBox<::L0::Module>;
 
     void setUp() {
@@ -209,7 +209,7 @@ struct ModuleKernelIsaAllocationsFixture : public ModuleFixture {
     void givenSeparateIsaMemoryRegionPerKernelWhenGraphicsAllocationFailsThenProperErrorReturned() {
         mockModule->allocateKernelsIsaMemoryCallBase = false;
         mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingCallBase = false;
-        mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingResult = isaAllocationPageSize;
+        mockModule->computeKernelIsaAllocationAlignedSizeWithPaddingResult = this->mockModule->getIsaAllocationPageSize();
 
         auto result = module->initialize(&this->moduleDesc, device->getNEODevice());
         EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
@@ -792,6 +792,35 @@ HWTEST_F(ModuleTest, whenMultipleModulesCreatedThenModulesShareIsaAllocation) {
         EXPECT_EQ(initialWriteMemoryCount + 1, ultCsr.writeMemoryParams.totalCallCount);
     }
 };
+
+TEST_F(ModuleTest, GivenLocalMemoryEnabledOrDisabledAnd2MBAlignmentEnabledOrDisabledWhenGettingIsaAllocationPageSizeThenCorrectValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    auto mockProductHelper = new MockProductHelper;
+
+    device->getNEODevice()->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
+
+    MockModule mockModule{device, nullptr, ModuleType::user};
+    EXPECT_EQ(mockModule.getIsaAllocationPageSize(), mockModule.isaAllocationPageSize);
+
+    {
+        debugManager.flags.EnableLocalMemory.set(0);
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+        EXPECT_EQ(MemoryConstants::pageSize, mockModule.getIsaAllocationPageSize());
+    }
+    {
+        debugManager.flags.EnableLocalMemory.set(1);
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
+
+        EXPECT_EQ(MemoryConstants::pageSize2M, mockModule.getIsaAllocationPageSize());
+    }
+    {
+        debugManager.flags.EnableLocalMemory.set(1);
+        mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
+
+        EXPECT_EQ(MemoryConstants::pageSize64k, mockModule.getIsaAllocationPageSize());
+    }
+}
 
 template <typename T1, typename T2>
 struct ModuleSpecConstantsFixture : public DeviceFixture {
@@ -4048,7 +4077,6 @@ TEST_F(ModuleTest, whenContainsStatefulAccessIsCalledThenResultIsCorrect) {
 
 template <bool localMemEnabled>
 struct ModuleIsaAllocationsFixture : public DeviceFixture {
-    static constexpr size_t isaAllocationPageSize = (localMemEnabled ? MemoryConstants::pageSize64k : MemoryConstants::pageSize);
     static constexpr NEO::MemoryPool isaAllocationMemoryPool = (localMemEnabled ? NEO::MemoryPool::localMemory : NEO::MemoryPool::system4KBPagesWith32BitGpuAddressing);
 
     void setUp() {
@@ -4064,6 +4092,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         this->mockMemoryManager->localMemorySupported[this->neoDevice->getRootDeviceIndex()] = true;
         this->mockModule.reset(new MockModule{this->device, nullptr, ModuleType::user});
         this->mockModule->translationUnit.reset(new MockModuleTranslationUnit{this->device});
+        this->isaAllocationPageSize = this->mockModule->getIsaAllocationPageSize();
     }
 
     void tearDown() {
@@ -4119,8 +4148,8 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
         EXPECT_EQ(kernelImmDatas[1]->getIsaOffsetInParentAllocation(), 0lu);
         EXPECT_EQ(kernelImmDatas[1]->getIsaSubAllocationSize(), 0lu);
         if constexpr (localMemEnabled) {
-            EXPECT_EQ(isaAllocationPageSize, kernelImmDatas[0]->getIsaSize());
-            EXPECT_EQ(isaAllocationPageSize, kernelImmDatas[1]->getIsaSize());
+            EXPECT_EQ(alignUp<size_t>(maxAllocationSizeInPage, MemoryConstants::pageSize64k), kernelImmDatas[0]->getIsaSize());
+            EXPECT_EQ(alignUp<size_t>(tinyAllocationSize, MemoryConstants::pageSize64k), kernelImmDatas[1]->getIsaSize());
         } else {
             EXPECT_EQ(this->computeKernelIsaAllocationSizeWithPadding(maxAllocationSizeInPage), kernelImmDatas[0]->getIsaSize());
             EXPECT_EQ(this->computeKernelIsaAllocationSizeWithPadding(tinyAllocationSize), kernelImmDatas[1]->getIsaSize());
@@ -4167,6 +4196,7 @@ struct ModuleIsaAllocationsFixture : public DeviceFixture {
 
     size_t isaPadding;
     size_t kernelStartPointerAlignment;
+    size_t isaAllocationPageSize;
     NEO::Device *neoDevice = nullptr;
     MockMemoryManager *mockMemoryManager = nullptr;
     std::unique_ptr<MockModule> mockModule = nullptr;
