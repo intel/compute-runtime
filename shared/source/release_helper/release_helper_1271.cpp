@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,6 +29,11 @@ bool ReleaseHelperHw<release>::isProgramAllStateComputeCommandFieldsWARequired()
 
 template <>
 inline bool ReleaseHelperHw<release>::isAuxSurfaceModeOverrideRequired() const {
+    return true;
+}
+
+template <>
+bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
     return true;
 }
 
