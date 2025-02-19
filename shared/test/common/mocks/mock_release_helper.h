@@ -41,6 +41,7 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isDummyBlitWaRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isNumRtStacksPerDssFixedValue, bool, true, ());
     ADDMETHOD_CONST_NOBASE(getFtrXe2Compression, bool, false, ());
+    ADDMETHOD_CONST_NOBASE(isDirectSubmissionLightSupported, bool, false, ());
 
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};

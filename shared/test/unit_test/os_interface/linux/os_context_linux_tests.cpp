@@ -8,14 +8,21 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "gtest/gtest.h"
 
+#include <link.h>
 #include <memory>
 
 using namespace NEO;
@@ -134,4 +141,59 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenGetFenceAddressAndValT
 
     EXPECT_GT(fenceAddressToWait, 0u);
     EXPECT_GT(fenceValToWait, 0u);
+}
+
+TEST(OSContextLinux, WhenCreateOsContextLinuxThenCheckIfOVLoaded) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.requirePerContextVM = true;
+
+    {
+        VariableBackup<decltype(SysCalls::sysCallsDlinfo)> mockDlinfo(&SysCalls::sysCallsDlinfo, [](void *handle, int request, void *info) -> int {
+            return -2;
+        });
+        MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        EXPECT_FALSE(osContext.ovLoaded);
+    }
+    {
+        VariableBackup<decltype(SysCalls::sysCallsDlinfo)> mockDlinfo(&SysCalls::sysCallsDlinfo, [](void *handle, int request, void *info) -> int {
+            return 0;
+        });
+        MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        EXPECT_FALSE(osContext.ovLoaded);
+    }
+    {
+        VariableBackup<decltype(SysCalls::sysCallsDlinfo)> mockDlinfo(&SysCalls::sysCallsDlinfo, [](void *handle, int request, void *info) -> int {
+            static char name[] = "libexample.so";
+            static link_map map{};
+            map.l_name = name;
+            *static_cast<link_map **>(info) = &map;
+            return 0;
+        });
+        MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        EXPECT_FALSE(osContext.ovLoaded);
+    }
+    {
+        VariableBackup<decltype(SysCalls::sysCallsDlinfo)> mockDlinfo(&SysCalls::sysCallsDlinfo, [](void *handle, int request, void *info) -> int {
+            static char name[] = "libopenvino_intel_gpu_plugin.so";
+            static link_map map{};
+            map.l_name = name;
+            *static_cast<link_map **>(info) = &map;
+            return 0;
+        });
+        MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        EXPECT_TRUE(osContext.ovLoaded);
+    }
+}
+
+TEST(OSContextLinux, givenOVLoadedWhenCheckForDirectSubmissionSupportThenProperValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.requirePerContextVM = true;
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ovLoaded = true;
+    auto directSubmissionSupported = osContext.isDirectSubmissionSupported();
+
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getProductHelper();
+    EXPECT_EQ(directSubmissionSupported, productHelper.isDirectSubmissionSupported(executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()) && executionEnvironment->rootDeviceEnvironments[0]->getReleaseHelper()->isDirectSubmissionLightSupported());
 }

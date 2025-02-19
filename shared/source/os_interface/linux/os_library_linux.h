@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,5 +25,8 @@ class OsLibrary : public NEO::OsLibrary {
     void *getProcAddress(const std::string &procName) override;
     std::string getFullPath() override;
 };
+
+bool isLibraryLoaded(const std::string &libraryName);
+
 } // namespace Linux
 } // namespace NEO

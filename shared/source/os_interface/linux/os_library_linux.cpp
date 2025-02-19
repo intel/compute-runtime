@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
+#include <cstring>
 #include <dlfcn.h>
 #include <link.h>
 
@@ -80,6 +81,23 @@ std::string OsLibrary::getFullPath() {
         return std::string(map->l_name);
     }
     return std::string();
+}
+
+bool isLibraryLoaded(const std::string &libraryName) {
+    auto handle = SysCalls::dlopen(0, RTLD_LAZY);
+    struct link_map *map = nullptr;
+    int retVal = NEO::SysCalls::dlinfo(handle, RTLD_DI_LINKMAP, &map);
+    if (retVal == 0 && map != nullptr) {
+        while (map) {
+            if (strstr(map->l_name, libraryName.c_str())) {
+                dlclose(handle);
+                return true;
+            }
+            map = map->l_next;
+        }
+    }
+    dlclose(handle);
+    return false;
 }
 } // namespace Linux
 } // namespace NEO
