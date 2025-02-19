@@ -85,6 +85,9 @@ std::string OsLibrary::getFullPath() {
 
 bool isLibraryLoaded(const std::string &libraryName) {
     auto handle = SysCalls::dlopen(0, RTLD_LAZY);
+    if (!handle) {
+        return false;
+    }
     struct link_map *map = nullptr;
     int retVal = NEO::SysCalls::dlinfo(handle, RTLD_DI_LINKMAP, &map);
     if (retVal == 0 && map != nullptr) {

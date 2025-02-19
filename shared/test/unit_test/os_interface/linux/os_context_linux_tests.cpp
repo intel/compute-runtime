@@ -143,11 +143,20 @@ TEST(OSContextLinux, givenPerContextVmsAndBindCompleteWhenGetFenceAddressAndValT
     EXPECT_GT(fenceValToWait, 0u);
 }
 
+extern void *(*dlopenFunc)(const char *filename, int flags);
+
 TEST(OSContextLinux, WhenCreateOsContextLinuxThenCheckIfOVLoaded) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.requirePerContextVM = true;
 
+    {
+        VariableBackup<decltype(dlopenFunc)> mockOpen(&dlopenFunc, [](const char *pathname, int flags) -> void * {
+            return nullptr;
+        });
+        MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        EXPECT_FALSE(osContext.ovLoaded);
+    }
     {
         VariableBackup<decltype(SysCalls::sysCallsDlinfo)> mockDlinfo(&SysCalls::sysCallsDlinfo, [](void *handle, int request, void *info) -> int {
             return -2;
