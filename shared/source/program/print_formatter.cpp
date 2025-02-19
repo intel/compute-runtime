@@ -62,9 +62,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
     std::unique_ptr<char[]> dataFormat(new char[length + 1]);
 
     for (size_t i = 0; i <= length; i++) {
-        if (formatString[i] == '\\')
-            output[cursor++] = escapeChar(formatString[++i]);
-        else if (formatString[i] == '%') {
+        if (formatString[i] == '%') {
             size_t end = i;
             if (end + 1 <= length && formatString[end + 1] == '%') {
                 output[cursor++] = '%';

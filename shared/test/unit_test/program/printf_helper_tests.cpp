@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -489,8 +489,13 @@ class PrintfNoArgumentsTest : public PrintFormatterTest,
 // automatic code would have to do the same thing it is testing and therefore would be prone to mistakes
 // this is needed because compiler doesn't escape the format strings and provides them exactly as they were typed in kernel source
 std::pair<std::string, std::string> stringValues[] = {
-    {R"(test)", "test"},
-    {R"(test\n)", "test\n"},
+    {R"(test)", R"(test)"},
+    {R"(test\n)", R"(test\n)"},
+    {R"(test\\n)", R"(test\\n)"},
+    {R"(test\\\n)", R"(test\\\n)"},
+    {R"(test\t)", R"(test\t)"},
+    {R"(test\\t)", R"(test\\t)"},
+    {R"(test\\\t)", R"(test\\\t)"},
 };
 
 TEST_P(PrintfNoArgumentsTest, GivenNoArgumentsWhenPrintingThenCharsAreEscaped) {
@@ -502,7 +507,6 @@ TEST_P(PrintfNoArgumentsTest, GivenNoArgumentsWhenPrintingThenCharsAreEscaped) {
     char actualOutput[maxPrintfOutputLength];
 
     printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, maxPrintfOutputLength, str, maxPrintfOutputLength - 1); });
-
     EXPECT_STREQ(input.second.c_str(), actualOutput);
 }
 
