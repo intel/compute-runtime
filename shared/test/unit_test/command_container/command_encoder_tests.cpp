@@ -297,6 +297,10 @@ HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenSetLastCounterValueIs
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(2u));
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(3u));
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(0u));
+
+    inOrderExecInfo = std::make_unique<InOrderExecInfo>(nullptr, nullptr, mockDevice, 2, true, false);
+    inOrderExecInfo->setLastWaitedCounterValue(2);
+    EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(1));
 }
 
 HWTEST_F(CommandEncoderTests, givenInOrderExecutionInfoWhenResetCalledThenUploadToTbx) {
