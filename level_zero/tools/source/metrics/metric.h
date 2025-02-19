@@ -9,21 +9,32 @@
 #include "shared/source/helpers/constants.h"
 
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include "level_zero/zet_intel_gpu_metric.h"
-#include <level_zero/zet_api.h>
 
 #include "metrics_discovery_api.h"
 
 #include <map>
 #include <vector>
 
-struct _zet_metric_group_handle_t {};
-struct _zet_metric_handle_t {};
-struct _zet_metric_streamer_handle_t {};
-struct _zet_metric_query_pool_handle_t {};
-struct _zet_metric_query_handle_t {};
-struct _zet_metric_programmable_exp_handle_t {};
+struct _zet_metric_group_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_group_handle_t>);
+
+struct _zet_metric_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_handle_t>);
+
+struct _zet_metric_streamer_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_streamer_handle_t>);
+
+struct _zet_metric_query_pool_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_query_pool_handle_t>);
+
+struct _zet_metric_query_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_query_handle_t>);
+
+struct _zet_metric_programmable_exp_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_metric_programmable_exp_handle_t>);
 
 namespace L0 {
 

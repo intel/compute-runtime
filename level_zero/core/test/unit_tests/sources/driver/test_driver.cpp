@@ -1209,7 +1209,7 @@ struct GtPinInitTest : public ::testing::Test {
     void TearDown() override {
         delete MockOsLibrary::loadLibraryNewObject;
         for (auto &driverHandle : *globalDriverHandles) {
-            delete driverHandle;
+            delete static_cast<BaseDriver *>(driverHandle);
         }
         delete globalDriverHandles;
         globalDriverHandles = nullptr;

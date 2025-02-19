@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct OsSysman;
 
 class Firmware : _zes_firmware_handle_t {
   public:
-    ~Firmware() override {}
+    virtual ~Firmware() = default;
     virtual ze_result_t firmwareGetProperties(zes_firmware_properties_t *pProperties) = 0;
     virtual ze_result_t firmwareFlash(void *pImage, uint32_t size) = 0;
     virtual ze_result_t firmwareGetFlashProgress(uint32_t *pCompletionPercent) = 0;

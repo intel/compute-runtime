@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,8 +18,8 @@
 #include <mutex>
 #include <vector>
 
-struct _ze_command_queue_handle_t {
-};
+struct _ze_command_queue_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_command_queue_handle_t>);
 
 namespace NEO {
 class CommandStreamReceiver;

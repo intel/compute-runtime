@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,11 +14,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
-struct _ze_context_handle_t {
-    const uint64_t objMagic = objMagicValue;
-    static const zel_handle_type_t handleType = ZEL_HANDLE_CONTEXT;
-    virtual ~_ze_context_handle_t() = default;
-};
+struct _ze_context_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_CONTEXT> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_context_handle_t>);
 
 namespace NEO {
 class Device;
@@ -44,7 +41,7 @@ struct Context : _ze_context_handle_t {
         return ZE_MEMORY_TYPE_UNKNOWN;
     }
 
-    ~Context() override = default;
+    virtual ~Context() = default;
     virtual ze_result_t destroy() = 0;
     virtual ze_result_t getStatus() = 0;
     virtual DriverHandle *getDriverHandle() = 0;

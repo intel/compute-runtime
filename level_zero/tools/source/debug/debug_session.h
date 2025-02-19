@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,13 +10,13 @@
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/os_thread.h"
 
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 #include "level_zero/tools/source/debug/eu_thread.h"
-#include <level_zero/ze_api.h>
-#include <level_zero/zet_api.h>
 
 #include <memory>
 
-struct _zet_debug_session_handle_t {};
+struct _zet_debug_session_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_zet_debug_session_handle_t>);
 
 namespace L0 {
 

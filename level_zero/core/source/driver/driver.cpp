@@ -90,7 +90,7 @@ void DriverImp::initialize(ze_result_t *result) {
             }
             if (*result != ZE_RESULT_SUCCESS) {
                 for (auto &driverHandle : *globalDriverHandles) {
-                    delete driverHandle;
+                    delete static_cast<BaseDriver *>(driverHandle);
                 }
                 globalDriverHandles->clear();
             } else if (envVariables.pin) {

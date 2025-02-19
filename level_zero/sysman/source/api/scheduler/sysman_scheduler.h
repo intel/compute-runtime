@@ -21,6 +21,7 @@ namespace Sysman {
 struct OsSysman;
 class Scheduler : _zes_sched_handle_t {
   public:
+    virtual ~Scheduler() = default;
     virtual ze_result_t schedulerGetProperties(zes_sched_properties_t *pProperties) = 0;
     virtual ze_result_t getCurrentMode(zes_sched_mode_t *pMode) = 0;
     virtual ze_result_t getTimeoutModeProperties(ze_bool_t getDefaults, zes_sched_timeout_properties_t *pConfig) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@ namespace Sysman {
 struct OsSysman;
 class Temperature : _zes_temp_handle_t {
   public:
+    virtual ~Temperature() = default;
     virtual ze_result_t temperatureGetProperties(zes_temp_properties_t *pProperties) = 0;
     virtual ze_result_t temperatureGetConfig(zes_temp_config_t *pConfig) = 0;
     virtual ze_result_t temperatureSetConfig(const zes_temp_config_t *pConfig) = 0;

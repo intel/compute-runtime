@@ -9,12 +9,13 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include <level_zero/ze_api.h>
+#include "level_zero/core/source/helpers/api_handle_helper.h"
 
 #include <memory>
 #include <vector>
 
-struct _ze_module_handle_t {};
+struct _ze_module_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_module_handle_t>);
 
 namespace NEO {
 struct KernelDescriptor;

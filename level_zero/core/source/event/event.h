@@ -15,7 +15,6 @@
 #include "shared/source/os_interface/os_time.h"
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
-#include <level_zero/ze_api.h>
 
 #include <atomic>
 #include <bitset>
@@ -25,12 +24,11 @@
 #include <mutex>
 #include <vector>
 
-struct _ze_event_handle_t {
-    const uint64_t objMagic = objMagicValue;
-    static const zel_handle_type_t handleType = ZEL_HANDLE_EVENT;
-};
+struct _ze_event_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_EVENT> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_event_handle_t>);
 
-struct _ze_event_pool_handle_t {};
+struct _ze_event_pool_handle_t : BaseHandle {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_event_pool_handle_t>);
 
 namespace NEO {
 class CommandStreamReceiver;

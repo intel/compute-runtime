@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct OsSysman;
 
 class Performance : _zes_perf_handle_t {
   public:
-    ~Performance() override {}
+    virtual ~Performance() = default;
     virtual ze_result_t performanceGetProperties(zes_perf_properties_t *pProperties) = 0;
     virtual ze_result_t performanceGetConfig(double *pFactor) = 0;
     virtual ze_result_t performanceSetConfig(double pFactor) = 0;

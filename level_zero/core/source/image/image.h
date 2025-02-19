@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,9 @@
 #pragma once
 
 #include "level_zero/core/source/helpers/api_handle_helper.h"
-#include <level_zero/ze_api.h>
 
-struct _ze_image_handle_t {
-    const uint64_t objMagic = objMagicValue;
-    static const zel_handle_type_t handleType = ZEL_HANDLE_IMAGE;
-};
+struct _ze_image_handle_t : BaseHandleWithLoaderTranslation<ZEL_HANDLE_IMAGE> {};
+static_assert(IsCompliantWithDdiHandlesExt<_ze_image_handle_t>);
 
 namespace NEO {
 struct ImageInfo;
