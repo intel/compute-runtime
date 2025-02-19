@@ -400,6 +400,31 @@ ze_result_t OaMetricSourceImp::metricProgrammableGet(uint32_t *pCount, zet_metri
     return getMetricEnumeration().metricProgrammableGet(pCount, phMetricProgrammables);
 }
 
+ze_result_t OaMetricSourceImp::appendMarker(zet_command_list_handle_t hCommandList, zet_metric_group_handle_t hMetricGroup, uint32_t value) {
+
+    auto commandListImp = static_cast<CommandListImp *>(CommandList::fromHandle(hCommandList));
+    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandListImp->getDevice());
+
+    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
+        // Use one of the sub-device contexts to append to command list.
+        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
+    }
+
+    OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
+
+    // Obtain gpu commands.
+    CommandBufferData_1_0 commandBuffer = {};
+    commandBuffer.CommandsType = MetricsLibraryApi::ObjectType::MarkerStreamUser;
+    commandBuffer.MarkerStreamUser.Value = value;
+    commandBuffer.Type = metricSource.isComputeUsed()
+                             ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                             : MetricsLibraryApi::GpuCommandBufferType::Render;
+
+    return metricsLibrary.getGpuCommands(*commandListImp, commandBuffer) ? ZE_RESULT_SUCCESS
+                                                                         : ZE_RESULT_ERROR_UNKNOWN;
+}
+
 template <>
 OaMetricSourceImp &MetricDeviceContext::getMetricSource<OaMetricSourceImp>() const {
     return static_cast<OaMetricSourceImp &>(*metricSources.at(MetricSource::metricSourceTypeOa));

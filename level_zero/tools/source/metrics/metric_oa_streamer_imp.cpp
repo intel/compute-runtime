@@ -328,27 +328,8 @@ ze_result_t OaMetricGroupImp::streamerOpen(
 }
 
 ze_result_t OaMetricStreamerImp::appendStreamerMarker(CommandList &commandList, uint32_t value) {
-
-    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.getDevice());
-
-    if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
-        // Use one of the sub-device contexts to append to command list.
-        pDeviceImp = static_cast<DeviceImp *>(pDeviceImp->subDevices[0]);
-    }
-
-    OaMetricSourceImp &metricSource = pDeviceImp->metricContext->getMetricSource<OaMetricSourceImp>();
-    auto &metricsLibrary = metricSource.getMetricsLibrary();
-
-    // Obtain gpu commands.
-    CommandBufferData_1_0 commandBuffer = {};
-    commandBuffer.CommandsType = ObjectType::MarkerStreamUser;
-    commandBuffer.MarkerStreamUser.Value = value;
-    commandBuffer.Type = metricSource.isComputeUsed()
-                             ? GpuCommandBufferType::Compute
-                             : GpuCommandBufferType::Render;
-
-    return metricsLibrary.getGpuCommands(commandList, commandBuffer) ? ZE_RESULT_SUCCESS
-                                                                     : ZE_RESULT_ERROR_UNKNOWN;
+    auto &metricSource = commandList.getDevice()->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    return metricSource.appendMarker(commandList.toHandle(), hMetricGroup, value);
 }
 
 } // namespace L0
