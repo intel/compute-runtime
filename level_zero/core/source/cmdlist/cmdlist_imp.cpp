@@ -209,8 +209,9 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList->isSyncModeQueue |= true;
         }
 
+        auto &productHelper = device->getProductHelper();
+
         if (!internalUsage) {
-            auto &productHelper = device->getProductHelper();
             commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper);
             if (NEO::debugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::debugManager.flags.EnableFlushTaskSubmission.get();
@@ -258,9 +259,11 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, &cmdQdesc, csr);
 
-        commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, device->getProductHelper());
+        commandList->copyThroughLockedPtrEnabled = gfxCoreHelper.copyThroughLockedPtrEnabled(hwInfo, productHelper);
 
-        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && !commandList->isCopyOnly(false) && commandList->isInOrderExecutionEnabled()) {
+        const bool cmdListSupportsCopyOffload = !commandList->isCopyOnly(false) && commandList->isInOrderExecutionEnabled() && !productHelper.isDcFlushAllowed();
+
+        if ((NEO::debugManager.flags.ForceCopyOperationOffloadForComputeCmdList.get() == 1 || queueProperties.copyOffloadHint) && cmdListSupportsCopyOffload) {
             commandList->enableCopyOperationOffload(productFamily, device, desc);
         }
 

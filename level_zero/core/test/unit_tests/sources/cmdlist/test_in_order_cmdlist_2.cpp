@@ -56,17 +56,26 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
     cmdQueueDesc.flags = ZE_COMMAND_QUEUE_FLAG_IN_ORDER;
     cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
+    auto dcFlushRequired = device->getProductHelper().isDcFlushAllowed();
+
     {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
-        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
 
-        auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
-        EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
-        EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
-        EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
-        EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+        if (dcFlushRequired) {
+            EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        } else {
+
+            EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+            auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
+            EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
+            EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
+            EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+        }
 
         zeCommandListDestroy(cmdListHandle);
     }
@@ -77,14 +86,20 @@ HWTEST2_F(CopyOffloadInOrderTests, givenDebugFlagSetWhenCreatingCmdListThenEnabl
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
-        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
 
-        auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
-        EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
-        EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
-        EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
-        EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+        if (dcFlushRequired) {
+            EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        } else {
+            EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+            auto queue = static_cast<WhiteBox<L0::CommandQueue> *>(cmdList->cmdQImmediateCopyOffload);
+            EXPECT_EQ(cmdQueueDesc.priority, queue->desc.priority);
+            EXPECT_EQ(cmdQueueDesc.mode, queue->desc.mode);
+            EXPECT_TRUE(queue->peekIsCopyOnlyCommandQueue());
+            EXPECT_TRUE(NEO::EngineHelpers::isBcs(queue->getCsr()->getOsContext().getEngineType()));
+        }
 
         zeCommandListDestroy(cmdListHandle);
 
@@ -145,11 +160,19 @@ HWTEST2_F(CopyOffloadInOrderTests, givenQueueDescriptorWhenCreatingCmdListThenEn
 
     cmdQueueDesc.pNext = &copyOffloadDesc;
 
+    auto dcFlushRequired = device->getProductHelper().isDcFlushAllowed();
+
     {
         EXPECT_EQ(ZE_RESULT_SUCCESS, zeCommandListCreateImmediate(context, device, &cmdQueueDesc, &cmdListHandle));
         auto cmdList = static_cast<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>> *>(CommandList::fromHandle(cmdListHandle));
-        EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
-        EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+
+        if (dcFlushRequired) {
+            EXPECT_FALSE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_EQ(nullptr, cmdList->cmdQImmediateCopyOffload);
+        } else {
+            EXPECT_TRUE(cmdList->copyOperationOffloadEnabled);
+            EXPECT_NE(nullptr, cmdList->cmdQImmediateCopyOffload);
+        }
 
         zeCommandListDestroy(cmdListHandle);
     }
