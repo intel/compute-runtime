@@ -406,8 +406,8 @@ uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) const {
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
-    return EncodeDispatchKernel<GfxFamily>::computeSlmValues(hwInfo, slmSize);
+uint32_t GfxCoreHelperHw<GfxFamily>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) const {
+    return EncodeDispatchKernel<GfxFamily>::computeSlmValues(hwInfo, slmSize, releaseHelper, isHeapless);
 }
 
 template <typename GfxFamily>

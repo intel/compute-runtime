@@ -115,7 +115,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, args.defaultPipelinedThreadArbitrationPolicy);
 
-    auto slmSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize());
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+    auto slmSize = EncodeDispatchKernel<Family>::computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize(), releaseHelper, heaplessModeEnabled);
 
     if (debugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         slmSize = static_cast<uint32_t>(debugManager.flags.OverrideSlmAllocationSize.get());
@@ -953,7 +954,7 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
 
     if (slmSize == 0u) {

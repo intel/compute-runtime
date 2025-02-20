@@ -1192,28 +1192,28 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenAlignSlm
 HWCMDTEST_F(IGFX_GEN12LP_CORE, GfxCoreHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0));
-    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1));
-    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024));
-    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 1025));
-    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 2048));
-    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 2049));
-    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 4096));
-    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 4097));
-    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8192));
-    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 8193));
-    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 16384));
-    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 16385));
-    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 32768));
-    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 32769));
-    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536));
+    EXPECT_EQ(0u, gfxCoreHelper.computeSlmValues(hwInfo, 0, nullptr, false));
+    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1, nullptr, false));
+    EXPECT_EQ(1u, gfxCoreHelper.computeSlmValues(hwInfo, 1024, nullptr, false));
+    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 1025, nullptr, false));
+    EXPECT_EQ(2u, gfxCoreHelper.computeSlmValues(hwInfo, 2048, nullptr, false));
+    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 2049, nullptr, false));
+    EXPECT_EQ(3u, gfxCoreHelper.computeSlmValues(hwInfo, 4096, nullptr, false));
+    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 4097, nullptr, false));
+    EXPECT_EQ(4u, gfxCoreHelper.computeSlmValues(hwInfo, 8192, nullptr, false));
+    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 8193, nullptr, false));
+    EXPECT_EQ(5u, gfxCoreHelper.computeSlmValues(hwInfo, 16384, nullptr, false));
+    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 16385, nullptr, false));
+    EXPECT_EQ(6u, gfxCoreHelper.computeSlmValues(hwInfo, 32768, nullptr, false));
+    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 32769, nullptr, false));
+    EXPECT_EQ(7u, gfxCoreHelper.computeSlmValues(hwInfo, 65536, nullptr, false));
 }
 
 HWTEST_F(GfxCoreHelperTest, GivenZeroSlmSizeWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     using SHARED_LOCAL_MEMORY_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto receivedSlmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hwInfo, 0));
+    auto receivedSlmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hwInfo, 0, nullptr, false));
     EXPECT_EQ(SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_SLM_ENCODES_0K, receivedSlmSize);
 }
 

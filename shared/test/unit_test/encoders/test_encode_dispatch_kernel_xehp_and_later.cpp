@@ -10,11 +10,13 @@
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -59,9 +61,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenSlmTotalSizeGraterTha
     auto cmd = genCmdCast<DefaultWalkerType *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
     auto &gfxcoreHelper = this->getHelper<GfxCoreHelper>();
+    auto releaseHelper = ReleaseHelper::create(pDevice->getHardwareInfo().ipVersion);
+    bool isHeapless = pDevice->getCompilerProductHelper().isHeaplessModeEnabled();
 
     uint32_t expectedValue = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
-        gfxcoreHelper.computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize));
+        gfxcoreHelper.computeSlmValues(pDevice->getHardwareInfo(), slmTotalSize, releaseHelper.get(), isHeapless));
 
     EXPECT_EQ(expectedValue, idd.getSharedLocalMemorySize());
 }

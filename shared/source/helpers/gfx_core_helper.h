@@ -45,6 +45,7 @@ struct RootDeviceEnvironment;
 struct PipeControlArgs;
 struct KernelDescriptor;
 class ProductHelper;
+class ReleaseHelper;
 class GfxCoreHelper;
 class AILConfiguration;
 
@@ -101,7 +102,7 @@ class GfxCoreHelper {
     virtual uint32_t calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const = 0;
     virtual uint32_t calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) const = 0;
-    virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const = 0;
+    virtual uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) const = 0;
 
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual uint32_t getMinimalSIMDSize() const = 0;
@@ -313,7 +314,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t alignSlmSize(uint32_t slmSize) const override;
 
-    uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const override;
+    uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) const override;
 
     static AuxTranslationMode getAuxTranslationMode(const HardwareInfo &hwInfo);
 

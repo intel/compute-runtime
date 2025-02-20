@@ -84,8 +84,8 @@ XE2_HPG_CORETEST_F(Xe2HpgCoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorre
         {11, 128 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe2AndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
     }
 
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1), std::exception);
+    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
 }

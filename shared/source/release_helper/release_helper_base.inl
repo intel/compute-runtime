@@ -162,4 +162,10 @@ template <ReleaseType releaseType>
 bool ReleaseHelperHw<releaseType>::getFtrXe2Compression() const {
     return true;
 }
+
+template <ReleaseType releaseType>
+uint32_t ReleaseHelperHw<releaseType>::computeSlmValues(uint32_t slmSize, bool isHeapless) const {
+    return 0u;
+}
+
 } // namespace NEO

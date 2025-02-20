@@ -51,10 +51,10 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenSlmSizeWhenEncodingThenReturn
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
     for (auto &testInput : computeSlmValuesXeHpcTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
     }
 
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 129 * MemoryConstants::kiloByte), std::exception);
+    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 129 * MemoryConstants::kiloByte, nullptr, false), std::exception);
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPreferredThenTrueIsReturned) {

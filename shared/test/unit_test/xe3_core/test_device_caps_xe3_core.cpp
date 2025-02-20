@@ -96,8 +96,8 @@ XE3_CORETEST_F(Xe3CoreDeviceCaps, givenSlmSizeWhenEncodingThenReturnCorrectValue
         {11, 128 * MemoryConstants::kiloByte}};
 
     for (const auto &testInput : computeSlmValuesXe3AndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hwInfo, testInput.slmSize, nullptr, false));
     }
 
-    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1), std::exception);
+    EXPECT_THROW(gfxCoreHelper.computeSlmValues(hwInfo, 128 * MemoryConstants::kiloByte + 1, nullptr, false), std::exception);
 }

@@ -63,6 +63,7 @@ class ReleaseHelper {
     virtual const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const = 0;
     virtual bool isNumRtStacksPerDssFixedValue() const = 0;
     virtual bool getFtrXe2Compression() const = 0;
+    virtual uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const = 0;
 
   protected:
     ReleaseHelper(HardwareIpVersion hardwareIpVersion) : hardwareIpVersion(hardwareIpVersion) {}
@@ -105,6 +106,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     const SizeToPreferredSlmValueArray &getSizeToPreferredSlmValue(bool isHeapless) const override;
     bool isNumRtStacksPerDssFixedValue() const override;
     bool getFtrXe2Compression() const override;
+    uint32_t computeSlmValues(uint32_t slmSize, bool isHeapless) const override;
 
   protected:
     ReleaseHelperHw(HardwareIpVersion hardwareIpVersion) : ReleaseHelper(hardwareIpVersion) {}

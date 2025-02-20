@@ -29,6 +29,7 @@ class GmmHelper;
 class IndirectHeap;
 class InOrderExecInfo;
 class ProductHelper;
+class ReleaseHelper;
 
 struct DeviceInfo;
 struct DispatchKernelEncoderI;
@@ -229,7 +230,7 @@ struct EncodeDispatchKernel {
     static void forceComputeWalkerPostSyncFlushWithWrite(WalkerType &walkerCmd);
 
     static uint32_t alignSlmSize(uint32_t slmSize);
-    static uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize);
+    static uint32_t computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless);
 
     static bool singleTileExecImplicitScalingRequired(bool cooperativeKernel);
 

@@ -320,7 +320,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenComputeSlmSi
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto hardwareInfo = *defaultHwInfo;
     for (auto &testInput : computeSlmValuesXeHpgTestsInput) {
-        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hardwareInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, gfxCoreHelper.computeSlmValues(hardwareInfo, testInput.slmSize, nullptr, false));
     }
 }
 

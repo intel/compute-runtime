@@ -144,7 +144,7 @@ uint32_t EncodeDispatchKernel<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t EncodeDispatchKernel<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize, ReleaseHelper *releaseHelper, bool isHeapless) {
     auto slmValue = std::max(slmSize, 1024u);
     slmValue = Math::nextPowerOfTwo(slmValue);
     slmValue = Math::getMinLsbSet(slmValue);
