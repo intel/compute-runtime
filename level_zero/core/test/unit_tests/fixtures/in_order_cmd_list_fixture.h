@@ -50,7 +50,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         using EventImp<uint32_t>::inOrderTimestampNode;
 
         void makeCounterBasedInitiallyDisabled(MultiGraphicsAllocation &poolAllocation) {
-            resetInOrderTimestampNode(nullptr);
+            resetInOrderTimestampNode(nullptr, 0);
             counterBasedMode = CounterBasedMode::initiallyDisabled;
             resetCompletionStatus();
             counterBasedFlags = 0;
@@ -60,7 +60,7 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
         }
 
         void makeCounterBasedImplicitlyDisabled(MultiGraphicsAllocation &poolAllocation) {
-            resetInOrderTimestampNode(nullptr);
+            resetInOrderTimestampNode(nullptr, 0);
             counterBasedMode = CounterBasedMode::implicitlyDisabled;
             resetCompletionStatus();
             counterBasedFlags = 0;

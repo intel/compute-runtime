@@ -325,7 +325,7 @@ struct Event : _ze_event_handle_t {
 
     void setExternalInterruptId(uint32_t interruptId) { externalInterruptId = interruptId; }
 
-    void resetInOrderTimestampNode(NEO::TagNodeBase *newNode);
+    void resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount);
 
     bool hasInOrderTimestampNode() const { return !inOrderTimestampNode.empty(); }
 
@@ -345,7 +345,7 @@ struct Event : _ze_event_handle_t {
 
     void unsetCmdQueue();
     void releaseTempInOrderTimestampNodes();
-    virtual void clearLatestInOrderTimestampData() = 0;
+    virtual void clearLatestInOrderTimestampData(uint32_t partitionCount) = 0;
 
     EventPool *eventPool = nullptr;
 

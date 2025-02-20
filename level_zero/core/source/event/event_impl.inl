@@ -219,7 +219,7 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 }
 
 template <typename TagSizeT>
-void EventImp<TagSizeT>::clearLatestInOrderTimestampData() {
+void EventImp<TagSizeT>::clearLatestInOrderTimestampData(uint32_t partitionCount) {
     auto node = inOrderTimestampNode.back();
     auto hostAddress = node->getCpuBase();
     auto deviceAddress = node->getGpuAddress();
@@ -227,7 +227,7 @@ void EventImp<TagSizeT>::clearLatestInOrderTimestampData() {
     const std::array<TagSizeT, 4> data = {Event::STATE_INITIAL, Event::STATE_INITIAL, Event::STATE_INITIAL, Event::STATE_INITIAL};
     constexpr size_t copySize = data.size() * sizeof(TagSizeT);
 
-    for (uint32_t i = 0; i < kernelEventCompletionData[0].getPacketsUsed(); i++) {
+    for (uint32_t i = 0; i < partitionCount; i++) {
         copyDataToEventAlloc(hostAddress, deviceAddress, copySize, data.data());
 
         hostAddress = ptrOffset(hostAddress, singlePacketSize);

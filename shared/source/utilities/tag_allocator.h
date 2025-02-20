@@ -58,7 +58,7 @@ class TagNodeBase : public NonCopyableAndNonMovableClass {
     bool isProfilingCapable() const { return profilingCapable; }
 
     // TagType specific calls
-    virtual void assignDataToAllTimestamps(uint32_t packetIndex, void *source) = 0;
+    virtual void assignDataToAllTimestamps(uint32_t packetIndex, const void *source) = 0;
 
     virtual size_t getGlobalStartOffset() const = 0;
     virtual size_t getContextStartOffset() const = 0;
@@ -115,7 +115,7 @@ class TagNode : public TagNodeBase, public IDNode<TagNode<TagType>> {
 
     void *getCpuBase() const override { return tagForCpuAccess; }
 
-    void assignDataToAllTimestamps(uint32_t packetIndex, void *source) override;
+    void assignDataToAllTimestamps(uint32_t packetIndex, const void *source) override;
 
     size_t getGlobalStartOffset() const override;
     size_t getContextStartOffset() const override;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -255,7 +255,7 @@ size_t TagNode<TagType>::getSinglePacketSize() const {
 }
 
 template <typename TagType>
-void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] void *source) {
+void TagNode<TagType>::assignDataToAllTimestamps([[maybe_unused]] uint32_t packetIndex, [[maybe_unused]] const void *source) {
     if constexpr (TagType::getTagNodeType() == TagNodeType::timestampPacket) {
         return tagForCpuAccess->assignDataToAllTimestamps(packetIndex, source);
     } else {

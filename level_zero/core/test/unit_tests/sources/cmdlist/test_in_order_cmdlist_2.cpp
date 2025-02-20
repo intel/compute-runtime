@@ -2659,6 +2659,52 @@ HWTEST2_F(MultiTileSynchronizedDispatchTests, givenLimitedSyncDispatchWhenAppend
 
 using MultiTileInOrderCmdListTests = MultiTileInOrderCmdListFixture;
 
+HWTEST2_F(MultiTileInOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenClearAllTsPackets, IsAtLeastXeHpcCore) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+
+    uint64_t counterValue = 4;
+    uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createMultiTileImmCmdList<gfxCoreFamily>();
+
+    auto tag = device->getInOrderTimestampAllocator()->getTag();
+    auto node = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(tag->getCpuBase());
+
+    constexpr TagSizeT packet00[4] = {12, 13, 14, 15};
+    constexpr TagSizeT packet01[4] = {16, 17, 18, 19};
+
+    node->assignDataToAllTimestamps(0, packet00);
+    node->assignDataToAllTimestamps(1, packet01);
+
+    tag->returnTag();
+
+    immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
+    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
+
+    auto node2 = static_cast<NEO::TimestampPackets<TagSizeT, 1> *>(eventObj->inOrderTimestampNode[0]->getCpuBase());
+
+    EXPECT_EQ(node, node2);
+
+    auto expectedValue = static_cast<uint64_t>(Event::STATE_INITIAL);
+    EXPECT_EQ(expectedValue, node2->getContextStartValue(0));
+    EXPECT_EQ(expectedValue, node2->getGlobalStartValue(0));
+    EXPECT_EQ(expectedValue, node2->getContextEndValue(0));
+    EXPECT_EQ(expectedValue, node2->getGlobalEndValue(0));
+    EXPECT_EQ(expectedValue, node2->getContextStartValue(1));
+    EXPECT_EQ(expectedValue, node2->getGlobalStartValue(1));
+    EXPECT_EQ(expectedValue, node2->getContextEndValue(1));
+    EXPECT_EQ(expectedValue, node2->getGlobalEndValue(1));
+
+    context->freeMem(devAddress);
+}
+
 HWTEST2_F(MultiTileInOrderCmdListTests, givenStandaloneEventWhenCallingAppendThenSuccess, IsAtLeastXeHpCore) {
     uint64_t counterValue = 2;
     auto hostAddress = reinterpret_cast<uint64_t *>(allocHostMem(sizeof(uint64_t)));

@@ -516,7 +516,7 @@ void Event::releaseTempInOrderTimestampNodes() {
 }
 
 ze_result_t Event::destroy() {
-    resetInOrderTimestampNode(nullptr);
+    resetInOrderTimestampNode(nullptr, 0);
     releaseTempInOrderTimestampNodes();
 
     if (isCounterBasedExplicitlyEnabled() && isFromIpcPool) {
@@ -660,13 +660,13 @@ void Event::setReferenceTs(uint64_t currentCpuTimeStamp) {
 }
 
 void Event::unsetInOrderExecInfo() {
-    resetInOrderTimestampNode(nullptr);
+    resetInOrderTimestampNode(nullptr, 0);
     inOrderExecInfo.reset();
     inOrderAllocationOffset = 0;
     inOrderExecSignalValue = 0;
 }
 
-void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
+void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
     bool removeExistingNodes = inOrderIncrementValue == 0 || !newNode;
 
     if (inOrderIncrementValue > 0 && inOrderTimestampNode.size() == inOrderIncrementOperationsCount) {
@@ -687,7 +687,7 @@ void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode) {
         inOrderTimestampNode.push_back(newNode);
 
         if (NEO::debugManager.flags.ClearStandaloneInOrderTimestampAllocation.get() != 0) {
-            clearLatestInOrderTimestampData();
+            clearLatestInOrderTimestampData(partitionCount);
         }
     }
 }

@@ -178,7 +178,7 @@ class MockEvent : public ::L0::Event {
     ze_result_t hostEventSetValue(State eventState) override {
         return ZE_RESULT_SUCCESS;
     }
-    void clearLatestInOrderTimestampData() override {}
+    void clearLatestInOrderTimestampData(uint32_t partitionCount) override {}
     uint32_t getPacketsUsedInLastKernel() override { return 1; }
     uint32_t getPacketsInUse() const override { return 1; }
     void resetPackets(bool resetAllPackets) override {}

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ class TimestampPackets : public TagTypeBase {
         }
     }
 
-    void assignDataToAllTimestamps(uint32_t packetIndex, void *source) {
+    void assignDataToAllTimestamps(uint32_t packetIndex, const void *source) {
         memcpy_s(&packets[packetIndex], sizeof(Packet), source, sizeof(Packet));
     }
 
