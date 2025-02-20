@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -191,6 +191,10 @@ scratch_kernel(__global int *resIdx, global TYPE *src, global TYPE *dst) {
 const char *scratchKernelBuildOptions = "-igc_opts 'VISAOptions=-forcespills' ";
 
 const char *printfKernelSource = R"===(
+
+#define MACRO_STR1 "string with tab(\\t) new line(\\n):"
+#define MACRO_STR2 "using tab \tand new line \nin this string"
+
 __kernel void printf_kernel(char byteValue, short shortValue, int intValue, long longValue) {
     printf("byte = %hhd\nshort = %hd\nint = %d\nlong = %ld", byteValue, shortValue, intValue, longValue);
 }
@@ -202,6 +206,15 @@ __kernel void printf_kernel1() {
         printf("id == %d\n", 0);
     }
 }
+
+__kernel void print_string() {
+    printf("%s\n%s", "string with tab(\\t) new line(\\n):", "using tab \tand new line \nin this string");
+}
+
+__kernel void print_macros() {
+    printf("%s\n%s", MACRO_STR1, MACRO_STR2);
+}
+
 )===";
 
 const char *readNV12Module = R"===(

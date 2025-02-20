@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,8 +24,10 @@
 #include <unistd.h>
 #endif
 
-static constexpr std::array<const char *, 2> kernelNames = {"printf_kernel",
-                                                            "printf_kernel1"};
+static constexpr std::array<const char *, 4> kernelNames = {"printf_kernel",
+                                                            "printf_kernel1",
+                                                            "print_string",
+                                                            "print_macros"};
 
 enum class PrintfExecutionMode : uint32_t {
     commandQueue,
@@ -85,6 +87,12 @@ void runPrintfKernel(const ze_module_handle_t &module, const ze_kernel_handle_t 
         dispatchTraits.groupCountX = 10u;
         dispatchTraits.groupCountY = 1u;
         dispatchTraits.groupCountZ = 1u;
+    } else if (id == 2 || id == 3) {
+        SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, 1U, 1U, 1U));
+
+        dispatchTraits.groupCountX = 1u;
+        dispatchTraits.groupCountY = 1u;
+        dispatchTraits.groupCountZ = 1u;
     }
     SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
 
@@ -110,15 +118,17 @@ int main(int argc, char *argv[]) {
     ze_module_handle_t module = nullptr;
     createModule(context, device, module);
 
-    std::array<std::string, 2> expectedStrings = {
+    std::array<std::string, 4> expectedStrings = {
         "byte = 127\nshort = 32767\nint = 2147483647\nlong = 9223372036854775807",
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"
-        "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"};
+        "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n",
+        "string with tab(\\t) new line(\\n):\nusing tab \tand new line \nin this string",
+        "string with tab(\\t) new line(\\n):\nusing tab \tand new line \nin this string"};
 
     PrintfExecutionMode executionModes[] = {PrintfExecutionMode::commandQueue, PrintfExecutionMode::immSyncCmdList};
 
     for (auto mode : executionModes) {
-        for (uint32_t i = 0; i < 2; i++) {
+        for (uint32_t i = 0; i < 4; i++) {
 
             if (validatePrintfOutput) {
                 // duplicate stdout descriptor
