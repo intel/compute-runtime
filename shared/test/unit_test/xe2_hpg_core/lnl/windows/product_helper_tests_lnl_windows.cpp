@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,6 @@
 using namespace NEO;
 
 using LnlProductHelperWindows = ProductHelperTest;
-
-LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
-    EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
-}
 
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenDcFlushMitigationThenReturnFalse) {
     EXPECT_FALSE(productHelper->mitigateDcFlush());
