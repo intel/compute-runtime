@@ -30,11 +30,6 @@ bool ReleaseHelperHw<release>::isPipeControlPriorToPipelineSelectWaRequired() co
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
-    return true;
-}
-
-template <>
 bool ReleaseHelperHw<release>::isDirectSubmissionSupported() const {
     return true;
 }
