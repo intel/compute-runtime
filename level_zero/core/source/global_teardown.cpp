@@ -11,6 +11,7 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/ddi/ze_ddi_tables.h"
 #include "level_zero/sysman/source/driver/sysman_driver_handle_imp.h"
 
 namespace L0 {
@@ -19,6 +20,9 @@ decltype(&zelLoaderTranslateHandle) loaderTranslateHandleFunc = nullptr;
 decltype(&zelSetDriverTeardown) setDriverTeardownFunc = nullptr;
 
 void globalDriverSetup() {
+    globalDriverDispatch.core.isValidFlag = true;
+    globalDriverDispatch.tools.isValidFlag = true;
+    globalDriverDispatch.sysman.isValidFlag = true;
     if (!globalDriverHandles) {
         globalDriverHandles = new std::vector<_ze_driver_handle_t *>;
     }
@@ -64,5 +68,8 @@ void globalDriverTeardown() {
         delete Sysman::globalSysmanDriver;
         Sysman::globalSysmanDriver = nullptr;
     }
+    globalDriverDispatch.core.isValidFlag = false;
+    globalDriverDispatch.tools.isValidFlag = false;
+    globalDriverDispatch.sysman.isValidFlag = false;
 }
 } // namespace L0
