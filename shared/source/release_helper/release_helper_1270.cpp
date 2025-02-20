@@ -33,11 +33,6 @@ inline bool ReleaseHelperHw<release>::isAuxSurfaceModeOverrideRequired() const {
 }
 
 template <>
-bool ReleaseHelperHw<release>::isDirectSubmissionLightSupported() const {
-    return true;
-}
-
-template <>
 inline bool ReleaseHelperHw<release>::isDotProductAccumulateSystolicSupported() const {
     return false;
 }
