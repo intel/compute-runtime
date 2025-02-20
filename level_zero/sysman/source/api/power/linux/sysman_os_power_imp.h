@@ -49,10 +49,12 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableAndNonMovableClass {
 
   private:
     std::string intelGraphicsHwmonDir = {};
-    std::string criticalPowerLimit = {};
-    std::string sustainedPowerLimit = {};
-    std::string sustainedPowerLimitInterval = {};
     std::string energyCounterNodeFile = {};
+    std::string criticalPowerLimitFile = {};
+    std::string sustainedPowerLimitFile = {};
+    std::string sustainedPowerLimitIntervalFile = {};
+    bool sustainedPowerLimitFileExists = false;
+    bool criticalPowerLimitFileExists = false;
     bool canControl = false;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;

@@ -87,13 +87,12 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenPowerHandleWithUnknownPowerDomainWhenI
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenTelemetrySupportAndEnergyCounterNodeExistanceStatesWhenIsPowerModuleSupportedIsCalledForSubdeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
-    auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE);
-
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isPackageEnergyCounterFilePresent : {false, true}) {
         for (bool isTelemetrySupportAvailable : {false, true}) {
             // Set the file existence flags based on the current combination
             pSysfsAccess->isEnergyCounterFilePresent = isPackageEnergyCounterFilePresent;
+            auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE);
             pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
             // The expected result is true if at least one of the path is present
             bool expected = (isTelemetrySupportAvailable || isPackageEnergyCounterFilePresent);
@@ -105,19 +104,18 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenTelemetrySupportAndEnergyCounterNodeEx
 }
 
 TEST_F(SysmanDevicePowerFixtureI915, GivenVariousPowerLimitFileExistanceStatesWhenIsPowerModuleSupportedIsCalledForRootDeviceHandleThenCorrectSupportStatusIsReturnedForPackageDomain) {
-    auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
-
     // Loop through all combinations of the three boolean flags (false/true) for the file existence
     for (bool isPackageEnergyCounterFilePresent : {false, true}) {
         for (bool isTelemetrySupportAvailable : {false, true}) {
             for (bool isPackagedSustainedPowerLimitFilePresent : {false, true}) {
                 for (bool isPackageCriticalPowerLimit2Present : {false, true}) {
                     // Set the file existence flags based on the current combination
-                    pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
                     pSysfsAccess->isEnergyCounterFilePresent = isPackageEnergyCounterFilePresent;
                     pSysfsAccess->isSustainedPowerLimitFilePresent = isPackagedSustainedPowerLimitFilePresent;
                     pSysfsAccess->isCriticalPowerLimitFilePresent = isPackageCriticalPowerLimit2Present;
 
+                    auto pPowerImp = std::make_unique<PublicLinuxPowerImp>(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE);
+                    pPowerImp->isTelemetrySupportAvailable = isTelemetrySupportAvailable;
                     // The expected result is true if at least one of the files is present
                     bool expected = (isTelemetrySupportAvailable || isPackageEnergyCounterFilePresent ||
                                      isPackagedSustainedPowerLimitFilePresent || isPackageCriticalPowerLimit2Present);
@@ -422,7 +420,8 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenSettingBurstPowerL
     }
 }
 
-TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenCallingGetPowerLimitsExtThenProperValuesAreReturned) {
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndPeakPowerLimitFileDoesNotExistWhenCallingGetPowerLimitsExtThenOnlySustainedLimitIsReturned) {
+    pSysfsAccess->isCriticalPowerLimitFilePresent = false;
     auto handles = getPowerHandles(powerHandleComponentCount);
 
     for (auto handle : handles) {
@@ -431,17 +430,44 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenCallingGetPowerLim
         uint32_t count = 0;
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
-        EXPECT_EQ(count, mockLimitCount);
-
-        count = 1;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, &allLimits));
         EXPECT_EQ(count, 1u);
-        EXPECT_EQ(false, allLimits.limitValueLocked);
-        EXPECT_EQ(true, allLimits.enabledStateLocked);
-        EXPECT_EQ(false, allLimits.intervalValueLocked);
-        EXPECT_EQ(ZES_POWER_SOURCE_ANY, allLimits.source);
-        EXPECT_EQ(ZES_LIMIT_UNIT_POWER, allLimits.limitUnit);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, &allLimits));
         EXPECT_EQ(ZES_POWER_LEVEL_SUSTAINED, allLimits.level);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleAndSustainedPowerLimitFileDoesNotExistWhenCallingGetPowerLimitsExtThenOnlyCriticalLimitIsReturned) {
+    pSysfsAccess->isSustainedPowerLimitFilePresent = false;
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        zes_power_limit_ext_desc_t allLimits{};
+        uint32_t count = 0;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, nullptr));
+        EXPECT_EQ(count, 1u);
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &count, &allLimits));
+        EXPECT_EQ(ZES_POWER_LEVEL_PEAK, allLimits.level);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenCallingGetPowerLimitsExtThenProperValuesAreReturned) {
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+        uint32_t limitCount = 0;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+        EXPECT_EQ(limitCount, mockLimitCount);
+
+        std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
+        EXPECT_EQ(ZES_POWER_LEVEL_SUSTAINED, allLimits[0].level);
+        EXPECT_EQ(ZES_POWER_LEVEL_PEAK, allLimits[1].level);
     }
 }
 

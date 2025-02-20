@@ -604,14 +604,14 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleAndPermissionsThenF
     EXPECT_EQ(sustainedGet.power, sustainedSet.power);
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenValidErrorIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenWritingToSustainedPowerEnableNodeWithoutPermissionsThenErrorIsReturned, IsXeHpOrXeHpcOrXeHpgCore) {
     auto handles = getPowerHandles(powerHandleComponentCount);
     ASSERT_NE(nullptr, handles[0]);
 
     pSysfsAccess->mockWriteUnsignedResult.push_back(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS);
     zes_power_sustained_limit_t sustainedSet = {};
     sustainedSet.enabled = 0;
-    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handles[0], &sustainedSet, nullptr, nullptr));
 }
 
 using SysmanProductHelperPowerMultiDeviceTest = SysmanDevicePowerMultiDeviceFixture;

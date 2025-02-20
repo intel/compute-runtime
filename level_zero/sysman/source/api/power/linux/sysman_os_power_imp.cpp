@@ -43,10 +43,10 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
 
 ze_result_t LinuxPowerImp::getDefaultLimit(int32_t &defaultLimit) {
     uint64_t powerLimit = 0;
-    std::string defaultPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageDefaultPowerLimit, subdeviceId, false);
-    auto result = pSysfsAccess->read(defaultPowerLimit, powerLimit);
+    std::string defaultPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageDefaultPowerLimit, subdeviceId, false);
+    auto result = pSysfsAccess->read(defaultPowerLimitFile, powerLimit);
     if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), defaultPowerLimit.c_str(), getErrorCode(result));
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), defaultPowerLimitFile.c_str(), getErrorCode(result));
         return getErrorCode(result);
     }
 
@@ -59,26 +59,19 @@ ze_result_t LinuxPowerImp::getDefaultLimit(int32_t &defaultLimit) {
 ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
     pExtPoperties->domain = powerDomain;
     if (pExtPoperties->defaultLimit) {
-        if (!isSubdevice) {
-            uint64_t val = 0;
-            std::string defaultPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageDefaultPowerLimit, subdeviceId, false);
-            ze_result_t result = pSysfsAccess->read(defaultPowerLimit, val);
-            if (result == ZE_RESULT_SUCCESS) {
-                pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageDefaultPowerLimit), val, val);
-                pExtPoperties->defaultLimit->limit = static_cast<int32_t>(val);
-            } else {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), defaultPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-        } else {
-            pExtPoperties->defaultLimit->limit = -1;
-        }
+        pExtPoperties->defaultLimit->limit = -1;
         pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
         pExtPoperties->defaultLimit->enabledStateLocked = true;
         pExtPoperties->defaultLimit->intervalValueLocked = true;
         pExtPoperties->defaultLimit->limitValueLocked = true;
         pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
         pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
+        if (!isSubdevice) {
+            auto result = getDefaultLimit(pExtPoperties->defaultLimit->limit);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+        }
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -131,65 +124,74 @@ ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy)
 
 ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (!isSubdevice) {
-        uint64_t val = 0;
-        if (pSustained != nullptr) {
-            val = 0;
-            result = pSysfsAccess->read(sustainedPowerLimit, val);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-            pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), val, val);
-            pSustained->power = static_cast<int32_t>(val);
-            pSustained->enabled = true;
-            pSustained->interval = -1;
-        }
-        if (pBurst != nullptr) {
-            pBurst->power = -1;
-            pBurst->enabled = false;
-        }
-        if (pPeak != nullptr) {
-            result = pSysfsAccess->read(criticalPowerLimit, val);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-            pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageCriticalPowerLimit), val, val);
-            pPeak->powerAC = static_cast<int32_t>(val);
-            pPeak->powerDC = -1;
-        }
-        result = ZE_RESULT_SUCCESS;
+    if (isSubdevice) {
+        return result;
     }
-    return result;
+
+    uint64_t val = 0;
+
+    if (pSustained != nullptr) {
+        val = 0;
+        result = pSysfsAccess->read(sustainedPowerLimitFile, val);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitFile.c_str(), getErrorCode(result));
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), val, val);
+        pSustained->power = static_cast<int32_t>(val);
+        pSustained->enabled = true;
+        pSustained->interval = -1;
+    }
+
+    if (pBurst != nullptr) {
+        pBurst->power = -1;
+        pBurst->enabled = false;
+    }
+
+    if (pPeak != nullptr) {
+        result = pSysfsAccess->read(criticalPowerLimitFile, val);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimitFile.c_str(), getErrorCode(result));
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageCriticalPowerLimit), val, val);
+        pPeak->powerAC = static_cast<int32_t>(val);
+        pPeak->powerDC = -1;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (canControl) {
-        uint64_t val = 0;
 
-        if (pSustained != nullptr) {
-            val = static_cast<uint64_t>(pSustained->power);
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), SysfsValueUnit::milli, val, val);
-            result = pSysfsAccess->write(sustainedPowerLimit, val);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-        }
-        if (pPeak != nullptr) {
-            val = static_cast<uint64_t>(pPeak->powerAC);
-            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageCriticalPowerLimit), SysfsValueUnit::milli, val, val);
-            result = pSysfsAccess->write(criticalPowerLimit, val);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-        }
-        result = ZE_RESULT_SUCCESS;
+    if (!canControl) {
+        return result;
     }
-    return result;
+
+    uint64_t val = 0;
+
+    if (pSustained != nullptr) {
+        val = static_cast<uint64_t>(pSustained->power);
+        pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), SysfsValueUnit::milli, val, val);
+        result = pSysfsAccess->write(sustainedPowerLimitFile, val);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitFile.c_str(), getErrorCode(result));
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
+    if (pPeak != nullptr) {
+        val = static_cast<uint64_t>(pPeak->powerAC);
+        pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageCriticalPowerLimit), SysfsValueUnit::milli, val, val);
+        result = pSysfsAccess->write(criticalPowerLimitFile, val);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimitFile.c_str(), getErrorCode(result));
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
@@ -202,94 +204,101 @@ ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pLimitExt) {
     ze_result_t result = ZE_RESULT_SUCCESS;
+
     if ((*pCount == 0) || (powerLimitCount < *pCount)) {
         *pCount = powerLimitCount;
     }
 
-    if (pSustained != nullptr) {
-        uint64_t val = 0;
-        uint8_t count = 0;
-        if (count < *pCount) {
-            result = pSysfsAccess->read(sustainedPowerLimit, val);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
+    if (isSubdevice || pLimitExt == nullptr) {
+        return result;
+    }
 
-            int32_t interval = 0;
-            result = pSysfsAccess->read(sustainedPowerLimitInterval, interval);
-            if (ZE_RESULT_SUCCESS != result) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitInterval.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-
-            pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), val, val);
-            pSustained[count].limit = static_cast<int32_t>(val);
-            pSustained[count].enabledStateLocked = true;
-            pSustained[count].intervalValueLocked = false;
-            pSustained[count].limitValueLocked = false;
-            pSustained[count].source = ZES_POWER_SOURCE_ANY;
-            pSustained[count].level = ZES_POWER_LEVEL_SUSTAINED;
-            pSustained[count].limitUnit = ZES_LIMIT_UNIT_POWER;
-            pSustained[count].interval = interval;
-            count++;
+    uint64_t val = 0;
+    uint8_t count = 0;
+    if (sustainedPowerLimitFileExists) {
+        result = pSysfsAccess->read(sustainedPowerLimitFile, val);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitFile.c_str(), getErrorCode(result));
+            return getErrorCode(result);
         }
 
-        if (count < *pCount) {
-            result = pSysfsAccess->read(criticalPowerLimit, val);
-            if (result != ZE_RESULT_SUCCESS) {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimit.c_str(), getErrorCode(result));
-                return getErrorCode(result);
-            }
-            pSustained[count].enabledStateLocked = true;
-            pSustained[count].intervalValueLocked = true;
-            pSustained[count].limitValueLocked = false;
-            pSustained[count].source = ZES_POWER_SOURCE_ANY;
-            pSustained[count].level = ZES_POWER_LEVEL_PEAK;
-            pSustained[count].interval = 0;
-            pSustained[count].limit = pSysmanProductHelper->getPowerLimitValue(val);
-            pSustained[count].limitUnit = pSysmanProductHelper->getPowerLimitUnit();
+        int32_t interval = 0;
+        result = pSysfsAccess->read(sustainedPowerLimitIntervalFile, interval);
+        if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitIntervalFile.c_str(), getErrorCode(result));
+            return getErrorCode(result);
         }
+
+        pSysmanKmdInterface->convertSysfsValueUnit(SysfsValueUnit::milli, pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), val, val);
+        pLimitExt[count].limit = static_cast<int32_t>(val);
+        pLimitExt[count].enabledStateLocked = true;
+        pLimitExt[count].intervalValueLocked = false;
+        pLimitExt[count].limitValueLocked = false;
+        pLimitExt[count].source = ZES_POWER_SOURCE_ANY;
+        pLimitExt[count].level = ZES_POWER_LEVEL_SUSTAINED;
+        pLimitExt[count].limitUnit = ZES_LIMIT_UNIT_POWER;
+        pLimitExt[count].interval = interval;
+        count++;
+    }
+
+    if (criticalPowerLimitFileExists) {
+        result = pSysfsAccess->read(criticalPowerLimitFile, val);
+        if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->read() failed to read %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimitFile.c_str(), getErrorCode(result));
+            return getErrorCode(result);
+        }
+        pLimitExt[count].enabledStateLocked = true;
+        pLimitExt[count].intervalValueLocked = true;
+        pLimitExt[count].limitValueLocked = false;
+        pLimitExt[count].source = ZES_POWER_SOURCE_ANY;
+        pLimitExt[count].level = ZES_POWER_LEVEL_PEAK;
+        pLimitExt[count].interval = 0;
+        pLimitExt[count].limit = pSysmanProductHelper->getPowerLimitValue(val);
+        pLimitExt[count].limitUnit = pSysmanProductHelper->getPowerLimitUnit();
     }
     return result;
 }
 
-ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pLimitExt) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    if (canControl) {
-        uint64_t val = 0;
-        for (uint32_t i = 0; i < *pCount; i++) {
-            if (pSustained[i].level == ZES_POWER_LEVEL_SUSTAINED) {
-                val = static_cast<uint64_t>(pSustained[i].limit);
-                pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), SysfsValueUnit::milli, val, val);
-                result = pSysfsAccess->write(sustainedPowerLimit, val);
-                if (ZE_RESULT_SUCCESS != result) {
-                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimit.c_str(), getErrorCode(result));
-                    return getErrorCode(result);
-                }
 
-                result = pSysfsAccess->write(sustainedPowerLimitInterval, pSustained[i].interval);
-                if (ZE_RESULT_SUCCESS != result) {
-                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitInterval.c_str(), getErrorCode(result));
-                    return getErrorCode(result);
-                }
-            } else if (pSustained[i].level == ZES_POWER_LEVEL_PEAK) {
-                val = pSysmanProductHelper->setPowerLimitValue(pSustained[i].limit);
-                result = pSysfsAccess->write(criticalPowerLimit, val);
-                if (ZE_RESULT_SUCCESS != result) {
-                    NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimit.c_str(), getErrorCode(result));
-                    return getErrorCode(result);
-                }
-            } else {
-                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
-                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-            }
-        }
-        result = ZE_RESULT_SUCCESS;
+    if (!canControl) {
+        return result;
     }
-    return result;
+
+    uint64_t val = 0;
+
+    for (uint32_t i = 0; i < *pCount; i++) {
+        if (pLimitExt[i].level == ZES_POWER_LEVEL_SUSTAINED) {
+            val = static_cast<uint64_t>(pLimitExt[i].limit);
+            pSysmanKmdInterface->convertSysfsValueUnit(pSysmanKmdInterface->getNativeUnit(SysfsName::sysfsNamePackageSustainedPowerLimit), SysfsValueUnit::milli, val, val);
+            result = pSysfsAccess->write(sustainedPowerLimitFile, val);
+            if (ZE_RESULT_SUCCESS != result) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+
+            result = pSysfsAccess->write(sustainedPowerLimitIntervalFile, pLimitExt[i].interval);
+            if (ZE_RESULT_SUCCESS != result) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), sustainedPowerLimitIntervalFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+        } else if (pLimitExt[i].level == ZES_POWER_LEVEL_PEAK) {
+            val = pSysmanProductHelper->setPowerLimitValue(pLimitExt[i].limit);
+            result = pSysfsAccess->write(criticalPowerLimitFile, val);
+            if (ZE_RESULT_SUCCESS != result) {
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): SysfsAccess->write() failed to write into %s/%s and returning error:0x%x \n", __FUNCTION__, intelGraphicsHwmonDir.c_str(), criticalPowerLimitFile.c_str(), getErrorCode(result));
+                return getErrorCode(result);
+            }
+        } else {
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 bool LinuxPowerImp::isIntelGraphicsHwmonDir(const std::string &name) {
@@ -334,19 +343,21 @@ void LinuxPowerImp::init() {
     }
 
     if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
-        criticalPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageCriticalPowerLimit, subdeviceId, false);
-        sustainedPowerLimit = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, subdeviceId, false);
-        sustainedPowerLimitInterval = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, subdeviceId, false);
+        criticalPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageCriticalPowerLimit, subdeviceId, false);
+        sustainedPowerLimitFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimit, subdeviceId, false);
+        sustainedPowerLimitIntervalFile = intelGraphicsHwmonDir + "/" + pSysmanKmdInterface->getSysfsFilePath(SysfsName::sysfsNamePackageSustainedPowerLimitInterval, subdeviceId, false);
     } else {
         return;
     }
 
-    if (pSysfsAccess->fileExists(sustainedPowerLimit)) {
+    if (pSysfsAccess->fileExists(sustainedPowerLimitFile)) {
         powerLimitCount++;
+        sustainedPowerLimitFileExists = true;
     }
 
-    if (pSysfsAccess->fileExists(criticalPowerLimit)) {
+    if (pSysfsAccess->fileExists(criticalPowerLimitFile)) {
         powerLimitCount++;
+        criticalPowerLimitFileExists = true;
     }
 }
 
@@ -357,7 +368,7 @@ bool LinuxPowerImp::isPowerModuleSupported() {
         return isEnergyCounterAvailable;
     }
 
-    return isEnergyCounterAvailable || pSysfsAccess->fileExists(sustainedPowerLimit) || pSysfsAccess->fileExists(criticalPowerLimit);
+    return isEnergyCounterAvailable || sustainedPowerLimitFileExists || criticalPowerLimitFileExists;
 }
 
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_power_domain_t powerDomain) : isSubdevice(onSubdevice), subdeviceId(subdeviceId), powerDomain(powerDomain) {
