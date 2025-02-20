@@ -2,7 +2,7 @@
 
 <!--
 
-Copyright (C) 2017-2021 Intel Corporation
+Copyright (C) 2017-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -10,17 +10,17 @@ SPDX-License-Identifier: MIT
 
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_pagefaulting_tests</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_pagefaulting_tests --disable_alarm</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_alarm</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseInternal|x64'">
-    <LocalDebuggerCommandArguments>--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_alarm</LocalDebuggerCommandArguments>
     <LocalDebuggerWorkingDirectory>$(TargetDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>

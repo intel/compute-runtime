@@ -142,7 +142,7 @@ void applyCommonWorkarounds() {
     }
 }
 
-bool enableAlarm = true;
+bool enableAlarm = ENABLE_ALARM_DEFAULT;
 int main(int argc, char **argv) {
 #if !defined(__linux__)
     std::regex dummyRegex{"dummyRegex"};   // these dummy objects are neededed to prevent false-positive

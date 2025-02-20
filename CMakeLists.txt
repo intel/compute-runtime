@@ -119,6 +119,13 @@ if(NEO_SERIALIZED_BUILTINS_COMPILATION)
   message(STATUS "Enabling serialized builtins compilation")
 endif()
 
+if(DEFINED NEO_ENABLE_ALARM_MODE AND "${NEO_ENABLE_ALARM_MODE}" STREQUAL "0")
+  message(STATUS "Disabling alarm in tests")
+  add_definitions(-DENABLE_ALARM_DEFAULT=0)
+else()
+  add_definitions(-DENABLE_ALARM_DEFAULT=1)
+endif()
+
 if(DEFINED NEO_EXTRA_DEFINES)
   string(REPLACE "," ";" NEO_EXTRA_DEFINES "${NEO_EXTRA_DEFINES}")
   foreach(_tmp ${NEO_EXTRA_DEFINES})
