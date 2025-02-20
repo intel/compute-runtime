@@ -5495,6 +5495,66 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThan
     context->freeMem(devAddress);
 }
 
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingSplitAppendThenSetCorrectGpuVa, MatchAny) {
+    using TagSizeT = typename FamilyType::TimestampPacketType;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    constexpr uint64_t counterValue = 4;
+    constexpr uint64_t incValue = 2;
+
+    auto devAddress = reinterpret_cast<uint64_t *>(allocDeviceMem(sizeof(uint64_t)));
+    auto eventObj = createExternalSyncStorageEvent(counterValue, incValue, devAddress);
+    eventObj->isTimestampEvent = true;
+    eventObj->setSinglePacketSize(NEO::TimestampPackets<TagSizeT, 1>::getSinglePacketSize());
+
+    auto handle = eventObj->toHandle();
+
+    auto immCmdList = createImmCmdList<gfxCoreFamily>();
+    auto cmdStream = immCmdList->getCmdContainer().getCommandStream();
+
+    auto offset = cmdStream->getUsed();
+
+    const size_t ptrBaseSize = 128;
+    const size_t copyOffset = 1;
+    auto alignedPtr = alignedMalloc(ptrBaseSize, MemoryConstants::cacheLineSize);
+    auto unalignedPtr = ptrOffset(alignedPtr, copyOffset);
+
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - copyOffset, handle, 0, nullptr, copyParams);
+
+    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
+    auto expectedAddress0 = eventObj->inOrderTimestampNode[0]->getGpuAddress() + eventObj->getGlobalStartOffset();
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+        auto srmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+
+        EXPECT_EQ(expectedAddress0, srmCmd->getMemoryAddress());
+    }
+
+    offset = cmdStream->getUsed();
+    immCmdList->appendMemoryCopy(unalignedPtr, unalignedPtr, ptrBaseSize - copyOffset, handle, 0, nullptr, copyParams);
+    ASSERT_EQ(2u, eventObj->inOrderTimestampNode.size());
+    auto expectedAddress1 = eventObj->inOrderTimestampNode[1]->getGpuAddress() + eventObj->getGlobalStartOffset();
+
+    {
+        GenCmdList cmdList;
+        ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+        auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+        auto srmCmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+
+        EXPECT_EQ(expectedAddress1, srmCmd->getMemoryAddress());
+    }
+
+    context->freeMem(devAddress);
+    alignedFree(alignedPtr);
+}
+
 HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendSignalInOrderDependencyCounterThenProgramAtomicOperation, MatchAny) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using ATOMIC_OPCODES = typename FamilyType::MI_ATOMIC::ATOMIC_OPCODES;
