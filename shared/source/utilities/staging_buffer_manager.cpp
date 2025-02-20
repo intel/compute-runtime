@@ -216,7 +216,7 @@ WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, Sta
     if (status == WaitStatus::gpuHang) {
         return status;
     }
-
+    transfer.second.csr->downloadAllocations(true);
     auto &userData = transfer.first;
     tracker = transfer.second;
     auto stagingBuffer = addrToPtr(tracker.chunkAddress);

@@ -521,6 +521,16 @@ TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenRegio
     imageTransferThroughStagingBuffers(true, stagingBufferSize, globalOrigin, globalRegion, expectedChunks);
 }
 
+HWTEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenDownloadAllocationsCalledForAllReadChunks) {
+    size_t expectedChunks = 8;
+    const size_t globalOrigin[3] = {0, 0, 0};
+    const size_t globalRegion[3] = {4, expectedChunks, 1};
+    imageTransferThroughStagingBuffers(true, stagingBufferSize, globalOrigin, globalRegion, expectedChunks);
+    auto ultCsr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr);
+    EXPECT_EQ(expectedChunks, ultCsr->downloadAllocationsCalledCount);
+    EXPECT_TRUE(ultCsr->latestDownloadAllocationsBlocking);
+}
+
 TEST_F(StagingBufferManagerTest, givenStagingBufferWhenPerformImageReadThenWholeRegionCovered) {
     size_t expectedChunks = 8;
     const size_t globalOrigin[3] = {0, 0, 0};
