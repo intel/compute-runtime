@@ -231,7 +231,7 @@ TEST_F(DriverVersionTest, givenExternalAllocatorWhenCallingGetExtensionPropertie
 }
 
 TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsReturned) {
-    ze_driver_properties_t properties;
+    ze_driver_properties_t properties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -244,7 +244,7 @@ TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpected
     DebugManagerStateRestore restorer;
     NEO::debugManager.flags.OverrideDriverVersion.set(0);
 
-    ze_driver_properties_t properties;
+    ze_driver_properties_t properties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -270,7 +270,7 @@ TEST_F(DriverVersionTest, GivenDebugOverrideWhenGettingDriverVersionThenExpected
 
 TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
 
-    ze_driver_properties_t properties;
+    ze_driver_properties_t properties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -288,12 +288,12 @@ TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
 
 TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUuidIsReturned) {
 
-    ze_driver_properties_t properties;
+    ze_driver_properties_t properties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     for (uint32_t i = 0; i < 32; i++) {
-        ze_driver_properties_t newProperties;
+        ze_driver_properties_t newProperties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
         res = driverHandle->getProperties(&newProperties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
@@ -1006,13 +1006,39 @@ TEST_F(DriverHandleTest, givenValidDriverHandleWhenClearErrorDescriptionIsCalled
 TEST(zeDriverHandleGetProperties, whenZeDriverGetPropertiesIsCalledThenGetPropertiesIsCalled) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     Mock<DriverHandle> driverHandle;
-    ze_driver_properties_t properties;
+    ze_driver_properties_t properties{ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
     ze_result_t expectedResult = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
 
     driverHandle.getPropertiesResult = expectedResult;
     result = zeDriverGetProperties(driverHandle.toHandle(), &properties);
     EXPECT_EQ(expectedResult, result);
     EXPECT_EQ(1u, driverHandle.getPropertiesCalled);
+}
+
+using GetDriverPropertiesTest = Test<DeviceFixture>;
+
+TEST_F(GetDriverPropertiesTest, whenGettingDdiHandlesExtensionPropertiesThenSupportIsExposedOnlyWhenDebugKeyIsSet) {
+    DebugManagerStateRestore restorer;
+
+    ze_driver_properties_t driverProperties = {ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES};
+    ze_driver_ddi_handles_ext_properties_t ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
+    driverProperties.pNext = &ddiHandlesExtProperties;
+
+    ze_result_t result = driverHandle->getProperties(&driverProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, ddiHandlesExtProperties.flags);
+
+    ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
+    NEO::debugManager.flags.EnableDdiHandlesExtension.set(0);
+    result = driverHandle->getProperties(&driverProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, ddiHandlesExtProperties.flags);
+
+    ddiHandlesExtProperties = {ZE_STRUCTURE_TYPE_DRIVER_DDI_HANDLES_EXT_PROPERTIES};
+    NEO::debugManager.flags.EnableDdiHandlesExtension.set(1);
+    result = driverHandle->getProperties(&driverProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ze_driver_ddi_handle_ext_flag_t::ZE_DRIVER_DDI_HANDLE_EXT_FLAG_DDI_HANDLE_EXT_SUPPORTED, ddiHandlesExtProperties.flags);
 }
 
 TEST(zeDriverHandleGetApiVersion, whenZeDriverGetApiIsCalledThenGetApiVersionIsCalled) {
