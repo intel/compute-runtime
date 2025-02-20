@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,12 +22,6 @@ DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckSupportCacheFlushAfterWalkerThenFalse)
 
 DG1TEST_F(Dg1DeviceCaps, givenDG1WhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
-}
-
-DG1TEST_F(Dg1DeviceCaps, givenDG1WhenRequestedVmeFlagsThenReturnFalse) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsVme);
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsVmeAvcTextureSampler);
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsVmeAvcPreemption);
 }
 
 DG1TEST_F(Dg1DeviceCaps, givenDg1WhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue) {

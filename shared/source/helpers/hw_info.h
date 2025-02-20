@@ -44,13 +44,10 @@ struct RuntimeCapabilityTable {
     bool ftrSupports64BitMath;
     bool ftrSvm;
     bool ftrSupportsCoherency;
-    bool ftrSupportsVmeAvcTextureSampler;
-    bool ftrSupportsVmeAvcPreemption;
     bool ftrRenderCompressedBuffers;
     bool ftrRenderCompressedImages;
     bool ftr64KBpages;
     bool instrumentationEnabled;
-    bool supportsVme;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
     bool supportsDeviceEnqueue;
@@ -109,14 +106,11 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.ftrSupports64BitMath == rhs.ftrSupports64BitMath);
     result &= (lhs.ftrSvm == rhs.ftrSvm);
     result &= (lhs.ftrSupportsCoherency == rhs.ftrSupportsCoherency);
-    result &= (lhs.ftrSupportsVmeAvcTextureSampler == rhs.ftrSupportsVmeAvcTextureSampler);
-    result &= (lhs.ftrSupportsVmeAvcPreemption == rhs.ftrSupportsVmeAvcPreemption);
     result &= (lhs.ftrRenderCompressedBuffers == rhs.ftrRenderCompressedBuffers);
     result &= (lhs.ftrRenderCompressedImages == rhs.ftrRenderCompressedImages);
     result &= (lhs.ftr64KBpages == rhs.ftr64KBpages);
     result &= (lhs.instrumentationEnabled == rhs.instrumentationEnabled);
     result &= (lhs.deviceName == rhs.deviceName);
-    result &= (lhs.supportsVme == rhs.supportsVme);
     result &= (lhs.supportCacheFlushAfterWalker == rhs.supportCacheFlushAfterWalker);
     result &= (lhs.supportsImages == rhs.supportsImages);
     result &= (lhs.supportsDeviceEnqueue == rhs.supportsDeviceEnqueue);

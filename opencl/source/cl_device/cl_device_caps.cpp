@@ -192,14 +192,6 @@ void ClDevice::initializeCaps() {
     if (debugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         deviceInfo.packedYuvExtension = true;
     }
-    auto supportsVme = hwInfo.capabilityTable.supportsVme;
-    if (debugManager.flags.EnableIntelVme.get() != -1) {
-        supportsVme = !!debugManager.flags.EnableIntelVme.get();
-    }
-
-    if (supportsVme) {
-        deviceInfo.vmeExtension = true;
-    }
 
     auto sharingAllowed = (getNumGenericSubDevices() <= 1u) && productHelper.isSharingWith3dOrMediaAllowed();
     if (sharingAllowed) {
@@ -222,30 +214,7 @@ void ClDevice::initializeCaps() {
     }
 
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
-
-    std::vector<std::string> exposedBuiltinKernelsVector;
-    if (supportsVme) {
-        exposedBuiltinKernelsVector.push_back("block_motion_estimate_intel");
-    }
-    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
-
-    if (debugManager.flags.EnableIntelAdvancedVme.get() != -1) {
-        supportsAdvancedVme = !!debugManager.flags.EnableIntelAdvancedVme.get();
-    }
-    if (supportsAdvancedVme) {
-        exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_check_intel");
-        exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_bidirectional_check_intel");
-    }
-    for (auto &builtInKernel : exposedBuiltinKernelsVector) {
-        exposedBuiltinKernels.append(builtInKernel);
-        exposedBuiltinKernels.append(";");
-
-        cl_name_version kernelNameVersion;
-        kernelNameVersion.version = CL_MAKE_VERSION(1, 0, 0);
-        strcpy_s(kernelNameVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, builtInKernel.c_str());
-        deviceInfo.builtInKernelsWithVersion.push_back(kernelNameVersion);
-    }
-    deviceInfo.builtInKernels = exposedBuiltinKernels.c_str();
+    deviceInfo.builtInKernels = "";
 
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
     deviceInfo.endianLittle = 1;
@@ -387,11 +356,6 @@ void ClDevice::initializeCaps() {
     deviceInfo.planarYuvMaxWidth = 16384;
     deviceInfo.planarYuvMaxHeight = gfxCoreHelper.getPlanarYuvMaxHeight();
 
-    deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
-    if (hwInfo.capabilityTable.supportsVme) {
-        deviceInfo.vmeAvcVersion = CL_AVC_ME_VERSION_1_INTEL;
-        deviceInfo.vmeVersion = CL_ME_VERSION_ADVANCED_VER_2_INTEL;
-    }
     deviceInfo.platformHostTimerResolution = getPlatformHostTimerResolution();
 
     deviceInfo.internalDriverVersion = CL_DEVICE_DRIVER_VERSION_INTEL_NEO1;

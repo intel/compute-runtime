@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -113,16 +113,6 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
     EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
-}
-
-TGLLPTEST_F(TgllpHwInfo, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-
-    uint64_t config = 0x100060010;
-    hardwareInfoSetup[productFamily](&hwInfo, false, config, nullptr);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
-    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
 }
 
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAddressSpaceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubManagerIsInitializedWithCorrectGpuAddressSpace) {

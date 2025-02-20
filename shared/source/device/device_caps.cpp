@@ -167,8 +167,6 @@ void Device::initializeCaps() {
 
     deviceInfo.maxSubGroups = gfxCoreHelper.getDeviceSubGroupSizes();
 
-    deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
-
     deviceInfo.name = this->getDeviceName();
 
     size_t maxParameterSizeFromIgc = getMaxParameterSizeFromIGC();

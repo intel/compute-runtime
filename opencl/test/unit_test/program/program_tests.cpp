@@ -1479,37 +1479,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     delete pKernel;
 }
 
-TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
-    if (!pDevice->getHardwareInfo().capabilityTable.supportsVme) {
-        GTEST_SKIP();
-    }
-    // PATCH_TOKEN_INLINE_VME_SAMPLER_INFO token indicates a VME kernel.
-
-    createProgramFromBinary(pContext, pContext->getDevices(), "vme_kernels");
-
-    ASSERT_NE(nullptr, pProgram);
-    retVal = pProgram->build(
-        pProgram->getDevices(),
-        nullptr);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    auto pKernelInfo = pProgram->getKernelInfo("device_side_block_motion_estimate_intel", rootDeviceIndex);
-    ASSERT_NE(nullptr, pKernelInfo);
-    EXPECT_EQ(true, pKernelInfo->kernelDescriptor.kernelAttributes.flags.usesVme);
-
-    auto pKernel = Kernel::create(
-        pProgram,
-        *pKernelInfo,
-        *pClDevice,
-        retVal);
-
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, pKernel);
-
-    delete pKernel;
-}
-
 class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
   public:
     void setUp() {

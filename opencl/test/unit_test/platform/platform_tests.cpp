@@ -272,11 +272,6 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     EXPECT_TRUE(hasSubstr(compilerExtensions, std::string(" -cl-ext=-all,+cl")));
 
     if (hwInfo->capabilityTable.supportsOcl21Features) {
-        if (hwInfo->capabilityTable.supportsVme) {
-            EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_device_side_avc_motion_estimation")));
-        } else {
-            EXPECT_FALSE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_device_side_avc_motion_estimation")));
-        }
         if (hwInfo->capabilityTable.supportsMediaBlock) {
             EXPECT_TRUE(hasSubstr(compilerExtensions, std::string("cl_intel_spirv_media_block_io")));
         } else {

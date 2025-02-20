@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,4 @@ using AdlsUsDeviceIdTest = Test<DeviceFixture>;
 
 ADLSTEST_F(AdlsUsDeviceIdTest, givenAdlsWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
-}
-
-ADLSTEST_F(AdlsUsDeviceIdTest, givenAdlsWhenRequestedVmeFlagsThenReturnFalse) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsVme);
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsVmeAvcTextureSampler);
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsVmeAvcPreemption);
 }

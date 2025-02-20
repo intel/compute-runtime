@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -24,7 +24,6 @@ set(IGDRCL_SRCS_tests_fixtures
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_fixture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_data_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_work_group_info_fixture.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/media_kernel_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_root_device_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/multi_tile_fixture.h
     ${CMAKE_CURRENT_SOURCE_DIR}/one_mip_level_image_fixture.h

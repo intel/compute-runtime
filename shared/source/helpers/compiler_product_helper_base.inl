@@ -136,26 +136,6 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_packed_yuv ";
     }
 
-    auto supportsVme = hwInfo.capabilityTable.supportsVme;
-    if (debugManager.flags.EnableIntelVme.get() != -1) {
-        supportsVme = !!debugManager.flags.EnableIntelVme.get();
-    }
-
-    if (supportsVme) {
-        extensions += "cl_intel_motion_estimation cl_intel_device_side_avc_motion_estimation ";
-        if (ocl21FeaturesEnabled) {
-            extensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
-        }
-    }
-
-    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
-    if (debugManager.flags.EnableIntelAdvancedVme.get() != -1) {
-        supportsAdvancedVme = !!debugManager.flags.EnableIntelAdvancedVme.get();
-    }
-    if (supportsAdvancedVme) {
-        extensions += "cl_intel_advanced_motion_estimation ";
-    }
-
     if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
         extensions += "cl_khr_int64_base_atomics ";
         extensions += "cl_khr_int64_extended_atomics ";

@@ -57,13 +57,10 @@ const RuntimeCapabilityTable ADLN::capabilityTable{
     false,                                          // ftrSupports64BitMath
     true,                                           // ftrSvm
     false,                                          // ftrSupportsCoherency
-    false,                                          // ftrSupportsVmeAvcTextureSampler
-    false,                                          // ftrSupportsVmeAvcPreemption
     false,                                          // ftrRenderCompressedBuffers
     false,                                          // ftrRenderCompressedImages
     true,                                           // instrumentationEnabled
     true,                                           // ftr64KBpages
-    false,                                          // supportsVme
     false,                                          // supportCacheFlushAfterWalker
     true,                                           // supportsImages
     false,                                          // supportsDeviceEnqueue

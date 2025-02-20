@@ -58,13 +58,10 @@ const RuntimeCapabilityTable PTL::capabilityTable{
     true,                                                      // ftrSupports64BitMath
     true,                                                      // ftrSvm
     false,                                                     // ftrSupportsCoherency
-    false,                                                     // ftrSupportsVmeAvcTextureSampler
-    false,                                                     // ftrSupportsVmeAvcPreemption
     false,                                                     // ftrRenderCompressedBuffers
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    false,                                                     // supportsVme
     false,                                                     // supportCacheFlushAfterWalker
     true,                                                      // supportsImages
     false,                                                     // supportsDeviceEnqueue

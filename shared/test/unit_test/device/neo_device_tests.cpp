@@ -497,11 +497,6 @@ TEST_F(DeviceGetCapsTest, whenDriverModelHasLimitationForMaxMemoryAllocationSize
     EXPECT_EQ(maxAllocSizeTestValue, caps.maxMemAllocSize);
 }
 
-TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenVmeIsEnabled) {
-    DebugSettingsManager<DebugFunctionalityLevel::regKeys> freshDebugSettingsManager("");
-    EXPECT_TRUE(freshDebugSettingsManager.flags.EnableIntelVme.get());
-}
-
 TEST(DeviceGetCapsSimpleTest, givenVariousOclVersionsWhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
     DebugManagerStateRestore dbgRestorer;
     int32_t oclVersionsToTest[] = {12, 21, 30};
@@ -1240,12 +1235,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenCheckingDe
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenCheckingPipesSupportThenFalseIsReturned) {
     EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsPipes);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenRequestedVmeFlagsThenReturnFalse) {
-    EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsVme);
-    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrSupportsVmeAvcTextureSampler);
-    EXPECT_FALSE(defaultHwInfo->capabilityTable.ftrSupportsVmeAvcPreemption);
 }
 
 TEST_F(DeviceTests, whenCheckingPreferredPlatformNameThenNullIsReturned) {
