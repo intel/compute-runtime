@@ -80,6 +80,7 @@ Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
     }
 
     const ElfProgramHeader<numBits> *programHeader = reinterpret_cast<const ElfProgramHeader<numBits> *>(binary.begin() + ret.elfFileHeader->phOff);
+    ret.programHeaders.reserve(ret.elfFileHeader->phNum);
     for (decltype(ret.elfFileHeader->phNum) i = 0; i < ret.elfFileHeader->phNum; ++i) {
         if (programHeader->offset + programHeader->fileSz > binary.size()) {
             outErrReason = "Out of bounds program header offset/filesz, program header idx : " + std::to_string(i);
@@ -91,6 +92,7 @@ Elf<numBits> decodeElf(const ArrayRef<const uint8_t> binary, std::string &outErr
     }
 
     const ElfSectionHeader<numBits> *sectionHeader = reinterpret_cast<const ElfSectionHeader<numBits> *>(binary.begin() + ret.elfFileHeader->shOff);
+    ret.sectionHeaders.reserve(ret.elfFileHeader->shNum);
     for (decltype(ret.elfFileHeader->shNum) i = 0; i < ret.elfFileHeader->shNum; ++i) {
         ArrayRef<const uint8_t> data;
         if (SHT_NOBITS != sectionHeader->type) {
@@ -151,7 +153,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
         // there may be multiple rela sections, reserve additional size
         auto previousEntries = relocations.size();
         auto allEntries = previousEntries + numberOfEntries;
-        relocs.reserve(allEntries);
+        relocs.reserve(allEntries - previousEntries);
 
         for (auto i = previousEntries; i < allEntries; i++) {
 
@@ -186,7 +188,7 @@ bool Elf<numBits>::decodeRelocations(SectionHeaderAndData<numBits> &sectionHeade
         // there may be multiple rel sections, reserve additional size
         auto previousEntries = relocations.size();
         auto allEntries = previousEntries + numberOfEntries;
-        relocs.reserve(allEntries);
+        relocs.reserve(allEntries - previousEntries);
 
         for (auto i = previousEntries; i < allEntries; i++) {
             int symbolIndex = extractSymbolIndex<ElfRel<numBits>>(*reloc);
