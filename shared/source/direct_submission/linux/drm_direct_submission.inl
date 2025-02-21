@@ -141,6 +141,8 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     if (!allocationsForResidency) {
         this->handleResidency();
+    } else {
+        this->lastUllsLightExecTimestamp = std::chrono::steady_clock::now();
     }
 
     auto currentBase = this->ringCommandStream.getGraphicsAllocation()->getGpuAddress();
@@ -212,7 +214,8 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleRingRestartForUllsLightResidency(ResidencyContainer *allocationsForResidency) {
     if (allocationsForResidency) {
-        auto restartNeeded = static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->obtainAndResetNewResourcesSinceLastRingSubmit();
+        auto restartNeeded = (static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->obtainAndResetNewResourcesSinceLastRingSubmit() ||
+                              std::chrono::duration_cast<std::chrono::microseconds>(this->getCpuTimePoint() - this->lastUllsLightExecTimestamp) > std::chrono::microseconds{ullsLightTimeout});
         if (restartNeeded) {
             this->stopRingBuffer(false);
         }
@@ -290,6 +293,11 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(TaskCountType taskCountToW
         }
         pollAddress = ptrOffset(pollAddress, this->immWritePostSyncOffset);
     }
+}
+
+template <typename GfxFamily, typename Dispatcher>
+std::chrono::steady_clock::time_point DrmDirectSubmission<GfxFamily, Dispatcher>::getCpuTimePoint() {
+    return std::chrono::steady_clock::now();
 }
 
 template <typename GfxFamily, typename Dispatcher>

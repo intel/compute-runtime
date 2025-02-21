@@ -93,6 +93,7 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::inputMonitorFenceDispatchRequirement;
     using BaseClass::isCompleted;
     using BaseClass::isNewResourceHandleNeeded;
+    using BaseClass::lastUllsLightExecTimestamp;
     using BaseClass::miMemFenceRequired;
     using BaseClass::partitionConfigSet;
     using BaseClass::partitionedMode;
@@ -106,6 +107,16 @@ struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatche
     using BaseClass::updateTagValue;
     using BaseClass::wait;
     using BaseClass::workPartitionAllocation;
+
+    MockDrmDirectSubmission(const DirectSubmissionInputParams &inputParams) : BaseClass(inputParams) {
+        this->lastUllsLightExecTimestamp = std::chrono::time_point<std::chrono::steady_clock>::max();
+    }
+
+    std::chrono::steady_clock::time_point getCpuTimePoint() override {
+        return this->callBaseGetCpuTimePoint ? BaseClass::getCpuTimePoint() : cpuTimePointReturnValue;
+    }
+    std::chrono::steady_clock::time_point cpuTimePointReturnValue{};
+    bool callBaseGetCpuTimePoint = true;
 };
 
 using namespace NEO;
@@ -794,6 +805,58 @@ HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenRegisterResource
     ResidencyContainer residencyContainer{};
     batchBuffer.allocationsForResidency = &residencyContainer;
     drmDirectSubmission.ringStart = true;
+
+    EXPECT_TRUE(drmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(drmDirectSubmission.ringCommandStream, 0);
+    hwParse.findHardwareCommands<FamilyType>();
+    auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
+    EXPECT_NE(pipeControl, nullptr);
+    auto *bbe = hwParse.getCommand<BATCH_BUFFER_END>();
+    EXPECT_NE(bbe, nullptr);
+
+    drmDirectSubmission.ringStart = false;
+    executionEnvironment.memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(DrmDirectSubmissionTest, givenDirectSubmissionLightWhenExecTimeoutReachedThenRestart) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(drmDirectSubmission.initialize(false));
+
+    FlushStampTracker flushStamp(true);
+    BatchBuffer batchBuffer = {};
+    GraphicsAllocation *commandBuffer = nullptr;
+    LinearStream stream;
+
+    const AllocationProperties commandBufferProperties{device->getRootDeviceIndex(), 0x1000,
+                                                       AllocationType::commandBuffer, device->getDeviceBitfield()};
+    commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+
+    stream.replaceGraphicsAllocation(commandBuffer);
+    stream.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
+    stream.getSpace(0x20);
+
+    memset(stream.getCpuBase(), 0, 0x20);
+
+    batchBuffer.endCmdPtr = ptrOffset(stream.getCpuBase(), 0x20);
+    batchBuffer.commandBufferAllocation = commandBuffer;
+    batchBuffer.usedSize = 0x40;
+    batchBuffer.taskStartAddress = 0x881112340000;
+    batchBuffer.stream = &stream;
+    batchBuffer.hasStallingCmds = true;
+
+    ResidencyContainer residencyContainer{};
+    batchBuffer.allocationsForResidency = &residencyContainer;
+    drmDirectSubmission.ringStart = true;
+    static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[device->getRootDeviceIndex()]->memoryOperationsInterface.get())->obtainAndResetNewResourcesSinceLastRingSubmit();
+
+    drmDirectSubmission.lastUllsLightExecTimestamp = std::chrono::steady_clock::time_point{};
+    drmDirectSubmission.cpuTimePointReturnValue = std::chrono::time_point<std::chrono::steady_clock>::max();
+    drmDirectSubmission.callBaseGetCpuTimePoint = false;
 
     EXPECT_TRUE(drmDirectSubmission.dispatchCommandBuffer(batchBuffer, flushStamp));
 
