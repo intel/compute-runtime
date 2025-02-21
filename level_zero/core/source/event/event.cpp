@@ -667,15 +667,7 @@ void Event::unsetInOrderExecInfo() {
 }
 
 void Event::resetInOrderTimestampNode(NEO::TagNodeBase *newNode, uint32_t partitionCount) {
-    bool removeExistingNodes = inOrderIncrementValue == 0 || !newNode;
-
-    if (inOrderIncrementValue > 0 && inOrderTimestampNode.size() == inOrderIncrementOperationsCount) {
-        // Increment event reused. Collect new TS nodes.
-        removeExistingNodes = true;
-        inOrderExecInfo->releaseNotUsedTempTimestampNodes(true);
-    }
-
-    if (removeExistingNodes) {
+    if (inOrderIncrementValue == 0 || !newNode) {
         for (auto &node : inOrderTimestampNode) {
             inOrderExecInfo->pushTempTimestampNode(node, inOrderExecSignalValue);
         }
@@ -756,7 +748,6 @@ ze_result_t Event::enableExtensions(const EventDescriptor &eventDescriptor) {
             updateInOrderExecState(inOrderExecInfo, externalStorageProperties->completionValue, 0);
 
             this->inOrderIncrementValue = externalStorageProperties->incrementValue;
-            this->inOrderIncrementOperationsCount = static_cast<uint32_t>(externalStorageProperties->completionValue / externalStorageProperties->incrementValue);
         }
 
         extendedDesc = reinterpret_cast<const ze_base_desc_t *>(extendedDesc->pNext);

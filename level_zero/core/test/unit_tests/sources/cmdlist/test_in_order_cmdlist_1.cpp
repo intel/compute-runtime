@@ -5470,7 +5470,7 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendThenHand
     context->freeMem(devAddress);
 }
 
-HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThanCounterValueThenResetNodes, MatchAny) {
+HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThanCounterValueThenDontResetNodes, MatchAny) {
     using TagSizeT = typename FamilyType::TimestampPacketType;
 
     constexpr uint64_t counterValue = 4;
@@ -5486,11 +5486,8 @@ HWTEST2_F(InOrderCmdListTests, givenExternalSyncStorageWhenCallingAppendMoreThan
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
-
-    ASSERT_EQ(2u, eventObj->inOrderTimestampNode.size());
-
     immCmdList->appendLaunchKernel(kernel->toHandle(), groupCount, handle, 0, nullptr, launchParams, false);
-    ASSERT_EQ(1u, eventObj->inOrderTimestampNode.size());
+    ASSERT_EQ(3u, eventObj->inOrderTimestampNode.size());
 
     context->freeMem(devAddress);
 }

@@ -192,7 +192,7 @@ ze_result_t EventImp<TagSizeT>::calculateProfilingData() {
 
         auto numPackets = eventCompletion.getPacketsUsed();
         if (inOrderIncrementValue > 0) {
-            numPackets *= inOrderIncrementOperationsCount;
+            numPackets *= static_cast<uint32_t>(inOrderTimestampNode.size());
         }
 
         for (auto packetId = 0u; packetId < numPackets; packetId++) {
@@ -240,7 +240,7 @@ void EventImp<TagSizeT>::assignKernelEventCompletionData(void *address) {
     for (uint32_t i = 0; i < kernelCount; i++) {
         uint32_t packetsToCopy = kernelEventCompletionData[i].getPacketsUsed();
         if (inOrderIncrementValue > 0) {
-            packetsToCopy *= inOrderIncrementOperationsCount;
+            packetsToCopy *= static_cast<uint32_t>(inOrderTimestampNode.size());
         }
 
         uint32_t nodeId = 0;
