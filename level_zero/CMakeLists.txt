@@ -208,6 +208,7 @@ if(BUILD_WITH_L0)
   endif()
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
+  include_directories(ddi)
 
   # Create our shared library/DLL
   configure_file(ze_intel_gpu_version.h.in ${NEO_BUILD_DIR}/ze_intel_gpu_version.h)
@@ -342,7 +343,6 @@ if(BUILD_WITH_L0)
   hide_subdir(api)
   add_subdirectory_unique(source)
 
-  hide_subdir(ddi)
   hide_subdir(experimental)
   hide_subdir(include)
   set(L0_RELEASE_LIB_NAME "${TARGET_NAME_L0}_lib")
@@ -360,7 +360,6 @@ if(BUILD_WITH_L0)
                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     )
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/api "${NEO_BUILD_DIR}/${LIB_NAME}/api")
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ddi "${NEO_BUILD_DIR}/${LIB_NAME}/ddi")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}/core/source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental "${NEO_BUILD_DIR}/${LIB_NAME}/experimental")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/include "${NEO_BUILD_DIR}/${LIB_NAME}/include")
