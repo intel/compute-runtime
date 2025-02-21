@@ -641,8 +641,8 @@ bool DebugSessionLinuxi915::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bin
                 std::unique_lock<std::mutex> memLock(asyncThreadMutex);
                 isaMap[vmBind->va_start] = std::move(isa);
 
-                // Expect canonical va_start
-                DEBUG_BREAK_IF(gmmHelper->canonize(vmBind->va_start) != vmBind->va_start);
+                // Expect non canonical va_start
+                DEBUG_BREAK_IF(gmmHelper->decanonize(vmBind->va_start) != vmBind->va_start);
 
                 bool apiEventNeedsAck = (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK);
                 // If ACK flag is not set when triggering MODULE LOAD event, auto-ack immediately

@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
