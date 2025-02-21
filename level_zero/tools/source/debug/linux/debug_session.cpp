@@ -315,7 +315,7 @@ ze_result_t DebugSessionLinux::readGpuMemory(uint64_t vmHandle, char *output, si
 
     int64_t retVal = 0;
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    gpuVa = gmmHelper->decanonize(gpuVa);
+    gpuVa = gmmHelper->canonize(gpuVa);
     if (flushVmCache(vmDebugFd) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -377,7 +377,7 @@ ze_result_t DebugSessionLinux::writeGpuMemory(uint64_t vmHandle, const char *inp
 
     int64_t retVal = 0;
     auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    gpuVa = gmmHelper->decanonize(gpuVa);
+    gpuVa = gmmHelper->canonize(gpuVa);
     if (flushVmCache(vmDebugFd) != 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }

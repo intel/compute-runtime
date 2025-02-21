@@ -2090,6 +2090,41 @@ TEST_F(IoctlHelperXeTest, givenMultipleBindInfosWhenVmBindIsCalledThenProperHand
     ioctlHelper->bindInfo.clear();
 }
 
+TEST_F(IoctlHelperXeTest, whenVmBindIsCalledThenProperCanonicalOrNonCanonicalAddressIsExpectedInVmBindInputsList) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto ioctlHelper = static_cast<MockIoctlHelperXe *>(drm->getIoctlHelper());
+    unsigned int idx = 0;
+
+    auto testAddress = [&](uint64_t addr) {
+        MockIoctlHelperXe::UserFenceExtension userFence{};
+        userFence.tag = userFence.tagValue;
+        userFence.addr = idx + 1;
+
+        VmBindParams vmBindParams{};
+        vmBindParams.userFence = castToUint64(&userFence);
+        vmBindParams.handle = idx + 1;
+        vmBindParams.userptr = idx + 1;
+        vmBindParams.start = addr;
+
+        auto ret = ioctlHelper->vmBind(vmBindParams);
+        EXPECT_EQ(0, ret);
+
+        auto &list = drm->vmBindInputs;
+        EXPECT_EQ(list.size(), idx + 1);
+
+        if (list.size() == idx + 1) {
+            EXPECT_EQ(list[idx].num_binds, 1u);
+            EXPECT_EQ(list[idx].bind.addr, vmBindParams.start);
+        }
+
+        idx++;
+    };
+
+    testAddress(0xfffff00000000000); // canonical address test
+    testAddress(0xf00000000000);     // non-canonical address test
+}
+
 TEST_F(IoctlHelperXeTest, givenLowPriorityContextWhenSettingPropertiesThenCorrectIndexIsUsedAndReturend) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);

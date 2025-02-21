@@ -466,6 +466,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
             if (vmBindOp.base.flags & euDebugInterface->getParamValue(NEO::EuDebugParam::eventBitCreate)) {
                 {
                     std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
                     if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataSbaArea)) {
                         connection->vmToStateBaseAreaBindInfo[vmBindData.vmBind.vmHandle] = {vmBindOp.addr, vmBindOp.range};
                     }
@@ -473,6 +474,7 @@ bool DebugSessionLinuxXe::handleVmBind(VmBindData &vmBindData) {
                         connection->vmToContextStateSaveAreaBindInfo[vmBindData.vmBind.vmHandle] = {vmBindOp.addr, vmBindOp.range};
                     }
                     if (metaDataEntry.metadata.type == euDebugInterface->getParamValue(NEO::EuDebugParam::metadataModuleArea)) {
+
                         isaAddr = vmBindOp.addr;
                         if (connection->isaMap[tileIndex].find(vmBindOp.addr) == connection->isaMap[tileIndex].end()) {
                             auto &isaMap = connection->isaMap[tileIndex];

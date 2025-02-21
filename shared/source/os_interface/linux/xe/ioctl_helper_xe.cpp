@@ -1341,7 +1341,6 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
 }
 
 int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
-    auto gmmHelper = drm.getRootDeviceEnvironment().getGmmHelper();
     int ret = -1;
     const char *operation = isBind ? "bind" : "unbind";
 
@@ -1353,14 +1352,14 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
                 for (auto i = 0u; i < bindInfo.size(); i++) {
                     if (vmBindParams.userptr == bindInfo[i].userptr) {
                         userptr = bindInfo[i].userptr;
-                        bindInfo[i].addr = gmmHelper->decanonize(vmBindParams.start);
+                        bindInfo[i].addr = vmBindParams.start;
                         break;
                     }
                 }
             }
         } else // unbind
         {
-            auto address = gmmHelper->decanonize(vmBindParams.start);
+            auto address = vmBindParams.start;
             for (auto i = 0u; i < bindInfo.size(); i++) {
                 if (address == bindInfo[i].addr) {
                     userptr = bindInfo[i].userptr;
@@ -1385,7 +1384,10 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool isBind) {
     if (vmBindParams.sharedSystemUsmBind == true) {
         bind.bind.addr = 0;
     } else {
-        bind.bind.addr = gmmHelper->decanonize(vmBindParams.start);
+        // Expect canonical address
+        DEBUG_BREAK_IF(drm.getRootDeviceEnvironment().getGmmHelper()->canonize(vmBindParams.start) != vmBindParams.start);
+
+        bind.bind.addr = vmBindParams.start;
     }
     bind.num_syncs = 1;
     UNRECOVERABLE_IF(vmBindParams.userFence == 0x0);
