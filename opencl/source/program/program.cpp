@@ -109,7 +109,7 @@ std::string Program::getInternalOptions() const {
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
     auto isDebuggerActive = pClDevice->getDevice().getDebugger() != nullptr;
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
-    CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper);
+    CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
 
     return internalOptions;
 }

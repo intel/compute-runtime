@@ -1075,6 +1075,19 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-stateful_address_mode" == currArg) {
             addressingMode = argv[argIndex + 1];
             argIndex++;
+        } else if (("-heapless_mode" == currArg) && hasMoreArgs) {
+            if (argv[argIndex + 1] == "enable") {
+                heaplessMode = CompilerOptions::HeaplessMode::enabled;
+            } else if (argv[argIndex + 1] == "disable") {
+                heaplessMode = CompilerOptions::HeaplessMode::disabled;
+            } else if (argv[argIndex + 1] == "default") {
+                heaplessMode = CompilerOptions::HeaplessMode::defaultMode;
+            } else {
+                argHelper->printf("Error: Invalid heapless mode.\n");
+                retVal = OCLOC_INVALID_COMMAND_LINE;
+                break;
+            }
+            argIndex++;
         } else if (("-config" == currArg) && hasMoreArgs) {
             parseHwInfoConfigString(argv[argIndex + 1], hwInfoConfig);
             if (!hwInfoConfig) {
@@ -1189,7 +1202,7 @@ void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
     }
 
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
-    CompilerOptions::applyExtraInternalOptions(internalOptions, *compilerProductHelper);
+    CompilerOptions::applyExtraInternalOptions(internalOptions, *compilerProductHelper, this->heaplessMode);
 }
 
 void OfflineCompiler::parseDebugSettings() {
@@ -1411,6 +1424,11 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                             -stateful_address_mode bindless - enforce generating in bindless mode
                                             -stateful_address_mode default - default mode
                                             not defined: default mode.
+
+  -heapless_mode                            Enforce heapless mode for the binary. The possible values are:
+                                            -heapless_mode enable  - enforce generating in heapless mode
+                                            -heapless_mode disable - enforce generating in heapful mode
+                                            -heapless_mode default - default mode for current platform
 
   -config                                   Target hardware info config for a single device,
                                             e.g 1x4x8.

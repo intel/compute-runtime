@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 
 namespace NEO {
 namespace CompilerOptions {
-void applyExtraInternalOptions(std::string &internalOptions, const CompilerProductHelper &compilerProductHelper) {
+void applyExtraInternalOptions(std::string &internalOptions, const CompilerProductHelper &compilerProductHelper, HeaplessMode heaplessMode) {
 }
 
 } // namespace CompilerOptions

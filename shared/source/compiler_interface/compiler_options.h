@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -184,5 +184,12 @@ std::string wrapInQuotes(const std::string &stringToWrap);
 
 void applyAdditionalInternalOptions(std::string &internalOptions);
 void applyAdditionalApiOptions(std::string &apiOptions);
+
+enum class HeaplessMode {
+    enabled,
+    disabled,
+    defaultMode,
+};
+
 } // namespace CompilerOptions
 } // namespace NEO

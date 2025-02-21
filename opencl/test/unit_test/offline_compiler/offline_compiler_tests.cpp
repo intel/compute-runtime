@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4604,6 +4604,44 @@ TEST(OclocCompile, GivenStatefulAddressModeWhenInvalidArgsPAssedThenErrorIsRetur
     ASSERT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
     output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
+}
+
+TEST(OclocCompile, GivenInvalidHeaplessModeOptionWhenOclocArgsAreParsedThenErrorIsReturned) {
+
+    MockOfflineCompiler ocloc;
+    std::vector<std::string> args = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-heapless_mode",
+        "invalid"};
+    testing::internal::CaptureStdout();
+    int retVal = ocloc.parseCommandLine(args.size(), args);
+    EXPECT_EQ(OCLOC_INVALID_COMMAND_LINE, retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+}
+
+TEST(OclocCompile, GivenValidHeaplessModeOptionWhenOclocArgsAreParsedThenSuccessIsReturned) {
+
+    for (auto heaplessMode : {"enable", "disable", "default"}) {
+        MockOfflineCompiler ocloc;
+        std::vector<std::string> args = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            gEnvironment->devicePrefix.c_str(),
+            "-heapless_mode",
+            heaplessMode};
+        testing::internal::CaptureStdout();
+        int retVal = ocloc.parseCommandLine(args.size(), args);
+        EXPECT_EQ(OCLOC_SUCCESS, retVal);
+        std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_STREQ(output.c_str(), "");
+    }
 }
 
 TEST(OclocCompile, GivenStatefulAddressModeSetToBindlessWhenBuildThenBindlessModeInternalOptionsAreAdded) {

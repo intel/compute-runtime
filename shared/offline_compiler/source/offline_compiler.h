@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/arrayref.h"
@@ -199,6 +200,7 @@ All supported acronyms: %s.
     std::string internalOptionsReadFromFile = "";
     std::string formatToEnforce = "";
     std::string addressingMode = "default";
+    CompilerOptions::HeaplessMode heaplessMode = CompilerOptions::HeaplessMode::defaultMode;
     std::string irHash, genHash, dbgHash, elfHash;
     std::string cacheDir;
 

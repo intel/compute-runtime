@@ -155,7 +155,7 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
     bool isDebuggerActive = neoDevice.getDebugger() != nullptr;
     NEO::CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
 
-    NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper);
+    NEO::CompilerOptions::applyExtraInternalOptions(internalOptions, compilerProductHelper, NEO::CompilerOptions::HeaplessMode::defaultMode);
     return internalOptions;
 }
 
