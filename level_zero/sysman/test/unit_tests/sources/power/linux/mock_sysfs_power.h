@@ -21,7 +21,6 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-constexpr uint64_t setEnergyCounter = (83456u * 1048576u);
 constexpr uint64_t mockKeyOffset = 0x420;
 constexpr uint32_t mockLimitCount = 2u;
 const std::string hwmonDir("device/hwmon");

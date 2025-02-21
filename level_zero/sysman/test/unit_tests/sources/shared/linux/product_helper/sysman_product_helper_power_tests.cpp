@@ -58,9 +58,6 @@ static ssize_t mockReadSuccess(int fd, void *buf, size_t count, off_t offset) {
     } else if (fd == 5) {
         oStream << "0x490e01";
     } else if (fd == 6) {
-        if (offset == mockKeyOffset) {
-            val = setEnergyCounter;
-        }
         memcpy(buf, &val, count);
         return count;
     } else if (fd == 7) {
@@ -143,7 +140,13 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidProductHelperHandleWhenCalling
     EXPECT_TRUE(pSysmanProductHelper->isPowerSetLimitSupported());
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidRootDevicePowerHandleForPackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWhenGettingPowerEnergyCounterThenFailureIsReturned, IsNotDG2) {
+    auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
+    zes_power_energy_counter_t energyCounter = {};
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pSysmanProductHelper->getPowerEnergyCounter(&energyCounter, pLinuxSysmanImp, ZES_POWER_DOMAIN_PACKAGE, 0));
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkFailure);
     pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
     zes_power_energy_counter_t energyCounter = {};
@@ -151,18 +154,20 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidRootDevicePowerHandleForPackag
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidRootDevicePowerHandleForPackageDomainWithTelemetryDataNotAvailableAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryDataNotAvailableAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
     VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
     VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
         uint64_t telem1Offset = 0;
-        std::string validGuid = "0xb15a0ede";
+        std::string validGuid = "0x4f9302";
         if (fd == 4) {
             memcpy(buf, &telem1Offset, count);
         } else if (fd == 5) {
             memcpy(buf, validGuid.data(), count);
+        } else if (fd == 6) {
+            count = -1;
         }
         return count;
     });
@@ -171,6 +176,94 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidRootDevicePowerHandleForPackag
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryOffsetReadFailsAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string invalidGuid = "0x4f9302";
+        if (fd == 4) {
+            count = -1;
+        }
+        return count;
+    });
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    zes_power_energy_counter_t energyCounter = {};
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
+    pLinuxPowerImp->isTelemetrySupportAvailable = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryKeyOffsetMapNotAvailableAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telem1Offset = 0;
+        std::string invalidGuid = "0xABCDEFG";
+        if (fd == 4) {
+            memcpy(buf, &telem1Offset, count);
+        } else if (fd == 5) {
+            memcpy(buf, invalidGuid.data(), count);
+        }
+        return count;
+    });
+    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
+
+    zes_power_energy_counter_t energyCounter = {};
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
+    pLinuxPowerImp->isTelemetrySupportAvailable = true;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+}
+
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG2) {
+    static uint64_t setEnergyCounter = 123456u;
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
+    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        uint64_t telem1Offset = 0;
+        std::string validGuid = "0x4f9302";
+
+        if (fd == 4) {
+            memcpy(buf, &telem1Offset, count);
+        } else if (fd == 5) {
+            memcpy(buf, validGuid.data(), count);
+        } else if (fd == 6) {
+            memcpy(buf, &setEnergyCounter, count);
+        }
+        return count;
+    });
+
+    auto handles = getPowerHandles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        ASSERT_NE(nullptr, handle);
+
+        zes_power_properties_t properties = {};
+        zes_power_ext_properties_t extProperties = {};
+
+        properties.pNext = &extProperties;
+        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+
+        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
+
+        zes_power_energy_counter_t energyCounter = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
+
+        // Calculate output energyCounter value
+        constexpr uint64_t fixedPointToJoule = 1048576;
+        uint64_t outputEnergyCounter = static_cast<uint64_t>((setEnergyCounter / fixedPointToJoule) * convertJouleToMicroJoule);
+
+        EXPECT_EQ(energyCounter.energy, outputEnergyCounter);
+    }
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackagePackageDomainWithTelemetrySupportNotAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
@@ -179,220 +272,6 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackage
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE));
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidSubdevicePowerHandleForPackageDomainWithTelemetrySupportAvailableAndSysfsNodeReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsPVC) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0xb15a0ede";
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        }
-        return count;
-    });
-    pSysfsAccess->mockReadValUnsignedLongResult.push_back(ZE_RESULT_ERROR_NOT_AVAILABLE);
-
-    zes_power_energy_counter_t energyCounter = {};
-    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, true, 0, ZES_POWER_DOMAIN_PACKAGE));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsPVC) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0xb15a0ede";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            count = -1;
-        }
-        return count;
-    });
-
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-
-        zes_power_properties_t properties = {};
-        zes_power_ext_properties_t extProperties = {};
-
-        properties.pNext = &extProperties;
-        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-
-        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
-
-        zes_power_energy_counter_t energyCounter = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
-    }
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG1) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x490e01";
-        // uint32_t mockKeyValue = 0x3;
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            memcpy(buf, &setEnergyCounter, count);
-        }
-        return count;
-    });
-
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-
-        zes_power_properties_t properties = {};
-        zes_power_ext_properties_t extProperties = {};
-
-        properties.pNext = &extProperties;
-        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-
-        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
-
-        zes_power_energy_counter_t energyCounter = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
-    }
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsDG1) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x490e01";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            count = -1;
-        }
-        return count;
-    });
-
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-
-        zes_power_properties_t properties = {};
-        zes_power_ext_properties_t extProperties = {};
-
-        properties.pNext = &extProperties;
-        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-
-        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
-
-        zes_power_energy_counter_t energyCounter = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-    }
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG2) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x4f9302";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            memcpy(buf, &setEnergyCounter, count);
-        }
-        return count;
-    });
-
-    auto handles = getPowerHandles(powerHandleComponentCount);
-
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-
-        zes_power_properties_t properties = {};
-        zes_power_ext_properties_t extProperties = {};
-
-        properties.pNext = &extProperties;
-        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-
-        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
-
-        zes_power_energy_counter_t energyCounter = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-        uint64_t expectedEnergyCounter = convertJouleToMicroJoule * (setEnergyCounter / 1048576);
-        EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
-    }
-}
-
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode, IsDG2) {
-    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
-    VariableBackup<bool> allowFakeDevicePathBackup(&NEO::SysCalls::allowFakeDevicePath, true);
-    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
-        uint64_t telem1Offset = 0;
-        std::string validGuid = "0x4f9302";
-
-        if (fd == 4) {
-            memcpy(buf, &telem1Offset, count);
-        } else if (fd == 5) {
-            memcpy(buf, validGuid.data(), count);
-        } else if (fd == 6) {
-            count = -1;
-        }
-        return count;
-    });
-
-    auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-        ASSERT_NE(nullptr, handle);
-
-        zes_power_properties_t properties = {};
-        zes_power_ext_properties_t extProperties = {};
-
-        properties.pNext = &extProperties;
-        extProperties.stype = ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
-
-        EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
-
-        zes_power_energy_counter_t energyCounter = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
-    }
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleWhenSettingPowerLimitsThenUnsupportedFeatureErrorIsReturned, IsDG1) {

@@ -81,6 +81,7 @@ class SysmanProductHelper {
     virtual bool isPowerSetLimitSupported() = 0;
     virtual std::string getPackageCriticalPowerLimitFile() = 0;
     virtual SysfsValueUnit getPackageCriticalPowerLimitNativeUnit() = 0;
+    virtual ze_result_t getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subDeviceId) = 0;
 
     // standby
     virtual bool isStandbySupported(SysmanKmdInterface *pSysmanKmdInterface) = 0;

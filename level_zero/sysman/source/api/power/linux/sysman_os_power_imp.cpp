@@ -76,38 +76,11 @@ ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPope
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxPowerImp::getPmtEnergyCounter(zes_power_energy_counter_t *pEnergy) {
-
-    std::string telemDir = "";
-    std::string guid = "";
-    uint64_t telemOffset = 0;
-
-    if (!pLinuxSysmanImp->getTelemData(subdeviceId, telemDir, guid, telemOffset)) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    std::map<std::string, uint64_t> keyOffsetMap;
-    if (!PlatformMonitoringTech::getKeyOffsetMap(pSysmanProductHelper, guid, keyOffsetMap)) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
-    const std::string key("PACKAGE_ENERGY");
-    uint64_t energy = 0;
-    constexpr uint64_t fixedPointToJoule = 1048576;
-    if (!PlatformMonitoringTech::readValue(keyOffsetMap, telemDir, key, telemOffset, energy)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    // PMT will return energy counter in Q20 format(fixed point representation) where first 20 bits(from LSB) represent decimal part and remaining integral part which is converted into joule by division with 1048576(2^20) and then converted into microjoules
-    pEnergy->energy = (energy / fixedPointToJoule) * convertJouleToMicroJoule;
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t LinuxPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 
     if (isTelemetrySupportAvailable) {
-        result = getPmtEnergyCounter(pEnergy);
+        result = pSysmanProductHelper->getPowerEnergyCounter(pEnergy, pLinuxSysmanImp, powerDomain, subdeviceId);
     }
 
     if (result != ZE_RESULT_SUCCESS) {

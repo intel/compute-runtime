@@ -19,13 +19,11 @@ constexpr static auto gfxProduct = IGFX_DG1;
 
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
     {"0x490e01", // DG1 B stepping
-     {{"PACKAGE_ENERGY", 0x420},
-      {"COMPUTE_TEMPERATURES", 0x68},
+     {{"COMPUTE_TEMPERATURES", 0x68},
       {"SOC_TEMPERATURES", 0x60},
       {"CORE_TEMPERATURES", 0x6c}}},
     {"0x490e", // DG1 A stepping
-     {{"PACKAGE_ENERGY", 0x400},
-      {"COMPUTE_TEMPERATURES", 0x68},
+     {{"COMPUTE_TEMPERATURES", 0x68},
       {"SOC_TEMPERATURES", 0x60},
       {"CORE_TEMPERATURES", 0x6c}}}};
 

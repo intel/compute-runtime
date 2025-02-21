@@ -561,6 +561,14 @@ TEST_F(SysmanDevicePowerFixtureI915, GivenHwMonDoesNotExistAndTelemDataNotAvaila
     }
 }
 
+TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandlesWithTelemetrySupportNotAvailableButSysfsReadSucceedsWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromSysfsNode) {
+    zes_power_energy_counter_t energyCounter = {};
+    std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
+    pLinuxPowerImp->isTelemetrySupportAvailable = true;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
+}
+
 TEST_F(SysmanDevicePowerFixtureI915, GivenValidPowerHandleWhenGettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
 
     zes_energy_threshold_t threshold;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,13 +17,13 @@ using SysmanProductHelperPmtTest = ::testing::Test;
 
 HWTEST2_F(SysmanProductHelperPmtTest, GivenSysmanProductHelperInstanceWhenGetGuidToKeyOffsetMapIsCalledThenValidMapIsReturned, IsDG1) {
     const std::map<std::string, std::map<std::string, uint64_t>> mockDg1GuidToKeyOffsetMap = {{"0x490e01",
-                                                                                               {{"PACKAGE_ENERGY", 0x420},
+                                                                                               {{"SOC_TEMPERATURES", 0x60},
                                                                                                 {"COMPUTE_TEMPERATURES", 0x68}}}};
 
     auto pSysmanProductHelper = L0::Sysman::SysmanProductHelper::create(defaultHwInfo->platform.eProductFamily);
     auto pGuidToKeyOffsetMap = pSysmanProductHelper->getGuidToKeyOffsetMap();
     EXPECT_NE(nullptr, pGuidToKeyOffsetMap);
-    EXPECT_EQ(mockDg1GuidToKeyOffsetMap.at("0x490e01").at("PACKAGE_ENERGY"), (*pGuidToKeyOffsetMap).at("0x490e01").at("PACKAGE_ENERGY"));
+    EXPECT_EQ(mockDg1GuidToKeyOffsetMap.at("0x490e01").at("SOC_TEMPERATURES"), (*pGuidToKeyOffsetMap).at("0x490e01").at("SOC_TEMPERATURES"));
     EXPECT_EQ(mockDg1GuidToKeyOffsetMap.at("0x490e01").at("COMPUTE_TEMPERATURES"), (*pGuidToKeyOffsetMap).at("0x490e01").at("COMPUTE_TEMPERATURES"));
 }
 
