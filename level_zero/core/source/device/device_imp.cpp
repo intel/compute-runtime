@@ -1359,23 +1359,23 @@ ze_result_t DeviceImp::getDeviceImageProperties(ze_device_image_properties_t *pD
 
 ze_result_t DeviceImp::getDebugProperties(zet_device_debug_properties_t *pDebugProperties) {
     bool isDebugAttachAvailable = getOsInterface() ? getOsInterface()->isDebugAttachAvailable() : false;
-    auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*this->getNEODevice()).getStateSaveAreaHeader();
-
-    if (stateSaveAreaHeader.size() == 0) {
-        PRINT_DEBUGGER_INFO_LOG("Context state save area header missing", "");
-        isDebugAttachAvailable = false;
-    }
+    pDebugProperties->flags = 0;
 
     auto &hwInfo = neoDevice->getHardwareInfo();
     if (!hwInfo.capabilityTable.l0DebuggerSupported) {
         isDebugAttachAvailable = false;
     }
-
-    bool tileAttach = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();
-    pDebugProperties->flags = 0;
     if (isDebugAttachAvailable) {
-        if ((isSubdevice && tileAttach) || !isSubdevice) {
-            pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
+        auto &stateSaveAreaHeader = NEO::SipKernel::getDebugSipKernel(*this->getNEODevice()).getStateSaveAreaHeader();
+
+        if (stateSaveAreaHeader.size() == 0) {
+            PRINT_DEBUGGER_INFO_LOG("Context state save area header missing", "");
+        } else {
+            bool tileAttach = NEO::debugManager.flags.ExperimentalEnableTileAttach.get();
+
+            if ((isSubdevice && tileAttach) || !isSubdevice) {
+                pDebugProperties->flags = zet_device_debug_property_flag_t::ZET_DEVICE_DEBUG_PROPERTY_FLAG_ATTACH;
+            }
         }
     }
     return ZE_RESULT_SUCCESS;
