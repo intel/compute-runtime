@@ -1112,6 +1112,20 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         }
     }
 
+    if (!deviceName.empty()) {
+        auto deviceNameCopy = deviceName;
+        ProductConfigHelper::adjustDeviceName(deviceNameCopy);
+        if (isArgumentDeviceId(deviceNameCopy)) {
+            auto deviceID = static_cast<unsigned short>(std::stoi(deviceNameCopy.c_str(), 0, 16));
+            uint32_t productConfig = argHelper->getProductConfigAndSetHwInfoBasedOnDeviceAndRevId(hwInfo, deviceID, revisionId, compilerProductHelper, releaseHelper);
+            if (productConfig != AOT::UNKNOWN_ISA) {
+                auto productAcronym = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
+                if (perDeviceOptions.find(productAcronym.c_str()) != perDeviceOptions.end())
+                    CompilerOptions::concatenateAppend(options, perDeviceOptions.at(productAcronym.c_str()));
+            }
+        }
+    }
+
     if (perDeviceOptions.find(deviceName) != perDeviceOptions.end()) {
         CompilerOptions::concatenateAppend(options, perDeviceOptions.at(deviceName));
     }

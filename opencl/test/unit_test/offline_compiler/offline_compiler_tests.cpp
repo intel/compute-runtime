@@ -33,6 +33,7 @@
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_fcl_facade.h"
 #include "opencl/test/unit_test/offline_compiler/mock/mock_ocloc_igc_facade.h"
 
+#include "device_ids_configs.h"
 #include "environment.h"
 #include "gtest/gtest.h"
 #include "mock/mock_argument_helper.h"
@@ -1218,6 +1219,116 @@ TEST_F(OfflineCompilerTests, GivenFlagStringWhenParsingThenInternalBooleanIsSetA
         EXPECT_EQ(OCLOC_SUCCESS, result);
 
         EXPECT_TRUE(mockOfflineCompiler.*memberBoolean);
+    }
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceAsPvcHexIdAndDeviceOptionsStricteForPvcOnlyWhenCmdLineParsedThenHexIdIsTranslatedToAcronymAndDeviceOptionsAreApplied) {
+    std::string deviceIdStr = "0x0bd5",
+                relevantAcronymStr = "pvc",
+                exampleDevOptionsStr = "-options -ze-opt-large-register-file";
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-file", clFiles + "foo.spv",
+        "-output_no_suffix",
+        "-spirv_input",
+        "-device_options", relevantAcronymStr, exampleDevOptionsStr,
+        "-device", deviceIdStr,
+        "-revision_id", "0x2f"};
+
+    auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto allEnabledDeviceAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getRepresentativeProductAcronyms();
+    auto deprecatedAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getDeprecatedAcronyms();
+    if ((allEnabledDeviceAcronyms.empty() || std::find(allEnabledDeviceAcronyms.begin(), allEnabledDeviceAcronyms.end(), relevantAcronymStr) == allEnabledDeviceAcronyms.end()) && (deprecatedAcronyms.empty() || std::find(deprecatedAcronyms.begin(), deprecatedAcronyms.end(), relevantAcronymStr) == deprecatedAcronyms.end())) {
+        GTEST_SKIP();
+    }
+
+    const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    EXPECT_EQ(OCLOC_SUCCESS, result);
+    EXPECT_STREQ(mockOfflineCompiler->options.c_str(), exampleDevOptionsStr.c_str());
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceHexIdAndDeviceOptionsInGeneralWhenCmdLineParsedThenHexIdIsTranslatedToAcronymAndDeviceOptionsAreApplied) {
+    struct DeviceIdElementDescriptionType {
+        unsigned short idVal;
+        std::string idStr;
+        std::string configStr;
+        std::vector<std::string> acronymsResultants;
+    };
+    std::vector<DeviceIdElementDescriptionType> deviceIdsVec{
+#define NAMEDDEVICE(devId, hwConf, ignored_brandingStr) {devId, #devId, #hwConf, {}},
+#define DEVICE(devId, hwConf) {devId, #devId, #hwConf, {}},
+#include "devices.inl"
+#undef DEVICE
+#undef NAMEDDEVICE
+    };
+    struct ConfigRelationElementDescriptionType {
+        std::vector<unsigned short> devIdVals;
+        std::string configStr;
+        enum AOT::PRODUCT_CONFIG prodIpTypeVal;
+    };
+    std::vector<ConfigRelationElementDescriptionType> configRelationVec{
+#define DEVICE_CONFIG(prodIpTypeVer, hwConf, devIds, ignored_family, ignored_release) {NEO::devIds, #hwConf, AOT::prodIpTypeVer},
+#include "product_config.inl"
+#undef DEVICE_CONFIG
+    };
+
+    for (auto &deviceIdElement : deviceIdsVec) {
+        std::transform(deviceIdElement.idStr.begin(), deviceIdElement.idStr.end(), deviceIdElement.idStr.begin(), ::tolower);
+        for (auto &configRelationElement : configRelationVec) {
+            if (deviceIdElement.configStr != configRelationElement.configStr ||
+                std::find(configRelationElement.devIdVals.begin(), configRelationElement.devIdVals.end(), deviceIdElement.idVal) == configRelationElement.devIdVals.end()) {
+                continue;
+            }
+            for (auto &acrMapEl : AOT::deviceAcronyms) {
+                if (acrMapEl.second == configRelationElement.prodIpTypeVal) {
+                    deviceIdElement.acronymsResultants.push_back(acrMapEl.first);
+                }
+            }
+            for (auto &acrMapEl : AOT::rtlIdAcronyms) {
+                if (acrMapEl.second == configRelationElement.prodIpTypeVal) {
+                    deviceIdElement.acronymsResultants.push_back(acrMapEl.first);
+                }
+            }
+            for (auto &acrMapEl : AOT::genericIdAcronyms) {
+                if (acrMapEl.second == configRelationElement.prodIpTypeVal) {
+                    deviceIdElement.acronymsResultants.push_back(acrMapEl.first);
+                }
+            }
+        }
+    }
+
+    for (auto &deviceIdElement : deviceIdsVec) {
+        if (deviceIdElement.acronymsResultants.empty()) {
+            continue;
+        }
+        std::string deviceIdStr = deviceIdElement.idStr,
+                    relevantAcronymStr = deviceIdElement.acronymsResultants.front(),
+                    exampleDevOptionsStr = "any string with options e.g.: (-options)? -ze-opt-large-register-file";
+        const std::vector<std::string> argv = {
+            "ocloc",
+            "compile",
+            "-file", clFiles + "foo.spv",
+            "-output_no_suffix",
+            "-spirv_input",
+            "-device_options", relevantAcronymStr, exampleDevOptionsStr,
+            "-device", deviceIdStr};
+
+        auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+        ASSERT_NE(nullptr, mockOfflineCompiler);
+
+        auto allEnabledDeviceAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getRepresentativeProductAcronyms();
+        auto deprecatedAcronyms = mockOfflineCompiler->argHelper->productConfigHelper->getDeprecatedAcronyms();
+        if ((allEnabledDeviceAcronyms.empty() || std::find(allEnabledDeviceAcronyms.begin(), allEnabledDeviceAcronyms.end(), relevantAcronymStr) == allEnabledDeviceAcronyms.end()) && (deprecatedAcronyms.empty() || std::find(deprecatedAcronyms.begin(), deprecatedAcronyms.end(), relevantAcronymStr) == deprecatedAcronyms.end())) {
+            GTEST_SKIP();
+        }
+
+        const auto result = mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+        EXPECT_EQ(OCLOC_SUCCESS, result);
+        EXPECT_STREQ(mockOfflineCompiler->options.c_str(), exampleDevOptionsStr.c_str());
     }
 }
 
