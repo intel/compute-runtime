@@ -63,7 +63,13 @@ GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironmentArg) : ro
 }
 
 uint64_t GmmHelper::canonize(uint64_t address) const {
+#if defined(__aarch64__)
+    // Memory layout on aarch64 doesn't require setting bits 63-48 to the same
+    // as bit 47. See https://docs.kernel.org/arch/arm64/memory.html
+    return static_cast<int64_t>(address);
+#else
     return static_cast<int64_t>(address << (64 - addressWidth)) >> (64 - addressWidth);
+#endif
 }
 
 uint64_t GmmHelper::decanonize(uint64_t address) const {
