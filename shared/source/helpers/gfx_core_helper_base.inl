@@ -833,8 +833,4 @@ uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo 
     return std::min(defaultInternalCopyEngineIndex, highestAvailableIndex);
 }
 
-template <typename Family>
-void GfxCoreHelperHw<Family>::overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const {
-}
-
 } // namespace NEO

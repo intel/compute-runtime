@@ -16,7 +16,6 @@
 #include "aubstream/aubstream.h"
 #include "igfxfmid.h"
 
-#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -199,8 +198,6 @@ class GfxCoreHelper {
 
     virtual uint32_t getDeviceTimestampWidth() const = 0;
     virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
-
-    virtual void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -439,8 +436,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
 
     uint32_t getDeviceTimestampWidth() const override;
-
-    void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const override;
 
     ~GfxCoreHelperHw() override = default;
 

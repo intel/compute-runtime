@@ -46,6 +46,11 @@ bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isAdjustDirectSubmissionTimeoutOnThrottleAndAcLineStatusEnabled() const {
+    return true;
+}
+
+template <>
 TimeoutParams ProductHelperHw<gfxProduct>::getDirectSubmissionControllerTimeoutParams(bool acLineConnected, QueueThrottle queueThrottle) const {
     TimeoutParams params{};
     if (acLineConnected) {
