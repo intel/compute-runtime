@@ -103,7 +103,7 @@ NAMEDDEVICE(0x7D45, MtlHwConfig, "Intel(R) Graphics")
 NAMEDDEVICE(0x7D67, ArlHwConfig, "Intel(R) Graphics")
 NAMEDDEVICE(0x7D51, ArlHwConfig, "Intel(R) Arc(TM) Graphics")
 NAMEDDEVICE(0x7DD1, ArlHwConfig, "Intel(R) Graphics")
-DEVICE(0x7D41, ArlHwConfig)
+NAMEDDEVICE(0x7D41, ArlHwConfig, "Intel(R) Graphics")
 #endif
 #endif
 
