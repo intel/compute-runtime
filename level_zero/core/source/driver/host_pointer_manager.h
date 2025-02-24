@@ -60,7 +60,7 @@ class HostPointerManager {
 
       public:
         using HostPointerContainer = std::map<const void *, HostPointerData>;
-        void insert(HostPointerData allocationsData);
+        void insert(const HostPointerData &allocationsData);
         void remove(const void *ptr);
         HostPointerData *get(const void *ptr);
         size_t getNumAllocs() const { return allocations.size(); };

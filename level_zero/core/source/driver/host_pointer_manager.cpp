@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 
 namespace L0 {
 
-void HostPointerManager::MapBasedAllocationTracker::insert(HostPointerData allocationsData) {
+void HostPointerManager::MapBasedAllocationTracker::insert(const HostPointerData &allocationsData) {
     allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsData.basePtr), allocationsData));
 }
 
