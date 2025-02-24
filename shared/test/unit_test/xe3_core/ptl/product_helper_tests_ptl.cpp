@@ -43,7 +43,3 @@ PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
-
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCallIsCachingOnCpuAvailableThenFalseIsReturned) {
-    EXPECT_FALSE(productHelper->isCachingOnCpuAvailable());
-}

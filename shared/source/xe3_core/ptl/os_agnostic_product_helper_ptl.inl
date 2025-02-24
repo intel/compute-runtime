@@ -29,9 +29,4 @@ bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(ReleaseHelper *rel
     return true;
 }
 
-template <>
-bool ProductHelperHw<gfxProduct>::isCachingOnCpuAvailable() const {
-    return false;
-}
-
 } // namespace NEO
