@@ -29,7 +29,7 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
   protected:
     bool allocateOsResources() override;
-    bool submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationForResidency) override;
+    bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) override;
 
     bool handleResidency() override;
     void handleCompletionFence(uint64_t completionValue, MonitoredFence &fence);

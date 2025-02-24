@@ -92,7 +92,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationForResidency) {
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) {
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS Submit to GPU\n");
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader.get());
     pHeader->RequiresCoherency = false;

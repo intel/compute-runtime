@@ -131,7 +131,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationsForResidency) {
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) {
     auto bb = static_cast<DrmAllocation *>(this->ringCommandStream.getGraphicsAllocation())->getBO();
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
@@ -212,7 +212,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DrmDirectSubmission<GfxFamily, Dispatcher>::handleRingRestartForUllsLightResidency(ResidencyContainer *allocationsForResidency) {
+void DrmDirectSubmission<GfxFamily, Dispatcher>::handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency) {
     if (allocationsForResidency) {
         auto restartNeeded = (static_cast<DrmMemoryOperationsHandler *>(this->memoryOperationHandler)->obtainAndResetNewResourcesSinceLastRingSubmit() ||
                               std::chrono::duration_cast<std::chrono::microseconds>(this->getCpuTimePoint() - this->lastUllsLightExecTimestamp) > std::chrono::microseconds{ullsLightTimeout});

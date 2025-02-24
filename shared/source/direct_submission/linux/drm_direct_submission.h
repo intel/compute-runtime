@@ -26,10 +26,10 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
   protected:
     bool allocateOsResources() override;
-    bool submit(uint64_t gpuAddress, size_t size, ResidencyContainer *allocationsForResidency) override;
+    bool submit(uint64_t gpuAddress, size_t size, const ResidencyContainer *allocationsForResidency) override;
 
     bool handleResidency() override;
-    void handleRingRestartForUllsLightResidency(ResidencyContainer *allocationsForResidency) override;
+    void handleRingRestartForUllsLightResidency(const ResidencyContainer *allocationsForResidency) override;
     void handleStopRingBuffer() override;
 
     void ensureRingCompletion() override;
