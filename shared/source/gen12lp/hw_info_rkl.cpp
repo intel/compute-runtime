@@ -63,7 +63,6 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     true,                                            // instrumentationEnabled
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
-    false,                                           // supportsDeviceEnqueue
     false,                                           // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // supportsOnDemandPageFaults

@@ -108,9 +108,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
                 EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_min_max", (++openclCFeatureIterator)->name);
             }
         }
-        if (hwInfo.capabilityTable.supportsDeviceEnqueue) {
-            EXPECT_STREQ("__opencl_c_device_enqueue", (++openclCFeatureIterator)->name);
-        }
         if (hwInfo.capabilityTable.supportsPipes) {
             EXPECT_STREQ("__opencl_c_pipes", (++openclCFeatureIterator)->name);
         }
@@ -1349,25 +1346,14 @@ TEST_F(DeviceGetCapsTest, givenOcl21DeviceWhenCheckingPipesSupportThenPipesAreSu
 TEST_F(DeviceGetCapsTest, givenCapsDeviceEnqueueWhenCheckingDeviceEnqueueSupportThenNoSupportReported) {
     auto hwInfo = *defaultHwInfo;
 
-    for (auto isDeviceEnqueueSupportedByHw : ::testing::Bool()) {
-        hwInfo.capabilityTable.supportsDeviceEnqueue = isDeviceEnqueueSupportedByHw;
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &caps = pClDevice->getDeviceInfo();
 
-        auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-        auto &caps = pClDevice->getDeviceInfo();
-
-        size_t deviceEnqueueFeaturesCount = 0;
-        for (auto &openclCFeature : caps.openclCFeatures) {
-            if (0 == strcmp(openclCFeature.name, "__opencl_c_device_enqueue")) {
-                deviceEnqueueFeaturesCount++;
-            }
-        }
-        EXPECT_EQ(0u, caps.maxOnDeviceEvents);
-        EXPECT_EQ(0u, caps.maxOnDeviceQueues);
-        EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
-        EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
-        EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
-        EXPECT_EQ(0u, deviceEnqueueFeaturesCount);
-    }
+    EXPECT_EQ(0u, caps.maxOnDeviceEvents);
+    EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+    EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+    EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+    EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
 }
 
 TEST_F(DeviceGetCapsTest, givenPipeSupportForcedWhenCheckingPipeSupportThenPipeIsCorrectlyReported) {

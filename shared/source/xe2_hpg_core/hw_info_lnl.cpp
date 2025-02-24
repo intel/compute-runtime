@@ -64,7 +64,6 @@ const RuntimeCapabilityTable LNL::capabilityTable{
     true,                                                      // instrumentationEnabled
     false,                                                     // supportCacheFlushAfterWalker
     true,                                                      // supportsImages
-    false,                                                     // supportsDeviceEnqueue
     false,                                                     // supportsPipes
     true,                                                      // supportsOcl21Features
     true,                                                      // supportsOnDemandPageFaults

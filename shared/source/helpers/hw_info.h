@@ -50,7 +50,6 @@ struct RuntimeCapabilityTable {
     bool instrumentationEnabled;
     bool supportCacheFlushAfterWalker;
     bool supportsImages;
-    bool supportsDeviceEnqueue;
     bool supportsPipes;
     bool supportsOcl21Features;
     bool supportsOnDemandPageFaults;
@@ -113,7 +112,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.deviceName == rhs.deviceName);
     result &= (lhs.supportCacheFlushAfterWalker == rhs.supportCacheFlushAfterWalker);
     result &= (lhs.supportsImages == rhs.supportsImages);
-    result &= (lhs.supportsDeviceEnqueue == rhs.supportsDeviceEnqueue);
     result &= (lhs.supportsPipes == rhs.supportsPipes);
     result &= (lhs.supportsOcl21Features == rhs.supportsOcl21Features);
     result &= (lhs.supportsOnDemandPageFaults == rhs.supportsOnDemandPageFaults);

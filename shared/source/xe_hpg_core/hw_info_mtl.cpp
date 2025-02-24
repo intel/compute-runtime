@@ -62,7 +62,6 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     true,                                                      // instrumentationEnabled
     true,                                                      // supportCacheFlushAfterWalker
     true,                                                      // supportsImages
-    false,                                                     // supportsDeviceEnqueue
     false,                                                     // supportsPipes
     true,                                                      // supportsOcl21Features
     false,                                                     // supportsOnDemandPageFaults

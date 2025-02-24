@@ -1229,10 +1229,6 @@ HWTEST2_F(DeviceTests, givenHwInfoWhenSlmSizeIsRequiredThenReturnCorrectValue, I
     EXPECT_EQ(64u, defaultHwInfo->capabilityTable.slmSize);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenCheckingDeviceEnqueueSupportThenFalseIsReturned) {
-    EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsDeviceEnqueue);
-}
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenXeHPAndLaterProductWhenCheckingPipesSupportThenFalseIsReturned) {
     EXPECT_FALSE(defaultHwInfo->capabilityTable.supportsPipes);
 }
