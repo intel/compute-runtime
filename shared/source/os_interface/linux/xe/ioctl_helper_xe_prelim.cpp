@@ -9,8 +9,16 @@
 
 namespace NEO {
 
-void IoctlHelperXePrelim::setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut) {
-    IoctlHelperXe::setContextProperties(osContext, extProperties, extIndexInOut);
+bool IoctlHelperXePrelim::isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex) {
+    return false;
+}
+
+uint32_t IoctlHelperXePrelim::getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex) {
+    return static_cast<uint32_t>(-1);
+}
+
+void IoctlHelperXePrelim::setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) {
+    IoctlHelperXe::setContextProperties(osContext, deviceIndex, extProperties, extIndexInOut);
 }
 
 bool IoctlHelperXePrelim::getFdFromVmExport(uint32_t vmId, uint32_t flags, int32_t *fd) {

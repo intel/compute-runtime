@@ -1319,7 +1319,7 @@ int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_
     std::array<drm_xe_ext_set_property, maxContextSetProperties> extProperties{};
     uint32_t extPropertyIndex{0U};
     setOptionalContextProperties(drm, &extProperties, extPropertyIndex);
-    setContextProperties(osContext, &extProperties, extPropertyIndex);
+    setContextProperties(osContext, deviceIndex, &extProperties, extPropertyIndex);
 
     drm_xe_exec_queue_create create{};
     create.width = 1;
@@ -1653,7 +1653,7 @@ void IoctlHelperXe::setOptionalContextProperties(Drm &drm, void *extProperties, 
     }
 }
 
-void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut) {
+void IoctlHelperXe::setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) {
 
     auto &ext = *reinterpret_cast<std::array<drm_xe_ext_set_property, maxContextSetProperties> *>(extProperties);
 

@@ -2098,7 +2098,7 @@ TEST_F(IoctlHelperXeTest, givenLowPriorityContextWhenSettingPropertiesThenCorrec
     OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::lowPriority}));
     std::array<drm_xe_ext_set_property, MockIoctlHelperXe::maxContextSetProperties> extProperties{};
     uint32_t extIndex = 1;
-    xeIoctlHelper->setContextProperties(osContext, &extProperties, extIndex);
+    xeIoctlHelper->setContextProperties(osContext, 0, &extProperties, extIndex);
 
     EXPECT_EQ(reinterpret_cast<uint64_t>(&extProperties[1]), extProperties[0].base.next_extension);
     EXPECT_EQ(0u, extProperties[1].base.next_extension);

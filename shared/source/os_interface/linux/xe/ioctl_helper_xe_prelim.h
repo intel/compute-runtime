@@ -20,7 +20,9 @@ class IoctlHelperXePrelim : public IoctlHelperXe {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
 
   protected:
-    void setContextProperties(const OsContextLinux &osContext, void *extProperties, uint32_t &extIndexInOut) override;
+    virtual bool isPrimaryContext(const OsContextLinux &osContext, uint32_t deviceIndex);
+    virtual uint32_t getPrimaryContextId(const OsContextLinux &osContext, uint32_t deviceIndex, size_t contextIndex);
+    void setContextProperties(const OsContextLinux &osContext, uint32_t deviceIndex, void *extProperties, uint32_t &extIndexInOut) override;
 };
 
 } // namespace NEO
