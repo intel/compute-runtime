@@ -688,6 +688,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     bool lastSystolicPipelineSelectMode = false;
     bool requiresInstructionCacheFlush = false;
     bool requiresDcFlush = false;
+    bool pushAllocationsForMakeResident = true;
 
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;

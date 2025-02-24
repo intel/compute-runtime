@@ -1411,8 +1411,11 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
                     this->overrideDispatchPolicy(DispatchMode::immediateDispatch);
                 }
             }
+            this->osContext->setDirectSubmissionActive();
+            if (this->osContext->isDirectSubmissionLightActive()) {
+                this->pushAllocationsForMakeResident = false;
+            }
         }
-        this->osContext->setDirectSubmissionActive();
     }
     return ret;
 }

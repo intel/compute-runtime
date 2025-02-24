@@ -156,7 +156,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
 
     if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {
-        auto pushAllocations = !this->osContext->isDirectSubmissionLightActive();
+        auto pushAllocations = this->pushAllocationsForMakeResident;
 
         if (debugManager.flags.MakeEachAllocationResident.get() != -1) {
             pushAllocations = !debugManager.flags.MakeEachAllocationResident.get();

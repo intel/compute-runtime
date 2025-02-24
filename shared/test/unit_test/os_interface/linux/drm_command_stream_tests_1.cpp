@@ -963,6 +963,19 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLi
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.reset(oldMemoryOperationsInterface);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionLightWhenMakeResidentThenDoNotAddToCsrResidencyContainer) {
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->directSubmission.reset();
+    csr->initDirectSubmission();
+    EXPECT_FALSE(testedCsr->pushAllocationsForMakeResident);
+    EXPECT_EQ(testedCsr->getResidencyAllocations().size(), 0u);
+
+    DrmAllocation graphicsAllocation(0, 1u /*num gmms*/, AllocationType::unknown, nullptr, nullptr, 1024, static_cast<osHandle>(1u), MemoryPool::memoryNull);
+    csr->makeResident(graphicsAllocation);
+
+    EXPECT_EQ(testedCsr->getResidencyAllocations().size(), 0u);
+}
+
 template <typename GfxFamily>
 struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagData;

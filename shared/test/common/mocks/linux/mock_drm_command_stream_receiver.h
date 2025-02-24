@@ -36,6 +36,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::immWritePostSyncWriteOffset;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::makeResident;
+    using CommandStreamReceiver::pushAllocationsForMakeResident;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::timeStampPostSyncWriteOffset;
