@@ -485,9 +485,9 @@ TEST_F(CloneKernelTest, givenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect
 }
 
 TEST_F(CloneKernelTest, givenArgImmediateWhenCloningKernelThenKernelInfoIsCorrect) {
-    pKernelInfo->addArgImmediate(0, sizeof(void *), 0x20);
-
     using TypeParam = unsigned long;
+    pKernelInfo->addArgImmediate(0, sizeof(TypeParam), 0x20);
+
     auto value = (TypeParam)0xAA55AA55UL;
 
     retVal = pSourceMultiDeviceKernel->setArg(0, sizeof(TypeParam), &value);
