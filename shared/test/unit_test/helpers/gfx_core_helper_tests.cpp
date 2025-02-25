@@ -1695,6 +1695,11 @@ HWTEST2_F(GfxCoreHelperTest, whenGetDefaultDeviceHierarchyThenReturnCompositeHie
     EXPECT_EQ(DeviceHierarchyMode::composite, defaultDeviceHierarchy);
 }
 
+HWTEST2_F(GfxCoreHelperTest, whenGetSipBinaryFromExternalLibThenReturnFalse, IsAtMostXe3Core) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_FALSE(gfxCoreHelper.getSipBinaryFromExternalLib());
+}
+
 HWTEST_F(GfxCoreHelperTest, givenContextGroupDisabledWhenContextGroupContextsCountAndSecondaryContextsSupportQueriedThenZeroCountAndFalseIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(0u, gfxCoreHelper.getContextGroupContextsCount());

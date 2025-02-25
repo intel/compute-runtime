@@ -834,6 +834,11 @@ uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo 
 }
 
 template <typename Family>
+bool GfxCoreHelperHw<Family>::getSipBinaryFromExternalLib() const {
+    return false;
+}
+
+template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
     return 0;
 }
