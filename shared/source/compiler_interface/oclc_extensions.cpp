@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -86,13 +86,6 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
             strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_min_max");
             openclCFeatures.push_back(openClCFeature);
         }
-    }
-
-    auto forcePipeSupport = debugManager.flags.ForcePipeSupport.get();
-    if ((hwInfo.capabilityTable.supportsPipes && (forcePipeSupport == -1)) ||
-        (forcePipeSupport == 1)) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_pipes");
-        openclCFeatures.push_back(openClCFeature);
     }
 
     auto forceFp64Support = debugManager.flags.OverrideDefaultFP64Settings.get();

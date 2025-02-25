@@ -295,16 +295,10 @@ void ClDevice::initializeCaps() {
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
-    deviceInfo.pipeSupport = arePipesSupported();
-    if (arePipesSupported()) {
-        deviceInfo.maxPipeArgs = 16;
-        deviceInfo.pipeMaxPacketSize = 1024;
-        deviceInfo.pipeMaxActiveReservations = 1;
-    } else {
-        deviceInfo.maxPipeArgs = 0;
-        deviceInfo.pipeMaxPacketSize = 0;
-        deviceInfo.pipeMaxActiveReservations = 0;
-    }
+    deviceInfo.pipeSupport = false;
+    deviceInfo.maxPipeArgs = 0;
+    deviceInfo.pipeMaxPacketSize = 0;
+    deviceInfo.pipeMaxActiveReservations = 0;
 
     deviceInfo.atomicMemoryCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
     if (ocl21FeaturesEnabled) {

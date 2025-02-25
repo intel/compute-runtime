@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,6 @@ namespace TestChecks {
 bool supportsSvm(const ClDevice *pClDevice);
 bool supportsImages(const Context *pContext);
 bool supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
-bool supportsPipes(const ClDevice *pClDevice);
 bool supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvironment);
 } // namespace TestChecks
 

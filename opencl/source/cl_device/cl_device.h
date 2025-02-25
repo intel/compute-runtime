@@ -124,7 +124,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const std::string &peekCompilerExtensions() const;
     const std::string &peekCompilerExtensionsWithFeatures() const;
     DeviceBitfield getDeviceBitfield() const;
-    bool arePipesSupported() const;
     bool isPciBusInfoValid() const;
 
     static cl_command_queue_capabilities_intel getQueueFamilyCapabilitiesAll();

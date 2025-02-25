@@ -63,7 +63,6 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     true,                                            // ftr64KBpages
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
-    false,                                           // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // supportsOnDemandPageFaults
     false,                                           // supportsIndependentForwardProgress

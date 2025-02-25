@@ -178,13 +178,6 @@ DeviceBitfield ClDevice::getDeviceBitfield() const {
     return device.getDeviceBitfield();
 }
 
-bool ClDevice::arePipesSupported() const {
-    if (debugManager.flags.ForcePipeSupport.get() != -1) {
-        return debugManager.flags.ForcePipeSupport.get();
-    }
-    return device.getHardwareInfo().capabilityTable.supportsPipes;
-}
-
 void ClDevice::initGTPinHelper() {
     gtpinGfxCoreHelper = GTPinGfxCoreHelper::create(this->getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -633,8 +633,8 @@ TEST(GetDeviceInfo, WhenQueryingPipesSupportThenProperValueIsReturned) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), paramRetSize);
 
-    cl_bool expectedPipesSupport = deviceFactory.rootDevices[0]->arePipesSupported() ? CL_TRUE : CL_FALSE;
-    EXPECT_EQ(expectedPipesSupport, pipesSupport);
+    cl_bool expectedValue = CL_FALSE;
+    EXPECT_EQ(expectedValue, pipesSupport);
 }
 
 TEST(GetDeviceInfo, WhenQueryingNonUniformWorkGroupSupportThenProperValueIsReturned) {

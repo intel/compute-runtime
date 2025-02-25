@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -22,8 +22,6 @@ set(RUNTIME_SRCS_MEM_OBJ
     ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/pipe.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/pipe.h
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}buffer_ext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}image_ext.inl
 )

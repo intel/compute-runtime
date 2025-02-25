@@ -43,7 +43,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
-#include "opencl/source/mem_obj/pipe.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
@@ -5363,8 +5362,8 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
                                 const cl_pipe_properties *properties,
                                 cl_int *errcodeRet) {
     TRACING_ENTER(ClCreatePipe, &context, &flags, &pipePacketSize, &pipeMaxPackets, &properties, &errcodeRet);
+    cl_int retVal = CL_INVALID_OPERATION;
     cl_mem pipe = nullptr;
-    cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("cl_context", context,
@@ -5373,48 +5372,6 @@ cl_mem CL_API_CALL clCreatePipe(cl_context context,
                    "cl_uint", pipeMaxPackets,
                    "const cl_pipe_properties", properties,
                    "cl_int", errcodeRet);
-
-    Context *pContext = nullptr;
-
-    const cl_mem_flags allValidFlags =
-        CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS;
-
-    do {
-        if ((pipePacketSize == 0) || (pipeMaxPackets == 0)) {
-            retVal = CL_INVALID_PIPE_SIZE;
-            break;
-        }
-
-        /* Are there some invalid flag bits? */
-        if ((flags & (~allValidFlags)) != 0) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
-        if (properties != nullptr) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
-        retVal = validateObjects(withCastToInternal(context, &pContext));
-        if (retVal != CL_SUCCESS) {
-            break;
-        }
-        auto pDevice = pContext->getDevice(0);
-
-        if (pDevice->arePipesSupported() == false) {
-            retVal = CL_INVALID_OPERATION;
-            break;
-        }
-
-        if (pipePacketSize > pDevice->getDeviceInfo().pipeMaxPacketSize) {
-            retVal = CL_INVALID_PIPE_SIZE;
-            break;
-        }
-
-        // create the pipe
-        pipe = Pipe::create(pContext, flags, pipePacketSize, pipeMaxPackets, properties, retVal);
-    } while (false);
 
     if (errcodeRet) {
         *errcodeRet = retVal;
@@ -5431,7 +5388,7 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
                                  size_t *paramValueSizeRet) {
     TRACING_ENTER(ClGetPipeInfo, &pipe, &paramName, &paramValueSize, &paramValue, &paramValueSizeRet);
 
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_MEM_OBJECT;
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("cl_mem", pipe,
@@ -5440,21 +5397,6 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
                    "void *", NEO::fileLoggerInstance().infoPointerToString(paramValue, paramValueSize),
                    "size_t*", paramValueSizeRet);
 
-    retVal = validateObjects(pipe);
-    if (CL_SUCCESS != retVal) {
-        TRACING_EXIT(ClGetPipeInfo, &retVal);
-        return retVal;
-    }
-
-    auto pPipeObj = castToObject<Pipe>(pipe);
-
-    if (pPipeObj == nullptr) {
-        retVal = CL_INVALID_MEM_OBJECT;
-        TRACING_EXIT(ClGetPipeInfo, &retVal);
-        return retVal;
-    }
-
-    retVal = pPipeObj->getPipeInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
     TRACING_EXIT(ClGetPipeInfo, &retVal);
     return retVal;
 }

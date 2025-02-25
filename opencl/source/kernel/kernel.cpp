@@ -59,7 +59,6 @@
 #include "opencl/source/kernel/kernel_info_cl.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/source/mem_obj/pipe.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
@@ -1624,47 +1623,7 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
         return CL_INVALID_ARG_SIZE;
     }
 
-    auto clMem = reinterpret_cast<const cl_mem *>(argVal);
-
-    if (clMem && *clMem) {
-        auto clMemObj = *clMem;
-        DBG_LOG_INPUTS("setArgPipe cl_mem", clMemObj);
-
-        storeKernelArg(argIndex, PIPE_OBJ, clMemObj, argVal, argSize);
-
-        auto memObj = castToObject<MemObj>(clMemObj);
-        if (!memObj) {
-            return CL_INVALID_MEM_OBJECT;
-        }
-
-        auto pipe = castToObject<Pipe>(clMemObj);
-        if (!pipe) {
-            return CL_INVALID_ARG_VALUE;
-        }
-
-        if (memObj->getContext() != &(this->getContext())) {
-            return CL_INVALID_MEM_OBJECT;
-        }
-
-        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-        const auto &argAsPtr = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex].as<ArgDescPointer>();
-
-        auto patchLocation = ptrOffset(getCrossThreadData(), argAsPtr.stateless);
-        pipe->setPipeArg(patchLocation, argAsPtr.pointerSize, rootDeviceIndex);
-
-        if (isValidOffset(argAsPtr.bindful)) {
-            auto graphicsAllocation = pipe->getGraphicsAllocation(rootDeviceIndex);
-            auto surfaceState = ptrOffset(getSurfaceStateHeap(), argAsPtr.bindful);
-            Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, false, false,
-                                    pipe->getSize(), pipe->getCpuAddress(), 0,
-                                    graphicsAllocation, 0, 0,
-                                    areMultipleSubDevicesInContext());
-        }
-
-        return CL_SUCCESS;
-    } else {
-        return CL_INVALID_MEM_OBJECT;
-    }
+    return CL_INVALID_MEM_OBJECT;
 }
 
 cl_int Kernel::setArgImage(uint32_t argIndex,

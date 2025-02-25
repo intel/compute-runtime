@@ -108,9 +108,6 @@ struct DeviceGetCapsTest : public ::testing::Test {
                 EXPECT_STREQ("__opencl_c_ext_fp16_local_atomic_min_max", (++openclCFeatureIterator)->name);
             }
         }
-        if (hwInfo.capabilityTable.supportsPipes) {
-            EXPECT_STREQ("__opencl_c_pipes", (++openclCFeatureIterator)->name);
-        }
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             EXPECT_STREQ("__opencl_c_fp64", (++openclCFeatureIterator)->name);
             if (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsFloatAtomics) {
@@ -252,15 +249,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
     EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
 
-    if (defaultHwInfo->capabilityTable.supportsPipes) {
-        EXPECT_EQ(16u, caps.maxPipeArgs);
-        EXPECT_EQ(1024u, caps.pipeMaxPacketSize);
-        EXPECT_EQ(1u, caps.pipeMaxActiveReservations);
-    } else {
-        EXPECT_EQ(0u, caps.maxPipeArgs);
-        EXPECT_EQ(0u, caps.pipeMaxPacketSize);
-        EXPECT_EQ(0u, caps.pipeMaxActiveReservations);
-    }
+    EXPECT_EQ(0u, caps.maxPipeArgs);
+    EXPECT_EQ(0u, caps.pipeMaxPacketSize);
+    EXPECT_EQ(0u, caps.pipeMaxActiveReservations);
 
     EXPECT_EQ(64u, caps.preferredGlobalAtomicAlignment);
     EXPECT_EQ(64u, caps.preferredLocalAtomicAlignment);
@@ -1133,7 +1124,7 @@ HWTEST_F(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThen
     EXPECT_EQ(expectedMaxWGS, device->getDeviceInfo().maxWorkGroupSize);
 }
 
-TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCapsAreCreatedThen1024WorkgroupSizeIsReturned) {
+TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCapsAreCreatedThenNumSubGroupsIsCalculatedBasedOnMaxWorkGroupSize) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     DebugManagerStateRestore dbgRestorer;
@@ -1147,7 +1138,6 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     mySysInfo.ThreadCount = 24 * 7;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
-    EXPECT_EQ(1024u, device->getSharedDeviceInfo().maxWorkGroupSize);
     EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / CommonConstants::maximalSimdSize, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
@@ -1335,14 +1325,6 @@ TEST_F(DeviceGetCapsTest, givenUnifiedMemorySharedSystemFlagWhenDeviceIsCreatedT
     EXPECT_TRUE(device->areSharedSystemAllocationsAllowed());
 }
 
-TEST_F(DeviceGetCapsTest, givenOcl21DeviceWhenCheckingPipesSupportThenPipesAreSupported) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-
-    if (device->getEnabledClVersion() == 21) {
-        EXPECT_EQ(1u, device->getHardwareInfo().capabilityTable.supportsPipes);
-    }
-}
-
 TEST_F(DeviceGetCapsTest, givenCapsDeviceEnqueueWhenCheckingDeviceEnqueueSupportThenNoSupportReported) {
     auto hwInfo = *defaultHwInfo;
 
@@ -1356,42 +1338,15 @@ TEST_F(DeviceGetCapsTest, givenCapsDeviceEnqueueWhenCheckingDeviceEnqueueSupport
     EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
 }
 
-TEST_F(DeviceGetCapsTest, givenPipeSupportForcedWhenCheckingPipeSupportThenPipeIsCorrectlyReported) {
-    DebugManagerStateRestore dbgRestorer;
-    int32_t forcePipeSupportValues[] = {-1, 0, 1};
+TEST_F(DeviceGetCapsTest, whenCheckingPipeSupportThenNoSupportIsReported) {
     auto hwInfo = *defaultHwInfo;
 
-    for (auto isPipeSupportedByHw : ::testing::Bool()) {
-        hwInfo.capabilityTable.supportsPipes = isPipeSupportedByHw;
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    auto &caps = pClDevice->getDeviceInfo();
 
-        for (auto forcePipeSupport : forcePipeSupportValues) {
-            debugManager.flags.ForcePipeSupport.set(forcePipeSupport);
-            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
-            auto &caps = pClDevice->getDeviceInfo();
-
-            size_t pipeFeaturesCount = 0;
-            for (auto &openclCFeature : caps.openclCFeatures) {
-                if (0 == strcmp(openclCFeature.name, "__opencl_c_pipes")) {
-                    pipeFeaturesCount++;
-                }
-            }
-
-            bool expectedPipeSupport = ((forcePipeSupport == -1) ? isPipeSupportedByHw : forcePipeSupport);
-            if (expectedPipeSupport) {
-                EXPECT_TRUE(pClDevice->arePipesSupported());
-                EXPECT_EQ(16u, caps.maxPipeArgs);
-                EXPECT_EQ(1024u, caps.pipeMaxPacketSize);
-                EXPECT_EQ(1u, caps.pipeMaxActiveReservations);
-                EXPECT_EQ(1u, pipeFeaturesCount);
-            } else {
-                EXPECT_FALSE(pClDevice->arePipesSupported());
-                EXPECT_EQ(0u, caps.maxPipeArgs);
-                EXPECT_EQ(0u, caps.pipeMaxPacketSize);
-                EXPECT_EQ(0u, caps.pipeMaxActiveReservations);
-                EXPECT_EQ(0u, pipeFeaturesCount);
-            }
-        }
-    }
+    EXPECT_EQ(0u, caps.maxPipeArgs);
+    EXPECT_EQ(0u, caps.pipeMaxPacketSize);
+    EXPECT_EQ(0u, caps.pipeMaxActiveReservations);
 }
 
 TEST_F(DeviceGetCapsTest, givenClDeviceWhenInitializingCapsThenUseGetQueueFamilyCapabilitiesMethod) {

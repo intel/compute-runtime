@@ -76,7 +76,6 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     true,                                                      // instrumentationEnabled
     false,                                                     // supportCacheFlushAfterWalker
     false,                                                     // supportsImages
-    false,                                                     // supportsPipes
     true,                                                      // supportsOcl21Features
     true,                                                      // supportsOnDemandPageFaults
     true,                                                      // supportsIndependentForwardProgress
