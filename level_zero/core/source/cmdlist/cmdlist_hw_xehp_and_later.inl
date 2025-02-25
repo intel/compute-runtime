@@ -164,7 +164,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
 
     kernel->patchGlobalOffset();
-    kernel->patchRegionParams(launchParams);
+    kernel->patchRegionParams(launchParams, threadGroupDimensions);
     this->allocateOrReuseKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 
     if (launchParams.isIndirect) {
