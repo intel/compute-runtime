@@ -121,4 +121,8 @@ template <>
 bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
     return true;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const {}
+
 } // namespace NEO

@@ -271,4 +271,10 @@ bool ProductHelperHw<gfxProduct>::isHostUsmAllocationReuseSupported() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::enableCompression(HardwareInfo *hwInfo) const {
+    hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.flags.ftrE2ECompression;
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.flags.ftrE2ECompression;
+}
+
 } // namespace NEO
