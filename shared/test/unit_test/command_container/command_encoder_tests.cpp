@@ -893,7 +893,20 @@ HWTEST2_F(CommandEncoderTests, whenAskingForImplicitScalingValuesThenAlwaysRetur
     EXPECT_FALSE(ImplicitScalingDispatch<FamilyType>::platformSupportsImplicitScaling(*rootExecEnv));
 }
 
-HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPolicyIsCalledThenNothingIsChanged, HeapfulSupportedMatch) {
+HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPolicyIsCalledThenChanged, IsAtLeastXe3Core) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
+
+    KernelDescriptor kernelDescriptor;
+    kernelDescriptor.kernelAttributes.threadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+    int32_t defaultPipelinedThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+    EncodeDispatchKernel<FamilyType>::encodeEuSchedulingPolicy(&idd, kernelDescriptor, defaultPipelinedThreadArbitrationPolicy);
+
+    EXPECT_EQ(idd.getEuThreadSchedulingModeOverride(), INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
+}
+
+HWTEST2_F(CommandEncoderTests, givenInterfaceDescriptorWhenEncodeEuSchedulingPolicyIsCalledThenNothingIsChanged, IsAtMostXe2HpgCore) {
 
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 

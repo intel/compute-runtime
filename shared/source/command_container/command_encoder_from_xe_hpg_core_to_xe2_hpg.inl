@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,11 @@ void EncodeDispatchKernel<Family>::setGrfInfo(InterfaceDescriptorType *pInterfac
 template <typename Family>
 bool EncodeEnableRayTracing<Family>::is48bResourceNeededForRayTracing() {
     return true;
+}
+
+template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy) {
 }
 
 } // namespace NEO

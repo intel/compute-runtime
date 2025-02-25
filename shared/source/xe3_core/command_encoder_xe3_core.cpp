@@ -18,6 +18,8 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe3_core/hw_cmds_base.h"
 
@@ -125,6 +127,34 @@ void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDevice
     if (walkerArgs.hasSample) {
         walkerCmd.setDispatchWalkOrder(DefaultWalkerType::DISPATCH_WALK_ORDER::DISPATCH_WALK_ORDER_MORTON_WALK);
         walkerCmd.setThreadGroupBatchSize(DefaultWalkerType::THREAD_GROUP_BATCH_SIZE::THREAD_GROUP_BATCH_SIZE_TG_BATCH_4);
+    }
+}
+
+template <typename Family>
+template <typename InterfaceDescriptorType>
+void EncodeDispatchKernel<Family>::encodeEuSchedulingPolicy(InterfaceDescriptorType *pInterfaceDescriptor, const KernelDescriptor &kernelDesc, int32_t defaultPipelinedThreadArbitrationPolicy) {
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
+    if constexpr (std::is_same_v<InterfaceDescriptorType, INTERFACE_DESCRIPTOR_DATA>) {
+
+        auto pipelinedThreadArbitrationPolicy = kernelDesc.kernelAttributes.threadArbitrationPolicy;
+
+        if (pipelinedThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) {
+            pipelinedThreadArbitrationPolicy = static_cast<ThreadArbitrationPolicy>(defaultPipelinedThreadArbitrationPolicy);
+        }
+
+        switch (pipelinedThreadArbitrationPolicy) {
+        case ThreadArbitrationPolicy::RoundRobin:
+            pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_ROUND_ROBIN);
+            break;
+        case ThreadArbitrationPolicy::AgeBased:
+            pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_OLDEST_FIRST);
+            break;
+        case ThreadArbitrationPolicy::RoundRobinAfterDependency:
+            pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_STALL_BASED_ROUND_ROBIN);
+            break;
+        default:
+            pInterfaceDescriptor->setEuThreadSchedulingModeOverride(INTERFACE_DESCRIPTOR_DATA::EU_THREAD_SCHEDULING_MODE_OVERRIDE::EU_THREAD_SCHEDULING_MODE_OVERRIDE_HW_DEFAULT);
+        }
     }
 }
 
