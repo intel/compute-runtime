@@ -166,7 +166,10 @@ bool DrmAllocation::setCacheRegion(Drm *drm, CacheRegion regionIndex) {
         return false;
     }
 
-    auto regionSize = (cacheInfo->getMaxReservationNumCacheRegions() > 0) ? cacheInfo->getMaxReservationCacheSize() / cacheInfo->getMaxReservationNumCacheRegions() : 0;
+    const auto cacheLevel{cacheInfo->getLevelForRegion(regionIndex)};
+    const auto maxCacheRegions{cacheInfo->getMaxReservationNumCacheRegions(cacheLevel)};
+    const auto maxReservationCacheSize{cacheInfo->getMaxReservationCacheSize(cacheLevel)};
+    const auto regionSize{(maxCacheRegions > 0) ? maxReservationCacheSize / maxCacheRegions : 0};
     if (regionSize == 0) {
         return false;
     }

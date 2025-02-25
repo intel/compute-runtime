@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,8 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
         if (cacheReserveArg->clos_index > closIndex) {
             return EINVAL;
         }
-        auto maxReservationNumWays = cacheInfo ? cacheInfo->getMaxReservationNumWays() : maxNumWays;
+        const auto cacheLevel{toCacheLevel(cacheReserveArg->cache_level)};
+        auto maxReservationNumWays = cacheInfo ? cacheInfo->getMaxReservationNumWays(cacheLevel) : maxNumWays;
         if (cacheReserveArg->num_ways > maxReservationNumWays) {
             return EINVAL;
         }

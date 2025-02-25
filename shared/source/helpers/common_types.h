@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,10 +32,8 @@ constexpr auto toUnderlying(EnumT scopedEnumValue) {
 }
 
 template <typename EnumT>
+    requires(std::is_enum_v<EnumT> && !std::is_convertible_v<EnumT, std::underlying_type_t<EnumT>>)
 constexpr auto toEnum(std::underlying_type_t<EnumT> region) {
-    static_assert(std::is_enum_v<EnumT>);
-    static_assert(!std::is_convertible_v<EnumT, std::underlying_type_t<EnumT>>);
-
     return static_cast<EnumT>(region);
 }
 
@@ -69,15 +67,25 @@ enum class CacheRegion : uint16_t {
     defaultRegion = 0,
     region1,
     region2,
+    region3,
     count,
     none = 0xFFFF
 };
-constexpr auto toCacheRegion(std::underlying_type_t<CacheRegion> region) { return toEnum<CacheRegion>(region); }
+constexpr inline auto toCacheRegion(std::underlying_type_t<CacheRegion> region) {
+    DEBUG_BREAK_IF(region >= toUnderlying(CacheRegion::count));
+    return toEnum<CacheRegion>(region);
+}
 
 enum class CacheLevel : uint16_t {
     defaultLevel = 0,
+    level2 = 2,
     level3 = 3
 };
+constexpr inline auto toCacheLevel(std::underlying_type_t<CacheRegion> level) {
+    DEBUG_BREAK_IF(level == 1U);
+    DEBUG_BREAK_IF(level > 3U);
+    return toEnum<CacheLevel>(level);
+}
 
 enum class CachePolicy : uint32_t {
     uncached = 0,

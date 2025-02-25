@@ -33,11 +33,12 @@ struct BuffersWithClMemCacheClosTests : public DrmMemoryManagerLocalMemoryPrelim
 
         mock->memoryInfo.reset(memoryInfo);
 
+        CacheReservationParameters l2CacheParameters{};
         CacheReservationParameters l3CacheParameters{};
         l3CacheParameters.maxSize = 1024;
         l3CacheParameters.maxNumRegions = 2;
         l3CacheParameters.maxNumWays = 32;
-        mock->cacheInfo.reset(new MockCacheInfo(*mock->getIoctlHelper(), l3CacheParameters));
+        mock->cacheInfo.reset(new MockCacheInfo(*mock->getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
         auto &multiTileArchInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
         multiTileArchInfo.TileCount = (memoryInfo->getDrmRegionInfos().size() - 1);

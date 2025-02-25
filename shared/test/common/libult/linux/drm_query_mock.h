@@ -20,6 +20,7 @@ struct ContextParamEnginesI915 {
 
 class DrmQueryMock : public DrmMock {
   public:
+    using Drm::ioctlHelper;
     using Drm::rootDeviceEnvironment;
 
     DrmQueryMock(RootDeviceEnvironment &rootDeviceEnvironment);

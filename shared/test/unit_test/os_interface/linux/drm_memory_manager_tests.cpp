@@ -4944,11 +4944,13 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenDefaultCacheInfoIsAvailableThen
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsNotSetThenReturnFalse) {
     const uint32_t rootDeviceIndex = 0u;
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
+
+    CacheReservationParameters l2CacheParameters{};
     CacheReservationParameters l3CacheParameters{};
     l3CacheParameters.maxSize = 32 * MemoryConstants::kiloByte;
     l3CacheParameters.maxNumRegions = 2;
     l3CacheParameters.maxNumWays = 32;
-    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), l3CacheParameters));
+    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
 
@@ -4960,11 +4962,12 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     drm.queryAndSetVmBindPatIndexProgrammingSupport();
 
+    CacheReservationParameters l2CacheParameters{};
     CacheReservationParameters l3CacheParameters{};
     l3CacheParameters.maxSize = 32 * MemoryConstants::kiloByte;
     l3CacheParameters.maxNumRegions = 2;
     l3CacheParameters.maxNumWays = 32;
-    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), l3CacheParameters));
+    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
     auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -4982,11 +4985,12 @@ TEST_F(DrmAllocationTests, givenDrmAllocationWhenCacheRegionIsSetSuccessfullyThe
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
     drm.queryAndSetVmBindPatIndexProgrammingSupport();
 
+    CacheReservationParameters l2CacheParameters{};
     CacheReservationParameters l3CacheParameters{};
     l3CacheParameters.maxSize = 32 * MemoryConstants::kiloByte;
     l3CacheParameters.maxNumRegions = 2;
     l3CacheParameters.maxNumWays = 32;
-    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), l3CacheParameters));
+    drm.cacheInfo.reset(new MockCacheInfo(*drm.getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
     MockBufferObject bo(rootDeviceIndex, &drm, 3, 0, 0, 1);
     MockDrmAllocation allocation(rootDeviceIndex, AllocationType::buffer, MemoryPool::localMemory);
@@ -5143,11 +5147,12 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWithHostPtrWhenItIsCreatedWithCac
     mock->ioctlExpected.total = -1;
     auto drm = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->getDriverModel()->as<Drm>());
 
+    CacheReservationParameters l2CacheParameters{};
     CacheReservationParameters l3CacheParameters{};
     l3CacheParameters.maxSize = 32 * MemoryConstants::kiloByte;
     l3CacheParameters.maxNumRegions = 2;
     l3CacheParameters.maxNumWays = 32;
-    drm->cacheInfo.reset(new MockCacheInfo(*drm->getIoctlHelper(), l3CacheParameters));
+    drm->cacheInfo.reset(new MockCacheInfo(*drm->getIoctlHelper(), l2CacheParameters, l3CacheParameters));
 
     auto ptr = reinterpret_cast<void *>(0x1000);
     auto size = MemoryConstants::pageSize;

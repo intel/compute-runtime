@@ -1018,15 +1018,36 @@ void Drm::setupSystemInfo(HardwareInfo *hwInfo, SystemInfo *sysInfo) {
 void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
+    if (debugManager.flags.ForceStaticL2ClosReservation.get()) {
+        if (debugManager.flags.L2ClosNumCacheWays.get() == -1) {
+            debugManager.flags.L2ClosNumCacheWays.set(2U);
+        }
+    }
+
+    auto getL2CacheReservationLimits{[&productHelper]() {
+        CacheReservationParameters out{};
+        if (productHelper.getNumCacheRegions() == 0) {
+            return out;
+        }
+
+        if (auto numCacheWays{debugManager.flags.L2ClosNumCacheWays.get()}; numCacheWays != -1) {
+            out.maxSize = 1U;
+            out.maxNumRegions = 1U;
+            out.maxNumWays = static_cast<uint16_t>(numCacheWays);
+            return out;
+        }
+        return out;
+    }};
+
     auto getL3CacheReservationLimits{[&hwInfo, &productHelper]() {
         CacheReservationParameters out{};
         if (debugManager.flags.ClosEnabled.get() == 0 || productHelper.getNumCacheRegions() == 0) {
             return out;
         }
 
-        constexpr uint16_t totalMaxNumWays = 32;
-        constexpr uint16_t globalReservationLimit = 16;
-        constexpr uint16_t clientReservationLimit = 8;
+        constexpr uint16_t totalMaxNumWays = 32U;
+        constexpr uint16_t globalReservationLimit = 16U;
+        constexpr uint16_t clientReservationLimit = 8U;
         const size_t totalCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * MemoryConstants::kiloByte;
 
         out.maxNumWays = std::min(globalReservationLimit, clientReservationLimit);
@@ -1036,7 +1057,12 @@ void Drm::setupCacheInfo(const HardwareInfo &hwInfo) {
         return out;
     }};
 
-    this->cacheInfo.reset(new CacheInfo(*ioctlHelper, getL3CacheReservationLimits()));
+    this->cacheInfo.reset(new CacheInfo(*ioctlHelper, getL2CacheReservationLimits(), getL3CacheReservationLimits()));
+
+    if (debugManager.flags.ForceStaticL2ClosReservation.get()) {
+        [[maybe_unused]] bool isReserved{this->cacheInfo->getCacheRegion(getL2CacheReservationLimits().maxSize, CacheRegion::region3)};
+        DEBUG_BREAK_IF(!isReserved);
+    }
 }
 
 void Drm::getPrelimVersion(std::string &prelimVersion) {

@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/cache/linux/cache_reservation_impl_prelim.h"
 
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -22,9 +23,13 @@ std::unique_ptr<CacheReservation> CacheReservation::create(Device &device) {
 }
 
 bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservationSize) {
+    using NEO::toCacheLevel;
+
     switch (cacheLevel) {
+    case 2U:
+        return reserveCacheForLevel(toCacheLevel(2U), cacheReservationSize, reservedL2CacheRegion, reservedL2CacheSize);
     case 3U:
-        return reserveCacheForLevel(3U, cacheReservationSize, reservedL3CacheRegion, reservedL3CacheSize);
+        return reserveCacheForLevel(toCacheLevel(3U), cacheReservationSize, reservedL3CacheRegion, reservedL3CacheSize);
     default:
         return false;
     }
@@ -32,18 +37,23 @@ bool CacheReservationImpl::reserveCache(size_t cacheLevel, size_t cacheReservati
     return true;
 }
 
-bool CacheReservationImpl::reserveCacheForLevel(size_t cacheLevel, size_t cacheReservationSize, NEO::CacheRegion &reservedCacheRegion, size_t &reservedCacheSize) {
+bool CacheReservationImpl::reserveCacheForLevel(NEO::CacheLevel cacheLevel, size_t cacheReservationSize, NEO::CacheRegion &reservedCacheRegion, size_t &reservedCacheSize) {
+
     auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
     auto cacheInfo = drm->getCacheInfo();
 
     if (cacheReservationSize == 0) {
-        cacheInfo->freeCacheRegion(reservedCacheRegion);
+        cacheInfo->freeCacheRegion(cacheLevel, reservedCacheRegion);
         reservedCacheRegion = NEO::CacheRegion::none;
         reservedCacheSize = 0;
         return true;
     }
 
-    auto cacheRegion = cacheInfo->reserveCacheRegion(cacheReservationSize);
+    if (reservedCacheRegion != NEO::CacheRegion::none || reservedCacheSize != 0U) {
+        return false;
+    }
+
+    auto cacheRegion = cacheInfo->reserveCacheRegion(cacheLevel, cacheReservationSize);
     if (cacheRegion == NEO::CacheRegion::none) {
         return false;
     }
@@ -55,12 +65,21 @@ bool CacheReservationImpl::reserveCacheForLevel(size_t cacheLevel, size_t cacheR
 }
 
 bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t regionSize, ze_cache_ext_region_t cacheRegion) {
+    return setCacheAdviceImpl(ptr, regionSize, static_cast<uint32_t>(cacheRegion));
+}
+
+bool CacheReservationImpl::setCacheAdviceImpl(void *ptr, size_t regionSize, uint32_t cacheRegion) {
     auto cacheRegionIdx = NEO::CacheRegion::defaultRegion;
     size_t cacheRegionSize = 0;
 
-    if (cacheRegion == ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_ZE_CACHE_RESERVE_REGION) {
+    constexpr auto l3CacheRegionId{static_cast<uint32_t>(ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_RESERVED)};
+    constexpr auto l2CacheRegionId{1U + static_cast<uint32_t>(ze_cache_ext_region_t::ZE_CACHE_EXT_REGION_NON_RESERVED)};
+    if (cacheRegion == l3CacheRegionId) {
         cacheRegionIdx = this->reservedL3CacheRegion;
         cacheRegionSize = this->reservedL3CacheSize;
+    } else if (cacheRegion == l2CacheRegionId) {
+        cacheRegionIdx = this->reservedL2CacheRegion;
+        cacheRegionSize = this->reservedL2CacheSize;
     }
 
     auto allocData = device.getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
@@ -77,7 +96,9 @@ bool CacheReservationImpl::setCacheAdvice(void *ptr, [[maybe_unused]] size_t reg
 }
 
 size_t CacheReservationImpl::getMaxCacheReservationSize(size_t cacheLevel) {
-    if (cacheLevel != 3U) {
+    using NEO::toCacheLevel;
+
+    if (cacheLevel != 2U && cacheLevel != 3U) {
         return 0U;
     }
 
@@ -85,7 +106,7 @@ size_t CacheReservationImpl::getMaxCacheReservationSize(size_t cacheLevel) {
 
     auto cacheInfo = drm->getCacheInfo();
     DEBUG_BREAK_IF(cacheInfo == nullptr);
-    return cacheInfo->getMaxReservationCacheSize();
+    return cacheInfo->getMaxReservationCacheSize(toCacheLevel(static_cast<uint16_t>(cacheLevel)));
 }
 
 } // namespace L0
