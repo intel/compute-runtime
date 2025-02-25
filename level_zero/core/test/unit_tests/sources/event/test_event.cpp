@@ -4603,7 +4603,7 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     ultCsr1->commandStreamReceiverType = CommandStreamReceiverType::tbx;
 
     ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
-    eventPoolDesc.count = 2;
+    eventPoolDesc.count = 3;
     ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
 
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -4611,8 +4611,10 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
 
     auto event0 = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1));
     auto event1 = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1));
+    auto event2 = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, subDevice1));
     event0->eventPoolAllocation = nullptr;
     event1->eventPoolAllocation = nullptr;
+    event2->eventPoolAllocation = nullptr;
 
     auto inOrderExecInfo0 = NEO::InOrderExecInfo::create(device->getDeviceInOrderCounterAllocator()->getTag(), nullptr, *device->getNEODevice(), 1, false);
     inOrderExecInfo0->setLastWaitedCounterValue(1);
@@ -4622,6 +4624,10 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     auto inOrderExecInfo1 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), nullptr, 0x1, nullptr, &counter, 1, 1, 1);
     inOrderExecInfo1->setLastWaitedCounterValue(1);
     event1->updateInOrderExecState(inOrderExecInfo1, 1, 0);
+
+    MockGraphicsAllocation mockAlloc(rootDeviceIndex, nullptr, 1);
+    auto inOrderExecInfo2 = NEO::InOrderExecInfo::createFromExternalAllocation(*device->getNEODevice(), &mockAlloc, 0x1, &mockAlloc, &counter, 1, 1, 1);
+    event2->updateInOrderExecState(inOrderExecInfo2, 1, 0);
 
     ultCsr0->makeResident(*inOrderExecInfo0->getDeviceCounterAllocation());
 
@@ -4641,8 +4647,17 @@ HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenEventCounterBasedUsedCreatedO
     EXPECT_EQ(3u, ultCsr1->downloadAllocationsCalledCount);
     EXPECT_FALSE(ultCsr1->latestDownloadAllocationsBlocking);
 
+    event2->hostSynchronize(1);
+
+    EXPECT_EQ(2u, ultCsr0->downloadAllocationsCalledCount);
+    EXPECT_FALSE(ultCsr0->latestDownloadAllocationsBlocking);
+
+    EXPECT_EQ(4u, ultCsr1->downloadAllocationsCalledCount);
+    EXPECT_TRUE(ultCsr1->latestDownloadAllocationsBlocking);
+
     event0->destroy();
     event1->destroy();
+    event2->destroy();
 }
 
 HWTEST2_F(EventMultiTileDynamicPacketUseTest, givenDynamicPacketEstimationWhenGettingMaxPacketFromSingleOneTileDeviceThenMaxFromThisDeviceSelected, IsAtLeastXeHpCore) {

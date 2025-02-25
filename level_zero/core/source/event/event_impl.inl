@@ -446,7 +446,7 @@ bool EventImp<TagSizeT>::handlePreQueryStatusOperationsAndCheckCompletion() {
     if (this->tbxMode) {
         bool downloadedAllocation = (eventPoolAllocation == nullptr);
         bool downloadedInOrdedAllocation = (inOrderExecInfo.get() == nullptr);
-        if (inOrderExecInfo && inOrderExecInfo->isExternalMemoryExecInfo()) {
+        if (inOrderExecInfo && !inOrderExecInfo->getDeviceCounterAllocation()) {
             downloadedInOrdedAllocation = true;
             DEBUG_BREAK_IF(true); //  external allocation - not able to download
         }
