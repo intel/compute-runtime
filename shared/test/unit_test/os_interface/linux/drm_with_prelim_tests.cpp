@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,39 @@ TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIo
         EXPECT_EQ(ioctlValue, ioctlHelper.vmBind(vmBindParams));
         EXPECT_EQ(1u, drm.context.vmBindCalled);
     }
+}
+
+TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperCanonicalOrNonCanonicalAddressIsExpectedInVmBindInputsList) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    IoctlHelperPrelim20 ioctlHelper{drm};
+    uint32_t idx = 0;
+
+    auto testAddress = [&](uint64_t addr) {
+        UserFenceVmBindExt userFence{};
+        userFence.addr = idx + 1;
+
+        VmBindParams vmBindParams{};
+        vmBindParams.userFence = castToUint64(&userFence);
+        vmBindParams.handle = idx + 1;
+        vmBindParams.userptr = idx + 1;
+        vmBindParams.start = addr;
+
+        auto ret = ioctlHelper.vmBind(vmBindParams);
+        EXPECT_EQ(0, ret);
+
+        auto &list = drm.vmBindInputs;
+        EXPECT_EQ(list.size(), idx + 1);
+
+        if (list.size() == idx + 1) {
+            EXPECT_EQ(list[idx].start, vmBindParams.start);
+        }
+
+        idx++;
+    };
+
+    testAddress(0xfffff00000000000); // canonical address test
+    testAddress(0xf00000000000);     // non-canonical address test
 }
 
 TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOnIoctlResult) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,6 +47,11 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
 
 int DrmMock::handleRemainingRequests(DrmIoctl request, void *arg) {
     if (request == DrmIoctl::gemWaitUserFence && arg != nullptr) {
+        return 0;
+    }
+    if (request == DrmIoctl::gemVmBind) {
+        auto vmBindInput = static_cast<GemVmBind *>(arg);
+        vmBindInputs.push_back(*vmBindInput);
         return 0;
     }
 

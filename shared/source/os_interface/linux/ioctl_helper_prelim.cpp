@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
@@ -795,11 +796,17 @@ prelim_drm_i915_gem_vm_bind translateVmBindParamsToPrelimStruct(const VmBindPara
 }
 
 int IoctlHelperPrelim20::vmBind(const VmBindParams &vmBindParams) {
+    // Expect canonical address
+    DEBUG_BREAK_IF(drm.getRootDeviceEnvironment().getGmmHelper()->canonize(vmBindParams.start) != vmBindParams.start);
+
     auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
     return IoctlHelper::ioctl(DrmIoctl::gemVmBind, &prelimVmBind);
 }
 
 int IoctlHelperPrelim20::vmUnbind(const VmBindParams &vmBindParams) {
+    // Expect canonical address
+    DEBUG_BREAK_IF(drm.getRootDeviceEnvironment().getGmmHelper()->canonize(vmBindParams.start) != vmBindParams.start);
+
     auto prelimVmBind = translateVmBindParamsToPrelimStruct(vmBindParams);
     return IoctlHelper::ioctl(DrmIoctl::gemVmUnbind, &prelimVmBind);
 }

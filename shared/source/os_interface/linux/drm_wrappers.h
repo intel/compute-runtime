@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,6 +181,19 @@ struct GemClose {
     uint32_t handle;
     uint32_t reserved;
     uint64_t userptr;
+};
+
+struct GemVmBind {
+    uint32_t vmId;
+    union {
+        uint32_t handle; /* For unbind, it is reserved and must be 0 */
+        int32_t fd;
+    };
+    uint64_t start;
+    uint64_t offset;
+    uint64_t length;
+    uint64_t flags;
+    uint64_t extensions;
 };
 
 struct PrimeHandle {

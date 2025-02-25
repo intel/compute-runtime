@@ -313,6 +313,7 @@ class DrmMock : public Drm {
         uint16_t flags;
     };
     StackVec<WaitUserFenceParams, 1> waitUserFenceParams;
+    StackVec<GemVmBind, 1> vmBindInputs;
 
     bool storedGetDeviceMemoryMaxClockRateInMhzStatus = true;
     bool useBaseGetDeviceMemoryMaxClockRateInMhz = true;
