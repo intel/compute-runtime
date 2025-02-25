@@ -821,8 +821,10 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
 
     void SetUp() override {
         CmdlistAppendLaunchKernelTests::SetUp();
-        memset(&expectedImplicitArgs, 0, sizeof(ImplicitArgs));
-        expectedImplicitArgs.structSize = ImplicitArgs::getSize();
+        memset(&expectedImplicitArgs, 0, sizeof(expectedImplicitArgs));
+
+        expectedImplicitArgs.header.structSize = ImplicitArgsV0::getSize();
+        expectedImplicitArgs.header.structVersion = 0;
 
         expectedImplicitArgs.numWorkDim = 3;
         expectedImplicitArgs.simdWidth = 32;
@@ -887,7 +889,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
         const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(&expectedImplicitArgs, *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
+        implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(reinterpret_cast<const ImplicitArgs *>(&expectedImplicitArgs), *kernelDescriptor, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
         auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
         auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
         EXPECT_EQ(indirectHeap->getUsed(), alignUp(sizeCrossThreadData + sizePerThreadDataForWholeGroup + implicitArgsProgrammingSize, NEO::EncodeDispatchKernel<FamilyType>::getDefaultIOHAlignment()));
@@ -899,7 +901,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
     }
     std::unique_ptr<L0::CommandList> commandList;
     GraphicsAllocation *indirectHeapAllocation = nullptr;
-    ImplicitArgs expectedImplicitArgs = {ImplicitArgs::getSize()};
+    ImplicitArgsV0 expectedImplicitArgs = {};
     std::array<uint8_t, 3> workgroupDimOrder{0, 1, 2};
     uint32_t implicitArgsProgrammingSize = 0u;
 
@@ -919,27 +921,27 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto numGrf = GrfConfig::defaultGrfNumber;
-    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
+    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgsV0::getSize(), MemoryConstants::cacheLineSize);
     const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, workgroupDimOrder, false, grfSize, numGrf, rootDeviceEnvironment);
 
-    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
+    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgsV0::getSize();
     size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 }
 
 HWCMDTEST_F(IGFX_GEN12LP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenPreXeHpPlatformWhenAppendLaunchKernelWithImplicitArgsThenImplicitArgsAreSentToIndirectHeapWithoutLocalIds) {
     dispatchKernelWithImplicitArgs<FamilyType>();
 
     auto implicitArgsInIndirectData = indirectHeapAllocation->getUnderlyingBuffer();
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 
-    auto crossThreadDataInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), alignUp(ImplicitArgs::getSize(), 64));
+    auto crossThreadDataInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), alignUp(ImplicitArgsV0::getSize(), 64));
 
     auto programmedImplicitArgsGpuVA = reinterpret_cast<uint64_t *>(crossThreadDataInIndirectData)[0];
     EXPECT_EQ(indirectHeapAllocation->getGpuAddress(), programmedImplicitArgsGpuVA);
@@ -966,18 +968,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
 
     auto grfSize = ImplicitArgsHelper::getGrfSize(expectedImplicitArgs.simdWidth);
     auto numGrf = GrfConfig::defaultGrfNumber;
-    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgs::getSize(), MemoryConstants::cacheLineSize);
+    auto expectedLocalIds = alignedMalloc(implicitArgsProgrammingSize - ImplicitArgsV0::getSize(), MemoryConstants::cacheLineSize);
     const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     generateLocalIDs(expectedLocalIds, expectedImplicitArgs.simdWidth, localSize, expectedDimOrder, false, grfSize, numGrf, rootDeviceEnvironment);
 
-    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
+    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgsV0::getSize();
     size_t sizeForLocalIds = NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(expectedImplicitArgs.simdWidth, grfSize, numGrf, 3u, totalLocalSize, !kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeForLocalIds));
     alignedFree(expectedLocalIds);
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, givenXeHpAndLaterPlatformWhenAppendLaunchKernelWithImplicitArgsAndSimd1ThenLocalIdsAreGeneratedCorrectly) {
@@ -999,12 +1001,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CmdlistAppendLaunchKernelWithImplicitArgsTests, giv
 
     EXPECT_EQ(0, memcmp(expectedLocalIds, indirectHeapAllocation->getUnderlyingBuffer(), sizeof(expectedLocalIds)));
 
-    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgs::getSize();
+    auto localIdsProgrammingSize = implicitArgsProgrammingSize - ImplicitArgsV0::getSize();
 
     EXPECT_EQ(alignUp(sizeof(expectedLocalIds), MemoryConstants::cacheLineSize), localIdsProgrammingSize);
 
     auto implicitArgsInIndirectData = ptrOffset(indirectHeapAllocation->getUnderlyingBuffer(), localIdsProgrammingSize);
-    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgs::getSize()));
+    EXPECT_EQ(0, memcmp(implicitArgsInIndirectData, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 }
 
 HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppendLaunchKernelThenImplicitArgsAreNotSentToIndirectHeap) {

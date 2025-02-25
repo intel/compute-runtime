@@ -69,13 +69,25 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
     auto pImplicitArgs = kernel.getImplicitArgs();
     if (pImplicitArgs) {
-        pImplicitArgs->localIdTablePtr = indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData;
+        size_t localWorkSize[3] = {0u, 0u, 0u};
 
+        pImplicitArgs->setLocalIdTablePtr(indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData);
+        if (pImplicitArgs->v0.header.structVersion == 0) {
+            localWorkSize[0] = pImplicitArgs->v0.localSizeX;
+            localWorkSize[1] = pImplicitArgs->v0.localSizeY;
+            localWorkSize[2] = pImplicitArgs->v0.localSizeZ;
+        } else if (pImplicitArgs->v1.header.structVersion == 1) {
+            localWorkSize[0] = pImplicitArgs->v1.localSizeX;
+            localWorkSize[1] = pImplicitArgs->v1.localSizeY;
+            localWorkSize[2] = pImplicitArgs->v1.localSizeZ;
+        } else {
+            UNRECOVERABLE_IF(true);
+        }
         const auto &kernelDescriptor = kernel.getDescriptor();
 
         const auto &kernelAttributes = kernelDescriptor.kernelAttributes;
         uint32_t requiredWalkOrder = 0u;
-        size_t localWorkSize[3] = {pImplicitArgs->localSizeX, pImplicitArgs->localSizeY, pImplicitArgs->localSizeZ};
+
         auto generationOfLocalIdsByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
             3,
             localWorkSize,

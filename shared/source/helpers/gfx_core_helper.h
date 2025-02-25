@@ -198,6 +198,7 @@ class GfxCoreHelper {
 
     virtual uint32_t getDeviceTimestampWidth() const = 0;
     virtual void alignThreadGroupCountToDssSize(uint32_t &threadCount, uint32_t dssCount, uint32_t threadsPerDss, uint32_t threadGroupSize) const = 0;
+    virtual uint32_t getImplicitArgsVersion() const = 0;
 
     virtual ~GfxCoreHelper() = default;
 
@@ -436,6 +437,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool usmCompressionSupported(const NEO::HardwareInfo &hwInfo) const override;
 
     uint32_t getDeviceTimestampWidth() const override;
+    uint32_t getImplicitArgsVersion() const override;
 
     ~GfxCoreHelperHw() override = default;
 

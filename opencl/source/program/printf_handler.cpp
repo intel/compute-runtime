@@ -70,7 +70,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     }
     auto pImplicitArgs = kernel->getImplicitArgs();
     if (pImplicitArgs) {
-        pImplicitArgs->printfBufferPtr = printfSurface->getGpuAddress();
+        pImplicitArgs->setPrintfBuffer(printfSurface->getGpuAddress());
     }
 }
 

@@ -833,4 +833,9 @@ uint32_t GfxCoreHelperHw<Family>::getInternalCopyEngineIndex(const HardwareInfo 
     return std::min(defaultInternalCopyEngineIndex, highestAvailableIndex);
 }
 
+template <typename Family>
+uint32_t GfxCoreHelperHw<Family>::getImplicitArgsVersion() const {
+    return 0;
+}
+
 } // namespace NEO

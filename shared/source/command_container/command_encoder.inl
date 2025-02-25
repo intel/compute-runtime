@@ -577,11 +577,22 @@ void EncodeIndirectParams<Family>::encode(CommandContainer &container, uint64_t 
     UNRECOVERABLE_IF(NEO::isValidOffset(kernelDescriptor.payloadMappings.dispatchTraits.workDim) && (kernelDescriptor.payloadMappings.dispatchTraits.workDim & 0b11) != 0u);
     setWorkDimIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.workDim, crossThreadDataGpuVa, dispatchInterface->getGroupSize());
     if (implicitArgsGpuPtr) {
-        CrossThreadDataOffset groupCountOffset[] = {offsetof(ImplicitArgs, groupCountX), offsetof(ImplicitArgs, groupCountY), offsetof(ImplicitArgs, groupCountZ)};
-        CrossThreadDataOffset globalSizeOffset[] = {offsetof(ImplicitArgs, globalSizeX), offsetof(ImplicitArgs, globalSizeY), offsetof(ImplicitArgs, globalSizeZ)};
-        setGroupCountIndirect(container, groupCountOffset, implicitArgsGpuPtr);
-        setGlobalWorkSizeIndirect(container, globalSizeOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
-        setWorkDimIndirect(container, offsetof(ImplicitArgs, numWorkDim), implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+        const auto version = container.getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
+        if (version == 0) {
+            constexpr CrossThreadDataOffset groupCountOffset[] = {offsetof(ImplicitArgsV0, groupCountX), offsetof(ImplicitArgsV0, groupCountY), offsetof(ImplicitArgsV0, groupCountZ)};
+            constexpr CrossThreadDataOffset globalSizeOffset[] = {offsetof(ImplicitArgsV0, globalSizeX), offsetof(ImplicitArgsV0, globalSizeY), offsetof(ImplicitArgsV0, globalSizeZ)};
+            constexpr auto numWorkDimOffset = offsetof(ImplicitArgsV0, numWorkDim);
+            setGroupCountIndirect(container, groupCountOffset, implicitArgsGpuPtr);
+            setGlobalWorkSizeIndirect(container, globalSizeOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+            setWorkDimIndirect(container, numWorkDimOffset, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+        } else if (version == 1) {
+            constexpr CrossThreadDataOffset groupCountOffsetV1[] = {offsetof(ImplicitArgsV1, groupCountX), offsetof(ImplicitArgsV1, groupCountY), offsetof(ImplicitArgsV1, groupCountZ)};
+            constexpr CrossThreadDataOffset globalSizeOffsetV1[] = {offsetof(ImplicitArgsV1, globalSizeX), offsetof(ImplicitArgsV1, globalSizeY), offsetof(ImplicitArgsV1, globalSizeZ)};
+            constexpr auto numWorkDimOffsetV1 = offsetof(ImplicitArgsV1, numWorkDim);
+            setGroupCountIndirect(container, groupCountOffsetV1, implicitArgsGpuPtr);
+            setGlobalWorkSizeIndirect(container, globalSizeOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+            setWorkDimIndirect(container, numWorkDimOffsetV1, implicitArgsGpuPtr, dispatchInterface->getGroupSize());
+        }
     }
 }
 

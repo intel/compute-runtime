@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,6 +98,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::unifiedMemoryControls;
 
         MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {
+            implicitArgsVersion = 0;
         }
         void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
         }

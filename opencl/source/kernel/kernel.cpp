@@ -205,9 +205,8 @@ cl_int Kernel::initialize() {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->structSize = ImplicitArgs::getSize();
-        pImplicitArgs->structVersion = 0;
-        pImplicitArgs->simdWidth = maxSimdSize;
+        pImplicitArgs->initializeHeader(gfxCoreHelper.getImplicitArgsVersion());
+        pImplicitArgs->setSimdWidth(maxSimdSize);
     }
     auto ret = KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, &pClDevice->getDevice());
     if (ret == NEO::KernelHelper::ErrorCode::invalidKernel) {
@@ -457,7 +456,7 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
     }
 
     if (pImplicitArgs) {
-        memcpy_s(pImplicitArgs.get(), ImplicitArgs::getSize(), pSourceKernel->getImplicitArgs(), ImplicitArgs::getSize());
+        memcpy_s(pImplicitArgs.get(), pImplicitArgs->getSize(), pSourceKernel->getImplicitArgs(), pImplicitArgs->getSize());
     }
     this->isBuiltIn = pSourceKernel->isBuiltIn;
 
@@ -2275,7 +2274,7 @@ const HardwareInfo &Kernel::getHardwareInfo() const {
 void Kernel::setWorkDim(uint32_t workDim) {
     patchNonPointer<uint32_t, uint32_t>(getCrossThreadDataRef(), getDescriptor().payloadMappings.dispatchTraits.workDim, workDim);
     if (pImplicitArgs) {
-        pImplicitArgs->numWorkDim = workDim;
+        pImplicitArgs->setNumWorkDim(workDim);
     }
 }
 
@@ -2284,9 +2283,7 @@ void Kernel::setGlobalWorkOffsetValues(uint32_t globalWorkOffsetX, uint32_t glob
                        getDescriptor().payloadMappings.dispatchTraits.globalWorkOffset,
                        {globalWorkOffsetX, globalWorkOffsetY, globalWorkOffsetZ});
     if (pImplicitArgs) {
-        pImplicitArgs->globalOffsetX = globalWorkOffsetX;
-        pImplicitArgs->globalOffsetY = globalWorkOffsetY;
-        pImplicitArgs->globalOffsetZ = globalWorkOffsetZ;
+        pImplicitArgs->setGlobalOffset(globalWorkOffsetX, globalWorkOffsetY, globalWorkOffsetZ);
     }
 }
 
@@ -2295,9 +2292,7 @@ void Kernel::setGlobalWorkSizeValues(uint32_t globalWorkSizeX, uint32_t globalWo
                        getDescriptor().payloadMappings.dispatchTraits.globalWorkSize,
                        {globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ});
     if (pImplicitArgs) {
-        pImplicitArgs->globalSizeX = globalWorkSizeX;
-        pImplicitArgs->globalSizeY = globalWorkSizeY;
-        pImplicitArgs->globalSizeZ = globalWorkSizeZ;
+        pImplicitArgs->setGlobalSize(globalWorkSizeX, globalWorkSizeY, globalWorkSizeZ);
     }
 }
 
@@ -2306,9 +2301,7 @@ void Kernel::setLocalWorkSizeValues(uint32_t localWorkSizeX, uint32_t localWorkS
                        getDescriptor().payloadMappings.dispatchTraits.localWorkSize,
                        {localWorkSizeX, localWorkSizeY, localWorkSizeZ});
     if (pImplicitArgs) {
-        pImplicitArgs->localSizeX = localWorkSizeX;
-        pImplicitArgs->localSizeY = localWorkSizeY;
-        pImplicitArgs->localSizeZ = localWorkSizeZ;
+        pImplicitArgs->setLocalSize(localWorkSizeX, localWorkSizeY, localWorkSizeZ);
     }
 }
 
@@ -2329,9 +2322,7 @@ void Kernel::setNumWorkGroupsValues(uint32_t numWorkGroupsX, uint32_t numWorkGro
                        getDescriptor().payloadMappings.dispatchTraits.numWorkGroups,
                        {numWorkGroupsX, numWorkGroupsY, numWorkGroupsZ});
     if (pImplicitArgs) {
-        pImplicitArgs->groupCountX = numWorkGroupsX;
-        pImplicitArgs->groupCountY = numWorkGroupsY;
-        pImplicitArgs->groupCountZ = numWorkGroupsZ;
+        pImplicitArgs->setGroupCount(numWorkGroupsX, numWorkGroupsY, numWorkGroupsZ);
     }
 }
 

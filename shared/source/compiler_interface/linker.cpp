@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -656,7 +656,15 @@ void Linker::resolveImplicitArgs(const KernelDescriptorsT &kernelDescriptors, De
                 UNRECOVERABLE_IF(!pDevice);
                 kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = kernelDescriptor.kernelAttributes.flags.useStackCalls || pDevice->getDebugger() != nullptr;
                 if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
-                    *pImplicitArgsReloc = ImplicitArgs::getSize();
+                    auto implicitArgsSize = 0;
+                    if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 0) {
+                        implicitArgsSize = ImplicitArgsV0::getSize();
+                    } else if (pDevice->getGfxCoreHelper().getImplicitArgsVersion() == 1) {
+                        implicitArgsSize = ImplicitArgsV1::getSize();
+                    } else {
+                        UNRECOVERABLE_IF(true);
+                    }
+                    *pImplicitArgsReloc = implicitArgsSize;
                 }
             }
         }

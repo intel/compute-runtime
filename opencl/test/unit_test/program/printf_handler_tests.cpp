@@ -112,7 +112,7 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
     auto pImplicitArgs = kernel.getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->printfBufferPtr);
+    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->v0.printfBufferPtr);
 }
 
 HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {

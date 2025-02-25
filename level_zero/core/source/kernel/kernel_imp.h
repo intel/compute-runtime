@@ -252,6 +252,7 @@ struct KernelImp : Kernel {
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;
+    uint32_t implicitArgsVersion = 0;
 
     typedef ze_result_t (KernelImp::*KernelArgHandler)(uint32_t argIndex, size_t argSize, const void *argVal);
     std::vector<KernelArgInfo> kernelArgInfos;

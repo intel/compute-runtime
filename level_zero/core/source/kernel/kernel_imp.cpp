@@ -250,7 +250,11 @@ ze_result_t KernelImp::getBaseAddress(uint64_t *baseAddress) {
     return ZE_RESULT_SUCCESS;
 }
 
-KernelImp::KernelImp(Module *module) : module(module) {}
+KernelImp::KernelImp(Module *module) : module(module) {
+    if (module) {
+        this->implicitArgsVersion = module->getDevice()->getGfxCoreHelper().getImplicitArgsVersion();
+    }
+}
 
 KernelImp::~KernelImp() {
     if (nullptr != privateMemoryGraphicsAllocation) {
@@ -321,15 +325,9 @@ void KernelImp::setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32
     }
 
     if (pImplicitArgs) {
-        pImplicitArgs->numWorkDim = workDim;
-
-        pImplicitArgs->globalSizeX = globalWorkSize[0];
-        pImplicitArgs->globalSizeY = globalWorkSize[1];
-        pImplicitArgs->globalSizeZ = globalWorkSize[2];
-
-        pImplicitArgs->groupCountX = groupCount[0];
-        pImplicitArgs->groupCountY = groupCount[1];
-        pImplicitArgs->groupCountZ = groupCount[2];
+        pImplicitArgs->setNumWorkDim(workDim);
+        pImplicitArgs->setGlobalSize(globalWorkSize[0], globalWorkSize[1], globalWorkSize[2]);
+        pImplicitArgs->setGroupCount(groupCount[0], groupCount[1], groupCount[2]);
     }
 }
 
@@ -1128,9 +1126,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<NEO::ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->structSize = NEO::ImplicitArgs::getSize();
-        pImplicitArgs->structVersion = 0;
-        pImplicitArgs->simdWidth = kernelDescriptor.kernelAttributes.simdSize;
+        pImplicitArgs->initializeHeader(this->implicitArgsVersion);
+        pImplicitArgs->setSimdWidth(kernelDescriptor.kernelAttributes.simdSize);
     }
 
     if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] > 0) {
@@ -1209,7 +1206,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
                               static_cast<uintptr_t>(address));
         }
         if (this->pImplicitArgs) {
-            pImplicitArgs->rtGlobalBufferPtr = address;
+            pImplicitArgs->setRtGlobalBufferPtr(address);
         }
 
         this->internalResidencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
@@ -1228,7 +1225,7 @@ void KernelImp::createPrintfBuffer() {
                               static_cast<uintptr_t>(this->printfBuffer->getGpuAddressToPatch()));
         }
         if (pImplicitArgs) {
-            pImplicitArgs->printfBufferPtr = printfBuffer->getGpuAddress();
+            pImplicitArgs->setPrintfBuffer(printfBuffer->getGpuAddress());
         }
         this->devicePrintfKernelMutex = &(static_cast<DeviceImp *>(this->module->getDevice())->printfKernelMutex);
     }
@@ -1298,9 +1295,7 @@ void KernelImp::patchWorkgroupSizeInCrossThreadData(uint32_t x, uint32_t y, uint
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.localWorkSize2, workgroupSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, workgroupSize);
     if (pImplicitArgs) {
-        pImplicitArgs->localSizeX = x;
-        pImplicitArgs->localSizeY = y;
-        pImplicitArgs->localSizeZ = z;
+        pImplicitArgs->setLocalSize(x, y, z);
     }
 }
 
@@ -1319,9 +1314,7 @@ void KernelImp::patchGlobalOffset() {
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkOffset, this->globalOffsets);
     if (pImplicitArgs) {
-        pImplicitArgs->globalOffsetX = globalOffsets[0];
-        pImplicitArgs->globalOffsetY = globalOffsets[1];
-        pImplicitArgs->globalOffsetZ = globalOffsets[2];
+        pImplicitArgs->setGlobalOffset(globalOffsets[0], globalOffsets[1], globalOffsets[2]);
     }
 }
 
@@ -1392,7 +1385,7 @@ void KernelImp::setAssertBuffer() {
     this->internalResidencyContainer.push_back(assertHandler->getAssertBuffer());
 
     if (pImplicitArgs) {
-        pImplicitArgs->assertBufferPtr = static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch());
+        pImplicitArgs->setAssertBufferPtr(static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch()));
     }
 }
 

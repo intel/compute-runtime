@@ -1928,7 +1928,7 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithInternalRelocationAndUnresolvedExt
 
     uint32_t internalRelocationOffset = 0x10;
     linkerInput->textRelocations.push_back({{implicitArgsRelocationSymbolName, internalRelocationOffset, LinkerInput::RelocationInfo::Type::address, SegmentType::instructions}});
-    uint32_t expectedInternalRelocationValue = ImplicitArgs::getSize();
+    uint32_t expectedInternalRelocationValue = ImplicitArgsV0::getSize();
 
     uint32_t externalRelocationOffset = 0x20;
     constexpr auto externalSymbolName = "unresolved";
@@ -4795,7 +4795,7 @@ TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingModuleThe
     auto status = pModule->linkBinary();
     EXPECT_TRUE(status);
 
-    EXPECT_EQ(ImplicitArgs::getSize(), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
+    EXPECT_EQ(ImplicitArgsV0::getSize(), *reinterpret_cast<uint32_t *>(ptrOffset(isaCpuPtr, 0x8)));
 
     EXPECT_TRUE(kernelInfo->kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }

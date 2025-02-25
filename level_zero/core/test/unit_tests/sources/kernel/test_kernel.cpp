@@ -1238,7 +1238,7 @@ HWTEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializ
     EXPECT_NE(nullptr, rtDispatchGlobals);
     auto implicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, implicitArgs);
-    EXPECT_EQ_VAL(implicitArgs->rtGlobalBufferPtr, rtDispatchGlobals->rtDispatchGlobalsArray->getGpuAddressToPatch());
+    EXPECT_EQ_VAL(implicitArgs->v0.rtGlobalBufferPtr, rtDispatchGlobals->rtDispatchGlobalsArray->getGpuAddressToPatch());
 
     auto &residencyContainer = kernel->getInternalResidencyContainer();
 
@@ -4060,8 +4060,8 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenInitializeThenPrin
     auto printfSurface = kernel->getPrintfBufferAllocation();
     ASSERT_NE(nullptr, printfSurface);
 
-    EXPECT_NE(0u, pImplicitArgs->printfBufferPtr);
-    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->printfBufferPtr);
+    EXPECT_NE(0u, pImplicitArgs->v0.printfBufferPtr);
+    EXPECT_EQ(printfSurface->getGpuAddress(), pImplicitArgs->v0.printfBufferPtr);
 }
 
 TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenImplicitArgsAreCreated) {
@@ -4080,8 +4080,8 @@ TEST_F(KernelImplicitArgTests, givenImplicitArgsRequiredWhenCreatingKernelThenIm
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    EXPECT_EQ(ImplicitArgs::getSize(), pImplicitArgs->structSize);
-    EXPECT_EQ(0u, pImplicitArgs->structVersion);
+    EXPECT_EQ(ImplicitArgsV0::getSize(), pImplicitArgs->v0.header.structSize);
+    EXPECT_EQ(0u, pImplicitArgs->v0.header.structVersion);
 }
 
 TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParamsThenImplicitArgsAreUpdated) {
@@ -4100,7 +4100,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     auto pImplicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, pImplicitArgs);
 
-    ImplicitArgs expectedImplicitArgs{ImplicitArgs::getSize()};
+    ImplicitArgsV0 expectedImplicitArgs{{ImplicitArgsV0::getSize(), 0}};
 
     expectedImplicitArgs.numWorkDim = 3;
     expectedImplicitArgs.simdWidth = simd;
@@ -4122,7 +4122,7 @@ TEST_F(KernelImplicitArgTests, givenKernelWithImplicitArgsWhenSettingKernelParam
     kernel->setGroupCount(3, 2, 1);
     kernel->setGlobalOffsetExp(1, 2, 3);
     kernel->patchGlobalOffset();
-    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, ImplicitArgs::getSize()));
+    EXPECT_EQ(0, memcmp(pImplicitArgs, &expectedImplicitArgs, ImplicitArgsV0::getSize()));
 }
 
 using BindlessKernelTest = Test<DeviceFixture>;

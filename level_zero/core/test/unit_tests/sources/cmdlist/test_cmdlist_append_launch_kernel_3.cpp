@@ -938,7 +938,7 @@ struct CommandListAppendLaunchKernelWithImplicitArgs : CommandListAppendLaunchKe
         if (FamilyType::supportsCmdSet(IGFX_XE_HP_CORE)) {
             const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
             auto implicitArgsProgrammingSize = ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernel.pImplicitArgs.get(), kernel.getKernelDescriptor(), !kernel.kernelRequiresGenerationOfLocalIdsByRuntime, rootDeviceEnvironment);
-            return implicitArgsProgrammingSize - ImplicitArgs::getSize();
+            return implicitArgsProgrammingSize - kernel.pImplicitArgs->v0.header.structSize;
         } else {
             return 0u;
         }
@@ -956,6 +956,8 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
     kernel.module = pMockModule.get();
     kernel.immutableData.crossThreadDataSize = sizeof(uint64_t);
     kernel.pImplicitArgs.reset(new ImplicitArgs());
+    kernel.pImplicitArgs->v0.header.structVersion = 0;
+    kernel.pImplicitArgs->v0.header.structSize = ImplicitArgsV0::getSize();
     UnitTestHelper<FamilyType>::adjustKernelDescriptorForImplicitArgs(*kernel.immutableData.kernelDescriptor);
 
     kernel.setGroupSize(1, 1, 1);
@@ -981,27 +983,27 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 
     auto groupCountXStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     groupCountXStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimX);
-    groupCountXStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, groupCountX));
+    groupCountXStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgsV0, groupCountX));
 
     auto groupCountYStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     groupCountYStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimY);
-    groupCountYStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, groupCountY));
+    groupCountYStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgsV0, groupCountY));
 
     auto groupCountZStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     groupCountZStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::gpgpuDispatchDimZ);
-    groupCountZStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, groupCountZ));
+    groupCountZStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgsV0, groupCountZ));
 
     auto globalSizeXStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     globalSizeXStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
-    globalSizeXStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, globalSizeX));
+    globalSizeXStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgsV0, globalSizeX));
 
     auto globalSizeYStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     globalSizeYStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
-    globalSizeYStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, globalSizeY));
+    globalSizeYStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgsV0, globalSizeY));
 
     auto globalSizeZStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     globalSizeZStoreRegisterMemCmd.setRegisterAddress(RegisterOffsets::csGprR1);
-    globalSizeZStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgs, globalSizeZ));
+    globalSizeZStoreRegisterMemCmd.setMemoryAddress(pImplicitArgsGPUVA + offsetof(ImplicitArgsV0, globalSizeZ));
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,11 @@ TEST(KernelAssert, GivenKernelWithAssertAndImplicitArgsWhenInitializingKernelThe
     auto assertBufferAddress = assertHandler->getAssertBuffer()->getGpuAddressToPatch();
     auto implicitArgs = kernel.getImplicitArgs();
     ASSERT_NE(nullptr, implicitArgs);
-    EXPECT_EQ(assertBufferAddress, implicitArgs->assertBufferPtr);
+    if (implicitArgs->v0.header.structVersion == 0) {
+        EXPECT_EQ(assertBufferAddress, implicitArgs->v0.assertBufferPtr);
+    } else if (implicitArgs->v1.header.structVersion == 1) {
+        EXPECT_EQ(assertBufferAddress, implicitArgs->v1.assertBufferPtr);
+    }
 }
 
 TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenAssertHandlerIsCreated) {
