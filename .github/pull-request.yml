@@ -1,2 +1,3 @@
-defaultbranch: master
+defaultbranch: releases/25.09
 draft: true
+branchtype: master
