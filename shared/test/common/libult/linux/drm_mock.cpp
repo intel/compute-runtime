@@ -114,6 +114,10 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             *gp->value = this->storedOaTimestampFrequency;
             return this->storedRetVal;
         }
+        if (gp->param == I915_PARAM_HAS_CONTEXT_FREQ_HINT) {
+            *gp->value = this->storedRetValForHasContextFreqHint;
+            return this->storedRetVal;
+        }
     }
 
     if ((request == DrmIoctl::gemContextCreateExt) && (arg != nullptr)) {
@@ -127,6 +131,13 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         receivedContextCreateSetParam = *reinterpret_cast<GemContextCreateExtSetParam *>(create->extensions);
         if (receivedContextCreateSetParam.base.name == I915_CONTEXT_CREATE_EXT_SETPARAM) {
             receivedContextParamRequestCount++;
+            if (receivedContextCreateSetParam.base.nextExtension != 0) {
+                auto offset = offsetof(GemContextCreateExtSetParam, param);
+                auto ext = reinterpret_cast<GemContextParam *>(receivedContextCreateSetParam.base.nextExtension + offset);
+                if (ext->param == I915_CONTEXT_PARAM_LOW_LATENCY) {
+                    this->lowLatencyHintRequested = true;
+                }
+            }
             receivedContextParamRequest = *reinterpret_cast<GemContextParam *>(&receivedContextCreateSetParam.param);
             if (receivedContextCreateSetParam.param.param == I915_CONTEXT_PARAM_VM) {
                 this->requestSetVmId = receivedContextParamRequest.value;

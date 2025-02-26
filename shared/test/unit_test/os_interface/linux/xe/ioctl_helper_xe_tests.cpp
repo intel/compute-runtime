@@ -2527,6 +2527,13 @@ TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenIsTimestampsRefreshEnabledCalled
     EXPECT_TRUE(xeIoctlHelper->isTimestampsRefreshEnabled());
 }
 
+TEST_F(IoctlHelperXeTest, givenXeIoctlHelperWhenHasContextFreqHintCalledThenReturnFalse) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    EXPECT_FALSE(xeIoctlHelper->hasContextFreqHint());
+}
+
 TEST_F(IoctlHelperXeTest, whenIoctlFailsOnQueryConfigSizeThenQueryDeviceIdAndRevisionFails) {
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};

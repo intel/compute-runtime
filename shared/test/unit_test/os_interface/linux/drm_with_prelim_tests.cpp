@@ -840,7 +840,7 @@ TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextIsCalledThenIoctlIsCalledOn
                 drm->ioctlCallsCount = 0u;
                 drm->createDrmContext(vmId, isDirectSubmissionRequested, isCooperativeContextRequested);
 
-                EXPECT_EQ(1u, drm->ioctlCallsCount);
+                EXPECT_EQ(vmId > 0 ? 2u : 1u, drm->ioctlCallsCount);
             }
         }
     }

@@ -384,6 +384,9 @@ TEST(DrmTest, GivenDrmWhenAskedForContextThatIsSuccessThenTrueIsReturned) {
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     pDrm->storedRetVal = 0;
     EXPECT_EQ(0, pDrm->createDrmContext(1, false, false));
+    if (pDrm->ioctlHelper->hasContextFreqHint()) {
+        EXPECT_EQ(1u, pDrm->lowLatencyHintRequested);
+    }
     delete pDrm;
 }
 
@@ -685,7 +688,7 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenExplicitVmIsCre
     EXPECT_EQ(drmMock.latestCreatedVmId, drmVmIds[0]);
     EXPECT_EQ(1, drmMock.createDrmVmCalled);
 
-    EXPECT_EQ(0, drmMock.ioctlCount.contextGetParam);
+    EXPECT_EQ(1, drmMock.ioctlCount.contextGetParam);
 }
 
 TEST(DrmTest, givenPerContextVMRequiredWhenVmIdCreationFailsThenQueryVmIsCalled) {

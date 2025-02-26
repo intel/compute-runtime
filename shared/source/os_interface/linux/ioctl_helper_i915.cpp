@@ -678,6 +678,28 @@ bool IoctlHelperI915::isPreemptionSupported() {
     return retVal == 0 && (schedulerCap & I915_SCHEDULER_CAP_PREEMPTION);
 }
 
+bool IoctlHelperI915::hasContextFreqHint() {
+    int param{};
+    GetParam getParam{};
+    getParam.param = I915_PARAM_HAS_CONTEXT_FREQ_HINT;
+    getParam.value = &param;
+
+    int retVal = ioctl(DrmIoctl::getparam, &getParam);
+    if (debugManager.flags.PrintIoctlEntries.get()) {
+        printf("DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_CONTEXT_FREQ_HINT, output value: %d, retCode:% d\n",
+               *getParam.value,
+               retVal);
+    }
+    return retVal == 0 && (param == 1);
+}
+
+void IoctlHelperI915::fillExtSetparamLowLatency(GemContextCreateExtSetParam &extSetparam) {
+    extSetparam.base.name = getDrmParamValue(DrmParam::contextCreateExtSetparam);
+    extSetparam.param.param = I915_CONTEXT_PARAM_LOW_LATENCY;
+    extSetparam.param.value = 1;
+    return;
+}
+
 bool IoctlHelperI915::queryDeviceIdAndRevision(Drm &drm) {
 
     HardwareInfo *hwInfo = drm.getRootDeviceEnvironment().getMutableHardwareInfo();

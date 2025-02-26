@@ -374,11 +374,15 @@ int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bo
     }
 
     GemContextCreateExtSetParam extSetparam = {};
-
+    GemContextCreateExtSetParam extSetparamLowLatency = {};
     if (drmVmId > 0) {
         extSetparam.base.name = ioctlHelper->getDrmParamValue(DrmParam::contextCreateExtSetparam);
         extSetparam.param.param = ioctlHelper->getDrmParamValue(DrmParam::contextParamVm);
         extSetparam.param.value = drmVmId;
+        if (ioctlHelper->hasContextFreqHint()) {
+            extSetparam.base.nextExtension = reinterpret_cast<uint64_t>(&extSetparamLowLatency.base);
+            ioctlHelper->fillExtSetparamLowLatency(extSetparamLowLatency);
+        }
         gcc.extensions = reinterpret_cast<uint64_t>(&extSetparam);
         gcc.flags |= ioctlHelper->getDrmParamValue(DrmParam::contextCreateFlagsUseExtensions);
     }

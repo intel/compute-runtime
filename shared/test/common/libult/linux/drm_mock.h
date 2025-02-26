@@ -223,6 +223,7 @@ class DrmMock : public Drm {
     int storedRetValForVmId = 1;
     int storedCsTimestampFrequency = 1000;
     int storedOaTimestampFrequency = 123456;
+    int storedRetValForHasContextFreqHint = 1;
     uint32_t mockProcessCount = 1;
     bool disableSomeTopology = false;
     bool allowDebugAttach = false;
@@ -301,6 +302,7 @@ class DrmMock : public Drm {
 
     bool expectIoctlCallsOnDestruction = false;
     uint32_t expectedIoctlCallsOnDestruction = 0u;
+    bool lowLatencyHintRequested = false;
 
     virtual int handleRemainingRequests(DrmIoctl request, void *arg);
 
