@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/utilities/arrayref.h"
+#include "shared/source/utilities/bitcontainers.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 #include "shared/source/utilities/lookup_array.h"
@@ -15,9 +16,11 @@
 
 #include "gtest/gtest.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <memory>
 #include <numeric>
+#include <ranges>
 #include <type_traits>
 #include <vector>
 
@@ -1654,13 +1657,13 @@ TEST(StackVec, WhenCallingDataThenVectorDataIsReturned) {
     char dataB[] = {5, 4, 3, 2, 1};
 
     StackVec<char, 1> stackVecA{dataA, dataA + sizeof(dataA)};
-    StackVec<char, 5> stackVecB{dataB, dataB + sizeof(dataB)};
+    const StackVec<char, 5> stackVecB{dataB, dataB + sizeof(dataB)};
 
     EXPECT_TRUE(stackVecA.usesDynamicMem());
     EXPECT_FALSE(stackVecB.usesDynamicMem());
 
-    auto stackVecAData = reinterpret_cast<char *>(stackVecA.data());
-    auto stackVecBData = reinterpret_cast<char *>(stackVecB.data());
+    auto stackVecAData = stackVecA.data();
+    auto stackVecBData = stackVecB.data();
     for (size_t i = 0; i < 5; i++) {
         EXPECT_EQ(dataA[i], stackVecAData[i]);
         EXPECT_EQ(dataB[i], stackVecBData[i]);
@@ -1725,6 +1728,44 @@ TEST(StackVec, whenPushingUniqueToRootDeviceIndicesContainerThenOnlyUniqueValues
     const RootDeviceIndicesContainer expectedContainer = {6, 5, 4, 3, 2, 1, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0};
     for (auto i = 0u; i < rootDeviceIndices.size(); i++) {
         EXPECT_EQ(rootDeviceIndices[i], expectedContainer[i]);
+    }
+}
+
+TEST(StackVec, WhenInsertingAtGivenPositionThenOrderIsMaintained) {
+    {
+        StackVec<int, 10> tested;
+        tested.insert(tested.end(), 12);
+
+        StackVec<int, 10> expected{12};
+        EXPECT_EQ(expected, tested);
+    }
+    {
+        StackVec<int, 10> tested{3, 5, 7, 11};
+        tested.insert(tested.end(), 12);
+        tested.insert(tested.begin(), 2);
+        tested.insert(tested.begin() + 2, 4);
+
+        StackVec<int, 10> expected{2, 3, 4, 5, 7, 11, 12};
+        EXPECT_EQ(expected, tested);
+    }
+    {
+        StackVec<int, 1> testedB{3};
+        testedB.insert(testedB.begin(), 2);
+        StackVec<int, 1> testedE{2};
+        testedE.insert(testedE.end(), 3);
+
+        StackVec<int, 10> expected{2, 3};
+        EXPECT_EQ(expected, testedB);
+        EXPECT_EQ(expected, testedE);
+    }
+    {
+        StackVec<int, 4> tested{3, 5, 7, 11};
+        tested.insert(tested.end(), 12);
+        tested.insert(tested.begin(), 2);
+        tested.insert(tested.begin() + 2, 4);
+
+        StackVec<int, 10> expected{2, 3, 4, 5, 7, 11, 12};
+        EXPECT_EQ(expected, tested);
     }
 }
 
@@ -1968,4 +2009,204 @@ TEST(LookupArrayLookUpGreaterEqual, WhenLookingForElementThenReturnFirstThatIsEq
     EXPECT_EQ(90, res);
 
     EXPECT_THROW(res = arr.lookUpGreaterEqual(10), std::exception);
+}
+
+TEST(BitArray, WhenFfzIsCalledThenReturnsFirstZeroBitOrMinusAllBitAreSet) {
+    {
+        BitArray ba{3};
+        ASSERT_EQ(3U, ba.length());
+        auto pos = ba.ffz();
+        EXPECT_EQ(0, pos);
+        pos = ba.ffz();
+        EXPECT_EQ(0, pos);
+        ba[0] = true;
+        pos = ba.ffz();
+        EXPECT_EQ(1, pos);
+        pos = ba.ffz();
+        EXPECT_EQ(1, pos);
+        ba[1] = true;
+        pos = ba.ffz();
+        EXPECT_EQ(2, pos);
+        ba[2] = true;
+        pos = ba.ffz();
+        EXPECT_EQ(-1, pos);
+    }
+    {
+        BitArray ba{64};
+        ASSERT_EQ(64U, ba.length());
+        for (int i = 0; i < 64; ++i) {
+            ba[i] = true;
+        }
+        auto pos = ba.ffz();
+        EXPECT_EQ(-1, pos);
+    }
+    {
+        BitArray ba{4097};
+        ASSERT_EQ(4097U, ba.length());
+        for (int i = 0; i < 4095; ++i) {
+            ba[i] = true;
+        }
+        auto pos = ba.ffz();
+        EXPECT_EQ(4095, pos);
+        ba[4095] = true;
+        pos = ba.ffz();
+        EXPECT_EQ(4096, pos);
+        ba[4096] = true;
+        pos = ba.ffz();
+        EXPECT_EQ(-1, pos);
+
+        ba[796] = false;
+        pos = ba.ffz();
+        EXPECT_EQ(796, pos);
+    }
+}
+
+TEST(BitAllocator, WhenAllocateIsCalledThenAllocatesAndReturnsFirstFreeBitPositionOrMinusOneIfEmpty) {
+    {
+        BitAllocator ba{3};
+        ASSERT_EQ(3U, ba.sizeInBits());
+        auto pos = ba.allocate();
+        EXPECT_EQ(0, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(1, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(2, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(-1, pos);
+
+        ba.free(1);
+        pos = ba.allocate();
+        EXPECT_EQ(1, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(-1, pos);
+
+        ba.free(0);
+        pos = ba.allocate();
+        EXPECT_EQ(0, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(-1, pos);
+    }
+    {
+        BitAllocator ba{64};
+        ASSERT_EQ(64U, ba.sizeInBits());
+        for (int i = 0; i < 64; ++i) {
+            EXPECT_EQ(i, ba.allocate());
+        }
+        auto pos = ba.allocate();
+        EXPECT_EQ(-1, pos);
+    }
+    {
+        BitAllocator ba{4097};
+        ASSERT_EQ(4097U, ba.sizeInBits());
+        for (int i = 0; i < 4095; ++i) {
+            EXPECT_EQ(i, ba.allocate());
+        }
+        auto pos = ba.allocate();
+        EXPECT_EQ(4095, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(4096, pos);
+        pos = ba.allocate();
+        EXPECT_EQ(-1, pos);
+
+        ba.free(796);
+        pos = ba.allocate();
+        EXPECT_EQ(796, pos);
+    }
+}
+
+TEST(OpaqueArray, WhenAllocateIsCalledThenAllocatesAndReturnsFirstFreeElementOrNullIfEmpty) {
+    struct GraphicsAllocationHandleExample {
+    } handle;
+    double underlyingMemory[5] = {1, 2, 3, 4, 5};
+    const size_t elementStride = 2 * sizeof(double);
+    {
+        OpaqueArrayElementAllocator<GraphicsAllocationHandleExample *> oa{&handle, underlyingMemory, elementStride, sizeof(underlyingMemory) / elementStride};
+        EXPECT_EQ(underlyingMemory, oa.base());
+        EXPECT_EQ(&handle, oa.handle());
+
+        EXPECT_TRUE(oa.contains(underlyingMemory));
+        EXPECT_TRUE(oa.contains(underlyingMemory + 1));
+        EXPECT_TRUE(oa.contains(underlyingMemory + 2));
+        EXPECT_TRUE(oa.contains(underlyingMemory + 3));
+        EXPECT_FALSE(oa.contains(underlyingMemory + 4));
+
+        auto el0 = oa.allocate();
+        EXPECT_EQ(underlyingMemory, el0);
+        EXPECT_EQ(el0, oa.element(0));
+
+        auto el1 = oa.allocate();
+        EXPECT_EQ(underlyingMemory + 2, el1);
+        EXPECT_EQ(el1, oa.element(1));
+
+        auto el2 = oa.allocate();
+        EXPECT_EQ(nullptr, el2);
+
+        oa.free(el0);
+        el2 = oa.allocate();
+        EXPECT_EQ(underlyingMemory, el2);
+    }
+}
+
+TEST(OpaqueElementAllocator, WhenAllocateIsCalledThenAllocatesAndReturnsFirstFreeElementAndGrowsIfNeeded) {
+    struct GraphicsAllocationHandleExample {};
+    using AllocatorT = OpaqueElementAllocator<GraphicsAllocationHandleExample *>;
+    using AllocationT = AllocatorT::AllocationT;
+
+    std::set<GraphicsAllocationHandleExample *> graphicsAllocations;
+    {
+        const size_t chunkSize = 256;
+        const size_t elementSize = 64;
+        AllocatorT allocator(chunkSize, elementSize, AllocatorT::UnderlyingAllocatorT{.allocate = [&](size_t s, size_t a) -> AllocationT {
+                                                                                          auto newGa = new GraphicsAllocationHandleExample;
+                                                                                          graphicsAllocations.insert(newGa);
+                                                                                          return {newGa, alignedMalloc(s, a)};
+                                                                                      },
+                                                                                      .free = [&](AllocationT alloc) {
+                                                        UNRECOVERABLE_IF(1 != graphicsAllocations.count(alloc.first));
+                                                        graphicsAllocations.erase(alloc.first);
+                                                        delete alloc.first; 
+                                                        alignedFree(alloc.second); }});
+
+        auto elsPerChunk = chunkSize / elementSize;
+        std::set<void *> allocated;
+        int toAllocate = static_cast<int>(elsPerChunk * 3 + 1);
+        for (int i = 0; i < toAllocate; ++i) {
+            AllocationT el = allocator.allocate();
+            EXPECT_NE(nullptr, el.first);
+            EXPECT_NE(nullptr, el.second);
+            EXPECT_EQ(1U, graphicsAllocations.count(el.first));
+            EXPECT_EQ(0U, allocated.count(el.second));
+            allocated.insert(el.second);
+
+            EXPECT_TRUE(isAligned(reinterpret_cast<uintptr_t>(el.second), elementSize));
+            EXPECT_EQ(alignUp(i + 1, elsPerChunk) / elsPerChunk, graphicsAllocations.size());
+        }
+
+        EXPECT_EQ(alignUp(toAllocate, elsPerChunk) / elsPerChunk, graphicsAllocations.size());
+        for (auto ptr : allocated) {
+            EXPECT_TRUE(allocator.contains(ptr));
+        }
+        int stackMem = 0;
+        EXPECT_FALSE(allocator.contains(&stackMem));
+        EXPECT_FALSE(allocator.free(&stackMem));
+
+        EXPECT_EQ(alignUp(toAllocate, elsPerChunk) / elsPerChunk, graphicsAllocations.size());
+        for (auto ptr : allocated) {
+            EXPECT_TRUE(allocator.free(ptr));
+        }
+
+        allocated.clear();
+        for (int i = 0; i < toAllocate; ++i) {
+            AllocationT el = allocator.allocate();
+            EXPECT_NE(nullptr, el.first);
+            EXPECT_NE(nullptr, el.second);
+            EXPECT_EQ(1U, graphicsAllocations.count(el.first));
+            EXPECT_EQ(0U, allocated.count(el.second));
+            allocated.insert(el.second);
+
+            EXPECT_TRUE(isAligned(reinterpret_cast<uintptr_t>(el.second), elementSize));
+        }
+        EXPECT_EQ(alignUp(toAllocate, elsPerChunk) / elsPerChunk, graphicsAllocations.size()) << " alloc reuse failed";
+    }
+    EXPECT_EQ(0U, graphicsAllocations.size());
 }

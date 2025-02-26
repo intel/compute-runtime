@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,15 @@ inline size_t ptrDiff(TA ptrAfter, TB ptrBefore) {
 template <typename T>
 inline uint64_t ptrDiff(uint64_t ptrAfter, T ptrBefore) {
     return ptrAfter - ptrBefore;
+}
+
+template <typename T, typename P>
+constexpr bool byteRangeContains(T rangeBase, size_t rangeSizeInBytes, P ptr) noexcept {
+    const auto begin = reinterpret_cast<uintptr_t>(rangeBase);
+    const auto end = begin + rangeSizeInBytes;
+    const auto p = reinterpret_cast<uintptr_t>(ptr);
+
+    return (p >= begin) && (p < end);
 }
 
 template <typename IntegerAddressType>
