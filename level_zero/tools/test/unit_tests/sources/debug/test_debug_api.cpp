@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -141,7 +141,7 @@ TEST_F(DebugApiTest, givenSubDeviceWhenCallingDebugAttachThenErrorIsReturned) {
     EXPECT_EQ(nullptr, debugSession);
 }
 
-using isDebugSupportedProduct = IsWithinProducts<IGFX_DG1, IGFX_METEORLAKE>;
+using isDebugSupportedProduct = IsWithinProducts<IGFX_DG1, IGFX_PTL>;
 HWTEST2_F(DebugApiTest, givenDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsCorrectFlag, isDebugSupportedProduct) {
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;

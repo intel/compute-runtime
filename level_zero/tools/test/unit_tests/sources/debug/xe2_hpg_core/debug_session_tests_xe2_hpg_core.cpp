@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,8 +77,7 @@ HWTEST2_F(Xe2HpgCoreDebugSessionTest,
 }
 
 using DebugApiTest = Test<DebugApiFixture>;
-using isDebugSupportedProduct = IsAtLeastProduct<IGFX_BMG>;
-HWTEST2_F(DebugApiTest, givenDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsCorrectFlag2, isDebugSupportedProduct) {
+HWTEST2_F(DebugApiTest, givenDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsCorrectFlag2, IsXe2HpgCore) {
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;
 
