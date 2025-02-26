@@ -19,7 +19,6 @@ struct OsSysman;
 
 class Ras : _zes_ras_handle_t {
   public:
-    virtual ~Ras() = default;
     virtual ze_result_t rasGetProperties(zes_ras_properties_t *pProperties) = 0;
     virtual ze_result_t rasGetConfig(zes_ras_config_t *pConfig) = 0;
     virtual ze_result_t rasSetConfig(const zes_ras_config_t *pConfig) = 0;

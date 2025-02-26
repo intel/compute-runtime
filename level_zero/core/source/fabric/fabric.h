@@ -8,16 +8,14 @@
 #pragma once
 
 #include "level_zero/core/source/fabric/fabric_device_interface.h"
-#include "level_zero/core/source/helpers/api_handle_helper.h"
+#include <level_zero/ze_api.h>
 
 #include <map>
 #include <memory>
 #include <vector>
 
-struct _ze_fabric_vertex_handle_t : BaseHandle {};
-static_assert(IsCompliantWithDdiHandlesExt<_ze_fabric_vertex_handle_t>);
-struct _ze_fabric_edge_handle_t : BaseHandle {};
-static_assert(IsCompliantWithDdiHandlesExt<_ze_fabric_edge_handle_t>);
+struct _ze_fabric_vertex_handle_t {};
+struct _ze_fabric_edge_handle_t {};
 
 namespace L0 {
 struct Device;

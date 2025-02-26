@@ -9,10 +9,9 @@
 
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/core/source/helpers/api_handle_helper.h"
+#include <level_zero/ze_api.h>
 
-struct _ze_module_build_log_handle_t : BaseHandle {};
-static_assert(IsCompliantWithDdiHandlesExt<_ze_module_build_log_handle_t>);
+struct _ze_module_build_log_handle_t {};
 
 namespace L0 {
 

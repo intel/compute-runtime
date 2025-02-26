@@ -18,7 +18,6 @@ namespace L0 {
 struct OsSysman;
 class Power : _zes_pwr_handle_t {
   public:
-    virtual ~Power() = default;
     virtual ze_result_t powerGetProperties(zes_power_properties_t *pProperties) = 0;
     virtual ze_result_t powerGetEnergyCounter(zes_power_energy_counter_t *pEnergy) = 0;
     virtual ze_result_t powerGetLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) = 0;

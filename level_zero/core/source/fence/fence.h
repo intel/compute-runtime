@@ -10,13 +10,12 @@
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/constants.h"
 
-#include "level_zero/core/source/helpers/api_handle_helper.h"
+#include <level_zero/ze_api.h>
 
 #include <chrono>
 #include <limits>
 
-struct _ze_fence_handle_t : BaseHandle {};
-static_assert(IsCompliantWithDdiHandlesExt<_ze_fence_handle_t>);
+struct _ze_fence_handle_t {};
 
 namespace L0 {
 

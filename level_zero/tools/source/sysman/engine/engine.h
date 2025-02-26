@@ -19,7 +19,6 @@ struct OsSysman;
 
 class Engine : _zes_engine_handle_t {
   public:
-    virtual ~Engine() = default;
     virtual ze_result_t engineGetProperties(zes_engine_properties_t *pProperties) = 0;
     virtual ze_result_t engineGetActivity(zes_engine_stats_t *pStats) = 0;
     virtual ze_result_t engineGetActivityExt(uint32_t *pCount, zes_engine_stats_t *pStats) = 0;

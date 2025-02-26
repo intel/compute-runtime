@@ -20,7 +20,7 @@ struct OsSysman;
 
 class Standby : _zes_standby_handle_t {
   public:
-    virtual ~Standby() = default;
+    ~Standby() override {}
     virtual ze_result_t standbyGetProperties(zes_standby_properties_t *pProperties) = 0;
     virtual ze_result_t standbyGetMode(zes_standby_promo_mode_t *pMode) = 0;
     virtual ze_result_t standbySetMode(const zes_standby_promo_mode_t mode) = 0;

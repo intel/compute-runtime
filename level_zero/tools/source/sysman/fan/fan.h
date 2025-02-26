@@ -18,7 +18,6 @@ namespace L0 {
 struct OsSysman;
 class Fan : _zes_fan_handle_t {
   public:
-    virtual ~Fan() = default;
     virtual ze_result_t fanGetProperties(zes_fan_properties_t *pProperties) = 0;
     virtual ze_result_t fanGetConfig(zes_fan_config_t *pConfig) = 0;
     virtual ze_result_t fanSetDefaultMode() = 0;

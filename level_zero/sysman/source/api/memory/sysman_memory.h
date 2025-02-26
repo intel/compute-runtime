@@ -20,7 +20,6 @@ struct OsSysman;
 
 class Memory : _zes_mem_handle_t {
   public:
-    virtual ~Memory() = default;
     virtual ze_result_t memoryGetProperties(zes_mem_properties_t *pProperties) = 0;
     virtual ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) = 0;
     virtual ze_result_t memoryGetState(zes_mem_state_t *pState) = 0;

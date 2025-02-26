@@ -19,7 +19,7 @@ struct OsSysman;
 
 class Performance : _zes_perf_handle_t {
   public:
-    virtual ~Performance() = default;
+    ~Performance() override {}
     virtual ze_result_t performanceGetProperties(zes_perf_properties_t *pProperties) = 0;
     virtual ze_result_t performanceGetConfig(double *pFactor) = 0;
     virtual ze_result_t performanceSetConfig(double pFactor) = 0;
