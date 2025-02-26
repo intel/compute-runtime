@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -485,6 +485,7 @@ HWTEST_F(KernelImpSuggestMaxCooperativeGroupCountTests, GivenUsedSlmSizeWhenCalc
 
 using KernelTest = Test<DeviceFixture>;
 HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatched, SupportsSampler) {
+    using SamplerState = typename FamilyType::SAMPLER_STATE;
     WhiteBox<::L0::KernelImmutableData> kernelImmData = {};
     NEO::KernelDescriptor descriptor;
     kernelImmData.kernelDescriptor = &descriptor;
@@ -498,12 +499,11 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     Mock<KernelImp> kernel;
     kernel.module = &module;
     kernel.kernelImmData = &kernelImmData;
-    kernel.dynamicStateHeapData.reset(new uint8_t[64 + 16]);
-    kernel.dynamicStateHeapDataSize = 64 + 16;
+    kernel.dynamicStateHeapData.reset(new uint8_t[64 + sizeof(SamplerState)]);
+    kernel.dynamicStateHeapDataSize = 64 + sizeof(SamplerState);
 
     kernel.setInlineSamplers();
 
-    using SamplerState = typename FamilyType::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<const SamplerState *>(kernel.dynamicStateHeapData.get() + 64U);
     EXPECT_TRUE(samplerState->getNonNormalizedCoordinateEnable());
     EXPECT_EQ(SamplerState::TEXTURE_COORDINATE_MODE_WRAP, samplerState->getTcxAddressControlMode());

@@ -303,7 +303,9 @@ void ImmediateCmdListSharedHeapsFixture::setUp() {
         mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 16;
         mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
 
-        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(16 * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
+        auto surfaceStateSize = device->getNEODevice()->getGfxCoreHelper().getSamplerStateSize();
+
+        kernel->dynamicStateHeapDataSize = static_cast<uint32_t>(surfaceStateSize * 2 + mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.tableOffset);
         kernel->dynamicStateHeapData.reset(new uint8_t[kernel->dynamicStateHeapDataSize]);
 
         mockKernelImmData->mockKernelDescriptor->payloadMappings.samplerTable = mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable;
