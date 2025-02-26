@@ -61,6 +61,11 @@ DriverHandle *ContextImp::getDriverHandle() {
 
 ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = static_cast<DriverHandleImp *>(driverHandle);
+    this->contextExt = createContextExt(driverHandle);
+}
+
+ContextImp::~ContextImp() {
+    destroyContextExt(this->contextExt);
 }
 
 ze_result_t ContextImp::allocHostMem(const ze_host_mem_alloc_desc_t *hostDesc,

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2024 Intel Corporation
+# Copyright (C) 2023-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,4 +13,7 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/context_imp.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/context_imp.h
                ${CMAKE_CURRENT_SOURCE_DIR}/context.h
+               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/context_ext.cpp
 )
+
+add_subdirectories()

@@ -58,7 +58,7 @@ template <typename T>
 struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
     void setUp() {
         auto executionEnvironment = NEO::MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), 0u);
-        auto memoryManager = new T(*executionEnvironment);
+        memoryManager = new T(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
     }
@@ -66,6 +66,8 @@ struct DeviceFixtureWithCustomMemoryManager : public DeviceFixture {
     void tearDown() {
         DeviceFixture::tearDown();
     }
+
+    T *memoryManager = nullptr;
 };
 
 struct DriverHandleGetMemHandlePtrMock : public L0::DriverHandleImp {
