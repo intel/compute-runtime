@@ -304,11 +304,11 @@ TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetWhenInit
 
     VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
     MockExecutionEnvironment executionEnvironment{};
-    executionEnvironment.initializeUnifiedMemoryReuseCleaner();
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner(true);
     auto cleaner = executionEnvironment.unifiedMemoryReuseCleaner.get();
 
     EXPECT_NE(cleaner, nullptr);
-    executionEnvironment.initializeUnifiedMemoryReuseCleaner();
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner(true);
     EXPECT_EQ(cleaner, executionEnvironment.unifiedMemoryReuseCleaner.get());
 }
 
@@ -317,9 +317,21 @@ TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetZeroWhen
     debugManager.flags.ExperimentalUSMAllocationReuseCleaner.set(0);
 
     MockExecutionEnvironment executionEnvironment{};
-    executionEnvironment.initializeUnifiedMemoryReuseCleaner();
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner(true);
 
     EXPECT_EQ(nullptr, executionEnvironment.unifiedMemoryReuseCleaner.get());
+}
+
+TEST(ExecutionEnvironment, givenExperimentalUSMAllocationReuseCleanerSetAndNotEnabledWhenInitializeUnifiedMemoryReuseCleanerThenForceInit) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.ExperimentalUSMAllocationReuseCleaner.set(1);
+
+    VariableBackup<decltype(NEO::Thread::createFunc)> funcBackup{&NEO::Thread::createFunc, [](void *(*func)(void *), void *arg) -> std::unique_ptr<Thread> { return nullptr; }};
+    MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.initializeUnifiedMemoryReuseCleaner(false);
+    auto cleaner = executionEnvironment.unifiedMemoryReuseCleaner.get();
+
+    EXPECT_NE(cleaner, nullptr);
 }
 
 TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {

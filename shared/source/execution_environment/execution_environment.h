@@ -66,7 +66,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
 
     DirectSubmissionController *initializeDirectSubmissionController();
-    void initializeUnifiedMemoryReuseCleaner();
+    void initializeUnifiedMemoryReuseCleaner(bool enable);
 
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<UnifiedMemoryReuseCleaner> unifiedMemoryReuseCleaner;

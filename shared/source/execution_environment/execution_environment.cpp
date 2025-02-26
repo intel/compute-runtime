@@ -152,9 +152,9 @@ DirectSubmissionController *ExecutionEnvironment::initializeDirectSubmissionCont
     return directSubmissionController.get();
 }
 
-void ExecutionEnvironment::initializeUnifiedMemoryReuseCleaner() {
+void ExecutionEnvironment::initializeUnifiedMemoryReuseCleaner(bool enable) {
     std::lock_guard<std::mutex> lock(initializeUnifiedMemoryReuseCleanerMutex);
-    auto initializeUnifiedMemoryReuseCleaner = UnifiedMemoryReuseCleaner::isSupported();
+    auto initializeUnifiedMemoryReuseCleaner = UnifiedMemoryReuseCleaner::isSupported() && enable;
 
     if (debugManager.flags.ExperimentalUSMAllocationReuseCleaner.get() != -1) {
         initializeUnifiedMemoryReuseCleaner = debugManager.flags.ExperimentalUSMAllocationReuseCleaner.get() == 1;
