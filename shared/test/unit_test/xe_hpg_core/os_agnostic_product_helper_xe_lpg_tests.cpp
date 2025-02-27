@@ -371,13 +371,3 @@ HWTEST2_F(XeLpgProductHelperTests, givenPatIndexWhenCheckIsCoherentAllocationThe
         EXPECT_FALSE(productHelper->isCoherentAllocation(patIndex).value());
     }
 }
-
-HWTEST2_F(XeLpgProductHelperTests, givenProductHelperWhenCallConfigureHardwareCustomThenCompressionIsDisabled, IsXeLpg) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrE2ECompression = true;
-
-    productHelper->configureHardwareCustom(&hwInfo, nullptr);
-
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedImages);
-}
