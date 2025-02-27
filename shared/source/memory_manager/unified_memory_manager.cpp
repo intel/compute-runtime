@@ -296,7 +296,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
 void *SVMAllocsManager::createHostUnifiedMemoryAllocation(size_t size,
                                                           const UnifiedMemoryProperties &memoryProperties) {
     bool isDiscrete = false;
-    if (size >= MemoryConstants::pageSize2M) {
+    if (size >= MemoryConstants::pageSize2M && !debugManager.flags.NEO_CAL_ENABLED.get()) {
         for (const auto rootDeviceIndex : memoryProperties.rootDeviceIndices) {
             isDiscrete |= !this->memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.isIntegratedDevice;
             if (isDiscrete) {
