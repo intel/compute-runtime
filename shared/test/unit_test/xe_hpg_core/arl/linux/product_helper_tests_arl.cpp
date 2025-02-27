@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,4 +98,14 @@ ARLTEST_F(ArlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThe
     isUncached = false;
     EXPECT_EQ(0u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::buffer));
     EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
+}
+
+ARLTEST_F(ArlProductHelperLinux, givenProductHelperWhenCallConfigureHardwareCustomThenCompressionIsDisabled) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.flags.ftrE2ECompression = true;
+
+    productHelper->configureHardwareCustom(&hwInfo, nullptr);
+
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedImages);
 }
