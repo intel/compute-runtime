@@ -1714,16 +1714,17 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
         const auto &argAsVal = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[argIndex].as<ArgDescValue>();
         for (const auto &element : argAsVal.elements) {
             DEBUG_BREAK_IF(element.size <= 0);
-            if (static_cast<size_t>(element.sourceOffset + element.size) > argSize) {
-                return CL_INVALID_ARG_SIZE;
-            }
 
             auto pDst = ptrOffset(crossThreadData, element.offset);
             auto pSrc = ptrOffset(argVal, element.sourceOffset);
 
-            auto dstAvailableSpace = crossThreadDataEnd - pDst;
+            DEBUG_BREAK_IF(!(ptrOffset(pDst, element.size) <= crossThreadDataEnd));
 
-            memcpy_s(pDst, dstAvailableSpace, pSrc, element.size);
+            if (element.sourceOffset < argSize) {
+                size_t maxBytesToCopy = argSize - element.sourceOffset;
+                size_t bytesToCopy = std::min(static_cast<size_t>(element.size), maxBytesToCopy);
+                memcpy_s(pDst, element.size, pSrc, bytesToCopy);
+            }
         }
 
         retVal = CL_SUCCESS;
