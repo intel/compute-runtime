@@ -418,7 +418,7 @@ int mkstemp(char *fileName) {
 int flock(int fd, int flag) {
     flockCalled++;
 
-    if (fd > 0 && flockRetVal == 0) {
+    if (fd >= 0 && flockRetVal == 0) {
         return 0;
     }
 
