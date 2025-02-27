@@ -856,6 +856,26 @@ TEST_F(UnifiedMemoryManagerPropertiesTest,
 }
 
 TEST_F(UnifiedMemoryManagerPropertiesTest,
+       givenCALAndSizeGreaterThan2mbWhenDiscretGpuAndCreateHostUSMThenDoNotAlignSizeAndVATo2mb) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.NEO_CAL_ENABLED.set(1);
+
+    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::hostUnifiedMemory, 1, rootDeviceIndices, deviceBitfields);
+
+    svmManager->multiOsContextSupport = true;
+    auto ptr = svmManager->createHostUnifiedMemoryAllocation(4 * MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, unifiedMemoryProperties);
+
+    auto allocation = svmManager->getSVMAlloc(ptr);
+
+    EXPECT_EQ(4 * MemoryConstants::pageSize2M + MemoryConstants::pageSize64k, allocation->gpuAllocations.getDefaultGraphicsAllocation()->getUnderlyingBufferSize());
+    EXPECT_TRUE(isAligned(allocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress(), MemoryConstants::pageSize));
+
+    svmManager->freeSVMAlloc(ptr);
+}
+
+TEST_F(UnifiedMemoryManagerPropertiesTest,
        given1ByteAsAllocationSizeWhenHostMemAllocIsCreatedItIsAlignedTo4k) {
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, DeviceBitfield(0x1)}};
