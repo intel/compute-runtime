@@ -900,6 +900,7 @@ void Device::initializeRayTracing(uint32_t maxBvhLevels) {
         rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
     }
 
+    rtDispatchGlobalsInfos.reserve(maxBvhLevels - rtDispatchGlobalsInfos.size() + 1);
     while (rtDispatchGlobalsInfos.size() <= maxBvhLevels) {
         rtDispatchGlobalsInfos.push_back(nullptr);
     }
@@ -1110,6 +1111,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         return;
     }
 
+    dispatchGlobalsInfo->rtStacks.reserve(tileCount);
     for (unsigned int tile = 0; tile < tileCount; tile++) {
         DeviceBitfield deviceBitfield =
             (tileCount == 1)
