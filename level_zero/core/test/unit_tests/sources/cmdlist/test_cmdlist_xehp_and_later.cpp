@@ -1719,6 +1719,9 @@ void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint6
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenRegularCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
 
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
@@ -1789,6 +1792,10 @@ HWTEST2_F(RayTracingCmdListTest,
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenRegularCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1843,6 +1850,10 @@ HWTEST2_F(RayTracingCmdListTest,
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenImmediateCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
@@ -1901,6 +1912,10 @@ HWTEST2_F(RayTracingCmdListTest,
 HWTEST2_F(RayTracingCmdListTest,
           givenRayTracingKernelWhenImmediateCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
           RayTracingMatcher) {
+    if (device->getNEODevice()->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        GTEST_SKIP();
+    }
+
     auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
     ultCsr->storeMakeResidentAllocations = true;
 
