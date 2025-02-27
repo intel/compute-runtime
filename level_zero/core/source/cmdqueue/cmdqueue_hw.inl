@@ -247,10 +247,10 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStreamSizeForExecuteCommandListsRe
         linearStreamSizeEstimate += NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
     }
 
+    linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit);
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(commandListHandles[i]);
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
-        linearStreamSizeEstimate += this->estimateCommandListPrimaryStart(ctx.globalInit);
         ctx.spaceForResidency += estimateCommandListResidencySize(cmdList);
     }
 
