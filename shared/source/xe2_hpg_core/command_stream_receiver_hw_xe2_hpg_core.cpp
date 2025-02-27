@@ -148,15 +148,11 @@ void BlitCommandsHelper<Family>::appendBaseAddressOffset(const BlitProperties &b
         if (isSource) {
             blitProperties.srcAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
             blitCmd.setSourceBaseAddress(ptrOffset(blitProperties.srcGpuAddress, offsetInfo.Render.Offset));
-            blitCmd.setSourceXOffset(offsetInfo.Render.XOffset);
-            blitCmd.setSourceYOffset(offsetInfo.Render.YOffset);
             blitCmd.setSourceSurfaceDepth(1);
             blitCmd.setSourceArrayIndex(1);
         } else {
             blitProperties.dstAllocation->getDefaultGmm()->gmmResourceInfo->getOffset(offsetInfo);
             blitCmd.setDestinationBaseAddress(ptrOffset(blitProperties.dstGpuAddress, offsetInfo.Render.Offset));
-            blitCmd.setDestinationXOffset(offsetInfo.Render.XOffset);
-            blitCmd.setDestinationYOffset(offsetInfo.Render.YOffset);
             blitCmd.setDestinationSurfaceDepth(1);
             blitCmd.setDestinationArrayIndex(1);
         }
