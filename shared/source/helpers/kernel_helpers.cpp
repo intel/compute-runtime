@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,6 +94,9 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
 
     PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
                        "computeUnits for each thread: %u\n", computeUnitsForScratch);
+
+    PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
+                       "global memory size: %llu\n", globalMemorySize);
 
     PRINT_DEBUG_STRING(debugManager.flags.PrintDebugMessages.get(), stderr,
                        "perHwThreadPrivateMemorySize: %u\t totalPrivateMemorySize: %lu\n",

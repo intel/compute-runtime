@@ -4762,6 +4762,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivat
     std::string output = testing::internal::GetCapturedStderr();
     std::ostringstream expectedOutput;
     expectedOutput << "computeUnits for each thread: " << std::to_string(this->device->getDeviceInfo().computeUnitsUsedForScratch) << "\n"
+                   << "global memory size: " << std::to_string(this->device->getDeviceInfo().globalMemSize) << "\n"
                    << "perHwThreadPrivateMemorySize: 0\t totalPrivateMemorySize: 0\n"
                    << "perHwThreadScratchSize: 0\t totalScratchSize: 0\n"
                    << "perHwThreadPrivateScratchSize: 0\t totalPrivateScratchSize: 0\n";
