@@ -259,6 +259,8 @@ struct EncodeStates {
                                      const void *fnDynamicStateHeap,
                                      BindlessHeapsHelper *bindlessHeapHelper,
                                      const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    static void adjustSamplerStateBorderColor(SAMPLER_STATE &samplerState, const SAMPLER_BORDER_COLOR_STATE &borderColorState);
     static size_t getSshHeapSize();
 };
 

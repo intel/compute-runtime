@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,10 @@ uint64_t EncodeDispatchKernel<Family>::getScratchAddressForImmediatePatching(Com
 template <typename Family>
 template <bool heaplessModeEnabled>
 void EncodeDispatchKernel<Family>::patchScratchAddressInImplicitArgs(ImplicitArgs &implicitArgs, uint64_t scratchAddress, bool scratchPtrRequired) {
+}
+
+template <typename Family>
+void EncodeStates<Family>::adjustSamplerStateBorderColor(SAMPLER_STATE &samplerState, const SAMPLER_BORDER_COLOR_STATE &borderColorState) {
 }
 
 } // namespace NEO

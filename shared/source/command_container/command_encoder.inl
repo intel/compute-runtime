@@ -16,6 +16,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -56,23 +57,25 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
     dsh->align(NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
     uint32_t borderColorOffsetInDsh = 0;
+    auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(fnDynamicStateHeap, borderColorOffset));
+
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    bool heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+
     if (!bindlessHeapHelper || (!bindlessHeapHelper->isGlobalDshSupported())) {
         borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
         // add offset of graphics allocation base address relative to heap base address
         if (bindlessHeapHelper) {
             borderColorOffsetInDsh += static_cast<uint32_t>(ptrDiff(dsh->getGpuBase(), bindlessHeapHelper->getGlobalHeapsBase()));
         }
-        auto borderColor = dsh->getSpace(borderColorSize);
-
-        memcpy_s(borderColor, borderColorSize, ptrOffset(fnDynamicStateHeap, borderColorOffset),
-                 borderColorSize);
+        auto borderColorDst = dsh->getSpace(borderColorSize);
+        memcpy_s(borderColorDst, borderColorSize, borderColor, borderColorSize);
 
         dsh->align(INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
         samplerStateOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
 
         dstSamplerState = reinterpret_cast<SAMPLER_STATE *>(dsh->getSpace(sizeSamplerState));
     } else {
-        auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(fnDynamicStateHeap, borderColorOffset));
         if (borderColor->getBorderColorRed() != 0.0f ||
             borderColor->getBorderColorGreen() != 0.0f ||
             borderColor->getBorderColorBlue() != 0.0f ||
@@ -95,13 +98,18 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     SAMPLER_STATE state = {};
     for (uint32_t i = 0; i < samplerCount; i++) {
         state = srcSamplerState[i];
-        state.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+
+        if (heaplessEnabled) {
+            EncodeStates<Family>::adjustSamplerStateBorderColor(state, *borderColor);
+        } else {
+            state.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+        }
         helper.adjustSamplerState(&state, hwInfo);
         dstSamplerState[i] = state;
     }
 
     return samplerStateOffsetInDsh;
-} // namespace NEO
+}
 
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress, bool isBcs) {

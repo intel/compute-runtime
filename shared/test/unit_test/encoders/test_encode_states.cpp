@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -84,6 +85,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
     uint32_t borderColorSize = 0x40;
     SAMPLER_BORDER_COLOR_STATE samplerState;
     samplerState.init();
@@ -92,7 +95,10 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     auto expectedValue = pDevice->getBindlessHeapsHelper()->getDefaultBorderColorOffset();
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(dsh->getGraphicsAllocation()->getUnderlyingBuffer());
-    EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+
+    if (!heaplessEnabled) {
+        EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+    }
 }
 
 HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWithAlphaThenBorderColorPtrOffseted) {
@@ -104,6 +110,9 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     auto mockHelper = std::make_unique<MockBindlesHeapsHelper>(pDevice,
                                                                pDevice->getNumGenericSubDevices() > 1);
     mockHelper->globalBindlessDsh = true;
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
 
@@ -123,7 +132,12 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessEnabledWhenBorderColorWit
     auto expectedValue = pDevice->getBindlessHeapsHelper()->getAlphaBorderColorOffset();
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(dsh->getGraphicsAllocation()->getUnderlyingBuffer());
-    EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+
+    if (heaplessEnabled) {
+        EXPECT_EQ(pSmplr->getIndirectStatePointer(), 0u);
+    } else {
+        EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+    }
 
     alignedFree(memory);
 }
@@ -140,6 +154,9 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
     auto globalBase = mockHelper->getGlobalHeapsBase();
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->bindlessHeapsHelper.reset(mockHelper.release());
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
 
     SAMPLER_BORDER_COLOR_STATE borderColorState;
     borderColorState.init();
@@ -162,7 +179,12 @@ HWTEST_F(BindlessCommandEncodeStatesTest, GivenBindlessHeapHelperAndGlobalDshNot
     EXPECT_EQ(alignUp(usedBefore + sizeof(SAMPLER_BORDER_COLOR_STATE), INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE) + sizeof(SAMPLER_STATE), usedAfter);
 
     auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(ptrDiff(dsh->getSpace(0), sizeof(SAMPLER_STATE)));
-    EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+
+    if (heaplessEnabled) {
+        EXPECT_EQ(pSmplr->getIndirectStatePointer(), 0u);
+    } else {
+        EXPECT_EQ(pSmplr->getIndirectStatePointer(), expectedValue);
+    }
 
     alignedFree(memory);
 }
