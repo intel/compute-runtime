@@ -1409,6 +1409,31 @@ HWTEST2_F(ImmediateCommandListTest, givenCopyEngineSyncCmdListWhenAppendingCopyO
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
 }
 
+HWTEST2_F(ImmediateCommandListTest, givenCopyEngineAsyncCmdListWhenAppendingRegularCmdListThenFlushTaskRequired, IsAtLeastXeHpcCore) {
+    ze_result_t returnValue;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::copy, 0u, returnValue, false));
+    auto cmdListHandle = commandList->toHandle();
+    commandList->close();
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    auto commandListImmediate = zeUniquePtr(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::copy, returnValue));
+    ASSERT_NE(nullptr, commandListImmediate);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandListImmediate.get());
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
+    ultCsr->recordFlushedBatchBuffer = true;
+
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.dispatchMonitorFence);
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
+}
+
 HWTEST_F(CommandListCreateTests, givenDeviceWhenCreatingCommandListForInternalUsageThenInternalEngineGroupIsUsed) {
     ze_command_list_handle_t commandList = nullptr;
     ze_command_list_desc_t desc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};

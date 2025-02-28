@@ -108,9 +108,9 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask
     NEO::LinearStream *optionalEpilogueCmdStream = nullptr;
 
     NEO::DispatchBcsFlags dispatchBcsFlags(
-        this->isSyncModeQueue,         // flushTaskCount
-        hasStallingCmds,               // hasStallingCmds
-        hasRelaxedOrderingDependencies // hasRelaxedOrderingDependencies
+        this->isSyncModeQueue || requireTaskCountUpdate, // flushTaskCount
+        hasStallingCmds,                                 // hasStallingCmds
+        hasRelaxedOrderingDependencies                   // hasRelaxedOrderingDependencies
     );
     dispatchBcsFlags.optionalEpilogueCmdStream = optionalEpilogueCmdStream;
     dispatchBcsFlags.dispatchOperation = appendOperation;
