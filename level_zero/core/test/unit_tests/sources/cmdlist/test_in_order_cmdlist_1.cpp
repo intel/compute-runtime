@@ -2769,7 +2769,9 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
         using BaseClass::BaseClass;
 
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate) override {
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
+                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
+                                   MutexLock *outerLock) override {
             flushData.push_back(this->cmdListCurrentStartOffset);
 
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
@@ -2900,7 +2902,9 @@ HWTEST2_F(InOrderCmdListTests, givenRelaxedOrderingWhenProgrammingTimestampEvent
             return ret;
         }
 
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate) override {
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
+                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
+                                   MutexLock *outerLock) override {
             auto hostAddr = reinterpret_cast<uint32_t *>(usedEvent->getCompletionFieldHostAddress());
             eventCompletionData.push_back(*hostAddr);
 
@@ -2965,7 +2969,9 @@ HWTEST2_F(InOrderCmdListTests, givenRegularNonTimestampEventWhenSkipItsConverted
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
         using BaseClass::BaseClass;
 
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate) override {
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
+                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
+                                   MutexLock *outerLock) override {
             flushCounter++;
 
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
@@ -3016,7 +3022,9 @@ HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenChainingWithRelaxedOrderingT
         using BaseClass = WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
         using BaseClass::BaseClass;
 
-        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate) override {
+        ze_result_t flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
+                                   NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
+                                   MutexLock *outerLock) override {
             flushCount++;
 
             return ZE_RESULT_SUCCESS;

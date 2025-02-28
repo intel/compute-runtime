@@ -664,7 +664,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     event->signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     commandList->partitionCount = packets;
-    commandList->checkAvailableSpace(0, false, commonImmediateCommandSize);
+    commandList->checkAvailableSpace(0, false, commonImmediateCommandSize, false);
     commandList->appendSignalEventPostWalker(event.get(), nullptr, nullptr, false, false, false);
     EXPECT_EQ(packets, event->getPacketsInUse());
 

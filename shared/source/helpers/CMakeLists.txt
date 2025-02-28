@@ -13,10 +13,11 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/api_gfx_core_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/append_operations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h

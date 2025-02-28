@@ -929,7 +929,7 @@ HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenC
     auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
     auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->getCmdContainer())->secondaryCommandStreamForImmediateCmdList.get();
 
-    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize);
+    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
 
     EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), secondaryCmdStream);
     EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
@@ -958,7 +958,7 @@ HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhe
     auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
     auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
-    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize);
+    immediateCmdList->checkAvailableSpace(0u, false, commonImmediateCommandSize, false);
 
     EXPECT_EQ(commandList->getCmdContainer().getCommandStream(), cmdStream);
     EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getMemoryPool()));

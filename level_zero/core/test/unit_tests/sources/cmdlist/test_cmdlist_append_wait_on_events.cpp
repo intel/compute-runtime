@@ -277,10 +277,12 @@ class MockCommandListImmediateHwWithWaitEventFail : public WhiteBox<::L0::Comman
         return executeCommandListImmediateReturnValue;
     }
 
-    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool kernelOperation, bool copyOffloadSubmission, bool requireTaskCountUpdate) override {
+    ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, NEO::AppendOperations appendOperation,
+                                                         bool copyOffloadSubmission, bool requireTaskCountUpdate,
+                                                         MutexLock *outerLock) override {
         ++executeCommandListImmediateWithFlushTaskCalledCount;
         if (callBaseExecute) {
-            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, kernelOperation, copyOffloadSubmission, requireTaskCountUpdate);
+            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, appendOperation, copyOffloadSubmission, requireTaskCountUpdate, outerLock);
         }
         return executeCommandListImmediateWithFlushTaskReturnValue;
     }

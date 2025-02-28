@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,7 +121,7 @@ struct BcsSplit {
             result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
 
             if (cmdList->flushTaskSubmissionEnabled()) {
-                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, false, false, cmdQsForSplit[i]);
+                cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies, NEO::AppendOperations::nonKernel, false, cmdQsForSplit[i], nullptr);
             } else {
                 cmdList->executeCommandListImmediateImpl(performMigration, cmdQsForSplit[i]);
             }

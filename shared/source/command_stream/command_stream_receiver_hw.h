@@ -39,6 +39,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         bool stateBaseAddressFullConfigurationNeeded = false;
         bool stateBaseAddressDirty = false;
         bool contextOneTimeInit = false;
+        bool stateCacheFlushRequired = false;
     };
 
   public:

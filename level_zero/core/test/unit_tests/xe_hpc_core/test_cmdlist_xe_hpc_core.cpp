@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -249,7 +249,7 @@ HWTEST2_F(CommandListStatePrefetchXeHpcCore, givenForceMemoryPrefetchForKmdMigra
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::renderCompute, returnValue));
     auto &commandListImmediate = static_cast<MockCommandListImmediate<gfxCoreFamily> &>(*commandList);
 
-    result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, false, false, false);
+    result = commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false, NEO::AppendOperations::nonKernel, false, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockMemoryManager = reinterpret_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
