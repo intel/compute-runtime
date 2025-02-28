@@ -910,7 +910,7 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
-    ze_sampler_handle_t sampler;
+    ze_sampler_handle_t sampler = nullptr;
     if (!useInlineSampler) {
         bool normalized = false;
         // ZE_SAMPLER_ADDRESS_MODE_CLAMP should return edge values for out of bound access
