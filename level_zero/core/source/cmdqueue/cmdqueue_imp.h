@@ -10,6 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
@@ -109,6 +110,9 @@ struct CommandQueueImp : public CommandQueue {
     void registerCsrClient() override;
     void clearHeapContainer() {
         heapContainer.clear();
+    }
+    NEO::LinearStream *getStartingCmdBuffer() const {
+        return startingCmdBuffer;
     }
 
   protected:

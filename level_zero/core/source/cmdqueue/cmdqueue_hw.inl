@@ -74,6 +74,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
+
+    if (parentImmediateCommandlistLinearStream != nullptr) {
+        this->startingCmdBuffer = parentImmediateCommandlistLinearStream;
+    } else {
+        this->startingCmdBuffer = &this->commandStream;
+    }
+
     auto neoDevice = device->getNEODevice();
 
     if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
@@ -108,8 +115,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                       !this->commandQueueDebugCmdsProgrammed &&
                       device->getL0Debugger();
     ctx.lockScratchController = lockScratchController;
-
-    this->startingCmdBuffer = &this->commandStream;
 
     if (this->isCopyOnlyCommandQueue) {
         ret = this->executeCommandListsCopyOnly(ctx, numCommandLists, phCommandLists, hFence, parentImmediateCommandlistLinearStream);
