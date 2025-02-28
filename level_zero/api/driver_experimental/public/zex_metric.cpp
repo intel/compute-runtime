@@ -70,6 +70,17 @@ ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(zet_intel_metric_decoder_ex
                                   pSetCount, pMetricEntriesCountPerSet, pMetricEntriesCount, pMetricEntries);
 }
 
+ze_result_t ZE_APICALL zetIntelMetricCalculateOperationCreateExp(zet_context_handle_t hContext, zet_device_handle_t hDevice,
+                                                                 zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                                                                 uint32_t *pCount, zet_metric_handle_t *phExcludedMetrics,
+                                                                 zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+    return L0::metricCalculateOperationCreate(hContext, hDevice, pCalculateDesc, pCount, phExcludedMetrics, phCalculateOperation);
+}
+
+ze_result_t zetIntelMetricCalculateOperationDestroyExp(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
+    return L0::metricCalculateOperationDestroy(hCalculateOperation);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -147,5 +158,20 @@ ze_result_t ZE_APICALL zetIntelMetricTracerDecodeExp(
     zet_intel_metric_entry_exp_t *pMetricEntries) {
     return L0::zetIntelMetricTracerDecodeExp(phMetricDecoder, pRawDataSize, pRawData, metricsCount, phMetrics, pSetCount,
                                              pMetricEntriesCountPerSet, pMetricEntriesCount, pMetricEntries);
+}
+
+ze_result_t zetIntelMetricCalculateOperationCreateExp(
+    zet_context_handle_t hContext,
+    zet_device_handle_t hDevice,
+    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+    uint32_t *pCount,
+    zet_metric_handle_t *phExcludedMetrics,
+    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+    return L0::zetIntelMetricCalculateOperationCreateExp(hContext, hDevice, pCalculateDesc, pCount, phExcludedMetrics, phCalculateOperation);
+}
+
+ze_result_t zetIntelMetricCalculateOperationDestroyExp(
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
+    return L0::zetIntelMetricCalculateOperationDestroyExp(hCalculateOperation);
 }
 }

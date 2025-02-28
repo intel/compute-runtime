@@ -3489,6 +3489,77 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenAppendMarkerIsCalledThenRet
     EXPECT_EQ(zetIntelCommandListAppendMarkerExp(commandList->toHandle(), metricGroupHandle, 0), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MetricEnumerationTest, givenValidOAMetricGroupThenOASourceCalcOperationIsCalled) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+
+    // Metric group handle.
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle = {};
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // metric groups from different source
+    zet_intel_metric_calculate_exp_desc_t calculateDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+        nullptr,            // pNext
+        1,                  // metricGroupCount
+        &metricGroupHandle, // phMetricGroups
+        0,                  // metricCount
+        nullptr,            // phMetrics
+        0,                  // timeWindowsCount
+        nullptr,            // pCalculateTimeWindows
+        1000,               // timeAggregationWindow
+    };
+
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
+    uint32_t excludedMetricsCount = 0;
+    zet_metric_handle_t *phExcludedMetrics = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
+                                                                                             device->toHandle(), &calculateDesc,
+                                                                                             &excludedMetricsCount, phExcludedMetrics,
+                                                                                             &hCalculateOperation));
+}
+
 using AppendMarkerDriverVersionTest = Test<DeviceFixture>;
 
 TEST_F(AppendMarkerDriverVersionTest, givenSupportedExtensionsWhenCheckIfAppendMarkerIsSupportedThenCorrectResultsAreReturned) {

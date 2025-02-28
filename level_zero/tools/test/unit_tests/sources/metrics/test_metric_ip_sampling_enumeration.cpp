@@ -1297,5 +1297,37 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenUnsup
     }
 }
 
+HWTEST2_F(MetricIpSamplingEnumerationTest, givenValidIPSamplingMetricGroupThenOASourceCalcOperationIsCalled, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t metricGroupHandle = nullptr;
+    EXPECT_EQ(zetMetricGroupGet(testDevices[0]->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // metric groups from different source
+    zet_intel_metric_calculate_exp_desc_t calculateDesc{
+        ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP,
+        nullptr,            // pNext
+        1,                  // metricGroupCount
+        &metricGroupHandle, // phMetricGroups
+        0,                  // metricCount
+        nullptr,            // phMetrics
+        0,                  // timeWindowsCount
+        nullptr,            // pCalculateTimeWindows
+        1000,               // timeAggregationWindow
+    };
+
+    zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation;
+    uint32_t excludedMetricsCount = 0;
+    zet_metric_handle_t *phExcludedMetrics = nullptr;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelMetricCalculateOperationCreateExp(context->toHandle(),
+                                                                                             testDevices[0]->toHandle(), &calculateDesc,
+                                                                                             &excludedMetricsCount, phExcludedMetrics,
+                                                                                             &hCalculateOperation));
+}
+
 } // namespace ult
 } // namespace L0

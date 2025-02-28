@@ -46,6 +46,14 @@ class MockMetricSource : public L0::MetricSource {
         this->type = type;
     }
 
+    ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
+                                    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                                    uint32_t *pCount,
+                                    zet_metric_handle_t *phExcludedMetrics,
+                                    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
     ~MockMetricSource() override = default;
 };
 
@@ -141,6 +149,22 @@ class MockMetric : public L0::MetricImp {
     void setMultiDevice(bool status) {
         isMultiDevice = status;
     }
+};
+
+class MockMetricCalcOp : public MetricCalcOpImp {
+  public:
+    ~MockMetricCalcOp() override = default;
+    MockMetricCalcOp() : MetricCalcOpImp(false){};
+    ze_result_t destroy() override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
+    ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    };
+    ze_result_t metricCalculateMultipleValues(size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
+                                              uint32_t *pSetCount, uint32_t *pMetricReportCountPerSet,
+                                              uint32_t *pTotalMetricReportCount,
+                                              zet_intel_metric_result_exp_t *pMetricResults) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
 };
 
 } // namespace ult

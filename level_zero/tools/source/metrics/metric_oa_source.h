@@ -64,6 +64,13 @@ class OaMetricSourceImp : public MetricSource {
                            const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],
                            zet_metric_group_sampling_type_flag_t samplingType,
                            zet_metric_group_handle_t *pMetricGroupHandle);
+    ze_result_t calcOperationCreate(MetricDeviceContext &metricDeviceContext,
+                                    zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                                    uint32_t *pCount,
+                                    zet_metric_handle_t *phExcludedMetrics,
+                                    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
 
   protected:
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
