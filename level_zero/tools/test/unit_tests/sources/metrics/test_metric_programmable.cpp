@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1201,12 +1201,12 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenMetricSetOpenFailsWhe
     uint32_t metricHandleCount = 0;
     const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
     const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle1{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle1));
     zet_metric_handle_t metricHandle2{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle2));
 
     zet_metric_handle_t metricHandles[] = {metricHandle1, metricHandle2};
 
@@ -1296,12 +1296,12 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenDelayedActivatingMetr
     uint32_t metricHandleCount = 0;
     const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
     const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle));
     zet_metric_handle_t metricHandle1{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle1));
     zet_metric_group_handle_t metricGroupHandle = nullptr;
 
     uint32_t metricGroupCount = 0;
@@ -1353,12 +1353,12 @@ TEST_F(OaMetricProgrammableTests, givenValidProgrammableWhenCreatingProgrammable
     uint32_t metricHandleCount = 0;
     const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
     const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle{};
 
     mockConcurrentGroup.metricEnumeratorReturn->metricProtoTypeReturn[0].mockOptionDescriptors[0].ValidValues->ValueType = MetricsDiscovery::VALUE_TYPE_LAST;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle));
     mockConcurrentGroup.metricEnumeratorReturn->metricProtoTypeReturn[0].mockOptionDescriptors[0].ValidValues->ValueType = MetricsDiscovery::VALUE_TYPE_UINT32;
 
     metricEnumeration->cleanupExtendedMetricInformation();
@@ -1394,12 +1394,12 @@ TEST_F(OaMetricProgrammableTests, givenValidMetricGroupWhenCreatingLessThanAvail
     uint32_t metricHandleCount = 0;
     const char metricName[ZET_MAX_METRIC_NAME] = "metricName";
     const char metricDescription[ZET_MAX_METRIC_NAME] = "metricDescription";
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle1{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle1));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle1));
     zet_metric_handle_t metricHandle2{};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, &parameterValue, 1, metricName, metricDescription, &metricHandleCount, &metricHandle2));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 1, &parameterValue, metricName, metricDescription, &metricHandleCount, &metricHandle2));
 
     zet_metric_handle_t metricHandles[] = {metricHandle1, metricHandle2};
 

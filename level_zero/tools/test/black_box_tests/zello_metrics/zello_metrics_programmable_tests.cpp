@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -267,13 +267,13 @@ bool createMetricFromProgrammables() {
             }
 
             uint32_t metricHandleCount = 0;
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, parameterValues.data(),
-                                                            props.parameterCount, props.name, props.description,
-                                                            &metricHandleCount, nullptr));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, props.parameterCount, parameterValues.data(),
+                                                             props.name, props.description,
+                                                             &metricHandleCount, nullptr));
             std::vector<zet_metric_handle_t> metricHandles(metricHandleCount);
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, parameterValues.data(),
-                                                            props.parameterCount, props.name, props.description,
-                                                            &metricHandleCount, metricHandles.data()));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, props.parameterCount, parameterValues.data(),
+                                                             props.name, props.description,
+                                                             &metricHandleCount, metricHandles.data()));
             LOG(zmu::LogLevel::INFO) << "MetricHandle Count: " << metricHandleCount << "\n";
             for (uint32_t j = 0; j < metricHandleCount; ++j) {
                 const zet_metric_handle_t metric = metricHandles[j];
@@ -404,13 +404,13 @@ bool testProgrammableMetricGroupCreateDestroy() {
             }
 
             uint32_t metricHandleCount = 0;
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, parameterValues.data(),
-                                                            props.parameterCount, props.name, props.description,
-                                                            &metricHandleCount, nullptr));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, props.parameterCount, parameterValues.data(),
+                                                             props.name, props.description,
+                                                             &metricHandleCount, nullptr));
             std::vector<zet_metric_handle_t> metricHandles(metricHandleCount);
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, parameterValues.data(),
-                                                            props.parameterCount, props.name, props.description,
-                                                            &metricHandleCount, metricHandles.data()));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, props.parameterCount, parameterValues.data(),
+                                                             props.name, props.description,
+                                                             &metricHandleCount, metricHandles.data()));
             LOG(zmu::LogLevel::DEBUG) << "MetricHandle Count: " << metricHandleCount << "\n";
 
             zet_metric_group_handle_t metricGroup{};
@@ -499,9 +499,9 @@ bool testProgrammableMetricGroupAddRemoveMetric() {
             uint32_t metricHandleCount = 0;
             zet_metric_programmable_exp_properties_t programmableProperties{};
             VALIDATECALL(zetMetricProgrammableGetPropertiesExp(programmable, &programmableProperties));
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, programmableProperties.name, programmableProperties.description, &metricHandleCount, nullptr));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, programmableProperties.name, programmableProperties.description, &metricHandleCount, nullptr));
             std::vector<zet_metric_handle_t> metricHandles(metricHandleCount);
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, programmableProperties.name, programmableProperties.description, &metricHandleCount, metricHandles.data()));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, programmableProperties.name, programmableProperties.description, &metricHandleCount, metricHandles.data()));
             metricHandles.resize(metricHandleCount);
             metricHandlesFromProgrammables.insert(metricHandlesFromProgrammables.end(), metricHandles.begin(), metricHandles.end());
         }
@@ -636,9 +636,9 @@ bool testProgrammableMetricGroupStreamer() {
             uint32_t metricHandleCount = 0;
             zet_metric_programmable_exp_properties_t programmableProperties{};
             VALIDATECALL(zetMetricProgrammableGetPropertiesExp(programmable, &programmableProperties));
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, programmableProperties.name, programmableProperties.description, &metricHandleCount, nullptr));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, programmableProperties.name, programmableProperties.description, &metricHandleCount, nullptr));
             std::vector<zet_metric_handle_t> metricHandles(metricHandleCount);
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, programmableProperties.name, programmableProperties.description, &metricHandleCount, metricHandles.data()));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, programmableProperties.name, programmableProperties.description, &metricHandleCount, metricHandles.data()));
             metricHandles.resize(metricHandleCount);
             metricHandlesFromProgrammables.insert(metricHandlesFromProgrammables.end(), metricHandles.begin(), metricHandles.end());
         }
@@ -782,9 +782,9 @@ bool testProgrammableMetricGroupQuery() {
             uint32_t metricHandleCount = 0;
             zet_metric_programmable_exp_properties_t programmableProperties{};
             VALIDATECALL(zetMetricProgrammableGetPropertiesExp(programmable, &programmableProperties));
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, programmableProperties.name, programmableProperties.description, &metricHandleCount, nullptr));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, programmableProperties.name, programmableProperties.description, &metricHandleCount, nullptr));
             std::vector<zet_metric_handle_t> metricHandles(metricHandleCount);
-            VALIDATECALL(zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, programmableProperties.name, programmableProperties.description, &metricHandleCount, metricHandles.data()));
+            VALIDATECALL(zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, programmableProperties.name, programmableProperties.description, &metricHandleCount, metricHandles.data()));
             metricHandles.resize(metricHandleCount);
             metricHandlesFromProgrammables.insert(metricHandlesFromProgrammables.end(), metricHandles.begin(), metricHandles.end());
         }

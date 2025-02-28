@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -213,7 +213,21 @@ zetMetricCreateFromProgrammableExp(
     const char description[ZET_MAX_METRIC_DESCRIPTION],
     uint32_t *pMetricHandleCount,
     zet_metric_handle_t *phMetricHandles) {
+
     return L0::metricCreateFromProgrammable(hMetricProgrammable, pParameterValues, parameterCount, name, description, pMetricHandleCount, phMetricHandles);
+}
+
+ze_result_t ZE_APICALL
+zetMetricCreateFromProgrammableExp2(
+    zet_metric_programmable_exp_handle_t hMetricProgrammable,
+    uint32_t parameterCount,
+    zet_metric_programmable_param_value_exp_t *pParameterValues,
+    const char *pName,
+    const char *pDescription,
+    uint32_t *pMetricHandleCount,
+    zet_metric_handle_t *phMetricHandles) {
+
+    return L0::metricCreateFromProgrammable(hMetricProgrammable, pParameterValues, parameterCount, pName, pDescription, pMetricHandleCount, phMetricHandles);
 }
 
 ze_result_t ZE_APICALL
@@ -638,6 +652,18 @@ zetMetricCreateFromProgrammableExp(
     uint32_t *pMetricHandleCount,
     zet_metric_handle_t *phMetricHandles) {
     return L0::zetMetricCreateFromProgrammableExp(hMetricProgrammable, pParameterValues, parameterCount, name, description, pMetricHandleCount, phMetricHandles);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricCreateFromProgrammableExp2(
+    zet_metric_programmable_exp_handle_t hMetricProgrammable,
+    uint32_t parameterCount,
+    zet_metric_programmable_param_value_exp_t *pParameterValues,
+    const char *pName,
+    const char *pDescription,
+    uint32_t *pMetricHandleCount,
+    zet_metric_handle_t *phMetricHandles) {
+    return L0::zetMetricCreateFromProgrammableExp2(hMetricProgrammable, parameterCount, pParameterValues, pName, pDescription, pMetricHandleCount, phMetricHandles);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

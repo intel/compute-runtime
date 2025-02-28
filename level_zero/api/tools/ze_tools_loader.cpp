@@ -254,6 +254,7 @@ zetGetMetricExpProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     fillDdiEntry(pDdiTable->pfnCreateFromProgrammableExp, L0::globalDriverDispatch.toolsMetricExp.pfnCreateFromProgrammableExp, version, ZE_API_VERSION_1_9);
     fillDdiEntry(pDdiTable->pfnDestroyExp, L0::globalDriverDispatch.toolsMetricExp.pfnDestroyExp, version, ZE_API_VERSION_1_9);
+    fillDdiEntry(pDdiTable->pfnCreateFromProgrammableExp2, L0::globalDriverDispatch.toolsMetricExp.pfnCreateFromProgrammableExp2, version, ZE_API_VERSION_1_12);
 
     return result;
 }

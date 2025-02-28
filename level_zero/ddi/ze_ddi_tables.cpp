@@ -314,7 +314,7 @@ DriverDispatch::DriverDispatch() {
     this->toolsMetric.pfnGetProperties = L0::zetMetricGetProperties;
     this->toolsMetricExp.pfnCreateFromProgrammableExp = L0::zetMetricCreateFromProgrammableExp;
     this->toolsMetricExp.pfnDestroyExp = L0::zetMetricDestroyExp;
-    this->toolsMetricExp.pfnCreateFromProgrammableExp2 = nullptr;
+    this->toolsMetricExp.pfnCreateFromProgrammableExp2 = L0::zetMetricCreateFromProgrammableExp2;
     this->toolsMetricGroup.pfnGet = L0::zetMetricGroupGet;
     this->toolsMetricGroup.pfnGetProperties = L0::zetMetricGroupGetProperties;
     this->toolsMetricGroup.pfnCalculateMetricValues = L0::zetMetricGroupCalculateMetricValues;

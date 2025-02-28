@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,9 +63,9 @@ void OaMultiDeviceMetricProgrammableFixture::getMetricFromProgrammable(zet_metri
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle));
     EXPECT_NE(metricHandle, nullptr);
 }
 
@@ -209,10 +209,10 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricProgrammableW
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle));
     EXPECT_NE(metricHandle, nullptr);
     zet_metric_properties_t metricProperties{};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricGetProperties(metricHandle, &metricProperties));
@@ -230,10 +230,10 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricsWhenMetricGr
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle));
     EXPECT_NE(metricHandle, nullptr);
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceCreateMetricGroupsFromMetricsExp(rootDevice->toHandle(), 1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
@@ -265,10 +265,10 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricsWhenMetricGr
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle));
     EXPECT_NE(metricHandle, nullptr);
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceCreateMetricGroupsFromMetricsExp(rootDevice->toHandle(), 1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
@@ -315,11 +315,11 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricsWhenMetricGr
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle[2] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
     EXPECT_NE(metricHandle[0], nullptr);
     EXPECT_NE(metricHandle[1], nullptr);
     uint32_t metricGroupCount = 0;
@@ -558,11 +558,11 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricGroupWhenAddM
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle[2] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
     EXPECT_NE(metricHandle[0], nullptr);
     EXPECT_NE(metricHandle[1], nullptr);
     uint32_t metricGroupCount = 0;
@@ -605,11 +605,11 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricGroupWhenRemo
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle[2] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
     EXPECT_NE(metricHandle[0], nullptr);
     EXPECT_NE(metricHandle[1], nullptr);
     uint32_t metricGroupCount = 0;
@@ -651,11 +651,11 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricGroupWhenClos
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle[2] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
     EXPECT_NE(metricHandle[0], nullptr);
     EXPECT_NE(metricHandle[1], nullptr);
     uint32_t metricGroupCount = 0;
@@ -706,11 +706,11 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricGroupWhenCrea
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle[2] = {};
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[0]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle[1]));
     EXPECT_NE(metricHandle[0], nullptr);
     EXPECT_NE(metricHandle[1], nullptr);
     uint32_t metricGroupCount = 0;
@@ -735,10 +735,10 @@ TEST_F(OaMultiDeviceMetricProgrammableTests, givenMultiDeviceMetricsWhenMetricIs
     const char *metricName = "MetricName";
     const char *metricDesc = "MetricDesc";
     uint32_t metricHandleCount = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, nullptr));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, nullptr));
     EXPECT_EQ(metricHandleCount, 1u);
     zet_metric_handle_t metricHandle = nullptr;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp(programmable, nullptr, 0, metricName, metricDesc, &metricHandleCount, &metricHandle));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetMetricCreateFromProgrammableExp2(programmable, 0, nullptr, metricName, metricDesc, &metricHandleCount, &metricHandle));
     EXPECT_NE(metricHandle, nullptr);
     uint32_t metricGroupCount = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDeviceCreateMetricGroupsFromMetricsExp(rootDevice->toHandle(), 1, &metricHandle, "metricGroupName", "metricGroupDesc", &metricGroupCount, nullptr));
