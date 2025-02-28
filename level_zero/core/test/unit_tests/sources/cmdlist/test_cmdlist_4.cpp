@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
@@ -1535,6 +1536,27 @@ HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
 HWTEST2_F(CommandListScratchPatchGlobalStatelessHeapsStateInitTest,
           givenHeaplessWithScratchPatchEnabledOnRegularCmdListWhenAppendingKernelWithoutScratchAndExternalScratchFlagThenScratchIsPatched, IsAtLeastXeHpcCore) {
     testExternalScratchPatching<FamilyType>();
+}
+
+HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThenImmediateStreamIsSelected, MatchAny) {
+    commandList->close();
+    auto cmdListHandle = commandList->toHandle();
+
+    // first append can carry preamble
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+
+    // regular append can dispatch bb_start to secondary regular or primary directly regular
+    commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+
+    auto startStream = static_cast<L0::CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
+
+    if (commandListImmediate->getCmdListBatchBufferFlag()) {
+        auto expectedStream = commandList->getCmdContainer().getCommandStream();
+        EXPECT_EQ(expectedStream, startStream);
+    } else {
+        auto expectedStream = commandListImmediate->getCmdContainer().getCommandStream();
+        EXPECT_EQ(expectedStream, startStream);
+    }
 }
 
 } // namespace ult
