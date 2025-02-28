@@ -6078,3 +6078,73 @@ HWTEST_F(CommandStreamReceiverHwTest, givenRequiredFlushTaskCountWhenFlushBcsTas
 
     EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.hasStallingCmds);
 }
+
+HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushBcsTaskCalledThenDispachEpilogueCommandsIntoEpilogueStream) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DispatchBcsFlags dispatchBcsFlags(false, false, false);
+
+    // first flush can carry preamble, no interest in flags here
+    commandStreamReceiver.flushBcsTask(commandStream,
+                                       commandStream.getUsed(),
+                                       dispatchBcsFlags,
+                                       pDevice->getHardwareInfo());
+
+    // regular dispatch here
+    GraphicsAllocation *commandBuffer = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream epilogueStream(commandBuffer);
+
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    dispatchBcsFlags.flushTaskCount = true;
+    dispatchBcsFlags.optionalEpilogueCmdStream = &epilogueStream;
+
+    commandStreamReceiver.flushBcsTask(commandStream,
+                                       commandStream.getUsed(),
+                                       dispatchBcsFlags,
+                                       pDevice->getHardwareInfo());
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandBuffer));
+
+    HardwareParse hwParser;
+
+    hwParser.parseCommands<FamilyType>(epilogueStream, 0);
+    auto cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(hwParser.cmdList.end(), cmdIterator);
+
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(commandBuffer);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmediateTaskCalledThenDispachEpilogueCommandsIntoEpilogueStream) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    // first flush can carry preamble, no interest in flags here
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    // regular dispatch here
+    GraphicsAllocation *commandBuffer = commandStreamReceiver.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver.getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream epilogueStream(commandBuffer);
+
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    immediateFlushTaskFlags.requireTaskCountUpdate = true;
+    immediateFlushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
+
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandBuffer));
+
+    HardwareParse hwParser;
+
+    hwParser.parseCommands<FamilyType>(epilogueStream, 0);
+    auto cmdIterator = find<typename FamilyType::PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(hwParser.cmdList.end(), cmdIterator);
+
+    commandStreamReceiver.getMemoryManager()->freeGraphicsMemoryImpl(commandBuffer);
+}

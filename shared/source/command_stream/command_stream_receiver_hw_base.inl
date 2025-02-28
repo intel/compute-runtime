@@ -214,6 +214,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 
     NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&(this->peekRootDeviceEnvironment()))};
 
+    LinearStream &epilogueCommandStream = dispatchBcsFlags.optionalEpilogueCmdStream != nullptr ? *dispatchBcsFlags.optionalEpilogueCmdStream : commandStreamTask;
+
     if (dispatchBcsFlags.flushTaskCount) {
         uint64_t postSyncAddress = getTagAllocation()->getGpuAddress();
         TaskCountType postSyncData = peekTaskCount() + 1;
@@ -222,7 +224,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         args.tlbFlush |= (debugManager.flags.ForceTlbFlushWithTaskCountAfterCopy.get() == 1);
 
-        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(commandStreamTask, postSyncAddress, postSyncData, args);
+        NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(epilogueCommandStream, postSyncAddress, postSyncData, args);
     }
 
     auto &commandStreamCSR = getCS(getRequiredCmdStreamSizeAligned(dispatchBcsFlags));
@@ -245,12 +247,15 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
     makeResident(*getTagAllocation());
 
     makeResident(*commandStreamTask.getGraphicsAllocation());
+    if (dispatchBcsFlags.optionalEpilogueCmdStream != nullptr) {
+        makeResident(*dispatchBcsFlags.optionalEpilogueCmdStream->getGraphicsAllocation());
+    }
 
     bool submitCSR = (commandStreamStartCSR != commandStreamCSR.getUsed());
     void *bbEndLocation = nullptr;
 
-    programEndingCmd(commandStreamTask, &bbEndLocation, isBlitterDirectSubmissionEnabled(), dispatchBcsFlags.hasRelaxedOrderingDependencies, true);
-    EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
+    programEndingCmd(epilogueCommandStream, &bbEndLocation, isBlitterDirectSubmissionEnabled(), dispatchBcsFlags.hasRelaxedOrderingDependencies, true);
+    EncodeNoop<GfxFamily>::alignToCacheLine(epilogueCommandStream);
 
     if (submitCSR) {
         auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
@@ -2178,6 +2183,8 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferCommands(ImmediateDispatchFlags &dispatchFlags,
                                                                                     LinearStream &immediateCommandStream,
                                                                                     ImmediateFlushData &flushData) {
+    LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : immediateCommandStream;
+
     if (dispatchFlags.blockingAppend || dispatchFlags.requireTaskCountUpdate) {
         auto address = getTagAllocation()->getGpuAddress();
 
@@ -2187,7 +2194,7 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
         args.notifyEnable = isUsedNotifyEnableForPostSync();
         args.workloadPartitionOffset = isMultiTileOperationEnabled();
         MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
-            immediateCommandStream,
+            epilogueCommandStream,
             PostSyncMode::immediateData,
             address,
             this->taskCount + 1,
@@ -2196,9 +2203,12 @@ void CommandStreamReceiverHw<GfxFamily>::dispatchImmediateFlushClientBufferComma
     }
 
     makeResident(*immediateCommandStream.getGraphicsAllocation());
+    if (dispatchFlags.optionalEpilogueCmdStream != nullptr) {
+        makeResident(*dispatchFlags.optionalEpilogueCmdStream->getGraphicsAllocation());
+    }
 
-    programEndingCmd(immediateCommandStream, &flushData.endPtr, isDirectSubmissionEnabled(), dispatchFlags.hasRelaxedOrderingDependencies, EngineHelpers::isBcs(this->osContext->getEngineType()));
-    EncodeNoop<GfxFamily>::alignToCacheLine(immediateCommandStream);
+    programEndingCmd(epilogueCommandStream, &flushData.endPtr, isDirectSubmissionEnabled(), dispatchFlags.hasRelaxedOrderingDependencies, EngineHelpers::isBcs(this->osContext->getEngineType()));
+    EncodeNoop<GfxFamily>::alignToCacheLine(epilogueCommandStream);
 }
 
 template <typename GfxFamily>
