@@ -1005,4 +1005,12 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isImageSuitableForCompression() const {
+    if (debugManager.flags.OverrideImageSuitableForRenderCompression.get() != -1) {
+        return !!debugManager.flags.OverrideImageSuitableForRenderCompression.get();
+    }
+    return true;
+}
+
 } // namespace NEO

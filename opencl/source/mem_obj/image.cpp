@@ -211,7 +211,7 @@ Image *Image::create(Context *context,
 
     auto &clGfxCoreHelper = defaultDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
-                                                                    *context, true);
+                                                                    *context, defaultProductHelper.isImageSuitableForCompression());
     preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->oclImageFormat);
     preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->oclImageFormat);
 

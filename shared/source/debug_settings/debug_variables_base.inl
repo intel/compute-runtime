@@ -184,6 +184,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiTileCompression, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmResourceUsageField, -1, "-1: default, >=0: gmm.resourceParams.Usage is set to this value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGmmCacheableField, -1, "-1: default, >=0: gmm Flags.Info.Cacheable is set to this value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideBufferSuitableForRenderCompression, -1, "-1: default, 0: Disable, 1: Enable")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideImageSuitableForRenderCompression, -1, "-1: default, 0: Disable, 1: Enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceState, -1, "-1: feature inactive, >=0 : following L1 cache control value will be programmed in render surface state (for regular buffers)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideL1CacheControlInSurfaceStateForScratchSpace, -1, "-1: feature inactive, >=0 : following L1 cache control value will be programmed in render surface state for scratch space")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreferredSlmAllocationSizePerDss, -1, "-1: default, >=0: program value for preferred SLM allocation size per dss")

@@ -74,12 +74,6 @@ MTLTEST_F(MtlProductHelperLinux, givenBooleanUncachedWhenCallOverridePatIndexThe
     EXPECT_EQ(3u, productHelper->overridePatIndex(isUncached, patIndex, AllocationType::commandBuffer));
 }
 
-MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenCallConfigureHardwareCustomThenCompressionIsDisabled) {
-    auto hwInfo = *defaultHwInfo;
-    hwInfo.featureTable.flags.ftrE2ECompression = true;
-
-    productHelper->configureHardwareCustom(&hwInfo, nullptr);
-
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedBuffers);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrRenderCompressedImages);
+MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsImageSuitableForCompressionThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isImageSuitableForCompression());
 }

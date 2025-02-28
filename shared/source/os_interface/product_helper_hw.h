@@ -199,6 +199,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getNumCacheRegions() const override;
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
+    bool isImageSuitableForCompression() const override;
 
     ~ProductHelperHw() override = default;
 

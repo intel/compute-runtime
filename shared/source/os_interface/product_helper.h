@@ -258,6 +258,7 @@ class ProductHelper {
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const = 0;
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
+    virtual bool isImageSuitableForCompression() const = 0;
 
     virtual ~ProductHelper() = default;
 

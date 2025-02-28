@@ -1143,3 +1143,17 @@ HWTEST2_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnF
     auto hwInfo = *defaultHwInfo;
     EXPECT_EQ(0u, productHelper->getMaxLocalSubRegionSize(hwInfo));
 }
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenAskedIsImageSuitableForCompressionThenReturnTrue, IsNotXeHpgCore) {
+    EXPECT_TRUE(productHelper->isImageSuitableForCompression());
+}
+
+HWTEST_F(ProductHelperTest, givenDebugFlagWhenCheckingIfImageIsSuitableForCompressionThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+
+    debugManager.flags.OverrideImageSuitableForRenderCompression.set(0);
+    EXPECT_FALSE(productHelper->isImageSuitableForCompression());
+
+    debugManager.flags.OverrideImageSuitableForRenderCompression.set(1);
+    EXPECT_TRUE(productHelper->isImageSuitableForCompression());
+}

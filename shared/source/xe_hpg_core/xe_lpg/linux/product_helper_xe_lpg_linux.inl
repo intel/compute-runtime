@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
@@ -13,6 +14,8 @@
 namespace NEO {
 template <>
 int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+    enableCompression(hwInfo);
+
     enableBlitterOperationsSupport(hwInfo);
 
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
@@ -47,6 +50,14 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(bool isUncachedType, uint
 template <>
 bool ProductHelperHw<gfxProduct>::useGemCreateExtInAllocateMemoryByKMD() const {
     return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isImageSuitableForCompression() const {
+    if (debugManager.flags.OverrideImageSuitableForRenderCompression.get() != -1) {
+        return !!debugManager.flags.OverrideImageSuitableForRenderCompression.get();
+    }
+    return false;
 }
 
 } // namespace NEO

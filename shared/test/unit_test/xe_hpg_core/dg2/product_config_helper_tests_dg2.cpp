@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -844,4 +844,8 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingEvictIfNecessaryFla
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingUseLocalPreferredForCacheableBuffersThenExpectTrue) {
     EXPECT_TRUE(productHelper->useLocalPreferredForCacheableBuffers());
+}
+
+DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIsImageSuitableForCompressionThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isImageSuitableForCompression());
 }
