@@ -41,7 +41,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 3327-3644
+    revision: 3329-3649
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
@@ -84,13 +84,13 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: ab182b834cc760c8ef9c5d6b776f1bd8df3bf1c5-3315
+    revision: 0fdc686575758fc02064fab89a791a1f00f0ad12-3329
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-3327
+converter: M-3329
 include:
 - infra.yml
 version: '1'
