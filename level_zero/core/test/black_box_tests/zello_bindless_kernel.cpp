@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -188,12 +188,23 @@ __kernel void image_read_sampler(__global float4 *dst, image1d_t img, sampler_t 
 }
 )===";
 
+const char *source1DInlineSampler = R"===(
+const sampler_t inlineSampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
+__kernel void image_read_inline_sampler(__global float4 *dst, image1d_t img) {
+    int id = get_global_id(0);
+    float coord = (float)(id+1);
+    dst[id] = read_imagef(img, inlineSampler, coord);
+    printf( "gid[%zu], coord=%.2f, dst.x=%.2f , dst.y=%.2f , dst.z=%.2f , dst.w=%.2f \n", get_global_id(0), coord, dst[id].x, dst[id].y, dst[id].z, dst[id].w);
+}
+)===";
+
 static std::string kernelName = "kernel_copy";
 static std::string kernelName2 = "kernel_fill";
 static std::string kernelName3 = "image_copy";
 static std::string kernelName4 = "image_read_sampler";
 static std::string kernelName4a = "image_read_sampler_oob";
 static std::string kernelName1DSampler = "image_read_sampler";
+static std::string kernelName1DInlineSampler = "image_read_inline_sampler";
 
 enum class ExecutionMode : uint32_t {
     commandQueue,
@@ -882,14 +893,14 @@ bool testBindlessImageSampledBorderColor(ze_context_handle_t context, ze_device_
 }
 
 bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t device, const std::string &deviceId,
-                                const std::string &revisionId, AddressingMode mode) {
+                                const std::string &revisionId, AddressingMode mode, bool useInlineSampler) {
     bool outputValidated = true;
 
     ze_module_handle_t module = nullptr;
     ze_kernel_handle_t kernel = nullptr;
 
-    createModule(source1DSampler, mode, context, device, deviceId, revisionId, module, "", false);
-    createKernel(module, kernel, kernelName1DSampler.c_str());
+    createModule(useInlineSampler ? source1DInlineSampler : source1DSampler, mode, context, device, deviceId, revisionId, module, "", false);
+    createKernel(module, kernel, useInlineSampler ? kernelName1DInlineSampler.c_str() : kernelName1DSampler.c_str());
 
     LevelZeroBlackBoxTests::CommandHandler commandHandler;
     bool isImmediateCmdList = false;
@@ -899,14 +910,17 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
     ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
-    bool normalized = false;
-    ze_sampler_desc_t samplerDesc = {ZE_STRUCTURE_TYPE_SAMPLER_DESC,
-                                     nullptr,
-                                     ZE_SAMPLER_ADDRESS_MODE_CLAMP,
-                                     ZE_SAMPLER_FILTER_MODE_NEAREST,
-                                     normalized};
     ze_sampler_handle_t sampler;
-    SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc, &sampler));
+    if (!useInlineSampler) {
+        bool normalized = false;
+        // ZE_SAMPLER_ADDRESS_MODE_CLAMP should return edge values for out of bound access
+        ze_sampler_desc_t samplerDesc = {ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+                                         nullptr,
+                                         ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+                                         ZE_SAMPLER_FILTER_MODE_NEAREST,
+                                         normalized};
+        SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc, &sampler));
+    }
 
     ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
                                   nullptr,
@@ -950,7 +964,9 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
 
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcImg), &srcImg));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(sampler), &sampler));
+    if (!useInlineSampler) {
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(sampler), &sampler));
+    }
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, xDim, 1u, 1u));
 
     ze_image_region_t srcRegion = {0, 0, 0, (uint32_t)srcImgDesc.width, (uint32_t)srcImgDesc.height, (uint32_t)srcImgDesc.depth};
@@ -969,6 +985,12 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
     float *output = reinterpret_cast<float *>(dstBuffer);
     std::vector<float> expectedOutput = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 70.f};
 
+    if (useInlineSampler) {
+        // inline sampler use CLK_ADDRESS_CLAMP - which will return border color (0,0,0,0) or (0,0,0,1)
+        // for out of bounds access
+        expectedOutput = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 0.f};
+    }
+
     for (auto i = 0u; i < nPixels; ++i) {
         for (auto j = 0u; j < nChannels; ++j) {
 
@@ -981,7 +1003,9 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
     }
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
-    SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler));
+    if (!useInlineSampler) {
+        SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler));
+    }
     SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
@@ -1437,7 +1461,7 @@ int main(int argc, char *argv[]) {
     ze_device_uuid_t uuid = deviceProperties.uuid;
     std::string revisionId = std::to_string(reinterpret_cast<uint16_t *>(uuid.id)[2]);
 
-    int numTests = 9;
+    int numTests = 10;
     int testCase = -1;
     testCase = LevelZeroBlackBoxTests::getParamValue(argc, argv, "", "--test-case", -1);
     if (testCase < -1 || testCase >= numTests) {
@@ -1588,12 +1612,24 @@ int main(int argc, char *argv[]) {
 
         case 8:
             if (is1dImageSupported) {
+                bool useInlineSampler = false;
                 std::cout << "\ntest case: testBindlessImage1DSampled\n"
                           << std::endl;
-                outputValidated &= testBindlessImage1DSampled(context, device, ss.str(), revisionId, mode);
+                outputValidated &= testBindlessImage1DSampled(context, device, ss.str(), revisionId, mode, useInlineSampler);
             } else {
                 std::cout << "Skipped. testBindlessImage1DSampled case not supported\n";
             }
+            break;
+        case 9:
+            if (is1dImageSupported) {
+                bool useInlineSampler = true;
+                std::cout << "\ntest case: testBindlessImage1DSampled with inline sampler\n"
+                          << std::endl;
+                outputValidated &= testBindlessImage1DSampled(context, device, ss.str(), revisionId, mode, useInlineSampler);
+            } else {
+                std::cout << "Skipped. testBindlessImage1DSampled case with inline sampler not supported\n";
+            }
+            break;
         }
 
         if (testCase != -1) {
