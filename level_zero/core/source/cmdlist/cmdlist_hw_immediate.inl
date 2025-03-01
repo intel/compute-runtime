@@ -424,7 +424,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     size_t commandStreamStart = this->cmdListCurrentStartOffset;
 
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
-    auto lockCSR = outerLock != nullptr ? std::move(*outerLock) : csr->obtainUniqueOwnership();
+    auto lockCSR = csr->obtainUniqueOwnership();
 
     if (NEO::ApiSpecificConfig::isSharedAllocPrefetchEnabled()) {
         auto svmAllocMgr = this->device->getDriverHandle()->getSvmAllocsManager();
@@ -1685,8 +1685,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
         return ret;
     }
 
-    auto mainAppendLock = static_cast<CommandQueueImp *>(this->cmdQImmediate)->getCsr()->obtainUniqueOwnership();
-    ret = this->cmdQImmediate->executeCommandLists(numCommandLists, phCommandLists, nullptr, true, this->commandContainer.getCommandStream());
+    auto cmdQueue = this->cmdQImmediate;
+    ret = cmdQueue->executeCommandLists(numCommandLists, phCommandLists, nullptr, true, this->commandContainer.getCommandStream());
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -1701,7 +1701,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     }
 
     bool hasStallingCmds = true;
-    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, true, &mainAppendLock);
+    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, true, nullptr);
 }
 
 } // namespace L0
