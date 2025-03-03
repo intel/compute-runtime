@@ -294,17 +294,17 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
         CmdListMemoryCopyParams copyParams = {};
         immCmdList0->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
-        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport || !heapless ? 1u : 2u;
+        auto expectedLatestTaskCount = immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasOptimizedCbEvent) ? 1u : 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || !heapless ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasOptimizedCbEvent) ? 3u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         immCmdList1->appendMemoryCopy(deviceAlloc, &hostCopyData, 1, nullptr, 0, nullptr, copyParams);
 
         expectedLatestTaskCount = 2u;
         expectedLatestTaskCount += (heapless ? 1u : 0u);
         EXPECT_EQ(expectedLatestTaskCount, ultCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
-        EXPECT_EQ(immCmdList0->dcFlushSupport || !heapless ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+        EXPECT_EQ(immCmdList0->dcFlushSupport || (!heapless && immCmdList0->latestOperationHasOptimizedCbEvent) ? 4u : 2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
 
         context->freeMem(deviceAlloc);
     }
@@ -3148,7 +3148,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
 
     immCmdList->hostSynchronize(0, false);
 
-    if (immCmdList->dcFlushSupport || !immCmdList->isHeaplessModeEnabled()) {
+    if (immCmdList->dcFlushSupport || (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent)) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3162,7 +3162,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
 
     immCmdList->hostSynchronize(0, false);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
+    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
@@ -3176,7 +3176,7 @@ HWTEST2_F(InOrderCmdListTests, givenHostVisibleEventOnLatestFlushWhenCallingSync
     // handle post sync operations
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
+    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(3u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else if (immCmdList->dcFlushSupport) {
@@ -3208,7 +3208,7 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
+    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(1u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -3220,7 +3220,7 @@ HWTEST2_F(InOrderCmdListTests, givenEmptyTempAllocationsStorageWhenCallingSynchr
 
     immCmdList->hostSynchronize(0, true);
 
-    if (!immCmdList->isHeaplessModeEnabled()) {
+    if (!immCmdList->isHeaplessModeEnabled() && immCmdList->latestOperationHasOptimizedCbEvent) {
         EXPECT_EQ(0u, immCmdList->synchronizeInOrderExecutionCalled);
         EXPECT_EQ(2u, ultCsr->waitForCompletionWithTimeoutTaskCountCalled);
     } else {
@@ -5122,7 +5122,7 @@ HWTEST2_F(InOrderCmdListTests, givenAubModeWhenSyncCalledAlwaysPollForCompletion
 
     immCmdList->hostSynchronize(0, false);
 
-    auto expectPollForCompletion = immCmdList->isHeaplessModeEnabled() ? 1u : 0u;
+    auto expectPollForCompletion = (immCmdList->isHeaplessModeEnabled() || !immCmdList->latestOperationHasOptimizedCbEvent) ? 1u : 0u;
     EXPECT_EQ(expectPollForCompletion++, ultCsr->pollForAubCompletionCalled);
 
     events[0]->hostSynchronize(std::numeric_limits<uint64_t>::max());

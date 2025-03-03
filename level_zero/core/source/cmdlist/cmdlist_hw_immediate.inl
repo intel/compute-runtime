@@ -1104,7 +1104,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::hostSynchronize(uint6
 
     auto tempAllocsCleanupRequired = handlePostWaitOperations && (mainStorageCleanupNeeded || copyOffloadStorageCleanupNeeded);
 
-    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && this->heaplessModeEnabled);
+    bool inOrderWaitAllowed = (isInOrderExecutionEnabled() && !tempAllocsCleanupRequired && this->latestFlushIsHostVisible && (this->heaplessModeEnabled || !this->latestOperationHasOptimizedCbEvent));
 
     uint64_t inOrderSyncValue = this->inOrderExecInfo.get() ? inOrderExecInfo->getCounterValue() : 0;
 
