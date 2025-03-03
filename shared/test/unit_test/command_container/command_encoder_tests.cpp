@@ -564,6 +564,63 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, CommandEncoderTests, WhenAnyParameterIsProvidedTh
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
 }
 
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, GivenWorkDimensionsAreZeroWhenAnyParameterIsProvidedThenVerifyRuntimeGenerationLocalIdsIsNotRequired) {
+    uint32_t workDim = 0;
+    uint32_t simd = 8;
+    std::array<uint8_t, 3> walkOrder = {};
+    uint32_t requiredWalkOrder = 0u;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, nullptr, walkOrder, false, requiredWalkOrder, simd));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, GivenSimdSizeIsOneWhenAnyParameterIsProvidedThenVerifyRuntimeGenerationLocalIdsIsRequired) {
+    uint32_t workDim = 3;
+    uint32_t simd = 1;
+    size_t lws[3] = {7, 7, 5};
+    std::array<uint8_t, 3> walkOrder = {0, 1, 2};
+    uint32_t requiredWalkOrder = 0u;
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, false, requiredWalkOrder, simd));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, GivenhwGenerationOfLocalIdsDebugFlagIsDisabledWhenAnyParameterIsProvidedThenVerifyRuntimeGenerationLocalIdsIsRequired) {
+    DebugManagerStateRestore restore;
+    debugManager.flags.EnableHwGenerationLocalIds.set(0);
+
+    uint32_t workDim = 3;
+    uint32_t simd = 8;
+    size_t lws[3] = {7, 7, 5};
+    std::array<uint8_t, 3> walkOrder = {0, 1, 2};
+    uint32_t requiredWalkOrder = 0u;
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, false, requiredWalkOrder, simd));
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenLocalWorkgroupSizeGreaterThen1024ThenRuntimeMustGenerateLocalIds) {
+    uint32_t workDim = 3;
+    uint32_t simd = 8;
+    std::array<size_t, 3> lws = {1025, 1, 1};
+
+    std::array<uint8_t, 3> walkOrder = {{0, 1, 2}};
+    uint32_t requiredWalkOrder = 77u;
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+
+    lws = {1, 1, 1025};
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+
+    lws = {32, 32, 4};
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+}
+
 HWTEST_F(CommandEncoderTests, givenNotify) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
