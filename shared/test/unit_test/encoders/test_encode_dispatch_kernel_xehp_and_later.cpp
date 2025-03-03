@@ -331,6 +331,7 @@ struct SamplerSupportedMatcher {
 HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensamplerStateWasCopied, SamplerSupportedMatcher) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+    using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
 
     if (!pDevice->getDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -346,8 +347,9 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
+    constexpr auto samplerTableBorderColorOffset = 0u;
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = samplerTableBorderColorOffset;
     dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0;
 
     unsigned char *samplerStateRaw = reinterpret_cast<unsigned char *>(&samplerState);
@@ -369,8 +371,13 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
     auto cmd = genCmdCast<COMPUTE_WALKER *>(*itor);
     auto &idd = cmd->getInterfaceDescriptor();
 
-    auto borderColorOffsetInDsh = usedBefore;
-    samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+    if (pDevice->getCompilerProductHelper().isHeaplessModeEnabled()) {
+        auto borderColor = reinterpret_cast<const SAMPLER_BORDER_COLOR_STATE *>(ptrOffset(dispatchInterface->getDynamicStateHeapData(), samplerTableBorderColorOffset));
+        EncodeStates<FamilyType>::adjustSamplerStateBorderColor(samplerState, *borderColor);
+    } else {
+        auto borderColorOffsetInDsh = usedBefore;
+        samplerState.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
+    }
 
     auto samplerStateOffset = idd.getSamplerStatePointer();
 
