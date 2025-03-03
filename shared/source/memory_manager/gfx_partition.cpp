@@ -94,12 +94,41 @@ static void reserve57BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::R
     reserveRangeWithMemoryMapsParse(osMemory, reservedCpuAddressRange, areaBase, areaTop, reservationSize);
 }
 
+[[maybe_unused]] static void reserveAllHigh48BitRangeGapsWithMemoryMapsParse(OSMemory *osMemory, std::vector<OSMemory::ReservedCpuAddressRange> &reservedCpuAddressRanges) {
+    constexpr uint64_t high48BitAreaBase = maxNBitValue(47) + 1;
+    constexpr uint64_t high48BitAreaTop = maxNBitValue(48);
+
+    OSMemory::MemoryMaps memoryMaps;
+    osMemory->getMemoryMaps(memoryMaps);
+    std::sort(memoryMaps.begin(), memoryMaps.end(), [](const OSMemory::MappedRegion &a, const OSMemory::MappedRegion &b) { return a.start < b.start; });
+
+    uint64_t current = high48BitAreaBase;
+    for (size_t i = 0; i < memoryMaps.size(); i++) {
+        if (memoryMaps[i].end <= high48BitAreaBase) {
+            continue;
+        }
+
+        if (memoryMaps[i].start > current) {
+            reservedCpuAddressRanges.push_back(osMemory->reserveCpuAddressRange(reinterpret_cast<void *>(current), static_cast<size_t>(memoryMaps[i].start - current), 0));
+        }
+
+        current = memoryMaps[i].end;
+    }
+
+    if (current < high48BitAreaTop) {
+        reservedCpuAddressRanges.push_back(osMemory->reserveCpuAddressRange(reinterpret_cast<void *>(current), static_cast<size_t>(high48BitAreaTop - current), 0));
+    }
+}
+
 GfxPartition::GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm) : reservedCpuAddressRangeForHeapSvm(reservedCpuAddressRangeForHeapSvm), osMemory(OSMemory::create()) {}
 
 GfxPartition::~GfxPartition() {
     osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForHeapSvm);
     reservedCpuAddressRangeForHeapSvm = {};
     osMemory->releaseCpuAddressRange(reservedCpuAddressRangeForHeapExtended);
+    for (auto &reservedCpuAddressRange : reservedCpuAddressRangesBlocked) {
+        osMemory->releaseCpuAddressRange(reservedCpuAddressRange);
+    }
 }
 
 void GfxPartition::Heap::init(uint64_t base, uint64_t size, size_t allocationAlignment) {
@@ -245,6 +274,12 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
         gfxBase = maxNBitValue(32) + 1;
         heapInit(HeapIndex::heapSvm, 0ull, gfxBase);
     } else {
+#if defined(__aarch64__)
+        // Remove the 0x800000000000-0xFFFFFFFFFFFF set of addresses from the SVM range.
+        // These are addressed differently on the CPU vs GPU (uncanonized vs not) and setting
+        // up SVM for them and translating these addresses is a bit involved.
+        reserveAllHigh48BitRangeGapsWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangesBlocked);
+#endif
         auto cpuVirtualAddressSize = CpuInfo::getInstance().getVirtualAddressSize();
         if (cpuVirtualAddressSize == 48 && gpuAddressSpace == maxNBitValue(48)) {
             gfxBase = maxNBitValue(48 - 1) + 1;
