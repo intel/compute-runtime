@@ -230,7 +230,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
     auto &commandStreamCSR = getCS(getRequiredCmdStreamSizeAligned(dispatchBcsFlags));
     size_t commandStreamStartCSR = commandStreamCSR.getUsed();
 
-    programHardwareContext(commandStreamCSR);
+    if (dispatchBcsFlags.dispatchOperation != AppendOperations::cmdList) {
+        programHardwareContext(commandStreamCSR);
+    }
 
     if (debugManager.flags.FlushTlbBeforeCopy.get() == 1) {
         MiFlushArgs tlbFlushArgs{waArgs};
@@ -302,45 +304,47 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     Device &device) {
 
     ImmediateFlushData flushData;
-    flushData.pipelineSelectFullConfigurationNeeded = !getPreambleSetFlag();
-    flushData.frontEndFullConfigurationNeeded = getMediaVFEStateDirty();
-    flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
-    flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
+    if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
+        flushData.pipelineSelectFullConfigurationNeeded = !getPreambleSetFlag();
+        flushData.frontEndFullConfigurationNeeded = getMediaVFEStateDirty();
+        flushData.stateComputeModeFullConfigurationNeeded = getStateComputeModeDirty();
+        flushData.stateBaseAddressFullConfigurationNeeded = getGSBAStateDirty();
 
-    if (!this->heaplessModeEnabled && dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSlot0Size > 0 || this->requiredScratchSlot1Size > 0)) {
-        bool checkFeStateDirty = false;
-        bool checkSbaStateDirty = false;
-        scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
-                                                        0u,
-                                                        this->requiredScratchSlot0Size,
-                                                        this->requiredScratchSlot1Size,
-                                                        *this->osContext,
-                                                        checkSbaStateDirty,
-                                                        checkFeStateDirty);
-        flushData.frontEndFullConfigurationNeeded |= checkFeStateDirty;
-        flushData.stateBaseAddressFullConfigurationNeeded |= checkSbaStateDirty;
+        if (!this->heaplessModeEnabled && dispatchFlags.sshCpuBase != nullptr && (this->requiredScratchSlot0Size > 0 || this->requiredScratchSlot1Size > 0)) {
+            bool checkFeStateDirty = false;
+            bool checkSbaStateDirty = false;
+            scratchSpaceController->setRequiredScratchSpace(dispatchFlags.sshCpuBase,
+                                                            0u,
+                                                            this->requiredScratchSlot0Size,
+                                                            this->requiredScratchSlot1Size,
+                                                            *this->osContext,
+                                                            checkSbaStateDirty,
+                                                            checkFeStateDirty);
+            flushData.frontEndFullConfigurationNeeded |= checkFeStateDirty;
+            flushData.stateBaseAddressFullConfigurationNeeded |= checkSbaStateDirty;
 
-        if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+            if (scratchSpaceController->getScratchSpaceSlot0Allocation()) {
+                makeResident(*scratchSpaceController->getScratchSpaceSlot0Allocation());
+            }
+            if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
+                makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+            }
         }
-        if (scratchSpaceController->getScratchSpaceSlot1Allocation()) {
-            makeResident(*scratchSpaceController->getScratchSpaceSlot1Allocation());
+
+        handleImmediateFlushPipelineSelectState(dispatchFlags, flushData);
+        handleImmediateFlushFrontEndState(dispatchFlags, flushData);
+        handleImmediateFlushStateComputeModeState(dispatchFlags, flushData);
+        handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
+        handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData, device);
+
+        flushData.stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
+        if (flushData.stateCacheFlushRequired) {
+            flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
         }
-    }
 
-    handleImmediateFlushPipelineSelectState(dispatchFlags, flushData);
-    handleImmediateFlushFrontEndState(dispatchFlags, flushData);
-    handleImmediateFlushStateComputeModeState(dispatchFlags, flushData);
-    handleImmediateFlushStateBaseAddressState(dispatchFlags, flushData, device);
-    handleImmediateFlushOneTimeContextInitState(dispatchFlags, flushData, device);
-
-    flushData.stateCacheFlushRequired = device.getBindlessHeapsHelper() ? device.getBindlessHeapsHelper()->getStateDirtyForContext(getOsContext().getContextId()) : false;
-    if (flushData.stateCacheFlushRequired) {
-        flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
-    }
-
-    if (requiresInstructionCacheFlush) {
-        flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
+        if (requiresInstructionCacheFlush) {
+            flushData.estimatedSize += MemorySynchronizationCommands<GfxFamily>::getSizeForInstructionCacheFlush();
+        }
     }
 
     // this must be the last call after all estimate size operations
@@ -349,21 +353,23 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushImmediateTask(
     auto &csrCommandStream = getCS(flushData.estimatedSize);
     flushData.csrStartOffset = csrCommandStream.getUsed();
 
-    if (flushData.stateCacheFlushRequired) {
-        device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
-        MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment());
-    }
+    if (dispatchFlags.dispatchOperation != AppendOperations::cmdList) {
+        if (flushData.stateCacheFlushRequired) {
+            device.getBindlessHeapsHelper()->clearStateDirtyForContext(getOsContext().getContextId());
+            MemorySynchronizationCommands<GfxFamily>::addStateCacheFlush(csrCommandStream, device.getRootDeviceEnvironment());
+        }
 
-    if (requiresInstructionCacheFlush) {
-        MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(csrCommandStream);
-        requiresInstructionCacheFlush = false;
-    }
+        if (requiresInstructionCacheFlush) {
+            MemorySynchronizationCommands<GfxFamily>::addInstructionCacheFlush(csrCommandStream);
+            requiresInstructionCacheFlush = false;
+        }
 
-    dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
-    dispatchImmediateFlushFrontEndCommand(flushData, device, csrCommandStream);
-    dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
-    dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
-    dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream, device);
+        dispatchImmediateFlushPipelineSelectCommand(flushData, csrCommandStream);
+        dispatchImmediateFlushFrontEndCommand(flushData, device, csrCommandStream);
+        dispatchImmediateFlushStateComputeModeCommand(flushData, csrCommandStream);
+        dispatchImmediateFlushStateBaseAddressCommand(flushData, csrCommandStream, device);
+        dispatchImmediateFlushOneTimeContextInitCommand(flushData, csrCommandStream, device);
+    }
 
     dispatchImmediateFlushJumpToImmediateCommand(immediateCommandStream, immediateCommandStreamStart, flushData, csrCommandStream);
 
@@ -1936,7 +1942,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushPipelineSelectState
         this->streamProperties.pipelineSelect.copyPropertiesAll(dispatchFlags.requiredState->pipelineSelect);
         flushData.pipelineSelectDirty = true;
         setPreambleSetFlag(true);
-    } else {
+    } else if (dispatchFlags.dispatchOperation == AppendOperations::kernel) {
         this->streamProperties.pipelineSelect.copyPropertiesSystolicMode(dispatchFlags.requiredState->pipelineSelect);
         flushData.pipelineSelectDirty = this->streamProperties.pipelineSelect.isDirty();
     }
@@ -1966,7 +1972,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushFrontEndState(Immed
         this->streamProperties.frontEndState.copyPropertiesAll(dispatchFlags.requiredState->frontEndState);
         flushData.frontEndDirty = true;
         setMediaVFEStateDirty(false);
-    } else {
+    } else if (dispatchFlags.dispatchOperation == AppendOperations::kernel) {
         this->streamProperties.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(dispatchFlags.requiredState->frontEndState);
         flushData.frontEndDirty = this->streamProperties.frontEndState.isDirty();
     }
@@ -1999,7 +2005,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStateComputeModeSta
         this->streamProperties.stateComputeMode.copyPropertiesAll(dispatchFlags.requiredState->stateComputeMode);
         flushData.stateComputeModeDirty = true;
         setStateComputeModeDirty(false);
-    } else {
+    } else if (dispatchFlags.dispatchOperation == AppendOperations::kernel) {
         this->streamProperties.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(dispatchFlags.requiredState->stateComputeMode);
         flushData.stateComputeModeDirty = this->streamProperties.stateComputeMode.isDirty();
     }
@@ -2026,7 +2032,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushStateBaseAddressSta
         this->streamProperties.stateBaseAddress.copyPropertiesAll(dispatchFlags.requiredState->stateBaseAddress);
         flushData.stateBaseAddressDirty = true;
         setGSBAStateDirty(false);
-    } else {
+    } else if (dispatchFlags.dispatchOperation == AppendOperations::kernel) {
         if (this->streamProperties.stateBaseAddress.indirectObjectBaseAddress.value == StreamProperty64::initValue) {
             this->streamProperties.stateBaseAddress.copyPropertiesStatelessMocsIndirectState(dispatchFlags.requiredState->stateBaseAddress);
         } else {

@@ -37,6 +37,7 @@ void CommandStreamReceiverFixture::setUp() {
     requiredStreamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     immediateFlushTaskFlags.requiredState = &requiredStreamProperties;
     immediateFlushTaskFlags.sshCpuBase = sshBuffer;
+    immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::kernel;
 
     if (pDevice->getPreemptionMode() == NEO::PreemptionMode::MidThread) {
         auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
