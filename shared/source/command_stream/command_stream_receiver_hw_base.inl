@@ -423,8 +423,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool hasStallingCmdsOnTaskStream = false;
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
-
-        processBarrierWithPostSync(commandStreamTask, dispatchFlags, levelClosed, currentPipeControlForNooping,
+        LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
+        processBarrierWithPostSync(epilogueCommandStream, dispatchFlags, levelClosed, currentPipeControlForNooping,
                                    epiloguePipeControlLocation, hasStallingCmdsOnTaskStream, args);
     }
     this->latestSentTaskCount = taskCount + 1;
@@ -560,6 +560,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (getWorkPartitionAllocation()) {
         makeResident(*getWorkPartitionAllocation());
+    }
+
+    if (dispatchFlags.optionalEpilogueCmdStream != nullptr) {
+        makeResident(*dispatchFlags.optionalEpilogueCmdStream->getGraphicsAllocation());
     }
 
     auto rtBuffer = device.getRTMemoryBackedBuffer();
@@ -2316,9 +2320,10 @@ inline BatchBuffer CommandStreamReceiverHw<GfxFamily>::prepareBatchBufferForSubm
     // If the CSR has work in its CS, flush it before the task
 
     if (submitTask) {
-        programEndingCmd(commandStreamTask, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies, EngineHelpers::isBcs(this->osContext->getEngineType()));
-        EncodeNoop<GfxFamily>::emitNoop(commandStreamTask, bbEndPaddingSize);
-        EncodeNoop<GfxFamily>::alignToCacheLine(commandStreamTask);
+        LinearStream &epilogueCommandStream = dispatchFlags.optionalEpilogueCmdStream != nullptr ? *dispatchFlags.optionalEpilogueCmdStream : commandStreamTask;
+        programEndingCmd(epilogueCommandStream, &bbEndLocation, directSubmissionEnabled, dispatchFlags.hasRelaxedOrderingDependencies, EngineHelpers::isBcs(this->osContext->getEngineType()));
+        EncodeNoop<GfxFamily>::emitNoop(epilogueCommandStream, bbEndPaddingSize);
+        EncodeNoop<GfxFamily>::alignToCacheLine(epilogueCommandStream);
 
         if (submitCSR) {
             chainCsrWorkToTask(commandStreamCSR, commandStreamTask, commandStreamStartTask, bbEndLocation, chainedBatchBufferStartOffset, chainedBatchBuffer);
