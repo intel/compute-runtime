@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -117,7 +118,7 @@ void IoctlHelper::registerMemoryToUnmap(DrmAllocation &allocation, void *pointer
 }
 
 BufferObject *IoctlHelper::allocUserptr(DrmMemoryManager &memoryManager, const AllocationData &allocData, uintptr_t address, size_t size, uint32_t rootDeviceIndex) {
-    return memoryManager.allocUserptr(address, size, rootDeviceIndex);
+    return memoryManager.allocUserptr(address, size, allocData.type, rootDeviceIndex);
 }
 
 } // namespace NEO

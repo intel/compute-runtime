@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,7 +64,7 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
         }
 
         auto boHostPtr = static_cast<uint8_t *>(cpuBasePointer) + tile * sizePerTile;
-        auto bo = allocUserptr(reinterpret_cast<uintptr_t>(boHostPtr), sizePerTile, allocationData.rootDeviceIndex);
+        auto bo = allocUserptr(reinterpret_cast<uintptr_t>(boHostPtr), sizePerTile, allocationData.type, allocationData.rootDeviceIndex);
         if (!bo) {
             freeGraphicsMemoryImpl(allocation);
             return nullptr;
