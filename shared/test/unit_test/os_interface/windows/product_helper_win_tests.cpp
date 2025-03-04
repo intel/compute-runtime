@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -63,6 +64,23 @@ TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThen
     ASSERT_EQ(0, ret);
 
     EXPECT_EQ(outHwInfo.capabilityTable.ftrSvm, ftrSvm);
+}
+
+TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetXe2CompressionCorrectly) {
+
+    auto releaseHelper = rootDeviceEnvironment->getReleaseHelper();
+    if (releaseHelper) {
+        outHwInfo.featureTable.flags.ftrXe2Compression = !releaseHelper->getFtrXe2Compression();
+    }
+
+    int ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
+    ASSERT_EQ(0, ret);
+
+    if (releaseHelper) {
+        EXPECT_EQ(releaseHelper->getFtrXe2Compression(), outHwInfo.featureTable.flags.ftrXe2Compression);
+    } else {
+        EXPECT_EQ(false, outHwInfo.featureTable.flags.ftrXe2Compression);
+    }
 }
 
 TEST_F(ProductHelperTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
