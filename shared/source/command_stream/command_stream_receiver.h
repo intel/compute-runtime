@@ -311,7 +311,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
     virtual SubmissionStatus flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;
     virtual bool isUpdateTagFromWaitEnabled() = 0;
-    virtual void flushMonitorFence(){};
+    virtual void flushMonitorFence(bool notifyKmd){};
     virtual bool isTlbFlushRequiredForStateCacheFlush();
 
     ScratchSpaceController *getScratchSpaceController() const {

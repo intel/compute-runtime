@@ -954,7 +954,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenRenderDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithNotifyFlag) {
+         givenRenderDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithoutNotifyFlag) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using Dispatcher = RenderDispatcher<FamilyType>;
@@ -981,7 +981,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
         if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             foundFenceUpdate = true;
-            EXPECT_TRUE(pipeControl->getNotifyEnable());
+            EXPECT_FALSE(pipeControl->getNotifyEnable());
             break;
         }
     }
@@ -989,7 +989,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenBlitterDirectSubmissionUsingNotifyEnabledWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithNotifyFlag) {
+         givenBlitterDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceThenExpectPostSyncOperationWithoutNotifyFlag) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using Dispatcher = BlitterDispatcher<FamilyType>;
 
@@ -1015,7 +1015,43 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
         auto miFlush = genCmdCast<MI_FLUSH_DW *>(*it);
         if (miFlush->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
             foundFenceUpdate = true;
-            EXPECT_TRUE(miFlush->getNotifyEnable());
+            EXPECT_FALSE(miFlush->getNotifyEnable());
+            break;
+        }
+    }
+    EXPECT_TRUE(foundFenceUpdate);
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest,
+         givenRenderDirectSubmissionWhenDispatchWorkloadCalledWithMonitorFenceAndNotifyEnableRequiredThenExpectPostSyncOperationWithNotifyFlag) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    FlushStampTracker flushStamp(true);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.disableMonitorFence = false;
+    directSubmission.notifyKmdDuringMonitorFence = true;
+
+    bool ret = directSubmission.initialize(true);
+    EXPECT_TRUE(ret);
+
+    size_t sizeUsedBefore = directSubmission.ringCommandStream.getUsed();
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+    EXPECT_TRUE(ret);
+
+    HardwareParse hwParse;
+    hwParse.parsePipeControl = true;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsedBefore);
+    hwParse.findHardwareCommands<FamilyType>();
+
+    bool foundFenceUpdate = false;
+    for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            foundFenceUpdate = true;
+            EXPECT_TRUE(pipeControl->getNotifyEnable());
             break;
         }
     }

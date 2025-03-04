@@ -24,7 +24,8 @@ class BlitterDispatcher : public Dispatcher<GfxFamily> {
                                      uint64_t immediateData,
                                      const RootDeviceEnvironment &rootDeviceEnvironment,
                                      bool partitionedWorkload,
-                                     bool dcFlushRequired);
+                                     bool dcFlushRequired,
+                                     bool notifyKmd);
     static size_t getSizeMonitorFence(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address);

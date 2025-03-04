@@ -96,7 +96,7 @@ class DirectSubmissionHw {
         return relaxedOrderingEnabled;
     }
 
-    virtual void flushMonitorFence(){};
+    virtual void flushMonitorFence(bool notifyKmd){};
 
     QueueThrottle getLastSubmittedThrottle() {
         return this->lastSubmittedThrottle;
@@ -263,5 +263,6 @@ class DirectSubmissionHw {
     bool relaxedOrderingInitialized = false;
     bool relaxedOrderingSchedulerRequired = false;
     bool inputMonitorFenceDispatchRequirement = true;
+    bool notifyKmdDuringMonitorFence = false;
 };
 } // namespace NEO

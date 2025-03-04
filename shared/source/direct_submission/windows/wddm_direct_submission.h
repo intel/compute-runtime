@@ -24,7 +24,7 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     ~WddmDirectSubmission() override;
 
-    void flushMonitorFence() override;
+    void flushMonitorFence(bool notifyKmd) override;
     void unblockPagingFenceSemaphore(uint64_t pagingFenceValue) override;
 
   protected:

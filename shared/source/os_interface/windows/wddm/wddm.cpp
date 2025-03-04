@@ -1185,14 +1185,17 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
     NTSTATUS status = STATUS_SUCCESS;
 
     if (!skipResourceCleanup() && lastFenceValue > *monitoredFence.cpuAddress) {
-        if (lastFenceValue > monitoredFence.lastSubmittedFence) {
-            this->forEachContextWithinWddm([&monitoredFence](const EngineControl &engine) {
-                auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
-                if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
-                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                    engine.commandStreamReceiver->flushMonitorFence();
-                }
-            });
+        CommandStreamReceiver *csr = nullptr;
+        this->forEachContextWithinWddm([&monitoredFence, &csr](const EngineControl &engine) {
+            auto &contextMonitoredFence = static_cast<OsContextWin *>(engine.osContext)->getResidencyController().getMonitoredFence();
+            if (contextMonitoredFence.cpuAddress == monitoredFence.cpuAddress) {
+                csr = engine.commandStreamReceiver;
+            }
+        });
+
+        if (csr != nullptr && lastFenceValue > monitoredFence.lastSubmittedFence) {
+            auto lock = csr->obtainUniqueOwnership();
+            csr->flushMonitorFence(false);
         }
 
         if (busyWait) {
@@ -1206,6 +1209,11 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
         }
 
         if (lastFenceValue > *monitoredFence.cpuAddress) {
+            if (csr != nullptr) {
+                // Flush monitor fence to emit KMD interrupt.
+                auto lock = csr->obtainUniqueOwnership();
+                csr->flushMonitorFence(true);
+            }
             D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {};
             waitFromCpu.ObjectCount = 1;
             waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
@@ -1216,7 +1224,6 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monitoredF
             DEBUG_BREAK_IF(status != STATUS_SUCCESS);
         }
     }
-
     return status == STATUS_SUCCESS;
 }
 

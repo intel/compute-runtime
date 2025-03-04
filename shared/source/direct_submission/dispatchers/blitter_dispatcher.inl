@@ -29,11 +29,12 @@ inline void BlitterDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmd
                                                                uint64_t immediateData,
                                                                const RootDeviceEnvironment &rootDeviceEnvironment,
                                                                bool partitionedWorkload,
-                                                               bool dcFlushRequired) {
+                                                               bool dcFlushRequired,
+                                                               bool notifyKmd) {
     NEO::EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
     MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.notifyEnable = true;
+    args.notifyEnable = notifyKmd;
 
     EncodeMiFlushDW<GfxFamily>::programWithWa(cmdBuffer, gpuAddress, immediateData, args);
 }

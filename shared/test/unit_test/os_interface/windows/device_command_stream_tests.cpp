@@ -1114,12 +1114,14 @@ struct MockWddmDrmDirectSubmissionDispatchCommandBuffer : public MockWddmDirectS
         return false;
     }
 
-    void flushMonitorFence() override {
+    void flushMonitorFence(bool notifyKmd) override {
         flushMonitorFenceCalled++;
+        lastNotifyKmdParamValue = notifyKmd;
     }
 
     uint32_t dispatchCommandBufferCalled = 0;
     uint32_t flushMonitorFenceCalled = 0u;
+    uint32_t lastNotifyKmdParamValue = false;
 };
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceThenFlushMonitorFenceOnDirectSubmission) {
@@ -1152,7 +1154,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenCsrWhenFlushMonitorFenceTh
     auto directSubmission = reinterpret_cast<MockSubmission *>(mockCsr->directSubmission.get());
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
 
-    csr->flushMonitorFence();
+    csr->flushMonitorFence(false);
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
 }
@@ -1178,11 +1180,11 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
 
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 0u);
-    csr->flushMonitorFence();
+    csr->flushMonitorFence(false);
     EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
 }
 
-HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFence) {
+HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerThanFenceValueToWaitWhenWaitFromCpuThenFlushMonitorFenceWithNotifyEnabledFlag) {
     using Dispatcher = RenderDispatcher<FamilyType>;
     using MockSubmission = MockWddmDrmDirectSubmissionDispatchCommandBuffer<FamilyType, Dispatcher>;
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
@@ -1224,7 +1226,8 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenLastSubmittedFenceLowerTha
     static_cast<OsContextWin *>(device->getDefaultEngine().osContext)->getResidencyController().resetMonitoredFenceParams(handle, &value, gpuVa);
     wddm->waitFromCpu(1, monitorFence, false);
 
-    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 1u);
+    EXPECT_EQ(directSubmission->flushMonitorFenceCalled, 2u);
+    EXPECT_TRUE(directSubmission->lastNotifyKmdParamValue);
 }
 
 HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionFailsThenFlushReturnsError) {

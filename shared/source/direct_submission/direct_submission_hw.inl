@@ -531,7 +531,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer(bool blocking) {
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
     }
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
@@ -618,7 +618,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferS
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
     }
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
 }
@@ -767,7 +767,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     if (dispatchMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, this->rootDeviceEnvironment, this->partitionedMode, this->dcFlushRequired, this->notifyKmdDuringMonitorFence);
     }
 
     dispatchSemaphoreSection(currentQueueWorkCount + 1);

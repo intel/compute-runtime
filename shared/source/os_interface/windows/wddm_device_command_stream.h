@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
         return wddm;
     }
     GmmPageTableMngr *createPageTableManager() override;
-    void flushMonitorFence() override;
+    void flushMonitorFence(bool notifyKmd) override;
     void setupContext(OsContext &osContext) override;
 
     using CommandStreamReceiver::pageTableManager;

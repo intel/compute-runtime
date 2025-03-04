@@ -65,7 +65,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
     uint64_t gpuVa = 0xFF00FF0000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, false, false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
@@ -127,7 +127,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, RenderDispatcherTest,
     uint64_t gpuVa = 0xBADA550000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), true, false);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), true, false, true);
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
@@ -162,7 +162,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWithDcFlushFlagTrueWhenAddingMonitorFe
     uint64_t gpuVa = 0xFF00FF0000ull;
     uint64_t value = 0x102030;
 
-    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, true);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, this->pDevice->getRootDeviceEnvironment(), false, true, false);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);

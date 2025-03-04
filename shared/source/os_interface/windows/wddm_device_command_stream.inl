@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -186,11 +186,11 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence() {
+void WddmCommandStreamReceiver<GfxFamily>::flushMonitorFence(bool notifyKmd) {
     if (this->directSubmission.get()) {
-        this->directSubmission->flushMonitorFence();
+        this->directSubmission->flushMonitorFence(notifyKmd);
     } else if (this->blitterDirectSubmission.get()) {
-        this->blitterDirectSubmission->flushMonitorFence();
+        this->blitterDirectSubmission->flushMonitorFence(notifyKmd);
     }
 }
 template <typename GfxFamily>

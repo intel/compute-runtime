@@ -90,6 +90,7 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
             }
         }
     }
+    this->notifyKmdDuringMonitorFence = true;
 }
 
 template <typename GfxFamily, typename Dispatcher>

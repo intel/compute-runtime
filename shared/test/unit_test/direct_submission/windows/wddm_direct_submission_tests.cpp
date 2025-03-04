@@ -368,19 +368,42 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
     EXPECT_EQ(nullptr, bbStart);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorFenceThenProgramPipeControl) {
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorFenceAndNotifyKmdDisabledThenProgramPipeControlWithoutNotifyEnable) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
 
     bool ret = wddmDirectSubmission.initialize(false);
     EXPECT_TRUE(ret);
-
-    wddmDirectSubmission.flushMonitorFence();
+    auto currOffset = wddmDirectSubmission.ringCommandStream.getUsed();
+    wddmDirectSubmission.flushMonitorFence(false);
 
     HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, 0u);
-    auto pipeControl = hwParse.getCommand<PIPE_CONTROL>();
-    EXPECT_NE(nullptr, pipeControl);
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, currOffset);
+    auto pipeControls = hwParse.getCommandsList<PIPE_CONTROL>();
+    bool isNotifyEnabledProgrammed = false;
+    for (auto &pipeControl : pipeControls) {
+        isNotifyEnabledProgrammed |= reinterpret_cast<PIPE_CONTROL *>(pipeControl)->getNotifyEnable();
+    }
+    EXPECT_FALSE(isNotifyEnabledProgrammed);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmDirectSubmissionWhenDispatchMonitorFenceAndNotifyKmdEnabledThenProgramPipeControlWithNotifyEnable) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
+
+    bool ret = wddmDirectSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    auto currOffset = wddmDirectSubmission.ringCommandStream.getUsed();
+    wddmDirectSubmission.flushMonitorFence(true);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(wddmDirectSubmission.ringCommandStream, currOffset);
+    auto pipeControls = hwParse.getCommandsList<PIPE_CONTROL>();
+    bool isNotifyEnabledProgrammed = false;
+    for (auto &pipeControl : pipeControls) {
+        isNotifyEnabledProgrammed |= reinterpret_cast<PIPE_CONTROL *>(pipeControl)->getNotifyEnable();
+    }
+    EXPECT_TRUE(isNotifyEnabledProgrammed);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenDirectSubmissionNewResourceTlbFlushWhenHandleNewResourcesSubmissionThenDispatchProperCommands) {
@@ -809,7 +832,7 @@ HWTEST_F(WddmDirectSubmissionTest,
 }
 
 HWTEST_F(WddmDirectSubmissionTest,
-         givenRenderDirectSubmissionWithDisabledMonitorFenceWhenMonitorFenceDispatchedThenDispatchPostSyncOperation) {
+         givenRenderDirectSubmissionWithDisabledMonitorFenceWhenMonitorFenceDispatchedThenDispatchPostSyncOperationWithoutNotifyFlag) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using Dispatcher = RenderDispatcher<FamilyType>;
@@ -863,7 +886,7 @@ HWTEST_F(WddmDirectSubmissionTest,
             uint64_t pipeControlPostSyncAddress = UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl);
             if (pipeControlPostSyncAddress == monitorFence.gpuAddress) {
                 foundFenceUpdate = true;
-                EXPECT_TRUE(pipeControl->getNotifyEnable());
+                EXPECT_FALSE(pipeControl->getNotifyEnable());
                 break;
             }
         }

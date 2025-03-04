@@ -931,6 +931,7 @@ using WddmSkipResourceCleanupFixtureTests = Test<WddmSkipResourceCleanupFixtureW
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsTrueThenSuccessIsReturnedAndGdiFunctionIsNotCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);
     init();
+    executionEnvironment->initializeMemoryManager();
     wddm->skipResourceCleanupVar = true;
     EXPECT_TRUE(wddm->skipResourceCleanup());
     wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
@@ -942,6 +943,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsFalseThenSuccessIsReturnedAndGdiFunctionIsCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);
     init();
+    executionEnvironment->initializeMemoryManager();
     wddm->skipResourceCleanupVar = false;
     EXPECT_FALSE(wddm->skipResourceCleanup());
     wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;
@@ -958,6 +960,7 @@ TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFro
 TEST_F(WddmSkipResourceCleanupFixtureTests, givenWaitForSynchronizationObjectFromCpuWhenSkipResourceCleanupIsFalseAndFenceWasNotUpdatedThenSuccessIsReturnedAndGdiFunctionIsNotCalled) {
     VariableBackup<uint64_t> varBackup(&waitForSynchronizationObjectFromCpuCounter);
     init();
+    executionEnvironment->initializeMemoryManager();
     wddm->skipResourceCleanupVar = false;
     EXPECT_FALSE(wddm->skipResourceCleanup());
     wddm->getGdi()->waitForSynchronizationObjectFromCpu = &waitForSynchronizationObjectFromCpuNoOpMock;

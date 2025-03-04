@@ -560,7 +560,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSection
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
-    Dispatcher::dispatchMonitorFence(directSubmission.ringCommandStream, 0ull, 0ull, directSubmission.rootDeviceEnvironment, false, directSubmission.dcFlushRequired);
+    Dispatcher::dispatchMonitorFence(directSubmission.ringCommandStream, 0ull, 0ull, directSubmission.rootDeviceEnvironment, false, directSubmission.dcFlushRequired, false);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
     EXPECT_EQ(Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment), directSubmission.ringCommandStream.getUsed());
 }
