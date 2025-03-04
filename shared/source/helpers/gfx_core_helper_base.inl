@@ -738,6 +738,11 @@ bool GfxCoreHelperHw<GfxFamily>::is48ResourceNeededForCmdBuffer() const {
 }
 
 template <typename GfxFamily>
+bool GfxCoreHelperHw<GfxFamily>::isStateSipRequired() const {
+    return true;
+}
+
+template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::singleTileExecImplicitScalingRequired(bool cooperativeKernel) const {
     return EncodeDispatchKernel<GfxFamily>::singleTileExecImplicitScalingRequired(cooperativeKernel);
 }

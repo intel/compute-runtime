@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,6 +41,10 @@ void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream,
 
 template <typename GfxFamily>
 void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, OsContext *context) {
+    auto &helper = device.getGfxCoreHelper();
+    if (!helper.isStateSipRequired()) {
+        return;
+    }
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
@@ -108,6 +112,10 @@ size_t PreemptionHelper::getRequiredPreambleSize(const Device &device) {
 
 template <typename GfxFamily>
 size_t PreemptionHelper::getRequiredStateSipCmdSize(Device &device, bool isRcs) {
+    auto &helper = device.getGfxCoreHelper();
+    if (!helper.isStateSipRequired()) {
+        return 0;
+    }
     size_t size = 0;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
     bool debuggingEnabled = device.getDebugger() != nullptr;

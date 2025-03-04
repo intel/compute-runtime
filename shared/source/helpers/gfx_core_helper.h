@@ -180,6 +180,8 @@ class GfxCoreHelper {
     virtual void initializeFromProductHelper(const ProductHelper &productHelper) = 0;
 
     virtual bool is48ResourceNeededForCmdBuffer() const = 0;
+    virtual bool isStateSipRequired() const = 0;
+
     virtual uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const = 0;
 
     virtual bool singleTileExecImplicitScalingRequired(bool cooperativeKernel) const = 0;
@@ -419,6 +421,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void initializeFromProductHelper(const ProductHelper &productHelper) override;
 
     bool is48ResourceNeededForCmdBuffer() const override;
+    bool isStateSipRequired() const override;
 
     uint32_t getKernelPrivateMemSize(const KernelDescriptor &kernelDescriptor) const override;
 

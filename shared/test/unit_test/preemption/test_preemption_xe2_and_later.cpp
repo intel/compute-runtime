@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -141,4 +142,22 @@ HWTEST2_F(Xe2MidThreadPreemptionTests, whenProgramStateSipIsCalledThenStateSipCm
     LinearStream cmdStream{buffer, bufferSize * sizeof(uint64_t)};
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
     EXPECT_NE(0U, cmdStream.getUsed());
+}
+
+HWTEST2_F(Xe2MidThreadPreemptionTests, GivenStateSipNotRequiredWhenProgramStateSipIsCalledThenStateSipIsNotAddedAndSizeIsZero, IsAtLeastXe2HpgCore) {
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+        bool isStateSipRequired() const override {
+            return false;
+        }
+    };
+    RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*this->device->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device, false);
+    EXPECT_EQ(0U, requiredSize);
+
+    constexpr auto bufferSize = 128u;
+    uint64_t buffer[bufferSize];
+    LinearStream cmdStream{buffer, bufferSize * sizeof(uint64_t)};
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
+    EXPECT_EQ(0U, cmdStream.getUsed());
 }
