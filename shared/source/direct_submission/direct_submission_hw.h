@@ -194,7 +194,6 @@ class DirectSubmissionHw {
 
     void updateRelaxedOrderingQueueSize(uint32_t newSize);
 
-    virtual void makeGlobalFenceAlwaysResident(){};
     struct RingBufferUse {
         RingBufferUse() = default;
         RingBufferUse(FlushStamp completionFence, GraphicsAllocation *ringBuffer) : completionFence(completionFence), ringBuffer(ringBuffer){};

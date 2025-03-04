@@ -28,6 +28,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeSystemMemoryFenceAddress;
     using BaseClass::getTagAddressValue;
+    using BaseClass::globalFenceAllocation;
     using BaseClass::gpuVaForAdditionalSynchronizationWA;
     using BaseClass::handleCompletionFence;
     using BaseClass::handleNewResourcesSubmission;
@@ -49,6 +50,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::semaphores;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
+    using BaseClass::systemMemoryFenceAddressSet;
     using BaseClass::updateMonitorFenceValueForResidencyList;
     using BaseClass::updateTagValue;
     using BaseClass::wddm;

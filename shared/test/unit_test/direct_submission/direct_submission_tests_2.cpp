@@ -839,6 +839,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     EXPECT_TRUE(directSubmission.partitionConfigSet);
+    auto miMemFenceRequired = directSubmission.globalFenceAllocation && directSubmission.miMemFenceRequired && !directSubmission.systemMemoryFenceAddressSet;
     directSubmission.activeTiles = 2;
     directSubmission.partitionedMode = true;
     directSubmission.partitionConfigSet = false;
@@ -863,6 +864,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
         expectedAllocationsCount += 2;
 
         submitSize += RelaxedOrderingHelper::getSizeRegistersInit<FamilyType>();
+    }
+    if (miMemFenceRequired) {
+        expectedAllocationsCount += 1;
     }
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(1u, directSubmission.handleResidencyCount);
