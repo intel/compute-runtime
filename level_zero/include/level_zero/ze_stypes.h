@@ -37,7 +37,8 @@
 #define ZEX_STRUCTURE_COUNTER_BASED_EVENT_EXTERNAL_STORAGE_ALLOC_PROPERTIES (ze_structure_type_t)0x00030027
 
 // Metric structure types
-#define ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP (zet_structure_type_t)0x0001000a      // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
-#define ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP (zet_structure_type_t)0x00010009 // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+#define ZET_INTEL_STRUCTURE_TYPE_METRIC_SOURCE_ID_EXP (zet_structure_type_t)0x0001000a                  // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+#define ZET_INTEL_STRUCTURE_TYPE_METRIC_CALCULATE_DESC_EXP (zet_structure_type_t)0x00010009             // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+#define ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES (zet_structure_type_t)0x00010008 // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
 
 #endif

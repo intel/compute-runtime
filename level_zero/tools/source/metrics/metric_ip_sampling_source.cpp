@@ -208,7 +208,9 @@ ze_result_t IpSamplingMetricSourceImp::getConcurrentMetricGroups(std::vector<zet
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) {
+ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup,
+                                                                           zet_metric_group_properties_t *pBaseProperties,
+                                                                           void *pNext) {
     ze_result_t retVal = ZE_RESULT_ERROR_INVALID_ARGUMENT;
     while (pNext) {
         auto extendedProperties = reinterpret_cast<zet_base_properties_t *>(pNext);
@@ -229,7 +231,12 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
             zet_metric_group_type_exp_t *groupType = reinterpret_cast<zet_metric_group_type_exp_t *>(extendedProperties);
             groupType->type = ZET_METRIC_GROUP_TYPE_EXP_FLAG_OTHER;
             retVal = ZE_RESULT_SUCCESS;
+        } else if (extendedProperties->stype == ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES) {
+            auto calcProperties = reinterpret_cast<zet_intel_metric_group_calculate_properties_exp_t *>(extendedProperties);
+            calcProperties->isTimeFilterSupported = false;
+            retVal = ZE_RESULT_SUCCESS;
         }
+
         pNext = extendedProperties->pNext;
     }
 
@@ -258,7 +265,7 @@ ze_result_t IpSamplingMetricGroupImp::getProperties(zet_metric_group_properties_
     pProperties->pNext = pNext;
 
     if (pNext) {
-        return metricSource.handleMetricGroupExtendedProperties(toHandle(), pNext);
+        return metricSource.handleMetricGroupExtendedProperties(toHandle(), pProperties, pNext);
     }
 
     return ZE_RESULT_SUCCESS;

@@ -1328,6 +1328,39 @@ HWTEST2_F(MetricIpSamplingEnumerationTest, givenValidIPSamplingMetricGroupThenOA
                                                                                              &excludedMetricsCount, phExcludedMetrics,
                                                                                              &hCalculateOperation));
 }
+HWTEST2_F(MetricIpSamplingEnumerationTest, WhenReadingMetricGroupTimeCalculateFilterThenCorrectValueIsReturned, EustallSupportedPlatforms) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
+        device->getProperties(&deviceProps);
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+
+        zet_intel_metric_group_calculate_properties_exp_t metricGroupCalcProps{};
+        metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES;
+        metricGroupCalcProps.pNext = nullptr;
+        metricGroupCalcProps.isTimeFilterSupported = true;
+
+        zet_metric_group_properties_t properties{};
+        properties.pNext = &metricGroupCalcProps;
+
+        EXPECT_EQ(zetMetricGroupGetProperties(metricGroups[0], &properties), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(strcmp(properties.description, "EU stall sampling"), 0);
+        EXPECT_EQ(strcmp(properties.name, "EuStallSampling"), 0);
+        EXPECT_EQ(metricGroupCalcProps.isTimeFilterSupported, false);
+    }
+}
 
 } // namespace ult
 } // namespace L0

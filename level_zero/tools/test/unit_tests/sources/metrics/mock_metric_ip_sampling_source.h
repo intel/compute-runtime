@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,9 @@ class MockMetricIpSamplingSource : public IpSamplingMetricSourceImp {
         return createMetricGroupsFromMetricsReturn;
     }
 
-    ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) override {
+    ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup,
+                                                    zet_metric_group_properties_t *pBaseProperties,
+                                                    void *pNext) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 };

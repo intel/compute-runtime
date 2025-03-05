@@ -551,6 +551,83 @@ TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFreq
     EXPECT_EQ(metricTimestampProperties.timestampValidBits, 32UL);
 }
 
+TEST_F(MetricEnumerationTest, whenReadingMetricCroupCalculateParametersThenExpectedValuesAreReturned) {
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_13> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_13 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+    metricsConcurrentGroupParams.IoMeasurementInformationCount = 1;
+
+    Mock<MetricsDiscovery::IEquation_1_0> ioReadEquation;
+    MetricsDiscovery::TEquationElement_1_0 ioEquationElement = {};
+    ioEquationElement.Type = MetricsDiscovery::EQUATION_ELEM_IMM_UINT64;
+    ioEquationElement.ImmediateUInt64 = 0;
+
+    ioReadEquation.getEquationElement.push_back(&ioEquationElement);
+
+    Mock<MetricsDiscovery::IInformation_1_0> ioMeasurement;
+    MetricsDiscovery::TInformationParams_1_0 oaInformation = {};
+    oaInformation.SymbolName = "BufferOverflow";
+    oaInformation.IoReadEquation = &ioReadEquation;
+    metricsConcurrentGroup.GetIoMeasurementInformationResult = &ioMeasurement;
+    ioMeasurement.GetParamsResult = &oaInformation;
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_13> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_11 metricsSetParams = {};
+
+    // Set flags for Streamer and Query metric sets.
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_IOSTREAM;
+    ;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    metricsDevice.getConcurrentGroupResults.push_back(&metricsConcurrentGroup);
+
+    metricsConcurrentGroup.GetParamsResult = &metricsConcurrentGroupParams;
+    metricsConcurrentGroup.getMetricSetResult = &metricsSet;
+
+    metricsSet.GetParamsResult = &metricsSetParams;
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 2u);
+
+    std::vector<zet_metric_group_handle_t> metricGroupsHandles(metricGroupCount);
+
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroupsHandles.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 2u);
+
+    zet_intel_metric_group_calculate_properties_exp_t metricGroupCalcProps{};
+    metricGroupCalcProps.stype = ZET_INTEL_STRUCTURE_TYPE_METRIC_GROUP_CALCULATE_EXP_PROPERTIES;
+    metricGroupCalcProps.pNext = nullptr;
+    metricGroupCalcProps.isTimeFilterSupported = false;
+
+    zet_metric_group_properties_t metricGroupProperties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES, &metricGroupCalcProps};
+
+    // Metric group properties.
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupsHandles[0], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    // Streamer metric groups support time filtering.
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
+    EXPECT_EQ(metricGroupCalcProps.isTimeFilterSupported, true);
+
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupsHandles[1], &metricGroupProperties), ZE_RESULT_SUCCESS);
+    // Query metric groups don't support time filtering.
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
+    EXPECT_EQ(metricGroupCalcProps.isTimeFilterSupported, false);
+}
+
 TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingPropertiesAndIncorrectStructPassedThenFailsWithInvalidArgument) {
 
     // Metrics Discovery device.

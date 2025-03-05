@@ -701,7 +701,7 @@ ze_result_t OaMetricGroupImp::getProperties(zet_metric_group_properties_t *pProp
         copyProperties(properties, *pProperties);
         pProperties->pNext = pNext;
         if (pNext) {
-            status = metricSource.handleMetricGroupExtendedProperties(toHandle(), pNext);
+            status = metricSource.handleMetricGroupExtendedProperties(toHandle(), pProperties, pNext);
         }
     }
 

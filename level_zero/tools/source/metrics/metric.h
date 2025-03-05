@@ -85,7 +85,9 @@ class MetricSource {
     uint32_t getType() const {
         return type;
     }
-    virtual ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) = 0;
+    virtual ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup,
+                                                            zet_metric_group_properties_t *pBaseProperties,
+                                                            void *pNext) = 0;
     virtual ze_result_t createMetricGroupsFromMetrics(std::vector<zet_metric_handle_t> &metricList,
                                                       const char metricGroupNamePrefix[ZET_INTEL_MAX_METRIC_GROUP_NAME_PREFIX_EXP],
                                                       const char description[ZET_MAX_METRIC_GROUP_DESCRIPTION],

@@ -20,7 +20,9 @@ class MockMetricSource : public L0::MetricSource {
     bool isAvailable() override { return isAvailableReturn; }
     ze_result_t appendMetricMemoryBarrier(L0::CommandList &commandList) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override { return ZE_RESULT_ERROR_UNKNOWN; }
-    ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup, void *pNext) override { return ZE_RESULT_ERROR_UNKNOWN; }
+    ze_result_t handleMetricGroupExtendedProperties(zet_metric_group_handle_t hMetricGroup,
+                                                    zet_metric_group_properties_t *pBaseProperties,
+                                                    void *pNext) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t activateMetricGroupsPreferDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t activateMetricGroupsAlreadyDeferred() override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t metricProgrammableGet(uint32_t *pCount, zet_metric_programmable_exp_handle_t *phMetricProgrammables) override {

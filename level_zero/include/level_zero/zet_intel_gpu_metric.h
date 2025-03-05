@@ -204,6 +204,17 @@ typedef enum _zet_intel_metric_calculate_exp_version_t {
 } zet_intel_metric_calculate_exp_version_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Query an  metric group calculate properties
+/// This structure can be passed in the 'pNext' of zet_metric_group_properties_t
+typedef struct _zet_intel_metric_group_calculate_properties_exp_t {
+    zet_structure_type_t stype; ///< [in] type of this structure
+    void *pNext;                ///< [in][optional] must be null or a pointer to an extension-specific
+                                ///< structure (i.e. contains stype and pNext).
+    bool isTimeFilterSupported; ///< [out] Flag to indicate if the metric group supports time filtering for
+                                ///< metrics calculation.
+} zet_intel_metric_group_calculate_properties_exp_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle of metric calculate operation
 typedef struct _zet_intel_metric_calculate_operation_exp_handle_t *zet_intel_metric_calculate_operation_exp_handle_t;
 
