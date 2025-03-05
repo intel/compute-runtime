@@ -361,9 +361,6 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     if (completionFenceAllocation != nullptr) {
         allocations.push_back(completionFenceAllocation);
     }
-    if (this->globalFenceAllocation != nullptr && this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
-        allocations.push_back(globalFenceAllocation);
-    }
 
     if (this->relaxedOrderingEnabled) {
         const AllocationProperties allocationProperties(rootDeviceIndex,
@@ -1242,6 +1239,7 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress() {
+    this->makeGlobalFenceAlwaysResident();
     EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation);
 }
 

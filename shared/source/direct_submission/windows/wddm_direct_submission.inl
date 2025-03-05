@@ -219,4 +219,13 @@ inline void WddmDirectSubmission<GfxFamily, Dispatcher>::unblockPagingFenceSemap
     this->semaphoreData->pagingFenceCounter = static_cast<uint32_t>(*this->wddm->getPagingFenceAddress());
 }
 
+template <typename GfxFamily, typename Dispatcher>
+inline void WddmDirectSubmission<GfxFamily, Dispatcher>::makeGlobalFenceAlwaysResident() {
+    if (this->globalFenceAllocation != nullptr) {
+        DirectSubmissionAllocations allocations;
+        allocations.push_back(this->globalFenceAllocation);
+        UNRECOVERABLE_IF(!this->makeResourcesResident(allocations));
+    }
+}
+
 } // namespace NEO

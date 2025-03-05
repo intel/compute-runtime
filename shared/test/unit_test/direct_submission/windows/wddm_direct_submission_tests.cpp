@@ -136,6 +136,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedWithMiMemFenc
     auto &compilerProductHelper = device->getCompilerProductHelper();
     auto isHeaplessStateInit = compilerProductHelper.isHeaplessStateInitEnabled(compilerProductHelper.isHeaplessModeEnabled());
     if (isFenceRequired && !isHeaplessStateInit) {
+        EXPECT_EQ(1u, wddm->makeResidentResult.handleCount);
         EXPECT_TRUE(device->getDefaultEngine().commandStreamReceiver->getGlobalFenceAllocation()->isExplicitlyMadeResident());
     }
     *wddmDirectSubmission->ringFence.cpuAddress = 1ull;
@@ -150,7 +151,7 @@ using WddmDirectSubmissionNoPreemptionTest = WddmDirectSubmissionFixture<Preempt
 HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedAndNotStartedThenExpectNoCommandsDispatched) {
     std::unique_ptr<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>> wddmDirectSubmission =
         std::make_unique<MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>>>(*device->getDefaultEngine().commandStreamReceiver);
-    auto miMemFenceRequired = wddmDirectSubmission->globalFenceAllocation && wddmDirectSubmission->miMemFenceRequired && !wddmDirectSubmission->systemMemoryFenceAddressSet;
+
     EXPECT_EQ(0u, wddmDirectSubmission->commandBufferHeader->NeedsMidBatchPreEmptionSupport);
 
     bool ret = wddmDirectSubmission->initialize(false);
@@ -164,9 +165,6 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     size_t expectedAllocationsCnt = 4;
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
-    }
-    if (miMemFenceRequired) {
-        expectedAllocationsCnt++;
     }
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
@@ -201,7 +199,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSubmitingCmdBufferThenExpectPass
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRingMonitorFenceCreatedAndAllocationsResident) {
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    auto miMemFenceRequired = wddmDirectSubmission.globalFenceAllocation && wddmDirectSubmission.miMemFenceRequired && !wddmDirectSubmission.systemMemoryFenceAddressSet;
+
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
     auto &gfxCoreHelper = device->getGfxCoreHelper();
@@ -209,9 +207,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
-    if (miMemFenceRequired) {
-        expectedAllocationsCnt++;
-    }
+
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
@@ -241,7 +237,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFailsThenExpectRingMonitorFenceCreatedAndAllocationsNotResident) {
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device->getDefaultEngine().commandStreamReceiver);
-    auto miMemFenceRequired = wddmDirectSubmission.globalFenceAllocation && wddmDirectSubmission.miMemFenceRequired && !wddmDirectSubmission.systemMemoryFenceAddressSet;
+
     wddm->callBaseMakeResident = false;
     wddm->makeResidentStatus = false;
 
@@ -252,9 +248,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
-    if (miMemFenceRequired) {
-        expectedAllocationsCnt++;
-    }
+
     EXPECT_EQ(0u, wddmMockInterface->createMonitoredFenceCalled);
     EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }

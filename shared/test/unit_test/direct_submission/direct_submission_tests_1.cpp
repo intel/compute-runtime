@@ -245,7 +245,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAlloca
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    auto miMemFenceRequired = directSubmission.globalFenceAllocation && directSubmission.miMemFenceRequired && !directSubmission.systemMemoryFenceAddressSet;
 
     directSubmission.callBaseResident = true;
     bool ret = directSubmission.initialize(true);
@@ -257,9 +256,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAlloca
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
-    if (miMemFenceRequired) {
-        expectedAllocationsCnt++;
-    }
+
     EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
     ASSERT_EQ(expectedAllocationsCnt, mockMemoryOperations->gfxAllocationsForMakeResident.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
@@ -276,7 +273,6 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocatio
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.reset(mockMemoryOperations.get());
 
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    auto miMemFenceRequired = directSubmission.globalFenceAllocation && directSubmission.miMemFenceRequired && !directSubmission.systemMemoryFenceAddressSet;
 
     MockGraphicsAllocation completionFenceAllocation{};
 
@@ -292,18 +288,13 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocatio
     if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
-    if (miMemFenceRequired) {
-        expectedAllocationsCnt++;
-    }
+
     EXPECT_EQ(1, mockMemoryOperations->makeResidentCalledCount);
     ASSERT_EQ(expectedAllocationsCnt, mockMemoryOperations->gfxAllocationsForMakeResident.size());
     EXPECT_EQ(directSubmission.ringBuffers[0].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[0]);
     EXPECT_EQ(directSubmission.ringBuffers[1].ringBuffer, mockMemoryOperations->gfxAllocationsForMakeResident[1]);
     EXPECT_EQ(directSubmission.semaphores, mockMemoryOperations->gfxAllocationsForMakeResident[2]);
     EXPECT_EQ(directSubmission.completionFenceAllocation, mockMemoryOperations->gfxAllocationsForMakeResident[3]);
-    if (miMemFenceRequired) {
-        EXPECT_EQ(directSubmission.globalFenceAllocation, mockMemoryOperations->gfxAllocationsForMakeResident[4]);
-    }
 
     pDevice->getRootDeviceEnvironmentRef().memoryOperationsInterface.release();
 }
