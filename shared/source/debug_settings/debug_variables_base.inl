@@ -334,6 +334,7 @@ DECLARE_DEBUG_VARIABLE(bool, LogAllocationType, false, "Logs allocation type to 
 DECLARE_DEBUG_VARIABLE(bool, LogAllocationStdout, false, "Log allocations to stdout instead of file")
 DECLARE_DEBUG_VARIABLE(bool, LogMemoryObject, false, "Logs memory object ptrs, sizes and operations")
 DECLARE_DEBUG_VARIABLE(bool, LogWaitingForCompletion, false, "Logs waiting for completion")
+DECLARE_DEBUG_VARIABLE(bool, LogUsmReuse, false, "Logs operations of usm reuse to csv file")
 DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, false, "enables debug messages and checks for Residency Model")
 DECLARE_DEBUG_VARIABLE(bool, EventsDebugEnable, false, "enables debug messages for events, virtual events, blocked enqueues, events trees etc.")
 DECLARE_DEBUG_VARIABLE(bool, EventsTrackerEnable, false, "enables event graphs dumping")

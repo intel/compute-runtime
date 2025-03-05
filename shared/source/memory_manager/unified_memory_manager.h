@@ -167,9 +167,26 @@ class SVMAllocsManager {
     };
 
     struct SvmAllocationCache {
+        enum class CacheOperationType {
+            insert,
+            get,
+            trim,
+            trimOld
+        };
+
+        struct SvmAllocationCachePerfInfo {
+            uint64_t allocationSize;
+            std::chrono::high_resolution_clock::time_point timePoint;
+            InternalMemoryType allocationType;
+            CacheOperationType operationType;
+            bool isSuccess;
+        };
+
         static constexpr size_t maxServicedSize = 256 * MemoryConstants::megaByte;
         static constexpr size_t minimalSizeToCheckUtilization = 4 * MemoryConstants::pageSize64k;
         static constexpr double minimalAllocUtilization = 0.5;
+
+        SvmAllocationCache();
 
         static bool sizeAllowed(size_t size) { return size <= SvmAllocationCache::maxServicedSize; }
         bool insert(size_t size, void *ptr, SvmAllocationData *svmData);
@@ -179,12 +196,15 @@ class SVMAllocsManager {
         void trim();
         void trimOldAllocs(std::chrono::high_resolution_clock::time_point trimTimePoint);
         void cleanup();
+        void logCacheOperation(const SvmAllocationCachePerfInfo &cachePerfEvent) const;
 
         std::vector<SvmCacheAllocationInfo> allocations;
+
         std::mutex mtx;
         size_t maxSize = 0;
         SVMAllocsManager *svmAllocsManager = nullptr;
         MemoryManager *memoryManager = nullptr;
+        bool enablePerformanceLogging = false;
     };
 
     enum class FreePolicyType : uint32_t {

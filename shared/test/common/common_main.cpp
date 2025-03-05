@@ -139,6 +139,7 @@ void applyCommonWorkarounds() {
     // Create FileLogger to prevent false memory leaks
     {
         NEO::fileLoggerInstance();
+        NEO::usmReusePerfLoggerInstance();
     }
 }
 

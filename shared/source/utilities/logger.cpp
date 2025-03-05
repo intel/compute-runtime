@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,6 +23,11 @@ namespace NEO {
 FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
     static FileLogger<globalDebugFunctionalityLevel> fileLoggerInstance(std::string("igdrcl.log"), debugManager.flags);
     return fileLoggerInstance;
+}
+
+FileLogger<globalDebugFunctionalityLevel> &usmReusePerfLoggerInstance() {
+    static FileLogger<globalDebugFunctionalityLevel> usmReusePerfLoggerInstance(std::string("usm_reuse_perf.csv"), debugManager.flags);
+    return usmReusePerfLoggerInstance;
 }
 
 template <DebugFunctionalityLevel debugLevel>

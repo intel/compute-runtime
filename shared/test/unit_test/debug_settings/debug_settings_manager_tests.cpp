@@ -8,6 +8,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/utilities/debug_file_reader.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/debug_settings/debug_settings_manager_fixture.h"
@@ -437,6 +438,43 @@ TEST(DebugSettingsManager, GivenLogsDisabledAndDumpToFileWhenPrintDebuggerLogCal
 
     auto logFileExists = fileExists(logFile);
     ASSERT_FALSE(logFileExists);
+}
+
+TEST(DebugSettingsManager, GivenLogsEnabledWhenLogCacheOperationCalledThenStringPrintedToFile) {
+    if (!NEO::usmReusePerfLoggerInstance().enabled()) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+
+    auto logFile = NEO::usmReusePerfLoggerInstance().getLogFileName();
+    std::remove(logFile);
+
+    SVMAllocsManager::SvmAllocationCache svmAllocationCache;
+    auto timePoint = std::chrono::high_resolution_clock::now();
+    svmAllocationCache.logCacheOperation({.allocationSize = 1024,
+                                          .timePoint = timePoint,
+                                          .allocationType = InternalMemoryType::deviceUnifiedMemory,
+                                          .operationType = SVMAllocsManager::SvmAllocationCache::CacheOperationType::trim,
+                                          .isSuccess = true});
+
+    auto logFileExists = fileExists(logFile);
+    EXPECT_TRUE(logFileExists);
+
+    size_t retSize;
+    auto data = loadDataFromFile(logFile, retSize);
+    auto retString = std::string(data.get(), data.get() + retSize);
+    std::stringstream expectedString;
+    expectedString << timePoint.time_since_epoch().count() << " , "
+                   << "device"
+                   << " , "
+                   << "trim"
+                   << " , "
+                   << "1024"
+                   << " , "
+                   << "TRUE";
+
+    EXPECT_NE(std::string::npos, retString.find(expectedString.str()));
+    std::remove(logFile);
 }
 
 TEST(DebugLog, WhenLogDebugStringCalledThenNothingIsPrintedToStdout) {
