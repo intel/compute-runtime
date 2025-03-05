@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "level_zero/sysman/source/driver/sysman_driver_handle.h"
 
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -29,6 +30,16 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     uint32_t numDevices = 0;
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
     struct OsSysmanDriver *pOsSysmanDriver = nullptr;
+    SysmanDevice *getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice);
+
+  private:
+    void updateUuidMap(SysmanDevice *sysmanDevice);
+    SysmanDevice *findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle);
+    std::mutex coreToSysmanDeviceMapLock;
+    std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap;
+
+  protected:
+    std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap;
 };
 
 extern struct SysmanDriverHandleImp *globalSysmanDriver;

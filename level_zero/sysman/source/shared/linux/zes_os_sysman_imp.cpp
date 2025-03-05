@@ -72,6 +72,7 @@ ze_result_t LinuxSysmanImp::init() {
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     pPmuInterface = PmuInterface::create(this);
+
     return result;
 }
 
@@ -493,6 +494,100 @@ bool LinuxSysmanImp::getTelemData(uint32_t subDeviceId, std::string &telemDir, s
     pTelemData->guid = guid;
     mapOfSubDeviceIdToTelemData[subDeviceId] = std::move(pTelemData);
     return true;
+}
+
+void LinuxSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
+    constexpr uint32_t rootDeviceCount = 1;
+    uint32_t totalUuidCountForDevice = this->getSubDeviceCount() + rootDeviceCount;
+    deviceUuids.clear();
+    for (uint32_t index = 0; index < totalUuidCountForDevice; index++) {
+        std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+        bool uuidValid = this->getUuidFromSubDeviceInfo(index, deviceUuid);
+        if (uuidValid) {
+            uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};
+            std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(uuid));
+            std::string uuidString(reinterpret_cast<char const *>(uuid));
+            deviceUuids.push_back(uuidString);
+        }
+    }
+}
+
+bool LinuxSysmanImp::generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
+        uuid.fill(0);
+
+        // Device UUID uniquely identifies a device within a system.
+        // We generate it based on device information along with PCI information
+        // This guarantees uniqueness of UUIDs on a system even when multiple
+        // identical Intel GPUs are present.
+
+        // We want to have UUID matching between different GPU APIs (including outside
+        // of compute_runtime project - i.e. other than L0 or OCL). This structure definition
+        // has been agreed upon by various Intel driver teams.
+        //
+        // Consult other driver teams before changing this.
+        //
+
+        struct DeviceUUID {
+            uint16_t vendorID;
+            uint16_t deviceID;
+            uint16_t revisionID;
+            uint16_t pciDomain;
+            uint8_t pciBus;
+            uint8_t pciDev;
+            uint8_t pciFunc;
+            uint8_t reserved[4];
+            uint8_t subDeviceID;
+        };
+
+        auto &hwInfo = getParentSysmanDeviceImp()->getHardwareInfo();
+        DeviceUUID deviceUUID = {};
+        deviceUUID.vendorID = 0x8086; // Intel
+        deviceUUID.deviceID = hwInfo.platform.usDeviceID;
+        deviceUUID.revisionID = hwInfo.platform.usRevId;
+        deviceUUID.pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        deviceUUID.pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        deviceUUID.pciDev = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
+        deviceUUID.subDeviceID = subDeviceID;
+
+        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+
+        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+
+        return true;
+    }
+    return false;
+}
+
+bool LinuxSysmanImp::getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    auto subDeviceCount = getSubDeviceCount();
+    if (uuidVec.size() == 0) {
+        constexpr uint32_t rootDeviceCount = 1;
+        uuidVec.resize(subDeviceCount + rootDeviceCount);
+    }
+    if (getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
+        auto driverModel = getParentSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();
+        auto &gfxCoreHelper = getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+        auto &productHelper = getParentSysmanDeviceImp()->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
+        if (NEO::debugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
+            if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
+                auto hwDeviceId = getSysmanHwDeviceIdInstance();
+                this->uuidVec[subDeviceID].isValid = productHelper.getUuid(driverModel, subDeviceCount, subDeviceID, this->uuidVec[subDeviceID].id);
+            }
+        }
+
+        if (!this->uuidVec[subDeviceID].isValid) {
+            NEO::PhysicalDevicePciBusInfo pciBusInfo = driverModel->getPciBusInfo();
+            this->uuidVec[subDeviceID].isValid = generateUuidFromPciAndSubDeviceInfo(subDeviceID, pciBusInfo, this->uuidVec[subDeviceID].id);
+        }
+
+        if (this->uuidVec[subDeviceID].isValid) {
+            uuid = this->uuidVec[subDeviceID].id;
+        }
+    }
+
+    return this->uuidVec[subDeviceID].isValid;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

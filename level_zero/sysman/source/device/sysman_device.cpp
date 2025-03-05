@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,8 +34,7 @@ SysmanDevice *SysmanDevice::fromHandle(zes_device_handle_t handle) {
         return nullptr;
     }
     if (std::find(globalSysmanDriver->sysmanDevices.begin(), globalSysmanDriver->sysmanDevices.end(), sysmanDevice) == globalSysmanDriver->sysmanDevices.end()) {
-        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "SysmanDevice::fromHandle: Device not found in sysmanDevices list%s\n", "");
-        return nullptr;
+        return globalSysmanDriver->getSysmanDeviceFromCoreDeviceHandle(handle);
     }
     return sysmanDevice;
 }

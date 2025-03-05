@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,6 +24,7 @@ struct OsSysman {
     static OsSysman *create(SysmanDeviceImp *pSysmanImp);
     virtual uint32_t getSubDeviceCount() = 0;
     virtual const NEO::HardwareInfo &getHardwareInfo() const = 0;
+    virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
 };
 
 } // namespace Sysman

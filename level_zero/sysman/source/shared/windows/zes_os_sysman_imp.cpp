@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,6 +112,83 @@ WddmSysmanImp::~WddmSysmanImp() {
 KmdSysManager &WddmSysmanImp::getKmdSysManager() {
     UNRECOVERABLE_IF(nullptr == pKmdSysManager);
     return *pKmdSysManager;
+}
+
+void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
+    deviceUuids.clear();
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    bool uuidValid = this->getUuid(deviceUuid);
+    if (uuidValid) {
+        uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};
+        std::copy_n(std::begin(deviceUuid), ZE_MAX_DEVICE_UUID_SIZE, std::begin(uuid));
+        std::string uuidString(reinterpret_cast<char const *>(uuid));
+        deviceUuids.push_back(uuidString);
+    }
+}
+
+bool WddmSysmanImp::getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    if (getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface != nullptr) {
+        auto driverModel = getSysmanDeviceImp()->getRootDeviceEnvironment().osInterface->getDriverModel();
+        if (!this->uuid.isValid) {
+            NEO::PhysicalDevicePciBusInfo pciBusInfo = driverModel->getPciBusInfo();
+            this->uuid.isValid = generateUuidFromPciBusInfo(pciBusInfo, this->uuid.id);
+        }
+
+        if (this->uuid.isValid) {
+            uuid = this->uuid.id;
+        }
+    }
+
+    return this->uuid.isValid;
+}
+
+bool WddmSysmanImp::generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid) {
+    if (pciBusInfo.pciDomain != NEO::PhysicalDevicePciBusInfo::invalidValue) {
+        uuid.fill(0);
+
+        // Device UUID uniquely identifies a device within a system.
+        // We generate it based on device information along with PCI information
+        // This guarantees uniqueness of UUIDs on a system even when multiple
+        // identical Intel GPUs are present.
+        //
+
+        // We want to have UUID matching between different GPU APIs (including outside
+        // of compute_runtime project - i.e. other than L0 or OCL). This structure definition
+        // has been agreed upon by various Intel driver teams.
+        //
+        // Consult other driver teams before changing this.
+        //
+
+        struct DeviceUUID {
+            uint16_t vendorID;
+            uint16_t deviceID;
+            uint16_t revisionID;
+            uint16_t pciDomain;
+            uint8_t pciBus;
+            uint8_t pciDev;
+            uint8_t pciFunc;
+            uint8_t reserved[4];
+            uint8_t subDeviceID;
+        };
+        auto &hwInfo = getSysmanDeviceImp()->getHardwareInfo();
+        DeviceUUID deviceUUID = {};
+        deviceUUID.vendorID = 0x8086; // Intel
+        deviceUUID.deviceID = hwInfo.platform.usDeviceID;
+        deviceUUID.revisionID = hwInfo.platform.usRevId;
+        deviceUUID.pciDomain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        deviceUUID.pciBus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        deviceUUID.pciDev = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        deviceUUID.pciFunc = static_cast<uint8_t>(pciBusInfo.pciFunction);
+        deviceUUID.subDeviceID = 0;
+
+        static_assert(sizeof(DeviceUUID) == NEO::ProductHelper::uuidSize);
+
+        memcpy_s(uuid.data(), NEO::ProductHelper::uuidSize, &deviceUUID, sizeof(DeviceUUID));
+
+        return true;
+    }
+
+    return false;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
