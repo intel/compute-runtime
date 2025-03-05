@@ -53,9 +53,23 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t numEvents, bool hasRelaxedOrderingDependencies, size_t commandSize, bool requestCommandBufferInLocalMem) {
     this->commandContainer.fillReusableAllocationLists();
 
-    /* Command container might has two command buffers. If it has, one is in local memory, because relaxed ordering requires that and one in system for copying it into ring buffer.
-       If relaxed ordering is needed in given dispatch and current command stream is in system memory, swap of command streams is required to ensure local memory. Same in the opposite scenario. */
-    if (hasRelaxedOrderingDependencies == NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+    // Command container might have two command buffers - one in local mem (mainly for relaxed ordering and any other specific purposes) and one in system mem for copying into ring buffer.
+    // If relaxed ordering is needed in given dispatch or if we need to force Local mem usage, and current command stream is in system memory, swap of command streams is required to ensure local memory.
+    // If relaxed ordering is not needed and command buffer is in local mem, then also we need to swap.
+    bool swapStreams = false;
+    if (hasRelaxedOrderingDependencies) {
+        if (NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            swapStreams = true;
+        }
+    } else {
+        if (requestCommandBufferInLocalMem && NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            swapStreams = true;
+        } else if (!requestCommandBufferInLocalMem && !NEO::MemoryPoolHelper::isSystemMemoryPool(this->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool())) {
+            swapStreams = true;
+        }
+    }
+
+    if (swapStreams) {
         if (this->commandContainer.swapStreams()) {
             this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
         }
@@ -63,7 +77,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t
 
     size_t semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < commandSize + semaphoreSize) {
-        bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies;
+        bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies && !requestCommandBufferInLocalMem;
 
         auto alloc = this->commandContainer.reuseExistingCmdBuffer(requireSystemMemoryCommandBuffer);
         this->commandContainer.addCurrentCommandBufferToReusableAllocationList();
@@ -1676,7 +1690,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
                                                                               ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     auto ret = ZE_RESULT_SUCCESS;
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, false);
+    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, this->dispatchCmdListBatchBufferAsPrimary);
     if (numWaitEvents) {
         ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, true, true, true, true, false);
     }

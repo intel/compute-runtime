@@ -304,7 +304,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
                                              neoDevice->getMemoryManager()->isLocalMemorySupported(neoDevice->getRootDeviceIndex());
 
     if (NEO::debugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
-        createSecondaryCmdBufferInHostMem &= !!NEO::debugManager.flags.DirectSubmissionFlatRingBuffer.get();
+        createSecondaryCmdBufferInHostMem = isImmediateType() && static_cast<bool>(NEO::debugManager.flags.DirectSubmissionFlatRingBuffer.get());
     }
 
     auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(),
