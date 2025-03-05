@@ -1567,11 +1567,18 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThe
     commandList->close();
     auto cmdListHandle = commandList->toHandle();
 
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.recursiveLockCounter = 0;
+
     // first append can carry preamble
     commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
 
+    EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
+
     // regular append can dispatch bb_start to secondary regular or primary directly regular
     commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+
+    EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
     auto startStream = static_cast<L0::CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
 

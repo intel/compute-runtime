@@ -73,11 +73,12 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         this->csr->ensurePrimaryCsrInitialized(*this->device->getNEODevice());
     }
 
-    auto lockCSR = this->csr->obtainUniqueOwnership();
+    std::unique_lock<NEO::CommandStreamReceiver::MutexType> lockCSR;
 
     if (parentImmediateCommandlistLinearStream != nullptr) {
         this->startingCmdBuffer = parentImmediateCommandlistLinearStream;
     } else {
+        lockCSR = this->csr->obtainUniqueOwnership();
         this->startingCmdBuffer = &this->commandStream;
     }
 

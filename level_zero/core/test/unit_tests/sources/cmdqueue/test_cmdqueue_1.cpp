@@ -1379,8 +1379,13 @@ HWTEST2_F(ExecuteCommandListTests, givenSuccessfulSubmitBatchBufferThenExecuteCo
     auto commandListHandle = commandList->toHandle();
     commandList->close();
 
+    auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.recursiveLockCounter = 0;
+
     auto res = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
     commandQueue->destroy();
     commandList->destroy();
