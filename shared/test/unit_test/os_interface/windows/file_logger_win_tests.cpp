@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.setAllocationType(AllocationType::buffer);
     allocation.memoryPool = MemoryPool::system64KBPages;
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
+    allocation.getDefaultGmm()->resourceParams.Usage = GMM_RESOURCE_USAGE_HEAP_STATELESS_DATA_PORT_L1_CACHED;
     allocation.setGpuAddress(0x12345);
     allocation.size = 777u;
 
@@ -68,6 +69,7 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
         EXPECT_TRUE(str.find(memoryPoolCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(gpuAddressCheck.str()) != std::string::npos);
         EXPECT_TRUE(str.find(rootDeviceIndexCheck.str()) != std::string::npos);
+        EXPECT_TRUE(str.find("UNKNOWN GMM USAGE TYPE 40") != std::string::npos);
         EXPECT_TRUE(str.find("Type: BUFFER") != std::string::npos);
         EXPECT_TRUE(str.find("Size: 777") != std::string::npos);
         EXPECT_TRUE(str.find(totalSystemMemoryCheck.str()) != std::string::npos);

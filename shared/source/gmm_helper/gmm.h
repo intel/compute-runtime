@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 namespace NEO {
 enum class ImagePlane;
@@ -71,7 +72,7 @@ class Gmm {
     GMM_RESCREATE_PARAMS resourceParams = {};
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
-    const char *getUsageTypeString();
+    std::string getUsageTypeString();
     void setCompressionEnabled(bool compresionEnabled) { this->compressionEnabled = compresionEnabled; }
     bool isCompressionEnabled() const { return compressionEnabled; }
 

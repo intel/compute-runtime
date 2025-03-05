@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -445,7 +445,7 @@ void Gmm::applyDebugOverrides() {
     }
 }
 
-const char *Gmm::getUsageTypeString() {
+std::string Gmm::getUsageTypeString() {
     switch (resourceParams.Usage) {
     case GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED:
         return "GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED";
@@ -464,7 +464,7 @@ const char *Gmm::getUsageTypeString() {
     case GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_IMAGE:
         return "GMM_RESOURCE_USAGE_OCL_IMAGE";
     default:
-        return "UNKNOWN GMM USAGE TYPE";
+        return "UNKNOWN GMM USAGE TYPE " + std::to_string(resourceParams.Usage);
     }
 }
 } // namespace NEO
