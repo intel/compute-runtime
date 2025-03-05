@@ -120,6 +120,9 @@ int Drm::ioctl(DrmIoctl request, void *arg) {
             end = std::chrono::steady_clock::now();
             long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
+            static std::mutex mtx;
+            std::lock_guard lock(mtx);
+
             IoctlStatisticsEntry ioctlData{};
             auto ioctlDataIt = this->ioctlStatistics.find(request);
             if (ioctlDataIt != this->ioctlStatistics.end()) {

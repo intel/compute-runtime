@@ -36,7 +36,7 @@ MTLTEST_F(MtlProductHelperLinux, GivenMtlWhenConfigureHardwareCustomThenKmdNotif
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(150ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pInHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
-    EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
+    EXPECT_EQ(28000ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
 MTLTEST_F(MtlProductHelperLinux, givenMtlWhenIsBlitterForImagesSupportedIsCalledThenTrueIsReturned) {

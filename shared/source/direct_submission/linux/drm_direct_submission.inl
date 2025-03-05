@@ -144,6 +144,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
         this->handleResidency();
     } else {
         this->lastUllsLightExecTimestamp = std::chrono::steady_clock::now();
+        this->boHandleForExec = bb->peekHandle();
     }
 
     auto currentBase = this->ringCommandStream.getGraphicsAllocation()->getGpuAddress();
@@ -257,7 +258,7 @@ uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue(bool require
         this->currentTagData.tagValue++;
         this->ringBuffers[this->currentRingBuffer].completionFence = this->currentTagData.tagValue;
     }
-    return 0ull;
+    return boHandleForExec;
 }
 
 template <typename GfxFamily, typename Dispatcher>

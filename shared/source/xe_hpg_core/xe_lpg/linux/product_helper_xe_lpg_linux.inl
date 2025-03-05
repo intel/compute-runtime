@@ -22,7 +22,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
     kmdNotifyProperties.enableKmdNotify = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 150;
     kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission = true;
-    kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds = 20;
+    kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds = 28000;
 
     return 0;
 }

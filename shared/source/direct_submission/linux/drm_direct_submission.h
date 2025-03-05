@@ -50,6 +50,7 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
 
     constexpr static size_t ullsLightTimeout = 2'000'000;
     std::chrono::steady_clock::time_point lastUllsLightExecTimestamp{};
+    int boHandleForExec = 0;
 
     std::vector<BufferObject *> residency{};
     std::vector<ExecObject> execObjectsStorage{};
