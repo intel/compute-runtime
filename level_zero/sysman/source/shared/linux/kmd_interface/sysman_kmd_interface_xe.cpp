@@ -101,8 +101,12 @@ std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t po
     return filePath;
 }
 
-int64_t SysmanKmdInterfaceXe::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
-    return -1;
+ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {

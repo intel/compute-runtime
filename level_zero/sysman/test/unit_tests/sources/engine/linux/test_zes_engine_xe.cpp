@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "level_zero/sysman/test/unit_tests/sources/engine/linux/mock_engine_xe.h"
 #include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_fixture.h"
 #include "level_zero/sysman/test/unit_tests/sources/shared/linux/kmd_interface/mock_sysman_kmd_interface_xe.h"
+#include "level_zero/sysman/test/unit_tests/sources/shared/linux/mock_pmu_interface.h"
 
 namespace L0 {
 namespace Sysman {
@@ -106,7 +107,7 @@ TEST_F(ZesEngineFixtureXe, GivenValidEngineHandleWhenCallingZesEngineGetActivity
         return count;
     });
 
-    pPmuInterface->mockPerfEventFailureReturnValue = -1;
+    pPmuInterface->mockPerfEventOpenReadFail = true;
     EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
 }
 

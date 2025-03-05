@@ -19,8 +19,6 @@ class MockSysmanKmdInterfaceXe : public L0::Sysman::SysmanKmdInterfaceXe {
     using L0::Sysman::SysmanKmdInterface::pSysfsAccess;
     MockSysmanKmdInterfaceXe(SysmanProductHelper *pSysmanProductHelper) : SysmanKmdInterfaceXe(pSysmanProductHelper) {}
     ~MockSysmanKmdInterfaceXe() override = default;
-
-    ADDMETHOD_NOBASE(getEngineActivityFd, int64_t, -1, (zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface));
 };
 
 } // namespace ult

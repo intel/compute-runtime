@@ -31,12 +31,8 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
     static zes_engine_group_t getGroupFromEngineType(zes_engine_group_t type);
     LinuxEngineImp() = default;
     LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice);
-    ~LinuxEngineImp() override {
-        if (fd != -1) {
-            close(static_cast<int>(fd));
-            fd = -1;
-        }
-    }
+    ~LinuxEngineImp() override;
+    void cleanup();
 
   protected:
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
@@ -50,7 +46,8 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableAndNonMovableClass {
 
   private:
     void init();
-    int64_t fd = -1;
+    std::vector<std::pair<int64_t, int64_t>> fdList{};
+    ze_result_t initStatus = ZE_RESULT_SUCCESS;
 };
 
 } // namespace Sysman

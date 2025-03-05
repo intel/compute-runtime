@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,6 @@ namespace Sysman {
 namespace ult {
 
 constexpr int64_t mockPmuFd = 10;
-constexpr uint64_t mockTimestamp = 87654321;
 constexpr uint64_t mockActiveTime = 987654321;
 const uint32_t microSecondsToNanoSeconds = 1000u;
 constexpr uint16_t invalidEngineClass = UINT16_MAX;
@@ -126,11 +125,16 @@ struct MockEnginePmuInterfaceImpPrelim : public L0::Sysman::PmuInterfaceImp {
     MockEnginePmuInterfaceImpPrelim(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
 
     bool mockPmuRead = false;
-    bool mockPerfEventOpenRead = false;
+    bool mockPerfEventOpenReadFail = false;
+    int32_t mockErrorNumber = -ENOSPC;
+    int32_t mockPerfEventOpenFailAtCount = 1;
+    uint64_t mockTimestamp = 87654321;
 
     int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
 
-        if (mockPerfEventOpenRead == true) {
+        mockPerfEventOpenFailAtCount = std::max<int32_t>(mockPerfEventOpenFailAtCount - 1, 1);
+        const bool shouldCheckForError = (mockPerfEventOpenFailAtCount == 1);
+        if (shouldCheckForError && mockPerfEventOpenReadFail == true) {
             return mockedPerfEventOpenAndFailureReturn(attr, pid, cpu, groupFd, flags);
         }
 
@@ -138,6 +142,7 @@ struct MockEnginePmuInterfaceImpPrelim : public L0::Sysman::PmuInterfaceImp {
     }
 
     int64_t mockedPerfEventOpenAndFailureReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
+        errno = mockErrorNumber;
         return -1;
     }
 
@@ -147,8 +152,8 @@ struct MockEnginePmuInterfaceImpPrelim : public L0::Sysman::PmuInterfaceImp {
             return mockedPmuReadAndFailureReturn(fd, data, sizeOfdata);
         }
 
-        data[0] = mockActiveTime;
-        data[1] = mockTimestamp;
+        data[2] = mockActiveTime;
+        data[3] = mockTimestamp;
         return 0;
     }
 

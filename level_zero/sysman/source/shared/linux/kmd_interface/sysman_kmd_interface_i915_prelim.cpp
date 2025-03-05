@@ -104,28 +104,59 @@ std::string SysmanKmdInterfaceI915Prelim::getEnergyCounterNodeFile(zes_power_dom
     return filePath;
 }
 
-int64_t SysmanKmdInterfaceI915Prelim::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
+ze_result_t SysmanKmdInterfaceI915Prelim::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
     uint64_t config = UINT64_MAX;
     switch (engineGroup) {
     case ZES_ENGINE_GROUP_ALL:
-        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_ANY_ENGINE_GROUP_BUSY_TICKS(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_COMPUTE_ALL:
     case ZES_ENGINE_GROUP_RENDER_ALL:
-        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_RENDER_GROUP_BUSY_TICKS(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_COPY_ALL:
-        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_COPY_GROUP_BUSY_TICKS(subDeviceId);
         break;
     case ZES_ENGINE_GROUP_MEDIA_ALL:
-        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY(subDeviceId);
+        config = __PRELIM_I915_PMU_MEDIA_GROUP_BUSY_TICKS(subDeviceId);
         break;
     default:
         auto engineClass = engineGroupToEngineClass.find(engineGroup);
-        config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
+        config = PRELIM_I915_PMU_ENGINE_BUSY_TICKS(engineClass->second, engineInstance);
         break;
     }
-    return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+
+    int64_t fd[2];
+    fd[0] = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[0] < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        return checkErrorNumberAndReturnStatus();
+    }
+
+    auto i915EngineClass = engineGroupToEngineClass.find(engineGroup);
+    fd[1] = pPmuInterface->pmuInterfaceOpen(PRELIM_I915_PMU_ENGINE_TOTAL_TICKS(i915EngineClass->second, engineInstance), static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[1] < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        close(static_cast<int>(fd[0]));
+        return checkErrorNumberAndReturnStatus();
+    }
+
+    fdList.push_back(std::make_pair(fd[0], fd[1]));
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t SysmanKmdInterfaceI915Prelim::readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
+    uint64_t data[4] = {};
+
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
+    if (ret < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    pStats->activeTime = data[2];
+    pStats->timestamp = data[3] ? data[3] : SysmanDevice::getSysmanTimestamp();
+    return ZE_RESULT_SUCCESS;
 }
 
 std::string SysmanKmdInterfaceI915Prelim::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {

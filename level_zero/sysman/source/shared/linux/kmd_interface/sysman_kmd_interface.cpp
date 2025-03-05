@@ -213,6 +213,14 @@ void SysmanKmdInterface::getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, ze
     }
 }
 
+ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
+    if (errno == EMFILE || errno == ENFILE) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): System has run out of file handles. Suggested action is to increase the file handle limit. \n", __FUNCTION__);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 std::string SysmanKmdInterfaceI915::getBasePathI915(uint32_t subDeviceId) {
     return "gt/gt" + std::to_string(subDeviceId) + "/";
 }

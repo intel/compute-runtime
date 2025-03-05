@@ -187,19 +187,22 @@ TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceWhenCheckingWhetherClientIn
     EXPECT_TRUE(pSysmanKmdInterface->clientInfoAvailableInFdInfo());
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenGroupEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdIsCalledThenInValidFdIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-
-    EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get()), 0);
-    EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_COMPUTE_ALL, 0, 0, pPmuInterface.get()), 0);
-    EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_COPY_ALL, 0, 0, pPmuInterface.get()), 0);
-    EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_RENDER_ALL, 0, 0, pPmuInterface.get()), 0);
-    EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, pPmuInterface.get()), 0);
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COPY_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_RENDER_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_MEDIA_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
-TEST_F(SysmanFixtureDeviceXe, GivenSingleEngineTypeAndSysmanKmdInterfaceInstanceWhenGetEngineActivityFdIsCalledThenInvalidFdIsReturned) {
+TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenReadingBusynessFromGroupFdThenErrorIsReturned) {
     auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
-    EXPECT_LT(pSysmanKmdInterface->getEngineActivityFd(ZES_ENGINE_GROUP_COMPUTE_SINGLE, 0, 0, pPmuInterface.get()), 0);
+    zes_engine_stats_t pStats = {};
+    std::pair<int64_t, int64_t> fdPair = {};
+    EXPECT_EQ(pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface.get(), fdPair, &pStats), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 
 TEST_F(SysmanFixtureDeviceXe, GivenSysmanKmdInterfaceInstanceWhenCheckingSupportForVfEngineUtilizationThenFalseValueIsReturned) {

@@ -56,12 +56,17 @@ static ssize_t mockReadFailure(int fd, void *buf, size_t count, off_t offset) {
 class SysmanFixtureDeviceI915Prelim : public SysmanDeviceFixture {
   protected:
     L0::Sysman::SysmanDevice *device = nullptr;
+    std::unique_ptr<MockPmuInterfaceImp> pPmuInterface;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
         device = pSysmanDevice;
         pLinuxSysmanImp->pSysmanKmdInterface.reset(new SysmanKmdInterfaceI915Prelim(pLinuxSysmanImp->getSysmanProductHelper()));
         mockInitFsAccess();
+        pPmuInterface = std::make_unique<MockPmuInterfaceImp>(pLinuxSysmanImp);
+        pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+        VariableBackup<L0::Sysman::PmuInterface *> pmuBackup(&pLinuxSysmanImp->pPmuInterface);
+        pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
     }
 
     void mockInitFsAccess() {
@@ -262,6 +267,28 @@ TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceWhenGetEnergyCounte
     EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFile(ZES_POWER_DOMAIN_PACKAGE));
     expectedFilePath = "";
     EXPECT_EQ(expectedFilePath, pSysmanKmdInterface->getEnergyCounterNodeFile(ZES_POWER_DOMAIN_CARD));
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndPmuFailsDueToTooManyFilesOpenWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    pPmuInterface->mockErrorNumber = EMFILE;
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
+}
+
+TEST_F(SysmanFixtureDeviceI915Prelim, GivenSysmanKmdInterfaceInstanceAndPmuOpenFailsDueToFileTableOverFlowWhenGetEngineActivityFdListIsCalledThenErrorIsReturned) {
+    VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, &mockReadSuccess);
+
+    auto pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
+    std::vector<std::pair<int64_t, int64_t>> fdList = {};
+    pPmuInterface->mockErrorNumber = ENFILE;
+    pPmuInterface->mockPerfEventOpenReadFail = true;
+    EXPECT_EQ(pSysmanKmdInterface->getEngineActivityFdList(ZES_ENGINE_GROUP_ALL, 0, 0, pPmuInterface.get(), fdList), ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE);
 }
 
 } // namespace ult

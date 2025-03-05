@@ -97,11 +97,31 @@ std::string SysmanKmdInterfaceI915Upstream::getEnergyCounterNodeFile(zes_power_d
     return filePath;
 }
 
-int64_t SysmanKmdInterfaceI915Upstream::getEngineActivityFd(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface) {
+ze_result_t SysmanKmdInterfaceI915Upstream::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
     uint64_t config = UINT64_MAX;
     auto engineClass = engineGroupToEngineClass.find(engineGroup);
     config = I915_PMU_ENGINE_BUSY(engineClass->second, engineInstance);
-    return pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+    auto fd = pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED);
+    if (fd < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        return checkErrorNumberAndReturnStatus();
+    }
+    fdList.push_back(std::make_pair(fd, -1));
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t SysmanKmdInterfaceI915Upstream::readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
+
+    uint64_t data[2] = {};
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
+    if (ret < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    pStats->activeTime = data[0] / microSecondsToNanoSeconds;
+    pStats->timestamp = data[1] / microSecondsToNanoSeconds;
+    return ZE_RESULT_SUCCESS;
 }
 
 std::string SysmanKmdInterfaceI915Upstream::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {

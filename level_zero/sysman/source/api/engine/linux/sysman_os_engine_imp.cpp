@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,6 +19,18 @@
 
 namespace L0 {
 namespace Sysman {
+
+void LinuxEngineImp::cleanup() {
+    for (auto &fdPair : fdList) {
+        DEBUG_BREAK_IF(fdPair.first < 0);
+        close(static_cast<int>(fdPair.first));
+    }
+    fdList.clear();
+}
+
+LinuxEngineImp::~LinuxEngineImp() {
+    cleanup();
+}
 
 zes_engine_group_t LinuxEngineImp::getGroupFromEngineType(zes_engine_group_t type) {
     if (type == ZES_ENGINE_GROUP_RENDER_SINGLE) {
@@ -72,20 +84,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::set<std::pair<zes_engine
 }
 
 ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
-    if (fd < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d it's returning error:0x%x \n", __FUNCTION__, fd, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    uint64_t data[2] = {};
-    auto ret = pPmuInterface->pmuRead(static_cast<int>(fd), data, sizeof(data));
-    if (ret < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-    // In data[], First u64 is "active time", And second u64 is "timestamp". Both in nanoseconds
-    pStats->activeTime = data[0] / microSecondsToNanoSeconds;
-    pStats->timestamp = data[1] / microSecondsToNanoSeconds;
-    return ZE_RESULT_SUCCESS;
+    return pSysmanKmdInterface->readBusynessFromGroupFd(pPmuInterface, fdList[0], pStats);
 }
 
 ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
@@ -96,12 +95,11 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
 }
 
 void LinuxEngineImp::init() {
-    fd = pSysmanKmdInterface->getEngineActivityFd(engineGroup, engineInstance, subDeviceId, pPmuInterface);
+    initStatus = pSysmanKmdInterface->getEngineActivityFdList(engineGroup, engineInstance, subDeviceId, pPmuInterface, fdList);
 }
 
 bool LinuxEngineImp::isEngineModuleSupported() {
-    if (fd < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): as fileDescriptor value = %d Engine Module is not supported \n", __FUNCTION__, fd);
+    if (initStatus != ZE_RESULT_SUCCESS) {
         return false;
     }
     return true;
@@ -114,6 +112,9 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
     init();
+    if (initStatus != ZE_RESULT_SUCCESS) {
+        cleanup();
+    }
 }
 
 std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
