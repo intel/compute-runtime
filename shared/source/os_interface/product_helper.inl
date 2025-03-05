@@ -1006,6 +1006,11 @@ bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isImageSuitableForCompression() const {
     if (debugManager.flags.OverrideImageSuitableForRenderCompression.get() != -1) {
         return !!debugManager.flags.OverrideImageSuitableForRenderCompression.get();

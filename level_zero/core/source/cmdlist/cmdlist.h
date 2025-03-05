@@ -505,6 +505,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool statelessBuiltinsEnabled = false;
     bool localDispatchSupport = false;
     bool copyOperationOffloadEnabled = false;
+    bool l3FlushAfterPostSyncRequired = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

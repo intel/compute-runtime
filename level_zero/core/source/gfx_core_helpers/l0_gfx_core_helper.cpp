@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,11 +74,13 @@ bool L0GfxCoreHelper::usePipeControlMultiKernelEventSync(const NEO::HardwareInfo
     return true;
 }
 
-bool L0GfxCoreHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo) {
+bool L0GfxCoreHelper::useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo, bool flushL3AfterPostSync) {
+
     if (NEO::debugManager.flags.CompactL3FlushEventPacket.get() != -1) {
         return !!NEO::debugManager.flags.CompactL3FlushEventPacket.get();
     }
-    return true;
+
+    return !flushL3AfterPostSync;
 }
 
 bool L0GfxCoreHelper::useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo) {

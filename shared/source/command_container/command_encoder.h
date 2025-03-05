@@ -89,6 +89,7 @@ struct EncodeDispatchKernelArgs {
     bool interruptEvent = false;
     bool immediateScratchAddressPatching = false;
     bool makeCommandView = false;
+    bool isFlushL3AfterPostSyncEnabled = false;
 
     bool requiresSystemMemoryFence() const {
         return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);
@@ -187,6 +188,9 @@ struct EncodeDispatchKernel {
 
     template <typename WalkerType>
     static void adjustTimestampPacket(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
+
+    template <typename WalkerType>
+    static void encodeL3FlushAfterPostSync(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);
 
     template <typename WalkerType>
     static void setupPostSyncForRegularEvent(WalkerType &walkerCmd, const EncodeDispatchKernelArgs &args);

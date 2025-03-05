@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
@@ -48,10 +50,16 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareIn
 
 template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
+
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<NEO::CompilerProductHelper>();
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto heaplessEnabled = compilerProductHelper.isHeaplessModeEnabled();
+    bool flushL3AfterPostSync = productHelper.isL3FlushAfterPostSyncRequired(heaplessEnabled);
+
     uint32_t basePackets = getEventMaxKernelCount(hwInfo);
-    if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment)) {
-        basePackets += L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo) ? 0 : 1;
+    if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment) && !flushL3AfterPostSync) {
+        basePackets += L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo, flushL3AfterPostSync) ? 0 : 1;
     }
 
     return basePackets;

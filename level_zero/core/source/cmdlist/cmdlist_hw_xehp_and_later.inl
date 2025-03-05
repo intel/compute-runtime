@@ -178,7 +178,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     uint64_t eventAddress = 0;
     bool isTimestampEvent = false;
-    bool l3FlushEnable = false;
+    bool l3FlushInPipeControlEnable = false;
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     bool interruptEvent = false;
     Event *compactEvent = nullptr;
@@ -206,7 +206,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
             bool flushRequired = event->isSignalScope() &&
                                  !launchParams.isKernelSplitOperation;
-            l3FlushEnable = getDcFlushRequired(flushRequired);
+
+            l3FlushInPipeControlEnable = getDcFlushRequired(flushRequired) &&
+                                         !l3FlushAfterPostSyncRequired;
             interruptEvent = event->isInterruptModeEnabled();
         }
     }
@@ -388,6 +390,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         .interruptEvent = interruptEvent,
         .immediateScratchAddressPatching = !this->scratchAddressPatchingEnabled,
         .makeCommandView = launchParams.makeKernelCommandView,
+        .isFlushL3AfterPostSyncEnabled = this->l3FlushAfterPostSyncRequired,
     };
     setAdditionalDispatchKernelArgsFromLaunchParams(dispatchKernelArgs, launchParams);
 
@@ -428,7 +431,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             }
         } else if (event) {
             event->setPacketsInUse(partitionCount);
-            if (l3FlushEnable) {
+
+            if (l3FlushInPipeControlEnable) {
                 programEventL3Flush(event);
             }
             if (!launchParams.isKernelSplitOperation) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,7 +70,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool enableStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport);
     static bool usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo);
-    static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo);
+    static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo, bool flushL3AfterPostSync);
     static bool useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo);
     static bool useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo);
     static NEO::HeapAddressModel getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);

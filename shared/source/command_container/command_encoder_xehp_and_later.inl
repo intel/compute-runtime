@@ -504,6 +504,7 @@ void EncodeDispatchKernel<Family>::setupPostSyncForRegularEvent(WalkerType &walk
     postSync.setImmediateData(immData);
     postSync.setDestinationAddress(gpuVa);
 
+    EncodeDispatchKernel<Family>::encodeL3FlushAfterPostSync(walkerCmd, args);
     EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
     EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, args);
 }

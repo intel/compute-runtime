@@ -76,6 +76,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             .interruptEvent = false,
             .immediateScratchAddressPatching = false,
             .makeCommandView = false,
+            .isFlushL3AfterPostSyncEnabled = false,
         };
 
         return args;
