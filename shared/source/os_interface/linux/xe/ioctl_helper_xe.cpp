@@ -678,12 +678,7 @@ int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t a
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    auto enableDeferBacking = true;
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        enableDeferBacking = debugManager.flags.EnableDeferBacking.get();
-    }
-
-    if (enableDeferBacking) {
+    if (debugManager.flags.EnableDeferBacking.get()) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -729,12 +724,7 @@ uint32_t IoctlHelperXe::createGem(uint64_t size, uint32_t memoryBanks, std::opti
     create.placement = static_cast<uint32_t>(memoryInstances.to_ulong());
     create.cpu_caching = this->getCpuCachingMode(isCoherent, isSysMemOnly);
 
-    auto enableDeferBacking = true;
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        enableDeferBacking = debugManager.flags.EnableDeferBacking.get();
-    }
-
-    if (enableDeferBacking) {
+    if (debugManager.flags.EnableDeferBacking.get()) {
         create.flags |= DRM_XE_GEM_CREATE_FLAG_DEFER_BACKING;
     }
 
@@ -1585,9 +1575,9 @@ bool IoctlHelperXe::isImmediateVmBindRequired() const {
 }
 
 bool IoctlHelperXe::makeResidentBeforeLockNeeded() const {
-    auto makeResidentBeforeLockNeeded = true;
-    if (debugManager.flags.EnableDeferBacking.get() != -1) {
-        makeResidentBeforeLockNeeded = debugManager.flags.EnableDeferBacking.get();
+    auto makeResidentBeforeLockNeeded = false;
+    if (debugManager.flags.EnableDeferBacking.get()) {
+        makeResidentBeforeLockNeeded = true;
     }
     return makeResidentBeforeLockNeeded;
 }
