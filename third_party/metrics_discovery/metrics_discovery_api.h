@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2019-2024 Intel Corporation
+Copyright (C) 2019-2025 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 179
+#define MD_API_BUILD_NUMBER_CURRENT 180
 
 namespace MetricsDiscovery
 {
@@ -70,7 +70,8 @@ namespace MetricsDiscovery
         MD_API_MINOR_NUMBER_11      = 11, // Add availability equations for metric sets
         MD_API_MINOR_NUMBER_12      = 12, // Add support for Information Set in concurrent group
         MD_API_MINOR_NUMBER_13      = 13, // Extend API to support flexible metric sets
-        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_13,
+        MD_API_MINOR_NUMBER_14      = 14, // Offline calculation support
+        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_14,
         MD_API_MINOR_NUMBER_CEIL    = 0xFFFFFFFF
     } MD_API_MINOR_VERSION;
 
@@ -772,6 +773,7 @@ namespace MetricsDiscovery
         EQUATION_ELEM_STD_NORM_GPU_DURATION,     // Action is $Self $GpuCoreClocks FDIV 100 FMUL
         EQUATION_ELEM_STD_NORM_EU_AGGR_DURATION, // Action is $Self $GpuCoreClocks $EuCoresTotalCount UMUL FDIV 100 FMUL
         EQUATION_ELEM_MASK,                      //
+        EQUATION_ELEM_PREV_METRIC_SYMBOL,        // Defined by prev$$"SymbolName", refers to previous metric value in the local set
         EQUATION_ELEM_LAST_1_0
 
     } TEquationElementType;
@@ -1331,7 +1333,6 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
-    //
     //   IConcurrentGroup_1_0
     //
     // Description:
@@ -1917,10 +1918,32 @@ namespace MetricsDiscovery
         virtual IAdapter_1_13* GetAdapter( uint32_t index );
     };
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IAdapterGroup_1_14
+    //
+    // Description:
+    //   Abstract interface for the GPU adapters root object.
+    //
+    // New:
+    // - OpenOfflineMetricsDeviceFromBuffer: To open offline metrics device from buffer
+    // - CloseOfflineMetricsDevice:          To close offline metrics device
+    // - SaveMetricsDeviceToBuffer:          To save metrics device with chosen sets to buffer
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapterGroup_1_14 : public IAdapterGroup_1_13
+    {
+    public:
+        virtual TCompletionCode OpenOfflineMetricsDeviceFromBuffer( uint8_t* buffer, uint32_t bufferSize, IMetricsDevice_1_13** metricsDevice );
+        virtual TCompletionCode CloseOfflineMetricsDevice( IMetricsDevice_1_13* metricsDevice );
+        virtual TCompletionCode SaveMetricsDeviceToBuffer( IMetricsDevice_1_13* metricsDevice, IMetricSet_1_13** metricSets, uint32_t metricSetCount, uint8_t* buffer, uint32_t* bufferSize, const uint32_t minMajorApiVersion, const uint32_t minMinorApiVersion );
+    };
+
     //////////////////////////////////////////////////////////////////////////////////
     // Latest interfaces and typedef structs versions:
     //////////////////////////////////////////////////////////////////////////////////
-    using IAdapterGroupLatest                    = IAdapterGroup_1_13;
+    using IAdapterGroupLatest                    = IAdapterGroup_1_14;
     using IAdapterLatest                         = IAdapter_1_13;
     using IConcurrentGroupLatest                 = IConcurrentGroup_1_13;
     using IEquationLatest                        = IEquation_1_0;
