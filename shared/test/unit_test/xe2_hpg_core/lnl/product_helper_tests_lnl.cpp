@@ -130,17 +130,24 @@ LNLTEST_F(LnlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
     for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
         auto allocationType = static_cast<AllocationType>(i);
         allocationData.type = allocationType;
-        if (allocationType == AllocationType::externalHostPtr ||
-            allocationType == AllocationType::bufferHostMemory ||
-            allocationType == AllocationType::mapAllocation ||
-            allocationType == AllocationType::svmCpu ||
-            allocationType == AllocationType::svmZeroCopy ||
-            allocationType == AllocationType::internalHostMemory ||
-            allocationType == AllocationType::commandBuffer ||
-            allocationType == AllocationType::printfSurface) {
+        switch (allocationData.type) {
+        case AllocationType::commandBuffer:
             EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
-        } else {
+            break;
+        case AllocationType::externalHostPtr:
+        case AllocationType::bufferHostMemory:
+        case AllocationType::mapAllocation:
+        case AllocationType::svmCpu:
+        case AllocationType::svmZeroCopy:
+        case AllocationType::internalHostMemory:
+        case AllocationType::printfSurface:
+            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
+            EXPECT_TRUE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
+            break;
+        default:
             EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
+            EXPECT_FALSE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
+            break;
         }
     }
 }

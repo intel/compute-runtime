@@ -6,9 +6,11 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe3_core/hw_info_xe3_core.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
@@ -42,4 +44,48 @@ PTLTEST_F(PtlProductHelper, givenCompilerProductHelperWhenGetMidThreadPreemption
 
 PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
+}
+
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckOverrideAllocationCacheableThenTrueIsReturnedForCommandBuffer) {
+    AllocationData allocationData{};
+    allocationData.type = AllocationType::commandBuffer;
+    EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
+
+    allocationData.type = AllocationType::buffer;
+    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
+}
+
+PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideCacheable) {
+    DebugManagerStateRestore restorer;
+    debugManager.flags.AllowDcFlush.set(1);
+
+    AllocationData allocationData{};
+    allocationData.type = AllocationType::externalHostPtr;
+    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
+
+    debugManager.flags.AllowDcFlush.set(0);
+
+    for (auto i = 0; i < static_cast<int>(AllocationType::count); ++i) {
+        auto allocationType = static_cast<AllocationType>(i);
+        allocationData.type = allocationType;
+        switch (allocationData.type) {
+        case AllocationType::commandBuffer:
+            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
+            break;
+        case AllocationType::externalHostPtr:
+        case AllocationType::bufferHostMemory:
+        case AllocationType::mapAllocation:
+        case AllocationType::svmCpu:
+        case AllocationType::svmZeroCopy:
+        case AllocationType::internalHostMemory:
+        case AllocationType::printfSurface:
+            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
+            EXPECT_TRUE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
+            break;
+        default:
+            EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
+            EXPECT_FALSE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
+            break;
+        }
+    }
 }

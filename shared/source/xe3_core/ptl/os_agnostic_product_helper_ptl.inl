@@ -10,6 +10,11 @@
 namespace NEO {
 
 template <>
+bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
+    return allocationData.type == AllocationType::commandBuffer || this->overrideCacheableForDcFlushMitigation(allocationData.type);
+}
+
+template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Ptl;
 };
