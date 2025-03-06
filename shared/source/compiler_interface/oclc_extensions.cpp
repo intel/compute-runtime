@@ -26,6 +26,8 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     openclCFeatures.push_back(openClCFeature);
 
     if (hwInfo.capabilityTable.supportsImages) {
+        openclCFeatures.reserve(3);
+
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_3d_image_writes");
         openclCFeatures.push_back(openClCFeature);
 
@@ -37,6 +39,8 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
     }
 
     if (hwInfo.capabilityTable.supportsOcl21Features) {
+        openclCFeatures.reserve(8);
+
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_acq_rel");
         openclCFeatures.push_back(openClCFeature);
 
@@ -62,6 +66,8 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         openclCFeatures.push_back(openClCFeature);
 
         if (hwInfo.capabilityTable.supportsFloatAtomics) {
+            openclCFeatures.reserve(8);
+
             strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_add");
             openclCFeatures.push_back(openClCFeature);
 
@@ -95,6 +101,8 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         openclCFeatures.push_back(openClCFeature);
 
         if (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsFloatAtomics) {
+            openclCFeatures.reserve(4);
+
             strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_global_atomic_add");
             openclCFeatures.push_back(openClCFeature);
 

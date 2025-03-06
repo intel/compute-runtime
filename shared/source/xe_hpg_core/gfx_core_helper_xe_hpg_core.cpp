@@ -173,6 +173,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
     auto ailHelper = rootDeviceEnvironment.getAILConfigurationHelper();
     auto forceRcs = ailHelper && ailHelper->forceRcs();
     if (hwInfo.featureTable.flags.ftrCCSNode && !forceRcs) {
+        engines.reserve(hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled);
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::regular});
         }

@@ -48,9 +48,11 @@ struct ElfRewriter {
 
     ElfRewriter(NEO::Elf::Elf<numBits> &src) {
         elfFileHeader = *src.elfFileHeader;
+        this->sectionHeaders.reserve(src.sectionHeaders.size());
         for (const auto &sh : src.sectionHeaders) {
             this->sectionHeaders.push_back(std::make_unique<MutableSectionHeader<numBits>>(src.getName(sh.header->name), *sh.header, std::vector<uint8_t>{sh.data.begin(), sh.data.end()}));
         }
+        this->programHeaders.reserve(src.programHeaders.size());
         for (const auto &ph : src.programHeaders) {
             this->programHeaders.push_back(std::make_unique<MutableProgramHeader<numBits>>(*ph.header, std::vector<uint8_t>{ph.data.begin(), ph.data.end()}));
             for (const auto &sh : this->sectionHeaders) {

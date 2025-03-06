@@ -207,6 +207,7 @@ const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(
         engines.push_back({aub_stream::ENGINE_CCS, EngineUsage::regular});
     }
 
+    engines.reserve(3);
     engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::regular});
     engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::lowPriority}); // low priority
     engines.push_back({defaultEngine, EngineUsage::internal});             // internal usage

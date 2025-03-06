@@ -55,6 +55,7 @@ BindlessHeapsHelper::BindlessHeapsHelper(Device *rootDevice, bool isMultiOsConte
                                                                                              rootDeviceIndex(rootDevice->getRootDeviceIndex()),
                                                                                              deviceBitfield(rootDevice->getDeviceBitfield()) {
 
+    ssHeapsAllocations.reserve(BindlesHeapType::numHeapTypes);
     for (auto heapType = 0; heapType < BindlesHeapType::numHeapTypes; heapType++) {
         auto size = MemoryConstants::pageSize64k;
 
