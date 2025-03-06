@@ -326,6 +326,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
     auto retVal = 0;
 
     if (this->drm->isVmBindAvailable()) {
+        auto lock = static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->lockHandlerIfUsed();
         retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId, false);
     } else {
         StackVec<ExecObject, maxFragmentsCount + 1> execObject(numberOfBos + 1);
@@ -339,6 +340,7 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
     auto retVal = 0;
 
     if (this->drm->isVmBindAvailable()) {
+        auto lock = static_cast<DrmMemoryOperationsHandler *>(this->drm->getRootDeviceEnvironment().memoryOperationsInterface.get())->lockHandlerIfUsed();
         for (size_t i = 0; i < numberOfBos; i++) {
             retVal = boToPin[i]->bind(osContext, vmHandleId, false);
             if (retVal) {

@@ -157,7 +157,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::mergeWithResidencyContain
 }
 
 std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerIfUsed() {
-    return std::unique_lock<std::mutex>();
+    return std::unique_lock<std::mutex>(mutex);
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) {
