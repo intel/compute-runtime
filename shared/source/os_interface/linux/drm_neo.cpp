@@ -984,19 +984,12 @@ bool Drm::getDeviceMemoryMaxClockRateInMhz(uint32_t tileId, uint32_t &clkRate) {
 }
 
 bool Drm::getDeviceMemoryPhysicalSizeInBytes(uint32_t tileId, uint64_t &physicalSize) {
-    const std::string relativefilePath = "/gt/gt" + std::to_string(tileId) + "/addr_range";
-    std::string readString(64, '\0');
-    errno = 0;
-    if (readSysFsAsString(relativefilePath, readString) == false) {
+    if (memoryInfo == nullptr || memoryInfo->getLocalMemoryRegions().size() == 0U) {
+        physicalSize = 0U;
         return false;
     }
 
-    char *endPtr = nullptr;
-    uint64_t retSize = static_cast<uint64_t>(std::strtoull(readString.data(), &endPtr, 16));
-    if ((endPtr == readString.data()) || (errno != 0)) {
-        return false;
-    }
-    physicalSize = retSize;
+    physicalSize = memoryInfo->getLocalMemoryRegionSize(tileId);
     return true;
 }
 

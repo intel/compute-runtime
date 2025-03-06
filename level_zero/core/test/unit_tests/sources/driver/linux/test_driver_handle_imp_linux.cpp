@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,6 +69,7 @@ class DriverQueryPeerTest : public ::testing::Test {
             devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
             auto osInterface = devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface.get();
             auto drmMock = new DrmMockQueryFabricStats(*executionEnvironment->rootDeviceEnvironments[i]);
+            drmMock->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
             drmMock->ioctlHelper.reset(new MockIoctlQueryFabricStats(*drmMock));
             osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }
@@ -303,6 +304,7 @@ class DriverQueryPeerTestOsInterfaceFail : public ::testing::Test {
             devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
             auto osInterface = devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface.get();
             auto drmMock = new DrmMockQueryFabricStats(*executionEnvironment->rootDeviceEnvironments[i]);
+            drmMock->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
             osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }
     }
@@ -378,6 +380,7 @@ class DriverQueryPeerTestFail : public ::testing::Test {
             devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
             auto osInterface = devices[i]->getExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface.get();
             auto drmMock = new DrmMockQueryFabricStats(*executionEnvironment->rootDeviceEnvironments[i]);
+            drmMock->useBaseGetDeviceMemoryPhysicalSizeInBytes = false;
             drmMock->ioctlHelper.reset(new MockIoctlQueryFabricStatsFail(*drmMock));
             osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }

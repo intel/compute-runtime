@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,6 +42,7 @@ class MemoryInfo {
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, bool isUSMHostAllocation);
     MOCKABLE_VIRTUAL int createGemExtWithMultipleRegions(DeviceBitfield memoryBanks, size_t allocSize, uint32_t &handle, uint64_t patIndex, int32_t pairHandle, bool isChunked, uint32_t numOfChunks, bool isUSMHostAllocation);
     void populateTileToLocalMemoryRegionIndexMap();
+    uint64_t getLocalMemoryRegionSize(uint32_t tileId) const;
 
     const RegionContainer &getLocalMemoryRegions() const { return localMemoryRegions; }
     const RegionContainer &getDrmRegionInfos() const { return drmQueryRegions; }

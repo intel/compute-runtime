@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,6 +96,12 @@ uint32_t MemoryInfo::getLocalMemoryRegionIndex(DeviceBitfield deviceBitfield) co
     }
     UNRECOVERABLE_IF(tileIndex >= tileToLocalMemoryRegionIndexMap.size());
     return tileToLocalMemoryRegionIndexMap[tileIndex];
+}
+
+uint64_t MemoryInfo::getLocalMemoryRegionSize(uint32_t tileIndex) const {
+    UNRECOVERABLE_IF(tileIndex >= tileToLocalMemoryRegionIndexMap.size());
+    const auto regionIndex{tileToLocalMemoryRegionIndexMap[tileIndex]};
+    return localMemoryRegions[regionIndex].probedSize;
 }
 
 MemoryClassInstance MemoryInfo::getMemoryRegionClassAndInstance(DeviceBitfield deviceBitfield, const HardwareInfo &hwInfo) {

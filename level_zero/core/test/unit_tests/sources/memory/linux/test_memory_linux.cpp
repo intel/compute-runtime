@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,8 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -180,7 +182,16 @@ struct MemoryExportImportObtainFdTest : public ::testing::Test {
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
             executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset(new NEO::OSInterface());
+
             auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[i]);
+            auto ioctlHelper{drmMock->getIoctlHelper()};
+            const auto memoryClassSystem = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem));
+            const auto memoryClassDevice = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
+            std::vector<MemoryRegion> mockMemRegions(3);
+            mockMemRegions[0] = {{memoryClassSystem, 0}, 1024};
+            mockMemRegions[1] = {{memoryClassDevice, 0}, 2048};
+            drmMock->memoryInfo.reset(new MemoryInfo{mockMemRegions, *drmMock});
+
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }
 
@@ -604,7 +615,16 @@ struct MemoryObtainFdTest : public ::testing::Test {
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
             devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
             executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset(new NEO::OSInterface());
+
             auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[i]);
+            auto ioctlHelper{drmMock->getIoctlHelper()};
+            const auto memoryClassSystem = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassSystem));
+            const auto memoryClassDevice = static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice));
+            std::vector<MemoryRegion> mockMemRegions(3);
+            mockMemRegions[0] = {{memoryClassSystem, 0}, 1024};
+            mockMemRegions[1] = {{memoryClassDevice, 0}, 2048};
+            drmMock->memoryInfo.reset(new MemoryInfo{mockMemRegions, *drmMock});
+
             executionEnvironment->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
         }
 
