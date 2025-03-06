@@ -177,7 +177,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
                              uint32_t rootDeviceIndex,
                              const DeviceBitfield deviceBitfield)
         : BaseClass(executionEnvironment, rootDeviceIndex, deviceBitfield), recursiveLockCounter(0),
-          recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()) {
+          recordedDispatchFlags(DispatchFlagsHelper::createDefaultDispatchFlags()),
+          recordedBcsDispatchFlags(DispatchFlagsHelper::createDefaultBcsDispatchFlags()) {
         this->downloadAllocationImpl = [this](GraphicsAllocation &graphicsAllocation) {
             this->downloadAllocationUlt(graphicsAllocation);
         };
@@ -238,6 +239,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
                                        Device &device) override {
         recordedImmediateDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
+        this->lastFlushedImmediateCommandStream = &immediateCommandStream;
         return BaseClass::flushImmediateTask(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
     }
 
@@ -247,7 +249,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
                                                 Device &device) override {
         recordedImmediateDispatchFlags = dispatchFlags;
         this->lastFlushedCommandStream = &commandStream;
+        this->lastFlushedImmediateCommandStream = &immediateCommandStream;
         return BaseClass::flushImmediateTaskStateless(immediateCommandStream, immediateCommandStreamStart, dispatchFlags, device);
+    }
+
+    CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                 const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override {
+        this->recordedBcsDispatchFlags = dispatchBcsFlags;
+        this->lastFlushedBcsCommandStream = &commandStreamTask;
+        return BaseClass::flushBcsTask(commandStreamTask, commandStreamTaskStart, dispatchBcsFlags, hwInfo);
     }
 
     SubmissionStatus initializeDeviceWithFirstSubmission(Device &device) override {
@@ -566,6 +576,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     TaskCountType flushBcsTaskReturnValue{};
 
     LinearStream *lastFlushedCommandStream = nullptr;
+    LinearStream *lastFlushedImmediateCommandStream = nullptr;
+    LinearStream *lastFlushedBcsCommandStream = nullptr;
     LinearStream *commandStreamHeaplessStateInit = nullptr;
 
     const IndirectHeap *recordedSsh = nullptr;
@@ -588,6 +600,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
+    DispatchBcsFlags recordedBcsDispatchFlags;
     ImmediateDispatchFlags recordedImmediateDispatchFlags = {};
     BlitPropertiesContainer receivedBlitProperties = {};
     uint32_t createAllocationForHostSurfaceCalled = 0;

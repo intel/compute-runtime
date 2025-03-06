@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::csr;
     using BaseClass::desc;
     using BaseClass::device;
+    using BaseClass::firstCmdListStream;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;

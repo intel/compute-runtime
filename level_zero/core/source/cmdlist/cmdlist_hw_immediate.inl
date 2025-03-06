@@ -119,14 +119,12 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushBcsTask(NEO::LinearStream &cmdStreamTask, size_t taskStartOffset, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, bool requireTaskCountUpdate, NEO::AppendOperations appendOperation, NEO::CommandStreamReceiver *csr) {
-    NEO::LinearStream *optionalEpilogueCmdStream = nullptr;
-
     NEO::DispatchBcsFlags dispatchBcsFlags(
         this->isSyncModeQueue || requireTaskCountUpdate, // flushTaskCount
         hasStallingCmds,                                 // hasStallingCmds
         hasRelaxedOrderingDependencies                   // hasRelaxedOrderingDependencies
     );
-    dispatchBcsFlags.optionalEpilogueCmdStream = optionalEpilogueCmdStream;
+    dispatchBcsFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
     dispatchBcsFlags.dispatchOperation = appendOperation;
 
     CommandListImp::storeReferenceTsToMappedEvents(true);
@@ -261,7 +259,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         handleHeapsAndResidencyForImmediateRegularTask<streamStatesSupported>(sshCpuPointer);
     }
 
-    NEO::LinearStream *optionalEpilogueCmdStream = nullptr;
+    NEO::LinearStream *optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     NEO::ImmediateDispatchFlags dispatchFlags{
         &this->requiredStreamState,     // requiredState
@@ -292,7 +290,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmedia
         handleHeapsAndResidencyForImmediateRegularTask<streamStatesSupported>(sshCpuPointer);
     }
 
-    NEO::LinearStream *optionalEpilogueCmdStream = nullptr;
+    NEO::LinearStream *optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     NEO::ImmediateDispatchFlags dispatchFlags{
         nullptr,                        // requiredState
@@ -332,7 +330,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         this->isSyncModeQueue,                                            // blocking
         this->isSyncModeQueue,                                            // dcFlush
         this->getCommandListSLMEnable(),                                  // useSLM
-        this->isSyncModeQueue,                                            // guardCommandBufferWithPipeControl
+        this->isSyncModeQueue || requireTaskCountUpdate,                  // guardCommandBufferWithPipeControl
         false,                                                            // gsba32BitRequired
         false,                                                            // lowPriority
         true,                                                             // implicitFlush
@@ -348,6 +346,8 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         false,                                                            // isStallingCommandsOnNextFlushRequired
         false                                                             // isDcFlushRequiredOnStallingCommandsOnNextFlush
     );
+
+    dispatchFlags.optionalEpilogueCmdStream = getOptionalEpilogueCmdStream(&cmdStreamTask, appendOperation);
 
     auto ioh = (this->commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::indirectObject));
     NEO::IndirectHeap *dsh = nullptr;
@@ -436,6 +436,14 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
 
     auto commandStream = this->commandContainer.getCommandStream();
     size_t commandStreamStart = this->cmdListCurrentStartOffset;
+    if (appendOperation == NEO::AppendOperations::cmdList && this->dispatchCmdListBatchBufferAsPrimary) {
+        auto cmdListStartCmdBufferStream = reinterpret_cast<CommandQueueImp *>(cmdQ)->getStartingCmdBuffer();
+        // check if queue starting stream is the same as immediate, if not - regular cmdlist is the starting command buffer
+        if (cmdListStartCmdBufferStream != commandStream) {
+            commandStream = cmdListStartCmdBufferStream;
+            commandStreamStart = 0u;
+        }
+    }
 
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
     auto lockCSR = outerLock != nullptr ? std::move(*outerLock) : csr->obtainUniqueOwnership();
@@ -494,7 +502,8 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto cmdQImp = static_cast<CommandQueueImp *>(cmdQ);
     cmdQImp->clearHeapContainer();
 
-    this->cmdListCurrentStartOffset = commandStream->getUsed();
+    // save offset from immediate stream - even when not used to dispatch commands, can be used for epilogue
+    this->cmdListCurrentStartOffset = this->commandContainer.getCommandStream()->getUsed();
     this->containsAnyKernel = false;
     this->handlePostSubmissionState();
 
@@ -1187,6 +1196,18 @@ CommandQueue *CommandListCoreFamilyImmediate<gfxCoreFamily>::getCmdQImmediate(bo
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+NEO::LinearStream *CommandListCoreFamilyImmediate<gfxCoreFamily>::getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation) {
+    if (appendOperation == NEO::AppendOperations::cmdList && this->dispatchCmdListBatchBufferAsPrimary) {
+        auto commandStream = this->commandContainer.getCommandStream();
+        // when regular cmd list is present as main command buffer, provide immediate command stream for epilogue
+        if (commandStream != taskCmdStream) {
+            return commandStream;
+        }
+    }
+    return nullptr;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_result_t inputRet, bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies,
                                                                           NEO::AppendOperations appendOperation, bool copyOffloadSubmission, ze_event_handle_t hSignalEvent, bool requireTaskCountUpdate,
                                                                           MutexLock *outerLock) {
@@ -1715,7 +1736,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
     }
 
     bool hasStallingCmds = true;
-    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::kernel, false, hSignalEvent, true, &mainAppendLock);
+    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::cmdList, false, hSignalEvent, true, &mainAppendLock);
 }
 
 } // namespace L0

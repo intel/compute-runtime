@@ -240,6 +240,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void allocateOrReuseKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread) override;
     void handleInOrderNonWalkerSignaling(Event *event, bool &hasStallingCmds, bool &relaxedOrderingDispatch, ze_result_t &result);
     CommandQueue *getCmdQImmediate(bool copyOffloadOperation) const;
+    NEO::LinearStream *getOptionalEpilogueCmdStream(NEO::LinearStream *taskCmdStream, NEO::AppendOperations appendOperation);
 
     MOCKABLE_VIRTUAL void checkAssert();
     ComputeFlushMethodType computeFlushMethod = nullptr;
