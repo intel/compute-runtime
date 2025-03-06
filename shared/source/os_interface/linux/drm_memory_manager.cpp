@@ -1974,6 +1974,15 @@ inline std::unique_ptr<Gmm> DrmMemoryManager::makeGmmIfSingleHandle(const Alloca
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
 
+    if (productHelper.overrideAllocationCacheable(allocationData)) {
+        gmmRequirements.overriderCacheable.enableOverride = true;
+        gmmRequirements.overriderCacheable.value = true;
+    }
+    if (productHelper.overrideCacheableForDcFlushMitigation(allocationData.type)) {
+        gmmRequirements.overriderPreferNoCpuAccess.enableOverride = true;
+        gmmRequirements.overriderPreferNoCpuAccess.value = false;
+    }
+
     return std::make_unique<Gmm>(gmmHelper,
                                  nullptr,
                                  sizeAligned,
