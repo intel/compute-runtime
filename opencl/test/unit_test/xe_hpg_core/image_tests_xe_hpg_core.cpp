@@ -48,13 +48,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenDifferentImageFormatsWhenCreatingI
 
         ASSERT_NE(nullptr, image);
         EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-
-        auto isImageSuitableForCompression = context.getDevice(0)->getProductHelper().isImageSuitableForCompression();
-        if (isImageSuitableForCompression) {
-            EXPECT_EQ(format.isCompressable, myMemoryManager->capturedPreferCompressed);
-        } else {
-            EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
-        }
+        EXPECT_EQ(format.isCompressable, myMemoryManager->capturedPreferCompressed);
     }
 }
 
@@ -70,13 +64,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-
-    auto isImageSuitableForCompression = context.getDevice(0)->getProductHelper().isImageSuitableForCompression();
-    if (isImageSuitableForCompression) {
-        EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
-    } else {
-        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
-    }
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
 
     imageFormat.image_channel_order = CL_RG;
     surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -85,10 +73,5 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-
-    if (isImageSuitableForCompression) {
-        EXPECT_TRUE(myMemoryManager->capturedPreferCompressed);
-    } else {
-        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
-    }
+    EXPECT_TRUE(myMemoryManager->capturedPreferCompressed);
 }

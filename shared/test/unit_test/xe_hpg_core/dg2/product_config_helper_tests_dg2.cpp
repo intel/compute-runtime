@@ -845,7 +845,3 @@ DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingEvictIfNecessaryFla
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenGettingUseLocalPreferredForCacheableBuffersThenExpectTrue) {
     EXPECT_TRUE(productHelper->useLocalPreferredForCacheableBuffers());
 }
-
-DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenAskedIsImageSuitableForCompressionThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isImageSuitableForCompression());
-}

@@ -1011,14 +1011,6 @@ bool ProductHelperHw<gfxProduct>::isL3FlushAfterPostSyncRequired(bool heaplessEn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isImageSuitableForCompression() const {
-    if (debugManager.flags.OverrideImageSuitableForRenderCompression.get() != -1) {
-        return !!debugManager.flags.OverrideImageSuitableForRenderCompression.get();
-    }
-    return true;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const {
 }
 

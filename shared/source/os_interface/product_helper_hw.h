@@ -200,7 +200,6 @@ class ProductHelperHw : public ProductHelper {
     uint64_t getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const override;
     bool isSharingWith3dOrMediaAllowed() const override;
     bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const override;
-    bool isImageSuitableForCompression() const override;
     void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const override;
 
     ~ProductHelperHw() override = default;

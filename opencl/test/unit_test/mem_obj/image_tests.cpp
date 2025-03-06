@@ -1113,13 +1113,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferC
     ASSERT_NE(nullptr, image);
     EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-
-    auto isImageSuitableForCompression = context.getDevice(0)->getProductHelper().isImageSuitableForCompression();
-    if (isImageSuitableForCompression) {
-        EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
-    } else {
-        EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
-    }
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
 }
 
 TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferCompression) {

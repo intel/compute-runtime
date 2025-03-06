@@ -24,7 +24,3 @@ MTLTEST_F(MtlProductHelperWindows, whenCheckingIsTimestampWaitSupportedForEvents
 MTLTEST_F(MtlProductHelperWindows, givenProductHelperWhenIsStagingBuffersEnabledThenTrueIsReturned) {
     EXPECT_TRUE(productHelper->isStagingBuffersEnabled());
 }
-
-MTLTEST_F(MtlProductHelperWindows, givenProductHelperWhenAskedIsImageSuitableForCompressionThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isImageSuitableForCompression());
-}
