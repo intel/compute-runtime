@@ -57,5 +57,17 @@ bool ProductHelperHw<gfxProduct>::restartDirectSubmissionForHostptrFree() const 
     return true;
 }
 
+template <>
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const {
+    timeout = std::chrono::microseconds{1'000};
+    maxTimeout = std::chrono::microseconds{1'000};
+    if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
+        timeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerTimeout.get()};
+    }
+    if (debugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
+        maxTimeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
+    }
+}
+
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

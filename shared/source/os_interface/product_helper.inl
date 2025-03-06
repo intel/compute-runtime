@@ -1018,4 +1018,8 @@ bool ProductHelperHw<gfxProduct>::isImageSuitableForCompression() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+void ProductHelperHw<gfxProduct>::overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const {
+}
+
 } // namespace NEO

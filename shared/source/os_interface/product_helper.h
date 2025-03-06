@@ -11,6 +11,7 @@
 
 #include "aubstream/engine_node.h"
 
+#include <chrono>
 #include <igfxfmid.h>
 #include <memory>
 #include <optional>
@@ -260,6 +261,7 @@ class ProductHelper {
     virtual bool isSharingWith3dOrMediaAllowed() const = 0;
     virtual bool isL3FlushAfterPostSyncRequired(bool heaplessEnabled) const = 0;
     virtual bool isImageSuitableForCompression() const = 0;
+    virtual void overrideDirectSubmissionTimeouts(std::chrono::microseconds &timeout, std::chrono::microseconds &maxTimeout) const = 0;
 
     virtual ~ProductHelper() = default;
 

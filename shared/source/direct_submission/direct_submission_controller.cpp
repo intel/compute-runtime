@@ -25,9 +25,6 @@ DirectSubmissionController::DirectSubmissionController() {
     if (debugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
         timeout = std::chrono::microseconds{debugManager.flags.DirectSubmissionControllerTimeout.get()};
     }
-    if (debugManager.flags.DirectSubmissionControllerDivisor.get() != -1) {
-        timeoutDivisor = debugManager.flags.DirectSubmissionControllerDivisor.get();
-    }
     if (debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.get() != -1) {
         bcsTimeoutDivisor = debugManager.flags.DirectSubmissionControllerBcsTimeoutDivisor.get();
     }
@@ -48,7 +45,7 @@ DirectSubmissionController::~DirectSubmissionController() {
 void DirectSubmissionController::registerDirectSubmission(CommandStreamReceiver *csr) {
     std::lock_guard<std::mutex> lock(directSubmissionsMutex);
     directSubmissions.insert(std::make_pair(csr, DirectSubmissionState()));
-    this->adjustTimeout(csr);
+    csr->getProductHelper().overrideDirectSubmissionTimeouts(this->timeout, this->maxTimeout);
 }
 
 void DirectSubmissionController::setTimeoutParamsForPlatform(const ProductHelper &helper) {
@@ -215,21 +212,6 @@ bool DirectSubmissionController::isDirectSubmissionIdle(CommandStreamReceiver *c
 
 SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
     return SteadyClock::now();
-}
-
-void DirectSubmissionController::adjustTimeout(CommandStreamReceiver *csr) {
-    if (EngineHelpers::isCcs(csr->getOsContext().getEngineType())) {
-        for (size_t subDeviceIndex = 0u; subDeviceIndex < csr->getOsContext().getDeviceBitfield().size(); ++subDeviceIndex) {
-            if (csr->getOsContext().getDeviceBitfield().test(subDeviceIndex)) {
-                ++this->ccsCount[subDeviceIndex];
-            }
-        }
-        auto curentMaxCcsCount = std::max_element(this->ccsCount.begin(), this->ccsCount.end());
-        if (*curentMaxCcsCount > this->maxCcsCount) {
-            this->maxCcsCount = *curentMaxCcsCount;
-            this->timeout /= this->timeoutDivisor;
-        }
-    }
 }
 
 void DirectSubmissionController::recalculateTimeout() {

@@ -77,3 +77,19 @@ LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenOverridePatIndexCalledT
 LNLTEST_F(LnlProductHelperWindows, givenProductHelperWhenCheckIsCopyBufferRectSplitSupportedThenReturnsTrue) {
     EXPECT_TRUE(productHelper->isCopyBufferRectSplitSupported());
 }
+
+LNLTEST_F(LnlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledThenTimeoutsAreOverridden) {
+    auto timeout = std::chrono::microseconds{5'000};
+    auto maxTimeout = timeout;
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(timeout.count(), 1'000);
+    EXPECT_EQ(maxTimeout.count(), 1'000);
+
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.DirectSubmissionControllerTimeout.set(2'000);
+    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(3'000);
+
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(timeout.count(), 2'000);
+    EXPECT_EQ(maxTimeout.count(), 3'000);
+}

@@ -98,7 +98,6 @@ class DirectSubmissionController {
     MOCKABLE_VIRTUAL bool sleep(std::unique_lock<std::mutex> &lock);
     MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
 
-    void adjustTimeout(CommandStreamReceiver *csr);
     void recalculateTimeout();
     void applyTimeoutForAcLineStatusAndThrottle(bool acLineConnected);
     void updateLastSubmittedThrottle(QueueThrottle throttle);

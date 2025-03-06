@@ -62,3 +62,22 @@ PTLTEST_F(PtlProductHelperWindows, givenResolveDependenciesByPipeControllsNotSup
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 3, csr));
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false, 2, csrRelaxed));
 }
+
+PTLTEST_F(PtlProductHelperWindows, givenOverrideDirectSubmissionTimeoutsCalledThenTimeoutsAreOverridden) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto productHelper = &mockDevice->getProductHelper();
+
+    auto timeout = std::chrono::microseconds{5'000};
+    auto maxTimeout = timeout;
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(timeout.count(), 1'000);
+    EXPECT_EQ(maxTimeout.count(), 1'000);
+
+    DebugManagerStateRestore restorer{};
+    debugManager.flags.DirectSubmissionControllerTimeout.set(2'000);
+    debugManager.flags.DirectSubmissionControllerMaxTimeout.set(3'000);
+
+    productHelper->overrideDirectSubmissionTimeouts(timeout, maxTimeout);
+    EXPECT_EQ(timeout.count(), 2'000);
+    EXPECT_EQ(maxTimeout.count(), 3'000);
+}
