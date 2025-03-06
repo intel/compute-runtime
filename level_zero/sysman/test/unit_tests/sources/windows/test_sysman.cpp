@@ -5,9 +5,6 @@
  *
  */
 
-#include "shared/test/common/mocks/mock_driver_model.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
-
 #include "level_zero/sysman/test/unit_tests/sources/windows/mock_sysman_fixture.h"
 
 namespace L0 {
@@ -105,59 +102,6 @@ TEST_F(SysmanDeviceFixture, GivenInvalidSysmanDeviceHandleWhenCallingSysmanDevic
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::deviceResetExt(invalidHandle, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::fabricPortGetMultiPortThroughput(invalidHandle, count, nullptr, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, SysmanDevice::deviceEnumEnabledVF(invalidHandle, &count, nullptr));
-}
-
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
-    pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
-    bool result = pWddmSysmanImp->generateUuidFromPciBusInfo(pciBusInfo, uuid);
-    EXPECT_EQ(false, result);
-}
-
-TEST_F(SysmanDeviceFixture, GivenNullOsInterfaceObjectWhenRetrievingUuidsOfDeviceThenNoUuidsAreReturned) {
-    auto execEnv = new NEO::ExecutionEnvironment();
-    execEnv->prepareRootDeviceEnvironments(1);
-    execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-    execEnv->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
-    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>());
-
-    auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
-    auto pWddmSysmanImp = static_cast<PublicWddmSysmanImp *>(pSysmanDeviceImp->pOsSysman);
-
-    auto &rootDeviceEnvironment = (pWddmSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
-    rootDeviceEnvironment.osInterface = nullptr;
-
-    std::vector<std::string> uuids;
-    pWddmSysmanImp->getDeviceUuids(uuids);
-    EXPECT_EQ(0u, uuids.size());
-}
-
-TEST_F(SysmanDeviceFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsReturned) {
-    auto execEnv = new NEO::ExecutionEnvironment();
-    execEnv->prepareRootDeviceEnvironments(1);
-    execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
-    execEnv->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
-
-    auto driverModel = std::make_unique<NEO::MockDriverModel>();
-    driverModel->pciSpeedInfo = {1, 1, 1};
-    PhysicalDevicePciBusInfo pciBusInfo = {};
-    pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
-    driverModel->pciBusInfo = pciBusInfo;
-    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(driverModel));
-
-    auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
-    auto pWddmSysmanImp = static_cast<PublicWddmSysmanImp *>(pSysmanDeviceImp->pOsSysman);
-
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    bool result = pWddmSysmanImp->getUuid(uuid);
-    EXPECT_FALSE(result);
-}
-
-TEST_F(SysmanDeviceFixture, GivenValidWddmSysmanImpWhenRetrievingUuidThenTrueIsReturned) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
-    bool result = pWddmSysmanImp->getUuid(uuid);
-    EXPECT_TRUE(result);
 }
 
 } // namespace ult

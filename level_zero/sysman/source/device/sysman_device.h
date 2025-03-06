@@ -138,7 +138,6 @@ struct SysmanDevice : _ze_device_handle_t {
     static ze_result_t deviceEnumEnabledVF(zes_device_handle_t hDevice, uint32_t *pCount, zes_vf_handle_t *phVFhandle);
 
     virtual OsSysman *deviceGetOsInterface() = 0;
-    virtual void getDeviceUuids(std::vector<std::string> &deviceUuids) = 0;
 };
 
 } // namespace Sysman

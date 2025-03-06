@@ -110,9 +110,6 @@ ze_result_t SysmanDeviceImp::deviceResetExt(zes_reset_properties_t *pProperties)
 ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {
     return pGlobalOperations->deviceGetState(pState);
 }
-void SysmanDeviceImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
-    return pOsSysman->getDeviceUuids(deviceUuids);
-}
 
 ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
     return pFabricPortHandleContext->fabricPortGet(pCount, phPort);

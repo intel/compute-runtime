@@ -50,7 +50,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     SysmanProductHelper *getSysmanProductHelper();
     uint32_t getSubDeviceCount() override;
-    void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
     const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     uint32_t getMemoryType();
@@ -80,9 +79,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     static ze_result_t getResult(int err);
     bool getTelemData(uint32_t subDeviceId, std::string &telemDir, std::string &guid, uint64_t &telemOffset);
 
-    bool getUuidFromSubDeviceInfo(uint32_t subDeviceID, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
-    bool generateUuidFromPciAndSubDeviceInfo(uint32_t subDeviceID, const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
-
   protected:
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
     std::unique_ptr<SysmanKmdInterface> pSysmanKmdInterface;
@@ -98,11 +94,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::map<uint32_t, std::unique_ptr<PlatformMonitoringTech::TelemData>> mapOfSubDeviceIdToTelemData;
     std::map<uint32_t, std::string> telemNodesInPciPath;
     std::unique_ptr<PlatformMonitoringTech::TelemData> pTelemData = nullptr;
-    struct Uuid {
-        bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
-    };
-    std::vector<Uuid> uuidVec;
 
   private:
     LinuxSysmanImp() = delete;

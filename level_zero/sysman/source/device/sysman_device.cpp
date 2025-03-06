@@ -34,7 +34,8 @@ SysmanDevice *SysmanDevice::fromHandle(zes_device_handle_t handle) {
         return nullptr;
     }
     if (std::find(globalSysmanDriver->sysmanDevices.begin(), globalSysmanDriver->sysmanDevices.end(), sysmanDevice) == globalSysmanDriver->sysmanDevices.end()) {
-        return globalSysmanDriver->getSysmanDeviceFromCoreDeviceHandle(handle);
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "SysmanDevice::fromHandle: Device not found in sysmanDevices list%s\n", "");
+        return nullptr;
     }
     return sysmanDevice;
 }
