@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,10 +21,13 @@ using ClEnqueueReadBufferTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSuccessIsReturned) {
-    MockBuffer buffer{};
+    MockContext context{};
+    MockGraphicsAllocation allocation{};
+    MockBuffer buffer{&context, allocation};
+    MockCommandQueue commandQueue{context};
     auto data = 1;
     auto retVal = clEnqueueReadBuffer(
-        pCommandQueue,
+        &commandQueue,
         &buffer,
         false,
         0,
