@@ -21,6 +21,7 @@ class TagNodeBase;
 class TimestampPacketContainer;
 class GraphicsAllocation;
 class CommandStreamReceiver;
+class GmmResourceInfo;
 
 enum class BlitSyncMode {
     none = 0,
@@ -66,6 +67,12 @@ struct BlitProperties {
                                                    TimestampPacketContainer &kernelTimestamps, const CsrDependencies &depsFromEvents,
                                                    CommandStreamReceiver &gpguCsr, CommandStreamReceiver &bcsCsr);
 
+    bool isImageOperation() const;
+    bool isSrc1DTiledArray() const;
+    bool isDst1DTiledArray() const;
+    bool is1DTiledArray(GmmResourceInfo *resInfo) const;
+    void transform1DArrayTo2DArrayIfNeeded();
+
     BlitSyncProperties blitSyncProperties = {};
     CsrDependencies csrDependencies;
     TagNodeBase *multiRootDeviceEventSync = nullptr;
@@ -95,8 +102,6 @@ struct BlitProperties {
     GMM_YUV_PLANE_ENUM dstPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
     GMM_YUV_PLANE_ENUM srcPlane = GMM_YUV_PLANE_ENUM::GMM_NO_PLANE;
     bool isSystemMemoryPoolUsed = false;
-
-    bool isImageOperation() const;
 };
 
 } // namespace NEO

@@ -56,6 +56,7 @@ struct ClBlitProperties {
                 blitProperties.blitDirection = blitDirection;
                 setBlitPropertiesForImage(blitProperties, builtinOpParams);
             }
+            blitProperties.transform1DArrayTo2DArrayIfNeeded();
             return blitProperties;
         }
 
@@ -142,6 +143,7 @@ struct ClBlitProperties {
             setBlitPropertiesForImage(blitProperties, builtinOpParams);
         }
 
+        blitProperties.transform1DArrayTo2DArrayIfNeeded();
         return blitProperties;
     }
 

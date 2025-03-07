@@ -8,6 +8,8 @@
 #include "shared/source/helpers/blit_properties.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/surface.h"
 
@@ -179,5 +181,43 @@ bool BlitProperties::isImageOperation() const {
            blitDirection == BlitterConstants::BlitDirection::imageToHostPtr ||
            blitDirection == BlitterConstants::BlitDirection::imageToImage;
 }
+bool BlitProperties::isSrc1DTiledArray() const {
+    if (srcAllocation->getDefaultGmm()) {
+        return is1DTiledArray(srcAllocation->getDefaultGmm()->gmmResourceInfo.get());
+    }
+    return false;
+}
+bool BlitProperties::isDst1DTiledArray() const {
+    if (dstAllocation->getDefaultGmm()) {
+        return is1DTiledArray(dstAllocation->getDefaultGmm()->gmmResourceInfo.get());
+    }
+    return false;
+}
+bool BlitProperties::is1DTiledArray(GmmResourceInfo *resInfo) const {
+    auto resourceType = resInfo->getResourceType();
+    auto isArray = resInfo->getArraySize() > 1;
+    auto isTiled = resInfo->getResourceFlags()->Info.Tile4 || resInfo->getResourceFlags()->Info.Tile64;
+    if (resourceType == GMM_RESOURCE_TYPE::RESOURCE_1D && isTiled && isArray) {
+        return true;
+    }
+    return false;
+}
+void BlitProperties::transform1DArrayTo2DArrayIfNeeded() {
+    if (this->isSrc1DTiledArray() || this->isDst1DTiledArray()) {
+        this->srcSize.z = this->srcSize.y;
+        this->srcSize.y = 1;
 
+        this->dstSize.z = this->dstSize.y;
+        this->dstSize.y = 1;
+
+        this->srcOffset.z = this->srcOffset.y;
+        this->srcOffset.y = 0;
+
+        this->dstOffset.z = this->dstOffset.y;
+        this->dstOffset.y = 0;
+
+        this->copySize.z = this->copySize.y;
+        this->copySize.y = 1;
+    }
+}
 } // namespace NEO

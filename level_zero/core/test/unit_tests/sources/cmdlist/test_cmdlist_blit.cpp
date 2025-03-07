@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,9 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -350,6 +353,80 @@ HWTEST2_F(AppendMemoryCopyFromContext, givenCommandListThenUpOnPerformingAppendM
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     auto result = commandList->appendMemoryCopyFromContext(dstPtr, nullptr, srcPtr, 8, nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+struct IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return IsAtLeastGfxCore<IGFX_XE_HP_CORE>::isMatched<productFamily>() && !IsXe2HpgCore::isMatched<productFamily>() && NEO::HwMapper<productFamily>::GfxProduct::supportsSampler;
+    }
+};
+HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenTiled1DArrayImagePassedToImageCopyBlitThenTransformedTo2DArrayCopy, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
+    auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
+    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
+    resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    mockAllocationSrc.setGmm(gmmSrc.get(), 0);
+    mockAllocationDst.setGmm(gmmSrc.get(), 0);
+
+    size_t arrayLevels = 8;
+    size_t depth = 1;
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 4, 4, 4, 4, 1, {1, arrayLevels, depth}, {1, arrayLevels, depth}, {1, arrayLevels, depth}, nullptr);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<XY_BLOCK_COPY_BLT *>(*itor);
+    EXPECT_EQ(cmd->getSourceSurfaceDepth(), arrayLevels);
+    EXPECT_EQ(cmd->getSourceSurfaceHeight(), depth);
+}
+
+HWTEST2_F(AppendMemoryCopyTests, givenCopyCommandListWhenNotTiled1DArrayImagePassedToImageCopyBlitThenNotTransformedTo2DArrayCopy, IsAtLeastXeHpCoreAndNotXe2HpgCoreWith2DArrayImageSupport) {
+    using XY_BLOCK_COPY_BLT = typename FamilyType::XY_BLOCK_COPY_BLT;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::copy, 0u);
+
+    auto gmmSrc = std::make_unique<MockGmm>(device->getNEODevice()->getGmmHelper());
+    auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
+    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
+    resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, 1u /*num gmms*/, NEO::AllocationType::internalHostMemory,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::system4KBPages, MemoryManager::maxOsContextCount);
+
+    mockAllocationSrc.setGmm(gmmSrc.get(), 0);
+    mockAllocationDst.setGmm(gmmSrc.get(), 0);
+
+    size_t arrayLevels = 8;
+    size_t depth = 1;
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 1, 1, 1, 1, 1, {1, arrayLevels, depth}, {1, arrayLevels, depth}, {1, arrayLevels, depth}, nullptr);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
+    auto itor = find<XY_BLOCK_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<XY_BLOCK_COPY_BLT *>(*itor);
+    EXPECT_EQ(cmd->getSourceSurfaceDepth(), depth);
+    EXPECT_EQ(cmd->getSourceSurfaceHeight(), arrayLevels);
 }
 
 } // namespace ult

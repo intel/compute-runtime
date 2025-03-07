@@ -20,6 +20,9 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_gfx_core_helper.h"
+#include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_client_context.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
@@ -2200,4 +2203,58 @@ HWTEST_F(BcsTests, givenHostPtrToImageWhenBlitBufferIsCalledThenBlitCmdIsFound) 
     hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
     auto cmdIterator = find<typename FamilyType::XY_BLOCK_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     EXPECT_NE(hwParser.cmdList.end(), cmdIterator);
+}
+HWTEST_F(BcsTests, given1DTiledArrayImageWhenConstructPropertiesThenImageTransformedTo2DArray) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        GTEST_SKIP();
+    }
+
+    auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
+    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 1;
+    resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
+    resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
+
+    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get()));
+    auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
+    image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
+    BuiltinOpParams builtinOpParams{};
+    builtinOpParams.srcMemObj = image.get();
+    builtinOpParams.dstMemObj = image.get();
+    builtinOpParams.size = {1, 8, 1};
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getCmdSizeForComputeMode();
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToImage,
+                                                                csr,
+                                                                builtinOpParams);
+    EXPECT_EQ(blitProperties.copySize.z, builtinOpParams.size.y);
+    EXPECT_EQ(blitProperties.copySize.y, builtinOpParams.size.z);
+}
+HWTEST_F(BcsTests, given1DNotTiledArrayImageWhenConstructPropertiesThenImageNotTransformedTo2DArray) {
+    if (!pDevice->getHardwareInfo().capabilityTable.supportsImages) {
+        GTEST_SKIP();
+    }
+
+    auto gmmSrc = std::make_unique<MockGmm>(pDevice->getGmmHelper());
+    auto resourceInfoSrc = static_cast<MockGmmResourceInfo *>(gmmSrc->gmmResourceInfo.get());
+    resourceInfoSrc->getResourceFlags()->Info.Tile64 = 0;
+    resourceInfoSrc->mockResourceCreateParams.Type = GMM_RESOURCE_TYPE::RESOURCE_1D;
+    resourceInfoSrc->mockResourceCreateParams.ArraySize = 8;
+
+    std::unique_ptr<Image> image(Image2dHelper<>::create(context.get()));
+    auto oldGmm = std::unique_ptr<Gmm>(image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getDefaultGmm());
+    image->getGraphicsAllocation(pDevice->getRootDeviceIndex())->setGmm(gmmSrc.release(), 0);
+    BuiltinOpParams builtinOpParams{};
+    builtinOpParams.srcMemObj = image.get();
+    builtinOpParams.dstMemObj = image.get();
+    builtinOpParams.size = {1, 8, 1};
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getCmdSizeForComputeMode();
+    auto blitProperties = ClBlitProperties::constructProperties(BlitterConstants::BlitDirection::imageToImage,
+                                                                csr,
+                                                                builtinOpParams);
+    EXPECT_EQ(blitProperties.copySize.y, builtinOpParams.size.y);
+    EXPECT_EQ(blitProperties.copySize.z, builtinOpParams.size.z);
 }

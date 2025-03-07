@@ -1459,6 +1459,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(clearColorAllocation);
 
     appendEventForProfiling(signalEvent, nullptr, true, false, false, true);
+    blitProperties.transform1DArrayTo2DArrayIfNeeded();
+
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(blitProperties, *commandContainer.getCommandStream(), *dummyBlitWa.rootDeviceEnvironment);
     dummyBlitWa.isWaRequired = true;
 
