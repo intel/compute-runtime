@@ -7599,6 +7599,24 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenNoGmmWhenQueryingPatIndexThenPassCorrectParams) {
+    mock->vmBindPatIndexProgrammingSupported = true;
+
+    auto &productHelper = this->device->getProductHelper();
+    auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[0]->getGmmClientContext());
+
+    for (auto allocationType = static_cast<uint32_t>(AllocationType::buffer); allocationType < static_cast<uint32_t>(AllocationType::count); ++allocationType) {
+        auto usageType = CacheSettingsHelper::getGmmUsageType(static_cast<AllocationType>(allocationType), false, productHelper);
+        auto isUncachedType = CacheSettingsHelper::isUncachedType(usageType);
+        auto preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(usageType, *executionEnvironment->rootDeviceEnvironments[0]);
+        bool cacheable = !preferNoCpuAccess && !isUncachedType;
+
+        mock->getPatIndex(nullptr, static_cast<AllocationType>(allocationType), CacheRegion::defaultRegion, CachePolicy::writeBack, false, false);
+        EXPECT_EQ(cacheable, mockClientContext->passedCachableSettingForGetPatIndexQuery);
+        EXPECT_EQ(false, mockClientContext->passedCompressedSettingForGetPatIndexQuery);
+    }
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForImageThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
     ImageDescriptor imgDesc = {};
     imgDesc.imageType = ImageType::image2D;

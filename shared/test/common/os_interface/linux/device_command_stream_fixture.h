@@ -119,6 +119,7 @@ struct DrmMockCustom : public Drm {
     using Drm::pageFaultSupported;
     using Drm::queryTopology;
     using Drm::setupIoctlHelper;
+    using Drm::vmBindPatIndexProgrammingSupported;
 
     struct IoctlResExt {
         std::vector<int32_t> no;
