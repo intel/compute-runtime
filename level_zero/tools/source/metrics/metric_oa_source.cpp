@@ -28,7 +28,6 @@ std::unique_ptr<OaMetricSourceImp> OaMetricSourceImp::create(const MetricDeviceC
 OaMetricSourceImp::OaMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext),
                                                                                        metricEnumeration(std::unique_ptr<MetricEnumeration>(new(std::nothrow) MetricEnumeration(*this))),
                                                                                        metricsLibrary(std::unique_ptr<MetricsLibrary>(new(std::nothrow) MetricsLibrary(*this))) {
-    metricOAOsInterface = MetricOAOsInterface::create(metricDeviceContext.getDevice());
     activationTracker = std::make_unique<MultiDomainDeferredActivationTracker>(metricDeviceContext.getSubDeviceIndex());
     type = MetricSource::metricSourceTypeOa;
 }
@@ -40,13 +39,12 @@ void OaMetricSourceImp::enable() {
 }
 
 ze_result_t OaMetricSourceImp::getTimerResolution(uint64_t &resolution) {
-
-    ze_result_t result = getMetricOsInterface()->getMetricsTimerResolution(resolution);
-    if (result != ZE_RESULT_SUCCESS) {
+    if (!metricEnumeration->readGlobalSymbol(globalSymbolOaGpuTimestampFrequency.data(), resolution)) {
         resolution = 0;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t OaMetricSourceImp::getTimestampValidBits(uint64_t &validBits) {
@@ -169,10 +167,6 @@ bool OaMetricSourceImp::isMetricGroupActivatedInHw() const {
 
 bool OaMetricSourceImp::isImplicitScalingCapable() const {
     return metricDeviceContext.isImplicitScalingCapable();
-}
-
-void OaMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface) {
-    this->metricOAOsInterface = std::move(metricOAOsInterface);
 }
 
 ze_result_t OaMetricSourceImp::activateMetricGroupsPreferDeferred(uint32_t count,

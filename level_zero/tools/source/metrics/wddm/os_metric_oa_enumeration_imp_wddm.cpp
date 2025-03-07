@@ -56,9 +56,4 @@ MetricsDiscovery::IAdapter_1_13 *getWddmMetricsAdapter(MetricEnumeration *metric
 
     return nullptr;
 }
-
-ze_result_t MetricOAWindowsImp::getMetricsTimerResolution(uint64_t &timerResolution) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 } // namespace L0

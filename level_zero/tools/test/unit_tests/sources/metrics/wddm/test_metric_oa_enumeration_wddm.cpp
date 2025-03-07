@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,8 +39,6 @@ TEST_F(MetricEnumerationTestWddm, givenCorrectWddmAdapterWhenGetMetricsAdapterTh
 
     setupDefaultMocksForMetricDevice(metricsDevice);
 
-    std::unique_ptr<MetricOAOsInterface> oaOsInterface = MetricOAOsInterface::create(*device);
-
     adapterGroup.GetParamsResult = &adapterGroupParams;
     adapterGroup.GetAdapterResult = &adapter;
     adapter.GetParamsResult = &adapterParams;
@@ -51,9 +49,6 @@ TEST_F(MetricEnumerationTestWddm, givenCorrectWddmAdapterWhenGetMetricsAdapterTh
     mockMetricEnumeration->getMetricsAdapterResult = &adapter;
 
     EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
-
-    uint64_t timerResolution;
-    EXPECT_EQ(oaOsInterface->getMetricsTimerResolution(timerResolution), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 } // namespace ult
 } // namespace L0

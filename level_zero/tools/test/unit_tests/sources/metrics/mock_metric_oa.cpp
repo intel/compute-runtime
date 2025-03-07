@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,11 +28,7 @@ void MetricContextFixture::setUp() {
     DeviceFixture::setUp();
 
     // Initialize metric api.
-    mockOAOsInterface = new MockOAOsInterface();
-    std::unique_ptr<MetricOAOsInterface> metricOAOsInterface =
-        std::unique_ptr<MetricOAOsInterface>(mockOAOsInterface);
     auto &metricSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
-    metricSource.setMetricOsInterface(metricOAOsInterface);
     metricSource.setInitializationState(ZE_RESULT_SUCCESS);
 
     mockIpSamplingOsInterface = new MockIpSamplingOsInterface();

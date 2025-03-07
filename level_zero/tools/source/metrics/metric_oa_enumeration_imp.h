@@ -18,6 +18,7 @@ namespace L0 {
 
 static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize";
 static constexpr std::string_view globalSymbolOaMaxTimestamp = "MaxTimestamp";
+static constexpr std::string_view globalSymbolOaGpuTimestampFrequency = "GpuTimestampFrequency";
 
 struct MetricEnumeration {
     MetricEnumeration(OaMetricSourceImp &metricSource);

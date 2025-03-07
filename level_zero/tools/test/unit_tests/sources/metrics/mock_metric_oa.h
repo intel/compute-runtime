@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -239,25 +239,6 @@ class MockIpSamplingOsInterface : public MetricIpSamplingOsInterface {
         return getMetricsTimerResolutionReturn;
     }
 };
-class MockOAOsInterface : public MetricOAOsInterface {
-  public:
-    ~MockOAOsInterface() override = default;
-    ze_result_t getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
-    uint8_t failGetResolutionOnCall = 0;
-    uint8_t getResolutionCallCount = 0;
-    ze_result_t getMetricsTimerResolution(uint64_t &timerResolution) override {
-        ze_result_t retVal;
-        getResolutionCallCount++;
-        if ((failGetResolutionOnCall) && (getResolutionCallCount >= failGetResolutionOnCall)) {
-            timerResolution = 0UL;
-            retVal = getMetricsTimerResolutionReturn;
-        } else {
-            timerResolution = 25000000UL; // PVC as reference
-            retVal = ZE_RESULT_SUCCESS;
-        }
-        return retVal;
-    }
-};
 
 class MetricContextFixture : public DeviceFixture {
 
@@ -284,7 +265,6 @@ class MetricContextFixture : public DeviceFixture {
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
     MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
     void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_13> &metricDevice);
-    MockOAOsInterface *mockOAOsInterface;
     MockIpSamplingOsInterface *mockIpSamplingOsInterface;
 };
 

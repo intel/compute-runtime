@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,6 @@ bool MetricEnumeration::getAdapterId(uint32_t &major, uint32_t &minor) {
 
 MetricsDiscovery::IAdapter_1_13 *MetricEnumeration::getMetricsAdapter() {
     return getDrmMetricsAdapter(this);
-}
-
-std::unique_ptr<MetricOAOsInterface> MetricOAOsInterface::create(Device &device) {
-    return std::make_unique<MetricOALinuxImp>(device);
 }
 
 } // namespace L0

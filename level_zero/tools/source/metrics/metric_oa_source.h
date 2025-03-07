@@ -51,8 +51,6 @@ class OaMetricSourceImp : public MetricSource {
     bool isImplicitScalingCapable() const;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
-    void setMetricOsInterface(std::unique_ptr<MetricOAOsInterface> &metricOAOsInterface);
-    MetricOAOsInterface *getMetricOsInterface() { return metricOAOsInterface.get(); }
     ze_result_t metricGroupCreateFromMetric(const char *pName, const char *pDescription,
                                             zet_metric_group_sampling_type_flags_t samplingType, zet_metric_handle_t hMetric,
                                             zet_metric_group_handle_t *phMetricGroup);
@@ -81,7 +79,6 @@ class OaMetricSourceImp : public MetricSource {
     std::unique_ptr<MetricsLibrary> metricsLibrary;
     MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
-    std::unique_ptr<MetricOAOsInterface> metricOAOsInterface = nullptr;
     std::unique_ptr<MultiDomainDeferredActivationTracker> activationTracker{};
     ze_result_t getTimerResolution(uint64_t &resolution);
     ze_result_t getTimestampValidBits(uint64_t &validBits);

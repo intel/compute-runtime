@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,14 +35,4 @@ MetricsDiscovery::IAdapter_1_13 *MetricEnumeration::getMetricsAdapter() {
     else
         return getDrmMetricsAdapter(this);
 }
-
-std::unique_ptr<MetricOAOsInterface> MetricOAOsInterface::create(Device &device) {
-    auto osInterface = device.getNEODevice()->getRootDeviceEnvironment().osInterface.get();
-
-    if (osInterface && osInterface->getDriverModel()->getDriverModelType() == NEO::DriverModelType::wddm)
-        return std::make_unique<MetricOAWindowsImp>();
-    else
-        return std::make_unique<MetricOALinuxImp>(device);
-}
-
 } // namespace L0

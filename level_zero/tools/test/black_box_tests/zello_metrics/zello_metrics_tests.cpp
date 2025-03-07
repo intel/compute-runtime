@@ -707,6 +707,97 @@ bool testExportData() {
     return true;
 }
 
+//////////////////////////
+/// metricGetTimestampTest
+//////////////////////////
+bool metricGetTimestampTest() {
+    // This test verifies zetMetricGroupGetGlobalTimestampsExp for all devices OR specific device
+    bool status = true;
+
+    zmu::TestMachineConfiguration machineConfig = {};
+    zmu::getTestMachineConfiguration(machineConfig);
+
+    auto metricTimestamp = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
+        auto metricGroupGetGlobalTimestamp = [](zet_metric_group_handle_t metricGroup, ze_bool_t synchronizedWithHost) {
+            uint64_t globalTimestamp = 0;
+            uint64_t metricTimestamp = 0;
+            auto status = zetMetricGroupGetGlobalTimestampsExp(metricGroup, synchronizedWithHost, &globalTimestamp, &metricTimestamp);
+            if (status != ZE_RESULT_SUCCESS) {
+                return status;
+            }
+            if (synchronizedWithHost) {
+                LOG(zmu::LogLevel::INFO) << "[Host|Metric] timestamp is " << globalTimestamp << " | " << metricTimestamp << std::endl;
+            } else {
+                LOG(zmu::LogLevel::INFO) << "[Device|Metric] timestamp is " << globalTimestamp << " | " << metricTimestamp << std::endl;
+            }
+            return ZE_RESULT_SUCCESS;
+        };
+
+        auto metricGroupGetExtendedTimestampResolutionProperties = [](zet_metric_group_handle_t metricGroup) {
+            const zet_metric_group_handle_t metricGroupHandle = metricGroup;
+            zet_metric_group_properties_t metricGroupProperties = {};
+            zet_metric_global_timestamps_resolution_exp_t metricGlobalTimestampsResolution = {};
+            metricGlobalTimestampsResolution.stype = ZET_STRUCTURE_TYPE_METRIC_GLOBAL_TIMESTAMPS_RESOLUTION_EXP;
+            metricGroupProperties.pNext = &metricGlobalTimestampsResolution;
+            auto status = zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties);
+            if (status != ZE_RESULT_SUCCESS) {
+                LOG(zmu::LogLevel::DEBUG) << "zetMetricGroupGetProperties status: " << status << std::endl;
+                return status;
+            }
+
+            LOG(zmu::LogLevel::INFO) << "METRIC GROUP[" << metricGroupProperties.name << "]: "
+                                     << "desc: " << metricGroupProperties.description << "\n";
+            LOG(zmu::LogLevel::INFO) << "\t -> timerResolution: " << metricGlobalTimestampsResolution.timerResolution << " | "
+                                     << "timestampValidBits: " << metricGlobalTimestampsResolution.timestampValidBits << std::endl;
+            return ZE_RESULT_SUCCESS;
+        };
+
+        if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
+            return false;
+        }
+
+        LOG(zmu::LogLevel::INFO) << "Running zetMetricGroupGetGlobalTimestampsExp() : Device [" << deviceId << ", " << subDeviceId << " ] : Metric Group :" << metricGroupName.c_str() << "\n";
+
+        std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
+            std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
+
+        auto metricGroup = zmu::findMetricGroup(metricGroupName.c_str(),
+                                                static_cast<zet_metric_group_sampling_type_flag_t>(ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED | ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EXP_TRACER_BASED), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange), NEO-12901
+                                                executionCtxt->getDeviceHandle(0));
+
+        ze_result_t status;
+        status = metricGroupGetGlobalTimestamp(metricGroup, true);
+        if (status != ZE_RESULT_SUCCESS) {
+            return false;
+        }
+        status = metricGroupGetGlobalTimestamp(metricGroup, false);
+        if (status != ZE_RESULT_SUCCESS) {
+            return false;
+        }
+
+        status = metricGroupGetExtendedTimestampResolutionProperties(metricGroup);
+        return status == ZE_RESULT_SUCCESS;
+    };
+
+    auto testSettings = zmu::TestSettings::get();
+
+    if (testSettings->deviceId.get() == -1) {
+        for (uint32_t deviceId = 0; deviceId < machineConfig.deviceCount; deviceId++) {
+            // Run for all subdevices
+            for (uint32_t subDeviceId = 0; subDeviceId < machineConfig.devices[deviceId].subDeviceCount; subDeviceId++) {
+                status &= metricTimestamp(deviceId, subDeviceId, testSettings->metricGroupName.get());
+            }
+            // Run for root device
+            status &= metricTimestamp(deviceId, -1, testSettings->metricGroupName.get());
+        }
+    } else {
+        // Run for specific device
+        status &= metricTimestamp(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
+    }
+
+    return status;
+}
+
 ZELLO_METRICS_ADD_TEST(queryTest)
 ZELLO_METRICS_ADD_TEST(streamTest)
 ZELLO_METRICS_ADD_TEST(streamMultiMetricDomainTest)
@@ -719,3 +810,4 @@ ZELLO_METRICS_ADD_TEST(displayAllMetricGroups)
 ZELLO_METRICS_ADD_TEST(queryImmediateCommandListTest)
 ZELLO_METRICS_ADD_TEST(collectIndefinitely)
 ZELLO_METRICS_ADD_TEST(testExportData)
+ZELLO_METRICS_ADD_TEST(metricGetTimestampTest)

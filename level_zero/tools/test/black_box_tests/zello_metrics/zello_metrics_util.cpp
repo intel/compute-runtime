@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,12 +24,14 @@ void createL0() {
 
 ze_driver_handle_t getDriver() {
     uint32_t driverCount = 0;
-    ze_driver_handle_t driverHandle = {};
+    std::vector<ze_driver_handle_t> driverHandles = {};
     // Obtain driver.
     VALIDATECALL(zeDriverGet(&driverCount, nullptr));
     EXPECT(driverCount > 0);
-    VALIDATECALL(zeDriverGet(&driverCount, &driverHandle));
-    return driverHandle;
+    driverHandles.resize(driverCount);
+
+    VALIDATECALL(zeDriverGet(&driverCount, driverHandles.data()));
+    return driverHandles[0];
 }
 
 ze_context_handle_t createContext(ze_driver_handle_t &driverHandle) {

@@ -84,24 +84,4 @@ MetricsDiscovery::IAdapter_1_13 *getDrmMetricsAdapter(MetricEnumeration *metricE
 
     return nullptr;
 }
-
-MetricOALinuxImp::MetricOALinuxImp(Device &device) : device(device) {}
-
-ze_result_t MetricOALinuxImp::getMetricsTimerResolution(uint64_t &timerResolution) {
-    ze_result_t result = ZE_RESULT_SUCCESS;
-
-    const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
-    int32_t timestampFrequency;
-    int32_t ret = drm->getOaTimestampFrequency(timestampFrequency);
-    if (ret < 0 || timestampFrequency == 0) {
-        timerResolution = 0;
-        result = ZE_RESULT_ERROR_UNKNOWN;
-        METRICS_LOG_ERR("getOATimestampFrequenc() failed errno = %d | ret = %d", errno, ret);
-    } else {
-        timerResolution = static_cast<uint64_t>(timestampFrequency);
-    }
-
-    return result;
-}
-
 } // namespace L0

@@ -757,23 +757,17 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    mockOAOsInterface->getMetricsTimerResolutionReturn = ZE_RESULT_ERROR_UNKNOWN;
-    mockOAOsInterface->failGetResolutionOnCall = 1;
-
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
     EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
 
-    EXPECT_EQ(metricTimestampProperties.timerResolution, 0UL);
-    EXPECT_EQ(metricTimestampProperties.timestampValidBits, 0UL);
+    EXPECT_NE(metricTimestampProperties.timerResolution, 0UL);
+    EXPECT_NE(metricTimestampProperties.timestampValidBits, 0UL);
 
-    mockOAOsInterface->getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
-    mockOAOsInterface->failGetResolutionOnCall = 0;
-
-    metricsDevice.forceGetSymbolByNameFail = true;
+    metricsDevice.failGetGpuTimestampFrequencyOnCall = true;
 
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
@@ -785,13 +779,10 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
     EXPECT_EQ(metricTimestampProperties.timerResolution, 0UL);
     EXPECT_EQ(metricTimestampProperties.timestampValidBits, 0UL);
 
-    metricsDevice.forceGetSymbolByNameFail = false;
+    metricsDevice.resetMockVars();
+    metricsDevice.forceGetMaxTimestampFail = true;
 
-    mockOAOsInterface->getMetricsTimerResolutionReturn = ZE_RESULT_ERROR_UNKNOWN;
-    mockOAOsInterface->getResolutionCallCount = 0;
-    mockOAOsInterface->failGetResolutionOnCall = 2; // getTimestampValidBits() also calls getTimerResolution()
-
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
     EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
@@ -801,8 +792,15 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
     EXPECT_EQ(metricTimestampProperties.timerResolution, 0UL);
     EXPECT_EQ(metricTimestampProperties.timestampValidBits, 0UL);
 
-    mockOAOsInterface->getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
-    mockOAOsInterface->failGetResolutionOnCall = 0;
+    metricsDevice.resetMockVars();
+    metricsDevice.failGetGpuTimestampFrequencyOnCall = 2;
+
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(metricGroupProperties.domain, 0u);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
+    EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
+    EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
+    EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
 }
 
 TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyThenValuesAreUpdated) {

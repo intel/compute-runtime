@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,12 +38,6 @@ class MetricIpSamplingOsInterface : public MetricOsInterface {
     uint32_t maxDssBufferSize = 512 * MemoryConstants::kiloByte;
     uint32_t defaultPollPeriodNs = 10000000u;
     uint32_t unitReportSize = 64u;
-};
-
-class MetricOAOsInterface : public MetricOsInterface {
-  public:
-    ~MetricOAOsInterface() override = default;
-    static std::unique_ptr<MetricOAOsInterface> create(Device &device);
 };
 
 } // namespace L0
