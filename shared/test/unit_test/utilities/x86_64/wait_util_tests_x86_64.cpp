@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Intel Corporation
+ * Copyright (C) 2023-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,7 +89,7 @@ struct WaitPkgEnabledFixture : public WaitPkgFixture {
         CpuInfo::cpuidFunc = mockCpuidEnableAll;
         WaitUtils::waitpkgSupport = true;
 
-        WaitUtils::init();
+        WaitUtils::init(false);
 
         CpuIntrinsicsTests::lastUmwaitCounter = 0;
         CpuIntrinsicsTests::lastUmwaitControl = 0;
@@ -123,7 +123,7 @@ TEST_F(WaitPkgTest, givenDefaultSettingsAndWaitpkgSupportTrueWhenWaitInitialized
 
     WaitUtils::waitpkgSupport = true;
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -135,7 +135,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportFalseWhenWaitIni
 
     debugManager.flags.EnableWaitpkg.set(1);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -147,7 +147,7 @@ TEST_F(WaitPkgTest, givenDisabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitIni
 
     debugManager.flags.EnableWaitpkg.set(0);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -161,7 +161,7 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
 
     debugManager.flags.EnableWaitpkg.set(1);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -175,7 +175,20 @@ TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInit
 
     debugManager.flags.EnableWaitpkg.set(1);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
+
+    EXPECT_EQ(0u, WaitUtils::waitCount);
+    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
+    EXPECT_TRUE(WaitUtils::waitpkgUse);
+}
+
+TEST_F(WaitPkgTest, givenEnabledSetToTrueAndWaitpkgSupportTrueWhenWaitInitializedAndCpuSupportsOperandThenWaitPkgEnabled) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+
+    WaitUtils::waitpkgSupport = true;
+
+    WaitUtils::init(true);
 
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
@@ -191,7 +204,7 @@ TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideCounterValueWhenWaitIniti
     debugManager.flags.EnableWaitpkg.set(1);
     debugManager.flags.WaitpkgCounterValue.set(1234);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(1234u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
@@ -206,10 +219,32 @@ TEST_F(WaitPkgTest, givenFullyEnabledWaitPkgAndOverrideControlValueWhenWaitIniti
     debugManager.flags.EnableWaitpkg.set(1);
     debugManager.flags.WaitpkgControlValue.set(1);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(0u, WaitUtils::waitCount);
     EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
     EXPECT_EQ(1u, WaitUtils::waitpkgControlValue);
+    EXPECT_TRUE(WaitUtils::waitpkgUse);
+}
+
+TEST_F(WaitPkgTest, givenEnabledWaitPkgSettingsAndWaitpkgSupportTrueWhenWaitInitializedTwiceThenInitOnce) {
+    CpuInfo::cpuidFunc = mockCpuidEnableAll;
+
+    WaitUtils::waitpkgSupport = true;
+
+    WaitUtils::init(true);
+
+    EXPECT_EQ(0u, WaitUtils::waitCount);
+    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
+    EXPECT_TRUE(WaitUtils::waitpkgUse);
+
+    debugManager.flags.WaitpkgControlValue.set(1);
+
+    WaitUtils::init(true);
+
+    EXPECT_EQ(0u, WaitUtils::waitCount);
+    EXPECT_EQ(10000u, WaitUtils::waitpkgCounterValue);
+    EXPECT_EQ(0u, WaitUtils::waitpkgControlValue);
     EXPECT_TRUE(WaitUtils::waitpkgUse);
 }
 

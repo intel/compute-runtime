@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,7 +59,7 @@ inline bool waitFunction(volatile TagAddressType *pollAddress, TaskCountType exp
     return waitFunctionWithPredicate<TaskCountType>(pollAddress, expectedValue, std::greater_equal<TaskCountType>());
 }
 
-void init();
+void init(bool enable);
 } // namespace WaitUtils
 
 } // namespace NEO

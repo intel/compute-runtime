@@ -45,6 +45,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/source/utilities/wait_util.h"
 
 #include "command_stream_receiver_hw_ext.inl"
 
@@ -1429,6 +1430,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             this->osContext->setDirectSubmissionActive();
             if (this->osContext->isDirectSubmissionLightActive()) {
                 this->pushAllocationsForMakeResident = false;
+                WaitUtils::init(true);
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,6 @@ namespace WaitUtils {
 
 constexpr uint64_t defaultCounterValue = 10000;
 constexpr uint32_t defaultControlValue = 0;
-constexpr bool defaultEnableWaitPkg = false;
 
 uint64_t waitpkgCounterValue = defaultCounterValue;
 uint32_t waitpkgControlValue = defaultControlValue;
@@ -30,13 +29,16 @@ bool waitpkgSupport = false;
 #endif
 bool waitpkgUse = false;
 
-void init() {
-    bool enableWaitPkg = defaultEnableWaitPkg;
-    int32_t overrideEnableWaitPkg = debugManager.flags.EnableWaitpkg.get();
-    if (overrideEnableWaitPkg != -1) {
-        enableWaitPkg = !!(overrideEnableWaitPkg);
+void init(bool enable) {
+    if (waitpkgUse) {
+        return;
     }
-    if (enableWaitPkg && waitpkgSupport) {
+
+    if (debugManager.flags.EnableWaitpkg.get() != -1) {
+        enable = debugManager.flags.EnableWaitpkg.get();
+    }
+
+    if (enable && waitpkgSupport) {
         if (CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureWaitPkg)) {
             waitpkgUse = true;
             waitCount = 0;
@@ -47,6 +49,7 @@ void init() {
     if (overrideWaitPkgCounter != -1) {
         waitpkgCounterValue = static_cast<uint64_t>(overrideWaitPkgCounter);
     }
+
     int32_t overrideWaitPkgControl = debugManager.flags.WaitpkgControlValue.get();
     if (overrideWaitPkgControl != -1) {
         waitpkgControlValue = static_cast<uint32_t>(overrideWaitPkgControl);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ using WaitPredicateOnlyTest = Test<WaitPredicateOnlyFixture>;
 TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenNoPollAddressProvidedThenPauseDefaultTimeAndReturnFalse) {
     EXPECT_EQ(1u, WaitUtils::defaultWaitCount);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
@@ -48,7 +48,7 @@ TEST_F(WaitPredicateOnlyTest, givenDebugFlagOverridesWhenNoPollAddressProvidedTh
     uint32_t count = 10u;
     debugManager.flags.WaitLoopCount.set(count);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(count, WaitUtils::waitCount);
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
@@ -58,7 +58,7 @@ TEST_F(WaitPredicateOnlyTest, givenDebugFlagOverridesWhenNoPollAddressProvidedTh
 }
 
 TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedDoesNotMeetCriteriaThenPauseDefaultTimeAndReturnFalse) {
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
     volatile TagAddressType pollValue = 1u;
@@ -71,7 +71,7 @@ TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedDoesNot
 }
 
 TEST_F(WaitPredicateOnlyTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCriteriaThenPauseDefaultTimeAndReturnTrue) {
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
     volatile TagAddressType pollValue = 3u;
@@ -87,7 +87,7 @@ TEST_F(WaitPredicateOnlyTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsC
     uint32_t count = 0u;
     debugManager.flags.WaitLoopCount.set(count);
 
-    WaitUtils::init();
+    WaitUtils::init(false);
     EXPECT_EQ(count, WaitUtils::waitCount);
 
     volatile TagAddressType pollValue = 3u;
