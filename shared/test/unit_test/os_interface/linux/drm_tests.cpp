@@ -2269,6 +2269,23 @@ TEST(DrmTest, GivenProductSpecificIoctlHelperAvailableAndDebugFlagToIgnoreIsSetW
     EXPECT_EQ(0u, customFuncCalled);
 }
 
+TEST(DrmTest, GivenSysFsPciPathWhenCallinggetSysFsPciPathBaseNameThenResultIsCorrect) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+
+    class DrmMockPciPath : public DrmMock {
+      public:
+        DrmMockPciPath(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {}
+        std::string mockSysFsPciPath = "/sys/devices/pci0000:00/0000:00:02.0/drm/card0";
+        std::string getSysFsPciPath() override { return mockSysFsPciPath; }
+    };
+    DrmMockPciPath drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    EXPECT_STREQ("card0", drm.getSysFsPciPathBaseName().c_str());
+    drm.mockSysFsPciPath = "/sys/devices/pci0000:00/0000:00:02.0/drm/card7";
+    EXPECT_STREQ("card7", drm.getSysFsPciPathBaseName().c_str());
+    drm.mockSysFsPciPath = "card8";
+    EXPECT_STREQ("card8", drm.getSysFsPciPathBaseName().c_str());
+}
+
 using DrmHwTest = ::testing::Test;
 HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitializedFromProductHelper) {
     DebugManagerStateRestore restore;
