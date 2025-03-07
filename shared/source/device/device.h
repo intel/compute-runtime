@@ -279,7 +279,7 @@ class Device : public ReferenceTrackedObject<Device>, NEO::NonCopyableAndNonMova
 
     MOCKABLE_VIRTUAL bool createDeviceImpl();
     bool initDeviceWithEngines();
-    void initializeCommonResources();
+    bool initializeCommonResources();
     bool initDeviceFully();
     void initUsmReuseMaxSize();
     virtual bool createEngines();
