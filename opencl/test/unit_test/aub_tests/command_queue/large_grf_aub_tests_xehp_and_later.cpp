@@ -464,9 +464,8 @@ HWTEST2_P(LargeGrfTest, givenMixedLargeGrfAndSmallGrfKernelsWhenExecutedThenResu
             EXPECT_FALSE(largeGrfValues[0]);
         } else {
             EXPECT_EQ(0u, largeGrfValues.size());
-            largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(*this->csr,
-                                                                                          this->csr->getCS(0));
-            ASSERT_NE(0u, largeGrfValues.size());
+            largeGrfValues = NEO::UnitTestHelper<FamilyType>::getProgrammedLargeGrfValues(this->csr->getCS(0));
+            ASSERT_EQ(1u, largeGrfValues.size());
             EXPECT_FALSE(largeGrfValues[0]);
         }
     }

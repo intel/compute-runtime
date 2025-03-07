@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -92,6 +92,8 @@ struct UnitTestHelper {
     static void adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor);
 
     static std::vector<bool> getProgrammedLargeGrfValues(CommandStreamReceiver &csr, LinearStream &linearStream);
+
+    static std::vector<bool> getProgrammedLargeGrfValues(LinearStream &linearStream);
 
     static uint32_t getProgrammedGrfValue(CommandStreamReceiver &csr, LinearStream &linearStream);
 

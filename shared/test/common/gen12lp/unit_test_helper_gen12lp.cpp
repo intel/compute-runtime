@@ -127,6 +127,11 @@ std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(Command
 }
 
 template <typename GfxFamily>
+std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(LinearStream &linearStream) {
+    return {};
+}
+
+template <typename GfxFamily>
 inline bool UnitTestHelper<GfxFamily>::getWorkloadPartitionForStoreRegisterMemCmd(typename GfxFamily::MI_STORE_REGISTER_MEM &storeRegisterMem) {
     return false;
 }
