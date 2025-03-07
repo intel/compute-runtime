@@ -1919,6 +1919,15 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenImmediateCmdListCsrIsSetThenCo
     EXPECT_EQ(cmdContainer.getCommandStream()->getCmdContainer(), nullptr);
 }
 
+TEST_F(CommandContainerTest, givenCmdContainerWithImmediateCsrWhenCreatingSecondaryCmdBufferThenSecondaryStreamHasCmdContainerSetToNullptr) {
+    MyMockCommandContainer cmdContainer;
+    cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    constexpr bool createSecondary = true;
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, false, createSecondary);
+    ASSERT_NE(nullptr, cmdContainer.secondaryCommandStreamForImmediateCmdList.get());
+    EXPECT_EQ(cmdContainer.secondaryCommandStreamForImmediateCmdList->getCmdContainer(), nullptr);
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenOldHeapIsStoredAndResetContainerThenUseStorageForReuseForStoredHeap) {
     MyMockCommandContainer cmdContainer;
 

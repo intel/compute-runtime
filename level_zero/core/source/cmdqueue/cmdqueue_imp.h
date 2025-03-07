@@ -114,6 +114,9 @@ struct CommandQueueImp : public CommandQueue {
     NEO::LinearStream *getStartingCmdBuffer() const {
         return startingCmdBuffer;
     }
+    void triggerBbStartJump() {
+        forceBbStartJump = true;
+    }
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
@@ -171,6 +174,7 @@ struct CommandQueueImp : public CommandQueue {
 
     std::atomic<bool> cmdListWithAssertExecuted = false;
     bool useKmdWaitFunction = false;
+    bool forceBbStartJump = false;
 };
 
 } // namespace L0

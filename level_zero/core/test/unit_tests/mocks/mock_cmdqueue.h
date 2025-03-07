@@ -31,6 +31,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::desc;
     using BaseClass::device;
     using BaseClass::firstCmdListStream;
+    using BaseClass::forceBbStartJump;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;
@@ -77,6 +78,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::commandStream;
     using BaseClass::estimateStreamSizeForExecuteCommandListsRegularHeapless;
     using BaseClass::executeCommandListsRegularHeapless;
+    using BaseClass::forceBbStartJump;
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
     using BaseClass::startingCmdBuffer;

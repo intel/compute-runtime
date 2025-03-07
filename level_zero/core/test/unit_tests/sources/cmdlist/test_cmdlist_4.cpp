@@ -1584,8 +1584,8 @@ HWTEST2_F(ImmediateCommandListTest, givenImmediateCmdListWhenAppendingRegularThe
     auto startStream = static_cast<L0::CommandQueueImp *>(commandListImmediate->cmdQImmediate)->getStartingCmdBuffer();
 
     if (commandListImmediate->getCmdListBatchBufferFlag()) {
-        auto expectedStream = commandList->getCmdContainer().getCommandStream();
-        EXPECT_EQ(expectedStream, startStream);
+        auto expectedStreamAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
+        EXPECT_EQ(expectedStreamAllocation, startStream->getGraphicsAllocation());
     } else {
         auto expectedStream = commandListImmediate->getCmdContainer().getCommandStream();
         EXPECT_EQ(expectedStream, startStream);
@@ -1694,6 +1694,67 @@ HWTEST2_F(ImmediateCommandListTest,
 
     auto iterator = find<MI_BATCH_BUFFER_END *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), iterator);
+}
+
+HWTEST2_F(ImmediateCommandListTest,
+          givenImmediateCmdListWithPrimaryBatchBufferWhenAppendingRegularCmdListWithWaitEventThenDispatchSemaphoreAndJumpFromImmediateToRegular, MatchAny) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    ze_event_pool_desc_t eventPoolDesc = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 2;
+
+    ze_event_desc_t eventDesc = {ZE_STRUCTURE_TYPE_EVENT_DESC};
+    eventDesc.index = 0;
+    eventDesc.wait = 0;
+    eventDesc.signal = 0;
+
+    ze_result_t returnValue;
+    std::unique_ptr<EventPool> eventPool = std::unique_ptr<EventPool>(static_cast<EventPool *>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue)));
+    std::unique_ptr<L0::Event> event = std::unique_ptr<L0::Event>(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    auto eventHandle = event->toHandle();
+
+    commandList->close();
+    auto cmdListHandle = commandList->toHandle();
+
+    auto regularCmdBufferStream = commandList->getCmdContainer().getCommandStream();
+    auto regularCmdBufferAllocation = regularCmdBufferStream->getGraphicsAllocation();
+
+    auto cmdQImmediate = static_cast<WhiteBox<::L0::CommandQueue> *>(commandListImmediate->cmdQImmediate);
+
+    commandListImmediate->dispatchCmdListBatchBufferAsPrimary = true;
+    cmdQImmediate->dispatchCmdListBatchBufferAsPrimary = true;
+
+    // first append can carry preamble
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto immediateCmdBufferStream = commandListImmediate->getCmdContainer().getCommandStream();
+    auto offsetBefore = immediateCmdBufferStream->getUsed();
+
+    // no preamble but wait event as first, then bb_start jumping to regular cmdlist
+    returnValue = commandListImmediate->appendCommandLists(1, &cmdListHandle, nullptr, 1, &eventHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto offsetAfter = immediateCmdBufferStream->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(
+        cmdList,
+        ptrOffset(immediateCmdBufferStream->getCpuBase(), offsetBefore),
+        offsetAfter - offsetBefore));
+
+    auto iteratorWait = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), iteratorWait);
+
+    auto iteratorBbStart = find<MI_BATCH_BUFFER_START *>(iteratorWait, cmdList.end());
+    ASSERT_NE(cmdList.end(), iteratorBbStart);
+
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(*iteratorBbStart);
+
+    EXPECT_EQ(regularCmdBufferAllocation->getGpuAddress(), bbStart->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 }
 
 } // namespace ult

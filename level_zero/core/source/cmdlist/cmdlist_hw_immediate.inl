@@ -438,7 +438,9 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     size_t commandStreamStart = this->cmdListCurrentStartOffset;
     if (appendOperation == NEO::AppendOperations::cmdList && this->dispatchCmdListBatchBufferAsPrimary) {
         auto cmdListStartCmdBufferStream = reinterpret_cast<CommandQueueImp *>(cmdQ)->getStartingCmdBuffer();
-        // check if queue starting stream is the same as immediate, if not - regular cmdlist is the starting command buffer
+        // check if queue starting stream is the same as immediate,
+        // if they are the same - immediate command list buffer has preamble in it including jump from immediate to regular cmdlist - proceed normal
+        // if not - regular cmdlist is the starting command buffer - no queue preamble or waiting commands
         if (cmdListStartCmdBufferStream != commandStream) {
             commandStream = cmdListStartCmdBufferStream;
             commandStreamStart = 0u;
@@ -1720,7 +1722,16 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
         return ret;
     }
 
-    auto mainAppendLock = static_cast<CommandQueueImp *>(this->cmdQImmediate)->getCsr()->obtainUniqueOwnership();
+    auto queueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+
+    auto mainAppendLock = queueImp->getCsr()->obtainUniqueOwnership();
+
+    if (this->dispatchCmdListBatchBufferAsPrimary) {
+        // check if wait event preamble or implicit synchronization is present and force bb start jump in queue, even when no preamble is required there
+        if (this->commandContainer.getCommandStream()->getUsed() != this->cmdListCurrentStartOffset) {
+            queueImp->triggerBbStartJump();
+        }
+    }
     ret = this->cmdQImmediate->executeCommandLists(numCommandLists, phCommandLists, nullptr, true, this->commandContainer.getCommandStream());
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
