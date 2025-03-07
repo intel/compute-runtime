@@ -1983,7 +1983,7 @@ TEST_F(DeviceTests, GivenDebuggingEnabledWhenDeviceIsInitializedThenL0DebuggerIs
     EXPECT_NE(nullptr, device->getL0Debugger());
 }
 
-TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsInitializedThenErrorIsPrintedButNotReturned) {
+TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsInitializedThenDeviceIsNullAndErrorIsPrinted) {
     extern bool forceCreateNullptrDebugger;
 
     VariableBackup backupForceCreateNullptrDebugger{&forceCreateNullptrDebugger, true};
@@ -1998,7 +1998,7 @@ TEST_F(DeviceTests, givenDebuggerRequestedByUserAndNotAvailableWhenDeviceIsIniti
     auto output = testing::internal::GetCapturedStderr();
 
     EXPECT_EQ(std::string("Debug mode is not enabled in the system.\n"), output);
-    EXPECT_EQ(nullptr, device->getL0Debugger());
+    EXPECT_EQ(nullptr, device);
 }
 
 TEST_F(DeviceTests, givenDebuggerRequestedByUserWhenDeviceWithSubDevicesCreatedThenInitializeDebuggerOncePerRootDevice) {
