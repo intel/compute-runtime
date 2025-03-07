@@ -300,10 +300,8 @@ class SVMAllocsManager {
     std::shared_mutex mtx;
     std::mutex mtxForIndirectAccess;
     bool multiOsContextSupport;
-    SvmAllocationCache usmDeviceAllocationsCache;
-    SvmAllocationCache usmHostAllocationsCache;
-    bool usmDeviceAllocationsCacheEnabled = false;
-    bool usmHostAllocationsCacheEnabled = false;
+    std::unique_ptr<SvmAllocationCache> usmDeviceAllocationsCache;
+    std::unique_ptr<SvmAllocationCache> usmHostAllocationsCache;
     std::multimap<uint32_t, GraphicsAllocation *> internalAllocationsMap;
 };
 } // namespace NEO

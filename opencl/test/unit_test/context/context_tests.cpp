@@ -826,8 +826,7 @@ TEST_F(GTPinContextDestroyTest, whenCallingConxtextDestructorThenGTPinIsNotified
     if (mockContext->svmAllocsManager) {
         mockContext->getDeviceMemAllocPool().cleanup();
         mockContext->getHostMemAllocPool().cleanup();
-        mockContext->svmAllocsManager->trimUSMDeviceAllocCache();
-        mockContext->svmAllocsManager->trimUSMHostAllocCache();
+        mockContext->svmAllocsManager->cleanupUSMAllocCaches();
         delete mockContext->svmAllocsManager;
     }
     mockContext->svmAllocsManager = new MockSVMAllocManager();
