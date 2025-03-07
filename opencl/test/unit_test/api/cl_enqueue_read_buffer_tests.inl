@@ -21,13 +21,10 @@ using ClEnqueueReadBufferTests = ApiTests;
 namespace ULT {
 
 TEST_F(ClEnqueueReadBufferTests, GivenCorrectArgumentsWhenReadingBufferThenSuccessIsReturned) {
-    MockContext context{};
-    MockGraphicsAllocation allocation{};
-    MockBuffer buffer{&context, allocation};
-    MockCommandQueue commandQueue{context};
+    MockBuffer buffer{};
     auto data = 1;
     auto retVal = clEnqueueReadBuffer(
-        &commandQueue,
+        pCommandQueue,
         &buffer,
         false,
         0,

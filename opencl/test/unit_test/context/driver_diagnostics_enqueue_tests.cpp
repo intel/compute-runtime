@@ -100,26 +100,6 @@ TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEn
     alignedFree(ptr);
 }
 
-TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueStagingReadBufferIsCalledThenContextProvidesHintsAboutAlignments) {
-    REQUIRE_SVM_OR_SKIP(pPlatform->getClDevice(0));
-    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    uintptr_t addressForReadBuffer = (uintptr_t)ptr;
-    size_t sizeForReadBuffer = MemoryConstants::cacheLineSize;
-    if (!alignedAddress) {
-        addressForReadBuffer++;
-    }
-    if (!alignedSize) {
-        sizeForReadBuffer--;
-    }
-    pCmdQ->enqueueStagingBufferTransfer(CL_COMMAND_READ_BUFFER, buffer, CL_FALSE,
-                                        0, sizeForReadBuffer, (void *)addressForReadBuffer, nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), addressForReadBuffer);
-    EXPECT_TRUE(containsHint(expectedHint, userData));
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBuffer, sizeForReadBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
-    alignedFree(ptr);
-}
-
 TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndNotSharedMemWhenEnqueueReadBufferRectIsCallingThenContextProvidesProperHint) {
 
     size_t bufferOrigin[] = {0, 0, 0};

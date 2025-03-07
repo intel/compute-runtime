@@ -243,16 +243,6 @@ class CommandQueueHw : public CommandQueue {
                              const cl_event *eventWaitList,
                              cl_event *event) override;
 
-    cl_int enqueueReadBufferImpl(Buffer *buffer,
-                                 cl_bool blockingRead,
-                                 size_t offset,
-                                 size_t size,
-                                 void *ptr,
-                                 GraphicsAllocation *mapAllocation,
-                                 cl_uint numEventsInWaitList,
-                                 const cl_event *eventWaitList,
-                                 cl_event *event, CommandStreamReceiver &csr) override;
-
     cl_int enqueueReadBufferRect(Buffer *buffer,
                                  cl_bool blockingRead,
                                  const size_t *bufferOrigin,
