@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/logger.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -155,12 +156,30 @@ ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
 
     std::vector<std::pair<std::string, uint32_t>> additionalExtensions;
 
+    bool isBfloat16Supported = false;
+    bool isBindlessHeapsSupported = false;
     for (const auto device : devices) {
+        if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()) {
+            if (device->getNEODevice()->getRootDeviceEnvironment().getReleaseHelper()->isBFloat16ConversionSupported()) {
+                isBfloat16Supported = true;
+            }
+        }
         if (device->getNEODevice()->getRootDeviceEnvironment().getBindlessHeapsHelper()) {
-            additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
+            isBindlessHeapsSupported = true;
+        }
+        if (isBfloat16Supported && isBindlessHeapsSupported) {
             break;
         }
     }
+
+    if (isBindlessHeapsSupported) {
+        additionalExtensions.emplace_back(ZE_BINDLESS_IMAGE_EXP_NAME, ZE_BINDLESS_IMAGE_EXP_VERSION_CURRENT);
+    }
+
+    if (isBfloat16Supported) {
+        additionalExtensions.emplace_back(ZE_BFLOAT16_CONVERSIONS_EXT_NAME, ZE_BFLOAT16_CONVERSIONS_EXT_VERSION_1_0);
+    }
+
     devices[0]->getL0GfxCoreHelper().appendPlatformSpecificExtensions(additionalExtensions, devices[0]->getProductHelper(), devices[0]->getHwInfo());
 
     if (devices[0]->getL0GfxCoreHelper().synchronizedDispatchSupported() && devices[0]->isImplicitScalingCapable()) {

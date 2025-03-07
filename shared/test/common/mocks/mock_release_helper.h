@@ -21,7 +21,6 @@ class MockReleaseHelper : public ReleaseHelper {
     ADDMETHOD_CONST_NOBASE(isPipeControlPriorToPipelineSelectWaRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isProgramAllStateComputeCommandFieldsWARequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isSplitMatrixMultiplyAccumulateSupported, bool, false, ());
-    ADDMETHOD_CONST_NOBASE(isBFloat16ConversionSupported, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isAuxSurfaceModeOverrideRequired, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isResolvingSubDeviceIDNeeded, bool, false, ());
     ADDMETHOD_CONST_NOBASE(isDirectSubmissionSupported, bool, false, ());
@@ -48,5 +47,10 @@ class MockReleaseHelper : public ReleaseHelper {
         static SizeToPreferredSlmValueArray sizeToPreferredSlmValue = {};
         return sizeToPreferredSlmValue;
     }
+
+    bool isBFloat16ConversionSupported() const override {
+        return bFloat16Support;
+    }
+    bool bFloat16Support = false;
 };
 } // namespace NEO
