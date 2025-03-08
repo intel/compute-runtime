@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,20 +47,20 @@ using DrmExternalSemaphoreTest = Test<DrmSemaphoreFixture>;
 
 HWTEST_F(DrmExternalSemaphoreTest, givenDriverModelDrmWhenImportExternalSemaphoreExpIsCalledThenUnsupportedFeatureIsReturned) {
     MockDeviceImp l0Device(neoDevice, neoDevice->getExecutionEnvironment());
-    ze_intel_external_semaphore_exp_desc_t desc = {};
-    ze_intel_external_semaphore_exp_handle_t hSemaphore;
+    ze_external_semaphore_ext_desc_t desc = {};
+    ze_external_semaphore_ext_handle_t hSemaphore;
     int fd = 0;
 
-    ze_intel_external_semaphore_desc_fd_exp_desc_t fdDesc = {};
+    ze_external_semaphore_fd_ext_desc_t fdDesc = {};
 
-    desc.flags = ZE_EXTERNAL_SEMAPHORE_EXP_FLAGS_OPAQUE_FD;
+    desc.flags = ZE_EXTERNAL_SEMAPHORE_EXT_FLAG_OPAQUE_FD;
 
-    fdDesc.stype = ZE_INTEL_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXP_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    fdDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_FD_EXT_DESC; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     fdDesc.fd = fd;
 
     desc.pNext = &fdDesc;
 
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(l0Device.toHandle(), &desc, &hSemaphore);
+    ze_result_t result = zeDeviceImportExternalSemaphoreExt(l0Device.toHandle(), &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }
 

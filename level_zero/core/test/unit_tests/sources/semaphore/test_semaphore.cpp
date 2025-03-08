@@ -28,9 +28,9 @@ namespace ult {
 using ExternalSemaphoreTest = Test<DeviceFixture>;
 HWTEST_F(ExternalSemaphoreTest, givenInvalidDescriptorAndImportExternalSemaphoreExpIsCalledThenInvalidArgumentsIsReturned) {
     ze_device_handle_t hDevice = device->toHandle();
-    const ze_intel_external_semaphore_exp_desc_t desc = {};
-    ze_intel_external_semaphore_exp_handle_t hSemaphore;
-    ze_result_t result = zeIntelDeviceImportExternalSemaphoreExp(hDevice, &desc, &hSemaphore);
+    const ze_external_semaphore_ext_desc_t desc = {};
+    ze_external_semaphore_ext_handle_t hSemaphore;
+    ze_result_t result = zeDeviceImportExternalSemaphoreExt(hDevice, &desc, &hSemaphore);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
@@ -42,7 +42,7 @@ HWTEST_F(ExternalSemaphoreTest, givenValidParametersWhenReleaseExternalSemaphore
 
 HWTEST_F(ExternalSemaphoreTest, givenInvalidDescriptorWhenInitializeIsCalledThenInvalidArgumentIsReturned) {
     ze_device_handle_t hDevice = device->toHandle();
-    const ze_intel_external_semaphore_exp_desc_t desc = {};
+    const ze_external_semaphore_ext_desc_t desc = {};
     auto externalSemaphoreImp = new ExternalSemaphoreImp();
     ze_result_t result = externalSemaphoreImp->initialize(hDevice, &desc);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
@@ -69,8 +69,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendWaitExternalSe
     MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = reinterpret_cast<ze_intel_external_semaphore_exp_handle_t>(0x1);
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_external_semaphore_ext_handle_t hSemaphore = reinterpret_cast<ze_external_semaphore_ext_handle_t>(0x1);
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
@@ -79,8 +79,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenRegularCommandListWhenAppendSignalExternal
     MockCommandListCoreFamily<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    ze_intel_external_semaphore_signal_params_exp_t signalParams = {};
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = reinterpret_cast<ze_intel_external_semaphore_exp_handle_t>(0x1);
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
+    ze_external_semaphore_ext_handle_t hSemaphore = reinterpret_cast<ze_external_semaphore_ext_handle_t>(0x1);
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
@@ -142,10 +142,10 @@ HWTEST2_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendSignalExtern
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
 
-    ze_intel_external_semaphore_signal_params_exp_t signalParams = {};
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
     signalParams.value = 1u;
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 0u);
@@ -174,11 +174,11 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendSignalExte
     cmdList.setCmdListContext(context);
     cmdList.failingWaitOnEvents = true;
 
-    ze_intel_external_semaphore_signal_params_exp_t signalParams = {};
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
     signalParams.value = 1u;
     ze_event_handle_t event;
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 1, &event);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 1u);
@@ -205,10 +205,10 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalInternalProxyEventFailsWhenApp
     cmdList.setCmdListContext(context);
     cmdList.failingSignalEvent = true;
 
-    ze_intel_external_semaphore_signal_params_exp_t signalParams = {};
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
     signalParams.value = 1u;
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 0u);
@@ -236,12 +236,12 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendSignalExte
     cmdList.setCmdListContext(context);
     cmdList.failOnSecondSignalEvent = true;
 
-    ze_intel_external_semaphore_signal_params_exp_t signalParams = {};
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
     signalParams.value = 1u;
     ze_event_handle_t waitEvent = {};
     MockEvent signalEvent;
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_event_handle_t hSignalEvent = signalEvent.toHandle();
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, hSignalEvent, 1, &waitEvent);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
@@ -269,8 +269,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendSignalExtern
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
 
-    ze_intel_external_semaphore_signal_params_exp_t signalParams = {};
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_signal_params_ext_t signalParams = {};
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendSignalExternalSemaphores(1, &hSemaphore, &signalParams, nullptr, 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 0u);
@@ -297,9 +297,9 @@ HWTEST2_F(ExternalSemaphoreTest, givenImmediateCommandListWhenAppendWaitExternal
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 1u);
@@ -327,10 +327,10 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendWaitOnEventFailsWhenAppendWaitExtern
     cmdList.setCmdListContext(context);
     cmdList.failingWaitOnEvents = true;
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
     ze_event_handle_t event;
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 1, &event);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 1u);
@@ -357,9 +357,9 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendWaitOnInternalProxyEventFailsWhenApp
     cmdList.setCmdListContext(context);
     cmdList.failingWaitOnEvents = true;
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 1u);
@@ -387,11 +387,11 @@ HWTEST2_F(ExternalSemaphoreTest, givenAppendSignalEventFailsWhenAppendWaitExtern
     cmdList.setCmdListContext(context);
     cmdList.failingSignalEvent = true;
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
     ze_event_handle_t waitEvent = {};
     MockEvent signalEvent;
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_event_handle_t hSignalEvent = signalEvent.toHandle();
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, hSignalEvent, 1, &waitEvent);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
@@ -419,8 +419,8 @@ HWTEST2_F(ExternalSemaphoreTest, givenFailingMemoryManagerWhenAppendWaitExternal
     cmdList.initialize(l0Device.get(), NEO::EngineGroupType::renderCompute, 0u);
     cmdList.setCmdListContext(context);
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_NE(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 0u);
@@ -601,9 +601,9 @@ HWTEST2_F(ExternalSemaphoreTest, DISABLED_givenNEOExternalSemaphoreWhenAppendWai
     auto mockNEOExternalSemaphore = static_cast<MockNEOExternalSemaphore *>(externalSemaphore->neoExternalSemaphore.get());
     EXPECT_EQ(mockNEOExternalSemaphore->getState(), NEO::ExternalSemaphore::SemaphoreState::Initial);
 
-    ze_intel_external_semaphore_wait_params_exp_t waitParams = {};
+    ze_external_semaphore_wait_params_ext_t waitParams = {};
 
-    ze_intel_external_semaphore_exp_handle_t hSemaphore = externalSemaphore->toHandle();
+    ze_external_semaphore_ext_handle_t hSemaphore = externalSemaphore->toHandle();
     ze_result_t result = cmdList.appendWaitExternalSemaphores(1, &hSemaphore, &waitParams, nullptr, 0, nullptr);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     EXPECT_EQ(cmdList.appendWaitOnEventsCalledTimes, 1u);

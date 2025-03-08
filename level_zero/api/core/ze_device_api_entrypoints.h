@@ -10,6 +10,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/semaphore/external_semaphore_imp.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
@@ -136,6 +137,18 @@ ze_result_t zeDeviceGetRootDevice(
     ze_device_handle_t hDevice,
     ze_device_handle_t *phRootDevice) {
     return L0::Device::fromHandle(hDevice)->getRootDevice(phRootDevice);
+}
+
+ze_result_t zeDeviceImportExternalSemaphoreExt(
+    ze_device_handle_t hDevice,
+    const ze_external_semaphore_ext_desc_t *desc,
+    ze_external_semaphore_ext_handle_t *phSemaphore) {
+    return L0::ExternalSemaphore::importExternalSemaphore(hDevice, desc, phSemaphore);
+}
+
+ze_result_t zeDeviceReleaseExternalSemaphoreExt(
+    ze_external_semaphore_ext_handle_t hSemaphore) {
+    return L0::ExternalSemaphoreImp::fromHandle(hSemaphore)->releaseExternalSemaphore();
 }
 
 } // namespace L0
@@ -294,5 +307,17 @@ ze_result_t zeDevicePciGetPropertiesExt(
     ze_device_handle_t hDevice,
     ze_pci_ext_properties_t *pPciProperties) {
     return L0::zeDevicePciGetPropertiesExt(hDevice, pPciProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceImportExternalSemaphoreExt(
+    ze_device_handle_t hDevice,
+    const ze_external_semaphore_ext_desc_t *desc,
+    ze_external_semaphore_ext_handle_t *phSemaphore) {
+    return L0::ExternalSemaphore::importExternalSemaphore(hDevice, desc, phSemaphore);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeDeviceReleaseExternalSemaphoreExt(
+    ze_external_semaphore_ext_handle_t hSemaphore) {
+    return L0::ExternalSemaphoreImp::fromHandle(hSemaphore)->releaseExternalSemaphore();
 }
 }

@@ -25,14 +25,14 @@ namespace L0 {
 
 class ExternalSemaphoreImp : public ExternalSemaphore {
   public:
-    ze_result_t initialize(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc);
+    ze_result_t initialize(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc);
     ze_result_t releaseExternalSemaphore() override;
 
     std::unique_ptr<NEO::ExternalSemaphore> neoExternalSemaphore;
 
   protected:
     Device *device = nullptr;
-    const ze_intel_external_semaphore_exp_desc_t *desc;
+    const ze_external_semaphore_ext_desc_t *desc;
 };
 
 class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
@@ -81,7 +81,7 @@ class ExternalSemaphoreController : NEO::NonCopyableAndNonMovableClass {
         }
     }
 
-    ze_result_t allocateProxyEvent(ze_intel_external_semaphore_exp_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, SemaphoreOperation operation);
+    ze_result_t allocateProxyEvent(ze_external_semaphore_ext_handle_t hExtSemaphore, ze_device_handle_t hDevice, ze_context_handle_t hContext, uint64_t fenceValue, ze_event_handle_t *phEvent, SemaphoreOperation operation);
     void processProxyEvents();
 
     std::mutex semControllerMutex;

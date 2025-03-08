@@ -1006,8 +1006,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteToMemory(v
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
-                                                                                        const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSemaphores(uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+                                                                                        const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);
@@ -1051,8 +1051,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitExternalSem
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalSemaphores(size_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
-                                                                                          const ze_intel_external_semaphore_signal_params_exp_t *params, ze_event_handle_t hSignalEvent,
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendSignalExternalSemaphores(size_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+                                                                                          const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                                                                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
     checkAvailableSpace(0, false, commonImmediateCommandSize, false);

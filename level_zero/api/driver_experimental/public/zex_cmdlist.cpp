@@ -72,27 +72,3 @@ zexCommandListAppendWriteToMemory(
     }
 }
 } // namespace L0
-
-ze_result_t ZE_APICALL
-zeIntelCommandListAppendWaitExternalSemaphoresExp(
-    ze_command_list_handle_t hCmdList,
-    unsigned int numExternalSemaphores,
-    const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
-    const ze_intel_external_semaphore_wait_params_exp_t *params,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCmdList)->appendWaitExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
-}
-
-ze_result_t ZE_APICALL
-zeIntelCommandListAppendSignalExternalSemaphoresExp(
-    ze_command_list_handle_t hCmdList,
-    size_t numExternalSemaphores,
-    const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
-    const ze_intel_external_semaphore_signal_params_exp_t *params,
-    ze_event_handle_t hSignalEvent,
-    uint32_t numWaitEvents,
-    ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCmdList)->appendSignalExternalSemaphores(numExternalSemaphores, hSemaphores, params, hSignalEvent, numWaitEvents, phWaitEvents);
-}

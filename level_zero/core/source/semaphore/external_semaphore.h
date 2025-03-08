@@ -19,23 +19,23 @@
 #include <memory>
 #include <mutex>
 
-struct _ze_intel_external_semaphore_exp_handle_t {
+struct _ze_external_semaphore_ext_handle_t {
     const uint64_t objMagic = objMagicValue;
 };
 
 namespace L0 {
 
-struct ExternalSemaphore : _ze_intel_external_semaphore_exp_handle_t {
+struct ExternalSemaphore : _ze_external_semaphore_ext_handle_t {
     virtual ~ExternalSemaphore() = default;
 
-    static ze_result_t importExternalSemaphore(ze_device_handle_t device, const ze_intel_external_semaphore_exp_desc_t *semaphoreDesc, ze_intel_external_semaphore_exp_handle_t *phSemaphore);
+    static ze_result_t importExternalSemaphore(ze_device_handle_t device, const ze_external_semaphore_ext_desc_t *semaphoreDesc, ze_external_semaphore_ext_handle_t *phSemaphore);
     virtual ze_result_t releaseExternalSemaphore() = 0;
 
-    static ExternalSemaphore *fromHandle(ze_intel_external_semaphore_exp_handle_t handle) { return static_cast<ExternalSemaphore *>(handle); }
-    inline ze_intel_external_semaphore_exp_handle_t toHandle() { return this; }
+    static ExternalSemaphore *fromHandle(ze_external_semaphore_ext_handle_t handle) { return static_cast<ExternalSemaphore *>(handle); }
+    inline ze_external_semaphore_ext_handle_t toHandle() { return this; }
 
   protected:
-    ze_intel_external_semaphore_exp_desc_t desc;
+    ze_external_semaphore_ext_desc_t desc;
 };
 
 } // namespace L0

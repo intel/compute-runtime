@@ -572,12 +572,12 @@ struct MockCommandList : public CommandList {
                      (void *desc, void *ptr, uint64_t data, ze_event_handle_t signalEventHandle, bool useQwordData));
 
     ADDMETHOD_NOBASE(appendWaitExternalSemaphores, ze_result_t, ZE_RESULT_SUCCESS,
-                     (uint32_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
-                      const ze_intel_external_semaphore_wait_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                     (uint32_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+                      const ze_external_semaphore_wait_params_ext_t *params, ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
     ADDMETHOD_NOBASE(appendSignalExternalSemaphores, ze_result_t, ZE_RESULT_SUCCESS,
-                     (size_t numExternalSemaphores, const ze_intel_external_semaphore_exp_handle_t *hSemaphores,
-                      const ze_intel_external_semaphore_signal_params_exp_t *params, ze_event_handle_t hSignalEvent,
+                     (size_t numExternalSemaphores, const ze_external_semaphore_ext_handle_t *hSemaphores,
+                      const ze_external_semaphore_signal_params_ext_t *params, ze_event_handle_t hSignalEvent,
                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendWriteToMemory, ze_result_t, ZE_RESULT_SUCCESS,
