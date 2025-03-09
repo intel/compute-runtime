@@ -19,12 +19,7 @@ std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
         return nullptr;
     }
     auto osInterface = device->getRootDeviceEnvironment().osInterface.get();
-    if (!osInterface) {
-        return nullptr;
-    }
-    if (!osInterface->isDebugAttachAvailable()) {
-        auto cardName = osInterface->getDriverModel()->as<Drm>()->getSysFsPciPathBaseName();
-        IoFunctions::fprintf(stderr, "Kernel debug mode is not enabled for %s. Device is not available for use\n", cardName.c_str());
+    if (!osInterface || !osInterface->isDebugAttachAvailable()) {
         return nullptr;
     }
 

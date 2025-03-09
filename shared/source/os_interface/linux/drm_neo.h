@@ -264,7 +264,6 @@ class Drm : public DriverModel {
     void cleanup() override;
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
-    MOCKABLE_VIRTUAL std::string getSysFsPciPathBaseName();
     std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
 
     template <typename DataType>

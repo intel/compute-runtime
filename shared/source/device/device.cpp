@@ -138,9 +138,7 @@ bool Device::createDeviceImpl() {
         }
 
         // initialize common resources once
-        if (!initializeCommonResources()) {
-            return false;
-        }
+        initializeCommonResources();
     }
 
     // create engines
@@ -174,14 +172,15 @@ bool Device::initDeviceWithEngines() {
     return createEngines();
 }
 
-bool Device::initializeCommonResources() {
+void Device::initializeCommonResources() {
     if (getExecutionEnvironment()->isDebuggingEnabled()) {
         const auto rootDeviceIndex = getRootDeviceIndex();
         auto rootDeviceEnvironment = getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
         rootDeviceEnvironment->initDebuggerL0(this);
         if (rootDeviceEnvironment->debugger == nullptr) {
-            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Debug mode is not enabled in the system.\n");
-            return false;
+            NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "Debug mode is not enabled in the system.\n");
+            getExecutionEnvironment()->setDebuggingMode(DebuggingMode::disabled);
         }
     }
 
@@ -210,7 +209,6 @@ bool Device::initializeCommonResources() {
         deviceUsmMemAllocPoolsManager.reset(new UsmMemAllocPoolsManager(getMemoryManager(), rootDeviceIndices, deviceBitfields, this, InternalMemoryType::deviceUnifiedMemory));
     }
     initUsmReuseMaxSize();
-    return true;
 }
 
 void Device::initUsmReuseMaxSize() {
