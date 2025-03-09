@@ -2238,6 +2238,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
     size_t chainedBatchBufferStartOffset = startFromCsr ? csrStream.getUsed() : 0;
     uint64_t taskStartAddress = immediateCommandStream.getGpuBase() + immediateCommandStreamStart;
     bool hasStallingCmds = (startFromCsr || dispatchFlags.blockingAppend || dispatchFlags.hasStallingCmds);
+    bool dispatchMonitorFence = dispatchFlags.blockingAppend || dispatchFlags.requireTaskCountUpdate;
 
     constexpr bool immediateLowPriority = false;
     const QueueThrottle immediateThrottle = getThrottleFromPowerSavingUint(this->getUmdPowerHintValue());
@@ -2246,7 +2247,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,
                             immediateLowPriority, immediateThrottle, immediateSliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, flushData.endPtr, this->getNumClients(), hasStallingCmds,
-                            dispatchFlags.hasRelaxedOrderingDependencies, dispatchFlags.blockingAppend, false};
+                            dispatchFlags.hasRelaxedOrderingDependencies, dispatchMonitorFence, false};
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());

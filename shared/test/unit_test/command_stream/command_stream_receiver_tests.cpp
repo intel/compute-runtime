@@ -6368,6 +6368,8 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmed
     LinearStream epilogueStream(commandBuffer);
 
     commandStreamReceiver.storeMakeResidentAllocations = true;
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+
     immediateFlushTaskFlags.requireTaskCountUpdate = true;
     immediateFlushTaskFlags.optionalEpilogueCmdStream = &epilogueStream;
 
@@ -6377,6 +6379,7 @@ HWTEST_F(CommandStreamReceiverHwTest, givenEpilogueStreamAvailableWhenFlushImmed
                                              *pDevice);
 
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandBuffer));
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.dispatchMonitorFence);
 
     HardwareParse hwParser;
 
