@@ -464,7 +464,7 @@ std::string Gmm::getUsageTypeString() {
     case GMM_RESOURCE_USAGE_TYPE_ENUM::GMM_RESOURCE_USAGE_OCL_IMAGE:
         return "GMM_RESOURCE_USAGE_OCL_IMAGE";
     default:
-        return "UNKNOWN GMM USAGE TYPE " + std::to_string(resourceParams.Usage);
+        return "UNKNOWN GMM USAGE TYPE " + std::to_string(gmmResourceInfo->getCachePolicyUsage());
     }
 }
 } // namespace NEO
