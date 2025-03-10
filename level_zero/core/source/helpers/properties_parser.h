@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -109,7 +109,8 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             const ze_external_memory_import_win32_handle_t *windowsExternalMemoryImportDesc = reinterpret_cast<const ze_external_memory_import_win32_handle_t *>(extendedDesc);
             if ((windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_OPAQUE_WIN32) ||
                 (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_HEAP) ||
-                (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE)) {
+                (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D12_RESOURCE) ||
+                (windowsExternalMemoryImportDesc->flags == ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE)) {
                 lookupTable.sharedHandleType.isSupportedHandle = true;
                 lookupTable.sharedHandleType.isNTHandle = true;
                 lookupTable.sharedHandleType.ntHandle = windowsExternalMemoryImportDesc->handle;

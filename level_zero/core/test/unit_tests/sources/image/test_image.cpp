@@ -733,6 +733,25 @@ HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D12ResourceHandleWhenCreatingIma
     imageHW.reset(nullptr);
 }
 
+HWTEST2_F(ImageCreateExternalMemoryTest, givenD3D11TextureHandleWhenCreatingImageThenSuccessIsReturned, MatchAny) {
+    ze_external_memory_import_win32_handle_t importNTHandle = {};
+    importNTHandle.handle = &imageHandle;
+    importNTHandle.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_D3D11_TEXTURE;
+    importNTHandle.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_WIN32;
+    desc.pNext = &importNTHandle;
+
+    delete driverHandle->svmAllocsManager;
+    driverHandle->setMemoryManager(execEnv->memoryManager.get());
+    driverHandle->svmAllocsManager = new NEO::SVMAllocsManager(execEnv->memoryManager.get(), false);
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    ASSERT_EQ(imageHW->getAllocation()->peekSharedHandle(), NEO::toOsHandle(importNTHandle.handle));
+
+    imageHW.reset(nullptr);
+}
+
 using ImageCreateWithMemoryManagerNTHandleMock = Test<DeviceFixtureWithCustomMemoryManager<MemoryManagerNTHandleMock>>;
 
 HWTEST2_F(ImageCreateWithMemoryManagerNTHandleMock, givenNTHandleWhenCreatingNV12ImageThenSuccessIsReturnedAndUVOffsetIsSet, MatchAny) {
