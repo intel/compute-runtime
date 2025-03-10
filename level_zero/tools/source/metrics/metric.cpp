@@ -58,11 +58,17 @@ MetricDeviceContext::MetricDeviceContext(Device &inputDevice) : device(inputDevi
 
 bool MetricDeviceContext::enable() {
     bool status = false;
+    std::lock_guard<std::mutex> lock(enableMetricsMutex);
     for (auto const &entry : metricSources) {
         auto const &metricSource = entry.second;
-        metricSource->enable();
+
+        // Enable only if not already enabled.
+        if (!isEnableChecked) {
+            metricSource->enable();
+        }
         status |= metricSource->isAvailable();
     }
+    isEnableChecked = true;
     return status;
 }
 
@@ -178,6 +184,18 @@ Device &MetricDeviceContext::getDevice() const {
     return device;
 }
 
+void MetricDeviceContext::enableMetricApiForDevice(zet_device_handle_t hDevice, bool &isFailed) {
+
+    auto deviceImp = static_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
+    // Initialize device.
+    isFailed |= !deviceImp->metricContext->enable();
+
+    // Initialize sub devices if available.
+    for (uint32_t i = 0; i < deviceImp->numSubDevices; ++i) {
+        isFailed |= !deviceImp->subDevices[i]->getMetricDeviceContext().enable();
+    }
+}
+
 ze_result_t MetricDeviceContext::enableMetricApi() {
 
     bool failed = false;
@@ -194,14 +212,7 @@ ze_result_t MetricDeviceContext::enableMetricApi() {
         driverHandle->getDevice(&rootDeviceCount, rootDevices.data());
 
         for (auto rootDeviceHandle : rootDevices) {
-            auto rootDevice = static_cast<DeviceImp *>(L0::Device::fromHandle(rootDeviceHandle));
-            // Initialize root device.
-            failed |= !rootDevice->metricContext->enable();
-
-            // Initialize sub devices.
-            for (uint32_t i = 0; i < rootDevice->numSubDevices; ++i) {
-                failed |= !rootDevice->subDevices[i]->getMetricDeviceContext().enable();
-            }
+            enableMetricApiForDevice(rootDeviceHandle, failed);
         }
         if (failed) {
             break;
@@ -868,6 +879,13 @@ ze_result_t metricCalculateOperationCreate(
 ze_result_t metricCalculateOperationDestroy(
     zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation) {
     return MetricCalcOp::fromHandle(hCalculateOperation)->destroy();
+}
+
+ze_result_t metricsEnable(zet_device_handle_t hDevice) {
+    auto isFailed = false;
+
+    MetricDeviceContext::enableMetricApiForDevice(hDevice, isFailed);
+    return isFailed ? ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE : ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

@@ -15,8 +15,9 @@ namespace ult {
 
 class MockMetricSource : public L0::MetricSource {
   public:
+    uint32_t enableCallCount = 0;
     bool isAvailableReturn = false;
-    void enable() override {}
+    void enable() override { enableCallCount++; }
     bool isAvailable() override { return isAvailableReturn; }
     ze_result_t appendMetricMemoryBarrier(L0::CommandList &commandList) override { return ZE_RESULT_ERROR_UNKNOWN; }
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override { return ZE_RESULT_ERROR_UNKNOWN; }
@@ -167,6 +168,19 @@ class MockMetricCalcOp : public MetricCalcOpImp {
                                               uint32_t *pSetCount, uint32_t *pMetricReportCountPerSet,
                                               uint32_t *pTotalMetricReportCount,
                                               zet_intel_metric_result_exp_t *pMetricResults) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; };
+};
+
+class MockMetricDeviceContext : public MetricDeviceContext {
+  public:
+    MockMetricDeviceContext(Device &device) : MetricDeviceContext(device) {}
+
+    void clearAllSources() {
+        metricSources.clear();
+    }
+
+    void setMockMetricSource(MockMetricSource *metricSource) {
+        metricSources[MetricSource::metricSourceTypeOa] = std::unique_ptr<MockMetricSource>(metricSource);
+    }
 };
 
 } // namespace ult

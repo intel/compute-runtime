@@ -145,6 +145,7 @@ class MetricDeviceContext {
 
     static std::unique_ptr<MetricDeviceContext> create(Device &device);
     static ze_result_t enableMetricApi();
+    static void enableMetricApiForDevice(zet_device_handle_t hDevice, bool &isFailed);
     ze_result_t getConcurrentMetricGroups(uint32_t metricGroupCount, zet_metric_group_handle_t *phMetricGroups,
                                           uint32_t *pConcurrentGroupCount, uint32_t *pCountPerConcurrentGroup);
 
@@ -173,6 +174,8 @@ class MetricDeviceContext {
     struct Device &device;
     bool multiDeviceCapable = false;
     uint32_t subDeviceIndex = 0;
+    bool isEnableChecked = false;
+    std::mutex enableMetricsMutex;
 };
 
 struct Metric : _zet_metric_handle_t {
@@ -491,5 +494,7 @@ ze_result_t metricCalculateOperationCreate(zet_context_handle_t hContext, zet_de
                                            uint32_t *pCount, zet_metric_handle_t *phExcludedMetrics, zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
 
 ze_result_t metricCalculateOperationDestroy(zet_intel_metric_calculate_operation_exp_handle_t hCalculateOperation);
+
+ze_result_t metricsEnable(zet_device_handle_t hDevice);
 
 } // namespace L0

@@ -59,6 +59,8 @@ void *ExtensionFunctionAddressHelper::getExtensionFunctionAddress(const std::str
     RETURN_FUNC_PTR_IF_EXIST(zexIntelReleaseNetworkInterrupt);
 
     RETURN_FUNC_PTR_IF_EXIST(zetIntelCommandListAppendMarkerExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceEnableMetricsExp);
+    RETURN_FUNC_PTR_IF_EXIST(zetIntelDeviceDisableMetricsExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerCreateExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerDestroyExp);
     RETURN_FUNC_PTR_IF_EXIST(zetIntelMetricTracerEnableExp);

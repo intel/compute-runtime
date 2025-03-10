@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,5 +101,6 @@ void showMetricsExportData(uint8_t *pExportData, size_t exportDataSize);
 bool osStreamMpCollectionWorkloadDifferentProcess();
 bool osStreamMpCollectionWorkloadSameProcess();
 int32_t osRunAllTests(int32_t runStatus);
+bool isEnvVariableSet(const char *name);
 
 } // namespace ZelloMetricsUtility

@@ -1547,7 +1547,7 @@ class MultiSourceOaMetricProgrammableFixture : public DeviceFixture,
   protected:
     void SetUp() override;
     void TearDown() override;
-    std::unique_ptr<MockMetricDeviceContext> deviceContext = nullptr;
+    std::unique_ptr<MockMetricDeviceContextIpSampling> deviceContext = nullptr;
     OaMetricSourceImp *oaMetricSource = nullptr;
     MetricEnumeration *metricEnumeration = nullptr;
     MockIAdapterGroup1x13 mockAdapterGroup{};
@@ -1564,7 +1564,7 @@ void MultiSourceOaMetricProgrammableFixture::SetUp() {
 
     mockAdapterGroup.mockParams.Version.MajorNumber = 1;
     mockAdapterGroup.mockParams.Version.MinorNumber = 13;
-    deviceContext = std::make_unique<MockMetricDeviceContext>(*device);
+    deviceContext = std::make_unique<MockMetricDeviceContextIpSampling>(*device);
     oaMetricSource = static_cast<OaMetricSourceImp *>(&deviceContext->getMetricSource<OaMetricSourceImp>());
     metricEnumeration = static_cast<MetricEnumeration *>(&oaMetricSource->getMetricEnumeration());
     metricEnumeration->setAdapterGroup(&mockAdapterGroup);
@@ -1573,7 +1573,7 @@ void MultiSourceOaMetricProgrammableFixture::SetUp() {
     metricEnumeration->setInitializationState(ZE_RESULT_SUCCESS);
 
     metricSource = new MockMetricIpSamplingSource(*deviceContext);
-    deviceContext->setMetricTraceSource(metricSource);
+    deviceContext->setMetricIpSamplingSource(metricSource);
 }
 
 TEST_F(MultiSourceOaMetricProgrammableFixture, givenCreateMetricGroupsFromMetricsIsCalledAndOneMetricSourcesReturnsUnsupportedThenSuccessIsReturned) {

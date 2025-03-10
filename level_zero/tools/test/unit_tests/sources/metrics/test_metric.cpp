@@ -5,11 +5,13 @@
  *
  */
 
+#include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/include/level_zero/zet_intel_gpu_metric.h"
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric_source.h"
-#include <level_zero/zet_api.h>
+#include "level_zero/zet_api.h"
 
 #include "gtest/gtest.h"
 
@@ -228,6 +230,61 @@ TEST_F(CalcOperationFixture, WhenCreatingCalcOpObjectToAndFromHandleBaseClassWor
     EXPECT_EQ(false, mockMetricCalcOp.isRootDevice());
     auto mockCalcOp = MetricCalcOp::fromHandle(hMockCalcOp);
     EXPECT_NE(nullptr, mockCalcOp);
+}
+
+using MetricRuntimeFixture = Test<DeviceFixture>;
+
+TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneThenReturnSuccess) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSource(metricSource);
+
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    deviceImp->metricContext.reset(mockDeviceContext);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    deviceImp->metricContext.reset();
+}
+
+TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneMultipleTimesThenEnableIsDoneOnlyOnce) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = true;
+    mockDeviceContext->setMockMetricSource(metricSource);
+
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    deviceImp->metricContext.reset(mockDeviceContext);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(metricSource->enableCallCount, 1u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(metricSource->enableCallCount, 1u);
+    deviceImp->metricContext.reset();
+}
+
+TEST_F(MetricRuntimeFixture, WhenRunTimeEnableIsDoneAndNoSourcesAreAvailableThenReturnError) {
+
+    auto mockDeviceContext = new MockMetricDeviceContext(*device);
+    mockDeviceContext->clearAllSources();
+    auto metricSource = new MockMetricSource();
+    metricSource->isAvailableReturn = false;
+    mockDeviceContext->setMockMetricSource(metricSource);
+
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    deviceImp->metricContext.reset(mockDeviceContext);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, zetIntelDeviceEnableMetricsExp(device->toHandle()));
+    EXPECT_EQ(metricSource->enableCallCount, 1u);
+    deviceImp->metricContext.reset();
+}
+
+TEST_F(MetricRuntimeFixture, WhenRunTimeDisableIsDoneMultipleTimesThenEnableIsDoneOnlyOnce) {
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetIntelDeviceDisableMetricsExp(device->toHandle()));
 }
 
 } // namespace ult

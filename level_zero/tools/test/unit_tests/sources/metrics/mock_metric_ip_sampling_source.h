@@ -57,11 +57,11 @@ class MockMetricIpSamplingSource : public IpSamplingMetricSourceImp {
     }
 };
 
-class MockMetricDeviceContext : public MetricDeviceContext {
+class MockMetricDeviceContextIpSampling : public MetricDeviceContext {
   public:
-    MockMetricDeviceContext(Device &device) : MetricDeviceContext(device) {}
+    MockMetricDeviceContextIpSampling(Device &device) : MetricDeviceContext(device) {}
 
-    void setMetricTraceSource(MockMetricIpSamplingSource *metricSource) {
+    void setMetricIpSamplingSource(MockMetricIpSamplingSource *metricSource) {
         metricSources[MetricSource::metricSourceTypeIpSampling] = std::unique_ptr<MockMetricIpSamplingSource>(metricSource);
     }
 };

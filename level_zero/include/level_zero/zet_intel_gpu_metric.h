@@ -385,6 +385,34 @@ zetIntelMetricCalculateMultipleValuesExp(
     zet_intel_metric_result_exp_t *pMetricResults);                        ///< [in,out][optional][range(0, *pTotalMetricResultsCount)] buffer of calculated
                                                                            ///< metrics results.
 
+#ifndef ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME
+/// @brief Extension name for query to read the Intel Level Zero Driver Version String
+#define ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME "ZET_intel_metrics_runtime_enable_disable"
+#endif // ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metrics Runtime Enable Disable extension Version(s)
+typedef enum _zet_intel_metrics_runtime_enable_disable_exp_version_t {
+    ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_VERSION_1_0 = ZE_MAKE_VERSION(1, 0),                                        ///< version 1.0
+    ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_VERSION_CURRENT = ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_VERSION_1_0, ///< latest known version
+    ZET_INTEL_METRICS_RUNTIME_ENABLE_DISABLE_EXP_VERSION_FORCE_UINT32 = 0x7fffffff
+} zet_intel_metrics_runtime_enable_disable_exp_version_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief This API Enables Metric collection for a device if not already enabled.
+/// If device is a root-device, then its sub-devices are also enabled.
+/// This API can be used as runtime alternative to setting ZET_ENABLE_METRICS=1.
+ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevice);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief This API Disables Metric for a device, if it was previously enabled.
+/// If device is a root-device, then its sub-devices are also disabled.
+/// The application has to ensure that all metric operations are complete and
+/// all metric resources are released before this API is called.
+/// If there are metric operations in progress, then ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
+/// is returned.
+ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

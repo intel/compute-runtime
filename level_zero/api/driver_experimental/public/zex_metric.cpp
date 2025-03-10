@@ -10,6 +10,14 @@
 
 namespace L0 {
 
+ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevice) {
+    return L0::metricsEnable(hDevice);
+}
+
+ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t ZE_APICALL zetIntelCommandListAppendMarkerExp(zet_command_list_handle_t hCommandList,
                                                           zet_metric_group_handle_t hMetricGroup,
                                                           uint32_t value) {
@@ -84,6 +92,14 @@ ze_result_t zetIntelMetricCalculateOperationDestroyExp(zet_intel_metric_calculat
 } // namespace L0
 
 extern "C" {
+
+ze_result_t ZE_APICALL zetIntelDeviceEnableMetricsExp(zet_device_handle_t hDevice) {
+    return L0::zetIntelDeviceEnableMetricsExp(hDevice);
+}
+
+ze_result_t ZE_APICALL zetIntelDeviceDisableMetricsExp(zet_device_handle_t hDevice) {
+    return L0::zetIntelDeviceDisableMetricsExp(hDevice);
+}
 
 ze_result_t ZE_APICALL
 zetIntelCommandListAppendMarkerExp(

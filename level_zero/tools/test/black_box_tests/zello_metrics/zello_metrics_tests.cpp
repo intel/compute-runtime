@@ -798,6 +798,76 @@ bool metricGetTimestampTest() {
     return status;
 }
 
+///////////////
+/// runtimeEnableTest
+///////////////
+bool runtimeEnableTest() {
+
+    // This test verifies run time initialization of a specific device
+
+    bool status = true;
+
+    zmu::TestMachineConfiguration machineConfig = {};
+    zmu::getTestMachineConfiguration(machineConfig);
+
+    auto testSettings = zmu::TestSettings::get();
+
+    auto runtimeEnableTestRun = [](uint32_t deviceId, int32_t subDeviceId, std::string &metricGroupName) {
+        LOG(zmu::LogLevel::INFO) << "Running Runtime Init Test : Device [" << deviceId << ", " << subDeviceId << " ] : Metric Group :" << metricGroupName.c_str() << "\n";
+        if (!zmu::isDeviceAvailable(deviceId, subDeviceId)) {
+            return false;
+        }
+
+        std::unique_ptr<SingleDeviceSingleQueueExecutionCtxt> executionCtxt =
+            std::make_unique<SingleDeviceSingleQueueExecutionCtxt>(deviceId, subDeviceId);
+
+        uint32_t metricGroupCountBeforeEnable = 0;
+        VALIDATECALL(zetMetricGroupGet(executionCtxt->getDeviceHandle(0), &metricGroupCountBeforeEnable, nullptr));
+
+        if (zmu::isEnvVariableSet("ZET_ENABLE_METRICS")) {
+            LOG(zmu::LogLevel::INFO) << "Unset ZET_ENABLE_METRICS and run this test ! \n";
+            return false;
+        }
+
+        EXPECT(metricGroupCountBeforeEnable == 0u);
+        LOG(zmu::LogLevel::INFO) << "MetricGroup Count Before Runtime Enabling: " << metricGroupCountBeforeEnable << "\n";
+
+        typedef ze_result_t (*pfzetIntelDeviceEnableMetricsExp)(zet_device_handle_t hDevice);
+        pfzetIntelDeviceEnableMetricsExp zetIntelDeviceEnableMetricsExp = nullptr;
+        ze_result_t result = zeDriverGetExtensionFunctionAddress(executionCtxt->getDriverHandle(0), "zetIntelDeviceEnableMetricsExp", reinterpret_cast<void **>(&zetIntelDeviceEnableMetricsExp));
+        VALIDATECALL(result);
+
+        auto status = zetIntelDeviceEnableMetricsExp(executionCtxt->getDeviceHandle(0));
+        VALIDATECALL(status);
+
+        uint32_t metricGroupCountAfterEnable = 0;
+        status = zetMetricGroupGet(executionCtxt->getDeviceHandle(0), &metricGroupCountAfterEnable, nullptr);
+        EXPECT(status == ZE_RESULT_SUCCESS);
+
+        LOG(zmu::LogLevel::INFO) << "MetricGroup Count After Runtime Enabling: " << metricGroupCountAfterEnable << "\n";
+        EXPECT(metricGroupCountAfterEnable > 0u);
+
+        return true;
+    };
+
+    if (testSettings->deviceId.get() == -1) {
+        for (uint32_t deviceId = 0; deviceId < machineConfig.deviceCount; deviceId++) {
+            // Run for all subdevices
+            for (uint32_t subDeviceId = 0; subDeviceId < machineConfig.devices[deviceId].subDeviceCount; subDeviceId++) {
+                status &= runtimeEnableTestRun(deviceId, subDeviceId, testSettings->metricGroupName.get());
+            }
+            // Run for root device
+            status &= runtimeEnableTestRun(deviceId, -1, testSettings->metricGroupName.get());
+        }
+    } else {
+        // Run for specific device
+        status &= runtimeEnableTestRun(testSettings->deviceId.get(), testSettings->subDeviceId.get(), testSettings->metricGroupName.get());
+    }
+
+    return status;
+}
+
+ZELLO_METRICS_ADD_TEST(runtimeEnableTest)
 ZELLO_METRICS_ADD_TEST(queryTest)
 ZELLO_METRICS_ADD_TEST(streamTest)
 ZELLO_METRICS_ADD_TEST(streamMultiMetricDomainTest)
