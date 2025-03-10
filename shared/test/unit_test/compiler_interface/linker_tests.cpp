@@ -18,6 +18,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/implicit_args_test_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_elf.h"
@@ -2082,7 +2083,7 @@ TEST_F(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWi
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(ImplicitArgsV0::getSize(), *addressToPatch);
+    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(deviceFactory.rootDevices[0]->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2270,7 +2271,7 @@ TEST_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebugg
     EXPECT_EQ(0U, relocatedSymbols.size());
 
     auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-    EXPECT_EQ(ImplicitArgsV0::getSize(), *addressToPatch);
+    EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(device->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
     EXPECT_EQ(initData, *(addressToPatch - 1));
     EXPECT_EQ(initData, *(addressToPatch + 1));
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
@@ -2477,7 +2478,7 @@ TEST_F(LinkerTests, givenMultipleImplicitArgsRelocationsWithinSingleKernelWhenLi
 
     for (const auto &reloc : relocs) {
         auto addressToPatch = reinterpret_cast<const uint32_t *>(instructionSegment.data() + reloc.r_offset);
-        EXPECT_EQ(ImplicitArgsV0::getSize(), *addressToPatch);
+        EXPECT_EQ(ImplicitArgsTestHelper::getImplicitArgsSize(deviceFactory.rootDevices[0]->getGfxCoreHelper().getImplicitArgsVersion()), *addressToPatch);
         EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
     }
 }

@@ -1209,6 +1209,7 @@ struct HardwareCommandsImplicitArgsTests : Test<ClDeviceFixture> {
         MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
         MockKernel kernel(&program, *pKernelInfo, *pClDevice);
+        kernel.implicitArgsVersion = 0;
         ASSERT_EQ(CL_SUCCESS, kernel.initialize());
         auto pImplicitArgs = kernel.getImplicitArgs();
 

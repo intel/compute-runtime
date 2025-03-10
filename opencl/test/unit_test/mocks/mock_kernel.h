@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -132,6 +132,7 @@ class MockKernel : public Kernel {
     using Kernel::singleSubdevicePreferredInCurrentEnqueue;
     using Kernel::unifiedMemoryControls;
 
+    using Kernel::implicitArgsVersion;
     using Kernel::slmSizes;
     using Kernel::slmTotalSize;
 

@@ -92,6 +92,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &c
         maxKernelWorkGroupSize = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize);
     }
     slmTotalSize = kernelInfoArg.kernelDescriptor.kernelAttributes.slmInlineSize;
+    this->implicitArgsVersion = getDevice().getGfxCoreHelper().getImplicitArgsVersion();
 }
 
 Kernel::~Kernel() {
@@ -204,7 +205,7 @@ cl_int Kernel::initialize() {
     if (kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs) {
         pImplicitArgs = std::make_unique<ImplicitArgs>();
         *pImplicitArgs = {};
-        pImplicitArgs->initializeHeader(gfxCoreHelper.getImplicitArgsVersion());
+        pImplicitArgs->initializeHeader(this->implicitArgsVersion);
         pImplicitArgs->setSimdWidth(maxSimdSize);
     }
     auto ret = KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(kernelDescriptor.kernelAttributes, &pClDevice->getDevice());

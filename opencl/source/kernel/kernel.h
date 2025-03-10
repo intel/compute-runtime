@@ -513,6 +513,7 @@ class Kernel : public ReferenceTrackedObject<Kernel>, NEO::NonCopyableAndNonMova
     uint32_t slmTotalSize = 0u;
     uint32_t sshLocalSize = 0u;
     uint32_t crossThreadDataSize = 0u;
+    uint32_t implicitArgsVersion = 0;
 
     bool containsStatelessWrites = true;
     bool usingSharedObjArgs = false;
