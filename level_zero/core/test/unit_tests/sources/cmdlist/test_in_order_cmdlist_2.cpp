@@ -763,6 +763,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenInOrderModeWhenCallingSyncThenHandleComp
         EXPECT_EQ(0u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
         EXPECT_EQ(0u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     }
+    *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenTbxModeWhenSyncCalledAlwaysDownloadAllocationsFromBothCsrs, IsAtLeastXeHpCore) {
@@ -844,6 +845,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     immCmdList->hostSynchronize(0, true);
     EXPECT_EQ(1u, mainQueueCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
     EXPECT_EQ(1u, offloadCsr->waitForCompletionWithTimeoutTaskCountCalled.load());
+    *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHandleCompletionAndTempAllocations, IsAtLeastXeHpCore) {
@@ -918,6 +920,7 @@ HWTEST2_F(CopyOffloadInOrderTests, givenNonInOrderModeWaitWhenCallingSyncThenHan
     immCmdList->hostSynchronize(0, true);
     EXPECT_TRUE(mainInternalStorage->getTemporaryAllocations().peekIsEmpty());
     EXPECT_TRUE(offloadInternalStorage->getTemporaryAllocations().peekIsEmpty());
+    *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
 HWTEST2_F(CopyOffloadInOrderTests, givenInterruptEventWhenDispatchingTheProgramUserInterrupt, IsAtLeastXeHpcCore) {
@@ -1970,8 +1973,7 @@ HWTEST2_F(StandaloneInOrderTimestampAllocationTests, givenTimestampEventWhenDisp
 
     cmdList->appendLaunchKernel(kernel->toHandle(), groupCount, eventHandle, 0, nullptr, launchParams, false);
 
-    // mark as not ready, to make sure that destructor will release everything anyway
-    *hostAddress = 0;
+    *hostAddress = std::numeric_limits<uint64_t>::max();
 }
 
 using SynchronizedDispatchTests = InOrderCmdListFixture;
@@ -3205,6 +3207,8 @@ HWTEST2_F(MultiTileInOrderCmdListTests, givenMultiTileInOrderModeWhenCallingSync
     *hostAddress1 = 3;
     EXPECT_EQ(ZE_RESULT_SUCCESS, immCmdList->hostSynchronize(0, false));
     EXPECT_EQ(ZE_RESULT_SUCCESS, events[0]->hostSynchronize(0));
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(MultiTileInOrderCmdListTests, whenUsingRegularCmdListThenAddWalkerToPatch, IsAtLeastXeHpCore) {

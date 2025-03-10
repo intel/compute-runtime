@@ -1903,7 +1903,11 @@ HWTEST2_F(PrimaryBatchBufferCmdListTest, givenRelaxedOrderingAndRegularCmdListAn
     ASSERT_NE(nullptr, immCommandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(immCommandList.get());
     whiteBoxCmdList->enableInOrderExecution();
-
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = std::numeric_limits<uint64_t>::max();
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(whiteBoxCmdList->getCsr(false));
     ultCsr->recordFlushedBatchBuffer = true;
 

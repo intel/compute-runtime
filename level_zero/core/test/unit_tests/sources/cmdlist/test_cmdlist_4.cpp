@@ -1757,5 +1757,25 @@ HWTEST2_F(ImmediateCommandListTest,
     EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
 }
 
+HWTEST2_F(ImmediateCommandListTest, givenAsyncCmdlistWhenCmdlistIsDestroyedThenHostSynchronizeCalled, MatchAny) {
+    ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
+    queueDesc.ordinal = 0u;
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_result_t returnValue;
+    auto immediateCmdList = CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &queueDesc, false, engineGroupType, returnValue));
+
+    immediateCmdList->cmdQImmediate->registerCsrClient();
+    auto csr = immediateCmdList->getCsr(false);
+
+    auto clientCount = csr->getNumClients();
+    EXPECT_EQ(1u, clientCount);
+
+    immediateCmdList->destroy();
+
+    clientCount = csr->getNumClients();
+    EXPECT_EQ(0u, clientCount);
+}
+
 } // namespace ult
 } // namespace L0

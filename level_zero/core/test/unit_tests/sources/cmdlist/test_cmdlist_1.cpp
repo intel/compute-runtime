@@ -1314,6 +1314,11 @@ HWTEST2_F(CommandListCreateTests, givenDirectSubmissionAndImmCmdListWhenDispatch
     for (bool inOrderExecution : {false, true}) {
         if (inOrderExecution && !inOrderExecAlreadyEnabled) {
             whiteBoxCmdList->enableInOrderExecution();
+            uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+            for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+                *hostAddress = std::numeric_limits<uint64_t>::max();
+                hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+            }
             inOrderExecAlreadyEnabled = true;
         }
 
@@ -1670,6 +1675,11 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = std::numeric_limits<uint64_t>::max();
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -1726,6 +1736,11 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierThe
     ASSERT_NE(nullptr, commandList);
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = std::numeric_limits<uint64_t>::max();
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -1798,6 +1813,11 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingBarrierWit
     auto whiteBoxCmdList0 = static_cast<CommandList *>(commandList0.get());
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
     whiteBoxCmdList->enableInOrderExecution();
+    uint64_t *hostAddress = ptrOffset(whiteBoxCmdList->inOrderExecInfo->getBaseHostAddress(), whiteBoxCmdList->inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < whiteBoxCmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = std::numeric_limits<uint64_t>::max();
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -1874,6 +1894,11 @@ HWTEST2_F(CommandListCreateTests, givenInOrderExecutionWhenDispatchingRelaxedOrd
     cmdList.reset(CommandList::whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, false, engineGroupType, returnValue)));
     cmdList->isFlushTaskSubmissionEnabled = true;
     cmdList->enableInOrderExecution();
+    uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
+    for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+        *hostAddress = std::numeric_limits<uint64_t>::max();
+        hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+    }
 
     std::unique_ptr<L0::ult::Module> mockModule = std::make_unique<L0::ult::Module>(device, nullptr, ModuleType::builtin);
     Mock<::L0::KernelImp> kernel;

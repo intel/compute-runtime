@@ -308,6 +308,9 @@ HWTEST2_F(InOrderCmdListTests, givenCmdListsWhenDispatchingThenUseInternalTaskCo
 
         context->freeMem(deviceAlloc);
     }
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList0.get());
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList1.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThenLatestWaitIsRecorded, MatchAny) {
@@ -343,6 +346,8 @@ HWTEST2_F(InOrderCmdListTests, givenCounterBasedEventsWhenHostWaitsAreCalledThen
     inOrderExecInfo->setAllocationOffset(4u);
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(0u));
     EXPECT_FALSE(inOrderExecInfo->isCounterAlreadyDone(counterValue));
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDebugFlagSetWhenEventHostSyncCalledThenCallWaitUserFence, IsAtLeastXeHpCore) {
@@ -975,6 +980,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenSubmittingThenProgramSemaphor
     }
 
     ASSERT_TRUE(verifyInOrderDependency<FamilyType>(itor, 1, immCmdList->inOrderExecInfo->getBaseDeviceAddress() + counterOffset, immCmdList->isQwordInOrderCounter(), false));
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenResolveDependenciesViaPipeControlsForInOrderModeWhenSubmittingThenProgramPipeControlInBetweenDispatches, IsAtLeastXeHpCore) {
@@ -1002,6 +1009,8 @@ HWTEST2_F(InOrderCmdListTests, givenResolveDependenciesViaPipeControlsForInOrder
 
     auto itor = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenOptimizedCbEventWhenSubmittingThenProgramPipeControlOrSemaphoreInBetweenDispatches, IsAtLeastXeHpCore) {
@@ -1035,6 +1044,8 @@ HWTEST2_F(InOrderCmdListTests, givenOptimizedCbEventWhenSubmittingThenProgramPip
         auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
     }
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramPipeControlOrSemaphoreInBetweenDispatches, IsAtLeastXeHpCore) {
@@ -1068,6 +1079,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderCmdListWhenSubmittingThenProgramPipeC
         auto itor = find<typename FamilyType::MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itor);
     }
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendCalledThenCreatePeerAllocation, MatchAny) {
@@ -1107,6 +1120,11 @@ HWTEST2_F(InOrderCmdListTests, givenDependencyFromDifferentRootDeviceWhenAppendC
         cmdList->initialize(inputDevice, NEO::EngineGroupType::renderCompute, 0u);
         cmdList->commandContainer.setImmediateCmdListCsr(csr);
         cmdList->enableInOrderExecution();
+        uint64_t *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
+        for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+            *hostAddress = std::numeric_limits<uint64_t>::max();
+            hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+        }
 
         createdCmdLists++;
 
@@ -1418,6 +1436,9 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderEventModeWhenSubmittingThenProgramSem
 
     itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
     EXPECT_EQ(cmdList.end(), itor);
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList2.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenImplicitEventConvertionEnabledWhenUsingImmediateCmdListThenConvertEventToCounterBased, MatchAny) {
@@ -4403,6 +4424,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
 
         useZeroOffset = !useZeroOffset;
     }
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflowThenHandleItCorrectly, IsAtLeastXeHpCore) {
@@ -4503,6 +4526,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenProgrammingCounterWithOverflo
 
     EXPECT_EQ(expectedCounter, events[0]->inOrderExecSignalValue);
     EXPECT_EQ(offset, events[0]->inOrderAllocationOffset);
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList.get());
 }
 
 HWTEST2_F(InOrderCmdListTests, givenCopyOnlyInOrderModeWhenProgrammingBarrierThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
@@ -5977,6 +6002,8 @@ HWTEST2_F(InOrderCmdListTests, givenInOrderModeWhenGpuHangDetectedInCpuCopyPathT
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, status);
 
     ultCsr->forceReturnGpuHang = false;
+
+    *hostAddress = std::numeric_limits<uint64_t>::max();
 
     context->freeMem(deviceAlloc);
 }

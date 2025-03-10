@@ -131,7 +131,7 @@ HWTEST2_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData
 
     static_cast<WhiteboxInOrderExecInfo *>(events[0]->inOrderExecInfo.get())->numDevicePartitionsToWait = 2;
     static_cast<WhiteboxInOrderExecInfo *>(events[0]->inOrderExecInfo.get())->numHostPartitionsToWait = 3;
-
+    static_cast<WhiteboxInOrderExecInfo *>(events[0]->inOrderExecInfo.get())->initializeAllocationsFromHost();
     auto deviceAlloc = static_cast<MemoryAllocation *>(events[0]->inOrderExecInfo->getDeviceCounterAllocation());
     auto hostAlloc = static_cast<MemoryAllocation *>(events[0]->inOrderExecInfo->getHostCounterAllocation());
 
@@ -155,6 +155,8 @@ HWTEST2_F(InOrderIpcTests, givenCounterOffsetWhenOpenIsCalledThenPassCorrectData
     EXPECT_TRUE(expectedOffset == ipcData.counterOffset);
     EXPECT_TRUE(events[0]->inOrderExecInfo->getNumDevicePartitionsToWait() == ipcData.devicePartitions);
     EXPECT_TRUE(events[0]->inOrderExecInfo->isHostStorageDuplicated() ? events[0]->inOrderExecInfo->getNumHostPartitionsToWait() : events[0]->inOrderExecInfo->getNumDevicePartitionsToWait() == ipcData.hostPartitions);
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList2.get());
 }
 
 HWTEST2_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData, MatchAny) {
@@ -169,6 +171,7 @@ HWTEST2_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData,
     auto event0InOrderInfo = static_cast<WhiteboxInOrderExecInfo *>(events[0]->inOrderExecInfo.get());
     event0InOrderInfo->numDevicePartitionsToWait = 2;
     event0InOrderInfo->numHostPartitionsToWait = 3;
+    event0InOrderInfo->initializeAllocationsFromHost();
 
     zex_ipc_counter_based_event_handle_t zexIpcData = {};
 
@@ -208,6 +211,8 @@ HWTEST2_F(InOrderIpcTests, givenIpcHandleWhenCreatingNewEventThenSetCorrectData,
     EXPECT_EQ(expectedOffset, newEventMock->inOrderAllocationOffset);
 
     zexCounterBasedEventCloseIpcHandle(newEvent);
+
+    completeHostAddress<gfxCoreFamily, WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>(immCmdList2.get());
 }
 
 HWTEST2_F(InOrderIpcTests, givenInvalidInternalHandleWhenOpenCalledThenReturnError, MatchAny) {

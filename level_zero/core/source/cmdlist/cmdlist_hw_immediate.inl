@@ -1651,15 +1651,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::synchronizeInOrderExe
 
         bool signaled = true;
 
-        const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
+        if (csr->getType() != NEO::CommandStreamReceiverType::aub) {
+            const uint64_t *hostAddress = ptrOffset(inOrderExecInfo->getBaseHostAddress(), inOrderExecInfo->getAllocationOffset());
 
-        for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
-            if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
-                signaled = false;
-                break;
+            for (uint32_t i = 0; i < inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+                if (!NEO::WaitUtils::waitFunctionWithPredicate<const uint64_t>(hostAddress, waitValue, std::greater_equal<uint64_t>())) {
+                    signaled = false;
+                    break;
+                }
+
+                hostAddress = ptrOffset(hostAddress, this->device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
             }
-
-            hostAddress = ptrOffset(hostAddress, this->device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
         }
 
         if (signaled) {

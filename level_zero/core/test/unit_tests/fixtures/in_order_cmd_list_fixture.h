@@ -13,6 +13,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/event/event_imp.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -196,9 +197,21 @@ struct InOrderCmdListFixture : public ::Test<ModuleFixture> {
             cmdList->copyOperationFenceSupported = device->getProductHelper().isDeviceToHostCopySignalingFenceRequired();
         }
 
+        completeHostAddress<gfxCoreFamily>(cmdList.get());
+
         createdCmdLists++;
 
         return cmdList;
+    }
+
+    template <GFXCORE_FAMILY gfxCoreFamily, typename CmdListT>
+    void completeHostAddress(CmdListT *cmdList) {
+        uint64_t maxValue = std::numeric_limits<uint64_t>::max();
+        void *hostAddress = ptrOffset(cmdList->inOrderExecInfo->getBaseHostAddress(), cmdList->inOrderExecInfo->getAllocationOffset());
+        for (uint32_t i = 0; i < cmdList->inOrderExecInfo->getNumHostPartitionsToWait(); i++) {
+            memcpy(hostAddress, &maxValue, sizeof(maxValue));
+            hostAddress = ptrOffset(hostAddress, device->getL0GfxCoreHelper().getImmediateWritePostSyncOffset());
+        }
     }
 
     template <GFXCORE_FAMILY gfxCoreFamily>
