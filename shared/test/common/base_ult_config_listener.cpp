@@ -8,6 +8,7 @@
 #include "base_ult_config_listener.h"
 
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 
@@ -20,6 +21,7 @@ namespace NEO {
 extern unsigned int testCaseMaxTimeInMs;
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
+    WaitUtils::waitpkgUse = false;
     maxOsContextCountBackup = MemoryManager::maxOsContextCount;
     debugVarSnapshot = debugManager.flags;
     injectFcnSnapshot = debugManager.injectFcn;
