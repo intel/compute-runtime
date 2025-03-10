@@ -7423,39 +7423,6 @@ TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenEnabled2MBSizeAlignmentWhe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryAlignmentTest, givenEnabled2MBSizeAlignmentWhenAllocatingLargeKernelIsaThenAllocationIsAlignedTo2MB) {
-    auto mockProductHelper = new MockProductHelper;
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-    ASSERT_TRUE(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->productHelper->is2MBLocalMemAlignmentEnabled());
-
-    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
-    AllocationData allocData;
-    allocData.allFlags = 0;
-    allocData.size = MemoryConstants::pageSize2M + 1;
-    allocData.flags.allocateMemory = true;
-    allocData.type = AllocationType::kernelIsa;
-    allocData.rootDeviceIndex = rootDeviceIndex;
-
-    auto memoryManager = createMemoryManager();
-    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
-    EXPECT_EQ(MemoryPool::localMemory, allocation->getMemoryPool());
-    EXPECT_TRUE(isAligned(allocation->getGpuAddress(), MemoryConstants::pageSize2M));
-    EXPECT_TRUE(isAligned(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize2M));
-
-    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
-    auto bo = drmAllocation->getBO();
-    EXPECT_NE(nullptr, bo);
-    EXPECT_EQ(allocation->getGpuAddress(), bo->peekAddress());
-    EXPECT_TRUE(isAligned(bo->peekAddress(), MemoryConstants::pageSize2M));
-    EXPECT_TRUE(isAligned(bo->peekSize(), MemoryConstants::pageSize2M));
-
-    memoryManager->freeGraphicsMemory(allocation);
-}
-
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;

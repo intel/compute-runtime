@@ -62,8 +62,7 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
 
     AllocationProperties properties = {device.getRootDeviceIndex(), kernelIsaSize, allocType, device.getDeviceBitfield()};
 
-    if (device.getProductHelper().is2MBLocalMemAlignmentEnabled() ||
-        debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
+    if (debugManager.flags.AlignLocalMemoryVaTo2MB.get() == 1) {
         properties.alignment = MemoryConstants::pageSize2M;
     }
 

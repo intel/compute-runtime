@@ -5,27 +5,13 @@
  *
  */
 
-#include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-class MockISAPool : public ISAPool {
-  public:
-    using ISAPool::chunkAllocator;
-};
-
-class MockISAPoolAllocator : public ISAPoolAllocator {
-  public:
-    using ISAPoolAllocator::bufferPools;
-
-    MockISAPoolAllocator(Device *device) : ISAPoolAllocator(device) {}
-};
 
 using IsaPoolAllocatorTest = Test<DeviceFixture>;
 
@@ -112,25 +98,4 @@ TEST_F(IsaPoolAllocatorTest, givenIsaPoolAllocatorWhenRequestForLargeAllocationT
     auto allocation = isaAllocator.requestGraphicsAllocationForIsa(false, requestAllocationSize);
     verifySharedIsaAllocation(allocation, 0, requestAllocationSize);
     isaAllocator.freeSharedIsaAllocation(allocation);
-}
-
-TEST_F(IsaPoolAllocatorTest, Given2MBLocalMemAlignmentEnabledWhenAllocatingIsaThenISAPoolSizeIsAlignedTo2MB) {
-    auto mockProductHelper = new MockProductHelper;
-    pDevice->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-
-    MockISAPoolAllocator mockIsaAllocator(pDevice);
-
-    constexpr size_t requestAllocationSize = MemoryConstants::pageSize + 1;
-    auto allocation = mockIsaAllocator.requestGraphicsAllocationForIsa(true, requestAllocationSize);
-
-    EXPECT_NE(nullptr, allocation);
-    ASSERT_GE(mockIsaAllocator.bufferPools.size(), 1u);
-
-    auto *bufferPool = static_cast<MockISAPool *>(&mockIsaAllocator.bufferPools[0]);
-    auto chunkAllocatorSize = bufferPool->chunkAllocator->getLeftSize() + bufferPool->chunkAllocator->getUsedSize();
-
-    EXPECT_TRUE(isAligned(chunkAllocatorSize, MemoryConstants::pageSize2M));
-
-    mockIsaAllocator.freeSharedIsaAllocation(allocation);
 }

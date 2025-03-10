@@ -10,7 +10,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
@@ -83,62 +82,6 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreatingKernelAllocationWithInternalIsaT
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(AllocationType::kernelIsaInternal, allocation->getAllocationType());
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
-}
-
-TEST(KernelInfoTest, Given2MBAlignmentEnabledByProductHelperWhenCreatingKernelAllocationThenAllocationPropertiesAlignmentIsSetTo2M) {
-    DebugManagerStateRestore restorer;
-
-    KernelInfo kernelInfo;
-    auto factory = UltDeviceFactory{1, 0};
-    auto device = factory.rootDevices[0];
-    const size_t heapSize = 0x40;
-    char heap[heapSize];
-    kernelInfo.heapInfo.kernelHeapSize = heapSize;
-    kernelInfo.heapInfo.pKernelHeap = &heap;
-
-    auto mockProductHelper = new MockProductHelper;
-    device->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = true;
-    debugManager.flags.AlignLocalMemoryVaTo2MB.set(0);
-
-    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-    mockMemoryManager->shouldStoreLastAllocationProperties = true;
-
-    auto retVal = kernelInfo.createKernelAllocation(*device, false);
-    EXPECT_TRUE(retVal);
-
-    ASSERT_NE(nullptr, mockMemoryManager->lastAllocationProperties);
-    EXPECT_EQ(MemoryConstants::pageSize2M, mockMemoryManager->lastAllocationProperties->alignment);
-
-    device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo.kernelAllocation);
-}
-
-TEST(KernelInfoTest, Given2MBAlignmentForcedByDebugFlagWhenCreatingKernelAllocationThenAllocationPropertiesAlignmentIsSetTo2M) {
-    DebugManagerStateRestore restorer;
-
-    KernelInfo kernelInfo;
-    auto factory = UltDeviceFactory{1, 0};
-    auto device = factory.rootDevices[0];
-    const size_t heapSize = 0x40;
-    char heap[heapSize];
-    kernelInfo.heapInfo.kernelHeapSize = heapSize;
-    kernelInfo.heapInfo.pKernelHeap = &heap;
-
-    auto mockProductHelper = new MockProductHelper;
-    device->getRootDeviceEnvironmentRef().productHelper.reset(mockProductHelper);
-    mockProductHelper->is2MBLocalMemAlignmentEnabledResult = false;
-    debugManager.flags.AlignLocalMemoryVaTo2MB.set(1);
-
-    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
-    mockMemoryManager->shouldStoreLastAllocationProperties = true;
-
-    auto retVal = kernelInfo.createKernelAllocation(*device, false);
-    EXPECT_TRUE(retVal);
-
-    ASSERT_NE(nullptr, mockMemoryManager->lastAllocationProperties);
-    EXPECT_EQ(MemoryConstants::pageSize2M, mockMemoryManager->lastAllocationProperties->alignment);
-
-    device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo.kernelAllocation);
 }
 
 class MyMemoryManager : public OsAgnosticMemoryManager {

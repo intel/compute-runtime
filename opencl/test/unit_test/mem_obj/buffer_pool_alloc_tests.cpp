@@ -200,9 +200,9 @@ TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledWhen
     EXPECT_TRUE(poolAllocator->isAggregatedSmallBuffersEnabled(context.get()));
     EXPECT_EQ(1u, poolAllocator->bufferPools.size());
     EXPECT_NE(nullptr, poolAllocator->bufferPools[0].mainStorage.get());
-    EXPECT_NE(nullptr, mockMemoryManager->lastAllocationPropertiesWithPtr);
-    EXPECT_TRUE(mockMemoryManager->lastAllocationPropertiesWithPtr->makeDeviceBufferLockable);
-    EXPECT_FALSE(mockMemoryManager->lastAllocationPropertiesWithPtr->flags.preferCompressed);
+    EXPECT_NE(nullptr, mockMemoryManager->lastAllocationProperties);
+    EXPECT_TRUE(mockMemoryManager->lastAllocationProperties->makeDeviceBufferLockable);
+    EXPECT_FALSE(mockMemoryManager->lastAllocationProperties->flags.preferCompressed);
 }
 
 TEST_F(AggregatedSmallBuffersEnabledTest, givenAggregatedSmallBuffersEnabledAndSizeLargerThanThresholdWhenBufferCreateCalledThenDoNotUsePool) {

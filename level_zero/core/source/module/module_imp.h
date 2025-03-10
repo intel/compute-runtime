@@ -190,7 +190,6 @@ struct ModuleImp : public Module {
     MOCKABLE_VIRTUAL size_t computeKernelIsaAllocationAlignedSizeWithPadding(size_t isaSize, bool lastKernel);
     MOCKABLE_VIRTUAL NEO::GraphicsAllocation *allocateKernelsIsaMemory(size_t size);
     StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations();
-    size_t getIsaAllocationPageSize() const;
 
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
