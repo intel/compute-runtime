@@ -367,6 +367,12 @@ if(BUILD_WITH_L0)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sysman/source "${NEO_BUILD_DIR}/${LIB_NAME}sysman/source")
 
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/core/source/driver/driver_handle_imp.cpp
+                                PROPERTIES
+                                COMPILE_DEFINITIONS
+                                "NEO_L0_VERSION_MAJOR=${NEO_L0_VERSION_MAJOR};NEO_L0_VERSION_MINOR=${NEO_L0_VERSION_MINOR}"
+    )
+
     if(DEFINED NEO_SPDLOG_DIR)
       target_include_directories(${LIB_NAME} PRIVATE "experimental/source/log_utility")
     else()
