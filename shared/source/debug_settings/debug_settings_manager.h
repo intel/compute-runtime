@@ -125,11 +125,11 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
     DebugSettingsManager(const char *registryPath);
     ~DebugSettingsManager();
 
-    static constexpr bool registryReadAvailable() {
+    static consteval bool registryReadAvailable() {
         return (debugLevel == DebugFunctionalityLevel::full) || (debugLevel == DebugFunctionalityLevel::regKeys);
     }
 
-    static constexpr bool disabled() {
+    static consteval bool disabled() {
         return debugLevel == DebugFunctionalityLevel::none;
     }
 
@@ -147,7 +147,7 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
         return readerImpl.get();
     }
 
-    static constexpr const char *getNonReleaseKeyName(const char *key) {
+    static consteval const char *getNonReleaseKeyName(const char *key) {
         return (disabled() && PURGE_DEBUG_KEY_NAMES) ? "" : key;
     }
 
