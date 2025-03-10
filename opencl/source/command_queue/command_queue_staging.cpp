@@ -83,8 +83,9 @@ cl_int CommandQueue::enqueueStagingImageTransfer(cl_command_type commandType, Im
     return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, commandType);
 }
 
-cl_int CommandQueue::enqueueStagingWriteBuffer(Buffer *buffer, cl_bool blockingCopy, size_t offset, size_t size, const void *ptr, cl_event *event) {
-    CsrSelectionArgs csrSelectionArgs{CL_COMMAND_WRITE_BUFFER, {}, buffer, this->getDevice().getRootDeviceIndex(), &size};
+cl_int CommandQueue::enqueueStagingBufferTransfer(cl_command_type commandType, Buffer *buffer, cl_bool blockingCopy, size_t offset, size_t size, const void *ptr, cl_event *event) {
+    auto isRead = commandType == CL_COMMAND_READ_BUFFER;
+    CsrSelectionArgs csrSelectionArgs{commandType, isRead ? buffer : nullptr, isRead ? nullptr : buffer, this->getDevice().getRootDeviceIndex(), &size};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
     cl_event profilingEvent = nullptr;
 
@@ -94,14 +95,26 @@ cl_int CommandQueue::enqueueStagingWriteBuffer(Buffer *buffer, cl_bool blockingC
         auto isLastTransfer = (offset + size == chunkOffset + chunkSize);
         isSingleTransfer = isFirstTransfer && isLastTransfer;
         cl_event *outEvent = assignEventForStaging(event, &profilingEvent, isFirstTransfer, isLastTransfer);
-
-        auto ret = this->enqueueWriteBufferImpl(buffer, false, chunkOffset, chunkSize, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        cl_int ret = 0;
+        if (isRead) {
+            ret = this->enqueueReadBufferImpl(buffer, false, chunkOffset, chunkSize, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        } else {
+            ret = this->enqueueWriteBufferImpl(buffer, false, chunkOffset, chunkSize, stagingBuffer, nullptr, 0, nullptr, outEvent, csr);
+        }
         ret |= this->flush();
         return ret;
     };
     auto stagingBufferManager = this->context->getStagingBufferManager();
-    auto ret = stagingBufferManager->performBufferTransfer(ptr, offset, size, chunkWrite, &csr, false);
-    return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, CL_COMMAND_WRITE_BUFFER);
+    auto ret = stagingBufferManager->performBufferTransfer(ptr, offset, size, chunkWrite, &csr, isRead);
+
+    if (isRead && context->isProvidingPerformanceHints()) {
+        context->providePerformanceHintForMemoryTransfer(commandType, true, static_cast<cl_mem>(buffer), ptr);
+        if (!isL3Capable(ptr, size)) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
+        }
+    }
+
+    return postStagingTransferSync(ret, event, profilingEvent, isSingleTransfer, blockingCopy, commandType);
 }
 
 /*

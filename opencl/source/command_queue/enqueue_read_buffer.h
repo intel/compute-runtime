@@ -34,11 +34,28 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) {
-
     const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
 
     CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), &size};
     CommandStreamReceiver &csr = selectCsrForBuiltinOperation(csrSelectionArgs);
+    return enqueueReadBufferImpl(buffer, blockingRead, offset, size, ptr, mapAllocation, numEventsInWaitList, eventWaitList, event, csr);
+}
+
+template <typename GfxFamily>
+cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferImpl(
+    Buffer *buffer,
+    cl_bool blockingRead,
+    size_t offset,
+    size_t size,
+    void *ptr,
+    GraphicsAllocation *mapAllocation,
+    cl_uint numEventsInWaitList,
+    const cl_event *eventWaitList,
+    cl_event *event, CommandStreamReceiver &csr) {
+
+    const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
+
+    CsrSelectionArgs csrSelectionArgs{cmdType, buffer, {}, device->getRootDeviceIndex(), &size};
 
     if (nullptr == mapAllocation) {
         notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));

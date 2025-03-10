@@ -171,10 +171,7 @@ StagingTransferStatus StagingBufferManager::performImageTransfer(const void *ptr
         }
     }
 
-    if (isRead) {
-        auto numOfSubmittedTransfers = numOfChunks + (remainder != 0 ? 1 : 0);
-        result.waitStatus = drainAndReleaseStagingQueue(stagingQueue, std::min(numOfSubmittedTransfers, maxInFlightReads));
-    }
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, numOfChunks + (remainder != 0 ? 1 : 0));
     return result;
 }
 
@@ -203,6 +200,7 @@ StagingTransferStatus StagingBufferManager::performBufferTransfer(const void *pt
         }
     }
 
+    result.waitStatus = drainAndReleaseStagingQueue(isRead, stagingQueue, copiesNum + (remainder != 0 ? 1 : 0));
     return result;
 }
 
@@ -236,14 +234,16 @@ WaitStatus StagingBufferManager::copyStagingToHost(const std::pair<UserData, Sta
  * Waits for all pending transfers to finish.
  * Releases staging buffers back to pool for reuse.
  */
-WaitStatus StagingBufferManager::drainAndReleaseStagingQueue(const StagingQueue &stagingQueue, size_t numOfTransfers) const {
-    StagingBufferTracker tracker{};
-    for (auto i = 0u; i < numOfTransfers; i++) {
-        auto status = copyStagingToHost(stagingQueue[i], tracker);
-        if (status == WaitStatus::gpuHang) {
-            return status;
+WaitStatus StagingBufferManager::drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers) const {
+    if (isRead) {
+        StagingBufferTracker tracker{};
+        for (auto i = 0u; i < std::min(numOfSubmittedTransfers, maxInFlightReads); i++) {
+            auto status = copyStagingToHost(stagingQueue[i], tracker);
+            if (status == WaitStatus::gpuHang) {
+                return status;
+            }
+            tracker.freeChunk();
         }
-        tracker.freeChunk();
     }
     return WaitStatus::ready;
 }

@@ -652,7 +652,7 @@ struct WriteBufferStagingBufferTest : public EnqueueWriteBufferHw {
 
 HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledThenReturnSuccess) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
-    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, buffer.getSize(), ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_WRITE_BUFFER, &buffer, false, 0, buffer.getSize(), ptr, nullptr);
     EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(res, CL_SUCCESS);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteBufferCounter);
@@ -708,7 +708,7 @@ HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledWithLa
                                                                             chunkSize * 4,
                                                                             nullptr,
                                                                             retVal));
-    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(buffer.get(), false, 0, chunkSize * 4, hostPtr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_WRITE_BUFFER, buffer.get(), false, 0, chunkSize * 4, hostPtr, nullptr);
     EXPECT_TRUE(mockCommandQueueHw.flushCalled);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(res, CL_SUCCESS);
@@ -723,7 +723,7 @@ HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferCalledWithEv
     constexpr cl_command_type expectedLastCmd = CL_COMMAND_WRITE_BUFFER;
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
     cl_event event;
-    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_WRITE_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -738,7 +738,7 @@ HWTEST_F(WriteBufferStagingBufferTest, givenOutOfOrderQueueWhenEnqueueStagingWri
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
     mockCommandQueueHw.setOoqEnabled();
     cl_event event;
-    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_WRITE_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -752,7 +752,7 @@ HWTEST_F(WriteBufferStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStag
     cl_event event;
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
     mockCommandQueueHw.setProfilingEnabled();
-    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_WRITE_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, &event);
     EXPECT_EQ(res, CL_SUCCESS);
 
     auto pEvent = (Event *)event;
@@ -765,7 +765,7 @@ HWTEST_F(WriteBufferStagingBufferTest, givenCmdQueueWithProfilingWhenEnqueueStag
 HWTEST_F(WriteBufferStagingBufferTest, whenEnqueueStagingWriteBufferFailedThenPropagateErrorCode) {
     MockCommandQueueHw<FamilyType> mockCommandQueueHw(context.get(), device.get(), &props);
     mockCommandQueueHw.enqueueWriteBufferCallBase = false;
-    auto res = mockCommandQueueHw.enqueueStagingWriteBuffer(&buffer, false, 0, MemoryConstants::cacheLineSize, ptr, nullptr);
+    auto res = mockCommandQueueHw.enqueueStagingBufferTransfer(CL_COMMAND_WRITE_BUFFER, &buffer, false, 0, MemoryConstants::cacheLineSize, ptr, nullptr);
 
     EXPECT_EQ(res, CL_INVALID_OPERATION);
     EXPECT_EQ(1ul, mockCommandQueueHw.enqueueWriteBufferCounter);

@@ -2542,7 +2542,8 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
         }
 
         if (pCommandQueue->isValidForStagingTransfer(pBuffer, ptr, cb, CL_COMMAND_WRITE_BUFFER, blockingWrite, numEventsInWaitList > 0)) {
-            retVal = pCommandQueue->enqueueStagingWriteBuffer(
+            retVal = pCommandQueue->enqueueStagingBufferTransfer(
+                CL_COMMAND_WRITE_BUFFER,
                 pBuffer,
                 blockingWrite,
                 offset,

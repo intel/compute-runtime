@@ -106,7 +106,7 @@ class StagingBufferManager : NEO::NonCopyableAndNonMovableClass {
     StagingTransferStatus performChunkTransfer(size_t chunkTransferId, bool isRead, const UserData &userData, StagingQueue &currentStagingBuffers, CommandStreamReceiver *csr, Func &func, Args... args);
 
     WaitStatus copyStagingToHost(const std::pair<UserData, StagingBufferTracker> &transfer, StagingBufferTracker &tracker) const;
-    WaitStatus drainAndReleaseStagingQueue(const StagingQueue &stagingQueue, size_t numOfTransfers) const;
+    WaitStatus drainAndReleaseStagingQueue(bool isRead, const StagingQueue &stagingQueue, size_t numOfSubmittedTransfers) const;
 
     bool isValidForStaging(const Device &device, const void *ptr, size_t size, bool hasDependencies);
 
