@@ -188,11 +188,6 @@ std::optional<std::string> SysmanKmdInterfaceI915Prelim::getEngineClassString(ui
     return sysfEngineString->second;
 }
 
-uint32_t SysmanKmdInterfaceI915Prelim::getEventType(const bool isIntegratedDevice) {
-    std::string i915DirName = "i915";
-    return getEventTypeImpl(i915DirName, isIntegratedDevice);
-}
-
 void SysmanKmdInterfaceI915Prelim::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
     getWedgedStatusImpl(pLinuxSysmanImp, pState);
 }
@@ -225,6 +220,12 @@ std::string SysmanKmdInterfaceI915Prelim::getGpuBindEntry() const {
 
 std::string SysmanKmdInterfaceI915Prelim::getGpuUnBindEntry() const {
     return getGpuUnBindEntryI915();
+}
+
+void SysmanKmdInterfaceI915Prelim::setSysmanDeviceDirName(const bool isIntegratedDevice) {
+
+    sysmanDeviceDirName = "i915";
+    getDeviceDirName(sysmanDeviceDirName, isIntegratedDevice);
 }
 
 } // namespace Sysman

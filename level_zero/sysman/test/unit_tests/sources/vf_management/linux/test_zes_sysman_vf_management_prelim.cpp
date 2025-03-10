@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,8 @@ class ZesVfFixturePrelim : public SysmanDeviceFixture {
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pPmuInterface->pSysmanKmdInterface = pLinuxSysmanImp->pSysmanKmdInterface.get();
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+        bool isIntegratedDevice = true;
+        pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
         device = pSysmanDevice;
     }
 

@@ -140,7 +140,7 @@ class SysmanKmdInterface {
     void convertSysfsValueUnit(const SysfsValueUnit dstUnit, const SysfsValueUnit srcUnit,
                                const uint64_t srcValue, uint64_t &dstValue) const;
     virtual std::optional<std::string> getEngineClassString(uint16_t engineClass) = 0;
-    virtual uint32_t getEventType(const bool isIntegratedDevice) = 0;
+    uint32_t getEventType();
     virtual bool isDefaultFrequencyAvailable() const = 0;
     virtual bool isBoostFrequencyAvailable() const = 0;
     virtual bool isTdpFrequencyAvailable() const = 0;
@@ -154,14 +154,16 @@ class SysmanKmdInterface {
     virtual std::string getGpuBindEntry() const = 0;
     virtual std::string getGpuUnBindEntry() const = 0;
     virtual std::vector<zes_power_domain_t> getPowerDomains() const = 0;
+    virtual void setSysmanDeviceDirName(const bool isIntegratedDevice) = 0;
     ze_result_t checkErrorNumberAndReturnStatus();
 
   protected:
     std::unique_ptr<FsAccessInterface> pFsAccess;
     std::unique_ptr<ProcFsAccessInterface> pProcfsAccess;
     std::unique_ptr<SysFsAccessInterface> pSysfsAccess;
+    std::string sysmanDeviceDirName = "";
     virtual const std::map<SysfsName, SysfsValueUnit> &getSysfsNameToNativeUnitMap() = 0;
-    uint32_t getEventTypeImpl(std::string &dirName, const bool isIntegratedDevice);
+    ze_result_t getDeviceDirName(std::string &dirName, const bool isIntegratedDevice);
     void getWedgedStatusImpl(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState);
 };
 
@@ -199,7 +201,6 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
                                              ze_bool_t onSubdevice,
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
-    uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return false; }
     bool isMediaFrequencyFactorAvailable() const override { return true; }
     bool isSystemPowerBalanceAvailable() const override { return false; }
@@ -216,6 +217,7 @@ class SysmanKmdInterfaceI915Upstream : public SysmanKmdInterface, SysmanKmdInter
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
+    void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -249,7 +251,6 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
                                              ze_bool_t onSubdevice,
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
-    uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return true; }
     bool isMediaFrequencyFactorAvailable() const override { return true; }
     bool isSystemPowerBalanceAvailable() const override { return true; }
@@ -266,6 +267,7 @@ class SysmanKmdInterfaceI915Prelim : public SysmanKmdInterface, SysmanKmdInterfa
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
     std::vector<zes_power_domain_t> getPowerDomains() const override { return {ZES_POWER_DOMAIN_PACKAGE}; }
+    void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;
@@ -299,7 +301,6 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
                                              ze_bool_t onSubdevice,
                                              uint32_t subdeviceId) override;
     std::optional<std::string> getEngineClassString(uint16_t engineClass) override;
-    uint32_t getEventType(const bool isIntegratedDevice) override;
     bool isBaseFrequencyFactorAvailable() const override { return false; }
     bool isMediaFrequencyFactorAvailable() const override { return false; }
     bool isSystemPowerBalanceAvailable() const override { return false; }
@@ -318,6 +319,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     ze_result_t getBusyAndTotalTicksConfigs(uint64_t fnNumber, uint64_t engineInstance, uint64_t engineClass, std::pair<uint64_t, uint64_t> &configPair) override;
     std::string getGpuBindEntry() const override;
     std::string getGpuUnBindEntry() const override;
+    void setSysmanDeviceDirName(const bool isIntegratedDevice) override;
 
   protected:
     std::map<SysfsName, valuePair> sysfsNameToFileMap;

@@ -53,7 +53,8 @@ class ZesEngineFixtureI915 : public ZesEngineFixture {
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-        pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+        bool isIntegratedDevice = true;
+        pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
         device = pSysmanDevice;
         getEngineHandles(0);
     }
@@ -138,7 +139,8 @@ TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleAndIntegratedDeviceWhenCallin
 }
 
 TEST_F(ZesEngineFixtureI915, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
-    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    bool isIntegratedDevice = false;
+    pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());

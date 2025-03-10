@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,9 +84,8 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEv
     });
 
     uint64_t config = 10;
-    auto &rootDeviceEnvironment = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment();
-    auto mutableHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    mutableHwInfo->capabilityTable.isIntegratedDevice = true;
+    bool isIntegratedDevice = true;
+    pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
     EXPECT_EQ(mockPmuFd, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
 }
 
@@ -124,9 +123,8 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEv
 
     pPmuInterface->perfEventOpenResult = -1;
     uint64_t config = 10;
-    auto &rootDeviceEnvironment = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment();
-    auto mutableHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    mutableHwInfo->capabilityTable.isIntegratedDevice = true;
+    bool isIntegratedDevice = true;
+    pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
     EXPECT_EQ(-1, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
 }
 
@@ -143,9 +141,8 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEv
     pPmuInterface->perfEventOpenResult = -1;
     pPmuInterface->getErrorNoResult = EBADF;
     uint64_t config = 10;
-    auto &rootDeviceEnvironment = pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironment();
-    auto mutableHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    mutableHwInfo->capabilityTable.isIntegratedDevice = true;
+    bool isIntegratedDevice = true;
+    pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
     EXPECT_EQ(-1, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
 }
 

@@ -61,6 +61,7 @@ ze_result_t LinuxSysmanImp::init() {
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
+    pSysmanKmdInterface->setSysmanDeviceDirName(getSysmanDeviceImp()->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice);
     pFsAccess = pSysmanKmdInterface->getFsAccess();
     pProcfsAccess = pSysmanKmdInterface->getProcFsAccess();
     pSysfsAccess = pSysmanKmdInterface->getSysFsAccess();

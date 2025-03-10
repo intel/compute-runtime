@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,13 +28,12 @@ inline int64_t PmuInterfaceImp::perfEventOpen(perf_event_attr *attr, pid_t pid, 
 }
 
 int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t format) {
-    const bool isIntegratedDevice = pDevice->getRootDeviceEnvironment().getHardwareInfo()->capabilityTable.isIntegratedDevice;
     struct perf_event_attr attr = {};
     int nrCpus = get_nprocs_conf();
     int cpu = 0;
     int64_t ret = 0;
 
-    attr.type = pSysmanKmdInterface->getEventType(isIntegratedDevice);
+    attr.type = pSysmanKmdInterface->getEventType();
     if (attr.type == 0) {
         return -ENOENT;
     }
@@ -63,7 +62,6 @@ int PmuInterfaceImp::pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) {
 }
 
 PmuInterfaceImp::PmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) {
-    pDevice = pLinuxSysmanImp->getSysmanDeviceImp();
     pSysmanKmdInterface = pLinuxSysmanImp->getSysmanKmdInterface();
 }
 

@@ -138,11 +138,6 @@ ze_result_t SysmanKmdInterfaceXe::getNumEngineTypeAndInstances(std::map<zes_engi
     return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
 }
 
-uint32_t SysmanKmdInterfaceXe::getEventType(const bool isIntegratedDevice) {
-    std::string xeDirName = "xe";
-    return getEventTypeImpl(xeDirName, isIntegratedDevice);
-}
-
 void SysmanKmdInterfaceXe::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
 
     auto pFsAccess = getFsAccess();
@@ -168,6 +163,12 @@ std::string SysmanKmdInterfaceXe::getGpuBindEntry() const {
 
 std::string SysmanKmdInterfaceXe::getGpuUnBindEntry() const {
     return "/sys/bus/pci/drivers/xe/unbind";
+}
+
+void SysmanKmdInterfaceXe::setSysmanDeviceDirName(const bool isIntegratedDevice) {
+
+    sysmanDeviceDirName = "xe";
+    getDeviceDirName(sysmanDeviceDirName, isIntegratedDevice);
 }
 
 } // namespace Sysman

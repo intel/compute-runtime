@@ -49,7 +49,8 @@ class ZesEngineFixturePrelim : public SysmanDeviceFixture {
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-        pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+        bool isIntegratedDevice = true;
+        pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
         device = pSysmanDevice;
         getEngineHandles(0);
     }
@@ -85,7 +86,6 @@ TEST_F(SysmanDeviceFixture, GivenComponentCountZeroAndOpenCallFailsWhenCallingZe
     osInterface->setDriverModel(std::unique_ptr<MockEngineNeoDrmPrelim>(pDrm));
 
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
     L0::Sysman::SysmanDevice *device = pSysmanDevice;
 
     uint32_t count = 0;
@@ -199,7 +199,8 @@ TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndPmuTimeStampIsZeroWhenCa
 
 TEST_F(ZesEngineFixturePrelim, GivenValidEngineHandleAndDiscreteDeviceWhenCallingZesEngineGetActivityThenVerifyCallReturnsSuccess) {
 
-    pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = false;
+    bool isIntegratedDevice = false;
+    pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
     zes_engine_stats_t stats = {};
     auto handles = getEngineHandles(handleComponentCount);
     EXPECT_EQ(handleComponentCount, handles.size());
@@ -404,7 +405,8 @@ class ZesEngineMultiFixturePrelim : public SysmanMultiDeviceFixture {
         pDrm->mockReadSysmanQueryEngineInfoMultiDevice = true;
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
-        pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
+        bool isIntegratedDevice = true;
+        pLinuxSysmanImp->pSysmanKmdInterface->setSysmanDeviceDirName(isIntegratedDevice);
         device = pSysmanDevice;
         getEngineHandles(0);
     }

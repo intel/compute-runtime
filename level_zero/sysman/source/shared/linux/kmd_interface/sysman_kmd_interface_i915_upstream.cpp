@@ -144,11 +144,6 @@ ze_result_t SysmanKmdInterfaceI915Upstream::getNumEngineTypeAndInstances(std::ma
     return getNumEngineTypeAndInstancesForDevice(getEngineBasePath(subdeviceId), mapOfEngines, pSysfsAccess);
 }
 
-uint32_t SysmanKmdInterfaceI915Upstream::getEventType(const bool isIntegratedDevice) {
-    std::string i915DirName = "i915";
-    return getEventTypeImpl(i915DirName, isIntegratedDevice);
-}
-
 void SysmanKmdInterfaceI915Upstream::getWedgedStatus(LinuxSysmanImp *pLinuxSysmanImp, zes_device_state_t *pState) {
     getWedgedStatusImpl(pLinuxSysmanImp, pState);
 }
@@ -178,6 +173,12 @@ std::string SysmanKmdInterfaceI915Upstream::getGpuBindEntry() const {
 
 std::string SysmanKmdInterfaceI915Upstream::getGpuUnBindEntry() const {
     return getGpuUnBindEntryI915();
+}
+
+void SysmanKmdInterfaceI915Upstream::setSysmanDeviceDirName(const bool isIntegratedDevice) {
+
+    sysmanDeviceDirName = "i915";
+    getDeviceDirName(sysmanDeviceDirName, isIntegratedDevice);
 }
 
 } // namespace Sysman

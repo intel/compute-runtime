@@ -173,23 +173,10 @@ void SysmanKmdInterface::convertSysfsValueUnit(const SysfsValueUnit dstUnit, con
     }
 }
 
-uint32_t SysmanKmdInterface::getEventTypeImpl(std::string &dirName, const bool isIntegratedDevice) {
-    auto pSysFsAccess = getSysFsAccess();
+uint32_t SysmanKmdInterface::getEventType() {
+
     auto pFsAccess = getFsAccess();
-
-    if (!isIntegratedDevice) {
-        std::string bdfDir;
-        ze_result_t result = pSysFsAccess->readSymLink(deviceDir, bdfDir);
-        if (ZE_RESULT_SUCCESS != result) {
-            return 0;
-        }
-        const auto loc = bdfDir.find_last_of('/');
-        auto bdf = bdfDir.substr(loc + 1);
-        std::replace(bdf.begin(), bdf.end(), ':', '_');
-        dirName = dirName + "_" + bdf;
-    }
-
-    const std::string eventTypeSysfsNode = sysDevicesDir + dirName + "/" + "type";
+    const std::string eventTypeSysfsNode = sysDevicesDir + sysmanDeviceDirName + "/" + "type";
     auto eventTypeVal = 0u;
     if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
         return 0;
@@ -219,6 +206,24 @@ ze_result_t SysmanKmdInterface::checkErrorNumberAndReturnStatus() {
         return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t SysmanKmdInterface::getDeviceDirName(std::string &dirName, const bool isIntegratedDevice) {
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    if (!isIntegratedDevice) {
+        auto pSysFsAccess = getSysFsAccess();
+        std::string bdfDir;
+        result = pSysFsAccess->readSymLink(deviceDir, bdfDir);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+        const auto loc = bdfDir.find_last_of('/');
+        auto bdf = bdfDir.substr(loc + 1);
+        std::replace(bdf.begin(), bdf.end(), ':', '_');
+        dirName = dirName + "_" + bdf;
+    }
+    return result;
 }
 
 std::string SysmanKmdInterfaceI915::getBasePathI915(uint32_t subDeviceId) {

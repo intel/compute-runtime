@@ -35,7 +35,6 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableAndNonMovableClass 
     SysmanKmdInterface *pSysmanKmdInterface = nullptr;
 
   private:
-    SysmanDeviceImp *pDevice = nullptr;
     static const std::string deviceDir;
     static const std::string sysDevicesDir;
 };
