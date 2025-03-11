@@ -1980,7 +1980,7 @@ inline std::unique_ptr<Gmm> DrmMemoryManager::makeGmmIfSingleHandle(const Alloca
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
 
-    if (productHelper.overrideAllocationCacheable(allocationData)) {
+    if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
     }

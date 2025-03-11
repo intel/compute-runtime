@@ -73,7 +73,7 @@ bool ProductHelperHw<gfxProduct>::isDeviceUsmPoolAllocatorSupported() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
+bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
     return allocationData.type == AllocationType::commandBuffer;
 }
 

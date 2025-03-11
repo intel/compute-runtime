@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -72,11 +72,11 @@ MTLTEST_F(MtlProductHelper, givenMtlWithoutHwIpVersionInHwInfoWhenGettingIpVersi
     EXPECT_EQ(compilerProductHelper->getDefaultHwIpVersion(), compilerProductHelper->getHwIpVersion(hwInfo));
 }
 
-MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckOverrideAllocationCacheableThenTrueIsReturnedForCommandBuffer) {
+MTLTEST_F(MtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;
-    EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
+    EXPECT_TRUE(productHelper->overrideAllocationCpuCacheable(allocationData));
 
     allocationData.type = AllocationType::buffer;
-    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
+    EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
 }

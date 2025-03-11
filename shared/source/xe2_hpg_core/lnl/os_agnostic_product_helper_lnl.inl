@@ -12,8 +12,8 @@
 namespace NEO {
 
 template <>
-bool ProductHelperHw<gfxProduct>::overrideAllocationCacheable(const AllocationData &allocationData) const {
-    return allocationData.type == AllocationType::commandBuffer || this->overrideCacheableForDcFlushMitigation(allocationData.type);
+bool ProductHelperHw<gfxProduct>::overrideAllocationCpuCacheable(const AllocationData &allocationData) const {
+    return allocationData.type == AllocationType::commandBuffer || allocationData.type == AllocationType::timestampPacketTagBuffer || this->overrideCacheableForDcFlushMitigation(allocationData.type);
 }
 
 template <>

@@ -137,7 +137,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getMaxNumSamplers() const override;
     uint32_t getCommandBuffersPreallocatedPerCommandQueue() const override;
     uint32_t getInternalHeapsPreallocated() const override;
-    bool overrideAllocationCacheable(const AllocationData &allocationData) const override;
+    bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const override;
     bool is2MBLocalMemAlignmentEnabled() const override;
 
     bool getFrontEndPropertyScratchSizeSupport() const override;
