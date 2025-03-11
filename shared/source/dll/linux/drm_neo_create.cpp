@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 
 #include "hw_cmds.h"
 
@@ -59,6 +60,11 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     if (drm->setupHardwareInfo(deviceDescriptor, true)) {
         return nullptr;
+    }
+
+    if (drm->isSharedSystemAllocEnabled()) {
+        auto hwInfo = drm->getRootDeviceEnvironment().getMutableHardwareInfo();
+        hwInfo->capabilityTable.sharedSystemMemCapabilities |= UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
     }
 
     if (drm->enableTurboBoost()) {

@@ -5966,6 +5966,50 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetMemPrefetchFailsToBindB
     EXPECT_FALSE(drmAllocation.prefetchBOCalled);
 }
 
+TEST_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnTrue) {
+    SubDeviceIdsVec subDeviceIds{0};
+    class MyMockIoctlHelper : public MockIoctlHelper {
+      public:
+        using MockIoctlHelper::MockIoctlHelper;
+
+        bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
+            return true;
+        }
+    };
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto ptr = malloc(1024);
+
+    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, rootDeviceIndex));
+
+    free(ptr);
+}
+
+TEST_F(DrmMemoryManagerTest, givenPrefetchSharedSystemAllocIsCalledThenReturnFalse) {
+    SubDeviceIdsVec subDeviceIds{0};
+    class MyMockIoctlHelper : public MockIoctlHelper {
+      public:
+        using MockIoctlHelper::MockIoctlHelper;
+
+        bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override {
+            return false;
+        }
+    };
+    auto mockIoctlHelper = new MyMockIoctlHelper(*mock);
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.ioctlHelper.reset(mockIoctlHelper);
+
+    auto ptr = malloc(1024);
+
+    EXPECT_TRUE(memoryManager->prefetchSharedSystemAlloc(ptr, 1024, subDeviceIds, rootDeviceIndex));
+
+    free(ptr);
+}
+
 TEST_F(DrmMemoryManagerTest, givenPageFaultIsUnSupportedWhenCallingBindBoOnBufferAllocationThenAllocationShouldNotPageFaultAndExplicitResidencyIsNotRequired) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

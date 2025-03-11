@@ -2464,8 +2464,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmPrefetchThenVmBindIs
     MemoryClassInstance targetMemoryRegion = memoryInfo->getLocalMemoryRegions()[subDeviceId].region;
     ASSERT_NE(nullptr, memoryInfo);
     drm->memoryInfo.reset(memoryInfo.release());
+    int memoryClassDevice = static_cast<int>(DrmParam::memoryClassDevice);
+    uint32_t region = (memoryClassDevice << 16u) | subDeviceId;
 
-    EXPECT_TRUE(xeIoctlHelper->setVmPrefetch(start, length, subDeviceId, vmId));
+    EXPECT_TRUE(xeIoctlHelper->setVmPrefetch(start, length, region, vmId));
     EXPECT_EQ(1u, drm->vmBindInputs.size());
 
     EXPECT_EQ(drm->vmBindInputs[0].vm_id, vmId);
@@ -2493,7 +2495,10 @@ TEST_F(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingSetVmPrefetchOnSecondTile
     ASSERT_NE(nullptr, memoryInfo);
     drm->memoryInfo.reset(memoryInfo.release());
 
-    EXPECT_TRUE(xeIoctlHelper->setVmPrefetch(start, length, subDeviceId, vmId));
+    int memoryClassDevice = static_cast<int>(DrmParam::memoryClassDevice);
+    uint32_t region = (memoryClassDevice << 16u) | subDeviceId;
+
+    EXPECT_TRUE(xeIoctlHelper->setVmPrefetch(start, length, region, vmId));
     EXPECT_EQ(1u, drm->vmBindInputs.size());
 
     EXPECT_EQ(drm->vmBindInputs[0].vm_id, vmId);
@@ -2639,6 +2644,7 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionConfigFlagHasGpuAddrMirror
 
     EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
     EXPECT_TRUE(drm->isSharedSystemAllocEnabled());
+    EXPECT_TRUE(drm->hasPageFaultSupport());
 }
 
 TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndConfigFlagHasGpuAddrMirrorClearThenSharedSystemAllocEnableFalse) {
@@ -2670,7 +2676,7 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndSharedSystemUsmSupportD
     MockExecutionEnvironment executionEnvironment{};
     std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
     DebugManagerStateRestore restore;
-    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
+    debugManager.flags.EnableRecoverablePageFaults.set(0);
     mockIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
         if (request == DRM_IOCTL_XE_DEVICE_QUERY) {
             struct drm_xe_device_query *deviceQuery = static_cast<struct drm_xe_device_query *>(arg);
@@ -2690,6 +2696,7 @@ TEST_F(IoctlHelperXeTest, whenQueryDeviceIdAndRevisionAndSharedSystemUsmSupportD
 
     EXPECT_TRUE(IoctlHelperXe::queryDeviceIdAndRevision(*drm));
     EXPECT_FALSE(drm->isSharedSystemAllocEnabled());
+    EXPECT_FALSE(drm->hasPageFaultSupport());
 }
 
 TEST_F(IoctlHelperXeTest, givenXeIoctlHelperAndDeferBackingFlagSetToTrueWhenMakeResidentBeforeLockNeededIsCalledThenVerifyTrueIsReturned) {

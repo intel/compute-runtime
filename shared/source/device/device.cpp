@@ -31,6 +31,7 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/release_helper/release_helper.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -668,11 +669,14 @@ Debugger *Device::getDebugger() const {
 }
 
 bool Device::areSharedSystemAllocationsAllowed() const {
-    auto sharedSystemAllocationsSupport = static_cast<bool>(getHardwareInfo().capabilityTable.sharedSystemMemCapabilities);
-    if (debugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
-        sharedSystemAllocationsSupport = debugManager.flags.EnableSharedSystemUsmSupport.get();
+    if ((debugManager.flags.EnableRecoverablePageFaults.get() == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
+        return false;
     }
-    return sharedSystemAllocationsSupport;
+    uint64_t mask = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+    if (((getHardwareInfo().capabilityTable.sharedSystemMemCapabilities) & mask) == mask) {
+        return true;
+    }
+    return false;
 }
 
 size_t Device::getEngineGroupIndexFromEngineGroupType(EngineGroupType engineGroupType) const {

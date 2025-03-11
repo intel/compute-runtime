@@ -162,8 +162,9 @@ bool IoctlHelperXe::queryDeviceIdAndRevision(Drm &drm) {
     hwInfo->platform.usDeviceID = config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] & 0xffff;
     hwInfo->platform.usRevId = static_cast<int>((config->info[DRM_XE_QUERY_CONFIG_REV_AND_DEVICE_ID] >> 16) & 0xff);
 
-    if ((debugManager.flags.EnableSharedSystemUsmSupport.get() != 0) && (config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR)) {
+    if ((debugManager.flags.EnableRecoverablePageFaults.get() != 0) && (debugManager.flags.EnableSharedSystemUsmSupport.get() != 0) && (config->info[DRM_XE_QUERY_CONFIG_FLAGS] & DRM_XE_QUERY_CONFIG_FLAG_HAS_CPU_ADDR_MIRROR)) {
         drm.setSharedSystemAllocEnable(true);
+        drm.setPageFaultSupported(true);
     }
     return true;
 }
@@ -836,8 +837,8 @@ bool IoctlHelperXe::setVmPrefetch(uint64_t start, uint64_t length, uint32_t regi
     uint32_t subDeviceId = region & subDeviceMaskMax;
     DeviceBitfield subDeviceMask = (1u << subDeviceId);
     MemoryClassInstance regionInstanceClass = this->drm.getMemoryInfo()->getMemoryRegionClassAndInstance(subDeviceMask, *pHwInfo);
-    bind.bind.prefetch_mem_region_instance = regionInstanceClass.memoryInstance;
 
+    bind.bind.prefetch_mem_region_instance = regionInstanceClass.memoryInstance;
     int ret = IoctlHelper::ioctl(DrmIoctl::gemVmBind, &bind);
 
     xeLog(" vm=%d addr=0x%lx range=0x%lx region=0x%x operation=%d(%s) ret=%d\n",

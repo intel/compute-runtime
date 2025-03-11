@@ -177,6 +177,8 @@ TEST_F(CommandListCreateTests, givenNonExistingPtrThenAppendMemoryPrefetchReturn
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::renderCompute, 0u, returnValue, false));
     ASSERT_NE(nullptr, commandList);
+    DebugManagerStateRestore restorer;
+    debugManager.flags.EnableSharedSystemUsmSupport.set(0);
 
     auto res = commandList->appendMemoryPrefetch(nullptr, 0);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);

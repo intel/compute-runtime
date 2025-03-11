@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2024 Intel Corporation
+ * Copyright (C) 2019-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
@@ -855,11 +856,9 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithIn
 }
 
 TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedThenItIsProperlySetInKernel) {
-    DebugManagerStateRestore restorer;
-    debugManager.flags.EnableSharedSystemUsmSupport.set(1u);
-
     auto mockContext = std::make_unique<MockContext>();
     auto device = mockContext->getDevice(0u);
+    device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
     REQUIRE_SVM_OR_SKIP(device);
 
     MockKernelWithInternals mockKernel(*device, mockContext.get(), true);
