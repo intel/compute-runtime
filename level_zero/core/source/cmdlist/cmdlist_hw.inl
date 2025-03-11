@@ -1724,13 +1724,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         bool emitPipeControl = !isCopyOnlyEnabled && launchParams.pipeControlSignalling;
 
         if (launchParams.isKernelSplitOperation || inOrderCopyOnlySignalingAllowed || emitPipeControl) {
-            if ((!signalEvent || !signalEvent->getAllocation(this->device)) && !isCopyOnlyEnabled) {
-                NEO::PipeControlArgs args;
-                args.dcFlushEnable = dcFlush;
-
-                NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
-                NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
-            }
+            dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnlyEnabled);
             appendSignalInOrderDependencyCounter(signalEvent, isCopyOnlyEnabled, false);
         }
 
@@ -2273,12 +2267,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     bool nonWalkerInOrderCmdChaining = false;
     if (this->isInOrderExecutionEnabled()) {
         if (launchParams.isKernelSplitOperation) {
-            if (!signalEvent || !signalEvent->getAllocation(this->device)) {
-                NEO::PipeControlArgs args;
-                args.dcFlushEnable = dcFlush;
-                NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
-                NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
-            }
+            dispatchInOrderPostOperationBarrier(signalEvent, dcFlush, isCopyOnly(false));
             appendSignalInOrderDependencyCounter(signalEvent, false, false);
         } else {
             nonWalkerInOrderCmdChaining = isInOrderNonWalkerSignalingRequired(signalEvent);
@@ -4445,6 +4434,17 @@ void CommandListCoreFamily<gfxCoreFamily>::setAdditionalKernelLaunchParams(CmdLi
     }
     if (launchParams.requiredPartitionDim == NEO::RequiredPartitionDim::none) {
         launchParams.requiredPartitionDim = kernelDescriptor.kernelAttributes.partitionDim;
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::dispatchInOrderPostOperationBarrier(Event *signalEvent, bool dcFlushRequired, bool copyOperation) {
+    if ((!signalEvent || !signalEvent->getAllocation(this->device)) && !copyOperation) {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = dcFlushRequired;
+
+        NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 }
 
