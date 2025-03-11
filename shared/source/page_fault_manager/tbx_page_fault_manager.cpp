@@ -9,6 +9,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 namespace NEO {
@@ -17,6 +18,16 @@ bool TbxPageFaultManager::verifyAndHandlePageFault(void *ptr, bool handleFault) 
     std::unique_lock<RecursiveSpinLock> lock{mtxTbx};
     auto allocPtr = getFaultData(memoryDataTbx, ptr, handleFault);
     if (allocPtr == nullptr) {
+        if (handleFault) {
+            std::unique_lock<RecursiveSpinLock> lock{mtx};
+            auto allocPtr = getFaultData(memoryData, ptr, handleFault);
+            if (allocPtr != nullptr) {
+                auto faultData = memoryData[allocPtr];
+                if (faultData.domain == CpuPageFaultManager::AllocationDomain::gpu) {
+                    this->allowCPUMemoryAccess(ptr, faultData.size);
+                }
+            }
+        }
         return CpuPageFaultManager::verifyAndHandlePageFault(ptr, handleFault);
     }
     if (handleFault) {

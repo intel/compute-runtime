@@ -1570,7 +1570,7 @@ static constexpr std::array onceWritableAllocTypesForTbx{
     AllocationType::bufferHostMemory,
 };
 
-HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsLockableThenTbxFaultableTypesShouldReturnTrue) {
+HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsTbxFaultableThenTbxFaultableTypesShouldReturnTrue) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
     debugManager.flags.EnableTbxPageFaultManager.set(true);
@@ -1589,12 +1589,8 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
 
     for (const auto &allocType : onceWritableAllocTypesForTbx) {
         gfxAlloc1->setAllocationType(allocType);
-        if (allocType == AllocationType::gpuTimestampDeviceBuffer) {
-            EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
-        } else if (GraphicsAllocation::isLockable(allocType)) {
+        if (allocType == AllocationType::bufferHostMemory || allocType == AllocationType::timestampPacketTagBuffer) {
             EXPECT_TRUE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
-        } else {
-            EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
         }
     }
 
@@ -1603,7 +1599,7 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
     memoryManager->freeGraphicsMemory(gfxAlloc1);
 }
 
-HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsNotLockableThenTbxFaultableTypesShouldReturnFalse) {
+HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerIsAvailableAndAllocIsNotTbxFaultableThenTbxFaultableTypesShouldReturnFalse) {
     DebugManagerStateRestore stateRestore;
     debugManager.flags.SetCommandStreamReceiver.set(static_cast<int32_t>(CommandStreamReceiverType::tbx));
     debugManager.flags.EnableTbxPageFaultManager.set(true);
@@ -1622,7 +1618,7 @@ HWTEST_F(TbxCommandStreamTests, givenAubOneTimeWritableAllocWhenTbxFaultManagerI
 
     for (const auto &allocType : onceWritableAllocTypesForTbx) {
         gfxAlloc1->setAllocationType(allocType);
-        if (!GraphicsAllocation::isLockable(allocType)) {
+        if (allocType != AllocationType::bufferHostMemory && allocType != AllocationType::timestampPacketTagBuffer) {
             EXPECT_FALSE(tbxCsr->isAllocTbxFaultable(gfxAlloc1));
         }
     }
