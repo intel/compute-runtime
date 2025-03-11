@@ -147,7 +147,7 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
                                              &regSize);
         if (ERROR_SUCCESS == success) {
             if (regType == REG_SZ || regType == REG_MULTI_SZ) {
-                auto regData = std::make_unique<char[]>(regSize);
+                auto regData = std::make_unique_for_overwrite<char[]>(regSize);
                 success = SysCalls::regQueryValueExA(key,
                                                      settingName,
                                                      NULL,
@@ -160,7 +160,7 @@ bool RegistryReader::getSettingStringCommon(const char *settingName, std::string
                 }
             } else if (regType == REG_BINARY) {
                 size_t charCount = regSize / sizeof(wchar_t);
-                auto regData = std::make_unique<wchar_t[]>(charCount);
+                auto regData = std::make_unique_for_overwrite<wchar_t[]>(charCount);
                 success = SysCalls::regQueryValueExA(key,
                                                      settingName,
                                                      NULL,

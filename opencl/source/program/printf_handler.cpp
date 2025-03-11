@@ -82,12 +82,13 @@ bool PrintfHandler::printEnqueueOutput() {
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
     const auto &productHelper = device.getProductHelper();
-    auto printfOutputBuffer = reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer());
+    auto printfOutputBuffer = reinterpret_cast<uint8_t *>(printfSurface->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
     if (CompressionSelector::allowStatelessCompression() || productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
-        printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
+        printfOutputDecompressed = std::make_unique_for_overwrite<uint8_t[]>(printfOutputSize);
+        memset(printfOutputDecompressed.get(), 0, sizeof(uint32_t));
         printfOutputBuffer = printfOutputDecompressed.get();
         auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::regular);
 
@@ -104,7 +105,7 @@ bool PrintfHandler::printEnqueueOutput() {
             return false;
         }
     }
-
+    printfOutputBuffer[printfOutputSize - 1] = 0;
     PrintFormatter printFormatter(printfOutputBuffer, printfOutputSize, kernel->is32Bit(),
                                   usesStringMap ? &kernel->getDescriptor().kernelMetadata.printfStringsMap : nullptr);
     printFormatter.printKernelOutput();

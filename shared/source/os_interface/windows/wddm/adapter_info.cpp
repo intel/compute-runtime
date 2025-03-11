@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ std::wstring queryAdapterDriverStorePath(const Gdi &gdi, D3DKMT_HANDLE adapter) 
     DEBUG_BREAK_IF(queryRegistryInfoSizeDesc.Status != D3DDDI_QUERYREGISTRY_STATUS_BUFFER_OVERFLOW);
 
     const auto privateDataSizeNeeded = queryRegistryInfoSizeDesc.OutputValueSize + sizeof(D3DDDI_QUERYREGISTRY_INFO);
-    auto storage = std::make_unique<uint64_t[]>((privateDataSizeNeeded + sizeof(uint64_t) - 1) / sizeof(uint64_t));
+    auto storage = std::make_unique_for_overwrite<uint64_t[]>((privateDataSizeNeeded + sizeof(uint64_t) - 1) / sizeof(uint64_t));
     D3DDDI_QUERYREGISTRY_INFO &queryRegistryInfoValueDesc = *reinterpret_cast<D3DDDI_QUERYREGISTRY_INFO *>(storage.get());
     queryRegistryInfoValueDesc = {};
     queryRegistryInfoValueDesc.QueryType = D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH;

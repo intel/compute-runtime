@@ -245,7 +245,7 @@ cl_int Kernel::initialize() {
     // allocate our own SSH, if necessary
     sshLocalSize = heapInfo.surfaceStateHeapSize;
     if (sshLocalSize) {
-        pSshLocal = std::make_unique<char[]>(sshLocalSize);
+        pSshLocal = std::make_unique_for_overwrite<char[]>(sshLocalSize);
 
         // copy the ssh into our local copy
         memcpy_s(pSshLocal.get(), sshLocalSize,

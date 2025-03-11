@@ -118,7 +118,7 @@ void TagAllocator<TagType>::populateFreeTags() {
 
     gfxAllocations.emplace_back(multiGraphicsAllocation);
 
-    auto nodesMemory = std::make_unique<NodeType[]>(tagCount);
+    auto nodesMemory = std::make_unique_for_overwrite<NodeType[]>(tagCount);
 
     for (size_t i = 0; i < tagCount; ++i) {
         auto tagOffset = i * tagSize;

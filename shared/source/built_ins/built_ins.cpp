@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,7 +93,7 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
         UNRECOVERABLE_IF(bindlessSip.getBinary().size() == 0);
 
         auto binarySize = alignUp(bindlessSip.getBinary().size(), sizeof(uint32_t)) / sizeof(uint32_t);
-        auto binary = std::make_unique<uint32_t[]>(binarySize);
+        auto binary = std::make_unique_for_overwrite<uint32_t[]>(binarySize);
         memcpy_s(binary.get(), binarySize * sizeof(uint32_t), bindlessSip.getBinary().data(), bindlessSip.getBinary().size());
 
         const auto allocType = AllocationType::kernelIsaInternal;

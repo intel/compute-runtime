@@ -3181,7 +3181,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     }
     commandContainer.addToResidencyContainer(dstPtrAllocationStruct.alloc);
 
-    std::unique_ptr<EventData[]> timestampsData = std::make_unique<EventData[]>(numEvents);
+    std::unique_ptr<EventData[]> timestampsData = std::make_unique_for_overwrite<EventData[]>(numEvents);
 
     for (uint32_t i = 0u; i < numEvents; ++i) {
         auto event = Event::fromHandle(phEvents[i]);
