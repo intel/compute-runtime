@@ -1009,7 +1009,19 @@ void KernelImp::setInlineSamplers() {
 
         auto sampler = std::unique_ptr<L0::Sampler>(L0::Sampler::create(productFamily, device, &samplerDesc));
         UNRECOVERABLE_IF(sampler.get() == nullptr);
-        sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, inlineSampler.getSamplerBindfulOffset());
+
+        if (NEO::isValidOffset(inlineSampler.bindless)) {
+            auto samplerStateIndex = inlineSampler.samplerIndex;
+            auto &gfxCoreHelper = device->getGfxCoreHelper();
+            auto samplerStateSize = gfxCoreHelper.getSamplerStateSize();
+            uint32_t offset = inlineSampler.borderColorStateSize;
+            offset += static_cast<uint32_t>(samplerStateSize) * samplerStateIndex;
+            sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, offset);
+
+        } else {
+
+            sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, inlineSampler.getSamplerBindfulOffset());
+        }
     }
 }
 
