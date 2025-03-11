@@ -9,7 +9,6 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/product_helper.h"
-#include "shared/source/release_helper/release_helper.h"
 
 #include "hw_cmds.h"
 
@@ -19,10 +18,6 @@ int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInf
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.flags.ftrSVM;
     this->setCapabilityCoherencyFlag(*outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
     outHwInfo->capabilityTable.ftrSupportsCoherency &= inHwInfo->featureTable.flags.ftrL3IACoherency;
-    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
-    if (releaseHelper) {
-        outHwInfo->featureTable.flags.ftrXe2Compression = releaseHelper->getFtrXe2Compression();
-    }
 
     setupDefaultEngineType(*outHwInfo, rootDeviceEnvironment);
     setupPreemptionMode(*outHwInfo, rootDeviceEnvironment, true);
