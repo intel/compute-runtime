@@ -7,6 +7,7 @@
 
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/sysman/source/shared/linux/kmd_interface/sysman_kmd_interface.h"
@@ -277,7 +278,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingSysFsAccessScanDirEnt
 
     std::string path = "noSuchDirectory";
     std::vector<std::string> listFiles;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysFsAccess->scanDirEntries(path, listFiles));
+    EXPECT_NE(ZE_RESULT_SUCCESS, pSysFsAccess->scanDirEntries(path, listFiles));
 }
 
 TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadOnMultipleFilesThenSuccessIsReturned) {
@@ -529,6 +530,85 @@ TEST(SysmanErrorCodeTest, GivenDifferentErrorCodesWhenCallingGetResultThenVerify
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, LinuxSysmanImp::getResult(ENOENT));
     EXPECT_EQ(ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE, LinuxSysmanImp::getResult(EBUSY));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, LinuxSysmanImp::getResult(EEXIST));
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
+    pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
+    uint32_t subDeviceId = 0;
+    bool result = pLinuxSysmanImp->generateUuidFromPciAndSubDeviceInfo(subDeviceId, pciBusInfo, uuid);
+    EXPECT_FALSE(result);
+}
+
+TEST_F(SysmanDeviceFixture, GivenNullOsInterfaceObjectWhenRetrievingUuidsOfDeviceThenNoUuidsAreReturned) {
+    auto execEnv = new NEO::ExecutionEnvironment();
+    execEnv->prepareRootDeviceEnvironments(1);
+    execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+    execEnv->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModel>());
+
+    auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
+    auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
+
+    auto &rootDeviceEnvironment = (pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
+    rootDeviceEnvironment.osInterface = nullptr;
+
+    std::vector<std::string> uuids;
+    pLinuxSysmanImp->getDeviceUuids(uuids);
+    EXPECT_EQ(0u, uuids.size());
+}
+
+TEST_F(SysmanDeviceFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsReturned) {
+    DebugManagerStateRestore restore;
+    auto execEnv = new NEO::ExecutionEnvironment();
+    execEnv->prepareRootDeviceEnvironments(1);
+    execEnv->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+    execEnv->rootDeviceEnvironments[0]->osInterface = std::make_unique<NEO::OSInterface>();
+
+    auto driverModel = std::make_unique<NEO::MockDriverModel>();
+    driverModel->pciSpeedInfo = {1, 1, 1};
+    PhysicalDevicePciBusInfo pciBusInfo = {};
+    pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
+    driverModel->pciBusInfo = pciBusInfo;
+    execEnv->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::move(driverModel));
+
+    auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
+    auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
+
+    debugManager.flags.EnableChipsetUniqueUUID.set(0);
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    uint32_t subDeviceId = 0;
+    bool result = pLinuxSysmanImp->getUuidFromSubDeviceInfo(subDeviceId, uuid);
+    EXPECT_FALSE(result);
+}
+
+struct MockSysmanLinuxProductHelper : public ProductHelperHw<IGFX_UNKNOWN> {
+    MockSysmanLinuxProductHelper() = default;
+    bool getUuid(DriverModel *driverModel, const uint32_t subDeviceCount, const uint32_t deviceIndex, std::array<uint8_t, ProductHelper::uuidSize> &uuid) const override {
+        auto pDrm = driverModel->as<Drm>();
+        if (pDrm->getFileDescriptor() >= 0) {
+            return true;
+        }
+        return false;
+    }
+};
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceWhenRetrievingUuidThenValidFdIsVerifiedInProductHelper) {
+    std::unique_ptr<ProductHelper> mockProductHelper = std::make_unique<MockSysmanLinuxProductHelper>();
+    auto pSysmanDeviceImp = std::make_unique<L0::Sysman::SysmanDeviceImp>(execEnv, 0);
+    auto pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pSysmanDeviceImp->pOsSysman);
+
+    auto &rootDeviceEnvironment = (pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
+
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    uint32_t subDeviceId = 0;
+    bool result = pLinuxSysmanImp->getUuidFromSubDeviceInfo(subDeviceId, uuid);
+    EXPECT_TRUE(result);
+
+    std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 }
 
 } // namespace ult

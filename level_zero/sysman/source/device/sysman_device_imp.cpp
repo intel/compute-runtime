@@ -211,6 +211,10 @@ ze_result_t SysmanDeviceImp::fabricPortGetMultiPortThroughput(uint32_t numPorts,
     return pFabricPortHandleContext->fabricPortGetMultiPortThroughput(numPorts, phPort, pThroughput);
 }
 
+void SysmanDeviceImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
+    return pOsSysman->getDeviceUuids(deviceUuids);
+}
+
 OsSysman *SysmanDeviceImp::deviceGetOsInterface() {
     return pOsSysman;
 }

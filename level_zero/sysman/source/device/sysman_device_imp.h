@@ -93,8 +93,8 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableAndNonMovableClass {
     bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
     ze_result_t fabricPortGetMultiPortThroughput(uint32_t numPorts, zes_fabric_port_handle_t *phPort, zes_fabric_port_throughput_t **pThroughput) override;
     ze_result_t deviceEnumEnabledVF(uint32_t *pCount, zes_vf_handle_t *phVFhandle) override;
-
     OsSysman *deviceGetOsInterface() override;
+    void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

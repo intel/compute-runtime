@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "level_zero/sysman/source/device/os_sysman.h"
 #include "level_zero/sysman/source/device/sysman_device.h"
@@ -36,11 +38,14 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     void releaseFwUtilInterface();
 
     uint32_t getSubDeviceCount() override;
+    void getDeviceUuids(std::vector<std::string> &deviceUuids) override;
     SysmanDeviceImp *getSysmanDeviceImp();
     const NEO::HardwareInfo &getHardwareInfo() const override { return pParentSysmanDeviceImp->getHardwareInfo(); }
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
     SysmanProductHelper *getSysmanProductHelper();
     PlatformMonitoringTech *getSysmanPmt();
+    bool getUuid(std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
+    bool generateUuidFromPciBusInfo(const NEO::PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, NEO::ProductHelper::uuidSize> &uuid);
 
   protected:
     FirmwareUtil *pFwUtilInterface = nullptr;
@@ -48,6 +53,10 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     SysmanDevice *pDevice = nullptr;
     std::unique_ptr<PlatformMonitoringTech> pPmt;
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
+    struct {
+        bool isValid = false;
+        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
+    } uuid;
 
   private:
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;

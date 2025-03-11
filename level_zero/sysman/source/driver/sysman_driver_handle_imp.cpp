@@ -28,11 +28,55 @@ struct SysmanDriverHandleImp *globalSysmanDriver;
 
 SysmanDriverHandleImp::SysmanDriverHandleImp() = default;
 
+void SysmanDriverHandleImp::updateUuidMap(SysmanDevice *sysmanDevice) {
+    std::vector<std::string> uuidArr;
+    sysmanDevice->getDeviceUuids(uuidArr);
+    for (auto &uuid : uuidArr) {
+        uuidDeviceMap[uuid] = sysmanDevice;
+    }
+    return;
+}
+
+SysmanDevice *SysmanDriverHandleImp::findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle) {
+    auto iterator = coreToSysmanDeviceMap.find(handle);
+    if (iterator != coreToSysmanDeviceMap.end()) {
+        SysmanDevice *sysmanDevice = iterator->second;
+        return sysmanDevice;
+    }
+    return nullptr;
+}
+
+SysmanDevice *SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle(ze_device_handle_t hDevice) {
+    const std::lock_guard<std::mutex> lock(this->coreToSysmanDeviceMapLock);
+    if (hDevice == nullptr) {
+        return nullptr;
+    }
+
+    SysmanDevice *sysmanDevice = findSysmanDeviceFromCoreToSysmanDeviceMap(hDevice);
+    if (sysmanDevice != nullptr) {
+        return sysmanDevice;
+    }
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    Device::fromHandle(hDevice)->getProperties(&deviceProperties);
+    std::string uuid(reinterpret_cast<char const *>(deviceProperties.uuid.id));
+    auto it = uuidDeviceMap.find(uuid);
+    if (it == uuidDeviceMap.end()) {
+        PRINT_DEBUG_STRING(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "SysmanDriverHandleImp::getSysmanDeviceFromCoreDeviceHandle() - sysman device handle equivalent to core device handle not found!! %s\n", "");
+        return nullptr;
+    }
+    sysmanDevice = it->second;
+    coreToSysmanDeviceMap[hDevice] = sysmanDevice;
+
+    return sysmanDevice;
+}
+
 ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executionEnvironment) {
     for (uint32_t rootDeviceIndex = 0u; rootDeviceIndex < executionEnvironment.rootDeviceEnvironments.size(); rootDeviceIndex++) {
         auto pSysmanDevice = SysmanDevice::create(executionEnvironment, rootDeviceIndex);
         if (pSysmanDevice != nullptr) {
             this->sysmanDevices.push_back(pSysmanDevice);
+            updateUuidMap(pSysmanDevice);
         }
     }
 
