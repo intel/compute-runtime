@@ -22,6 +22,10 @@ extern unsigned int testCaseMaxTimeInMs;
 
 void BaseUltConfigListener::OnTestStart(const ::testing::TestInfo &) {
     WaitUtils::waitpkgUse = false;
+    WaitUtils::waitpkgCounterValue = WaitUtils::defaultCounterValue;
+    WaitUtils::waitpkgControlValue = WaitUtils::defaultControlValue;
+    WaitUtils::waitCount = WaitUtils::defaultWaitCount;
+
     maxOsContextCountBackup = MemoryManager::maxOsContextCount;
     debugVarSnapshot = debugManager.flags;
     injectFcnSnapshot = debugManager.injectFcn;
