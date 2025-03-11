@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,8 +35,19 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     using IoctlHelperXe::xeShowBindTable;
 
     int perfOpenIoctl(DrmIoctl request, void *arg) override {
-        if (failPerfOpen) {
-            return -1;
+        switch (request) {
+        case DrmIoctl::perfQuery:
+            if (failPerfQuery) {
+                return -1;
+            }
+            break;
+        case DrmIoctl::perfOpen:
+            if (failPerfOpen) {
+                return -1;
+            }
+            break;
+        default:
+            break;
         }
         return IoctlHelperXe::perfOpenIoctl(request, arg);
     }
@@ -60,4 +71,5 @@ struct MockIoctlHelperXe : IoctlHelperXe {
     bool failPerfDisable = false;
     bool failPerfEnable = false;
     bool failPerfOpen = false;
+    bool failPerfQuery = false;
 };

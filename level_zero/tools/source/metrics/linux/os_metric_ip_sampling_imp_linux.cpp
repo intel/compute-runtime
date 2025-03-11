@@ -47,6 +47,7 @@ MetricIpSamplingLinuxImp::MetricIpSamplingLinuxImp(Device &device) : device(devi
 ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNReports, uint32_t &samplingPeriodNs) {
 
     const auto drm = device.getOsInterface()->getDriverModel()->as<NEO::Drm>();
+    // gpuTimeStampfrequency will be in Hertz
     uint64_t gpuTimeStampfrequency = 0;
     ze_result_t ret = getMetricsTimerResolution(gpuTimeStampfrequency);
     if (ret != ZE_RESULT_SUCCESS) {
@@ -66,7 +67,7 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    notifyEveryNReports = std::max(notifyEveryNReports, 1u);
+    notifyEveryNReports = std::clamp(notifyEveryNReports, 1u, getRequiredBufferSize(notifyEveryNReports));
     if (!ioctlHelper->perfOpenEuStallStream(euStallFdParameter, samplingPeriodNs, classInstance->engineInstance, notifyEveryNReports, gpuTimeStampfrequency, &stream)) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -99,6 +100,9 @@ ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDa
     // If read needs to try again, do not return error
     if (errno == EINTR || errno == EAGAIN || errno == EBUSY) {
         return ZE_RESULT_SUCCESS;
+    } else if (errno == EIO) {
+        // on i915 EIO is not returned by KMD for any error conditions. Hence we can use this safetly for both xe and i915.
+        return ZE_RESULT_WARNING_DROPPED_DATA;
     }
 
     return ZE_RESULT_ERROR_UNKNOWN;

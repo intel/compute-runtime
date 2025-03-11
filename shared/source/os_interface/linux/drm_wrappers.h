@@ -293,6 +293,7 @@ enum class DrmIoctl {
     perfOpen,
     perfEnable,
     perfDisable,
+    perfQuery,
     primaryContextExport,
     primaryContextImport
 };

@@ -1284,6 +1284,7 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
     case DrmIoctl::metadataDestroy: {
         ret = debuggerMetadataDestroyIoctl(request, arg);
     } break;
+    case DrmIoctl::perfQuery:
     case DrmIoctl::perfOpen: {
         ret = perfOpenIoctl(request, arg);
     } break;
@@ -1706,6 +1707,7 @@ unsigned int IoctlHelperXe::getIoctlRequestValue(DrmIoctl ioctlRequest) const {
     case DrmIoctl::perfOpen:
     case DrmIoctl::perfEnable:
     case DrmIoctl::perfDisable:
+    case DrmIoctl::perfQuery:
         return getIoctlRequestValuePerf(ioctlRequest);
     default:
         UNRECOVERABLE_IF(true);

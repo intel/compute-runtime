@@ -79,6 +79,8 @@ extern uint32_t readFuncCalled;
 extern uint32_t writeFuncCalled;
 extern uint32_t mkfifoFuncCalled;
 extern bool failMkfifo;
+extern bool failFcntl;
+extern bool failFcntl1;
 
 extern std::vector<void *> mmapVector;
 extern std::vector<void *> mmapCapturedExtendedPointers;

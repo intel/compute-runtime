@@ -255,6 +255,8 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, givenReadFailsWithRetryErrorNumberWhe
     EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_SUCCESS);
     errno = EAGAIN;
     EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_SUCCESS);
+    errno = EIO;
+    EXPECT_EQ(metricIpSamplingOsInterface->readData(&pRawData, &pRawDataSize), ZE_RESULT_WARNING_DROPPED_DATA);
 }
 
 HWTEST2_F(MetricIpSamplingLinuxTestPrelim, WhenGetRequiredBufferSizeIsCalledThenCorrectSizeIsReturned, IsPVC) {

@@ -60,6 +60,14 @@ TEST_F(IoctlHelperXeTest, whenCallingGetIoctlRequestValuePerfDisableThenZeroisRe
     EXPECT_EQ(0u, xeIoctlHelper.get()->getIoctlRequestValuePerf(DrmIoctl::perfDisable));
 }
 
+TEST_F(IoctlHelperXeTest, whenCallingGetIoctlRequestValuePerfQueryThenZeroisReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    EXPECT_NE(nullptr, xeIoctlHelper);
+    EXPECT_EQ(0u, xeIoctlHelper.get()->getIoctlRequestValuePerf(DrmIoctl::perfQuery));
+}
+
 TEST_F(IoctlHelperXeTest, whenCallingPerfOpenIoctlWithInvalidValuesThenZeroisReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -82,6 +90,14 @@ TEST_F(IoctlHelperXeTest, whenCallingPerfOpenIoctlThenProperValueIsReturned) {
     auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);
     EXPECT_NE(nullptr, xeIoctlHelper);
     EXPECT_EQ(0, xeIoctlHelper.get()->ioctl(DrmIoctl::perfOpen, nullptr));
+}
+
+TEST_F(IoctlHelperXeTest, whenCallingPerfQueryIoctlThenProperValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = DrmMockXe::create(*executionEnvironment->rootDeviceEnvironments[0]);
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(*drm);
+    EXPECT_NE(nullptr, xeIoctlHelper);
+    EXPECT_EQ(0, xeIoctlHelper.get()->ioctl(DrmIoctl::perfQuery, nullptr));
 }
 
 TEST_F(IoctlHelperXeTest, whenCallingPerfDisableIoctlThenProperValueIsReturned) {
