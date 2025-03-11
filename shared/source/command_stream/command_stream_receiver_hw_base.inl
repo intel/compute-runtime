@@ -275,7 +275,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
                             false, getThrottleFromPowerSavingUint(this->getUmdPowerHintValue()), NEO::QueueSliceCount::defaultSliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchBcsFlags.hasStallingCmds || dispatchBcsFlags.flushTaskCount),
                             dispatchBcsFlags.hasRelaxedOrderingDependencies, dispatchBcsFlags.flushTaskCount, false};
-
+    batchBuffer.disableFlatRingBuffer = dispatchBcsFlags.dispatchOperation == AppendOperations::cmdList;
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
     this->latestSentTaskCount = taskCount + 1;
 
@@ -2247,6 +2247,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::handleImmediateFlushSendBatc
                             immediateLowPriority, immediateThrottle, immediateSliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, flushData.endPtr, this->getNumClients(), hasStallingCmds,
                             dispatchFlags.hasRelaxedOrderingDependencies, dispatchMonitorFence, false};
+    batchBuffer.disableFlatRingBuffer = dispatchFlags.dispatchOperation == AppendOperations::cmdList;
+
     updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());

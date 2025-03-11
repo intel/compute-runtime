@@ -6398,10 +6398,26 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlushBcsTaskCmdListDispatchWhenCalled
 
     size_t usedSize = commandStreamReceiver.commandStream.getUsed();
 
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
     commandStreamReceiver.flushBcsTask(commandStream,
                                        commandStream.getUsed(),
                                        dispatchBcsFlags,
                                        pDevice->getHardwareInfo());
 
     EXPECT_EQ(usedSize, commandStreamReceiver.commandStream.getUsed());
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.disableFlatRingBuffer);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenImmediateFlushTaskCmdListDispatchWhenFlushingBufferThenDisableFlatRingBuffer) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.recordFlushedBatchBuffer = true;
+
+    immediateFlushTaskFlags.dispatchOperation = NEO::AppendOperations::cmdList;
+    commandStreamReceiver.flushImmediateTask(commandStream,
+                                             commandStream.getUsed(),
+                                             immediateFlushTaskFlags,
+                                             *pDevice);
+
+    EXPECT_TRUE(commandStreamReceiver.latestFlushedBatchBuffer.disableFlatRingBuffer);
 }
