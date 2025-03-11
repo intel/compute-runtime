@@ -1714,18 +1714,49 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
                                                                               ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto ret = ZE_RESULT_SUCCESS;
-    checkAvailableSpace(numWaitEvents, false, commonImmediateCommandSize, this->dispatchCmdListBatchBufferAsPrimary);
-    if (numWaitEvents) {
-        ret = this->appendWaitOnEvents(numWaitEvents, phWaitEvents, nullptr, false, true, true, true, true, false);
-    }
+    constexpr bool copyOffloadOperation = false;
+    constexpr bool relaxedOrderingDispatch = false;
+    constexpr bool requireTaskCountUpdate = true;
+    constexpr bool hasStallingCmds = true;
 
+    bool copyEngineExecution = isCopyOnly(copyOffloadOperation);
+
+    auto ret = ZE_RESULT_SUCCESS;
+    checkAvailableSpace(numWaitEvents,
+                        relaxedOrderingDispatch,
+                        commonImmediateCommandSize,
+                        this->dispatchCmdListBatchBufferAsPrimary);
+
+    ret = CommandListCoreFamily<gfxCoreFamily>::addEventsToCmdList(numWaitEvents, phWaitEvents,
+                                                                   nullptr,
+                                                                   relaxedOrderingDispatch,
+                                                                   false,
+                                                                   true,
+                                                                   false,
+                                                                   copyOffloadOperation);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
-    auto queueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
+    Event *signalEvent = nullptr;
+    bool dcFlush = false;
+    if (hSignalEvent) {
+        signalEvent = Event::fromHandle(hSignalEvent);
+        dcFlush = this->getDcFlushRequired(signalEvent->isSignalScope());
+    }
 
+    if (!this->handleCounterBasedEventOperations(signalEvent)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(signalEvent,
+                                                                  nullptr,
+                                                                  true,
+                                                                  false,
+                                                                  false,
+                                                                  copyEngineExecution);
+
+    auto queueImp = static_cast<CommandQueueImp *>(this->cmdQImmediate);
     auto mainAppendLock = queueImp->getCsr()->obtainUniqueOwnership();
 
     if (this->dispatchCmdListBatchBufferAsPrimary) {
@@ -1734,22 +1765,42 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendCommandLists(ui
             queueImp->triggerBbStartJump();
         }
     }
-    ret = this->cmdQImmediate->executeCommandLists(numCommandLists, phCommandLists, nullptr, true, this->commandContainer.getCommandStream());
+    ret = this->cmdQImmediate->executeCommandLists(numCommandLists, phCommandLists,
+                                                   nullptr,
+                                                   true,
+                                                   this->commandContainer.getCommandStream());
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
 
-    bool relaxedOrderingDispatch = false;
-    if (hSignalEvent) {
-        ret = CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent, relaxedOrderingDispatch);
+    CommandListCoreFamily<gfxCoreFamily>::appendSignalEventPostWalker(signalEvent,
+                                                                      nullptr,
+                                                                      nullptr,
+                                                                      false,
+                                                                      false,
+                                                                      copyEngineExecution);
+    if (isInOrderExecutionEnabled()) {
+        CommandListCoreFamily<gfxCoreFamily>::dispatchInOrderPostOperationBarrier(signalEvent,
+                                                                                  dcFlush,
+                                                                                  copyEngineExecution);
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalInOrderDependencyCounter(signalEvent,
+                                                                                   copyOffloadOperation,
+                                                                                   false);
     }
 
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
+    CommandListCoreFamily<gfxCoreFamily>::handleInOrderDependencyCounter(signalEvent,
+                                                                         false,
+                                                                         copyOffloadOperation);
 
-    bool hasStallingCmds = true;
-    return flushImmediate(ret, true, hasStallingCmds, relaxedOrderingDispatch, NEO::AppendOperations::cmdList, false, hSignalEvent, true, &mainAppendLock);
+    return flushImmediate(ret,
+                          true,
+                          hasStallingCmds,
+                          relaxedOrderingDispatch,
+                          NEO::AppendOperations::cmdList,
+                          copyOffloadOperation,
+                          hSignalEvent,
+                          requireTaskCountUpdate,
+                          &mainAppendLock);
 }
 
 } // namespace L0

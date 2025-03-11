@@ -338,14 +338,13 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockCommandQueueExecute queue(device, &mockCommandStreamReceiver, &queueDesc);
 
-    ze_event_handle_t hEventHandle = event->toHandle();
     auto cmdList = new MockCommandListImmediateHwWithWaitEventFail<gfxCoreFamily>;
     cmdList->cmdListType = CommandList::CommandListType::typeImmediate;
     cmdList->forceWaitEventError = true;
     cmdList->cmdQImmediate = &queue;
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
-    auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle);
+    auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
     EXPECT_EQ(queue.executeCalledCount, 0u);
 
@@ -365,10 +364,8 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     auto result = cmdList->appendCommandLists(0u, nullptr, nullptr, 1u, &hEventHandle);
-    EXPECT_EQ(cmdList->appendWaitEventCalled, 1u);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
     EXPECT_EQ(queue.executeCalledCount, 0u);
-    EXPECT_EQ(cmdList->appendSignalEventCalled, 0u);
 
     cmdList->destroy();
 }
@@ -395,7 +392,6 @@ HWTEST2_F(CommandListImmediateAppendRegularTest, givenImmediateCommandListAndApp
     cmdList->initialize(device, NEO::EngineGroupType::renderCompute, 0u);
 
     auto result = cmdList->appendCommandLists(0u, nullptr, hSignalEventHandle, 1u, &hEventHandle);
-    EXPECT_EQ(cmdList->appendWaitEventCalled, 1u);
     EXPECT_EQ(queue.executeCalledCount, 1u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
