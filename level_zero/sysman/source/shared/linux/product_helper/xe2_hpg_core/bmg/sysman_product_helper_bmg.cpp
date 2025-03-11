@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Intel Corporation
+ * Copyright (C) 2024-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,21 @@ constexpr static auto gfxProduct = IGFX_BMG;
 
 #include "level_zero/sysman/source/shared/linux/product_helper/sysman_product_helper_xe_hp_and_later.inl"
 
+// XTAL clock frequency is denoted as an integer between [0-3] with a predefined value for each number.
+// This vector defines the predefined value for each integer represented by the index of the vector.
+static const std::vector<double> indexToXtalClockFrequecyMap = {24, 19.2, 38.4, 25};
+
 static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap = {
     {"0x1e2f8200", // BMG PUNIT rev 1
-     {{"VRAM_BANDWIDTH", 56}}},
+     {{"XTAL_CLK_FREQUENCY", 4},
+      {"VRAM_BANDWIDTH", 56},
+      {"XTAL_COUNT", 128},
+      {"VCCGT_ENERGY_ACCUMULATOR", 1628},
+      {"VCCDDR_ENERGY_ACCUMULATOR", 1640}}},
     {"0x5e2f8210", // BMG OOBMSM Rev 15
-     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
+     {{"PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU", 136},
+      {"PLATFORM_ENERGY_STATUS", 140},
+      {"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
       {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 168},
       {"reg_PCIESS_rx_bytecount_lsb", 280},
       {"reg_PCIESS_rx_bytecount_msb", 276},
@@ -274,7 +284,9 @@ static std::map<std::string, std::map<std::string, uint64_t>> guidToKeyOffsetMap
       {"GDDR5_CH1_GT_64B_WR_REQ_UPPER", 1280},
       {"GDDR5_CH1_GT_64B_WR_REQ_LOWER", 1284}}},
     {"0x5e2f8211", // BMG OOBMSM Rev 16
-     {{"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
+     {{"PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU", 136},
+      {"PLATFORM_ENERGY_STATUS", 140},
+      {"SOC_THERMAL_SENSORS_TEMPERATURE_0_2_0_GTTMMADR[1]", 164},
       {"VRAM_TEMPERATURE_0_2_0_GTTMMADR", 168},
       {"reg_PCIESS_rx_bytecount_lsb", 280},
       {"reg_PCIESS_rx_bytecount_msb", 284},
@@ -916,6 +928,95 @@ ze_result_t SysmanProductHelperHw<gfxProduct>::getMemoryBandwidth(zes_mem_bandwi
 template <>
 bool SysmanProductHelperHw<gfxProduct>::isZesInitSupported() {
     return true;
+}
+
+template <>
+ze_result_t SysmanProductHelperHw<gfxProduct>::getPowerEnergyCounter(zes_power_energy_counter_t *pEnergy, LinuxSysmanImp *pLinuxSysmanImp, zes_power_domain_t powerDomain, uint32_t subdeviceId) {
+    std::string key = "";
+    switch (powerDomain) {
+    case ZES_POWER_DOMAIN_PACKAGE:
+        key = "PACKAGE_ENERGY_STATUS_SKU_0_0_0_PCU";
+        break;
+    case ZES_POWER_DOMAIN_CARD:
+        key = "PLATFORM_ENERGY_STATUS";
+        break;
+    case ZES_POWER_DOMAIN_MEMORY:
+        key = "VCCDDR_ENERGY_ACCUMULATOR";
+        break;
+    case ZES_POWER_DOMAIN_GPU:
+        key = "VCCGT_ENERGY_ACCUMULATOR";
+        break;
+    default:
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        break;
+    }
+
+    std::string &rootPath = pLinuxSysmanImp->getPciRootPath();
+    std::map<uint32_t, std::string> telemNodes;
+    NEO::PmtUtil::getTelemNodesInPciPath(std::string_view(rootPath), telemNodes);
+    if (telemNodes.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    std::map<std::string, uint64_t> keyOffsetMap;
+    std::unordered_map<std::string, std::string> keyTelemInfoMap;
+
+    // Iterate through all the TelemNodes to find both OOBMSM and PUNIT guids along with their keyOffsetMap
+    for (const auto &it : telemNodes) {
+        std::string telemNodeDir = it.second;
+
+        std::array<char, NEO::PmtUtil::guidStringSize> guidString = {};
+        if (!NEO::PmtUtil::readGuid(telemNodeDir, guidString)) {
+            continue;
+        }
+
+        auto keyOffsetMapIterator = guidToKeyOffsetMap.find(guidString.data());
+        if (keyOffsetMapIterator == guidToKeyOffsetMap.end()) {
+            continue;
+        }
+
+        const auto &tempKeyOffsetMap = keyOffsetMapIterator->second;
+        for (auto it = tempKeyOffsetMap.begin(); it != tempKeyOffsetMap.end(); it++) {
+            keyOffsetMap[it->first] = it->second;
+            keyTelemInfoMap[it->first] = telemNodeDir;
+        }
+    }
+
+    if (keyOffsetMap.empty()) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+    // Calculate energy counter
+    uint32_t energyCounter = 0;
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, energyCounter)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    // Energy counter is in U(18.14) format. Need to convert it into uint64_t and then in MicroJoule
+    uint32_t integerPart = static_cast<uint32_t>(energyCounter >> 14);
+    uint32_t decimalBits = static_cast<uint32_t>((energyCounter & 0x3FFF));
+    double decimalPart = static_cast<double>(decimalBits) / (1 << 14);
+    double result = static_cast<double>(integerPart + decimalPart);
+    pEnergy->energy = static_cast<uint64_t>((result * convertJouleToMicroJoule));
+
+    // timestamp calcuation
+    uint64_t timestamp64 = 0;
+    key = "XTAL_COUNT";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, timestamp64)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    uint32_t frequency = 0;
+    key = "XTAL_CLK_FREQUENCY";
+    if (!PlatformMonitoringTech::readValue(keyOffsetMap, keyTelemInfoMap[key], key, 0, frequency)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    double timestamp = timestamp64 / indexToXtalClockFrequecyMap[frequency & 0x2];
+    pEnergy->timestamp = static_cast<uint64_t>(timestamp);
+
+    return ZE_RESULT_SUCCESS;
 }
 
 template class SysmanProductHelperHw<gfxProduct>;

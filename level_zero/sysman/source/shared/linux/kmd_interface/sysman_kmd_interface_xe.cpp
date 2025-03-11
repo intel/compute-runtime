@@ -50,9 +50,10 @@ void SysmanKmdInterfaceXe::initSysfsNameToFileMap(SysmanProductHelper *pSysmanPr
     sysfsNameToFileMap[SysfsName::sysfsNameThrottleReasonThermal] = std::make_pair("freq0/throttle/reason_thermal", "");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageSustainedPowerLimit] = std::make_pair("", "power1_max");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageSustainedPowerLimitInterval] = std::make_pair("", "power1_max_interval");
-    sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode] = std::make_pair("", "energy1_input");
+    sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode] = std::make_pair("", "energy2_input");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageDefaultPowerLimit] = std::make_pair("", "power1_rated_max");
     sysfsNameToFileMap[SysfsName::sysfsNamePackageCriticalPowerLimit] = std::make_pair("", pSysmanProductHelper->getPackageCriticalPowerLimitFile());
+    sysfsNameToFileMap[SysfsName::sysfsNameCardEnergyCounterNode] = std::make_pair("", "energy1_input");
     sysfsNameToFileMap[SysfsName::sysfsNameMemoryAddressRange] = std::make_pair("physical_vram_size_bytes", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMaxMemoryFrequency] = std::make_pair("freq_vram_rp0", "");
     sysfsNameToFileMap[SysfsName::sysfsNameMinMemoryFrequency] = std::make_pair("freq_vram_rpn", "");
@@ -97,6 +98,8 @@ std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t po
     std::string filePath = {};
     if (powerDomain == ZES_POWER_DOMAIN_PACKAGE) {
         filePath = sysfsNameToFileMap[SysfsName::sysfsNamePackageEnergyCounterNode].second;
+    } else if (powerDomain == ZES_POWER_DOMAIN_CARD) {
+        filePath = sysfsNameToFileMap[SysfsName::sysfsNameCardEnergyCounterNode].second;
     }
     return filePath;
 }
@@ -111,6 +114,10 @@ ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &p
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {
     return "xe";
+}
+
+std::vector<zes_power_domain_t> SysmanKmdInterfaceXe::getPowerDomains() const {
+    return {ZES_POWER_DOMAIN_PACKAGE, ZES_POWER_DOMAIN_CARD, ZES_POWER_DOMAIN_GPU, ZES_POWER_DOMAIN_MEMORY};
 }
 
 std::optional<std::string> SysmanKmdInterfaceXe::getEngineClassString(uint16_t engineClass) {

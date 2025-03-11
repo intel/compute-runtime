@@ -33,7 +33,7 @@ const std::string sustainedPowerLimit("power1_max");
 const std::string sustainedPowerLimitInterval("power1_max_interval");
 const std::string criticalPowerLimit1("curr1_crit");
 const std::string criticalPowerLimit2("power1_crit");
-const std::string energyCounterNode("energy1_input");
+const std::string packageEnergyCounterNode("energy1_input");
 const std::string defaultPowerLimit("power1_rated_max");
 constexpr uint64_t expectedEnergyCounter = 123456785u;
 constexpr uint64_t expectedEnergyCounterTile0 = 123456785u;
@@ -106,11 +106,11 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
                 return mockReadPeakResult;
             }
             val = criticalPowerLimitVal;
-        } else if (file.compare(i915HwmonDirTile0 + "/" + energyCounterNode) == 0) {
+        } else if (file.compare(i915HwmonDirTile0 + "/" + packageEnergyCounterNode) == 0) {
             val = expectedEnergyCounterTile0;
-        } else if (file.compare(i915HwmonDirTile1 + "/" + energyCounterNode) == 0) {
+        } else if (file.compare(i915HwmonDirTile1 + "/" + packageEnergyCounterNode) == 0) {
             val = expectedEnergyCounterTile1;
-        } else if (file.compare(i915HwmonDir + "/" + energyCounterNode) == 0) {
+        } else if (file.compare(i915HwmonDir + "/" + packageEnergyCounterNode) == 0) {
             val = expectedEnergyCounter;
         } else if (file.compare(i915HwmonDir + "/" + defaultPowerLimit) == 0) {
             val = mockDefaultPowerLimitVal;
@@ -248,7 +248,7 @@ struct MockPowerSysfsAccessInterface : public L0::Sysman::SysFsAccessInterface {
     }
 
     bool fileExists(const std::string file) override {
-        if (file.find(energyCounterNode) != std::string::npos) {
+        if (file.find(packageEnergyCounterNode) != std::string::npos) {
             return isEnergyCounterFilePresent;
         } else if (file.find(sustainedPowerLimit) != std::string::npos) {
             return isSustainedPowerLimitFilePresent;
@@ -301,19 +301,6 @@ class SysmanDevicePowerFixtureI915 : public SysmanDeviceFixture {
         std::vector<zes_pwr_handle_t> handles(count, nullptr);
         EXPECT_EQ(zesDeviceEnumPowerDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
         return handles;
-    }
-};
-
-class SysmanDevicePowerFixtureXe : public SysmanDeviceFixture {
-  protected:
-    L0::Sysman::SysmanDevice *device = nullptr;
-    void SetUp() override {
-        SysmanDeviceFixture::SetUp();
-        device = pSysmanDevice;
-        pSysmanDeviceImp->pPowerHandleContext->handleList.clear();
-    }
-    void TearDown() override {
-        SysmanDeviceFixture::TearDown();
     }
 };
 

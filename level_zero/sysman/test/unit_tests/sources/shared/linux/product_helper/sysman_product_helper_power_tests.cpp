@@ -19,8 +19,7 @@ constexpr uint32_t powerHandleComponentCount = 1u;
 
 static int mockReadLinkSuccess(const char *path, char *buf, size_t bufsize) {
     std::map<std::string, std::string> fileNameLinkMap = {
-        {sysfsPathTelem1, realPathTelem1},
-    };
+        {sysfsPathTelem1, realPathTelem1}};
     auto it = fileNameLinkMap.find(std::string(path));
     if (it != fileNameLinkMap.end()) {
         std::memcpy(buf, it->second.c_str(), it->second.size());
@@ -43,7 +42,7 @@ static int mockOpenSuccess(const char *pathname, int flags) {
         returnValue = 5;
     } else if ((strPathName == telem1TelemFileName) || (strPathName == telem2TelemFileName) || (strPathName == telem3TelemFileName)) {
         returnValue = 6;
-    } else if (strPathName.find(energyCounterNode) != std::string::npos) {
+    } else if (strPathName.find(packageEnergyCounterNode) != std::string::npos) {
         returnValue = 7;
     }
     return returnValue;
@@ -178,7 +177,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
-HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryOffsetReadFailsAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
+HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetrySupportAvailableAndTelemetryOffsetReadFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, &mockReadLinkSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsStat)> mockStat(&NEO::SysCalls::sysCallsStat, &mockStatSuccess);
     VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, &mockOpenSuccess);
@@ -195,7 +194,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWithTelemetryKeyOffsetMapNotAvailableAndSysfsNodeReadAlsoFailsWhenGettingPowerEnergyCounterThenFailureIsReturned, IsDG2) {
@@ -218,7 +217,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandleForPackageDomainWit
     zes_power_energy_counter_t energyCounter = {};
     std::unique_ptr<PublicLinuxPowerImp> pLinuxPowerImp(new PublicLinuxPowerImp(pOsSysman, false, 0, ZES_POWER_DOMAIN_PACKAGE));
     pLinuxPowerImp->isTelemetrySupportAvailable = true;
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pLinuxPowerImp->getEnergyCounter(&energyCounter));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pLinuxPowerImp->getEnergyCounter(&energyCounter));
 }
 
 HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySupportAvailableWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrievedFromPmtNode, IsDG2) {
@@ -256,6 +255,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
         EXPECT_EQ(ZES_POWER_DOMAIN_PACKAGE, extProperties.domain);
 
         zes_power_energy_counter_t energyCounter = {};
+        uint64_t timeStampInitial = SysmanDevice::getSysmanTimestamp();
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetEnergyCounter(handle, &energyCounter));
 
         // Calculate output energyCounter value
@@ -263,6 +263,7 @@ HWTEST2_F(SysmanProductHelperPowerTest, GivenValidPowerHandlesWithTelemetrySuppo
         uint64_t outputEnergyCounter = static_cast<uint64_t>((setEnergyCounter / fixedPointToJoule) * convertJouleToMicroJoule);
 
         EXPECT_EQ(energyCounter.energy, outputEnergyCounter);
+        EXPECT_GE(energyCounter.timestamp, timeStampInitial);
     }
 }
 
