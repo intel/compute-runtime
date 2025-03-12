@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -199,7 +199,7 @@ HWTEST2_F(BuiltInSharedTest, GivenHeaplessModeEnabledWhenGetBuiltinResourceNames
 
         auto resourceNames = getBuiltinResourceNames(builtInType, BuiltinCode::ECodeType::binary, *pDevice);
 
-        std::string expectedResourceNameGeneric = "stateless_heapless_" + builtInTypeAsString + ".builtin_kernel.bin";
+        std::string expectedResourceNameGeneric = "heapless_" + builtInTypeAsString + ".builtin_kernel.bin";
         std::string expectedResourceNameForRelease = deviceIpString + "_" + expectedResourceNameGeneric;
 
         EXPECT_EQ(1u, resourceNames.size());

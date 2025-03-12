@@ -107,7 +107,7 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
         const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
         const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
         if (heaplessEnabled) {
-            addressingModePrefix = "stateless_heapless_";
+            addressingModePrefix = "heapless_";
         } else if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
             addressingModePrefix = "stateless_";
         } else if (ApiSpecificConfig::getBindlessMode(device)) {

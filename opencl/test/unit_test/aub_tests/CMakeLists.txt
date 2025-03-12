@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2024 Intel Corporation
+# Copyright (C) 2018-2025 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -32,7 +32,7 @@ if(NOT NEO_SKIP_AUB_TESTS AND DEFINED AUB_STREAM_PROJECT_NAME)
 
   target_sources(igdrcl_aub_tests PRIVATE
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
-                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_HEAPLESS_LIB_NAME}>
+                 $<TARGET_OBJECTS:${BUILTINS_BINARIES_HEAPLESS_LIB_NAME}>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                  $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
   )
