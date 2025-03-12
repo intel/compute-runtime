@@ -58,7 +58,7 @@
 #include <sstream>
 
 #ifndef DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR
-#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR (1 << 4)
+#define DRM_XE_VM_BIND_FLAG_SYSTEM_ALLOCATOR (1 << 5)
 #endif
 
 namespace NEO {

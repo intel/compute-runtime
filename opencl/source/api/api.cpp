@@ -4392,7 +4392,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
 
             auto allocData = pSvmAllocMgr->getSVMAlloc(ptr);
             if (allocData) {
-                pSvmAllocMgr->prefetchMemory(pCommandQueue->getDevice(), pCommandQueue->getGpgpuCommandStreamReceiver(), *allocData);
+                pSvmAllocMgr->prefetchMemory(pCommandQueue->getDevice(), pCommandQueue->getGpgpuCommandStreamReceiver(), ptr, size);
             }
         }
     }
@@ -5227,7 +5227,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
             for (const auto &pDevice : multiDeviceKernel->getDevices()) {
-                if (!pDevice->areSharedSystemAllocationsAllowed()) {
+                if ((pDevice->getHardwareInfo().capabilityTable.sharedSystemMemCapabilities == 0) || (debugManager.flags.EnableSharedSystemUsmSupport.get() == 0)) {
                     retVal = CL_INVALID_ARG_VALUE;
                     TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
                     return retVal;
