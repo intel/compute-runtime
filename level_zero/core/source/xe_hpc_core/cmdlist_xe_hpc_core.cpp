@@ -20,6 +20,40 @@
 
 namespace L0 {
 
+template <>
+ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const void *ptr, size_t size) {
+    auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
+    auto allocData = svmAllocMgr->getSVMAlloc(ptr);
+
+    if (!allocData) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (NEO::debugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
+        this->performMemoryPrefetch = true;
+        auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        if (prefetchManager) {
+            prefetchManager->insertAllocation(this->prefetchContext, ptr, *allocData);
+        }
+    }
+
+    if (NEO::debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto gpuAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
+    commandContainer.addToResidencyContainer(gpuAlloc);
+
+    size_t offset = ptrDiff(ptr, gpuAlloc->getGpuAddress());
+
+    NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
+
+    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *gpuAlloc, static_cast<uint32_t>(size), offset, device->getNEODevice()->getRootDeviceEnvironment());
+
+    return ZE_RESULT_SUCCESS;
+}
+
 template struct CommandListCoreFamily<IGFX_XE_HPC_CORE>;
 template struct CommandListCoreFamilyImmediate<IGFX_XE_HPC_CORE>;
 

@@ -1069,43 +1069,42 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
     return allocationType;
 }
 
-static uint32_t getSubDeviceId(Device &device) {
-    if (!device.isSubDevice()) {
-        uint32_t deviceBitField = static_cast<uint32_t>(device.getDeviceBitfield().to_ulong());
-        if (device.getDeviceBitfield().count() > 1) {
-            deviceBitField &= ~deviceBitField + 1;
+void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData) {
+    auto getSubDeviceId = [](Device &device) {
+        if (!device.isSubDevice()) {
+            uint32_t deviceBitField = static_cast<uint32_t>(device.getDeviceBitfield().to_ulong());
+            if (device.getDeviceBitfield().count() > 1) {
+                deviceBitField &= ~deviceBitField + 1;
+            }
+            return Math::log2(deviceBitField);
         }
-        return Math::log2(deviceBitField);
-    }
-    return static_cast<NEO::SubDevice *>(&device)->getSubDeviceIndex();
-};
+        return static_cast<NEO::SubDevice *>(&device)->getSubDeviceIndex();
+    };
 
-static NEO::SubDeviceIdsVec getSubDeviceIds(CommandStreamReceiver &csr) {
-    SubDeviceIdsVec subDeviceIds;
-    for (auto subDeviceId = 0u; subDeviceId < csr.getOsContext().getDeviceBitfield().size(); subDeviceId++) {
-        if (csr.getOsContext().getDeviceBitfield().test(subDeviceId)) {
-            subDeviceIds.push_back(subDeviceId);
+    auto getSubDeviceIds = [](CommandStreamReceiver &csr) {
+        SubDeviceIdsVec subDeviceIds;
+        for (auto subDeviceId = 0u; subDeviceId < csr.getOsContext().getDeviceBitfield().size(); subDeviceId++) {
+            if (csr.getOsContext().getDeviceBitfield().test(subDeviceId)) {
+                subDeviceIds.push_back(subDeviceId);
+            }
         }
-    }
-    return subDeviceIds;
-};
+        return subDeviceIds;
+    };
 
-void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size) {
-
-    auto svmData = getSVMAlloc(ptr);
-
-    if (!svmData) {
-        if (device.areSharedSystemAllocationsAllowed()) {
-            // Single vm_id for shared system USM allocation
-            auto subDeviceIds = SubDeviceIdsVec{getSubDeviceId(device)};
-            memoryManager->prefetchSharedSystemAlloc(ptr, size, subDeviceIds, device.getRootDeviceIndex());
-        }
-        return;
+    // Perform prefetch for chunks if EnableBOChunkingPrefetch is 1
+    // and if KMD migration is set, as current target is to use
+    // chunking only with KMD migration
+    bool isChunkingNeededForDeviceAllocations = false;
+    if (NEO::debugManager.flags.EnableBOChunkingDevMemPrefetch.get() &&
+        memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
+        (svmData.memoryType == InternalMemoryType::deviceUnifiedMemory)) {
+        isChunkingNeededForDeviceAllocations = true;
     }
 
     if ((memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
-         (svmData->memoryType == InternalMemoryType::sharedUnifiedMemory))) {
-        auto gfxAllocation = svmData->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
+         (svmData.memoryType == InternalMemoryType::sharedUnifiedMemory)) ||
+        isChunkingNeededForDeviceAllocations) {
+        auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
         auto subDeviceIds = commandStreamReceiver.getActivePartitions() > 1 ? getSubDeviceIds(commandStreamReceiver) : SubDeviceIdsVec{getSubDeviceId(device)};
         memoryManager->setMemPrefetch(gfxAllocation, subDeviceIds, device.getRootDeviceIndex());
     }
@@ -1113,17 +1112,9 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
 
 void SVMAllocsManager::prefetchSVMAllocs(Device &device, CommandStreamReceiver &commandStreamReceiver) {
     std::shared_lock<std::shared_mutex> lock(mtx);
-
-    auto subDeviceIds = commandStreamReceiver.getActivePartitions() > 1 ? getSubDeviceIds(commandStreamReceiver) : SubDeviceIdsVec{getSubDeviceId(device)};
-    if (memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex())) {
-        for (auto &allocation : this->svmAllocs.allocations) {
-            NEO::SvmAllocationData svmData = *allocation.second;
-
-            if (svmData.memoryType == InternalMemoryType::sharedUnifiedMemory) {
-                auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
-                memoryManager->setMemPrefetch(gfxAllocation, subDeviceIds, device.getRootDeviceIndex());
-            }
-        }
+    for (auto &allocation : this->svmAllocs.allocations) {
+        NEO::SvmAllocationData allocData = *allocation.second;
+        this->prefetchMemory(device, commandStreamReceiver, allocData);
     }
 }
 

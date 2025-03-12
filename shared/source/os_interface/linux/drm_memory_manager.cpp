@@ -300,16 +300,6 @@ bool DrmMemoryManager::setAtomicAccess(GraphicsAllocation *gfxAllocation, size_t
     return drmAllocation->setAtomicAccess(&this->getDrm(rootDeviceIndex), size, mode);
 }
 
-bool DrmMemoryManager::prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
-
-    auto &drm = this->getDrm(rootDeviceIndex);
-    auto ioctlHelper = drm.getIoctlHelper();
-    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::memoryClassDevice);
-    auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceIds[0]);
-    auto vmId = drm.getVirtualMemoryAddressSpace(subDeviceIds[0]);
-    return ioctlHelper->setVmPrefetch(reinterpret_cast<uint64_t>(ptr), size, region, vmId);
-}
-
 bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
     auto osContextLinux = getDefaultOsContext(rootDeviceIndex);

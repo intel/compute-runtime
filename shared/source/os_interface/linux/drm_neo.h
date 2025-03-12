@@ -165,7 +165,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
-    MOCKABLE_VIRTUAL void setPageFaultSupported(bool value) { this->pageFaultSupported = value; }
+
     MOCKABLE_VIRTUAL void queryPageFaultSupport();
     bool hasPageFaultSupport() const;
     bool hasKmdMigrationSupport() const;

@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/test.h"
@@ -327,7 +326,8 @@ TEST_F(clSetKernelArgSVMPointerTests, givenSvmAndValidArgValueWhenSettingSameKer
         EXPECT_EQ(++callCounter, pMockKernel->setArgSvmAllocCalls);
         ++mockSvmManager->allocationsCounter;
 
-        pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.sharedSystemMemCapabilities = UnifiedSharedMemoryFlags::access | UnifiedSharedMemoryFlags::sharedSystemPageFaultEnabled;
+        DebugManagerStateRestore stateRestorer;
+        debugManager.flags.EnableSharedSystemUsmSupport.set(1);
         mockSvmManager->freeSVMAlloc(nextPtrSvm);
         // same values but no svmData - called
         retVal = clSetKernelArgSVMPointer(

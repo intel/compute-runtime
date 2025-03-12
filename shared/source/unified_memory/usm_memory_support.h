@@ -15,5 +15,5 @@ inline constexpr uint64_t access = 1 << 0;
 inline constexpr uint64_t atomicAccess = 1 << 1;
 inline constexpr uint64_t concurrentAccess = 1 << 2;
 inline constexpr uint64_t concurrentAtomicAccess = 1 << 3;
-inline constexpr uint64_t sharedSystemPageFaultEnabled = 1 << 4;
+
 } // namespace UnifiedSharedMemoryFlags

@@ -218,12 +218,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         return MemoryManager::setMemPrefetch(gfxAllocation, subDeviceIds, rootDeviceIndex);
     }
 
-    bool prefetchSharedSystemAlloc(const void *ptr, const size_t size, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) override {
-        memPrefetchSubDeviceIds = subDeviceIds;
-        prefetchSharedSystemAllocCalled = true;
-        return MemoryManager::prefetchSharedSystemAlloc(ptr, size, subDeviceIds, rootDeviceIndex);
-    }
-
     bool hasPageFaultsEnabled(const Device &neoDevice) override;
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override;
 
@@ -336,7 +330,6 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool failLockResource = false;
     bool failSetMemAdvise = false;
     bool setMemPrefetchCalled = false;
-    bool prefetchSharedSystemAllocCalled = false;
     bool cpuCopyRequired = false;
     bool forceCompressed = false;
     bool forceFailureInPrimaryAllocation = false;

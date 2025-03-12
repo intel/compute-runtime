@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/xe2_hpg_core/hw_cmds_base.h"
 #include "shared/source/xe2_hpg_core/hw_info.h"
 

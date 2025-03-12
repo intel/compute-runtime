@@ -1997,46 +1997,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const void *ptr, size_t size) {
-    auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
-    auto allocData = svmAllocMgr->getSVMAlloc(ptr);
-
-    if (!allocData) {
-        if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
-            this->performMemoryPrefetch = true;
-            auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-            if (prefetchManager) {
-                prefetchManager->insertAllocation(this->prefetchContext, *device->getDriverHandle()->getSvmAllocsManager(), *device->getNEODevice(), ptr, size);
-            }
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-    }
-
-    if (NEO::debugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
-        this->performMemoryPrefetch = true;
-        auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
-        if (prefetchManager) {
-            prefetchManager->insertAllocation(this->prefetchContext, *device->getDriverHandle()->getSvmAllocsManager(), *device->getNEODevice(), ptr, size);
-        }
-    }
-
-    if (NEO::debugManager.flags.AddStatePrefetchCmdToMemoryPrefetchAPI.get() != 1) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const void *ptr,
+                                                                       size_t count) {
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    if (allocData) {
         return ZE_RESULT_SUCCESS;
     }
-
-    auto gpuAlloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-
-    commandContainer.addToResidencyContainer(gpuAlloc);
-
-    size_t offset = ptrDiff(ptr, gpuAlloc->getGpuAddress());
-
-    NEO::LinearStream &cmdStream = *commandContainer.getCommandStream();
-
-    NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *gpuAlloc, static_cast<uint32_t>(size), offset, device->getNEODevice()->getRootDeviceEnvironment());
-
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

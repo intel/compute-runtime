@@ -25,8 +25,8 @@ struct MockSVMAllocsManager : public SVMAllocsManager {
     using SVMAllocsManager::usmDeviceAllocationsCache;
     using SVMAllocsManager::usmHostAllocationsCache;
 
-    void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, const void *ptr, const size_t size) override {
-        SVMAllocsManager::prefetchMemory(device, commandStreamReceiver, ptr, size);
+    void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData) override {
+        SVMAllocsManager::prefetchMemory(device, commandStreamReceiver, svmData);
         prefetchMemoryCalled = true;
     }
     bool prefetchMemoryCalled = false;
