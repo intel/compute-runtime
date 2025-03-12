@@ -36,10 +36,10 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     void updateUuidMap(SysmanDevice *sysmanDevice);
     SysmanDevice *findSysmanDeviceFromCoreToSysmanDeviceMap(ze_device_handle_t handle);
     std::mutex coreToSysmanDeviceMapLock;
-    std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap;
+    std::unordered_map<ze_device_handle_t, SysmanDevice *> coreToSysmanDeviceMap{};
 
   protected:
-    std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap;
+    std::unordered_map<std::string, SysmanDevice *> uuidDeviceMap{};
 };
 
 extern struct SysmanDriverHandleImp *globalSysmanDriver;

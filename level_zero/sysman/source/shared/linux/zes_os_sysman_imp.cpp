@@ -501,7 +501,7 @@ void LinuxSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     uint32_t totalUuidCountForDevice = this->getSubDeviceCount() + rootDeviceCount;
     deviceUuids.clear();
     for (uint32_t index = 0; index < totalUuidCountForDevice; index++) {
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+        std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid{};
         bool uuidValid = this->getUuidFromSubDeviceInfo(index, deviceUuid);
         if (uuidValid) {
             uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};

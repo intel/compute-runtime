@@ -533,7 +533,7 @@ TEST(SysmanErrorCodeTest, GivenDifferentErrorCodesWhenCallingGetResultThenVerify
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWithInvalidPciDomainWhenCallingGenerateUuidFromPciBusInfoThenFalseIsReturned) {
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
     NEO::PhysicalDevicePciBusInfo pciBusInfo = {};
     pciBusInfo.pciDomain = std::numeric_limits<uint32_t>::max();
     uint32_t subDeviceId = 0;
@@ -578,7 +578,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPciBusInfoWhenRetrievingUuidThenFalseIsR
 
     debugManager.flags.EnableChipsetUniqueUUID.set(0);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
     uint32_t subDeviceId = 0;
     bool result = pLinuxSysmanImp->getUuidFromSubDeviceInfo(subDeviceId, uuid);
     EXPECT_FALSE(result);
@@ -603,7 +603,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceWhenRetrievingUuidThenValidFdIsVerif
     auto &rootDeviceEnvironment = (pLinuxSysmanImp->getSysmanDeviceImp()->getRootDeviceEnvironmentRef());
     std::swap(rootDeviceEnvironment.productHelper, mockProductHelper);
 
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid;
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> uuid{};
     uint32_t subDeviceId = 0;
     bool result = pLinuxSysmanImp->getUuidFromSubDeviceInfo(subDeviceId, uuid);
     EXPECT_TRUE(result);

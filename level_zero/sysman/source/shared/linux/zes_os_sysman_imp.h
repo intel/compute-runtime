@@ -99,7 +99,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<PlatformMonitoringTech::TelemData> pTelemData = nullptr;
     struct Uuid {
         bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
+        std::array<uint8_t, NEO::ProductHelper::uuidSize> id{};
     };
     std::vector<Uuid> uuidVec;
 

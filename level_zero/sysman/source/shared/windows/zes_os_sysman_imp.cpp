@@ -116,7 +116,7 @@ KmdSysManager &WddmSysmanImp::getKmdSysManager() {
 
 void WddmSysmanImp::getDeviceUuids(std::vector<std::string> &deviceUuids) {
     deviceUuids.clear();
-    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid;
+    std::array<uint8_t, NEO::ProductHelper::uuidSize> deviceUuid{};
     bool uuidValid = this->getUuid(deviceUuid);
     if (uuidValid) {
         uint8_t uuid[ZE_MAX_DEVICE_UUID_SIZE] = {};

@@ -55,7 +55,7 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableAndNonMovableClass {
     std::unique_ptr<SysmanProductHelper> pSysmanProductHelper;
     struct {
         bool isValid = false;
-        std::array<uint8_t, NEO::ProductHelper::uuidSize> id;
+        std::array<uint8_t, NEO::ProductHelper::uuidSize> id{};
     } uuid;
 
   private:
