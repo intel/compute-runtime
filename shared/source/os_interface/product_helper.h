@@ -196,7 +196,7 @@ class ProductHelper {
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual uint32_t getCommandBuffersPreallocatedPerCommandQueue() const = 0;
     virtual uint32_t getInternalHeapsPreallocated() const = 0;
-    virtual bool overrideAllocationCpuCacheable(const AllocationData &allocationData) const = 0;
+    virtual bool overrideAllocationCacheable(const AllocationData &allocationData) const = 0;
     virtual bool is2MBLocalMemAlignmentEnabled() const = 0;
 
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;

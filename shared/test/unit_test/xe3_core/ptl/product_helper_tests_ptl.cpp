@@ -46,13 +46,13 @@ PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckDirectSubmissionSupported
     EXPECT_TRUE(productHelper->isDirectSubmissionSupported(releaseHelper));
 }
 
-PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckoverrideAllocationCpuCacheableThenTrueIsReturnedForCommandBuffer) {
+PTLTEST_F(PtlProductHelper, givenProductHelperWhenCheckOverrideAllocationCacheableThenTrueIsReturnedForCommandBuffer) {
     AllocationData allocationData{};
     allocationData.type = AllocationType::commandBuffer;
-    EXPECT_TRUE(productHelper->overrideAllocationCpuCacheable(allocationData));
+    EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
 
     allocationData.type = AllocationType::buffer;
-    EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
+    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
 }
 
 PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideCacheable) {
@@ -61,7 +61,7 @@ PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
 
     AllocationData allocationData{};
     allocationData.type = AllocationType::externalHostPtr;
-    EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
+    EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
 
     debugManager.flags.AllowDcFlush.set(0);
 
@@ -70,8 +70,7 @@ PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
         allocationData.type = allocationType;
         switch (allocationData.type) {
         case AllocationType::commandBuffer:
-        case AllocationType::timestampPacketTagBuffer:
-            EXPECT_TRUE(productHelper->overrideAllocationCpuCacheable(allocationData));
+            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
             break;
         case AllocationType::externalHostPtr:
         case AllocationType::bufferHostMemory:
@@ -80,11 +79,11 @@ PTLTEST_F(PtlProductHelper, givenExternalHostPtrWhenMitigateDcFlushThenOverrideC
         case AllocationType::svmZeroCopy:
         case AllocationType::internalHostMemory:
         case AllocationType::printfSurface:
-            EXPECT_TRUE(productHelper->overrideAllocationCpuCacheable(allocationData));
+            EXPECT_TRUE(productHelper->overrideAllocationCacheable(allocationData));
             EXPECT_TRUE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
             break;
         default:
-            EXPECT_FALSE(productHelper->overrideAllocationCpuCacheable(allocationData));
+            EXPECT_FALSE(productHelper->overrideAllocationCacheable(allocationData));
             EXPECT_FALSE(productHelper->overrideCacheableForDcFlushMitigation(allocationData.type));
             break;
         }

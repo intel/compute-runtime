@@ -234,7 +234,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = allowLargePages;
     gmmRequirements.preferCompressed = allocationData.flags.preferCompressed;
-    if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
+    if (productHelper.overrideAllocationCacheable(allocationData)) {
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
     }
@@ -464,7 +464,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     GmmRequirements gmmRequirements{};
     gmmRequirements.allowLargePages = true;
     gmmRequirements.preferCompressed = false;
-    if (productHelper.overrideAllocationCpuCacheable(allocationData)) {
+    if (productHelper.overrideAllocationCacheable(allocationData)) {
         gmmRequirements.overriderCacheable.enableOverride = true;
         gmmRequirements.overriderCacheable.value = true;
     }
