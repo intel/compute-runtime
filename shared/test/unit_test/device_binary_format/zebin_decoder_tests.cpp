@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin/zeinfo_enum_lookup.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -54,7 +55,7 @@ class DecodeZeInfoKernelEntryFixture {
 
         auto &kernelNode = *yamlParser->createChildrenRange(*yamlParser->findNodeWithKeyDfs("kernels")).begin();
         return NEO::Zebin::ZeInfo::decodeZeInfoKernelEntry(*kernelDescriptor, *yamlParser, kernelNode,
-                                                           grfSize, minScratchSpaceSize, errors, warnings, zeInfoVersion);
+                                                           grfSize, minScratchSpaceSize, samplerStateSize, samplerBorderColorStateSize, errors, warnings, zeInfoVersion);
     }
 
   protected:
@@ -63,6 +64,8 @@ class DecodeZeInfoKernelEntryFixture {
     std::unique_ptr<KernelDescriptor> kernelDescriptor;
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 1024U;
+    uint32_t samplerStateSize = 16u;
+    uint32_t samplerBorderColorStateSize = 64u;
     std::string errors, warnings;
 
   private:
@@ -7079,6 +7082,42 @@ TEST(PopulateInlineSamplers, GivenInvalidSamplerIndexThenPopulateInlineSamplersF
     auto err = NEO::Zebin::ZeInfo::populateKernelInlineSampler(kd, inlineSamplerSrc, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::invalidBinary, err);
     EXPECT_FALSE(errors.empty());
+}
+
+TEST(GenerateDsh, given4SamplersWhenGenerateDSHIsCalledThenDshIsGeneratedCorrectly) {
+
+    NEO::KernelDescriptor kd;
+    auto numSamplers = 4u;
+    kd.payloadMappings.samplerTable.numSamplers = numSamplers;
+    uint32_t samplerBorderColorStateSize = 64u;
+    uint32_t samplerStateSize = 16u;
+    NEO::Zebin::ZeInfo::generateDSH(kd, samplerStateSize, samplerBorderColorStateSize);
+
+    EXPECT_EQ(numSamplers, kd.payloadMappings.samplerTable.numSamplers);
+    EXPECT_EQ(samplerBorderColorStateSize, kd.payloadMappings.samplerTable.tableOffset);
+    EXPECT_EQ(0u, kd.payloadMappings.samplerTable.borderColor);
+
+    size_t dshSize = samplerBorderColorStateSize + numSamplers * samplerStateSize;
+    auto expectedSize = samplerBorderColorStateSize > 0 ? alignUp(dshSize, samplerBorderColorStateSize) : dshSize;
+    EXPECT_EQ(expectedSize, kd.generatedDsh.size());
+}
+
+TEST(GenerateDsh, given4SamplersWithoutSamplerBorderColorStateWhenGenerateDSHIsCalledThenDshIsGeneratedCorrectly) {
+
+    NEO::KernelDescriptor kd;
+    auto numSamplers = 4u;
+    kd.payloadMappings.samplerTable.numSamplers = numSamplers;
+    uint32_t samplerBorderColorStateSize = 0u;
+    uint32_t samplerStateSize = 16u;
+    NEO::Zebin::ZeInfo::generateDSH(kd, samplerStateSize, samplerBorderColorStateSize);
+
+    EXPECT_EQ(numSamplers, kd.payloadMappings.samplerTable.numSamplers);
+    EXPECT_EQ(samplerBorderColorStateSize, kd.payloadMappings.samplerTable.tableOffset);
+    EXPECT_EQ(0u, kd.payloadMappings.samplerTable.borderColor);
+
+    size_t dshSize = samplerBorderColorStateSize + numSamplers * samplerStateSize;
+    auto expectedSize = samplerBorderColorStateSize > 0 ? alignUp(dshSize, samplerBorderColorStateSize) : dshSize;
+    EXPECT_EQ(expectedSize, kd.generatedDsh.size());
 }
 
 TEST(PopulateInlineSamplers, GivenInvalidAddrModeThenPopulateInlineSamplersFails) {

@@ -145,6 +145,7 @@ class GfxCoreHelper {
     virtual void setSipKernelData(uint32_t *&sipKernelBinary, size_t &kernelBinarySize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual void adjustPreemptionSurfaceSize(size_t &csrSize, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getSamplerStateSize() const = 0;
+    virtual uint32_t getSamplerBorderColorStateSize() const = 0;
     virtual bool preferInternalBcsEngine() const = 0;
     virtual bool isScratchSpaceSurfaceStateAccessible() const = 0;
     virtual uint32_t getMaxScratchSize(const NEO::ProductHelper &productHelper) const = 0;
@@ -225,6 +226,10 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getSamplerStateSize() const override {
         using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
         return sizeof(SAMPLER_STATE);
+    }
+
+    uint32_t getSamplerBorderColorStateSize() const override {
+        return 64u;
     }
 
     uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {

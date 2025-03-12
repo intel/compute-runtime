@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,9 @@ struct TargetDevice {
     uint32_t maxPointerSizeInBytes = 4U;
     uint32_t grfSize = 32U;
     uint32_t minScratchSpaceSize = 0U;
+    uint32_t samplerStateSize = 0U;
+    uint32_t samplerBorderColorStateSize = 0U;
+
     bool applyValidationWorkaround = false;
 };
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment);

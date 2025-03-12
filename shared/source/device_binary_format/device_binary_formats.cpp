@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,8 @@ TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment)
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;
     targetDevice.minScratchSpaceSize = gfxCoreHelper.getMinimalScratchSpaceSize();
+    targetDevice.samplerStateSize = static_cast<uint32_t>(gfxCoreHelper.getSamplerStateSize());
+    targetDevice.samplerBorderColorStateSize = gfxCoreHelper.getSamplerBorderColorStateSize();
 
     if (auto ail = rootDeviceEnvironment.getAILConfigurationHelper(); nullptr != ail) {
         targetDevice.applyValidationWorkaround = ail->useLegacyValidationLogic();

@@ -522,7 +522,7 @@ DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, cons
     UNRECOVERABLE_IF(zeInfoSections.kernels.size() != 1U);
     for (const auto &kernelNd : parser.createChildrenRange(*zeInfoSections.kernels[0])) {
         auto kernelInfo = std::make_unique<KernelInfo>();
-        auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, outErrReason, outWarning, srcZeInfoVersion);
+        auto zeInfoErr = decodeZeInfoKernelEntry(kernelInfo->kernelDescriptor, parser, kernelNd, dst.grfSize, dst.minScratchSpaceSize, dst.samplerStateSize, dst.samplerBorderColorStateSize, outErrReason, outWarning, srcZeInfoVersion);
         if (DecodeError::success != zeInfoErr) {
             return zeInfoErr;
         }
@@ -532,7 +532,7 @@ DecodeError decodeZeInfoKernels(ProgramInfo &dst, Yaml::YamlParser &parser, cons
     return DecodeError::success;
 }
 
-DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, uint32_t grfSize, uint32_t minScratchSpaceSize, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion) {
+DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, uint32_t grfSize, uint32_t minScratchSpaceSize, uint32_t samplerStateSize, uint32_t samplerBorderColorStateSize, std::string &outErrReason, std::string &outWarning, const Types::Version &srcZeInfoVersion) {
     ZeInfoKernelSections zeInfokernelSections;
     auto extractError = extractZeInfoKernelSections(yamlParser, kernelNd, zeInfokernelSections, ".ze_info", outErrReason, outWarning);
     if (DecodeError::success != extractError) {
@@ -601,7 +601,7 @@ DecodeError decodeZeInfoKernelEntry(NEO::KernelDescriptor &dst, NEO::Yaml::YamlP
     DEBUG_BREAK_IF(dst.payloadMappings.samplerTable.numSamplers < dst.inlineSamplers.size());
 
     if (dst.payloadMappings.samplerTable.numSamplers > 0U) {
-        generateDSH(dst);
+        generateDSH(dst, samplerStateSize, samplerBorderColorStateSize);
     }
 
     if (NEO::debugManager.flags.ZebinAppendElws.get()) {
@@ -1800,17 +1800,17 @@ void generateSSHWithBindingTable(KernelDescriptor &dst) {
     }
 }
 
-void generateDSH(KernelDescriptor &dst) {
-    constexpr auto samplerStateSize = 16U;
-    constexpr auto borderColorStateSize = 64U;
+void generateDSH(KernelDescriptor &dst, uint32_t samplerStateSize, uint32_t samplerBorderColorStateSize) {
 
     dst.kernelAttributes.flags.usesSamplers = true;
     auto &samplerTable = dst.payloadMappings.samplerTable;
     samplerTable.borderColor = 0U;
-    samplerTable.tableOffset = borderColorStateSize;
+    samplerTable.tableOffset = samplerBorderColorStateSize;
 
-    size_t dshSize = borderColorStateSize + samplerTable.numSamplers * samplerStateSize;
-    dst.generatedDsh.resize(alignUp(dshSize, borderColorStateSize), 0U);
+    size_t dshSize = samplerBorderColorStateSize + samplerTable.numSamplers * samplerStateSize;
+    auto dshSizeAligned = samplerBorderColorStateSize > 0 ? alignUp(dshSize, samplerBorderColorStateSize) : dshSize;
+
+    dst.generatedDsh.resize(dshSizeAligned, 0U);
 }
 
 } // namespace NEO::Zebin::ZeInfo

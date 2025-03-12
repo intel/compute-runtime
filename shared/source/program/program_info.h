@@ -47,6 +47,8 @@ struct ProgramInfo : NEO::NonCopyableClass {
     uint32_t minScratchSpaceSize = 0U;
     uint32_t indirectDetectionVersion = 0U;
     size_t kernelMiscInfoPos = std::string::npos;
+    uint32_t samplerStateSize = 0u;
+    uint32_t samplerBorderColorStateSize = 0u;
 };
 
 static_assert(NEO::NonCopyable<ProgramInfo>);

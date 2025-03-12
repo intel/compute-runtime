@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -117,6 +117,9 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
     dst.indirectDetectionVersion = src.generatorFeatureVersions.indirectMemoryAccessDetection;
+    dst.samplerStateSize = src.targetDevice.samplerStateSize;
+    dst.samplerBorderColorStateSize = src.targetDevice.samplerBorderColorStateSize;
+
     auto decodeError = NEO::Zebin::decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
     if (DecodeError::success != decodeError) {
         return decodeError;
