@@ -131,6 +131,7 @@ if(BUILD_WITH_L0)
           add_custom_command(
                              TARGET copy_third_party_files
                              PRE_BUILD
+                             COMMAND echo Running copy_third_party_files for igc targets. Copy from: $<TARGET_SONAME_FILE:${TARGET_tmp}> to: "${CUSTOM_COMMAND_BINARY_DIR}/"
                              COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
                              COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_SONAME_FILE:${TARGET_tmp}> "${CUSTOM_COMMAND_BINARY_DIR}/"
           )
@@ -146,13 +147,18 @@ if(BUILD_WITH_L0)
   else()
     if(DEFINED IGC_DIR) # Only copy igc libs if available
       message(STATUS "L0::Igc Dir: ${IGC_DIR}")
-      add_custom_command(
-                         TARGET copy_third_party_files
-                         PRE_BUILD
-                         COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
-                         COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__IGC_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
-                         DEPENDS "${NEO__IGC_LIBRARY_PATH}"
-      )
+      set(TEMP_IGC_DIRS "${NEO__IGC_LIBRARY_PATH}")
+      string(REPLACE ":" ";" TEMP_IGC_DIRS "${NEO__IGC_LIBRARY_PATH}")
+      foreach(TEMP_DIR ${TEMP_IGC_DIRS})
+        add_custom_command(
+                           TARGET copy_third_party_files
+                           PRE_BUILD
+                           COMMAND echo Running copy_third_party_files for igc dir. Copy from: "${TEMP_DIR}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
+                           COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
+                           COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}" "${CUSTOM_COMMAND_BINARY_DIR}/"
+                           DEPENDS "${NEO__IGC_LIBRARY_PATH}"
+        )
+      endforeach()
     endif()
   endif()
 
@@ -179,6 +185,7 @@ if(BUILD_WITH_L0)
       add_custom_command(
                          TARGET copy_third_party_files
                          PRE_BUILD
+                         COMMAND echo Running copy_third_party_files for gmm dir. Copy from: "${NEO__GMM_LIBRARY_PATH}" to: "${CUSTOM_COMMAND_BINARY_DIR}/"
                          COMMAND ${CMAKE_COMMAND} -E make_directory ${CUSTOM_COMMAND_BINARY_DIR}
                          COMMAND ${CMAKE_COMMAND} -E copy_directory "${NEO__GMM_LIBRARY_PATH}" "${CUSTOM_COMMAND_BINARY_DIR}/"
                          DEPENDS "${NEO__GMM_LIBRARY_PATH}"
