@@ -103,11 +103,13 @@ StackVec<std::string, 3> getBuiltinResourceNames(EBuiltInOps::Type builtin, Buil
 
     std::string_view addressingModePrefix = "";
     if (type == BuiltinCode::ECodeType::binary) {
+        const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
         const bool requiresStatelessAddressing = (false == productHelper.isStatefulAddressingModeSupported());
         const bool builtInUsesStatelessAddressing = EBuiltInOps::isStateless(builtin);
-        const bool heaplessEnabled = EBuiltInOps::isHeapless(builtin);
-        if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
-            addressingModePrefix = heaplessEnabled ? "stateless_heapless_" : "stateless_";
+        if (heaplessEnabled) {
+            addressingModePrefix = "stateless_heapless_";
+        } else if (builtInUsesStatelessAddressing || requiresStatelessAddressing) {
+            addressingModePrefix = "stateless_";
         } else if (ApiSpecificConfig::getBindlessMode(device)) {
             addressingModePrefix = "bindless_";
         } else {
