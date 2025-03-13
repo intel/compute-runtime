@@ -180,21 +180,41 @@ kernel void image_query_3d(global int *dst, image3d_t img) {
 )===";
 
 const char *source1DSampler = R"===(
-__kernel void image_read_sampler(__global float4 *dst, image1d_t img, sampler_t sampler) {
+__kernel void image_read_sampler(__global float4 *dst, __global float4 *dst2,__global float4 *dst3, image1d_t img, image1d_t img2, image1d_t img3,  sampler_t sampler, sampler_t sampler2, sampler_t sampler3) {
     int id = get_global_id(0);
     float coord = (float)(id+1);
     dst[id] = read_imagef(img, sampler, coord);
     printf( "gid[%zu], coord=%.2f, dst.x=%.2f , dst.y=%.2f , dst.z=%.2f , dst.w=%.2f \n", get_global_id(0), coord, dst[id].x, dst[id].y, dst[id].z, dst[id].w);
+
+    float coord2 = (float)(id+1);
+    dst2[id] = read_imagef(img2, sampler2, coord2);
+    printf( "gid[%zu], coord2=%.2f, dst2.x=%.2f , dst2.y=%.2f , dst2.z=%.2f , dst2.w=%.2f \n", get_global_id(0), coord2, dst2[id].x, dst2[id].y, dst2[id].z, dst2[id].w);
+
+    float coord3 = (float)(id+0.3)/8.0;
+    dst3[id] = read_imagef(img3, sampler3, coord3);
+    printf( "gid[%zu], coord3=%.2f, dst3.x=%.2f , dst3.y=%.2f , dst3.z=%.2f , dst3.w=%.2f \n", get_global_id(0), coord3, dst3[id].x, dst3[id].y, dst3[id].z, dst3[id].w);
 }
 )===";
 
 const char *source1DInlineSampler = R"===(
 const sampler_t inlineSampler = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void image_read_inline_sampler(__global float4 *dst, image1d_t img) {
+const sampler_t inlineSampler2 = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP_TO_EDGE  | CLK_FILTER_NEAREST;
+const sampler_t inlineSampler3 = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE  | CLK_FILTER_LINEAR;
+
+__kernel void image_read_inline_sampler(__global float4 *dst,__global float4 *dst2, __global float4 *dst3, image1d_t img, image1d_t img2, image1d_t img3) {
     int id = get_global_id(0);
     float coord = (float)(id+1);
     dst[id] = read_imagef(img, inlineSampler, coord);
     printf( "gid[%zu], coord=%.2f, dst.x=%.2f , dst.y=%.2f , dst.z=%.2f , dst.w=%.2f \n", get_global_id(0), coord, dst[id].x, dst[id].y, dst[id].z, dst[id].w);
+
+    float coord2= (float)(id+1);
+    dst2[id] = read_imagef(img2, inlineSampler2, coord2);
+    printf( "gid[%zu], coord2=%.2f, dst2.x=%.2f , dst2.y=%.2f , dst2.z=%.2f , dst2.w=%.2f \n", get_global_id(0), coord2, dst2[id].x, dst2[id].y, dst2[id].z, dst2[id].w);
+
+    float coord3= (float)(id+0.3) /8.0;
+    dst3[id] = read_imagef(img3, inlineSampler3, coord3);
+    printf( "gid[%zu], coord3=%.2f, dst3.x=%.2f , dst3.y=%.2f , dst3.z=%.2f , dst3.w=%.2f \n", get_global_id(0), coord3, dst3[id].x, dst3[id].y, dst3[id].z, dst3[id].w);
+
 }
 )===";
 
@@ -911,6 +931,9 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
     hostDesc.flags = ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED;
 
     ze_sampler_handle_t sampler = nullptr;
+    ze_sampler_handle_t sampler2 = nullptr;
+    ze_sampler_handle_t sampler3 = nullptr;
+
     if (!useInlineSampler) {
         bool normalized = false;
         // ZE_SAMPLER_ADDRESS_MODE_CLAMP should return edge values for out of bound access
@@ -920,6 +943,21 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
                                          ZE_SAMPLER_FILTER_MODE_NEAREST,
                                          normalized};
         SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc, &sampler));
+
+        ze_sampler_desc_t samplerDesc2 = {ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+                                          nullptr,
+                                          ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+                                          ZE_SAMPLER_FILTER_MODE_NEAREST,
+                                          normalized};
+        SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc2, &sampler2));
+
+        normalized = true;
+        ze_sampler_desc_t samplerDesc3 = {ZE_STRUCTURE_TYPE_SAMPLER_DESC,
+                                          nullptr,
+                                          ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER,
+                                          ZE_SAMPLER_FILTER_MODE_LINEAR,
+                                          normalized};
+        SUCCESS_OR_TERMINATE(zeSamplerCreate(context, device, &samplerDesc3, &sampler3));
     }
 
     ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -934,6 +972,32 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
                                   1,
                                   0,
                                   0};
+
+    ze_image_desc_t srcImgDesc2 = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                   nullptr,
+                                   0,
+                                   ZE_IMAGE_TYPE_1D,
+                                   {ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                   8,
+                                   1,
+                                   1,
+                                   0,
+                                   0};
+
+    ze_image_desc_t srcImgDesc3 = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                   nullptr,
+                                   0,
+                                   ZE_IMAGE_TYPE_1D,
+                                   {ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32, ZE_IMAGE_FORMAT_TYPE_FLOAT,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                   8,
+                                   1,
+                                   1,
+                                   0,
+                                   0};
     constexpr auto nChannels = 4u;
     constexpr auto bytesPerChannel = sizeof(float);
     constexpr auto bytesPerPixel = bytesPerChannel * nChannels;
@@ -944,38 +1008,76 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
     size_t allocSize = nPixels * bytesPerPixel;
 
     // Create and initialize host memory
-    void *dstBuffer;
+    void *dstBuffer = nullptr;
     SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer));
 
+    void *dstBuffer2 = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer2));
+
+    void *dstBuffer3 = nullptr;
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, 1, &dstBuffer3));
+
     float *dst = reinterpret_cast<float *>(dstBuffer);
+    float *dst2 = reinterpret_cast<float *>(dstBuffer2);
+    float *dst3 = reinterpret_cast<float *>(dstBuffer3);
+
     for (auto iPixel = 0u; iPixel < srcImgDesc.width; ++iPixel) {
         for (auto channel = 0u; channel < 4; ++channel) {
             dst[iPixel * bytesPerChannel + channel] = static_cast<float>(iPixel * 10);
+            dst2[iPixel * bytesPerChannel + channel] = static_cast<float>(iPixel * 10);
+            dst3[iPixel * bytesPerChannel + channel] = static_cast<float>(iPixel * 10);
         }
     }
 
     ze_image_handle_t srcImg;
+    ze_image_handle_t srcImg2;
+    ze_image_handle_t srcImg3;
+
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = 1u;
     dispatchTraits.groupCountY = 1u;
     dispatchTraits.groupCountZ = 1u;
 
     SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc, &srcImg));
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc2, &srcImg2));
+    SUCCESS_OR_TERMINATE(zeImageCreate(context, device, &srcImgDesc3, &srcImg3));
 
     SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(srcImg), &srcImg));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer2), &dstBuffer2));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(dstBuffer3), &dstBuffer3));
+
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(srcImg), &srcImg));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(srcImg2), &srcImg2));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 5, sizeof(srcImg3), &srcImg3));
+
     if (!useInlineSampler) {
-        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(sampler), &sampler));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 6, sizeof(sampler), &sampler));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 7, sizeof(sampler2), &sampler2));
+        SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 8, sizeof(sampler3), &sampler3));
     }
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, xDim, 1u, 1u));
 
     ze_image_region_t srcRegion = {0, 0, 0, (uint32_t)srcImgDesc.width, (uint32_t)srcImgDesc.height, (uint32_t)srcImgDesc.depth};
+    ze_image_region_t srcRegion2 = {0, 0, 0, (uint32_t)srcImgDesc.width, (uint32_t)srcImgDesc.height, (uint32_t)srcImgDesc.depth};
+    ze_image_region_t srcRegion3 = {0, 0, 0, (uint32_t)srcImgDesc.width, (uint32_t)srcImgDesc.height, (uint32_t)srcImgDesc.depth};
 
     std::vector<float> data(nPixels * nChannels);
+    std::vector<float> data2(nPixels * nChannels);
+    std::vector<float> data3(nPixels * nChannels);
+
     memcpy(data.data(), dstBuffer, allocSize);
+    memcpy(data2.data(), dstBuffer2, allocSize);
+    memcpy(data3.data(), dstBuffer3, allocSize);
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemory(commandHandler.cmdList, srcImg, data.data(),
                                                                 &srcRegion, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemory(commandHandler.cmdList, srcImg2, data2.data(),
+                                                                &srcRegion2, nullptr, 0, nullptr));
+
+    SUCCESS_OR_TERMINATE(zeCommandListAppendImageCopyFromMemory(commandHandler.cmdList, srcImg3, data3.data(),
+                                                                &srcRegion3, nullptr, 0, nullptr));
+
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(commandHandler.cmdList, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(commandHandler.appendKernel(kernel, dispatchTraits));
     SUCCESS_OR_TERMINATE(commandHandler.execute());
@@ -983,12 +1085,21 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
 
     // Validate
     float *output = reinterpret_cast<float *>(dstBuffer);
+    float *output2 = reinterpret_cast<float *>(dstBuffer2);
+    float *output3 = reinterpret_cast<float *>(dstBuffer3);
+
+    // nearest filtering
     std::vector<float> expectedOutput = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 70.f};
+    std::vector<float> expectedOutput2 = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 0.f};
+
+    // linear filtering
+    std::vector<float> expectedOutput3 = {0.f, 8.0f, 18.f, 28.f, 38.f, 48.f, 58.f, 68.f};
 
     if (useInlineSampler) {
-        // inline sampler use CLK_ADDRESS_CLAMP - which will return border color (0,0,0,0) or (0,0,0,1)
-        // for out of bounds access
+        // inline sampler1 use CLK_ADDRESS_CLAMP - which will return border color (0,0,0,0) or (0,0,0,1)
         expectedOutput = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 0.f};
+        // inline sampler2 use CLK_ADDRESS_CLAMP_TO_EDGE - which will return edge values for out of bounds access
+        expectedOutput2 = {10.f, 20.f, 30.f, 40.f, 50.f, 60.f, 70.f, 70.f};
     }
 
     for (auto i = 0u; i < nPixels; ++i) {
@@ -999,14 +1110,34 @@ bool testBindlessImage1DSampled(ze_context_handle_t context, ze_device_handle_t 
                 outputValidated = false;
                 break;
             }
+            if (output2[i * nChannels + j] != expectedOutput2[i]) {
+                std::cerr << "error: dstBuffer2[" << i << "] channel[" << j << "] = " << output2[i * nChannels + j] << " is not equal to " << expectedOutput2[i] << "\n ";
+                outputValidated = false;
+                break;
+            }
+            int outputFloor3 = static_cast<int>(output3[i * nChannels + j]);
+            int expectedFloor3 = static_cast<int>(expectedOutput3[i]);
+            if (outputFloor3 != expectedFloor3) {
+                std::cerr << "error: dstBuffer3[" << i << "] channel[" << j << "] = " << output3[i * nChannels + j] << " is not equal to " << expectedOutput3[i] << "\n ";
+                outputValidated = false;
+                break;
+            }
         }
     }
 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer2));
+    SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer3));
+
     if (!useInlineSampler) {
         SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler));
+        SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler2));
+        SUCCESS_OR_TERMINATE(zeSamplerDestroy(sampler3));
     }
     SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg));
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg2));
+    SUCCESS_OR_TERMINATE(zeImageDestroy(srcImg3));
+
     SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
