@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ class MockPmuInterfaceImpForSysman : public L0::Sysman::PmuInterfaceImp {
   public:
     using L0::Sysman::PmuInterfaceImp::getErrorNo;
     using L0::Sysman::PmuInterfaceImp::perfEventOpen;
+    using L0::Sysman::PmuInterfaceImp::pSysmanKmdInterface;
     using L0::Sysman::PmuInterfaceImp::readFunction;
     using L0::Sysman::PmuInterfaceImp::syscallFunction;
     MockPmuInterfaceImpForSysman(L0::Sysman::LinuxSysmanImp *pLinuxSysmanImp) : L0::Sysman::PmuInterfaceImp(pLinuxSysmanImp) {}

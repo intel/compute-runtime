@@ -17,7 +17,7 @@ namespace L0 {
 namespace Sysman {
 namespace ult {
 
-class MockNeoDrm : public NEO::Drm {
+struct MockNeoDrm : public NEO::Drm {
 
   public:
     using NEO::Drm::getEngineInfo;
@@ -32,19 +32,15 @@ class MockNeoDrm : public NEO::Drm {
             return mockSysmanQueryEngineInfoReturnFalse;
         }
 
-        std::vector<NEO::EngineCapabilities> mockEngineInfo(6);
+        std::vector<NEO::EngineCapabilities> mockEngineInfo(3);
         mockEngineInfo[0].engine.engineClass = EngineClass::ENGINE_CLASS_RENDER;
         mockEngineInfo[0].engine.engineInstance = 0;
-        mockEngineInfo[1].engine.engineClass = EngineClass::ENGINE_CLASS_RENDER;
-        mockEngineInfo[1].engine.engineInstance = 1;
-        mockEngineInfo[2].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO;
-        mockEngineInfo[2].engine.engineInstance = 1;
-        mockEngineInfo[3].engine.engineClass = EngineClass::ENGINE_CLASS_COPY;
+        mockEngineInfo[1].engine.engineClass = EngineClass::ENGINE_CLASS_COPY;
+        mockEngineInfo[1].engine.engineInstance = 0;
+        mockEngineInfo[2].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO_ENHANCE;
+        mockEngineInfo[2].engine.engineInstance = 0;
+        mockEngineInfo[3].engine.engineClass = UINT16_MAX;
         mockEngineInfo[3].engine.engineInstance = 0;
-        mockEngineInfo[4].engine.engineClass = EngineClass::ENGINE_CLASS_VIDEO_ENHANCE;
-        mockEngineInfo[4].engine.engineInstance = 0;
-        mockEngineInfo[5].engine.engineClass = UINT16_MAX;
-        mockEngineInfo[5].engine.engineInstance = 0;
 
         StackVec<std::vector<NEO::EngineCapabilities>, 2> engineInfosPerTile{mockEngineInfo};
         this->engineInfo.reset(new NEO::EngineInfo(this, engineInfosPerTile));

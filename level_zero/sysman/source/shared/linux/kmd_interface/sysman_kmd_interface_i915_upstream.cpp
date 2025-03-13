@@ -115,8 +115,8 @@ ze_result_t SysmanKmdInterfaceI915Upstream::readBusynessFromGroupFd(PmuInterface
     uint64_t data[2] = {};
     auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
     if (ret < 0) {
-        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
     pStats->activeTime = data[0] / microSecondsToNanoSeconds;

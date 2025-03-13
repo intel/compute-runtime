@@ -105,11 +105,80 @@ std::string SysmanKmdInterfaceXe::getEnergyCounterNodeFile(zes_power_domain_t po
 }
 
 ze_result_t SysmanKmdInterfaceXe::getEngineActivityFdList(zes_engine_group_t engineGroup, uint32_t engineInstance, uint32_t subDeviceId, PmuInterface *const &pPmuInterface, std::vector<std::pair<int64_t, int64_t>> &fdList) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    auto engineClass = engineGroupToEngineClass.find(engineGroup);
+    if (engineClass == engineGroupToEngineClass.end()) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Engine Group not supported and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    const std::string activeTicksEventFile = std::string(sysDevicesDir) + sysmanDeviceDirName + "/events/engine-active-ticks";
+    uint64_t activeTicksConfig = UINT64_MAX;
+    auto ret = pPmuInterface->getConfigFromEventFile(activeTicksEventFile, activeTicksConfig);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the active ticks from event file and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    const std::string totalTicksEventFile = std::string(sysDevicesDir) + "/" + sysmanDeviceDirName + "/events/engine-total-ticks";
+    uint64_t totalTicksConfig = UINT64_MAX;
+    ret = pPmuInterface->getConfigFromEventFile(totalTicksEventFile, totalTicksConfig);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the total ticks from event file and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    const std::string formatDir = std::string(sysDevicesDir) + sysmanDeviceDirName + "/format/";
+    ret = pPmuInterface->getConfigAfterFormat(formatDir, activeTicksConfig, engineClass->second, engineInstance, subDeviceId);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the active ticks after format and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    ret = pPmuInterface->getConfigAfterFormat(formatDir, totalTicksConfig, engineClass->second, engineInstance, subDeviceId);
+    if (ret < 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Failed to get config for the total ticks after format and returning error:0x%x\n", __FUNCTION__, result);
+        return result;
+    }
+
+    int64_t fd[2];
+    fd[0] = pPmuInterface->pmuInterfaceOpen(activeTicksConfig, -1, PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[0] < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Busy Ticks Handle \n", __FUNCTION__);
+        return checkErrorNumberAndReturnStatus();
+    }
+
+    fd[1] = pPmuInterface->pmuInterfaceOpen(totalTicksConfig, static_cast<int>(fd[0]), PERF_FORMAT_TOTAL_TIME_ENABLED | PERF_FORMAT_GROUP);
+    if (fd[1] < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): Could not open Total Active Ticks Handle \n", __FUNCTION__);
+        close(static_cast<int>(fd[0]));
+        return checkErrorNumberAndReturnStatus();
+    }
+
+    fdList.push_back(std::make_pair(fd[0], fd[1]));
+
+    return result;
 }
 
 ze_result_t SysmanKmdInterfaceXe::readBusynessFromGroupFd(PmuInterface *const &pPmuInterface, std::pair<int64_t, int64_t> &fdPair, zes_engine_stats_t *pStats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    uint64_t data[4] = {};
+
+    auto ret = pPmuInterface->pmuRead(static_cast<int>(fdPair.first), data, sizeof(data));
+    if (ret < 0) {
+        NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s():pmuRead is returning value:%d and error:0x%x \n", __FUNCTION__, ret, ZE_RESULT_ERROR_UNKNOWN);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    pStats->activeTime = data[2];
+    pStats->timestamp = data[3] ? data[3] : SysmanDevice::getSysmanTimestamp();
+    return ZE_RESULT_SUCCESS;
 }
 
 std::string SysmanKmdInterfaceXe::getHwmonName(uint32_t subDeviceId, bool isSubdevice) const {

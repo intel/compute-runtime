@@ -31,6 +31,9 @@ class PmuInterface;
 class LinuxSysmanImp;
 class SysmanProductHelper;
 
+constexpr std::string_view deviceDir("device");
+constexpr std::string_view sysDevicesDir("/sys/devices/");
+
 typedef std::pair<std::string, std::string> valuePair;
 
 enum EngineClass {
@@ -295,7 +298,7 @@ class SysmanKmdInterfaceXe : public SysmanKmdInterface {
     std::string getHwmonName(uint32_t subDeviceId, bool isSubdevice) const override;
     bool isStandbyModeControlAvailable() const override { return false; }
     bool clientInfoAvailableInFdInfo() const override { return true; }
-    bool isGroupEngineInterfaceAvailable() const override { return true; }
+    bool isGroupEngineInterfaceAvailable() const override { return false; }
     ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines,
                                              LinuxSysmanImp *pLinuxSysmanImp,
                                              SysFsAccessInterface *pSysfsAccess,

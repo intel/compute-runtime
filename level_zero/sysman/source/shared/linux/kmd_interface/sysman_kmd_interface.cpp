@@ -21,9 +21,6 @@
 namespace L0 {
 namespace Sysman {
 
-const std::string deviceDir("device");
-const std::string sysDevicesDir("/sys/devices/");
-
 const std::map<uint16_t, std::string> SysmanKmdInterfaceI915::i915EngineClassToSysfsEngineMap = {
     {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, "rcs"},
     {static_cast<uint16_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_COMPUTE), "ccs"},
@@ -176,7 +173,7 @@ void SysmanKmdInterface::convertSysfsValueUnit(const SysfsValueUnit dstUnit, con
 uint32_t SysmanKmdInterface::getEventType() {
 
     auto pFsAccess = getFsAccess();
-    const std::string eventTypeSysfsNode = sysDevicesDir + sysmanDeviceDirName + "/" + "type";
+    const std::string eventTypeSysfsNode = std::string(sysDevicesDir) + sysmanDeviceDirName + "/" + "type";
     auto eventTypeVal = 0u;
     if (ZE_RESULT_SUCCESS != pFsAccess->read(eventTypeSysfsNode, eventTypeVal)) {
         return 0;
@@ -214,7 +211,7 @@ ze_result_t SysmanKmdInterface::getDeviceDirName(std::string &dirName, const boo
     if (!isIntegratedDevice) {
         auto pSysFsAccess = getSysFsAccess();
         std::string bdfDir;
-        result = pSysFsAccess->readSymLink(deviceDir, bdfDir);
+        result = pSysFsAccess->readSymLink(std::string(deviceDir), bdfDir);
         if (ZE_RESULT_SUCCESS != result) {
             return result;
         }
