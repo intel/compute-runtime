@@ -902,6 +902,11 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
             if (releaseHelper && releaseHelper->isRayTracingSupported()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
                 rtProperties->maxBVHLevels = NEO::RayTracingHelper::maxBvhLevels;
+
+                if (NEO::debugManager.flags.SetMaxBVHLevels.get() != -1) {
+                    rtProperties->maxBVHLevels = static_cast<uint32_t>(NEO::debugManager.flags.SetMaxBVHLevels.get());
+                }
+
             } else {
                 rtProperties->flags = 0;
                 rtProperties->maxBVHLevels = 0;

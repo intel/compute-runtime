@@ -57,6 +57,7 @@ class ReleaseHelper {
     virtual uint32_t getAdditionalFp16Caps() const = 0;
     virtual uint32_t getAdditionalExtraCaps() const = 0;
     virtual uint32_t getStackSizePerRay() const = 0;
+    virtual void adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const = 0;
     virtual bool isLocalOnlyAllowed() const = 0;
     virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool isDirectSubmissionLightSupported() const = 0;
@@ -100,6 +101,7 @@ class ReleaseHelperHw : public ReleaseHelper {
     uint32_t getAdditionalFp16Caps() const override;
     uint32_t getAdditionalExtraCaps() const override;
     uint32_t getStackSizePerRay() const override;
+    void adjustRTDispatchGlobals(void *rtDispatchGlobals, uint32_t rtStacksPerDss, bool heaplessEnabled, uint32_t maxBvhLevels) const override;
     bool isLocalOnlyAllowed() const override;
     bool isDummyBlitWaRequired() const override;
     bool isDirectSubmissionLightSupported() const override;

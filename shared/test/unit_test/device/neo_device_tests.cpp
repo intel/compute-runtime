@@ -253,7 +253,7 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenStackSizePerRayIsSet
     pDevice->initializeRayTracing(5);
     pDevice->allocateRTDispatchGlobals(3);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
-    struct RTDispatchGlobals dispatchGlobals = *reinterpret_cast<struct RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
+    RTDispatchGlobals dispatchGlobals = *reinterpret_cast<struct RTDispatchGlobals *>(pDevice->getRTDispatchGlobals(3)->rtDispatchGlobalsArray->getUnderlyingBuffer());
 
     auto releaseHelper = getReleaseHelper();
     if (releaseHelper) {

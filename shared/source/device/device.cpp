@@ -1134,17 +1134,23 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
             break;
         }
 
-        struct RTDispatchGlobals dispatchGlobals = {0};
+        RTDispatchGlobals dispatchGlobals = {0};
 
         dispatchGlobals.rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize;
         dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
         auto releaseHelper = getReleaseHelper();
         dispatchGlobals.stackSizePerRay = releaseHelper ? releaseHelper->getStackSizePerRay() : 0;
-        dispatchGlobals.numDSSRTStacks = RayTracingHelper::getNumRtStacksPerDss(*this);
-        dispatchGlobals.maxBVHLevels = maxBvhLevels;
 
+        auto rtStacksPerDss = RayTracingHelper::getNumRtStacksPerDss(*this);
+        dispatchGlobals.numDSSRTStacks = rtStacksPerDss;
+        dispatchGlobals.maxBVHLevels = maxBvhLevels;
         uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
         dispatchGlobalsAsArray[7] = 1;
+
+        if (releaseHelper) {
+            bool heaplessEnabled = this->getCompilerProductHelper().isHeaplessModeEnabled();
+            releaseHelper->adjustRTDispatchGlobals(static_cast<void *>(&dispatchGlobals), rtStacksPerDss, heaplessEnabled, maxBvhLevels);
+        }
 
         MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getRootDeviceEnvironment(), *dispatchGlobalsArrayAllocation),
                                                          *this,

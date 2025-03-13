@@ -1205,6 +1205,33 @@ HWTEST2_F(DeviceTest, whenPassingRaytracingExpStructToGetPropertiesThenPropertie
     EXPECT_EQ(expectedMaxBVHLevels, rayTracingProperties.maxBVHLevels);
 }
 
+HWTEST2_F(DeviceTest, givenSetMaxBVHLevelsWhenPassingRaytracingExpStructToGetPropertiesThenPropertiesWithCorrectFlagIsReturned, MatchAny) {
+
+    DebugManagerStateRestore dbgRestorer;
+    debugManager.flags.SetMaxBVHLevels.set(7);
+
+    ze_device_module_properties_t kernelProperties = {};
+    kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
+
+    ze_device_raytracing_ext_properties_t rayTracingProperties = {};
+    rayTracingProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_RAYTRACING_EXT_PROPERTIES;
+    rayTracingProperties.flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32;
+    rayTracingProperties.maxBVHLevels = 37u;
+
+    kernelProperties.pNext = &rayTracingProperties;
+
+    ze_result_t res = device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(ZE_DEVICE_RAYTRACING_EXT_FLAG_FORCE_UINT32, rayTracingProperties.flags);
+
+    auto releaseHelper = this->neoDevice->getReleaseHelper();
+    if (releaseHelper && releaseHelper->isRayTracingSupported()) {
+        EXPECT_EQ(7u, rayTracingProperties.maxBVHLevels);
+    } else {
+        EXPECT_EQ(0u, rayTracingProperties.maxBVHLevels);
+    }
+}
+
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
 

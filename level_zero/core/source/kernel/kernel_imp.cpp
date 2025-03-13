@@ -1199,6 +1199,11 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     if (this->usesRayTracing()) {
         uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
+
+        if (NEO::debugManager.flags.SetMaxBVHLevels.get() != -1) {
+            bvhLevels = static_cast<uint32_t>(NEO::debugManager.flags.SetMaxBVHLevels.get());
+        }
+
         auto arg = this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals;
         neoDevice->initializeRayTracing(bvhLevels);
 
