@@ -1404,18 +1404,17 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     }
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
-    auto preferNoCpuAccess = CacheSettingsHelper::preferNoCpuAccess(usageType, rootDeviceEnvironment);
-    bool cacheable = !preferNoCpuAccess && !isUncachedType;
+    bool cachable = !CacheSettingsHelper::isUncachedType(usageType);
     bool compressed = false;
 
     if (gmm) {
         resourceInfo = gmm->gmmResourceInfo->peekGmmResourceInfo();
         usageType = gmm->resourceParams.Usage;
         compressed = gmm->isCompressionEnabled();
-        cacheable = gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable;
+        cachable = gmm->gmmResourceInfo->getResourceFlags()->Info.Cacheable;
     }
 
-    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cacheable);
+    uint64_t patIndex = rootDeviceEnvironment.getGmmClientContext()->cachePolicyGetPATIndex(resourceInfo, usageType, compressed, cachable);
     patIndex = productHelper.overridePatIndex(isUncachedType, patIndex, allocationType);
 
     UNRECOVERABLE_IF(patIndex == static_cast<uint64_t>(GMM_PAT_ERROR));
