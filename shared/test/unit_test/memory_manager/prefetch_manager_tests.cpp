@@ -34,8 +34,6 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, nullptr);
     ASSERT_NE(nullptr, ptr);
 
-    auto ptr2 = malloc(1024);
-
     auto &hwInfo = *device->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     VariableBackup<uint64_t> sharedSystemMemCapabilities{&hwInfo.capabilityTable.sharedSystemMemCapabilities};
@@ -43,6 +41,8 @@ TEST(PrefetchManagerTests, givenPrefetchManagerWhenCallingInterfaceFunctionsThen
 
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
+
+    auto ptr2 = malloc(1024);
 
     EXPECT_EQ(0u, prefetchContext.allocations.size());
 
