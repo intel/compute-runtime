@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/definitions/indirect_detection_versions.h"
+#include "shared/source/helpers/string_helpers.h"
 #include "shared/source/os_interface/product_helper_xe_hpg_and_xe_hpc.inl"
 
 #include "aubstream/product_family.h"
@@ -142,6 +143,25 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
     }
 
     return false;
+}
+
+template <>
+void ProductHelperHw<gfxProduct>::parseCcsMode(std::string ccsModeString, std::unordered_map<uint32_t, uint32_t> &rootDeviceNumCcsMap, uint32_t rootDeviceIndex, RootDeviceEnvironment *rootDeviceEnvironment) const {
+
+    auto numberOfCcsEntries = StringHelpers::split(ccsModeString, ",");
+
+    for (const auto &entry : numberOfCcsEntries) {
+        auto subEntries = StringHelpers::split(entry, ":");
+        uint32_t rootDeviceIndexParsed = StringHelpers::toUint32t(subEntries[0]);
+
+        if (rootDeviceIndexParsed == rootDeviceIndex) {
+            if (subEntries.size() > 1) {
+                uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+                rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
+                rootDeviceEnvironment->setNumberOfCcs(maxCcsCount);
+            }
+        }
+    }
 }
 
 template <>
