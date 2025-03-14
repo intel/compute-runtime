@@ -1073,11 +1073,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemoryExt(voi
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
+
+    launchParams.isDestinationAllocationImported = this->isAllocationImported(allocationStruct.alloc, device->getDriverHandle()->getSvmAllocsManager());
+
     ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), kernelArgs,
                                                                    event, numWaitEvents, phWaitEvents, launchParams, relaxedOrderingDispatch);
     addToMappedEventList(event);
 
-    addFlushRequiredCommand(allocationStruct.needsFlush, event, isCopyOnly(false));
+    addFlushRequiredCommand(allocationStruct.needsFlush, event, isCopyOnly(false), !this->l3FlushAfterPostSyncRequired);
 
     return ret;
 }
@@ -1353,6 +1356,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::svmCpu) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
+
+    launchParams.isDestinationAllocationImported = this->isAllocationImported(dstPtrAlloc, device->getDriverHandle()->getSvmAllocsManager());
 
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(builtinKernel, dispatchKernelArgs, signalEvent, launchParams);
 }
@@ -1638,8 +1643,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    bool isSplitOperation = kernelCounter > 1;
     launchParams.numKernelsInSplitLaunch = kernelCounter;
-    launchParams.isKernelSplitOperation = kernelCounter > 1;
+    launchParams.isKernelSplitOperation = isSplitOperation;
     bool singlePipeControlPacket = eventSignalPipeControl(launchParams.isKernelSplitOperation, dcFlush);
 
     launchParams.pipeControlSignalling = (signalEvent && singlePipeControlPacket) || getDcFlushRequired(dstAllocationStruct.needsFlush);
@@ -1717,7 +1723,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc, isCopyOnlyEnabled);
 
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnlyEnabled);
-    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled);
+
+    bool l3flushInPipeControl = !l3FlushAfterPostSyncRequired || isSplitOperation;
+    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled, l3flushInPipeControl);
+
     addToMappedEventList(signalEvent);
 
     if (this->isInOrderExecutionEnabled()) {
@@ -1826,7 +1835,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     appendCopyOperationFence(signalEvent, srcAllocationStruct.alloc, dstAllocationStruct.alloc, isCopyOnlyEnabled);
 
     addToMappedEventList(signalEvent);
-    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled);
+    addFlushRequiredCommand(dstAllocationStruct.needsFlush, signalEvent, isCopyOnlyEnabled, !this->l3FlushAfterPostSyncRequired);
 
     if (this->isInOrderExecutionEnabled()) {
         if (inOrderCopyOnlySignalingAllowed) {
@@ -1916,6 +1925,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(Align
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
+
+    launchParams.isDestinationAllocationImported = this->isAllocationImported(dstAlignedAllocation->alloc, device->getDriverHandle()->getSvmAllocsManager());
+
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, signalEvent, numWaitEvents,
                                                                     phWaitEvents, launchParams, relaxedOrderingDispatch);
 }
@@ -1983,6 +1995,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(Align
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
+
+    launchParams.isDestinationAllocationImported = this->isAllocationImported(dstAlignedAllocation->alloc, device->getDriverHandle()->getSvmAllocsManager());
+
     return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(),
                                                                     dispatchKernelArgs, signalEvent,
                                                                     numWaitEvents,
@@ -2119,6 +2134,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
             allocData->memoryType == InternalMemoryType::sharedUnifiedMemory) {
             hostPointerNeedsFlush = true;
         }
+
     } else {
         if (device->getDriverHandle()->getHostPointerBaseAddress(ptr, nullptr) != ZE_RESULT_SUCCESS) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -2142,6 +2158,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
     launchParams.isBuiltInKernel = true;
     launchParams.isDestinationAllocationInSystemMemory = hostPointerNeedsFlush;
+    launchParams.isDestinationAllocationImported = this->isAllocationImported(dstAllocation.alloc, device->getDriverHandle()->getSvmAllocsManager());
 
     CmdListFillKernelArguments fillArguments = {};
     setupFillKernelArguments(dstAllocation.offset, patternSize, size, fillArguments, builtinKernel);
@@ -2293,9 +2310,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
+    bool isSplitOperation = launchParams.numKernelsExecutedInSplitLaunch > 1;
+    bool isFlushInPipeControl = !this->l3FlushAfterPostSyncRequired || isSplitOperation;
+
     addToMappedEventList(signalEvent);
     appendEventForProfilingAllWalkers(signalEvent, nullptr, nullptr, false, singlePipeControlPacket, false, isCopyOnly(false));
-    addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent, isCopyOnly(false));
+    addFlushRequiredCommand(hostPointerNeedsFlush, signalEvent, isCopyOnly(false), isFlushInPipeControl);
 
     bool nonWalkerInOrderCmdChaining = false;
     if (this->isInOrderExecutionEnabled()) {
@@ -3259,6 +3279,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     launchParams.isDestinationAllocationInSystemMemory =
         (dstAllocationType == NEO::AllocationType::bufferHostMemory) ||
         (dstAllocationType == NEO::AllocationType::externalHostPtr);
+
+    launchParams.isDestinationAllocationImported = this->isAllocationImported(dstPtrAllocationStruct.alloc, device->getDriverHandle()->getSvmAllocsManager());
+
     auto appendResult = appendLaunchKernel(builtinKernel->toHandle(), dispatchKernelArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents, launchParams, false);
     if (appendResult != ZE_RESULT_SUCCESS) {
@@ -3708,10 +3731,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation) {
+void CommandListCoreFamily<gfxCoreFamily>::addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation, bool flushL3InPipeControl) {
     if (copyOperation) {
         return;
     }
+    if (!flushL3InPipeControl) {
+        return;
+    }
+
     if (signalEvent) {
         flushOperationRequired &= !signalEvent->isSignalScope();
     }

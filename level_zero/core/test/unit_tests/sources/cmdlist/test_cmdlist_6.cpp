@@ -272,7 +272,7 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenRequiredFlushOperationThenExp
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, nullptr, true);
+    commandList->addFlushRequiredCommand(true, nullptr, true, true);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }
@@ -369,6 +369,32 @@ HWTEST2_F(CommandListTest, givenCopyCommandListWhenAppendFillWithDependenciesThe
     EXPECT_EQ(device->getNEODevice()->getDefaultEngine().commandStreamReceiver->peekBarrierCount(), 0u);
 }
 
+HWTEST2_F(CommandListTest, givenL3FlushInPipeControlFalseListWhenRequiredFlushOperationThenPipeControlIsNotProgrammed, IsAtLeastXeHpgCore) {
+
+    if (!MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
+        GTEST_SKIP();
+    }
+
+    for (auto l3FlushInPipeControl : {false, true}) {
+        auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+        ASSERT_NE(nullptr, commandList);
+        ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::compute, 0u);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+        auto &commandContainer = commandList->commandContainer;
+
+        size_t usedBefore = commandContainer.getCommandStream()->getUsed();
+
+        commandList->addFlushRequiredCommand(true, nullptr, false, l3FlushInPipeControl);
+        size_t usedAfter = commandContainer.getCommandStream()->getUsed();
+
+        if (l3FlushInPipeControl == false) {
+            EXPECT_EQ(usedBefore, usedAfter);
+        } else {
+            EXPECT_NE(usedBefore, usedAfter);
+        }
+    }
+}
+
 HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationThenExpectPipeControlWithDcFlush, IsDcFlushSupportedPlatform) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
@@ -381,7 +407,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationThen
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, nullptr, false);
+    commandList->addFlushRequiredCommand(true, nullptr, false, true);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
 
@@ -406,7 +432,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenNoRequiredFlushOperationTh
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(false, nullptr, false);
+    commandList->addFlushRequiredCommand(false, nullptr, false, true);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }
@@ -433,7 +459,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndN
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, event.get(), false);
+    commandList->addFlushRequiredCommand(true, event.get(), false, true);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(sizeof(PIPE_CONTROL), usedAfter - usedBefore);
 
@@ -469,7 +495,7 @@ HWTEST2_F(CommandListTest, givenComputeCommandListWhenRequiredFlushOperationAndS
     auto &commandContainer = commandList->commandContainer;
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    commandList->addFlushRequiredCommand(true, event.get(), false);
+    commandList->addFlushRequiredCommand(true, event.get(), false, true);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(usedBefore, usedAfter);
 }

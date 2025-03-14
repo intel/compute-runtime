@@ -89,7 +89,8 @@ struct EncodeDispatchKernelArgs {
     bool interruptEvent = false;
     bool immediateScratchAddressPatching = false;
     bool makeCommandView = false;
-    bool isFlushL3AfterPostSyncEnabled = false;
+    bool isFlushL3AfterPostSyncForExternalAllocationRequired = false;
+    bool isFlushL3AfterPostSyncForHostUsmRequired = false;
 
     bool requiresSystemMemoryFence() const {
         return (isHostScopeSignalEvent && isKernelUsingSystemAllocation);

@@ -329,7 +329,7 @@ struct CommandListCoreFamily : public CommandListImp {
     MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed, bool copyOffload);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
     uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
-    void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation);
+    void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent, bool copyOperation, bool flushL3InPipeControl);
     void handlePostSubmissionState();
 
     void setupFillKernelArguments(size_t baseOffset,
@@ -353,6 +353,9 @@ struct CommandListCoreFamily : public CommandListImp {
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event, bool copyOperation);
     void dispatchEventPostSyncOperation(Event *event, void **syncCmdBuffer, CommandToPatchContainer *outListCommands, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl,
                                         bool skipPartitionOffsetProgramming, bool copyOperation);
+
+    constexpr bool isAllocationImported(NEO::GraphicsAllocation *gpuAllocation, NEO::SVMAllocsManager *svmManager) const;
+
     bool isKernelUncachedMocsRequired(bool kernelState) {
         this->containsStatelessUncachedResource |= kernelState;
         if (this->stateBaseAddressTracking) {
