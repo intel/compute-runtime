@@ -2097,6 +2097,7 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingC
 HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhenDispatchingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using WalkerVariant = typename FamilyType::WalkerVariant;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
 
     auto immCmdList = createImmCmdList<gfxCoreFamily>();
     auto eventPool = createEvents<FamilyType>(1, false);
@@ -2110,34 +2111,45 @@ HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlAndAllocFlushWhe
     immCmdList->appendMemoryCopy(&copyData, &copyData, 1, eventHandle, 0, nullptr, copyParams);
 
     auto dcFlushRequired = immCmdList->getDcFlushRequired(true);
+    auto inOrderExecInfo = immCmdList->inOrderExecInfo;
+    auto gpuAddress = inOrderExecInfo->getBaseDeviceAddress();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::Parse::parseCommandBuffer(cmdList, ptrOffset(cmdStream->getCpuBase(), offset), cmdStream->getUsed() - offset));
+
+    auto miAtomicItor = find<MI_ATOMIC *>(cmdList.begin(), cmdList.end());
+    if (device->getProductHelper().isDcFlushAllowed() && inOrderExecInfo->isHostStorageDuplicated()) {
+        EXPECT_NE(cmdList.end(), miAtomicItor);
+        auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(*miAtomicItor);
+        EXPECT_EQ(gpuAddress, miAtomicCmd->getMemoryAddress());
+    } else {
+        EXPECT_EQ(cmdList.end(), miAtomicItor);
+    }
+
     auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     if (immCmdList->eventSignalPipeControl(false, immCmdList->getDcFlushRequired(events[0]->isSignalScope()))) {
         EXPECT_NE(cmdList.end(), sdiItor);
     } else {
         if (dcFlushRequired) {
             EXPECT_NE(cmdList.end(), sdiItor);
-
+            if (inOrderExecInfo->isHostStorageDuplicated()) {
+                gpuAddress = reinterpret_cast<uint64_t>(inOrderExecInfo->getBaseHostAddress());
+            }
             auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
-
-            EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), sdiCmd->getAddress());
-
+            EXPECT_EQ(gpuAddress, sdiCmd->getAddress());
         } else {
             EXPECT_EQ(cmdList.end(), sdiItor);
         }
-
         auto walkerItor = NEO::UnitTestHelper<FamilyType>::findWalkerTypeCmd(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), walkerItor);
 
         WalkerVariant walkerVariant = NEO::UnitTestHelper<FamilyType>::getWalkerVariant(*walkerItor);
-        std::visit([&immCmdList, &dcFlushRequired](auto &&walker) {
+        std::visit([gpuAddress, &dcFlushRequired](auto &&walker) {
             auto &postSync = walker->getPostSync();
             if (dcFlushRequired) {
-                EXPECT_NE(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+                EXPECT_NE(gpuAddress, postSync.getDestinationAddress());
             } else {
-                EXPECT_EQ(immCmdList->inOrderExecInfo->getBaseDeviceAddress(), postSync.getDestinationAddress());
+                EXPECT_EQ(gpuAddress, postSync.getDestinationAddress());
             }
         },
                    walkerVariant);
