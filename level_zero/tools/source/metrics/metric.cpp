@@ -531,12 +531,14 @@ ze_result_t MetricDeviceContext::calcOperationCreate(zet_context_handle_t hConte
             METRICS_LOG_ERR("%s", "Metrics must be from the same domain");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        if (!areMetricsFromSameDeviceHierarchy(pCalculateDesc->metricCount, pCalculateDesc->phMetrics)) {
+
+        metricImp = static_cast<MetricImp *>(Metric::fromHandle(pCalculateDesc->phMetrics[0]));
+        // IpSampling does not use multi-device metrics
+        if ((metricImp->getMetricSource().getType() != MetricSource::metricSourceTypeIpSampling) &&
+            (!areMetricsFromSameDeviceHierarchy(pCalculateDesc->metricCount, pCalculateDesc->phMetrics))) {
             METRICS_LOG_ERR("%s", "Mix of root device and sub-device metric handle is not allowed");
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-
-        metricImp = static_cast<MetricImp *>(Metric::fromHandle(pCalculateDesc->phMetrics[0]));
     }
 
     if (pCalculateDesc->metricGroupCount > 0) {

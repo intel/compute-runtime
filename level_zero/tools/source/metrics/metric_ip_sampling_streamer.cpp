@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/tools/source/metrics/os_interface_metric.h"
 #include <level_zero/zet_api.h>
 
+#include <set>
 #include <string.h>
 
 namespace L0 {
@@ -92,6 +93,48 @@ uint32_t IpSamplingMetricStreamerImp::getMaxSupportedReportCount() {
     const auto unitReportSize = ipSamplingSource.getMetricOsInterface()->getUnitReportSize();
     UNRECOVERABLE_IF(unitReportSize == 0);
     return ipSamplingSource.getMetricOsInterface()->getRequiredBufferSize(UINT32_MAX) / unitReportSize;
+}
+
+ze_result_t IpSamplingMetricCalcOpImp::create(IpSamplingMetricSourceImp &metricSource,
+                                              zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                                              bool isMultiDevice,
+                                              zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+
+    // There is only one valid metric group in IP sampling and time filtering is not supported
+    // So only metrics handles are used to filter the metrics
+
+    // avoid duplicates
+    std::set<zet_metric_handle_t> uniqueMetricHandles(pCalculateDesc->phMetrics, pCalculateDesc->phMetrics + pCalculateDesc->metricCount);
+
+    // The order of metrics in the report should be the same as the one in the HW report to optimize calculation
+    uint32_t metricGroupCount = 1;
+    zet_metric_group_handle_t hMetricGroup = {};
+    metricSource.metricGroupGet(&metricGroupCount, &hMetricGroup);
+    uint32_t metricCount = 0;
+    MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, nullptr);
+    std::vector<zet_metric_handle_t> hMetrics(metricCount);
+    MetricGroup::fromHandle(hMetricGroup)->metricGet(&metricCount, hMetrics.data());
+    std::vector<MetricImp *> inputMetricsInReport = {};
+
+    for (uint32_t i = 0; i < metricCount; i++) {
+        auto metric = static_cast<MetricImp *>(Metric::fromHandle(hMetrics[i]));
+        if (pCalculateDesc->metricGroupCount > 0) {
+            inputMetricsInReport.push_back(metric);
+        } else {
+            if (uniqueMetricHandles.find(hMetrics[i]) != uniqueMetricHandles.end()) {
+                inputMetricsInReport.push_back(metric);
+            }
+        }
+    }
+
+    auto calcOp = new IpSamplingMetricCalcOpImp(inputMetricsInReport, isMultiDevice);
+    *phCalculateOperation = calcOp->toHandle();
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t IpSamplingMetricCalcOpImp::destroy() {
+    delete this;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t MultiDeviceIpSamplingMetricGroupImp::streamerOpen(

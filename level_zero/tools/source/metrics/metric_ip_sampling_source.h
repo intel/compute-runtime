@@ -61,9 +61,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
                                     zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
                                     uint32_t *pCount,
                                     zet_metric_handle_t *phExcludedMetrics,
-                                    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+                                    zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) override;
 
     uint32_t metricSourceCount = 0;
 

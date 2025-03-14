@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,8 +59,8 @@ class MockStallRawIpData {
         rawData[7] = 0;
     }
 };
-class MetricIpSamplingFixture : public MultiDeviceFixture,
-                                public ::testing::Test {
+class MetricIpSamplingMultiDevFixture : public MultiDeviceFixture,
+                                        public ::testing::Test {
   public:
     void SetUp() override;
     void TearDown() override;
@@ -69,8 +69,8 @@ class MetricIpSamplingFixture : public MultiDeviceFixture,
     std::vector<L0::Device *> testDevices = {};
 };
 
-class MetricIpSamplingTimestampFixture : public DeviceFixture,
-                                         public ::testing::Test {
+class MetricIpSamplingFixture : public DeviceFixture,
+                                public ::testing::Test {
   public:
     void SetUp() override;
     void TearDown() override;
@@ -79,7 +79,7 @@ class MetricIpSamplingTimestampFixture : public DeviceFixture,
     std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
 };
 
-class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingFixture {
+class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingMultiDevFixture {
   public:
     void addHeader(uint8_t *rawDataOut, size_t rawDataOutSize, uint8_t *rawDataIn, size_t rawDataInSize, uint32_t setIndex) {
 

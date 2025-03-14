@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 namespace L0 {
 
 class IpSamplingMetricSourceImp;
+struct IpSamplingMetricImp;
 
 struct IpSamplingMetricStreamerBase : public MetricStreamer {
     ze_result_t appendStreamerMarker(CommandList &commandList, uint32_t value) override { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
@@ -41,6 +42,35 @@ struct MultiDeviceIpSamplingMetricStreamerImp : public IpSamplingMetricStreamerB
 
   protected:
     std::vector<IpSamplingMetricStreamerImp *> subDeviceStreamers = {};
+};
+
+struct IpSamplingMetricCalcOpImp : public MetricCalcOpImp {
+    IpSamplingMetricCalcOpImp(std::vector<MetricImp *> &inputMetricsInReport,
+                              bool multidevice) : MetricCalcOpImp(multidevice),
+                                                  metricCount(static_cast<uint32_t>(inputMetricsInReport.size())),
+                                                  metricsInReport(inputMetricsInReport) {}
+
+    ~IpSamplingMetricCalcOpImp() override{};
+    static ze_result_t create(IpSamplingMetricSourceImp &metricSource,
+                              zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                              bool isMultiDevice,
+                              zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation);
+    ze_result_t destroy() override;
+    ze_result_t getReportFormat(uint32_t *pCount, zet_metric_handle_t *phMetrics) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    std::vector<MetricImp *> &getMetricsInReport() { return metricsInReport; };
+    uint32_t getMetricsInReportCount() { return metricCount; };
+    ze_result_t metricCalculateMultipleValues(size_t rawDataSize, size_t *offset, const uint8_t *pRawData,
+                                              uint32_t *pSetCount, uint32_t *pMetricsReportCountPerSet,
+                                              uint32_t *pTotalMetricReportCount,
+                                              zet_intel_metric_result_exp_t *pMetricResults) override {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+
+  protected:
+    uint32_t metricCount = 0;
+    std::vector<MetricImp *> metricsInReport{};
 };
 
 } // namespace L0

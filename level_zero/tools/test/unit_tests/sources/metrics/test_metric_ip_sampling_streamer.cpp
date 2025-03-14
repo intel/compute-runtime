@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Intel Corporation
+ * Copyright (C) 2022-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ extern _ze_driver_handle_t *globalDriverHandle;
 
 namespace ult {
 
-class MetricIpSamplingStreamerTest : public MetricIpSamplingFixture {
+class MetricIpSamplingStreamerTest : public MetricIpSamplingMultiDevFixture {
 
   public:
     zet_metric_group_handle_t getMetricGroup(L0::Device *device) {

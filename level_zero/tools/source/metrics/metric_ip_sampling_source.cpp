@@ -243,6 +243,22 @@ ze_result_t IpSamplingMetricSourceImp::handleMetricGroupExtendedProperties(zet_m
     return retVal;
 }
 
+ze_result_t IpSamplingMetricSourceImp::calcOperationCreate(MetricDeviceContext &metricDeviceContext,
+                                                           zet_intel_metric_calculate_exp_desc_t *pCalculateDesc,
+                                                           uint32_t *pCount,
+                                                           zet_metric_handle_t *phExcludedMetrics,
+                                                           zet_intel_metric_calculate_operation_exp_handle_t *phCalculateOperation) {
+    ze_result_t status = ZE_RESULT_ERROR_UNKNOWN;
+
+    // All metrics in Ip sampling allow calculation
+    *pCount = 0;
+    *phExcludedMetrics = nullptr;
+
+    bool isMultiDevice = (metricDeviceContext.isImplicitScalingCapable()) ? true : false;
+    status = IpSamplingMetricCalcOpImp::create(*this, pCalculateDesc, isMultiDevice, phCalculateOperation);
+    return status;
+}
+
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
                                                    std::vector<IpSamplingMetricImp> &metrics) : IpSamplingMetricGroupBase(metricSource) {
     this->metrics.reserve(metrics.size());

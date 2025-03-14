@@ -18,7 +18,7 @@ extern std::vector<_ze_driver_handle_t *> *globalDriverHandles;
 
 namespace ult {
 
-void MetricIpSamplingFixture::SetUp() {
+void MetricIpSamplingMultiDevFixture::SetUp() {
 
     debugManager.flags.EnableImplicitScaling.set(1);
 
@@ -51,12 +51,12 @@ void MetricIpSamplingFixture::SetUp() {
     globalDriverHandles->push_back(driverHandle.get());
 }
 
-void MetricIpSamplingFixture::TearDown() {
+void MetricIpSamplingMultiDevFixture::TearDown() {
     MultiDeviceFixture::tearDown();
     globalDriverHandles->clear();
 }
 
-void MetricIpSamplingTimestampFixture::SetUp() {
+void MetricIpSamplingFixture::SetUp() {
     DeviceFixture::setUp();
     auto mockMetricIpSamplingOsInterface = new MockMetricIpSamplingOsInterface();
     osInterfaceVector.push_back(mockMetricIpSamplingOsInterface);
@@ -71,7 +71,7 @@ void MetricIpSamplingTimestampFixture::SetUp() {
     globalDriverHandles->push_back(driverHandle.get());
 }
 
-void MetricIpSamplingTimestampFixture::TearDown() {
+void MetricIpSamplingFixture::TearDown() {
     DeviceFixture::tearDown();
     globalDriverHandles->clear();
 }
