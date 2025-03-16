@@ -371,7 +371,7 @@ void ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const 
     auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
     UNRECOVERABLE_IF(!rootDeviceEnvironment);
     if (rootDeviceNumCcsMap.find(rootDeviceIndex) != rootDeviceNumCcsMap.end()) {
-        rootDeviceEnvironment->setNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex));
+        rootDeviceEnvironment->limitNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex));
     } else {
         adjustCcsCountImpl(rootDeviceEnvironment.get());
     }
@@ -385,11 +385,21 @@ void ExecutionEnvironment::parseCcsCountLimitations() {
         return;
     }
 
-    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
-        auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
-        UNRECOVERABLE_IF(!rootDeviceEnvironment);
-        auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
-        productHelper.parseCcsMode(numberOfCcsString, rootDeviceNumCcsMap, rootDeviceIndex, rootDeviceEnvironment.get());
+    const uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
+
+    auto numberOfCcsEntries = StringHelpers::split(numberOfCcsString, ",");
+
+    for (const auto &entry : numberOfCcsEntries) {
+        auto subEntries = StringHelpers::split(entry, ":");
+        uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
+
+        if (rootDeviceIndex < numRootDevices) {
+            if (subEntries.size() > 1) {
+                uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+                rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
+                rootDeviceEnvironments[rootDeviceIndex]->limitNumberOfCcs(maxCcsCount);
+            }
+        }
     }
 }
 
