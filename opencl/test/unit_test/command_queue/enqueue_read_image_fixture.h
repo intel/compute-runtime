@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 namespace NEO {
 
 struct EnqueueReadImageTest : public CommandEnqueueFixture,
+                              public SurfaceStateAccessor,
                               public ::testing::Test {
     typedef CommandQueueHwFixture CommandQueueFixture;
     using CommandQueueHwFixture::pCmdQ;

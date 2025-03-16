@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Intel Corporation
+ * Copyright (C) 2018-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 namespace NEO {
 
 struct EnqueueCopyImageTest : public CommandEnqueueFixture,
+                              public SurfaceStateAccessor,
                               public ::testing::Test {
 
     void SetUp(void) override {
