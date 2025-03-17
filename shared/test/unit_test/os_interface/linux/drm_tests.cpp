@@ -20,6 +20,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -2266,4 +2267,28 @@ TEST(DrmTest, GivenProductSpecificIoctlHelperAvailableAndDebugFlagToIgnoreIsSetW
     drm.setupIoctlHelper(productFamily);
 
     EXPECT_EQ(0u, customFuncCalled);
+}
+
+using DrmHwTest = ::testing::Test;
+HWTEST_F(DrmHwTest, GivenDrmWhenSetupHardwareInfoCalledThenGfxCoreHelperIsInitializedFromProductHelper) {
+    DebugManagerStateRestore restore;
+    struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
+
+        void initializeFromProductHelper(const ProductHelper &productHelper) override {
+            initFromProductHelperCalled = true;
+        }
+        bool initFromProductHelperCalled = false;
+    };
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    NEO::RAIIGfxCoreHelperFactory<MockGfxCoreHelper> raii(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto setupHardwareInfo = [](HardwareInfo *, bool, const ReleaseHelper *) {};
+    DeviceDescriptor device = {0, executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo(), setupHardwareInfo};
+
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+    drm.setupHardwareInfo(&device, false);
+
+    EXPECT_TRUE(raii.mockGfxCoreHelper->initFromProductHelperCalled);
 }

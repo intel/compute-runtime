@@ -489,6 +489,8 @@ bool Device::createEngine(EngineTypeUsage engineTypeUsage) {
     osContext->setIsPrimaryEngine(isPrimaryEngine);
     osContext->setIsDefaultEngine(isDefaultEngine);
 
+    DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
+
     commandStreamReceiver->setupContext(*osContext);
 
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
@@ -562,12 +564,14 @@ bool Device::createSecondaryEngine(CommandStreamReceiver *primaryCsr, EngineType
         return false;
     }
 
-    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false);
+    EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, primaryCsr->getOsContext().isRootDevice());
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterSecondaryOsContext(&primaryCsr->getOsContext(), commandStreamReceiver.get(), engineDescriptor);
     osContext->incRefInternal();
     commandStreamReceiver->setupContext(*osContext);
     commandStreamReceiver->setPrimaryCsr(primaryCsr);
+
+    DEBUG_BREAK_IF(getDeviceBitfield().count() > 1 && !osContext->isRootDevice());
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
 

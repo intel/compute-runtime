@@ -468,6 +468,7 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
 
     rootDeviceEnvironment.initProductHelper();
     rootDeviceEnvironment.initGfxCoreHelper();
+    rootDeviceEnvironment.initializeGfxCoreHelperFromProductHelper();
     rootDeviceEnvironment.initApiGfxCoreHelper();
     rootDeviceEnvironment.initCompilerProductHelper();
     rootDeviceEnvironment.initAilConfigurationHelper();

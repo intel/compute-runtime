@@ -1423,6 +1423,7 @@ HWTEST_F(DeviceTests, givenRootDeviceWithCCSEngineAndContextGroupSizeEnabledWhen
         for (size_t i = 1; i < device->secondaryEngines[aub_stream::EngineType::ENGINE_CCS].engines.size(); i++) {
             EXPECT_EQ(secondaryEngines.engines[0].osContext, secondaryEngines.engines[i].osContext->getPrimaryContext());
             EXPECT_TRUE(secondaryEngines.engines[i].osContext->isPartOfContextGroup());
+            EXPECT_TRUE(secondaryEngines.engines[i].osContext->isRootDevice());
         }
 
         EXPECT_EQ(0u, secondaryEngines.regularCounter.load());
