@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -207,7 +207,7 @@ void GlArbSyncEvent::unblockEventBy(Event &event, TaskCountType taskLevel, int32
         return;
     }
 
-    event.getCommandQueue()->getGpgpuCommandStreamReceiver().stopDirectSubmission(true);
+    event.getCommandQueue()->getGpgpuCommandStreamReceiver().stopDirectSubmission(true, true);
     ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectSignal(event.getCommandQueue()->getGpgpuCommandStreamReceiver().getOsContext(), *glSyncInfo);
     ctx->getSharing<GLSharingFunctionsWindows>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
 }

@@ -162,7 +162,7 @@ void DirectSubmissionController::checkNewSubmissions() {
             }
             auto lock = csr->obtainUniqueOwnership();
             if (!isCsrIdleDetectionEnabled || isDirectSubmissionIdle(csr, lock)) {
-                csr->stopDirectSubmission(false);
+                csr->stopDirectSubmission(false, false);
                 state.isStopped = true;
                 shouldRecalculateTimeout = true;
                 this->lowestThrottleSubmitted = QueueThrottle::HIGH;

@@ -202,7 +202,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         programStallingCommandsForBarrierCalled = true;
     }
 
-    void stopDirectSubmission(bool blocking) override {
+    void stopDirectSubmission(bool blocking, bool needsLock) override {
         this->blockingStopDirectSubmissionCalled = blocking;
         stopDirectSubmissionCalledTimes++;
     }

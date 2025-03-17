@@ -875,8 +875,7 @@ int Drm::waitHandle(uint32_t waitHandle, int64_t timeout) {
         for (const auto &engines : mulitEngines) {
             for (const auto &engine : engines) {
                 if (engine.osContext->isDirectSubmissionLightActive()) {
-                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                    engine.commandStreamReceiver->stopDirectSubmission(false);
+                    engine.commandStreamReceiver->stopDirectSubmission(false, true);
                 }
             }
         }

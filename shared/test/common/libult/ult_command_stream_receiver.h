@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include <map>
 #include <optional>
@@ -524,11 +525,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         return *flushReturnValue;
     }
 
-    void stopDirectSubmission(bool blocking) override {
+    void stopDirectSubmission(bool blocking, bool needsLock) override {
         stopDirectSubmissionCalled = true;
         stopDirectSubmissionCalledBlocking = blocking;
         if (this->callBaseStopDirectSubmission) {
-            BaseClass::stopDirectSubmission(blocking);
+            BaseClass::stopDirectSubmission(blocking, needsLock);
         }
     }
 
@@ -563,7 +564,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         flushHandlerCalled++;
         return BaseClass::flushHandler(batchBuffer, allocationsForResidency);
     }
-
+    bool isAnyDirectSubmissionEnabled() const override {
+        if (isAnyDirectSubmissionEnabledCallBase) {
+            return BaseClass::isAnyDirectSubmissionEnabled();
+        }
+        return isAnyDirectSubmissionEnabledResult;
+    }
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -597,6 +603,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t initializeDeviceWithFirstSubmissionCalled = 0;
     uint32_t drainPagingFenceQueueCalled = 0;
     uint32_t flushHandlerCalled = 0;
+    uint32_t obtainUniqueOwnershipCalledTimes = 0;
     mutable uint32_t checkGpuHangDetectedCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
@@ -645,6 +652,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     bool stopDirectSubmissionCalledBlocking = false;
     bool registeredDcFlushForDcFlushMitigation = false;
     bool isUserFenceWaitSupported = false;
+    bool isAnyDirectSubmissionEnabledCallBase = true;
+    bool isAnyDirectSubmissionEnabledResult = true;
 };
 
 } // namespace NEO

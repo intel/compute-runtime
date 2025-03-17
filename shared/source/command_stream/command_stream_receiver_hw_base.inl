@@ -1375,8 +1375,12 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking) {
+inline void CommandStreamReceiverHw<GfxFamily>::stopDirectSubmission(bool blocking, bool needsLock) {
     if (this->isAnyDirectSubmissionEnabled()) {
+        std::unique_lock<MutexType> lock;
+        if (needsLock) {
+            lock = obtainUniqueOwnership();
+        }
         if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
             this->blitterDirectSubmission->stopRingBuffer(blocking);
         } else {

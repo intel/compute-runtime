@@ -1069,8 +1069,7 @@ void Device::stopDirectSubmissionAndWaitForCompletion() {
     for (auto &engine : allEngines) {
         auto csr = engine.commandStreamReceiver;
         if (csr->isAnyDirectSubmissionEnabled()) {
-            auto lock = csr->obtainUniqueOwnership();
-            csr->stopDirectSubmission(true);
+            csr->stopDirectSubmission(true, true);
         }
     }
 }
@@ -1272,8 +1271,7 @@ void Device::stopDirectSubmissionForCopyEngine() {
     }
     auto regularBcs = regularBcsEngine->commandStreamReceiver;
     if (regularBcs->isAnyDirectSubmissionEnabled()) {
-        auto lock = regularBcs->obtainUniqueOwnership();
-        regularBcs->stopDirectSubmission(false);
+        regularBcs->stopDirectSubmission(false, true);
     }
 }
 

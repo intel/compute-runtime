@@ -356,7 +356,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
 
     MOCKABLE_VIRTUAL void startControllingDirectSubmissions();
 
-    bool isAnyDirectSubmissionEnabled() const {
+    MOCKABLE_VIRTUAL bool isAnyDirectSubmissionEnabled() const {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
     }
 
@@ -382,7 +382,7 @@ class CommandStreamReceiver : NEO::NonCopyableAndNonMovableClass {
         return false;
     }
 
-    virtual void stopDirectSubmission(bool blocking) {}
+    virtual void stopDirectSubmission(bool blocking, bool needsLock) {}
 
     virtual QueueThrottle getLastDirectSubmissionThrottle() = 0;
 

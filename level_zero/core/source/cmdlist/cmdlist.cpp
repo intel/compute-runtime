@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Intel Corporation
+ * Copyright (C) 2020-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,8 +57,7 @@ void CommandList::removeHostPtrAllocations() {
     if (restartDirectSubmission) {
         const auto &engines = memoryManager->getRegisteredEngines(device->getRootDeviceIndex());
         for (const auto &engine : engines) {
-            auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-            engine.commandStreamReceiver->stopDirectSubmission(false);
+            engine.commandStreamReceiver->stopDirectSubmission(false, true);
         }
     }
 

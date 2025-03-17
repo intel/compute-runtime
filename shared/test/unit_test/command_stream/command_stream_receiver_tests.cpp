@@ -903,6 +903,37 @@ HWTEST_F(CommandStreamReceiverTest, whenClearColorAllocationIsCreatedThenItIsDes
     EXPECT_EQ(nullptr, csr.clearColorAllocation);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenUllsEnabledAndStopDirectSubmissionCalledThenObtainOwnershipIsCalled) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto ownershipCalledBefore = csr.recursiveLockCounter.load();
+    csr.isAnyDirectSubmissionEnabledResult = true;
+    csr.isAnyDirectSubmissionEnabledCallBase = false;
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(csr);
+    csr.directSubmission.reset(directSubmission);
+    csr.stopDirectSubmission(false, true);
+    EXPECT_EQ(csr.recursiveLockCounter, ownershipCalledBefore + 1u);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenUllsEnabledAndStopDirectSubmissionCalledWithLockNotNeededThenObtainOwnershipIsNotCalled) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto ownershipCalledBefore = csr.recursiveLockCounter.load();
+    csr.isAnyDirectSubmissionEnabledResult = true;
+    csr.isAnyDirectSubmissionEnabledCallBase = false;
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(csr);
+    csr.directSubmission.reset(directSubmission);
+    csr.stopDirectSubmission(false, false);
+    EXPECT_EQ(csr.recursiveLockCounter, ownershipCalledBefore);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenUllsDisabledAndStopDirectSubmissionCalledThenObtainOwnershipIsNotCalled) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto ownershipCalledBefore = csr.recursiveLockCounter.load();
+    csr.isAnyDirectSubmissionEnabledResult = false;
+    csr.isAnyDirectSubmissionEnabledCallBase = false;
+    csr.stopDirectSubmission(false, true);
+    EXPECT_EQ(csr.recursiveLockCounter, ownershipCalledBefore);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenNoDirectSubmissionWhenCheckTaskCountFromWaitEnabledThenReturnsFalse) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_FALSE(csr.isUpdateTagFromWaitEnabled());

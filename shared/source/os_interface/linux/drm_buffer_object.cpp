@@ -352,8 +352,7 @@ int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOf
             const auto &engines = this->drm->getRootDeviceEnvironment().executionEnvironment.memoryManager->getRegisteredEngines(osContext->getRootDeviceIndex());
             for (const auto &engine : engines) {
                 if (engine.osContext->isDirectSubmissionLightActive()) {
-                    auto lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                    engine.commandStreamReceiver->stopDirectSubmission(false);
+                    engine.commandStreamReceiver->stopDirectSubmission(false, true);
                 }
             }
         }

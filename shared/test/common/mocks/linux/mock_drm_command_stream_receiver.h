@@ -129,7 +129,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         this->drm = proxyDrm;
     }
 
-    void stopDirectSubmission(bool blocking) override {
+    void stopDirectSubmission(bool blocking, bool needsLock) override {
         stopDirectSubmissionCalled = true;
     }
 

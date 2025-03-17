@@ -74,7 +74,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionDisabledWhenStopThenRingIsNo
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
-    csr.stopDirectSubmission(false);
+    csr.stopDirectSubmission(false, false);
     EXPECT_TRUE(directSubmission.ringStart);
 
     csr.directSubmission.release();
@@ -91,7 +91,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenStopThenRingIsNotStarted
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
-    csr.stopDirectSubmission(false);
+    csr.stopDirectSubmission(false, false);
     EXPECT_FALSE(directSubmission.ringStart);
 
     csr.directSubmission.release();
@@ -112,7 +112,7 @@ HWTEST_F(DirectSubmissionTest, givenBlitterDirectSubmissionWhenStopThenRingIsNot
     EXPECT_TRUE(ret);
     EXPECT_TRUE(directSubmission.ringStart);
 
-    csr.stopDirectSubmission(false);
+    csr.stopDirectSubmission(false, false);
     EXPECT_FALSE(directSubmission.ringStart);
 
     csr.blitterDirectSubmission.release();

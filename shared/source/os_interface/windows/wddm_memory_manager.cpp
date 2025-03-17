@@ -743,8 +743,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 std::unique_lock<CommandStreamReceiver::MutexType> lock;
                 if (engine.commandStreamReceiver->isAnyDirectSubmissionEnabled()) {
-                    lock = engine.commandStreamReceiver->obtainUniqueOwnership();
-                    engine.commandStreamReceiver->stopDirectSubmission(true);
+                    engine.commandStreamReceiver->stopDirectSubmission(true, true);
                 }
                 [[maybe_unused]] auto status = engine.commandStreamReceiver->pageTableManager->updateAuxTable(input->getGpuAddress(), defaultGmm, false);
                 DEBUG_BREAK_IF(!status);
