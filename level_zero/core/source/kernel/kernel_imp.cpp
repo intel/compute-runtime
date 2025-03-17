@@ -1151,7 +1151,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
             return result;
         }
     } else {
-        auto result = setGroupSize(kernelDescriptor.kernelAttributes.simdSize, 1, 1);
+        auto result = setGroupSize(1, 1, 1);
         if (result != ZE_RESULT_SUCCESS) {
             return result;
         }

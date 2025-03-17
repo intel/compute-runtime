@@ -176,6 +176,7 @@ void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
 
 void CmdListPipelineSelectStateFixture::setUp() {
     debugManager.flags.EnablePipelineSelectTracking.set(1);
+    debugManager.flags.EnableFrontEndTracking.set(0);
     ModuleMutableCommandListFixture::setUp();
 
     auto result = ZE_RESULT_SUCCESS;

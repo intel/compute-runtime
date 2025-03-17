@@ -1005,5 +1005,19 @@ TEST_F(KernelImpTest, givenCorrectEngineTypeWhenGettingMaxWgCountPerTileThenRetu
     EXPECT_EQ(100u, kernel.getMaxWgCountPerTile(NEO::EngineGroupType::cooperativeCompute));
 }
 
+TEST_F(KernelImpTest, givenDefaultGroupSizeWhenGetGroupSizeCalledThenReturnDefaultValues) {
+    Mock<Module> module(device, nullptr);
+    Mock<::L0::KernelImp> kernel;
+    kernel.module = &module;
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernel.initialize(&kernelDesc);
+
+    auto groupSize = kernel.getGroupSize();
+
+    EXPECT_EQ(1u, groupSize[0]);
+    EXPECT_EQ(1u, groupSize[1]);
+    EXPECT_EQ(1u, groupSize[2]);
+}
+
 } // namespace ult
 } // namespace L0
