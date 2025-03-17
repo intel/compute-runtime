@@ -90,6 +90,16 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
             if (debugManager.flags.ForceDeviceId.get() == "unk") {
                 hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
+            } else if (aotInfo.deviceIds->front() != hardwareInfo->platform.usDeviceID) {
+                std::stringstream devIds{};
+                for (auto id : *aotInfo.deviceIds)
+                    devIds << "0x" << std::hex << id << ", ";
+
+                NEO::printDebugString(NEO::debugManager.flags.PrintDebugMessages.get(),
+                                      stdout, "Info@ %s(): Mismatch of device ids. ForceDeviceId %s is used for platform with multiple deviceIds: [%s]. Consider using OverrideHwIpVersion flag.\n",
+                                      __FUNCTION__,
+                                      debugManager.flags.ForceDeviceId.get().c_str(),
+                                      devIds.str().substr(0, devIds.str().size() - 2).c_str());
             }
         }
         hardwareInfo->ipVersion.value = compilerProductHelper.getHwIpVersion(*hardwareInfo);
