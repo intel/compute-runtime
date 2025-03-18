@@ -1434,6 +1434,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
             this->osContext->setDirectSubmissionActive();
             if (this->osContext->isDirectSubmissionLightActive()) {
                 this->pushAllocationsForMakeResident = false;
+                WaitUtils::init(true);
             }
         }
     }
