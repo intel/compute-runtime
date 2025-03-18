@@ -41,8 +41,10 @@ bool AubHelper::isOneTimeAubWritableAllocationType(const AllocationType &type) {
     case AllocationType::assertBuffer:
     case AllocationType::tagBuffer:
     case AllocationType::syncDispatchToken:
+        return true;
     case AllocationType::bufferHostMemory:
-        return (NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.get() ? false : true) || (NEO::debugManager.flags.EnableTbxPageFaultManager.get() == 1);
+        return NEO::debugManager.isTbxPageFaultManagerEnabled() ||
+               (NEO::debugManager.flags.SetBufferHostMemoryAlwaysAubWritable.get() == false);
     default:
         return false;
     }

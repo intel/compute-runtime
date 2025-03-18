@@ -162,9 +162,10 @@ class DebugSettingsManager : NEO::NonCopyableAndNonMovableClass {
 
     inline bool isTbxPageFaultManagerEnabled() {
         auto setCsr = flags.SetCommandStreamReceiver.get();
-        auto tbxMngrFlag = flags.EnableTbxPageFaultManager.get();
-        auto isTbxMode = (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbx)) || (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
-        return tbxMngrFlag && isTbxMode;
+        auto isTbxMode = (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbx)) ||
+                         (setCsr == static_cast<int32_t>(CommandStreamReceiverType::tbxWithAub));
+        auto isFaultManagerEnabledInEnvVars = flags.EnableTbxPageFaultManager.get();
+        return isFaultManagerEnabledInEnvVars && isTbxMode;
     }
 
   protected:

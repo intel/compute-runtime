@@ -85,7 +85,9 @@ TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
 template <typename GfxFamily>
 bool TbxCommandStreamReceiverHw<GfxFamily>::isAllocTbxFaultable(GraphicsAllocation *gfxAlloc) {
     // indicates host memory not managed by the driver
-    if (gfxAlloc->getDriverAllocatedCpuPtr() == nullptr || !debugManager.isTbxPageFaultManagerEnabled() || this->getTbxPageFaultManager() == nullptr) {
+    if ((gfxAlloc->getDriverAllocatedCpuPtr() == nullptr) ||
+        (debugManager.isTbxPageFaultManagerEnabled() == false) ||
+        (this->getTbxPageFaultManager() == nullptr)) {
         return false;
     }
     auto allocType = gfxAlloc->getAllocationType();

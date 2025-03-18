@@ -129,9 +129,10 @@ TEST(AubHelper, givenAllocationTypeWhenAskingIfOneTimeWritableThenReturnCorrectR
     }
 }
 
-TEST(AubHelper, givenSetBufferHostMemoryAlwaysAubWritableAndDisabledTbxFaultMngrWhenAskingIfBufferHostMemoryAllocationIsOneTimeAubWritableThenReturnCorrectResult) {
+TEST(AubHelper, givenAlwaysAubWritableAndEnableTbxFaultManagerSetExternallyThenAllocationIsOneTimeAubWritableShouldReturnCorrectResult) {
     DebugManagerStateRestore stateRestore;
     NEO::debugManager.flags.EnableTbxPageFaultManager.set(0);
+    NEO::debugManager.flags.SetCommandStreamReceiver.set(2);
 
     for (auto isAlwaysAubWritable : {false, true}) {
         for (auto isTbxFaultManagerEnabled : {false, true}) {
