@@ -169,9 +169,8 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
 
     {
         debugManager.flags.EnableTimestampWaitForQueues.set(-1);
-        const auto &gfxCoreHelper = mockDevice->getGfxCoreHelper();
         const auto &productHelper = mockDevice->getProductHelper();
-        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), gfxCoreHelper.isTimestampWaitSupportedForQueues() && !productHelper.isDcFlushAllowed());
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), productHelper.isTimestampWaitSupportedForQueues(false) && !productHelper.isDcFlushAllowed());
     }
 
     {

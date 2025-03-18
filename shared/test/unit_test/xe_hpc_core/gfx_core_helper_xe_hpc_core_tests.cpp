@@ -63,13 +63,12 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, WhenGettingIsCpuImageTransferPrefe
     EXPECT_TRUE(gfxCoreHelper.isCpuImageTransferPreferred(*defaultHwInfo));
 }
 
-XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenGfxCoreHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
-}
-
 using ProductHelperTestXeHpcCore = Test<DeviceFixture>;
+
+XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
+    auto &helper = getHelper<ProductHelper>();
+    EXPECT_TRUE(helper.isTimestampWaitSupportedForQueues(false));
+}
 
 XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimestampWaitSupportForEventsThenReturnTrue) {
     auto &helper = getHelper<ProductHelper>();

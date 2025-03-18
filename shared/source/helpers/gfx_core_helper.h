@@ -74,7 +74,6 @@ class GfxCoreHelper {
     static uint32_t getHighestEnabledSlice(const HardwareInfo &hwInfo);
     static uint32_t getHighestEnabledDualSubSlice(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
-    virtual bool isTimestampWaitSupportedForQueues() const = 0;
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;
     virtual bool makeResidentBeforeLockNeeded(bool precondition) const = 0;
     virtual size_t getRenderSurfaceStateSize() const = 0;
@@ -273,7 +272,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool timestampPacketWriteSupported() const override;
 
-    bool isTimestampWaitSupportedForQueues() const override;
     bool isUpdateTaskCountFromWaitSupported() const override;
 
     bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const override;

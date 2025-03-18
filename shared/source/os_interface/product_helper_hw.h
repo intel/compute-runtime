@@ -89,6 +89,7 @@ class ProductHelperHw : public ProductHelper {
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const override;
+    bool isTimestampWaitSupportedForQueues(bool heaplessEnabled) const override;
     uint32_t getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const override;
     void adjustScratchSize(size_t &requiredScratchSize) const override;
     size_t getSvmCpuAlignment() const override;

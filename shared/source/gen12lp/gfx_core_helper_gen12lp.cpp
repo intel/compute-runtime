@@ -42,11 +42,6 @@ bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
     return false;
 }

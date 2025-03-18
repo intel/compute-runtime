@@ -31,11 +31,6 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenAskingFor
     EXPECT_EQ(expectedAlignment, gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 }
 
-XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
-}
-
 XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenXe2HpgCoreWhenAskedForMinimialSimdThen16IsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
@@ -612,6 +607,11 @@ XE2_HPG_CORETEST_F(GfxCoreHelperTestsXe2HpgCore, givenProgramGlobalFenceAsMiMemF
 }
 
 using ProductHelperTestXe2HpgCore = Test<DeviceFixture>;
+
+XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues(false));
+}
 
 XE2_HPG_CORETEST_F(ProductHelperTestXe2HpgCore, givenProductHelperWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
     auto &productHelper = getHelper<ProductHelper>();

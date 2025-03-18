@@ -44,11 +44,6 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenAskingForTimesta
     EXPECT_EQ(expectedAlignment, gfxCoreHelper.getTimestampPacketAllocatorAlignment());
 }
 
-XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenGfxCoreHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
-}
-
 XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenXe3CoreWhenAskedForMinimialSimdThen16IsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(16u, gfxCoreHelper.getMinimalSIMDSize());
@@ -608,6 +603,11 @@ XE3_CORETEST_F(GfxCoreHelperTestsXe3Core, givenProgramGlobalFenceAsMiMemFenceCom
 }
 
 using ProductHelperTestXe3Core = Test<DeviceFixture>;
+
+XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCheckTimestampWaitForQueuesSupportThenReturnTrue) {
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues(false));
+}
 
 XE3_CORETEST_F(ProductHelperTestXe3Core, givenProductHelperWhenCheckTimestampWaitSupportThenReturnTrue) {
     auto &productHelper = getHelper<ProductHelper>();

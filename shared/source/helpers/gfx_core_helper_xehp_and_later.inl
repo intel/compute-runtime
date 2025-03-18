@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Intel Corporation
+ * Copyright (C) 2021-2025 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,11 +50,6 @@ bool GfxCoreHelperHw<GfxFamily>::hvAlign4Required() const {
 
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
-    return true;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
     return true;
 }
 

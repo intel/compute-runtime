@@ -58,6 +58,11 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDebugFlagWhenCheckingIfBuffer
 
 using ProductHelperTestXeHpgCore = Test<DeviceFixture>;
 
+XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenProductHelperWhenCheckTimestampWaitSupportForQueuesThenReturnTrue) {
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(productHelper.isTimestampWaitSupportedForQueues(false));
+}
+
 XE_HPG_CORETEST_F(ProductHelperTestXeHpgCore, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
     auto &productHelper = getHelper<ProductHelper>();
@@ -140,11 +145,6 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, GivenVariousValuesWhenAlignSlmSize
     EXPECT_EQ(32768u, gfxCoreHelper.alignSlmSize(32768));
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(32769));
     EXPECT_EQ(65536u, gfxCoreHelper.alignSlmSize(65536));
-}
-
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCheckTimestampWaitSupportForQueuesThenReturnTrue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isTimestampWaitSupportedForQueues());
 }
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {

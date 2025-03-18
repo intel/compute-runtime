@@ -1331,10 +1331,10 @@ void CommandQueue::assignDataToOverwrittenBcsNode(TagNodeBase *node) {
 }
 
 bool CommandQueue::isWaitForTimestampsEnabled() const {
-    const auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
     auto &productHelper = getDevice().getProductHelper();
+
     auto enabled = CommandQueue::isTimestampWaitEnabled();
-    enabled &= gfxCoreHelper.isTimestampWaitSupportedForQueues();
+    enabled &= productHelper.isTimestampWaitSupportedForQueues(false);
     enabled &= !productHelper.isDcFlushAllowed();
     enabled &= !getDevice().getRootDeviceEnvironment().isWddmOnLinux();
     enabled &= !this->isOOQEnabled(); // TSP for OOQ dispatch is optional. We need to wait for task count.

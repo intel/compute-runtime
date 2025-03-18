@@ -85,11 +85,6 @@ uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool 
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
-    return true;
-}
-
-template <>
 const StackVec<size_t, 3> GfxCoreHelperHw<Family>::getDeviceSubGroupSizes() const {
     return {16, 32};
 }
