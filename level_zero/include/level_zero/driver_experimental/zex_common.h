@@ -185,7 +185,7 @@ typedef struct _zex_counter_based_event_desc_t {
     ze_structure_type_t stype;                 ///< [in] type of this structure
     const void *pNext;                         ///< [in][optional] must be null or a pointer to an extension-specific
     zex_counter_based_event_exp_flags_t flags; ///< [in] counter based event flags.
-                                               ///< Must be 0 (default) or a valid combination of ::ZEX_COUNTER_BASED_EVENT_FLAG_IMMEDIATE and/or ::ZEX_COUNTER_BASED_EVENT_FLAG_NON_IMMEDIATE
+                                               ///< Must be 0 (default) or a valid combination of ::zex_counter_based_event_exp_flag_t
     ze_event_scope_flags_t signalScope;        ///< [in] defines the scope of relevant cache hierarchies to flush on a
                                                ///< signal action before the event is triggered.
                                                ///< must be 0 (default) or a valid combination of ::ze_event_scope_flag_t;
