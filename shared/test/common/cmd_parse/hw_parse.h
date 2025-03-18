@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -22,7 +23,7 @@ namespace NEO {
 
 struct KernelInfo;
 
-struct HardwareParse {
+struct HardwareParse : NEO::NonCopyableAndNonMovableClass {
     HardwareParse() {
         itorMediaInterfaceDescriptorLoad = cmdList.end();
         itorMediaVfeState = cmdList.end();

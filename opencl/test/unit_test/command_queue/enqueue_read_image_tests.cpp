@@ -650,11 +650,15 @@ HWCMDTEST_F(IGFX_GEN12LP_CORE, EnqueueReadImageTest, WhenReadingImageThenInterfa
 HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenSurfaceStateIsCorrect) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
+    mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueReadImage<FamilyType>();
 
     // BufferToImage kernel uses BTI=1 for destSurface
     uint32_t bindingTableIndex = 0;
-    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), bindingTableIndex);
+    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, bindingTableIndex);
 
     // EnqueueReadImage uses multi-byte copies depending on per-pixel-size-in-bytes
     const auto &imageDesc = srcImage->getImageDesc();
@@ -726,7 +730,7 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
 HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenRowPitchIsSetToSlicePitch) {
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
-    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::copyImage3dToBuffer;
+    EBuiltInOps::Type copyBuiltIn = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled());
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
         pCmdQ->getClDevice());
@@ -941,15 +945,16 @@ typedef EnqueueReadImageMipMapTest MipMapReadImageTest;
 HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalledThenProperMipLevelIsSet) {
     auto builtIns = new MockBuiltins();
     MockRootDeviceEnvironment::resetBuiltins(pCmdQ->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[pCmdQ->getDevice().getRootDeviceIndex()].get(), builtIns);
+    EBuiltInOps::Type eBuiltInOp = EBuiltInOps::adjustBuiltinType<EBuiltInOps::copyImage3dToBuffer>(false, pCmdQ->getHeaplessModeEnabled());
     auto imageType = (cl_mem_object_type)GetParam();
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
-        EBuiltInOps::copyImage3dToBuffer,
+        eBuiltInOp,
         pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
     auto oldBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyImage3dToBuffer,
+        eBuiltInOp,
         std::unique_ptr<NEO::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(*builtIns, pCmdQ->getClDevice(), &origBuilder)));
 
     cl_int retVal = CL_SUCCESS;
@@ -1004,7 +1009,7 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::copyImage3dToBuffer,
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOp,
                                                                                                                               pCmdQ->getClDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 
@@ -1013,7 +1018,7 @@ HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalled
     // restore original builder and retrieve mock builder
     auto newBuilder = pClExecutionEnvironment->setBuiltinDispatchInfoBuilder(
         rootDeviceIndex,
-        EBuiltInOps::copyImage3dToBuffer,
+        eBuiltInOp,
         std::move(oldBuilder));
     EXPECT_NE(nullptr, newBuilder);
 }

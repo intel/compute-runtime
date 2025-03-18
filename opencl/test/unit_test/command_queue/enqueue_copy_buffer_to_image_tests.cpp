@@ -171,12 +171,11 @@ HWTEST_F(EnqueueCopyBufferToImageTest, WhenCopyingBufferToImageThenSurfaceStateI
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
     mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueCopyBufferToImage<FamilyType>();
 
-    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
-    uint32_t index = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(1).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
+    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 1);
 
-    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), index);
     const auto &imageDesc = dstImage->getImageDesc();
     // EnqueueReadImage uses multi-byte copies depending on per-pixel-size-in-bytes
     EXPECT_EQ(imageDesc.image_width, surfaceState->getWidth());

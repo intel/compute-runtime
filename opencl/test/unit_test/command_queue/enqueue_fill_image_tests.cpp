@@ -22,6 +22,7 @@
 using namespace NEO;
 
 class EnqueueFillImageTest : public EnqueueFillImageTestFixture,
+                             public SurfaceStateAccessor,
                              public ::testing::Test {
   public:
     void SetUp(void) override {
@@ -194,12 +195,11 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
     VariableBackup<CommandQueue *> cmdQBackup(&pCmdQ, mockCmdQ.get());
     mockCmdQ->storeMultiDispatchInfo = true;
+
     enqueueFillImage<FamilyType>();
 
-    const auto &kernelInfo = mockCmdQ->storedMultiDispatchInfo.begin()->getKernel()->getKernelInfo();
-    uint32_t index = static_cast<uint32_t>(kernelInfo.getArgDescriptorAt(0).template as<ArgDescImage>().bindful) / sizeof(RENDER_SURFACE_STATE);
+    const auto surfaceState = SurfaceStateAccessor::getSurfaceState<FamilyType>(mockCmdQ, 0);
 
-    const auto surfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::Type::surfaceState, 0), index);
     const auto &imageDesc = image->getImageDesc();
     EXPECT_EQ(imageDesc.image_width, surfaceState->getWidth());
     EXPECT_EQ(imageDesc.image_height, surfaceState->getHeight());

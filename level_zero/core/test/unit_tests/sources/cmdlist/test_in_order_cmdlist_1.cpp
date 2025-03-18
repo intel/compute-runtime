@@ -2043,7 +2043,7 @@ HWTEST2_F(InOrderCmdListTests, givenCmdsChainingFromAppendCopyAndFlushRequiredWh
 
     offset = cmdStream->getUsed();
     immCmdList->appendMemoryCopyRegion(&copyData, &region, 1, 1, &copyData, &region, 1, 1, nullptr, 0, nullptr, copyParams);
-    findSemaphores((heaplessEnabled && !immCmdList->dcFlushSupport) ? 1 : 0); // no implicit dependency
+    findSemaphores(heaplessEnabled ? 1 : 0); // no implicit dependency
 }
 
 HWTEST2_F(InOrderCmdListTests, givenEventWithRequiredPipeControlWhenDispatchingCopyThenSignalInOrderAllocation, IsAtLeastXeHpCore) {

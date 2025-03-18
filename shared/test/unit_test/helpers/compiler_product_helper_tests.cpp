@@ -382,7 +382,7 @@ HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpV
     EXPECT_EQ(compilerProductHelper.getHwIpVersion(hwInfo), config);
 }
 
-HWTEST_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned) {
+HWTEST2_F(CompilerProductHelperFixture, givenCompilerProductHelperWhenIsHeaplessModeEnabledThenFalseIsReturned, IsAtMostXe3Core) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     EXPECT_FALSE(compilerProductHelper.isHeaplessModeEnabled());
 }
