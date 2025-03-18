@@ -1829,8 +1829,14 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TILE_Y: {
                     dst.FtrTileY = readTokValue<decltype(dst.FtrTileY)>(*tok);
                 } break;
+                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_XE2PLUS_TILING: {
+                    dst.FtrXe2PlusTiling = readTokValue<decltype(dst.FtrXe2PlusTiling)>(*tok);
+                } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FLAT_PHYS_CCS: {
                     dst.FtrFlatPhysCCS = readTokValue<decltype(dst.FtrFlatPhysCCS)>(*tok);
+                } break;
+                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_XE2COMPRESSION: {
+                    dst.FtrXe2Compression = readTokValue<decltype(dst.FtrXe2Compression)>(*tok);
                 } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MULTI_TILE_ARCH: {
                     dst.FtrMultiTileArch = readTokValue<decltype(dst.FtrMultiTileArch)>(*tok);
@@ -1843,6 +1849,9 @@ struct Demarshaller<TOK_S_SKU_FEATURE_TABLE> {
                 } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CAMERA_CAPTURE_CACHING: {
                     dst.FtrCameraCaptureCaching = readTokValue<decltype(dst.FtrCameraCaptureCaching)>(*tok);
+                } break;
+                case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PML5SUPPORT: {
+                    dst.FtrPml5Support = readTokValue<decltype(dst.FtrPml5Support)>(*tok);
                 } break;
                 case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_KMD_DAF: {
                     dst.FtrKmdDaf = readTokValue<decltype(dst.FtrKmdDaf)>(*tok);
@@ -3035,8 +3044,14 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_TILE_Y: {
                                 dst.SkuTable.FtrTileY = readTokValue<decltype(dst.SkuTable.FtrTileY)>(*tokSkuTable);
                             } break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_XE2PLUS_TILING: {
+                                dst.SkuTable.FtrXe2PlusTiling = readTokValue<decltype(dst.SkuTable.FtrXe2PlusTiling)>(*tokSkuTable);
+                            } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_FLAT_PHYS_CCS: {
                                 dst.SkuTable.FtrFlatPhysCCS = readTokValue<decltype(dst.SkuTable.FtrFlatPhysCCS)>(*tokSkuTable);
+                            } break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_XE2COMPRESSION: {
+                                dst.SkuTable.FtrXe2Compression = readTokValue<decltype(dst.SkuTable.FtrXe2Compression)>(*tokSkuTable);
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_MULTI_TILE_ARCH: {
                                 dst.SkuTable.FtrMultiTileArch = readTokValue<decltype(dst.SkuTable.FtrMultiTileArch)>(*tokSkuTable);
@@ -3049,6 +3064,9 @@ struct Demarshaller<TOK_S_ADAPTER_INFO> {
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_CAMERA_CAPTURE_CACHING: {
                                 dst.SkuTable.FtrCameraCaptureCaching = readTokValue<decltype(dst.SkuTable.FtrCameraCaptureCaching)>(*tokSkuTable);
+                            } break;
+                            case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_PML5SUPPORT: {
+                                dst.SkuTable.FtrPml5Support = readTokValue<decltype(dst.SkuTable.FtrPml5Support)>(*tokSkuTable);
                             } break;
                             case TOK_FBD_SKU_FEATURE_TABLE__ANONYMOUS21990__FTR_KMD_DAF: {
                                 dst.SkuTable.FtrKmdDaf = readTokValue<decltype(dst.SkuTable.FtrKmdDaf)>(*tokSkuTable);
