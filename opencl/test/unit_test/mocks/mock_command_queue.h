@@ -193,7 +193,6 @@ class MockCommandQueue : public CommandQueue {
     cl_int enqueueReadBufferImpl(Buffer *buffer, cl_bool blockingRead, size_t offset, size_t cb,
                                  void *ptr, GraphicsAllocation *mapAllocation, cl_uint numEventsInWaitList,
                                  const cl_event *eventWaitList, cl_event *event, CommandStreamReceiver &csr) override {
-        enqueueReadBufferImplCalledCount++;
         return CL_SUCCESS;
     }
 
@@ -283,7 +282,6 @@ class MockCommandQueue : public CommandQueue {
     std::atomic<TaskCountType> latestTaskCountWaited{std::numeric_limits<TaskCountType>::max()};
     std::optional<WaitStatus> waitUntilCompleteReturnValue{};
     int waitUntilCompleteCalledCount{0};
-    size_t enqueueReadBufferImplCalledCount = 0;
 };
 
 template <typename GfxFamily>
